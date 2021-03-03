@@ -163,16 +163,16 @@ SYNOPSIS
         </client>
     <clients>
     <services>
-        <defaults prio="SRVC_PRIO_DEF" 
-                 routing="SRVC_ROUTE_NAME_DEF" 
-                 autotran="SRVC_AUTOTRAN_DEF"
-                 trantime="SRVC_TRANTIME_DEF"/>
+        <defaults prio="SVC_PRIO_DEF" 
+                 routing="SVC_ROUTE_NAME_DEF" 
+                 autotran="SVC_AUTOTRAN_DEF"
+                 trantime="SVC_TRANTIME_DEF"/>
         ...
-        <service svcnm="SRVC_SERVICE_NAME" 
-                 prio="SRVC_PRIO" 
-                 routing="SRVC_ROUTE_NAME" 
-                 autotran="SRVC_AUTOTRAN"
-                 trantime="SRVC_TRANTIME"/>
+        <service svcnm="SVC_SERVICE_NAME" 
+                 prio="SVC_PRIO" 
+                 routing="SVC_ROUTE_NAME" 
+                 autotran="SVC_AUTOTRAN"
+                 trantime="SVC_TRANTIME"/>
         ...
     </services>
     <routing>
@@ -606,41 +606,41 @@ PARAMETERS
     SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
     The default is *0*.
 
-'SRVC_SERVICE_NAME'::
+'SVC_SERVICE_NAME'::
     Service name for which settings are being defined. Max service length is
     *30* symbols.
 
-'SRVC_PRIO'::
+'SVC_PRIO'::
     Service call default priority. If value is not set, then it it is loaded
-    from default value 'SRVC_PRIO_DEF'. If default is not set, then value *50*
+    from default value 'SVC_PRIO_DEF'. If default is not set, then value *50*
     is used in the Enduro/X system. Priority is valid to be set in range of
     *1*..*100*.
 
-'SRVC_ROUTE_NAME'::
+'SVC_ROUTE_NAME'::
     Routing criterion name. Which must reference valid routing definition under the
     *<routing>/<route>*, value 'ROUTE_NAME'. If value is not specified, value is taken from 
-    'SRVC_ROUTING_NAME_DEF'. This parameter is optional. If not set, then no
+    'SVC_ROUTING_NAME_DEF'. This parameter is optional. If not set, then no
     routing is performed for service and messages are sent to default service.
     Max routing name length is *15* symbols.
 
-'SRVC_AUTOTRAN'::
+'SVC_AUTOTRAN'::
     Automatic transaction mode for service. If parameter is set to *y* or *Y*,
     then if XATMI service is invoked with out global transaction, the XATMI
     server will start the transaction automatically. When server process performs
     *tpreturn(3)*, transaction is committed in case if server returns *TPSUCCESS*
     otherwise transaction is aborted. If process performs *tpforward(3)*, then
     receiving server becomes transaction owner. If parameter is not specified value is
-    taken from previously defined 'SRVC_AUTOTRAN_DEF' value. If it was not set,
+    taken from previously defined 'SVC_AUTOTRAN_DEF' value. If it was not set,
     then default is *N* (no auto global transactions used by server).
     Note that this setting is extracted by XATMI server processes at the startup
     time. If configuration is change, say from *N* to *Y*, particular XATMI server
     processes needs to be restarted in order to enable automatic transactions
     for particular XATMI servers.
 
-'SRVC_TRANTIME'::
+'SVC_TRANTIME'::
     Automatic transaction life time. This parameter is used by XATMI servers starting
     when automatic transactions are started. If value is not specified, then
-    value is taken from previously defined 'SRVC_TRANTIME_DEF'. If this value also
+    value is taken from previously defined 'SVC_TRANTIME_DEF'. If this value also
     is not defined, then default value is *30*.
 
 'ROUTE_NAME'::
@@ -712,7 +712,7 @@ suffix and other is with route group suffix. Only exception when working with
 route groups is that *xadmin unadv* and *xadmin readsv* would operate with single
 service name.
 
-2. Routing criterion i.e. 'SRVC_ROUTE_NAME' must be defined for service in
+2. Routing criterion i.e. 'SVC_ROUTE_NAME' must be defined for service in
 *<service />* tag.
 
 3. Routing criterion must be defined in *<route/>* tag.
