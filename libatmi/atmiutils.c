@@ -95,15 +95,23 @@
  */
 #ifdef MQ_PRIO_MAX
 
-#define NDRX_PRIO_DOWNSCALE(PRIO)\
-    if (PRIO>(MQ_PRIO_MAX-1))\
+#if (MQ_PRIO_MAX-1 < NDRX_MSGPRIO_MAX)
+
+    #define NDRX_PRIO_DOWNSCALE(PRIO)\
     {\
-        PRIO=(((float)PRIO) * (float)(MQ_PRIO_MAX-1) / 100.0f);\
+        PRIO=( ((float)PRIO) * (float)(MQ_PRIO_MAX-1) / (float)NDRX_MSGPRIO_MAX );\
     }
 
 #else
-/* no scaling... */
+/* no scaling needed ... */
 #define NDRX_PRIO_DOWNSCALE(PRIO)
+#endif
+
+#else
+
+/* no scaling... as no priority supported by queuing sub-system */
+#define NDRX_PRIO_DOWNSCALE(PRIO)
+
 #endif
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -346,8 +354,6 @@ expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags
     int snd_prio;
     SET_TOUT_CONF;
 
-    NDRX_LOG(log_debug, "ndrx_generic_q_send_2: %ld msg_prio: %d", len, msg_prio);
-    
     /* Set nonblock flag to system, if provided to EnduroX */
     if (flags & TPNOBLOCK)
     {
@@ -429,8 +435,8 @@ restart_send:
     /* freebsd needs downscale on some version limited to 32 priorities */
     NDRX_PRIO_DOWNSCALE(snd_prio);
             
-    NDRX_LOG(6, "use timeout: %d config: %d prio: %d snd_prio: %d", 
-                use_tout, G_atmi_env.time_out, msg_prio, snd_prio);
+    NDRX_LOG(log_debug, "len: %d use timeout: %d config: %d prio: %d snd_prio: %d", 
+                len, use_tout, G_atmi_env.time_out, msg_prio, snd_prio);
     if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, snd_prio)) ||
          (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, snd_prio, &abs_timeout)))
     {
