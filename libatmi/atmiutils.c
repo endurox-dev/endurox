@@ -91,13 +91,14 @@
 
 /**
  * On freebsd we get <32 prios only.
+ * Also note that we assume here, that PRIO would be within range of 100.
  */
 #ifdef MQ_PRIO_MAX
 
 #define NDRX_PRIO_DOWNSCALE(PRIO)\
-    if (PRIO>=MQ_PRIO_MAX)\
+    if (PRIO>(MQ_PRIO_MAX-1))\
     {\
-        PRIO=(((float)PRIO) * (float)MQ_PRIO_MAX / 100.0f);\
+        PRIO=(((float)PRIO) * (float)(MQ_PRIO_MAX-1) / 100.0f);\
     }
 
 #else
