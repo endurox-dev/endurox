@@ -330,7 +330,8 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     /* reset the hook */
     tls->pf_tpacall_noservice_hook = NULL;
     
-    tls->prio = NDRX_MSGPRIO_DEFAULT;
+    /* no priority set ... */
+    tls->prio = 0;
     tls->prio_flags=0;
     tls->prio_last = NDRX_MSGPRIO_DEFAULT;
     

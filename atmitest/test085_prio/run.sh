@@ -51,7 +51,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=10
+export NDRX_TOUT=30
 export NDRX_SILENT=Y
 
 #
@@ -138,6 +138,12 @@ if [[ "$POLLER" == "epoll" || "$POLLER" == "kqueue" ]]; then
     RES70=`cat bench.70.log | grep results | awk '{print $3}'`
 
     echo "[$RESDEF] vs [$RES70]"
+
+    if [[ "X$RESDEF" == "X" || "X$RES70" == "X" ]]; then
+        echo "Missing results"
+        go_out 1
+    fi
+
     if [[ "$RESDEF" -ge "$RES70" ]]; then
         echo "Priority does not work prio DEF processed $RESDEF (shall be <) prio 70 processed $RES70 (1)"
         go_out 1
@@ -170,6 +176,12 @@ if [[ "$POLLER" == "epoll" || "$POLLER" == "kqueue" ]]; then
     RES70=`cat bench.70.log | grep results | awk '{print $3}'`
 
     echo "[$RESDEF] vs [$RES70]"
+
+    if [[ "X$RESDEF" == "X" || "X$RES70" == "X" ]]; then
+        echo "Missing results"
+        go_out 1
+    fi
+
     if [[ "$RESDEF" -le "$RES70" ]]; then
         echo "Priority does not work prio DEF processed $RESDEF (shall be >) prio 70 processed $RES70 (2)"
         go_out 1
