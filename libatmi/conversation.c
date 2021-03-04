@@ -1379,7 +1379,8 @@ exprivate int process_unsolicited_messages(int cd, long *p_revent)
         data=NULL;
     }
     
-    if (TPEEVENT==tperrno)
+    /* no problem if they want to send... ! */
+    if (TPEEVENT==tperrno && TPEV_SENDONLY!=revent)
     {
         *p_revent=revent;
         ret=EXFAIL;
