@@ -88,13 +88,9 @@ Mandatory Env. Variables
     Max message size (in bytes). The value is limited to the operating system limits
     of the maximums size of the POSIX queues message size. For example on Linux 
     kernel 3.13 it is possible to set message size to 10 Megabytes. Also the message
-    size denotes the internal buffer sizes for XATMI message processing. As mostly
-    for all operations Enduro/X uses stack allocation for the buffers, this means
-    that there are requirements for the application stack sizes. Thus the stack
-    size must be 30 times the size of the message. For example if message size
-    is set to 64KB, then stack size must be at least 1920KB (~2MB). Otherwise application
-    will not start. If message size max is set to less than 64KB, then buffer size
-    is defaulted to 64KB.
+    size denotes the internal buffer sizes for XATMI message processing.
+    If message size max is set to less than 64KB, 
+    then buffer size is defaulted to 64KB.
     This parameter also affects the opening/creation of the message queue. As the
     message size is specified in mq_open() attributes.
 
