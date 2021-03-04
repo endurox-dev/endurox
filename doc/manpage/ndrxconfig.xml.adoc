@@ -614,7 +614,10 @@ PARAMETERS
     Service call default priority. If value is not set, then it it is loaded
     from default value 'SVC_PRIO_DEF'. If default is not set, then value *50*
     is used in the Enduro/X system. Priority is valid to be set in range of
-    *1*..*100*.
+    *1*..*100*. This is used for Linux and FreeBSD OS. Note that values 1..100
+    may be downscaled prior doing mq_send() Posix function call, if operating
+    system has lesser number of priorities available. Consult with your operating
+    system documentation, particularly constant *MQ_PRIO_MAX*.
 
 'SVC_ROUTE_NAME'::
     Routing criterion name. Which must reference valid routing definition under the
