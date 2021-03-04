@@ -308,7 +308,7 @@ out_send:
     else if (flags & TPSOFTERR)
     {
         NDRX_LOG(log_error, "TPSOFTERR present -> returning service "
-                "error code: %dl", call->rcode);
+                "error code: %ld", call->rcode);
         call->sysflags |=SYS_FLAG_REPLY_ERROR;
         ret=EXFAIL;
     }
