@@ -52,6 +52,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export NDRX_ULOG=$TESTDIR
 export PATH=$PATH:$TESTDIR
+export NDRX_SILENT=Y
 
 # fallback to default compiler
 if [ "X$CC" == "X" ]; then
@@ -100,7 +101,7 @@ function go_out {
     
     set_dom1;
     xadmin stop -y
-    xadmin down -y
+    xadmin down -y 2>&1 2>/dev/null
 
     # If some alive stuff left...
     xadmin killall atmiclt71
@@ -121,6 +122,13 @@ function comp_version { echo "$@" | awk -F. '{ printf("%d%03d%03d\n", $1,$2,$3);
 #
 for TEST_COMP in "cc" "c++"; do
 
+#
+# if there was previous run...
+#
+xadmin stop -y
+xadmin down -y 2>&1 2>/dev/null
+
+rm -f tmstest atmi.sv71_dum atmi.sv71 atmi.sv71def atmi.sv71thr atmi.sv71nthr atmi.sv71err atmi.sv71err2 atmiclt71err atmiclt71 atmiclt71dflt atmiclt71_txn 2>/dev/null
 
 # must have flags
 COMPFLAGS=""
@@ -129,6 +137,7 @@ if [ $TEST_COMP == "c++" ]; then
 
     if [ "$UNAME" != "Linux" ]; then
         echo "c++ Only available for linux (thus done)"
+        go_out 0
     fi
 
     # detect compiler version
