@@ -515,6 +515,8 @@ sub write_c {
             ||$func_name=~/^tpbegin$/
             ||$func_name=~/^tpcommit$/
             ||$func_name=~/^tpopen$/
+            ||$func_name=~/^tpsuspend$/
+            ||$func_name=~/^tpresume$/
             ||$func_name=~/^tpclose$/
             ||$func_name=~/^tppost$/
             ||$func_name=~/^tpenqueue$/
