@@ -123,5 +123,7 @@ extern NDRX_API void Ondrx_atfork_parent(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void Ondrx_atfork_prepare(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpencrypt(TPCONTEXT_T *p_ctxt, char *input, long ilen, char *output, long *olen, long flags);
 extern NDRX_API int Otpdecrypt(TPCONTEXT_T *p_ctxt, char *input, long ilen, char *output, long *olen, long flags);
+extern NDRX_API int Otpsprio(TPCONTEXT_T *p_ctxt, int prio, long flags);
+extern NDRX_API int Otpgprio(TPCONTEXT_T *p_ctxt);
 #endif  /* __OATMI_H */
 
