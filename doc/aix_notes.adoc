@@ -97,7 +97,7 @@ The following operations will be done from root user. This will download
 the all open source packages to local machine to /root/rpms folder.
 
 ---------------------------------------------------------------------
-# mkdir /root/rpms
+# mkdir -p /root/rpms
 # cd /root/rpms
 # ftp -i www.oss4aix.org
 # ftp -i www.oss4aix.org
@@ -122,6 +122,10 @@ Passive mode on.
 ftp> 
 ftp> 
 ftp> cd /compatible/aix71
+
+-- In case of AIX 7.2: 
+ftp> cd /compatible/aix72
+
 250 CWD command successful
 ftp> mget *
 227 Entering Passive Mode (178,254,6,100,136,212).
