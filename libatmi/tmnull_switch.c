@@ -40,14 +40,13 @@
 #include <atmi.h>
 
 #include <xa.h>
+
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-exprivate __thread int M_is_open = EXFALSE;
-exprivate __thread int M_rmid = EXFAIL;
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -101,13 +100,13 @@ struct xa_switch_t tmnull_switch =
  */
 expublic int ndrx_nul_xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
-    if (M_is_open)
+    if (G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_open_entry() - already open!");
         return XAER_RMERR;
     }
-    M_is_open = EXTRUE;
-    M_rmid = rmid;
+    G_atmi_tls->tmnull_is_open = EXTRUE;
+    G_atmi_tls->tmnull_rmid = rmid;
              
     return XA_OK;
 }
@@ -123,7 +122,7 @@ expublic int ndrx_nul_xa_close_entry(struct xa_switch_t *sw, char *xa_info, int 
 {
     NDRX_LOG(log_error, "xa_close_entry() called");
     
-    M_is_open = EXFALSE;
+    G_atmi_tls->tmnull_is_open = EXFALSE;
     return XA_OK;
 }
 
@@ -138,7 +137,7 @@ expublic int ndrx_nul_xa_close_entry(struct xa_switch_t *sw, char *xa_info, int 
  */
 expublic int ndrx_nul_xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_start_entry() - XA not open!");
         return XAER_RMERR;
@@ -157,7 +156,7 @@ expublic int ndrx_nul_xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid,
  */
 expublic int ndrx_nul_xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_end_entry() - XA not open!");
         return XAER_RMERR;
@@ -178,7 +177,7 @@ out:
  */
 expublic int ndrx_nul_xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_rollback_entry() - XA not open!");
         return XAER_RMERR;
@@ -197,7 +196,7 @@ expublic int ndrx_nul_xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rm
  */
 expublic int ndrx_nul_xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_prepare_entry() - XA not open!");
         return XAER_RMERR;
@@ -216,7 +215,7 @@ expublic int ndrx_nul_xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmi
  */
 expublic int ndrx_nul_xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_commit_entry() - XA not open!");
         return XAER_RMERR;
@@ -236,7 +235,7 @@ expublic int ndrx_nul_xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid
  */
 expublic int ndrx_nul_xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_recover_entry() - XA not open!");
         return XAER_RMERR;
@@ -255,7 +254,7 @@ expublic int ndrx_nul_xa_recover_entry(struct xa_switch_t *sw, XID *xid, long co
  */
 expublic int ndrx_nul_xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-   if (!M_is_open)
+   if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_forget_entry() - XA not open!");
         return XAER_RMERR;
@@ -276,7 +275,7 @@ expublic int ndrx_nul_xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid
  */
 expublic int ndrx_nul_xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_complete_entry() - XA not open!");
         return XAER_RMERR;

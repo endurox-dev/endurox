@@ -81,6 +81,7 @@
 #include "tmqueue.h"
 #include "nstdutil.h"
 #include "Exfields.h"
+#include "atmi_tls.h"
 #include <qcommon.h>
 #include <xa_cmn.h>
 #include <ubfutil.h>
@@ -91,30 +92,14 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-/* Shared between threads: */
-exprivate __thread int M_is_open = EXFALSE;
-exprivate __thread int M_rmid = EXFAIL;
-
-exprivate char M_folder[PATH_MAX] = {EXEOS}; /**< Where to store the q data         */
-exprivate char M_folder_active[PATH_MAX] = {EXEOS}; /**< Active transactions        */
-exprivate char M_folder_prepared[PATH_MAX] = {EXEOS}; /**< Prepared transactions    */
-exprivate char M_folder_committed[PATH_MAX] = {EXEOS}; /**< Committed transactions  */
+exprivate char M_folder[PATH_MAX+1] = {EXEOS}; /**< Where to store the q data         */
+exprivate char M_folder_active[PATH_MAX+1] = {EXEOS}; /**< Active transactions        */
+exprivate char M_folder_prepared[PATH_MAX+1] = {EXEOS}; /**< Prepared transactions    */
+exprivate char M_folder_committed[PATH_MAX+1] = {EXEOS}; /**< Committed transactions  */
 
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
 
-/* Per thread data: */
-exprivate __thread int M_is_reg = EXFALSE; /* Dynamic registration done? */
-/*
- * Due to fact that we might have multiple queued messages per resource manager
- * we will name the transaction files by this scheme:
- * - <XID_STR>-1|2|3|4|..|N
- * we will start the processing from N back to 1 so that if we crash and retry
- * the operation, we can handle all messages in system.
- */
-exprivate __thread char M_filename_base[PATH_MAX+1] = {EXEOS}; /* base name of the file */
-exprivate __thread char M_filename_active[PATH_MAX+1] = {EXEOS}; /* active file name */
-exprivate __thread char M_filename_prepared[PATH_MAX+1] = {EXEOS}; /* prepared file name */
 /*---------------------------Prototypes---------------------------------*/
 
 expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -196,11 +181,11 @@ struct xa_switch_t ndrxqdynsw =
  */
 exprivate char *set_filename_base(XID *xid, int rmid)
 {
-    atmi_xa_serialize_xid(xid, M_filename_base);
+    atmi_xa_serialize_xid(xid, G_atmi_tls->qdisk_tls->filename_base);
     
-    NDRX_LOG(log_debug, "Base file name built [%s]", M_filename_base);
+    NDRX_LOG(log_debug, "Base file name built [%s]", G_atmi_tls->qdisk_tls->filename_base);
     
-    return M_filename_base;
+    return G_atmi_tls->qdisk_tls->filename_base;
 }
 
 /**
@@ -221,19 +206,20 @@ exprivate void set_filenames(void)
     
     for (i=1;;i++)
     {
-        snprintf(M_filename_active, sizeof(M_filename_active), 
-                "%s/%s-%03d", M_folder_active, M_filename_base, i);
-        snprintf(M_filename_prepared, sizeof(M_filename_prepared), 
-                "%s/%s-%03d", M_folder_prepared, M_filename_base, i);
+        snprintf(G_atmi_tls->qdisk_tls->filename_active, sizeof(G_atmi_tls->qdisk_tls->filename_active), 
+                "%s/%s-%03d", M_folder_active, G_atmi_tls->qdisk_tls->filename_base, i);
+        snprintf(G_atmi_tls->qdisk_tls->filename_prepared, sizeof(G_atmi_tls->qdisk_tls->filename_prepared), 
+                "%s/%s-%03d", M_folder_prepared, G_atmi_tls->qdisk_tls->filename_base, i);
         
-        if (!ndrx_file_exists(M_filename_active) && 
-                !ndrx_file_exists(M_filename_prepared))
+        if (!ndrx_file_exists(G_atmi_tls->qdisk_tls->filename_active) && 
+                !ndrx_file_exists(G_atmi_tls->qdisk_tls->filename_prepared))
         {
             break;
         }
     }
     NDRX_LOG(log_info, "Filenames set to: [%s] [%s]", 
-                M_filename_active, M_filename_prepared);
+                G_atmi_tls->qdisk_tls->filename_active, 
+                G_atmi_tls->qdisk_tls->filename_prepared);
 }
 
 /**
@@ -249,9 +235,9 @@ exprivate int get_filenames_max(void)
     while(1)
     {
         snprintf(filename_active, sizeof(filename_active), "%s/%s-%03d", 
-                M_folder_active, M_filename_base, i+1);
+                M_folder_active, G_atmi_tls->qdisk_tls->filename_base, i+1);
         snprintf(filename_prepared, sizeof(filename_prepared), "%s/%s-%03d", 
-                M_folder_prepared, M_filename_base, i+1);
+                M_folder_prepared, G_atmi_tls->qdisk_tls->filename_base, i+1);
         NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, 
                 filename_prepared);
         if (ndrx_file_exists(filename_active) || 
@@ -280,7 +266,7 @@ exprivate char *get_filename_i(int i, char *folder, int slot)
     static __thread char filename[2][PATH_MAX+1];
     
     snprintf(filename[slot], sizeof(filename[0]), "%s/%s-%03d", folder, 
-        M_filename_base, i);
+        G_atmi_tls->qdisk_tls->filename_base, i);
     
     return filename[slot];
 }
@@ -590,14 +576,32 @@ expublic int xa_open_entry_mkdir(char *xa_info)
 expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     int ret = XA_OK;
-    if (M_is_open)
+    
+    if (G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_warn, "xa_open_entry() - already open!");
         return XA_OK;
     }
+    
+    G_atmi_tls->qdisk_tls=NDRX_FPMALLOC(sizeof(ndrx_qdisk_tls_t), 0);
+            
+    if (NULL==G_atmi_tls->qdisk_tls)
+    {
+        int err=errno;
+        
+        NDRX_LOG(log_warn, "xa_open_entry() - failed to malloc TLS data: %s",
+                strerror(err));
+        return XAER_RMERR;
+    }
 
-    M_is_open = EXTRUE;
-    M_rmid = rmid;
+    G_atmi_tls->qdisk_tls->is_reg=EXFALSE;
+    G_atmi_tls->qdisk_tls->filename_base[0]=EXEOS;
+    G_atmi_tls->qdisk_tls->filename_active[0]=EXEOS;
+    G_atmi_tls->qdisk_tls->filename_prepared[0]=EXEOS;
+    
+            
+    G_atmi_tls->qdisk_is_open = EXTRUE;
+    G_atmi_tls->qdisk_rmid = rmid;
     
     /* Load only once? */
     if (!M_folder_set)
@@ -631,7 +635,14 @@ expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
 {
     NDRX_LOG(log_error, "xa_close_entry() called");
     
-    M_is_open = EXFALSE;
+    if (NULL!=G_atmi_tls->qdisk_tls)
+    {
+        NDRX_FPFREE(G_atmi_tls->qdisk_tls);
+        G_atmi_tls->qdisk_tls=NULL;
+    }
+    
+    G_atmi_tls->qdisk_is_open = EXFALSE;
+    
     return XA_OK;
 }
 
@@ -647,7 +658,7 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
 {
     set_filename_base(xid, rmid);
     
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_start_entry() - XA not open!");
         return XAER_RMERR;
@@ -665,13 +676,13 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
  */
 expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_end_entry() - XA not open!");
         return XAER_RMERR;
     }
     
-    if (M_is_reg)
+    if (G_atmi_tls->qdisk_tls->is_reg)
     {
         if (EXSUCCEED!=ax_unreg(rmid, 0))
         {
@@ -680,7 +691,7 @@ expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags
             return XAER_RMERR;
         }
         
-        M_is_reg = EXFALSE;
+        G_atmi_tls->qdisk_tls->is_reg = EXFALSE;
     }
     
 out:
@@ -705,7 +716,7 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
     char *folders[2] = {M_folder_active, M_folder_prepared};
     char *fn = "xa_rollback_entry";
 
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
         return XAER_RMERR;
@@ -776,7 +787,7 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
     int i;
     int names_max;
 
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_prepare_entry() - XA not open!");
         return XAER_RMERR;
@@ -824,7 +835,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     char *fname;
     char *fname_msg;
     
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - XA not open!");
         return XAER_RMERR;
@@ -1052,9 +1063,9 @@ exprivate int write_to_tx_file(char *block, int len)
     FILE *f = NULL;
     int ax_ret;
     
-    if (ndrx_get_G_atmi_env()->xa_sw->flags & TMREGISTER && !M_is_reg)
+    if (ndrx_get_G_atmi_env()->xa_sw->flags & TMREGISTER && !G_atmi_tls->qdisk_tls->is_reg)
     {
-        ax_ret = ax_reg(M_rmid, &xid, 0);
+        ax_ret = ax_reg(G_atmi_tls->qdisk_rmid, &xid, 0);
                 
         if (TM_JOIN!=ax_ret && TM_OK!=ax_ret)
         {
@@ -1062,27 +1073,28 @@ exprivate int write_to_tx_file(char *block, int len)
             EXFAIL_OUT(ret);
         }
         
-        if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, M_rmid, 0))
+        if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, G_atmi_tls->qdisk_rmid, 0))
         {
             NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
             EXFAIL_OUT(ret);
         }
         
-        M_is_reg = EXTRUE;
+        G_atmi_tls->qdisk_tls->is_reg = EXTRUE;
     }
     
     set_filenames();
     
     /* Open file for write... */
-    NDRX_LOG(log_info, "Writing command file: [%s]", M_filename_active);
-    if (NULL==(f = NDRX_FOPEN(M_filename_active, "a+b")))
+    NDRX_LOG(log_info, "Writing command file: [%s]", 
+        G_atmi_tls->qdisk_tls->filename_active);
+    if (NULL==(f = NDRX_FOPEN(G_atmi_tls->qdisk_tls->filename_active, "a+b")))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
-                M_filename_active, strerror(err));
+                G_atmi_tls->qdisk_tls->filename_active, strerror(err));
         
         userlog( "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
-                M_filename_active, strerror(err));
+                G_atmi_tls->qdisk_tls->filename_active, strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -1218,6 +1230,12 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
     char *folders[2] = {M_folder_committed, M_folder_prepared};
     short msg_nodeid, msg_srvid;
     char msgid[TMMSGIDLEN];
+    
+    if (!G_atmi_tls->qdisk_is_open)
+    {
+        NDRX_LOG(log_error, "ERROR! tmq_storage_get_blocks() - XA not open!");
+        return XAER_RMERR;
+    }
     
     for (j = 0; j < 2; j++)
     {
@@ -1412,7 +1430,7 @@ out:
  */
 expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_recover_entry() - XA not open!");
         return XAER_RMERR;
@@ -1434,7 +1452,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_forget_entry() - XA not open!");
         return XAER_RMERR;
@@ -1455,7 +1473,7 @@ expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
  */
 expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
 {
-    if (!M_is_open)
+    if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_complete_entry() - XA not open!");
         return XAER_RMERR;
