@@ -235,6 +235,11 @@ expublic void ndrx_atmi_tls_free(void *data)
             NDRX_FPFREE(el);
         }
         
+        if (NULL!=tls->qdisk_tls)
+        {
+            NDRX_FPFREE(tls->qdisk_tls);
+        }
+        
         NDRX_FREE((char*)data);
     }
 }
@@ -334,6 +339,12 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->prio = 0;
     tls->prio_flags=0;
     tls->prio_last = NDRX_MSGPRIO_DEFAULT;
+    tls->tmnull_is_open=EXFALSE;
+    tls->tmnull_rmid=EXFAIL;
+    
+    tls->qdisk_is_open=EXFALSE;
+    tls->qdisk_rmid=EXFAIL;
+    tls->qdisk_tls=NULL;
     
     /* set callback, when thread dies, we need to get the destructor 
      * to be called
