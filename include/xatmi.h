@@ -347,6 +347,7 @@ extern "C" {
  * tpbegin/tpcommit/tpclose/tpopen/tpabort/tpsuspend/tpresume 
  */
 #define TPTXCOMMITDLOG             0x00000004  /**< Commit decision logged     */
+#define TPTXNOOPTIM                0x00000100  /**< No known host optimization */
 
 /* Flags to tpscmt() - TP_COMMIT_CONTROL values, for compatibility: */
 #define TP_CMT_LOGGED              0x04  /**< return after commit has logged   */

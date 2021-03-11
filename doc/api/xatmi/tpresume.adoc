@@ -25,6 +25,13 @@ Resume global transaction with given transaction data in 'tranid' parameter.
 XA sub-system must be open, by *tpopen(3)*. Technically it is possible that 
 resume is done by other process than which did the suspend.
 
+*Valid flags*
+
+*TPTXNOOPTIM* Do not use cached known resource managers in 'tranid'. Thus having
+this flag set, this process even for previously involved RMs will perform 
+xa transaction start and if that fails, then attempt *TM_JOIN*.
+
+
 RETURN VALUE
 ------------
 On success, *tpresume()* return zero; on error, -1 is returned, 
@@ -41,6 +48,7 @@ with debug info from last function call.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info. Could be the case if XA sub-system is not open by *tpopen()*.
+Transaction was expired at *tmsrv(8)*.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, 
 or debugs for more info.
