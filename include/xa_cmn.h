@@ -134,10 +134,11 @@ extern "C" {
     X->tmknownrms[0] = EXEOS;
     
 /* WARNING! these are the same flags used by xatmi.h, TPTX* flags!!!            */
-#define TMTXFLAGS_DYNAMIC_REG      0x00000001  /**< TX initiator uses dyanmic reg */
+/* #define TMTXFLAGS_IS_ABORT_ONLY     0x0001 - see xatmi.h */
 #define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered     */
 #define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged      */
 #define TMTXFLAGS_TPNOSTARTXID     0x00000010  /**< internal, end makes prepare */
+#define TMTXFLAGS_DYNAMIC_REG      0x00000020  /**< TX initiator uses dyanmic reg */
 
 #define XA_OP_NOP                       0
 #define XA_OP_START                     1

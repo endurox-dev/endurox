@@ -81,7 +81,7 @@ in service queue. Or internals of *tpreturn(3)* failed at server code, e.g.
 failed to commit auto-tran.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
-debugs for more info.
+debugs for more info. 
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info.
