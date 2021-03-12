@@ -464,7 +464,7 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -r\tPID or BINARY is regular expression\n"
                 "\t\t -a\tApply to all binaries in application domain\n"
                 "\t\t -n\tExecute COMMAND on binary startup\n"
-                "\t\t -e\tEXecute COMMAND on binary startup with command expiry\n"
+                "\t\t -e\tExecute COMMAND on binary startup with command expiry\n"
                 "\t\t -s <SLOT>\tSlot number for command\n"
                 "\t\t -A\tArgument A to COMMAND\n"
                 "\t\t -B\tArgument B to COMMAND"

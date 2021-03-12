@@ -60,7 +60,7 @@
             <max>1</max>
             <srvid>10</srvid>
             <envs><env name="NDRX_RTGRP">DOM1</env></envs>
-            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -sT2:TESTSV</sysopt>
+            <sysopt>-Z -e ${TESTDIR}/atmisv-dom1.log -r -sT2:TESTSV</sysopt>
         </server>
 
         <server name="atmi.sv84">
@@ -68,7 +68,7 @@
             <max>1</max>
             <srvid>320</srvid>
             <envs><env name="NDRX_RTGRP">DOM3</env></envs>
-            <sysopt>-e ${TESTDIR}/atmisv-dom13.log -r</sysopt>
+            <sysopt>-Z -e ${TESTDIR}/atmisv-dom13.log -r</sysopt>
         </server>
 
         <server name="atmi.sv84">
@@ -77,13 +77,13 @@
             <srvid>420</srvid>
             <envs><env name="NDRX_RTGRP">DOM4</env></envs>
             <!-- perform dynamc adv groupt tests.. -->
-            <sysopt>-e ${TESTDIR}/atmisv-dom14.log -r -sDADV/DUNA:DYNADV -sT2:TESTSV</sysopt>
+            <sysopt>-Z -e ${TESTDIR}/atmisv-dom14.log -r -sDADV/DUNA:DYNADV -sT2:TESTSV</sysopt>
         </server>
 
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
+            <sysopt>-Z -e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
             <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
         </server>
         
@@ -94,7 +94,7 @@
             <srvid>1420</srvid>
             <envs><env name="NDRX_RTGRP">G1</env></envs>
             <!-- perform dynamc adv groupt tests.. -->
-            <sysopt>-e ${TESTDIR}/atmisv-exbenchsv-g1.log </sysopt>
+            <sysopt>-Z -e ${TESTDIR}/atmisv-Z -exbenchsv-g1.log </sysopt>
         </server>
 
         <server name="exbenchsv">
@@ -103,7 +103,7 @@
             <srvid>1421</srvid>
             <envs><env name="NDRX_RTGRP">G2</env></envs>
             <!-- perform dynamc adv groupt tests.. -->
-            <sysopt>-e ${TESTDIR}/atmisv-exbenchsv-g2.log </sysopt>
+            <sysopt>-Z -e ${TESTDIR}/atmisv-Z -exbenchsv-g2.log </sysopt>
         </server>
         
     </servers>
