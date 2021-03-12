@@ -400,11 +400,11 @@ expublic int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:z:Z--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:G--")) != EXFAIL)
     {
         switch(c)
         {
-            case 'z':
+            case 'g':
                 
                 /* routing group... override here whatever we have in env... */
                 if (EXEOS!=G_atmi_env.rtgrp[0])
@@ -416,7 +416,7 @@ expublic int ndrx_init(int argc, char** argv)
                 NDRX_LOG(log_info, "Routing group %s to [%s]",
                         (was_grp_used?"cli override":"set"), G_atmi_env.rtgrp);
                 break;
-            case 'Z':
+            case 'G':
                 /* Send @GPR encoded in service TPSVCINFO.name*/
                 G_server_conf.ddr_keep_grp=EXTRUE;
                 NDRX_LOG(log_info, "Keeping DDR group name in service names");
