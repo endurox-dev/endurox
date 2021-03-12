@@ -467,7 +467,13 @@ PARAMETERS
     passed to buildserver at build time or registered in tmdsptchtbl_t array
     passed to _tmstartserver(). The -S are processed and service array is prepared,
     afterwards the -N and -s<service_name1> flag works as usual, with -N disable
-    all service advertise and with -s some single service may be enabled.
+    all service advertise and with -s some single service may be enabled. With
+    flag *-z* <RTGRP> it is possible to define or override the env variable 
+    *NDRX_RTGRP* - routing group code. Use *-Z* flag to configure that particular server
+    shall include '@<RTGRP>' routing group suffix in service name received by
+    service function (i.e. structure *TPSVCINFO* field *name* shall contain full
+    service name with the group code, if call was routed to group), 
+    by default group name is not included even if service is routed to group.
 
 'ATMI_SERVER_APPLICATION_OPTIONS'::
     Application specific command line options. This follows content after sys options as:

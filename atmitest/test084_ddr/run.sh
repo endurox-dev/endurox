@@ -138,6 +138,14 @@ echo "*** Check routes... (long type)"
 set -x
 
 xadmin prtsvc 
+
+
+# Check that by default even routed... service name is not posted to
+# service routine
+./atmiclt84 -SNOGRP -l-200 -gNOGRP -e0 || go_out 1
+
+xadmin stop -i 40
+
 ./atmiclt84 -STESTSV -l-200 -gTESTSV@DOM1 -e0 || go_out 1
 
 ./atmiclt84 -STESTSV -l-15 -gTESTSV@DOM2 -e0 || go_out 1
