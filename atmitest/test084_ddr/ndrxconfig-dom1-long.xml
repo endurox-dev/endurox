@@ -59,7 +59,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
-            <sysopt>-Z -e ${TESTDIR}/atmisv-dom2.log -r -sT2:TESTSV -zDOM1</sysopt>
+            <sysopt>-G -e ${TESTDIR}/atmisv-dom2.log -r -sT2:TESTSV -gDOM1</sysopt>
         </server>
         
         <!-- test that group is not included, even routed -->
@@ -67,7 +67,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>40</srvid>
-            <sysopt>-N -e ${TESTDIR}/atmisv-dom2-nogrp.log -r -sNOGRP:TESTSV -zDOM44</sysopt>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom2-nogrp.log -r -sNOGRP:TESTSV -gDOM44</sysopt>
         </server>
         
         <server name="tpbridge">
