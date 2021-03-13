@@ -378,6 +378,7 @@ expublic int ndrx_init(int argc, char** argv)
     char key[NDRX_MAX_KEY_SIZE]={EXEOS};
     char rqaddress[NDRX_MAX_Q_SIZE+1] = "";
     char tmp[NDRX_MAX_Q_SIZE+1];
+    int was_grp_used=EXFALSE;
     
     /* Create ATMI context */
     ATMI_TLS_ENTRY;
@@ -399,10 +400,27 @@ expublic int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:G--")) != EXFAIL)
     {
         switch(c)
         {
+            case 'g':
+                
+                /* routing group... override here whatever we have in env... */
+                if (EXEOS!=G_atmi_env.rtgrp[0])
+                {
+                    was_grp_used=EXTRUE;
+                }
+                
+                NDRX_STRCPY_SAFE(G_atmi_env.rtgrp, optarg);
+                NDRX_LOG(log_info, "Routing group %s to [%s]",
+                        (was_grp_used?"cli override":"set"), G_atmi_env.rtgrp);
+                break;
+            case 'G':
+                /* Send @GPR encoded in service TPSVCINFO.name*/
+                G_server_conf.ddr_keep_grp=EXTRUE;
+                NDRX_LOG(log_info, "Keeping DDR group name in service names");
+                break;
             case 'k':
                 /* just ignore the key... */
                 NDRX_STRCPY_SAFE(key, optarg);

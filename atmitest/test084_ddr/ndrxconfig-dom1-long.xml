@@ -59,8 +59,15 @@
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
-            <envs><env name="NDRX_RTGRP">DOM1</env></envs>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -sT2:TESTSV</sysopt>
+            <sysopt>-G -e ${TESTDIR}/atmisv-dom2.log -r -sT2:TESTSV -gDOM1</sysopt>
+        </server>
+        
+        <!-- test that group is not included, even routed -->
+        <server name="atmi.sv84">
+            <min>1</min>
+            <max>1</max>
+            <srvid>40</srvid>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom2-nogrp.log -r -sNOGRP:TESTSV -gDOM44</sysopt>
         </server>
         
         <server name="tpbridge">
@@ -97,6 +104,15 @@
             <field>T_LONG_2_FLD</field>
             <ranges>
                         100-200:DOM3,*:*
+            </ranges>
+            <buftype>UBF</buftype>
+        </route>
+        
+        <!-- No group name used in service -->
+        <route routing="NOGRP">
+            <field>T_LONG_2_FLD</field>
+            <ranges>
+                        MIN-MAX:DOM44
             </ranges>
             <buftype>UBF</buftype>
         </route>

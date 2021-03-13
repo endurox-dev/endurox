@@ -265,6 +265,23 @@ out:
 }
 
 /**
+ * Copy service name to svcinfo struct
+ * take care of @ routing group...
+ */
+#define CPY_SERVICE_NAME do {\
+		NDRX_STRCPY_SAFE(svcinfo.name, call->name);\
+		if (!G_server_conf.ddr_keep_grp)\
+		{\
+			char *p=strchr(svcinfo.name, NDRX_SYS_SVC_PFXC);\
+			/* strip off the group */\
+			if (NULL!=p && p!=svcinfo.name)\
+			{\
+				*p=EXEOS;\
+			}\
+		}\
+	} while (0)
+
+/**
  * Serve service call
  * @param call_buf call buffer
  * @param call_len call buffer len
@@ -374,7 +391,9 @@ expublic int sv_serve_call(int *service, int *status,
 
         svcinfo.data = request_buffer;
         svcinfo.len = req_len;
-        NDRX_STRCPY_SAFE(svcinfo.name, call->name);
+        
+        CPY_SERVICE_NAME;
+        
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         
@@ -679,8 +698,7 @@ expublic int sv_serve_connect(int *service, int *status,
             svcinfo.data = NULL;
             svcinfo.len = 0;
         }
-
-        NDRX_STRCPY_SAFE(svcinfo.name, call->name);
+        CPY_SERVICE_NAME;        
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
         /* set the client id to caller */
