@@ -193,6 +193,8 @@ struct srv_conf
   
     threadpool dispthreads;     /**< thread pool for dispatch threads*/
     NDRX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync        */
+    
+    int ddr_keep_grp;           /**< shall we keep DDR group name in svcnm? */
 };
 
 typedef struct srv_conf srv_conf_t;
