@@ -193,7 +193,24 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
             /* no need for value if action unset */
             if (!(env->flags & NDRX_ENV_ACTION_UNSET))
             {
-                env->value = NDRX_STRDUP(p);
+                int len = strlen(p)+1 + PATH_MAX;
+                char *tmp = NDRX_FPMALLOC(len, 0);
+                
+                if (NULL==tmp)
+                {
+                    NDRX_LOG(log_error, "Failed to fpmalloc %d bytes: %s", 
+                            len, strerror(errno));
+                    xmlFree(p);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* subst the env...*/
+                ndrx_str_env_subs_len(tmp, len);
+                
+                /* realloc to what ever size is needed */
+                env->value = NDRX_STRDUP(tmp);
+                
+                NDRX_FPFREE(tmp);
 
                 if (NULL==env->value)
                 {
@@ -202,6 +219,9 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
                     xmlFree(p);
                     EXFAIL_OUT(ret);
                 }
+                
+                /* subsitute content? */
+                
             }
             xmlFree(p);
             
