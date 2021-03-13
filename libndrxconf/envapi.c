@@ -204,6 +204,8 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
                     EXFAIL_OUT(ret);
                 }
                 
+                NDRX_STRCPY_SAFE_DST(tmp, p, len);
+                
                 /* subst the env...*/
                 ndrx_str_env_subs_len(tmp, len);
                 
