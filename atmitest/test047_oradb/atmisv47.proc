@@ -83,7 +83,7 @@ void BALANCE (TPSVCINFO *p_svc)
 
     /* Just print the buffer */
     Bprint(p_ub);
-    
+
     if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, h_accnum, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
@@ -135,6 +135,7 @@ void ACCOPEN (TPSVCINFO *p_svc)
     long h_balance;
     char h_accnum[1024];
     EXEC SQL END DECLARE SECTION;
+    TPTRANID trn;
     
     NDRX_LOG(log_debug, "%s got call", __func__);
 
@@ -153,6 +154,34 @@ void ACCOPEN (TPSVCINFO *p_svc)
     /* Just print the buffer */
     Bprint(p_ub);
     
+
+    if (EXSUCCEED!=tpsuspend (&trn, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to suspend: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=tpresume (&trn, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to resume: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    /* suspend again, now resume with no optimization */
+    if (EXSUCCEED!=tpsuspend (&trn, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to suspend: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=tpresume (&trn, TPTXNOOPTIM))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to resume TPTXNOOPTIM: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    /* OK continue... */
+
     if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, h_accnum, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
