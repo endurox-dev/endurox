@@ -91,27 +91,36 @@ expublic void * ndrx_atmi_tls_get(long priv_flags)
             
             if (tls->G_atmi_xa_curtx.txinfo)
             {
+                atmi_error_t aerr;
+                int aerr_loaded=EXFALSE;
+                
+                /* suspend current error */
+                if (tls->M_atmi_error)
+                {
+                    aerr_loaded=EXTRUE;
+                    ndrx_TPsave_error(&aerr);
+                }
+                
                 tls->M_atmi_error = 0;
                 if (EXSUCCEED!=ndrx_tpsuspend(&tls->tranid, 0, EXTRUE))
                 {
+                    /*
+                     * Nothing to do here! it will fail next time when user
+                     * will try to do some DB operation... 
+                     */
                     userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
                             tpstrerror(tperrno));
-
-#if 0
-                    Nothing to do here! it will fail next time when user
-                    will try to do some DB operation...
-                    MUTEX_UNLOCK_V(tls->mutex);
-
-                    ndrx_atmi_tls_free(tls);
-                    /* fail it. */
-                    tls = NULL;
-                    goto out;
-#endif
                 }
                 else
                 {
                     tls->global_tx_suspended = EXTRUE;
-                }        
+                }
+                
+                if (aerr_loaded)
+                {
+                    ndrx_TPrestore_error(&aerr);
+                }
+                
             }
         }
         

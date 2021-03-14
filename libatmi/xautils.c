@@ -263,10 +263,12 @@ expublic atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
  * @param tmnodeid
  * @param tmsrvid
  * @param[in] btid branch tid
+ * @param[in] tmtxflags transaction flags
  * @return ptr to entry or NULL
  */
 expublic atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
-        short tmrmid, short tmnodeid, short tmsrvid, char *tmknownrms, long btid)
+        short tmrmid, short tmnodeid, short tmsrvid, char *tmknownrms, long btid,
+        short tmtxflags)
 {
     atmi_xa_tx_info_t * tmp = NDRX_CALLOC(1, sizeof(atmi_xa_tx_info_t));
     ATMI_TLS_ENTRY;
@@ -282,6 +284,7 @@ expublic atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
     tmp->tmnodeid = tmnodeid;
     tmp->tmsrvid = tmsrvid;
     tmp->btid = btid;
+    tmp->tmtxflags = tmtxflags;
     NDRX_STRCPY_SAFE(tmp->tmknownrms, tmknownrms);
     
     EXHASH_ADD_STR( G_atmi_tls->G_atmi_xa_curtx.tx_tab, tmxid, tmp );
@@ -516,13 +519,16 @@ expublic int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai)
     if (NULL==(G_atmi_tls->G_atmi_xa_curtx.txinfo = atmi_xa_curtx_get(p_xai->tmxid)) &&
          NULL==(G_atmi_tls->G_atmi_xa_curtx.txinfo = 
             atmi_xa_curtx_add(p_xai->tmxid, p_xai->tmrmid, 
-            p_xai->tmnodeid, p_xai->tmsrvid, p_xai->tmknownrms, p_xai->btid)))
+            p_xai->tmnodeid, p_xai->tmsrvid, p_xai->tmknownrms, p_xai->btid,
+            p_xai->tmtxflags)))
             
     {
         NDRX_LOG(log_error, "Set current transaction failed!");
         ret=EXFAIL;
         goto out;
     }
+    
+    /* mark  */
     
 out:
         return ret;

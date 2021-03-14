@@ -73,7 +73,7 @@ extern "C" {
 
 #define NDRX_XID_SERIAL_BUFSIZE     48 /**< Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /**< Number of resource managers supported */
-#define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /**< transaction is marked as abort only */
+#define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /**< transaction is marked as abort only, used in tmtxflags */
 
 #define ATMI_XA_TX_INFO_FIELDS      \
     short tmtxflags;                   /* See TMTXFLAGS_* */\
