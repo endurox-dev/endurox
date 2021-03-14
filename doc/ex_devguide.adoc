@@ -319,6 +319,10 @@ is expected to fill in:
 
 - parameter value labels.
 
+- Variables and field names in the structure.
+
+- Configuration parameter names referenced in text.
+
 === Reserved identifier prefixes
 
 As the C language do not have prefixes like for high level languages (Java, C#, etc),
