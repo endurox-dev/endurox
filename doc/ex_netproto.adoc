@@ -148,11 +148,13 @@ number of bytes.
 .List of basic data types
 |=========================================================
 |Type name |Description
-|<Type>..X | Field length form 0 to X.
-|<Type>X..Y |  Field length from X to Y.
-|<Type>X | Fixed field length X.
+|<Type>..X | Field length (range) form 0 to X.
+|<Type>X..Y |  Field length (range) from X to Y.
+|<Type>X | Fixed field length (range) X.
 |SHORT | Signed short field. 16bit value.
-|LONG | Signed long field. 32bit or 64bit value.
+|LONG | Signed long field. 32bit or 64bit value. Depending on platfrom.
+In case if range is specified and upper value is greater than *10*, then
+for 32bit platforms this is defaulted to *10*.
 |CHAR | One byte ASCII char. Shall not contain 0x00 terminator byte. In that
 case field TLV length shall be 0.
 |FLOAT | Floating point value. See <<numbers-anchor>> for encoding rules.
@@ -160,7 +162,9 @@ case field TLV length shall be 0.
 |STRING | String value. May contains all ASCII characters, except 0x00 byte.
 |CARRAY | This is blob type, may contain any bytes.
 |INT | Signed integer type, 32bit type.
-|ULONG | Unsigned long. 32 or 64 bit value.
+|ULONG | Unsigned long. 32 or 64 bit value. . Depending on platfrom.
+In case if range is specified and upper value is greater than *10*, then
+for 32bit platforms this is defaulted to *10*.
 |UINT | 32bit usinged integer.
 |NTIMER | Time field. seconds and nano-seconds. See <<time-anchor>>. Field is
 fixed length of 40 digits.
