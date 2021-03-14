@@ -60,6 +60,10 @@ if [ "$(uname)" == "Darwin" ]; then
     export NDRX_LIBEXT="dylib"
 fi
 
+if [ "$(uname)" == "AIX" ]; then
+	export LIBPATH=$LIBPATH:$EX_PG_LIBPATH
+fi
+
 #
 # Domain 1 - here client will live
 #

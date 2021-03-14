@@ -236,6 +236,8 @@ export NDRX_THREADSTACKSIZE=8192
 # currently uses default port
 #export EX_PG_PORT=5432
 #export EX_PG_DB=xe
+# additional libpath for postgres 
+#export EX_PG_LIBPATH=/opt/freeware/lib
 
 
 EOF
