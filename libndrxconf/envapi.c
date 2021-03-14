@@ -193,7 +193,6 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
             /* no need for value if action unset */
             if (!(env->flags & NDRX_ENV_ACTION_UNSET))
             {
-                /* realloc to what ever size is needed */
                 env->value = NDRX_STRDUP(p);
                 
                 if (NULL==env->value)
