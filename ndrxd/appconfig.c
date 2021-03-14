@@ -123,8 +123,6 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
 {
     NDRX_LOG(log_debug, "Free up config memory...");
     
-    
-    
     if (NULL!=*app_config)
     {
         conf_server_node_t *elt, *tmp;

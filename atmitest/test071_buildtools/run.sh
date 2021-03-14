@@ -165,6 +165,7 @@ case $UNAME in
     # check compiler, we have a set of things required for each compiler to actually build the binary
     $CC -qversion 2>/dev/null
     RET=$?
+    export OBJECT_MODE=64
 
     if [ "X$RET" == "X0" ]; then
 	echo "Xlc compiler..."

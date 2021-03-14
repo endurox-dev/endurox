@@ -100,6 +100,16 @@ exprivate int atmi_xa_init_thread(int do_open);
 /******************************************************************************/
 
 /**
+ * Return Enduro/X null switch (special case for aix/golang) - to
+ * have atlest null switch available - thus provide internal one
+ * @return XA switch or null
+ */
+exprivate struct xa_switch_t *ndrx_aix_fix(void)
+{
+    return &tmnull_switch;
+}
+
+/**
  * Initialize current thread
  */
 exprivate int atmi_xa_init_thread(int do_open)
@@ -179,8 +189,21 @@ expublic int atmi_xa_init(void)
 
     func = (ndrx_get_xa_switch_loader)dlsym(handle, "ndrx_get_xa_switch");
 
+/* for golang brtl runtime linkage cannot be enabled, thus processes
+ * do no see the global Enduro/X variables,
+ * we can make special exception here for nullswitch, to use
+ * built-in symbol here
+ */
+#ifdef EX_OS_AIX
+    if (0==strcmp(G_atmi_env.xa_driverlib, "libndrxxanulls.so"))
+    {
+        func = ndrx_aix_fix;
+    }
+#endif
+
     if (!func) 
     {
+
         error = dlerror();
         NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
             G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
