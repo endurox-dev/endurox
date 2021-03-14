@@ -405,11 +405,12 @@ $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
 $ cmake -DDEFINE_DISABLEDOC=ON \
-    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
+    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib -DCMAKE_AR=/usr/bin/ar  .
 $ make
 $ make install
 ---------------------------------------------------------------------
 
+*/usr/bin/ar* seems to be required for AIX 7.2.
 
 == Unit Testing
 

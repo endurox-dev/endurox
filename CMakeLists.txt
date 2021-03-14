@@ -337,14 +337,24 @@ INCLUDE (${CMAKE_ROOT}/Modules/TestBigEndian.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 
 
-CHECK_C_SOURCE_COMPILES("extern const char * __progname; int main() {return __progname[0];}" HAVE_PROGNAME)
 CHECK_C_SOURCE_COMPILES("int main() {__builtin_expect(1, 1);}" HAVE_EXPECT)
 CHECK_C_SOURCE_COMPILES("int main() { int X = 0; __sync_bool_compare_and_swap(&X, 0, 1); __sync_synchronize();}" HAVE_SYNC)
 CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t len; getline(buf, &len, stdin);}" HAVE_GETLINE)
-CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
+
+if(CMAKE_OS_NAME STREQUAL "AIX")
+	# it compiles OK, but we have no header where it is defined
+	# thus we get lots of warnings
+	message("No strlcpy/strcat_s/asprintf/__progname test for AIX")
+	set(HAVE_STRLCPY "0")
+        set(EX_HAVE_STRCAT_S "0")
+else()
+	CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
+        CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" EX_HAVE_STRCAT_S)
+        CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" EX_HAVE_ASPRINTF)
+        CHECK_C_SOURCE_COMPILES("extern const char * __progname; int main() {return __progname[0];}" HAVE_PROGNAME)
+endif()
+
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
-CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" EX_HAVE_STRCAT_S)
-CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" EX_HAVE_ASPRINTF)
 
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
