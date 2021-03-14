@@ -992,12 +992,12 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
         /* tell RM, then we use dynamic reg (so that it does not register 
          * local RMs work)
          */
-        tmflags|=TMTXFLAGS_DYNAMIC_REG;
+        tmflags|=TMFLAGS_DYNAMIC_REG;
     }
     
     if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
     {
-        tmflags|=TMTXFLAGS_TPNOSTARTXID;
+        tmflags|=TMFLAGS_TPNOSTARTXID;
     }
     
     if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
@@ -1475,9 +1475,9 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     }
     
     /* Now transfer current transaction data from one struct to another... */
+    
     XA_TX_COPY(tranid, G_atmi_tls->G_atmi_xa_curtx.txinfo);
     tranid->is_tx_initiator = G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator;
-    
     
     /* TODO: if join is not supported, then we terminate current transaction/BTID
      * and that shall be removed from list.
@@ -1572,8 +1572,9 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
     
     G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = tranid->is_tx_initiator;
     
-    NDRX_LOG(log_debug, "Resume ok xid: [%s] is_tx_initiator: %d", 
-            tranid->tmxid, tranid->is_tx_initiator);
+    NDRX_LOG(log_debug, "Resume ok xid: [%s] is_tx_initiator: %d abort_only: %d", 
+            tranid->tmxid, tranid->is_tx_initiator, 
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY);
     
 out:
     return ret;
@@ -1744,7 +1745,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         
         if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
         {
-            tmflags|=TMTXFLAGS_TPNOSTARTXID;
+            tmflags|=TMFLAGS_TPNOSTARTXID;
         }
 
         
@@ -1764,7 +1765,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             EXFAIL_OUT(ret);
         }
         
-        if (tmflags & TMTXFLAGS_RMIDKNOWN)
+        if (tmflags & TMFLAGS_RMIDKNOWN)
         {
             *p_is_known = EXTRUE;
         }
