@@ -129,13 +129,21 @@ install (TARGETS
 #################################################################################
 # Have some package config, usable for golang for example...
 #################################################################################
-SET(ATMISRV_INTEG_LIBS "-latmisrvinteg -latmi -lubf -lnstd -lpthread -lm")
 
+# there is special mode for aix
+# seems that go linker does not recongnize .so files...
+
+if(CMAKE_OS_NAME STREQUAL "AIX")
+SET(ATMISRV_INTEG_LIBS "-lndrxaix -lrt -ldl")
+else()
+
+SET(ATMISRV_INTEG_LIBS "-latmisrvinteg -latmi -lubf -lnstd -lpthread -lm")
 foreach(LIB ${RT_LIB})
     list(APPEND ATMISRV_INTEG_LIBS "-l${LIB}")
 endforeach()
-
 string(REPLACE ";" " " ATMISRV_INTEG_LIBS "${ATMISRV_INTEG_LIBS}")
+
+endif()
 
 
 # Produce a pkg-config file
