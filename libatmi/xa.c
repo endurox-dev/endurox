@@ -45,6 +45,7 @@
 #include <atmi_shm.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
+#include <nstdutil.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
@@ -195,7 +196,7 @@ expublic int atmi_xa_init(void)
  * built-in symbol here
  */
 #ifdef EX_OS_AIX
-    if (0==strcmp(G_atmi_env.xa_driverlib, "libndrxxanulls.so"))
+    if (ndrx_str_ends_with(G_atmi_env.xa_driverlib, "libndrxxanulls.so"))
     {
         func = ndrx_aix_fix;
     }

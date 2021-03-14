@@ -372,6 +372,7 @@ extern NDRX_API void ndrx_str_trim_single_left(char *input, char symb);
 extern NDRX_API void ndrx_str_unescape(char *input, char *symbs);
 extern NDRX_API char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs);
 extern NDRX_API int ndrx_str_valid_cid(char *str, int max_len);
+extern NDRX_API int ndrx_str_ends_with(char *str, char *needle);
 
 /* String handling, where macros does not work: */
 

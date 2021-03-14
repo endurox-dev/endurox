@@ -2255,4 +2255,18 @@ expublic int ndrx_str_valid_cid(char *str, int max_len)
     return EXTRUE;
 }
 
+/**
+ * Check that str ends with needle
+ * @param str string
+ * @param needle what to search for str trailing
+ * @return EXTRUE, EXFALSE
+ */
+expublic int ndrx_str_ends_with(char *str, char *needle)
+{
+    int len_str = strlen(str);
+    int len_needle = strlen(needle);
+    
+    return  (len_str >= len_needle) && (0 == strcmp(str + (len_str-len_needle), needle));
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
