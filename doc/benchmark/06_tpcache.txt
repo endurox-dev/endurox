@@ -1,16 +1,16 @@
 "Configuration" "MsgSize" "CallsPerSec"
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 0 838056
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 1 857801
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 5 772830
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 9 686960
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 13 580993
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 17 480469
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 21 440430
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 25 406551
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 29 370679
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 33 350835
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 37 326375
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 41 309132
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 45 288451
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 49 273523
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 53 256803
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 0 1005153
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 1 978149
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 5 883235
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 9 799220
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 13 700171
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 17 645039
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 21 595782
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 25 563024
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 29 526817
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 33 499512
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 37 477668
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 41 448877
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 45 424456
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 49 403547
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 53 386415
