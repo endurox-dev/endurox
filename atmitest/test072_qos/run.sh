@@ -51,7 +51,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=310
+export NDRX_TOUT=350
 
 #
 # Domain 1 - here client will live
