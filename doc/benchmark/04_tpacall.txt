@@ -14,3 +14,18 @@
 "v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 45 114814
 "v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 49 108647
 "v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 53 97350
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 0 68581
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 1 68000
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 5 64606
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 9 61492
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 13 58863
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 17 55411
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 21 52496
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 25 49498
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 29 46625
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 33 44802
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 37 43150
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 41 41892
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 45 40716
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 49 39470
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 53 38289
