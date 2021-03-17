@@ -14,8 +14,6 @@
 "v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 45 422268
 "v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 49 412695
 "v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 53 397670
-"v7.5.22, AIX7.2, (Power8,SAS 15k)" 0 177990
-"v7.5.22, AIX7.2, (Power8,SAS 15k)" 1 195864
 "v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 0 196923
 "v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 1 195630
 "v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 5 187675
