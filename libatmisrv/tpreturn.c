@@ -91,8 +91,32 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     
     if (last_call->flags & TPNOREPLY)
     {
-        NDRX_LOG(log_debug, "No reply expected - return to main()!, "
-                "flags; %ld", last_call->flags);
+        NDRX_LOG(log_debug, "No reply required (TPNOREPLY) - return to main() "
+                "flags: %ld", last_call->flags);
+        
+        /* commit or abort .. if autotran was started */
+        if (last_call->sysflags & SYS_FLAG_AUTOTRAN
+            && tpgetlev())
+        {
+            /* try to commit */
+            if (rval==TPSUCCESS)
+            {
+                if (EXSUCCEED!=ndrx_tpcommit(0))
+                {
+                    NDRX_LOG(log_error, "Auto commit failed: %s ", tpstrerror(tperrno));
+                    userlog("Auto commit failed: %s", tpstrerror(tperrno));
+                }
+            }
+            else
+            {
+                if (EXSUCCEED!=ndrx_tpabort(0))
+                {
+                    NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
+                    userlog("Auto abort failed: %s", tpstrerror(tperrno));
+                }
+            }
+        }
+        
         goto out;
     }
 

@@ -163,6 +163,182 @@ set_dom1;
 
 
 ################################################################################
+echo "*** Running OK1 (tpacall, TPNORPLY) case..."
+
+./atmiclt82 OK1 A
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 OK A failed"
+    go_out $RET
+fi
+
+echo "Checking OK case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep OK1 | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X1" ]]; then
+    echo "Got invalid count: $CNT"
+    set_dom2;
+    xadmin psc
+
+    set_dom1;
+    xadmin psc
+    go_out -1
+fi
+
+xadmin pt
+################################################################################
+echo "*** Running FAIL (tpacall, TPNORPLY) case..."
+
+./atmiclt82 FAIL A
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 FAIL A failed"
+    go_out $RET
+fi
+
+echo "Checking OK case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep FAIL | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+echo "Checking active transactions - must be 0"
+
+xadmin pt
+
+CNT=`xadmin pt | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+################################################################################
+echo "*** Running RETURN (tpacall, TPNORPLY + illegal return from service func) case..."
+
+./atmiclt82 RETURN A
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 RETURN A failed"
+    go_out $RET
+fi
+
+echo "Checking RETURN case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep RETURN | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+echo "Checking active transactions - must be 0"
+
+xadmin pt
+
+CNT=`xadmin pt | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+################################################################################
+echo "*** Running RETURN Z (tpconnect, illegal return from service func) case..."
+
+# set timeout for shorter period, so that tmsrv does not abort..
+export NDRX_TOUT=5
+./atmiclt82 RETURN Z
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 RETURN Z failed"
+    go_out $RET
+fi
+
+# let abrot to work out...
+sleep 3
+
+# restore back....
+export NDRX_TOUT=20
+
+echo "Checking RETURN Z case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep RETURN | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+echo "Checking active transactions - must be 0"
+
+echo "----------------------------------------"
+xadmin pt
+echo "----------------------------------------"
+CNT=`xadmin pt | wc -l | awk '{print $1}'`
+echo "----------------------------------------"
+echo "CNT=$CNT"
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+################################################################################
 echo "*** Running OK case..."
 
 ./atmiclt82 OK

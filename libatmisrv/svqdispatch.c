@@ -300,7 +300,7 @@ expublic int sv_serve_call(int *service, int *status,
     buffer_obj_t *outbufobj=NULL; /* Have a reference to allocated buffer */
     long call_age;
     int generate_rply = EXFALSE;
-    tp_command_call_t * last_call;
+    tp_command_call_t * last_call=NULL;
     long error_code = TPESVCERR; /**< Default error in case if cannot process */
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
@@ -433,6 +433,7 @@ expublic int sv_serve_call(int *service, int *status,
         }
         else if (G_server_conf.service_array[call_no]->autotran)
         {
+            NDRX_LOG(log_debug, "Starting auto transaction");
             if (EXFAIL==tpbegin(G_server_conf.service_array[call_no]->trantime, 0))
             {
                 NDRX_LOG(log_error, "Failed to start autotran (trantime=%lu): %s", 
@@ -562,6 +563,20 @@ expublic int sv_serve_call(int *service, int *status,
         else
         {
             NDRX_LOG(log_warn, "No return from service!");
+            
+            /* if no return in the end... we must abort... */
+            if (tpgetlev() && last_call->sysflags & SYS_FLAG_AUTOTRAN)
+            {
+                NDRX_LOG(log_error, "ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+                userlog("ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+                if (EXSUCCEED!=ndrx_tpabort(0))
+                {
+                    NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
+                    userlog("Auto abort failed: %s", tpstrerror(tperrno));
+                }
+            }
 
             if (!(svcinfo.flags & TPNOREPLY))
             {
@@ -611,7 +626,6 @@ out:
 
 /**
  * Serve service call
- * TODO: we need XA handling here too!
  * @param call_buf original call buffer
  * @param call_len original call buffer len
  * @param call_no call service number
@@ -747,6 +761,7 @@ expublic int sv_serve_connect(int *service, int *status,
         }
         else if (G_server_conf.service_array[call_no]->autotran)
         {
+            NDRX_LOG(log_debug, "Starting auto transaction");
             if (EXFAIL==tpbegin(G_server_conf.service_array[call_no]->trantime, 0))
             {
                 NDRX_LOG(log_error, "Failed to start autotran (trantime=%lu): %s", 
@@ -839,7 +854,25 @@ expublic int sv_serve_connect(int *service, int *status,
         else
         {
             NDRX_LOG(log_warn, "No return from service!");
-
+            
+            if (tpgetlev() && last_call->sysflags & SYS_FLAG_AUTOTRAN)
+            {
+                NDRX_LOG(log_error, "ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+                userlog("ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
+                        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+                
+                if (EXSUCCEED!=ndrx_tpabort(0))
+                {
+                    NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
+                    userlog("Auto abort failed: %s", tpstrerror(tperrno));
+                }
+            }
+            
+            /* force close queues and remove us from conv... */
+            normal_connection_shutdown(ndrx_get_G_accepted_connection(), EXTRUE, 
+                    "missing tpreturn, forced cleanup");
+            
             if (!(svcinfo.flags & TPNOREPLY))
             {
                 /* if we are here, then there was no reply! */
