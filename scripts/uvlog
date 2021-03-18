@@ -255,11 +255,11 @@ sub print_line  {
     {
         if ($first)
         {
-                printf("$lead|$_\n");
+                print("$lead|$_\n");
         }
         else
         {
-                printf("$line_front|$_\n");
+                print("$line_front|$_\n");
         }
     }
     

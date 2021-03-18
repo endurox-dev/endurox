@@ -73,7 +73,7 @@ int main(int argc, char** argv)
     long olen;
     char *buf = NULL;
     long revent;
-    int cd;
+    int cd=EXFAIL;
     int tmp;
     
     /* We shall call commands:
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        if (argc>2)
+        if (argc>2 && ('C'==argv[2][0] || 'S'==argv[2][0] || 'Z'==argv[2][0]))
         {
             if ('C'==argv[2][0])
             {
@@ -193,7 +193,6 @@ int main(int argc, char** argv)
                             printf("TESTERROR event %ld\n", revent);
                             break;
                     }
-                    /* capture the error code from the script */
                 }
                 else
                 {
@@ -204,6 +203,31 @@ int main(int argc, char** argv)
                 goto out;
             }
             
+            if (EXFAIL!=cd && EXSUCCEED!=tpdiscon(cd))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to discon: %s", 
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+            
+        }
+        else if (argc>2 && 'A'==argv[2][0])
+        {
+            /* 
+             * Async check 
+             * So either committed or aborted. It shall not be active transaction
+             */
+            if (EXFAIL == tpacall("TESTSV2", (char *)p_ub, 0L, TPNOREPLY))
+            {
+                NDRX_LOG(log_error, "TESTSV2 async call failed: %s", tpstrerror(tperrno));
+                /* capture the error code from the script */
+                printf("%s\n", tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+            }
+            
+            /* let service to finish */
+            sleep(3);
         }
         else
         {
@@ -221,7 +245,7 @@ int main(int argc, char** argv)
     }
     
 out:
-    
+
     if (NULL!=buf)
     {
         tpfree(buf);
