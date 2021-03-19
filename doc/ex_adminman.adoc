@@ -1850,7 +1850,7 @@ transaction log storage, thought heart beat process would be required too enable
 singleton instance of particular tmsrv. So this would assume that database has
 HA capabilities (for example Oracle RAC).
 
-=== tmqueue limitations
+==== tmqueue limitations
 
 Also similarly as tmsrv *tmqueue(8)*, has a limitations that it stores the messages
 as files on the disk locally. And that at point of crash messages would be stuck
