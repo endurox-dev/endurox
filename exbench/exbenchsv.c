@@ -71,9 +71,38 @@ void EXBENCHSV (TPSVCINFO *p_svc)
 int init(int argc, char** argv)
 {
     int ret = EXSUCCEED;
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
+    char svcnm_base[XATMI_SERVICE_NAME_LENGTH+1]="EXBENCH";
+    int c;
+    int svcnum=0;
+    
+        /* Parse command line, will use simple getopt */
+    while ((c = getopt(argc, argv, "s:N:--")) != EXFAIL)
+    {
+        switch(c)
+        {
+            case 'N':
+                svcnum = atoi(optarg);
+                break;
+            case 's':
+                NDRX_STRCPY_SAFE(svcnm_base, optarg);
+                break;
+            
+        }
+    }
+    
+    
+    if (svcnum > 0)
+    {
+        snprintf(svcnm, sizeof(svcnm), "%s%03d", svcnm_base, (tpgetsrvid() % 1000) % svcnum );
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(svcnm, svcnm_base);
+    }
 
     /* Advertise our service */
-    if (EXSUCCEED!=tpadvertise("EXBENCH", EXBENCHSV))
+    if (EXSUCCEED!=tpadvertise(svcnm, EXBENCHSV))
     {
         NDRX_LOG(log_error, "Failed to initialise EXBENCH!");
         ret=EXFAIL;
