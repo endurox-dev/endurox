@@ -178,7 +178,7 @@ expublic int ndrx_pthread_cond_wait(pthread_cond_t *restrict cond,
 exprivate int qd_exhash_add(mqd_t q)
 {
     int ret = EXSUCCEED;
-    qd_hash_t * el = NDRX_CALLOC(1, sizeof(qd_hash_t));
+    qd_hash_t * el = NDRX_FPMALLOC(sizeof(qd_hash_t), 0);
     
     NDRX_LOG(log_dump, "Registering %p as mqd_t", q);
     if (NULL==el)
@@ -245,7 +245,7 @@ exprivate void qd_hash_del(mqd_t qd)
     if (NULL!=ret)
     {
         EXHASH_DEL(M_qd_hash, ret);
-        NDRX_FREE(ret);
+        NDRX_FPFREE(ret);
     }
     
     MUTEX_UNLOCK_V(M_lock);
@@ -328,7 +328,7 @@ expublic int emq_close(mqd_t emqd)
     NDRX_LOG(log_dump, "After munmap()");
 
     emqinfo->emqi_magic = 0;          /* just in case */
-    NDRX_FREE(emqinfo);
+    NDRX_FPFREE(emqinfo);
     qd_hash_del(emqd);
 
     NDRX_LOG(log_dump, "into: emq_close ret 0");
@@ -525,7 +525,7 @@ again:
             goto err;
 
         /* allocate one emq_info{} for the queue */
-        if ( (emqinfo = NDRX_MALLOC(sizeof(struct emq_info))) == NULL)
+        if ( (emqinfo = NDRX_FPMALLOC(sizeof(struct emq_info), 0)) == NULL)
             goto err;
 #if defined(WIN32)
         emqinfo->emqi_fmap = fmap;
@@ -657,7 +657,7 @@ exists:
     close(fd);
 
     /* allocate one emq_info{} for each open */
-    if ( (emqinfo = NDRX_MALLOC(sizeof(struct emq_info))) == NULL)
+    if ( (emqinfo = NDRX_FPMALLOC(sizeof(struct emq_info), 0)) == NULL)
         goto err;
     emqinfo->emqi_hdr = (struct emq_hdr *) mptr;
     emqinfo->emqi_magic = EMQI_MAGIC;
@@ -690,7 +690,7 @@ err:
         munmap(mptr, filesize);
 #endif
     if (emqinfo != NULL)
-        NDRX_FREE(emqinfo);
+        NDRX_FPFREE(emqinfo);
     close(fd);
     
     NDRX_LOG(log_dump, "into: emq_open ret -1");
