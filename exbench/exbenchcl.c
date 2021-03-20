@@ -46,6 +46,18 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/**
+ * Read end of pipe
+ */
+#define NDRX_READ 0
+
+
+/**
+ * Write end of pipe
+ */
+#define NDRX_WRITE 1
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -66,7 +78,9 @@ exprivate MUTEX_LOCKDECL(M_wait_mutex);
 exprivate int M_do_run = EXTRUE;
 exprivate long M_msg_sent=0;    /**< Messages sent */
 exprivate char *M_master_buf=NULL;  /**< This is master sample buffer       */
-exprivate int M_msgsize = 0;    /**< effective message size */
+exprivate int M_msgsize = 0;        /**< effective message size */
+exprivate int M_fork = EXFALSE;     /**< Use forking */
+exprivate int M_fd[2]={EXFAIL, EXFAIL}; /**< pipe channel for forking clients to report stats */
 /* Lock  */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -83,6 +97,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     char *rcv_buf;
     long rcvlen;
     long sent=0;
+    ndrx_stopwatch_t w;
     
     if (NULL==buf)
     {
@@ -97,12 +112,13 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     
     /* Service by thread */
     snprintf(svcnm, sizeof(svcnm), M_svcnm, (int)thnum);
+    ndrx_stopwatch_reset(&w);
     
     /* re-lock.. */
     MUTEX_LOCK_V(M_wait_mutex);
     MUTEX_UNLOCK_V(M_wait_mutex);
     
-    while (M_do_run)
+    while (!M_fork && M_do_run || (M_fork && ndrx_stopwatch_get_delta_sec(&w) < M_runtime))
     {
         if (M_prio!=NDRX_MSGPRIO_DEFAULT)
         {
@@ -162,6 +178,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -f <fldnm>       Ubf field name to fill with random data\n");
     fprintf(stderr, "  -b <data>        Initial data. For UBF it is JSON\n");
     fprintf(stderr, "  -S <size>        Random data size, default 1024\n");
+    fprintf(stderr, "  -F               Use forking instead of threading\n");
    
 }
 
@@ -178,6 +195,7 @@ expublic int main( int argc, char** argv )
     double tps;
     ndrx_stopwatch_t w;
     char run_ver[512];
+    int parent=EXTRUE;
     /* parse args: 
      * -n <number_of_threads> 
      * -s <service_to_call> 
@@ -190,10 +208,13 @@ expublic int main( int argc, char** argv )
      * -B <buffer type UBF, STRING, etc..)
      */
     
-    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:F")) != -1)
     {
         switch (c)
         {
+            case 'F':
+                M_fork = EXTRUE;
+                break;
             case 'B':
                 M_buftype = ndrx_get_buffer_descr(optarg, NULL);
                 break;
@@ -202,7 +223,6 @@ expublic int main( int argc, char** argv )
                 break;
             case 'P':
                 M_doplot = EXTRUE;
-
                 break;
             case 'n':
                 /* this will allocate thread pool... */
@@ -261,6 +281,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_prio=%d", M_prio);
     NDRX_LOG(log_info, "M_buftype=%p", M_buftype);
     NDRX_LOG(log_info, "M_nr_threads=%d", M_nr_threads);
+    NDRX_LOG(log_info, "M_fork=%d", M_fork);
     
     /* allocate the buffer & fill with random data */
     
@@ -329,45 +350,120 @@ expublic int main( int argc, char** argv )
         setenv("NDRX_BENCH_CONFIGNAME", run_ver, EXTRUE);
     }
     
-    M_threads = ndrx_thpool_init(M_nr_threads,  &ret, NULL, NULL, 0, NULL);
+    if (M_fork)
+    {
+        signal(SIGCHLD, SIG_IGN); /* ignore childs, we will wait on pipe */
         
-    if (EXSUCCEED!=ret)
-    {
-        NDRX_LOG(log_error, "Thread pool init failure");
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_debug, "Fork mode");
+
+        if (EXSUCCEED!=pipe ( M_fd ))
+        {
+            NDRX_LOG(log_error, "Failed to pipe: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
+        for (i=0; i<M_nr_threads; i++)
+        {
+            if ( fork () == 0 ) /* Child Writer */
+            {
+                int finish=EXFALSE;
+                parent=EXFALSE;
+                
+                /* let parent to complete... forking */
+                tpterm();
+                if (EXSUCCEED!=tpinit(NULL))
+                {
+                    NDRX_LOG(log_error, "Failed to init: %s", tpstrerror(tperrno));
+                    userlog("Failed to init: %s", tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
+                sleep(1);
+                
+                ndrx_stopwatch_reset(&w);
+                
+                /* mark the run-time... */
+                thread_process((void *)&i, &finish);
+                
+                spent=ndrx_stopwatch_get_delta(&w);
+
+                tps = ((double)M_msg_sent / (spent / 1000));
+                NDRX_LOG(log_debug, "Spent: %ld ms msgs: %ld tps: %lf", 
+                    spent, M_msg_sent, tps);
+                
+                if (sizeof(tps)!=write (M_fd[NDRX_WRITE], (char *)&tps, sizeof(tps)))
+                {
+                    NDRX_LOG(log_error, "Failed to write to pipe: %s", 
+                            strerror(errno));
+                    userlog("Failed to write to pipe: %s", 
+                            strerror(errno));
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* proc is terminating.. */
+                goto out;
+                
+            }
+        }
+       
+        /* read the results */
+        for (i=0; i<M_nr_threads; i++)
+        {
+            double tpsproc=0;
+            if (sizeof(tpsproc)!=read ( M_fd[NDRX_READ], (char *)&tpsproc, sizeof(tpsproc)))
+            {
+                NDRX_LOG(log_error, "Failed to read result %d: %s", strerror(errno));
+                EXFAIL_OUT(ret);
+            }
+            /* update totals */
+            tps+=tpsproc;
+        }
     }
-    
-    /* sync to master */
-    MUTEX_LOCK_V(M_wait_mutex);
-    
-    for (i=0; i<M_nr_threads; i++)
+    else
     {
-        /* thread nr is set as ptr */
-        ndrx_thpool_add_work(M_threads, (void*)thread_process, (void *)i);
+        
+        NDRX_LOG(log_debug, "Thread mode");
+        M_threads = ndrx_thpool_init(M_nr_threads,  &ret, NULL, NULL, 0, NULL);
+
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Thread pool init failure");
+            EXFAIL_OUT(ret);
+        }
+
+        /* sync to master */
+        MUTEX_LOCK_V(M_wait_mutex);
+
+        for (i=0; i<M_nr_threads; i++)
+        {
+            /* thread nr is set as ptr */
+            ndrx_thpool_add_work(M_threads, (void*)thread_process, (void *)i);
+        }
+
+        /* let threads to prepare */
+        sleep(2);
+
+        ndrx_stopwatch_reset(&w);
+
+        MUTEX_UNLOCK_V(M_wait_mutex);
+
+        /* let it run... */
+        while (ndrx_stopwatch_get_delta_sec(&w) < M_runtime)
+        {
+            sleep(1);
+        }
+        M_do_run=EXFALSE;
+
+        /* wait.. */
+        ndrx_thpool_wait(M_threads);
+        spent=ndrx_stopwatch_get_delta(&w);
+
+        tps = ((double)M_msg_sent / (spent / 1000));
+
+        NDRX_LOG(log_debug, "Spent: %ld ms msgs: %ld tps: %lf", 
+                spent, M_msg_sent, tps);
+
+        ndrx_thpool_destroy(M_threads);
     }
-    
-    /* let threads to prepare */
-    sleep(2);
-    
-    ndrx_stopwatch_reset(&w);
-    
-    MUTEX_UNLOCK_V(M_wait_mutex);
-    
-    /* let it run... */
-    while (ndrx_stopwatch_get_delta_sec(&w) < M_runtime)
-    {
-        sleep(1);
-    }
-    M_do_run=EXFALSE;
-    
-    /* wait.. */
-    ndrx_thpool_wait(M_threads);
-    spent=ndrx_stopwatch_get_delta(&w);
-    
-    tps = ((double)M_msg_sent / (spent / 1000));
-    
-    NDRX_LOG(log_debug, "Spent: %ld ms msgs: %ld tps: %lf", 
-            spent, M_msg_sent, tps);
     
     /* write the stats... */
     if (M_doplot)
@@ -375,10 +471,17 @@ expublic int main( int argc, char** argv )
         ndrx_bench_write_stats(M_msgsize, tps);
     }
     
-    ndrx_thpool_destroy(M_threads);
-    
 out:
-        
+    if (EXFAIL!=M_fd[NDRX_READ])
+    {
+        close(M_fd[NDRX_READ]);
+    }
+
+    if (EXFAIL!=M_fd[NDRX_WRITE])
+    {
+        close(M_fd[NDRX_WRITE]);
+    }
+
     if (NULL!=M_master_buf)
     {
         tpfree((char *)M_master_buf);
