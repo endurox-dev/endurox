@@ -81,6 +81,7 @@ exprivate char *M_master_buf=NULL;  /**< This is master sample buffer       */
 exprivate int M_msgsize = 0;        /**< effective message size */
 exprivate int M_fork = EXFALSE;     /**< Use forking */
 exprivate int M_fd[2]={EXFAIL, EXFAIL}; /**< pipe channel for forking clients to report stats */
+exprivate int M_svcnum = 0;        /**< No multi-services used */
 /* Lock  */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -109,9 +110,18 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     /* prep */
     memcpy(buf, M_master_buf, M_rndsize*2);
     
-    
     /* Service by thread */
-    snprintf(svcnm, sizeof(svcnm), M_svcnm, (int)thnum);
+    
+    if (M_svcnum > 0)
+    {
+        snprintf(svcnm, sizeof(svcnm), "%s%03d", M_svcnm, (int)thnum % M_svcnum);
+    }
+    else
+    {
+        /* just use name directly.. */
+        NDRX_STRCPY_SAFE(svcnm, M_svcnm);
+    }
+    
     ndrx_stopwatch_reset(&w);
     
     /* re-lock.. */
@@ -179,6 +189,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -b <data>        Initial data. For UBF it is JSON\n");
     fprintf(stderr, "  -S <size>        Random data size, default 1024\n");
     fprintf(stderr, "  -F               Use forking instead of threading\n");
+    fprintf(stderr, "  -N <svcnum>      Number of services\n");
    
 }
 
@@ -206,12 +217,17 @@ expublic int main( int argc, char** argv )
      * -P - do plot
      * -p <call_priority>
      * -B <buffer type UBF, STRING, etc..)
+     * -F - use forking mode
+     * -N <number_of_services_modulus>
      */
     
-    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:F")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:")) != -1)
     {
         switch (c)
         {
+            case 'N':
+                M_svcnum = atoi(optarg);
+                break;
             case 'F':
                 M_fork = EXTRUE;
                 break;
@@ -282,6 +298,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_buftype=%p", M_buftype);
     NDRX_LOG(log_info, "M_nr_threads=%d", M_nr_threads);
     NDRX_LOG(log_info, "M_fork=%d", M_fork);
+    NDRX_LOG(log_info, "M_svcnum=%d", M_svcnum);
     
     /* allocate the buffer & fill with random data */
     
@@ -382,7 +399,7 @@ expublic int main( int argc, char** argv )
                 ndrx_stopwatch_reset(&w);
                 
                 /* mark the run-time... */
-                thread_process((void *)&i, &finish);
+                thread_process((void *)i, &finish);
                 
                 spent=ndrx_stopwatch_get_delta(&w);
 
