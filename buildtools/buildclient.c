@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     ndrx_rm_def_t rmdef;
     FILE *out_fptr = NULL;
     
-    NDRX_BANNER("BUILDCLIENT Compiler");
+    NDRX_BANNER("BUILDCLIENT Tool");
     
     /* clear any error... */
     _Nunset_error();

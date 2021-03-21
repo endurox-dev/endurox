@@ -108,7 +108,10 @@ void TESTSV2 (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
     }
-    
+    else if (0==strcmp(testbuf, "RETURN"))
+    {
+        return;
+    }
     if (0==strcmp(testbuf, "OK"))
     {
         /* perform dynamic advertise, so that next cases OK works too */

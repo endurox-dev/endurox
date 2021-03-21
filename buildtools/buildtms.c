@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     FILE *out_fptr = NULL;
     ndrx_rm_def_t rmdef;
 
-    NDRX_BANNER("BUILDTMS Compiler");
+    NDRX_BANNER("BUILDTMS Tool");
     
     /* clear any error... */
     _Nunset_error();
