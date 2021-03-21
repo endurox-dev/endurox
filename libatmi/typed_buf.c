@@ -269,7 +269,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     }
 
     /* now append the memory list with allocated block */
-    if (NULL==(node=(buffer_obj_t *)NDRX_MALLOC(sizeof(buffer_obj_t))))
+    if (NULL==(node=(buffer_obj_t *)NDRX_FPMALLOC(sizeof(buffer_obj_t), 0)))
     {
         ndrx_TPset_error_fmt(TPEOS, "%s: Failed to allocate buffer list node: %s",  __func__,
                                         strerror(errno));
@@ -420,7 +420,7 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
         MUTEX_UNLOCK_V(M_lock);
         
         /* delete elt by it self */
-        NDRX_FREE(elt);
+        NDRX_FPFREE(elt);
     }
     
 }
