@@ -550,6 +550,9 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         /* ###################### CRITICAL SECTION ############################### */
         /* lock for round-robin... */
 
+        /* TODO: add RW lock functionality here and use CAS for round robin increment
+         * Probably we could move to c11 and use atomic_fetch_add() % resnr
+         */
         if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
         {
             NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
