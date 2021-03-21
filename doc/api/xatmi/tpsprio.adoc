@@ -32,7 +32,8 @@ used by this service and in other cases value must be *0*.
 
 Call priority is determined at call point where message is put in the message queue.
 Thus at this point relative priority is calculated, if flag *TPABSOLUTE* is not set.
-When calculating priority value gets bellow *1* it is defaulted to *1* or if value gets greater than *100*, then it is defaulted to *100*.
+When calculating priority value gets bellow *1* it is defaulted to *1* or if 
+value gets greater than *100*, then it is defaulted to *100*.
 
 Priority setting is valid till the message is delivered (or attempted to deliver) to
 message queue. After that settings are reset and default *50* or service setting in
@@ -75,6 +76,16 @@ System which processes priority are:
 1. *epoll* for Linux OS.
 
 2. *kqueue* for FreeBSD OS.
+
+As in Enduro/X each queue is a XATMI service, then priority setting only applies
+to the queue / service. If one XATMI server advertises several services, then
+XATMI server level dequeue order usually is round robin (depending on the epoll,
+kqueue implementation over the several file-descriptors (FDs).
+Thus priority setting only affects particular service queue.
+For example if having two services *DEBIT* and *CREDIT* provided by *banksv*,
+if *DEBIT* has prio 50 set for call and *CREDIT* has prio 100, then the *DEBIT*
+service messages at server level would be dequeued evenly step by step, one 
+service call from *DEBIT* and one service call from *CREDIT*, etc.
 
 RETURN VALUE
 ------------
