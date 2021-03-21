@@ -566,6 +566,7 @@ Ensure(test071_buildtools)
 {
     int ret;
     ret=system_dbg("test071_buildtools/run.sh");
+    assert_equal(ret, EXSUCCEED);
 }
 
 Ensure(test072_qos)
