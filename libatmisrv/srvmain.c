@@ -982,7 +982,7 @@ int ndrx_main(int argc, char** argv)
         
         if (NULL==(env_clopt=NDRX_STRDUP(p)))
         {
-            int err;
+            int err=errno;
             
             NDRX_LOG(log_error, "%s: Failed to strdup: %s", __func__, 
                     strerror(err));
