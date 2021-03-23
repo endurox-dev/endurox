@@ -625,14 +625,17 @@ void ddrerror(char *s, ...)
     if (EXFAIL!=ndrx_G_ddrp.error)
     {
         va_list ap;
-        va_start(ap, s);
         char errbuf[2048];
+        int len;
 
+        va_start(ap, s);
         snprintf(errbuf, sizeof(errbuf), "Routing range of [%s] buftype [%s]. Near of %d-%d: ", 
                 ndrx_G_ddrp.p_crit->routcrit.criterion, 
                 ndrx_G_ddrp.p_crit->routcrit.buftype,
                 ddrlloc.first_column, ddrlloc.last_column);
-        vsprintf(errbuf+strlen(errbuf), s, ap);
+        len=strlen(errbuf);
+        vsnprintf(errbuf+len, sizeof(errbuf)-len, s, ap);
+        va_end(ap);
 
         if (NDRXD_is_error())
         {

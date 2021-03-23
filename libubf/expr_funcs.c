@@ -188,12 +188,15 @@ void yyerror(char *s, ...)
     if (EXFAIL!=G_error)
     {
         va_list ap;
-        va_start(ap, s);
         char errbuf[2048];
+        int len;
 
+        va_start(ap, s);
         snprintf(errbuf, sizeof(errbuf), ". Near of %d-%d: ", 
                 yylloc.first_column, yylloc.last_column);
-        vsprintf(errbuf+strlen(errbuf), s, ap);
+        len=strlen(errbuf);
+        vsnprintf(errbuf+len, sizeof(errbuf)-len, s, ap);
+        va_end(ap);
 
         if (ndrx_Bis_error())
         {

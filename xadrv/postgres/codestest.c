@@ -118,7 +118,7 @@ int main(int argc, char **argv)
         ,NULL
     };
 
-    int i;
+    int i=0;
     
     /*
     sqlca.sqlcode = 0;
