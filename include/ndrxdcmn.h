@@ -411,7 +411,7 @@ struct shm_svcinfo
      * srvs is large number, but there is only on queue.
      */
     short resnr;                          
-    int resrr;                          /**< round robin server */
+    unsigned int resrr;                          /**< round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
     ndrx_shm_resid_t resids[0];         /**<  Servers id's offering this service */

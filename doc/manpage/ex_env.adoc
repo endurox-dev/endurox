@@ -279,7 +279,9 @@ Mandatory Env. Variables
     System V queues acquires one more semaphore resource from the *NDRX_IPCKEY*+1.
     Thus this semaphore is used read/write mode to protect the SystemV-to-Posix
     and Posix-to-SystemV mapping tables.
-    The default value for this parameter is *50*.
+    The default value for this parameter is *50*. This parameters is also used
+    when processes accesses services shared memory in System-V or EMQ mode for
+    protecting the round-robin selector.
 
 *NDRX_MSGQUEUESMAX*='MAX_IPC_QUEUES'::
     Max number of queues that can be mapped to System V sub-system. This parameter

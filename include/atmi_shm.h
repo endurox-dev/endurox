@@ -102,8 +102,8 @@ extern NDRX_API int ndrx_sem_attach_all(void);
 extern NDRX_API int ndrx_lock_svc_op(const char *msg);
 extern NDRX_API int ndrx_unlock_svc_op(const char *msg);
 
-extern NDRX_API int ndrx_lock_svc_nm(char *svcnm, const char *msg);
-extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm, const char *msg);
+extern NDRX_API int ndrx_lock_svc_nm(char *svcnm, const char *msg, int typ);
+extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm, const char *msg, int typ);
 
 #ifdef	__cplusplus
 }
