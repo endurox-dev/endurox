@@ -539,7 +539,7 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 
 - Version 7.5.20 released on 18/02/2021 (stable) Feature #213, Feature #286, Feature #401, Bug #608, Support #481, Support #644
 
-- Version 7.5.22 released on 15/02/2021 (stable) Feature #640
+- Version 7.5.22 released on 15/02/2021 (stable) Feature #640, Support #657
 
 # Build configurations
 

@@ -64,6 +64,10 @@
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
+#ifdef EX_HAVE_STDATOMIC
+#include <stdatomic.h>
+#endif
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -553,25 +557,32 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         /* TODO: add RW lock functionality here and use CAS for round robin increment
          * Probably we could move to c11 and use atomic_fetch_add() % resnr
          */
-        if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
+        if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__, NDRX_SEM_TYP_READ))
         {
             NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
             EXFAIL_OUT(ret);
         }
         
+        /* if have atomic header, use it... */
+#ifdef EX_HAVE_STDATOMIC
+        atomic_fetch_add( &psvcinfo->resrr, 1 );
+#else
         psvcinfo->resrr++;
+#endif
         
+#if 0
         if (psvcinfo->resrr < 0 || /* just in case... */
                 psvcinfo->resrr >= psvcinfo->resnr)
         {
             psvcinfo->resrr = 0;
         }
+#endif
         
-        resrr = psvcinfo->resrr;
-        
+        /* just chose the one  */
+        resrr = psvcinfo->resrr % psvcinfo->resnr;
         resid = psvcinfo->resids[resrr].resid;
         
-        if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
+        if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__, NDRX_SEM_TYP_READ))
         {
             NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
             EXFAIL_OUT(ret);
@@ -645,7 +656,7 @@ expublic int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len)
         goto out; /* do not fail, try locally */
     }
     
-    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
+    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__, NDRX_SEM_TYP_READ))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         EXFAIL_OUT(ret);
@@ -682,7 +693,7 @@ expublic int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len)
     
 out:
 
-    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
+    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__, NDRX_SEM_TYP_READ))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
     }
@@ -877,7 +888,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     shm_svcinfo_t* el;
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
+    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__, NDRX_SEM_TYP_WRITE))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         ret=EXFAIL;
@@ -1091,7 +1102,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
 out:
 
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
+    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__, NDRX_SEM_TYP_WRITE))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
     }
@@ -1144,7 +1155,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
     shm_svcinfo_t* el;
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
+    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__, NDRX_SEM_TYP_WRITE))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
         return;
@@ -1242,7 +1253,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
     }
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
+    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__, NDRX_SEM_TYP_WRITE))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
         return;
