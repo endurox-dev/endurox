@@ -625,7 +625,7 @@ expublic int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned long *tra
     }
     
     /* not we might get EXFAIL here too.. */
-    if (EXTRUE==(ret=ndrx_ddr_services_get(svcnm, &svc)))
+    if (EXTRUE==(ret=ndrx_ddr_services_get(svcnmtmp, &svc)))
     {
         *autotran = svc->autotran;
         *trantime = svc->trantime;

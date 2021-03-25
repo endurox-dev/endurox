@@ -156,12 +156,11 @@ expublic void ndrx_skipsvc_delhash(void)
  *  TODO: if we are in routing group, then add @grp automatically for each alias
  *  - Also check the length of the new service. IF does not fit, then return error.
  * @param msg1 debug msg1
- * @param argc
- * @param argv
+ * @param usegrp use groups if available
  * @return
  */
 expublic int ndrx_parse_svc_arg_cmn(char *msg1,
-        svc_entry_t **root_svc_list, char *arg)
+        svc_entry_t **root_svc_list, char *arg, int usegrp)
 {
     char alias_name[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char grpsvc[MAXTIDENT*2]={EXEOS};
@@ -189,7 +188,7 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
     while (NULL!=p)
     {
         grparr[0]=p;
-        if (G_atmi_env.rtgrp[0])
+        if (usegrp && G_atmi_env.rtgrp[0])
         {
             NDRX_STRCPY_SAFE(grpsvc, p);
             NDRX_STRCAT_S(grpsvc, sizeof(grpsvc), NDRX_SYS_SVC_PFX);
@@ -251,17 +250,19 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
  */
 expublic int ndrx_parse_svc_arg(char *arg)
 {
-    return ndrx_parse_svc_arg_cmn("-s", &G_server_conf.svc_list, arg);
+    return ndrx_parse_svc_arg_cmn("-s", &G_server_conf.svc_list, arg, EXTRUE);
 }
 
 /**
  * parse -S service:function mapping flag
+ * Note that function aliases are replied much later via help of tpadveritse
+ * thus at that point group is added to the name (if having any DDR group set)
  * @param root_svc_list
  * @param arg -S flag value
  */
 expublic int ndrx_parse_func_arg(char *arg)
 {
-    return ndrx_parse_svc_arg_cmn("-S", &G_server_conf.funcsvc_list, arg);
+    return ndrx_parse_svc_arg_cmn("-S", &G_server_conf.funcsvc_list, arg, EXFALSE);
 }
 
 /*
@@ -380,6 +381,12 @@ expublic int ndrx_init(int argc, char** argv)
     char tmp[NDRX_MAX_Q_SIZE+1];
     int was_grp_used=EXFALSE;
     
+    /* reply aliases later, as maybe there is -sSVC -g GRP
+     * thus if performing advertise first, we do not yet know that we are part of the
+     * group
+     */
+    string_list_t *svcalias=NULL, *svciter;
+    
     /* Create ATMI context */
     ATMI_TLS_ENTRY;
 
@@ -441,12 +448,21 @@ expublic int ndrx_init(int argc, char** argv)
                 
                 NDRX_STRCPY_SAFE(rqaddress, optarg);
                 break;
+                
             case 's':
-                ret=ndrx_parse_svc_arg(optarg);
+                
+                if (EXSUCCEED!=ndrx_string_list_add(&svcalias, optarg))
+                {
+                    /* probably OOM */
+                    NDRX_LOG(log_error, "Failed to populate svcalias list");
+                    EXFAIL_OUT(ret);
+                }
+
                 break;
             case 'S':
                 ret=ndrx_parse_func_arg(optarg);
                 break;
+                
             case 'x':
                 ret=ndrx_parse_xcvt_arg(optarg);
                 break;
@@ -541,6 +557,15 @@ expublic int ndrx_init(int argc, char** argv)
                 goto out;
                 break;
             /* add support for s */
+        }
+    }
+    
+    /* reply the aliases as we have now groups set ... */
+    LL_FOREACH(svcalias, svciter)
+    {
+        if (EXSUCCEED!=ndrx_parse_svc_arg(svciter->qname))
+        {
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -709,6 +734,9 @@ expublic int ndrx_init(int argc, char** argv)
 #endif
     
 out:
+
+    ndrx_string_list_free(svcalias);
+
     return ret;
 }
 
