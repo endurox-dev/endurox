@@ -125,7 +125,7 @@ echo "Wait 10 for conn"
 sleep 10
 RET=0
 
-xadmin psc
+xadmin psc -s
 xadmin ppm
 echo "Running off client"
 
@@ -139,6 +139,27 @@ set -x
 
 xadmin prtsvc 
 
+#
+# test CLI aliasing...
+#
+./atmiclt84 -SFUNSVC -l-200 -gFUNSVC@DOMX -e0 || go_out 1
+./atmiclt84 -SFUNSVCAL -l-200 -gFUNSVCAL@DOMX -e0 || go_out 1
+
+#
+# Check that double advertise 
+#
+CNT=`xadmin psc -s | grep LONGFUNC@DOMX@DOMX | wc | awk '{print $1}'`
+
+echo "Got count: $CNT"
+if [ $CNT -ne 0 ]; then
+    echo "Invalid LONGFUNC@DOMX@DOMX count - must be 0, got: $CNT"
+    go_out -1
+fi
+
+#
+# not needed anymore...
+#
+xadmin stop -s atmi.sv84_2
 
 # Check that by default even routed... service name is not posted to
 # service routine

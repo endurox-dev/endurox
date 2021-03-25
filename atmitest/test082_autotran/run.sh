@@ -161,6 +161,33 @@ echo "Running off client"
 
 set_dom1;
 
+################################################################################
+echo "*** Running ABORT2 case... (DDR)"
+
+./atmiclt82 ABORT2
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 OK2 failed"
+    go_out $RET
+fi
+
+echo "Checking ABORT2 case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep ABORT2 | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
 
 ################################################################################
 echo "*** Running OK1 (tpacall, TPNORPLY) case..."

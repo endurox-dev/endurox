@@ -1,7 +1,7 @@
 /**
- * @brief Test auto-transaction functionality - server
+ * @brief Test service / function aliasing
  *
- * @file atmisv82.c
+ * @file atmisv84_2.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -40,7 +40,8 @@
 #include <test.fd.h>
 #include <string.h>
 #include <unistd.h>
-#include "test82.h"
+#include <thlock.h>
+#include "exassert.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -51,117 +52,60 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Standard service entry
+ * Standard service entry, function
  */
-void TESTSV2 (TPSVCINFO *p_svc)
+void TESTFN (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
-    char testbuf[1024];
-    TPQCTL qc;
+    
+    /* ensure the size */
+    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 1024)))
+    {
+        NDRX_LOG(log_error, "Failed to realloc: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
 
     NDRX_LOG(log_debug, "%s got call", __func__);
     
-    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, p_svc->name, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
-                 Bstrerror(Berror));
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
+                 p_svc->name, Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
     
-    /* enqueue the data buffer */
-    memset(&qc, 0, sizeof(qc));
-    
-    /* add msg 1 */
-    if (EXSUCCEED!=tpenqueue("MYSPACE", "MSGQ", &qc, (char *)p_ub, 0, 0))
-    {
-        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
-                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-        EXFAIL_OUT(ret);
-    }
-    
-    if (0==strcmp(testbuf, "FAIL"))
-    {
-        ret=EXFAIL;
-    }
-    else if (0==strcmp(testbuf, "SLEEP"))
-    {
-        /* make tout */
-        sleep(15);
-    }
-    else if (0==strcmp(testbuf, "COMMIT"))
-    {
-        if (EXSUCCEED!=tpcommit(0))
-        {
-            NDRX_LOG(log_error, "TESTERROR: tpcommit() failed: %s", 
-                    tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-    }
-    else if (0==strcmp(testbuf, "ABORT") || 0==strcmp(testbuf, "ABORT2"))
-    {
-        if (EXSUCCEED!=tpabort(0))
-        {
-            NDRX_LOG(log_error, "TESTERROR: tpabort() failed: %s", 
-                    tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-    }
-    else if (0==strcmp(testbuf, "RETURN"))
-    {
-        return;
-    }
-    if (0==strcmp(testbuf, "OK"))
-    {
-        /* perform dynamic advertise, so that next cases OK works too */
-        if (EXSUCCEED!=tpunadvertise("TESTSV2"))
-        {
-            NDRX_LOG(log_error, "TESTERROR: Failed to unadvertise: %s", tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-
-        /* let ndrxd to flush the queues
-         * otherwise with next requests the queues are not restored? 
-         */
-        sleep(3);
-
-        if (EXSUCCEED!=tpadvertise("TESTSV2", TESTSV2))
-        {
-            NDRX_LOG(log_error, "TESTERROR: Failed to advertise: %s", tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-    }
-    
 out:
-    
-    tpreturn(  EXSUCCEED==ret?TPSUCCESS:TPFAIL,
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
                 0L,
                 0L);
-
 }
 
 /**
+ * Multi-init from tpacall from thread init
+ * @param p_svc
+ */
+void MULTI_INIT (TPSVCINFO *p_svc)
+{
+    tpreturn(  TPSUCCESS,
+                0L,
+                (char *)p_svc->data,
+                0L,
+                0L);
+}
+/**
  * Do initialisation
  */
-int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+int tpsvrinit(int argc, char **argv)
 {
     int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
-    
-    if (EXSUCCEED!=tpopen())
-    {
-        NDRX_LOG(log_error, "Failed to tpopen: %s", tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
-    }
-
-    if (EXSUCCEED!=tpadvertise("TESTSV2", TESTSV2))
-    {
-        NDRX_LOG(log_error, "Failed to initialise TESTSV2!");
-        EXFAIL_OUT(ret);
-    }
 out:
     return ret;
 }
@@ -169,11 +113,43 @@ out:
 /**
  * Do de-initialisation
  */
-void NDRX_INTEGRA(tpsvrdone)(void)
+void tpsvrdone(void)
 {
-    tpclose();
-    
     NDRX_LOG(log_debug, "tpsvrdone called");
 }
+
+/* Auto generated system advertise table */
+expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
+    { "", "TESTFN", TESTFN, 0, 0 }
+    , { NULL, NULL, NULL, 0, 0 }
+};
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Main entry for tmsrv
+ */
+int main( int argc, char** argv )
+{
+    _tmbuilt_with_thread_option=EXTRUE;
+    struct tmsvrargs_t tmsvrargs =
+    {
+        &tmnull_switch,
+        &ndrx_G_tmdsptchtbl[0],
+        0,
+        tpsvrinit,
+        tpsvrdone,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        tpsvrthrinit,
+        tpsvrthrdone
+    };
+    
+    return( _tmstartserver( argc, argv, &tmsvrargs ));
+    
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

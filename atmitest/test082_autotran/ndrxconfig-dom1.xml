@@ -91,7 +91,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>500</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv1.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv1.log -r -gGRP2</sysopt>
             
             <envs>
                 <usegroup>TMQ</usegroup>
@@ -103,7 +103,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>510</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv2.log -r -gGRP2</sysopt>
             
             <envs>
                 <usegroup>TMQ</usegroup>
@@ -121,9 +121,24 @@
     </servers>
     
     <services>
-        <service svcnm="TESTSV" autotran="Y" trantime="10"/>
-        <service svcnm="TESTSV2" autotran="Y" trantime="10"/>
+        <service svcnm="TESTSV" autotran="Y" trantime="10" routing="RT1" />
+        <service svcnm="TESTSV2" autotran="Y" trantime="10" routing="RT1" />
     </services>
-    
+
+    <routing>
+        
+        <!-- Special routing to check that groups also receive
+            autotran flag
+        -->
+        <route routing="RT1">
+            <field>T_STRING_FLD</field>
+            <ranges>
+                        ABORT2:GRP2
+                        ,*:*
+            </ranges>
+            <buftype>UBF</buftype>
+        </route>
+     
+    </routing>
 </endurox>
 

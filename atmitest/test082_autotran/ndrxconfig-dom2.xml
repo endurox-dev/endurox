@@ -80,7 +80,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>510</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv2d2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv2d2.log -r -gGRP2</sysopt>
             
             <envs>
 		<!-- dummy XA res is OK, as we do not work with qspace directly -->
