@@ -129,7 +129,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     MUTEX_LOCK_V(M_wait_mutex);
     MUTEX_UNLOCK_V(M_wait_mutex);
     
-    while (!M_fork && M_do_run || (M_fork && ndrx_stopwatch_get_delta_sec(&w) < M_runtime))
+    while ((!M_fork && M_do_run) || (M_fork && ndrx_stopwatch_get_delta_sec(&w) < M_runtime))
     {
         if (M_prio!=NDRX_MSGPRIO_DEFAULT)
         {
