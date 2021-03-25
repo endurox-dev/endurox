@@ -433,8 +433,14 @@ xadmin ppm
 
 CNT=`xadmin psc | grep ECHO2SV | wc | awk '{print $1}'`
 if [ $CNT -ne 1 ]; then
-    echo "Too many ECHO2SV!: $CNT"
+    echo "Invalid ECHO2SV count!: $CNT"
     go_out -10
+fi
+
+CNT=`xadmin psc | grep FUNCALIAS | wc | awk '{print $1}'`
+if [ $CNT -ne 1 ]; then
+    echo "Invalid FUNCALIAS count!: $CNT"
+    go_out -11
 fi
 
 echo Run off binaries...""
