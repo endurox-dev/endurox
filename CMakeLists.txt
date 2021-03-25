@@ -359,6 +359,7 @@ endif()
 
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
 CHECK_C_SOURCE_COMPILES("#include <stdatomic.h> \n int main() {int i=0; atomic_fetch_add( &i, 1 );}" EX_HAVE_STDATOMIC)
+CHECK_C_SOURCE_COMPILES("int main() {int i=0; __sync_fetch_and_add( &i, 1 );}" EX_HAVE_SYNCFETCHADD)
 
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)

@@ -63,10 +63,7 @@
 #include <ndrx_ddr.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
-
-#ifdef EX_HAVE_STDATOMIC
-#include <stdatomic.h>
-#endif
+#include <exatomic.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -564,19 +561,8 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         }
         
         /* if have atomic header, use it... */
-#ifdef EX_HAVE_STDATOMIC
-        atomic_fetch_add( &psvcinfo->resrr, 1 );
-#else
-        psvcinfo->resrr++;
-#endif
         
-#if 0
-        if (psvcinfo->resrr < 0 || /* just in case... */
-                psvcinfo->resrr >= psvcinfo->resnr)
-        {
-            psvcinfo->resrr = 0;
-        }
-#endif
+        NDRX_ATOMIC_ADD(&psvcinfo->resrr, 1);
         
         /* just chose the one  */
         resrr = psvcinfo->resrr % psvcinfo->resnr;
