@@ -81,7 +81,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>100</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -SFUNCALIAS:ECHOSV</sysopt>
             <envs>
                 <env name="NDRX_XA_RES_ID">2</env>
             </envs>
