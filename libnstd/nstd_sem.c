@@ -234,9 +234,11 @@ expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
         ushort *array;
     } arg;
     
+    ushort arr[sem->nrsems];
     memset(&arg, 0, sizeof(arg));
+
     /* for setting initial value... */
-    arg.array = alloca(sizeof(ushort)*sem->nrsems);
+    arg.array = arr;
     
     /* creating the semaphore object --  sem_open() 
      * this will attach anyway?
