@@ -101,6 +101,9 @@ string(TOUPPER ${_TMP_CMAKE_OS_NAME_EXTR} CMAKE_OS_NAME)
 # Force C++ for C
 #SET(CMAKE_C_COMPILER ${CMAKE_CXX_COMPILER})
 
+set (CMAKE_C_STANDARD 11)
+set (CMAKE_C_STANDARD_REQUIRED 99)
+
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
 message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
@@ -206,7 +209,7 @@ elseif(CMAKE_OS_NAME STREQUAL "AIX")
             SET ( CMAKE_CXX_FLAGS "-D_MSGQSUPPORT -O2 -qtls -q64 -b64 -qsuppress=1500-030" CACHE STRING "compile flags" FORCE)
             set ( CMAKE_C_FLAGS " -D_MSGQSUPPORT -D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE ")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qwarn64 -qpic -bexpfull -b64")
-            set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -brtl -qtls -q64 -qlanglvl=extc99")
+            set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -brtl -qtls -q64")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-997 -qprocimported=setjmp")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-747")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-742")
@@ -250,7 +253,7 @@ elseif(CMAKE_OS_NAME STREQUAL "SUNOS")
 
         # Bug #219 !!! _REENTRANT makes errno thread safe
         # For GNU I guess 
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -errtags -fast -xc99=all -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -errtags -fast -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_MBR_DECLARATION -erroff=E_NO_IMPLICIT_DECL_ALLOWED")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_ARG_INCOMPATIBLE_WITH_ARG_L")
