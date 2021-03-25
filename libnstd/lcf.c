@@ -47,6 +47,7 @@
 #include <exregex.h>
 #include <lcfint.h>
 #include "exsha1.h"
+#include <exatomic.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_LCFMAX_DFLT         20      /**< Default max commands       */
@@ -607,11 +608,11 @@ expublic int ndrx_lcf_run(void)
                 flags=0;
                 if (EXSUCCEED!=cbfunc->cfunc.pf_callback(&cmd_tmp, &flags))
                 {
-                    cur->failed++;
+                    NDRX_ATOMIC_ADD(&cur->failed, 1);
                 }
                 else
                 {
-                    cur->applied++;
+                    NDRX_ATOMIC_ADD(&cur->applied, 1);
                 }
                 
                 /* load the responses, if any: */
@@ -628,7 +629,7 @@ expublic int ndrx_lcf_run(void)
             }
             else
             {
-                cur->seen++;
+                NDRX_ATOMIC_ADD(&cur->seen, 1);
             }
             
             /* mark command as processed */
