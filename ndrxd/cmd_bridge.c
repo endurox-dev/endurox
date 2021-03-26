@@ -238,8 +238,18 @@ expublic int cmd_brrefresh (command_call_t * call, char *data, size_t len, int c
                                             "refresh msg", r->svc_nm);
             if (NULL==brd_get_svc(svcref, r->svc_nm))
             {
+                /* if sending full refresh at the same time when some delta (+) happened (bit later)
+                 * and due to bridge re-ordering the delta may come first. Thus currently we
+                 * will remove the delta
+                 * TODO: Maybe we could introduce some message sequencing numbers,
+                 * and if we have seen higher delta that this refresh message,
+                 * then ignore this update?
+                 * Or other option would be to ignore the older messages, if
+                 * we have seen newer. Thus maybe some refresh or delta may be passed.
+                 * But at least we would be more or less in sync with other node.
+                 */
                 NDRX_LOG(log_warn, "Service [%s] not present in refresh "
-                "message, but we see it our view - there was some packet loss! - "
+                "message, but we see it our view - there was some packet re-ordering or loss! - "
                         "Removing it from our view!", r->svc_nm);
                 /* Remove stuff from SHM.... */
                 brd_lock_and_update_shm(br->nodeid, r->svc_nm, 0, BRIDGE_REFRESH_MODE_FULL);
