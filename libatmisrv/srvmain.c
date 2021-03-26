@@ -80,6 +80,16 @@ srv_conf_t G_server_conf;
 ndrx_svchash_t *ndrx_G_svchash_skip = NULL;
 
 /**
+ * Advertised functions in case if -N is used
+ * Convert ndrx_skipsvc_add to exception_lists
+ * for ndrx_G_svchash_skip and ndrx_G_svchash_funcs
+ * -SNEWSVC:FUNC shall be added to exception list services, as otherwise -N would suppress them
+ * -T new flag would suppress service advertises from tmdsptchtbl_t, but exception
+ * list is still needed, because we want -S to be present even if -N is used.
+ */
+ndrx_svchash_t *ndrx_G_svchash_funcs = NULL;
+
+/**
  * List of defer messages so that we can call self services during the
  * startup...
  */
