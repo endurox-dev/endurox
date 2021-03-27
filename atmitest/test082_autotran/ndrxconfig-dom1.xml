@@ -123,6 +123,7 @@
     <services>
         <service svcnm="TESTSV" autotran="Y" trantime="10" routing="RT1" />
         <service svcnm="TESTSV2" autotran="Y" trantime="10" routing="RT1" />
+        <service svcnm="TESTSVD" autotran="Y" trantime="10" routing="RT1" />
     </services>
 
     <routing>
