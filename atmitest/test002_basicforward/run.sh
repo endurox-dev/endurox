@@ -48,16 +48,6 @@ fi;
 
 . ../testenv.sh
 
-echo "-------------  RUNNING DOWN -------------"
-xadmin down -y
-echo "------------ SYSTEM AFTER DOWN ----------"
-ipcs
-xadmin ps | grep atmi
-xadmin ps | grep ndrx
-xadmin ps | grep tp
-xadmin ps | grep xa
-echo "-----------------------------------------"
-
 rm *.log
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 

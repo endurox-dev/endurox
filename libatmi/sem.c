@@ -93,16 +93,26 @@ expublic int ndrxd_sem_init(char *q_prefix)
 
 /**
  * Open semaphore
- * @return
+ * @param create shall we only attach (do not open)
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_sem_open_all(void)
+expublic int ndrx_sem_open_all(int create)
 {
     int ret=EXSUCCEED;
 
-    if (EXSUCCEED!=ndrx_sem_open(&G_sem_svcop, EXTRUE))
+    if (create)
     {
-        ret=EXFAIL;
-        goto out;
+        if (EXSUCCEED!=ndrx_sem_open(&G_sem_svcop, EXTRUE))
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        if (EXSUCCEED!=ndrx_sem_attach(&G_sem_svcop))
+        {
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
