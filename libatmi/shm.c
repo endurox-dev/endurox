@@ -304,12 +304,26 @@ expublic int ndrxd_shm_delete(void)
  * MT protected by:
  * - Server does init first in single thread
  * - For clients tp_internal_init() does the thread safe call internally
- * @lev indicates the attach level (should it be service array only)?
- * @return 
+ * @param lev indicates the attach level (should it be service array only)?
+ * @param create shall we also create instead of attaching?
+ * @return EXSUCCEED/
  */
-expublic int ndrx_shm_attach_all(int lev)
+expublic int ndrx_shm_open_all(int lev, int create)
 {
    int ret=EXSUCCEED;
+   
+   struct {
+       int lev;
+       ndrx_shm_t *shm;
+   } map [] = {
+       
+       {NDRX_SHM_LEV_SVC, &G_svcinfo}
+       ,{NDRX_SHM_LEV_SVC, &ndrx_G_routcrit}
+       ,{NDRX_SHM_LEV_SVC, &ndrx_G_routsvc}
+       ,{NDRX_SHM_LEV_SRV, &G_srvinfo}
+       ,{NDRX_SHM_LEV_BR, &G_brinfo}  
+   };
+   int i;
    
    /**
      * Library not initialised
@@ -320,38 +334,26 @@ expublic int ndrx_shm_attach_all(int lev)
         EXFAIL_OUT(ret);
     }
    
-   /* Attached to service shared mem */
-   if (lev & NDRX_SHM_LEV_SVC &&
-           EXSUCCEED!=ndrx_shm_open(&G_svcinfo, EXTRUE))
+   for (i=0; i<N_DIM(map); i++)
    {
-       EXFAIL_OUT(ret);
-   }
-   
-   if (lev & NDRX_SHM_LEV_SVC &&
-           EXSUCCEED!=ndrx_shm_open(&ndrx_G_routcrit, EXTRUE))
-   {
-       EXFAIL_OUT(ret);
-   }
-   
-   if (lev & NDRX_SHM_LEV_SVC &&
-           EXSUCCEED!=ndrx_shm_open(&ndrx_G_routsvc, EXTRUE))
-   {
-       EXFAIL_OUT(ret);
-   }
-   
-   /* Attach to srv shared mem */
-   if (lev & NDRX_SHM_LEV_SRV &&
-           EXSUCCEED!=ndrx_shm_open(&G_srvinfo, EXTRUE))
-   {
-       EXFAIL_OUT(ret);
-   }
-   
-   
-   /* Attach to srv shared mem */
-   if (lev & NDRX_SHM_LEV_BR &&
-           EXSUCCEED!=ndrx_shm_open(&G_brinfo, EXTRUE))
-   {
-       EXFAIL_OUT(ret);
+       if (map[i].lev & lev)
+       {
+           if (create)
+           {
+               
+                if (EXSUCCEED!=ndrx_shm_open(map[i].shm, EXTRUE))
+                {
+                    EXFAIL_OUT(ret);
+                }
+           }
+           else
+           {
+                if (EXSUCCEED!=ndrx_shm_attach(map[i].shm))
+                {
+                    EXFAIL_OUT(ret);
+                }
+           }
+       }
    }
    
 out:

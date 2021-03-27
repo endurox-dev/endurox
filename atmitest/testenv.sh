@@ -1,6 +1,5 @@
 #!/bin/bash
 ##
-##
 ## @file testenv.sh
 ##
 ## -----------------------------------------------------------------------------
@@ -44,6 +43,10 @@ export PATH=$PATH:../../xadmin
 xadmin qrmall ,
 # any left overs from previous tests...
 xadmin killall ndrxd
+
+# this is due to fact that for SystemV reasons we
+# open the shared memory segments by clients too.
+xadmin down -y >/dev/null 2>&1
 
 if [[ `xadmin poller` == "SystemV" ]]; then
     xadmin udown -y

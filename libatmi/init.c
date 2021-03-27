@@ -784,6 +784,9 @@ out:
  
 /**
  * Roll in ATMI library configuration.
+ * NOTE! We need to open shared (create) shared mems just by clients too
+ * the thing is that for System-V there is no way for clients to detect the
+ * server queues with out the shared mem infos.
  * @param init_data
  * @return SUCCEED/FAIL
  */
@@ -805,7 +808,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                                 "shutting down client session");
             
             /*  attach to server shm segment. */
-            ndrx_shm_attach_all(NDRX_SHM_LEV_SRV);
+            ndrx_shm_open_all(NDRX_SHM_LEV_SRV, EXTRUE);
         }
         else
         {
@@ -868,9 +871,9 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
             
             /* Try to attach to semaphore array */
-            if (EXSUCCEED!=ndrx_sem_open_all())
+            if (EXSUCCEED!=ndrx_sem_open_all(EXTRUE))
             {
-                NDRX_LOG(log_error, "Failed to attache to semaphores!!");
+                NDRX_LOG(log_error, "Failed to attach to semaphores!");
                 sem_fail = EXTRUE;
                 /*ret=FAIL;
                 goto out;*/
@@ -883,7 +886,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             {
                 if (init_data->is_client)
                 {
-                    if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR) && 
+                    if (EXSUCCEED==ndrx_shm_open_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR, EXTRUE) && 
                             sem_fail)
                     {
                         NDRX_LOG(log_error, "SHM ok, but sem fail -"
@@ -900,8 +903,8 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                     /* TODO: if there was tpinit() before server booted, the  NDRX_SHM_LEV_SRV is
                      * not mounted.
                      */
-                    if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | 
-                                        NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR) &&
+                    if (EXSUCCEED==ndrx_shm_open_all(NDRX_SHM_LEV_SVC | 
+                                        NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR, EXTRUE) &&
                             sem_fail)
                     
                     {
@@ -930,7 +933,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
         {
             NDRX_LOG(log_debug, "Client shm init was first, init server SHM");
             
-            if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SRV) &&
+            if (EXSUCCEED==ndrx_shm_open_all(NDRX_SHM_LEV_SRV, EXTRUE) &&
                             sem_fail)
                     
             {
