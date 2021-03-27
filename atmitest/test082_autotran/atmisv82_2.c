@@ -99,7 +99,8 @@ void TESTSV2 (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(testbuf, "ABORT") || 0==strcmp(testbuf, "ABORT2"))
+    else if (0==strcmp(testbuf, "ABORT") || 0==strcmp(testbuf, "ABORT2") ||
+            0==strcmp(testbuf, "ABORT3"))
     {
         if (EXSUCCEED!=tpabort(0))
         {
@@ -112,6 +113,8 @@ void TESTSV2 (TPSVCINFO *p_svc)
     {
         return;
     }
+#if 0
+   due to Support #658 bug, cannot perform dynamic unadvertise/advertise to reach the stable works mode
     if (0==strcmp(testbuf, "OK"))
     {
         /* perform dynamic advertise, so that next cases OK works too */
@@ -132,6 +135,7 @@ void TESTSV2 (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
     }
+#endif
     
 out:
     

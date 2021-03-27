@@ -58,10 +58,23 @@ void TESTSV (TPSVCINFO *p_svc)
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     char testbuf[1024];
+    static int first=EXTRUE;
     TPQCTL qc;
 
     NDRX_LOG(log_debug, "%s got call", __func__);
     
+    if (first)
+    {
+        /* check the auto-tran goes to dynamic adv services
+         * + routed..
+         */
+        if (EXSUCCEED!=tpadvertise("TESTSVD", TESTSV))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to advertise: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        first=EXFALSE;
+    }
     if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 

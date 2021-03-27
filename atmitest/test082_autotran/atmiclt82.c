@@ -231,10 +231,16 @@ int main(int argc, char** argv)
         }
         else
         {
-            if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-            {
-                NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            char svcnm[XATMI_SERVICE_NAME_LENGTH+1]="TESTSV";
 
+            if (0==strcmp(argv[1], "ABORT3"))
+            {
+                NDRX_STRCPY_SAFE(svcnm, "TESTSVD");
+            }
+
+            if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+            {
+                NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
                 /* capture the error code from the script */
                 printf("%s\n", tpstrerror(tperrno));
                 ret=EXFAIL;
