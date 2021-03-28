@@ -435,46 +435,47 @@ PARAMETERS
     id is set in $NDRX_SRVMAX environment variable. Minimal server id is 1.
 'ATMI_SERVER_SYSTEM_OPTIONS'::
     Command line system options passed to ATMI server. Following parameters are
-    used by Enduro/X ATMI servers: '-N', boolean type. If present, then no services
-    will be advertised by server. In this case will be advertised only services specified
-    by '-s' flag. For example if server advertises SERVICE1, SERVICE2, SERVICE3, but '-N'
-    was specified, and '-sSERVICE3' is specified, then only service SERVICE3 will be 
-    advertised. The '-s' argument also can contain aliases for services, for example
-    '-sOTHERSVC:SERVICE2', then new service OTHERSVC will be advertised which
-    basically is the same SERVICE2 (same function used). '-s' and '-N' can be mixed.
-    '-s' can appear multiple times in system options. With one '-s' multiple services
+    used by Enduro/X ATMI servers: *-N*, boolean type. If present, then no services
+    will be advertised by server. In this case only services specified
+    by *-s* (service alias) or *-S* (function alias) flags will be advertised. 
+    For example if server advertises *SERVICE1, SERVICE2, SERVICE3*, but *-N*
+    is specified, and *-sSERVICE3* is specified, then only service *SERVICE3* will be 
+    advertised. The *-s* argument also can contain aliases for services, for example
+    *-sOTHERSVC:SERVICE2*, then new service *OTHERSVC* will be advertised which
+    basically is the same *SERVICE2* (same function used). *-s*, *-S* and *-N* can be mixed.
+    *-s* can appear multiple times in system options. With one *-s* multiple services
     can be aliased to single existing service.
-    The format is: '-s<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The ',' can be
-    used as separator too, but for certain platforms it does not work, thus '/' is
-    recommended. When using full advertise (all service) some of them can be masked
-    by '-n' flag. For example '-sSERVICE4' will advertise all, but 'SERVICE4'. Flag
-    '-n' can be repeated multiple times.
-    Server binaries output is controlled via '-e LOG_FILE', which means
-    that stdout & stderr of server is dumped to LOG_FILE.
-    There are few internal params: param '-k' is just a random key
-    for shell scripts. Another internal param is Server ID which is automatically passed
-    to binary via '-i SERVER_ID'.
+    The format is: *-s*'<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The *,* can be
+    used as separator too, but for certain platforms it does not work, thus */* is
+    recommended. Services can be masked out from final advertise by
+    by *-n* flag. For example *-nSERVICE4* will not be advertised (no matter was it
+    advertise or alias). *-n* can be repeated multiple times.
+    When Enduro/X XATMI server is build with integration lib (libatmisrvinteg) 
+    user have ability to alias the functions to service names with 
+    *-S*'<service_name1>/<service_name2>:<function name>' flag. Functions are
+    passed to *buildserver(8)* at build time or registered in *tmdsptchtbl_t* array
+    passed to *_tmstartserver(3)*. Firstly *-S* flags are processed,
+    afterwards *-s*' flags are processed, meaning that it works as 
+    usual including to function aliased services by *-S* services. 
+    Server binaries output is controlled via *-e*'LOG_FILE', which means
+    that stdout & stderr of server is dumped to 'LOG_FILE'.
+    There are few internal parameters: parameter *-k* is just a random key
+    for shell scripts. Another internal parameter is Server ID which is automatically passed
+    to binary via *-i* 'SERVER_ID'.
     Enduro/X supports automatic buffer conversion for ATMI servers. 
-    Currently supported modes are 'JSON2UBF', 'UBF2JSON', these modes are activated 
-    by -x paramter in system options. These modes are passed for server functions 
-    being advertised. For example if we have service *functions* (not services) 
-    UBF1FUNC, UBF2FUNC and JSONFUNC and we want to ensure that these receive
+    Currently supported modes are *JSON2UBF*, *UBF2JSON*, these modes are activated 
+    by *-x* parameter in system options. These modes are passed for server functions 
+    being advertised. For example if we have service functions (not services) 
+    *UBF1FUNC*, *UBF2FUNC* and *JSONFUNC* and we want to ensure that these receive
     converted messages even if caller to UBF service sends JSON and vice versa, then 
     following options might be set to command line:
-    '-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON'.
-    When Enduro/X is build with integration lib (libatmisrvinteg) user have ability
-    to map the functions with -S <service_name1>/<service_name2>:<function name>
-    passed to buildserver at build time or registered in tmdsptchtbl_t array
-    passed to _tmstartserver(). The -S are processed and service array is prepared,
-    afterwards the -N and -s<service_name1> flag works as usual, with -N disable
-    all service advertise and with -s some single service may be enabled. With
-    flag *-g* <RTGRP> it is possible to define or override the env variable 
+    *-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON*. With
+    flag *-g*'<RTGRP>' it is possible to define or override the env variable 
     *NDRX_RTGRP* - routing group code. Use *-G* flag to configure that particular server
     shall include '@<RTGRP>' routing group suffix in service name received by
     service function (i.e. structure *TPSVCINFO* field *name* shall contain full
     service name with the group code, if call was routed to group), 
     by default group name is not included even if service is routed to group.
-
 'ATMI_SERVER_APPLICATION_OPTIONS'::
     Application specific command line options. This follows content after sys options as:
     'system options -- app options'.

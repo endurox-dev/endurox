@@ -167,6 +167,22 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
                             EXFAIL_OUT(ret);
                         }
                     }
+                    
+                    /* Adding this service to exception list
+                     * in case if doing G_server_conf.advertise_all=0
+                     * As -S we shall still present in the final
+                     */
+                    if (!G_server_conf.advertise_all)
+                    {
+                        NDRX_LOG(log_debug, "Marking alias of function [%s] for advertise", el->svc_nm);
+                        if (EXSUCCEED!=ndrx_svchash_add(&ndrx_G_svchash_funcs, el->svc_nm))
+                        {
+                            NDRX_LOG(log_error, "Failed to mark service [%s] for advertise",
+                                    el->svc_nm);
+                            EXFAIL_OUT(ret);
+                        }
+                    }
+                    
                     found = EXTRUE;
                     break;
                 }

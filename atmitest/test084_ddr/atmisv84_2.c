@@ -88,18 +88,6 @@ out:
 }
 
 /**
- * Multi-init from tpacall from thread init
- * @param p_svc
- */
-void MULTI_INIT (TPSVCINFO *p_svc)
-{
-    tpreturn(  TPSUCCESS,
-                0L,
-                (char *)p_svc->data,
-                0L,
-                0L);
-}
-/**
  * Do initialisation
  */
 int tpsvrinit(int argc, char **argv)

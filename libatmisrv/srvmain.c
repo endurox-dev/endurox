@@ -77,6 +77,10 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 srv_conf_t G_server_conf;
+
+/**
+ * Do not advertise these particular services
+ */
 ndrx_svchash_t *ndrx_G_svchash_skip = NULL;
 
 /**
@@ -100,10 +104,11 @@ exprivate ndrx_tpacall_defer_t *M_deferred_tpacalls = NULL;
 exprivate int ndrx_tpacall_noservice_hook_defer(char *svc, char *data, long len, long flags);
 /**
  * Add service to skip advertise list
- * @param svcnm
+ * @param hash hash handle
+ * @param svc_nm service name to add to hash
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_skipsvc_add(char *svc_nm)
+expublic int ndrx_svchash_add(ndrx_svchash_t **hash, char *svc_nm)
 {
     int ret = EXSUCCEED;
     ndrx_svchash_t *el = NULL;
@@ -118,22 +123,37 @@ expublic int ndrx_skipsvc_add(char *svc_nm)
     }
     
     NDRX_STRCPY_SAFE(el->svc_nm, svc_nm);
-    EXHASH_ADD_STR( ndrx_G_svchash_skip, svc_nm, el);
+    EXHASH_ADD_STR( *hash, svc_nm, el);
     
 out:
     return ret;
 }
 
 /**
- * Check service is it for advertise
+ * Check is service in the list
+ * Be aware we could lookup for group names, but names with out @<GRP> are then
+ * list.
+ * @param hash hash handle to check service presence there
  * @param svcnm
  * @return EXFALSE/EXTRUE
  */
-expublic int ndrx_skipsvc_chk(char *svc_nm)
+expublic int ndrx_svchash_chk(ndrx_svchash_t **hash, char *svc_nm)
 {
     ndrx_svchash_t *el = NULL;
+    char tmp[XATMI_SERVICE_NAME_LENGTH+1];
+    char *p;
     
-    EXHASH_FIND_STR( ndrx_G_svchash_skip, svc_nm, el);
+    NDRX_STRCPY_SAFE(tmp, svc_nm);
+    
+    p = strchr(tmp, NDRX_SYS_SVC_PFXC);
+    
+    if (NULL!=p)
+    {
+        *p=EXEOS;
+    }
+    
+    /* search for name with out suffix... */
+    EXHASH_FIND_STR( *hash, tmp, el);
     
     if (NULL!=el)
     {
@@ -145,14 +165,15 @@ expublic int ndrx_skipsvc_chk(char *svc_nm)
 
 /**
  * Delete hash list (un-init)
+ * @param hash hash list to clean up
  */
-expublic void ndrx_skipsvc_delhash(void)
+expublic void ndrx_svchash_cleanup(ndrx_svchash_t **hash)
 {
     ndrx_svchash_t *el = NULL, *elt = NULL;
     
-    EXHASH_ITER(hh, ndrx_G_svchash_skip, el, elt)
+    EXHASH_ITER(hh, *hash, el, elt)
     {
-        EXHASH_DEL(ndrx_G_svchash_skip, el);
+        EXHASH_DEL(*hash, el);
         NDRX_FREE(el);
     }
 }
@@ -490,7 +511,7 @@ expublic int ndrx_init(int argc, char** argv)
                 break;
             case 'n':
                 /* Do not advertise single service */
-                if (EXSUCCEED!=ndrx_skipsvc_add(optarg))
+                if (EXSUCCEED!=ndrx_svchash_add(&ndrx_G_svchash_skip, optarg))
                 {
                     ndrx_TPset_error_msg(TPESYSTEM, "Malloc failed");
                     EXFAIL_OUT(ret);
