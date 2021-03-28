@@ -86,6 +86,33 @@ function go_out {
     exit $1
 }
 
+
+#
+# Check count of services by process instance
+#
+function chk_count {
+
+    xadmin start -i $1
+    xadmin psc
+    CNT=`xadmin  psc | grep T3 | wc -l`
+    echo "Got: [$CNT]"
+    if [ "X$CNT" != "X$2" ]; then
+        echo "Invalid service count: $CNT (expected $2)"
+        go_out -4
+    fi
+
+    # after the shutdown shall be clean
+    xadmin stop -i $1
+    CNT=`xadmin  psc | grep T3 | wc -l`
+    echo "Got: [$CNT] (after shutdown)"
+    if [ "X$CNT" != "X0" ]; then
+        echo "Invalid service count: $CNT (expected 0)"
+        go_out -5
+    fi
+
+}
+
+
 rm *.log
 
 set_dom1;
@@ -225,6 +252,31 @@ xadmin psvc
 
 echo "***pqa -a After shutdown***"
 xadmin pqa -a
+
+################################################################################
+echo "Checking aliasing limits..."
+################################################################################
+
+echo "*** Cannot start as too many services in the tmdsptchtbl_t"
+chk_count 1000, 0
+
+echo "*** Check single function aliased"
+chk_count 1001, 2
+
+echo "*** 25*2 funcs advertised (all full)"
+chk_count 1002, 0
+
+echo "*** 24*2 funcs advertised (have space)"
+chk_count 1003, 48
+
+echo "*** 25*2 alias advertised (all full)"
+chk_count 1004, 0
+
+echo "*** 24*2 alias advertised (have space)"
+chk_count 1005, 48
+
+echo "*** 23*2 alias advertised (have space)"
+chk_count 1006, 46
 
 
 # Catch is there is test error!!!

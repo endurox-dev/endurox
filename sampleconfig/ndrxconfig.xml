@@ -95,7 +95,7 @@
 			<min>1</min>
 			<max>1</max>
 			<envs><env name="NDRX_RTGRP">GT</env></envs>
-			<sysopt>-e /tmp/ADT -r</sysopt>
+			<sysopt>-e /tmp/ADT -r -SEHLO</sysopt>
 		</server>
 		<server name="tpadmsv">
 			<srvid>311</srvid>

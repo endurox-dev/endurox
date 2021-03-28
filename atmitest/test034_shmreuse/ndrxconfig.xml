@@ -67,5 +67,73 @@
                 <sysopt>-e ${TESTDIR}/atmisv34_2.log -r</sysopt>
             </server>
             
+            <!-- this shall not start, as table too big for advertise -->
+            <server name="atmisv34_3">
+                <min>0</min>
+                <max>1</max>
+                <srvid>1000</srvid>
+                <sysopt>-e ${TESTDIR}/atmisv34_3.log -r</sysopt>
+            </server>
+
+            <!-- this shall bring up with two services, as we alias to functions 
+                 also we shall have the A3OK@CCC advertised too
+            -->
+            <server name="atmisv34_3">
+                <min>0</min>
+                <max>1</max>
+                <srvid>1001</srvid>
+                <sysopt>-SA3OK:T3 -e ${TESTDIR}/atmisv34_3.log -r -N -gCCC</sysopt>
+            </server>
+            
+            <!--
+                We have list of 25 services (FUNC ALIAS), shall fail to start
+            -->
+            <server name="atmisv34_3">
+                <min>0</min>
+                <max>1</max>
+                <srvid>1002</srvid>
+                <sysopt>-e ${TESTDIR}/atmisv34_3.log -r -N -gCCC -Sz:T3 -Sy:T3 -Sx:T3 -Sw:T3 -Sv:T3 -Su:T3 -St:T3 -Ss:T3 -Sr:T3 -Sq:T3 -Sp:T3 -So:T3 -Sn:T3 -Sm:T3 -Sl:T3 -Sk:T3 -Sj:T3 -Si:T3 -Sh:T3 -Sg:T3 -Sf:T3 -Se:T3 -Sd:T3 -Sc:T3 -Sb:T3</sysopt>
+            </server>
+            
+            <!--
+                We have list of 24 services (FUNC ALIAS), shall start OK
+            -->
+            <server name="atmisv34_3">
+                <min>0</min>
+                <max>1</max>
+                <srvid>1003</srvid>
+                <sysopt>-e ${TESTDIR}/atmisv34_3.log -r -N -gCCC -Sz:T3 -Sy:T3 -Sx:T3 -Sw:T3 -Sv:T3 -Su:T3 -St:T3 -Ss:T3 -Sr:T3 -Sq:T3 -Sp:T3 -So:T3 -Sn:T3 -Sm:T3 -Sl:T3 -Sk:T3 -Sj:T3 -Si:T3 -Sh:T3 -Sg:T3 -Sf:T3 -Se:T3 -Sd:T3 -Sc:T3</sysopt>
+            </server>
+            
+            <!--
+                We have list of 25 services (1FUNC + other ALIAS), shall fail to start
+            -->
+            <server name="atmisv34_3">
+                <min>0</min>
+                <max>1</max>
+                <srvid>1004</srvid>
+                <sysopt>-ST3:T3 -e ${TESTDIR}/atmisv34_3.log -r -N -gCCC -sz:T3 -sy:T3 -sx:T3 -sw:T3 -sv:T3 -su:T3 -st:T3 -ss:T3 -sr:T3 -sq:T3 -sp:T3 -so:T3 -sn:T3 -sm:T3 -sl:T3 -sk:T3 -sj:T3 -si:T3 -sh:T3 -sg:T3 -sf:T3 -se:T3 -sd:T3 -Sc:T3</sysopt>
+            </server>
+            
+            <!--
+                We have list of 24 services (1FUNC + other ALIAS), shall start OK
+            -->
+            <server name="atmisv34_3">
+                <min>0</min>
+                <max>1</max>
+                <srvid>1005</srvid>
+                <sysopt>-ST3:T3 -e ${TESTDIR}/atmisv34_3.log -r -N -gCCC -sz:T3 -sy:T3 -sx:T3 -sw:T3 -sv:T3 -su:T3 -st:T3 -ss:T3 -sr:T3 -sq:T3 -sp:T3 -so:T3 -sn:T3 -sm:T3 -sl:T3 -sk:T3 -sj:T3 -si:T3 -sh:T3 -sg:T3 -sf:T3 -se:T3 -sd:T3</sysopt>
+            </server>
+            
+            <!--
+              Test -n flag
+              -->
+            <server name="atmisv34_3">
+                <min>0</min>
+                <max>1</max>
+                <srvid>1006</srvid>
+                <sysopt>-ST3:T3 -e ${TESTDIR}/atmisv34_3.log -r -N -gCCC -sz:T3 -sy:T3 -sx:T3 -sw:T3 -sv:T3 -su:T3 -st:T3 -ss:T3 -sr:T3 -sq:T3 -sp:T3 -so:T3 -sn:T3 -sm:T3 -sl:T3 -sk:T3 -sj:T3 -si:T3 -sh:T3 -sg:T3 -sf:T3 -se:T3 -sd:T3 -sc:T3 -Sb:T3 -nc -nd -nb</sysopt>
+            </server>
+                        
 	</servers>
 </endurox>

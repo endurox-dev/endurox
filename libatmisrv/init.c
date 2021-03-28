@@ -276,6 +276,22 @@ exprivate int add_specific_queue(char *qname, int is_admin)
 }
 
 /**
+ * Perform service limit check
+ */
+#define LIMIT_CHECK do {                                                               \
+        if ((final_nr_services+1) > (MAX_SVC_PER_SVR - ATMI_SRV_Q_ADJUST))             \
+        {                                                                              \
+            NDRX_LOG(log_error, "ERROR: Failed to advertise: service "                 \
+                                "limit per process %d reached on [%s]!",               \
+                                (MAX_SVC_PER_SVR-ATMI_SRV_Q_ADJUST), svn_nm_add);      \
+            userlog("ERROR: Failed to advertise: service "                             \
+                                "limit per process %d reached on [%s]!",               \
+                                (MAX_SVC_PER_SVR-ATMI_SRV_Q_ADJUST), svn_nm_add);      \
+            EXFAIL_OUT(ret);                                                           \
+        }                                                                              \
+    } while (0)
+
+/**
  * Functions builds final list what needs to be actually advertised to EX system
  * See description of tpadvertise_full() for -A & -s logic
  *
@@ -291,6 +307,7 @@ expublic int atmisrv_build_advertise_list(void)
     svc_entry_t *s_tmp, *s_el;
     svc_entry_fn_t *f_tmp, *f_el;
     pid_t mypid = getpid();
+    int final_nr_services = 0;
 
     char *svn_nm_srch=NULL;
     char *svn_nm_add=NULL;
@@ -330,42 +347,60 @@ expublic int atmisrv_build_advertise_list(void)
             svn_nm_srch=s_el->svc_nm;
             svn_nm_add=s_el->svc_nm;
         }
+        
+        /* check that this service isn't masked out for advertise */
+        if (ndrx_svchash_chk(&ndrx_G_svchash_skip, svn_nm_add))
+        {
+            NDRX_LOG(log_info, "%s masked by -n - not advertising", 
+                    svn_nm_add);
+            continue;
+        }
 
+        LIMIT_CHECK;
+        
         if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, svn_nm_add, NULL)))
         {
             NDRX_LOG(log_error, "Phase 1 advertise FAIL!");
             goto out;
         }
+        
+        final_nr_services++;
 
     }
     
     /* phase 2. advertise all, that we have from tpadvertise 
      * (only in case if we have -A) 
      */
-    if (G_server_conf.advertise_all)
+    DL_FOREACH_SAFE(G_server_conf.service_raw_list,f_el,f_tmp)
     {
-        DL_FOREACH_SAFE(G_server_conf.service_raw_list,f_el,f_tmp)
+        /* if have service the list of -S, then still want to be advertised */
+        if (!G_server_conf.advertise_all &&
+                !ndrx_svchash_chk(&ndrx_G_svchash_funcs, f_el->svc_nm))
         {
-            
-            /* check that this service isn't masked out for advertise */
-            
-            if (ndrx_skipsvc_chk(f_el->svc_nm))
-            {
-                NDRX_LOG(log_info, "%s masked by -n - not advertising", 
-                        f_el->svc_nm);
-                continue;
-            }
-            
-            svn_nm_srch=f_el->svc_nm;
-            svn_nm_add=f_el->svc_nm;
-
-            if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, 
-                    svn_nm_add, NULL)))
-            {
-                NDRX_LOG(log_error, "Phase 2 advertise FAIL!");
-                goto out;
-            }
+            continue;
         }
+        
+        /* check that this service isn't masked out for advertise */
+        if (ndrx_svchash_chk(&ndrx_G_svchash_skip, f_el->svc_nm))
+        {
+            NDRX_LOG(log_info, "%s masked by -n - not advertising", 
+                    f_el->svc_nm);
+            continue;
+        }
+
+        svn_nm_srch=f_el->svc_nm;
+        svn_nm_add=f_el->svc_nm;
+
+        LIMIT_CHECK;
+
+        if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, 
+                svn_nm_add, NULL)))
+        {
+            NDRX_LOG(log_error, "Phase 2 advertise FAIL!");
+            goto out;
+        }
+
+        final_nr_services++;
     }
     
     ret=build_service_array_list();
@@ -528,7 +563,8 @@ expublic void atmisrv_un_initialize(int fork_uninit)
     
     /* close XA if was open.. */
     atmi_xa_uninit();
-    ndrx_skipsvc_delhash();
+    ndrx_svchash_cleanup(&ndrx_G_svchash_skip);
+    ndrx_svchash_cleanup(&ndrx_G_svchash_funcs);
     /* Mark our environment as un-initialized 
      * In external main() function cases, they might want to reuse the ATMI
      * context, and it is not server any more.
@@ -630,11 +666,17 @@ exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), ch
             }
             else
             {
-                if (G_server_conf.service_raw_list_count+1 > MAX_SVC_PER_SVR - ATMI_SRV_Q_ADJUST)
+                /* Do not count if G_server_conf.advertise_all is 0
+                 * as these really does not open the queues...
+                 */
+                if (G_server_conf.advertise_all && 
+                        (G_server_conf.service_raw_list_count+1) > (MAX_SVC_PER_SVR - ATMI_SRV_Q_ADJUST))
                 {
-                    ndrx_TPset_error_fmt(TPELIMIT, "Service limit per process %d reached on [%s]!", 
+                    userlog("Failed to advertise: service limit per process %d reached on [%s]!", 
                             MAX_SVC_PER_SVR-ATMI_SRV_Q_ADJUST, entry->svc_nm);
-                    
+                    ndrx_TPset_error_fmt(TPELIMIT, "Failed to advertise: Service "
+                            "limit per process %d reached on [%s]!", 
+                            MAX_SVC_PER_SVR-ATMI_SRV_Q_ADJUST, entry->svc_nm);
                     NDRX_FREE(entry);
                     EXFAIL_OUT(ret);
                 }
