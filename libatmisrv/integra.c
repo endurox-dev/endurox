@@ -153,7 +153,8 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
             found = EXFALSE;
             while (NULL!=tab->svcnm)
             {
-                if (0==strcmp(el->svc_aliasof, tab->funcnm))
+                if ((0==strcmp(el->svc_aliasof, tab->funcnm)) ||
+                    (EXEOS==el->svc_aliasof[0] && 0==strcmp(el->svc_nm, tab->funcnm)))
                 {
                     /* advertise only if have service name */
                     if (EXSUCCEED!=tpadvertise_full(el->svc_nm, tab->p_func, tab->funcnm))
