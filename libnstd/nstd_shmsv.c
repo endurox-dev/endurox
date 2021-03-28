@@ -165,10 +165,17 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
         EXFAIL_OUT(ret);
     }
     
-    /* Reset SHM */
+    /**
+     *  Reset SHM 
+     * In case of some processes are doing attach, here race condition
+     * is possible, as memory is ready, other process may already connect
+     * and even advertise something, but we reset it here.
+     * so this is redundant, as SUS says, that created memory will be already
+     * initialized to 0.
     memset(shm->mem, 0, shm->size);
+     * */
     
-    NDRX_LOG_EARLY(log_debug, "Shm: [%s] %d/%x created size: %d mem: %p", 
+    NDRX_LOG_EARLY(log_info, "Shm: [%s] %d/%x created size: %d mem: %p", 
             shm->path, shm->fd, shm->key, shm->size, shm->mem);
     
 out:
