@@ -42,7 +42,7 @@ export PATH=$PATH:../../xadmin
 # Clean up q Space (remove all queues matching the symbol)
 xadmin qrmall ,
 # any left overs from previous tests...
-xadmin killall ndrxd
+xadmin killall ndrxd >/dev/null 2>&1
 
 # this is due to fact that for SystemV reasons we
 # open the shared memory segments by clients too.
