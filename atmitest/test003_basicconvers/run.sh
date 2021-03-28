@@ -53,7 +53,7 @@ function go_out {
     echo "Test exiting with: $1"
 
     # If some alive stuff left...
-    xadmin killall atmiclt3 atmisv3
+    xadmin killall atmiclt3 atmisv3 2>/dev/null
 
     popd 2>/dev/null
     exit $1
