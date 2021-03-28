@@ -452,9 +452,10 @@ PARAMETERS
     advertise or alias). *-n* can be repeated multiple times.
     When Enduro/X XATMI server is build with integration lib (libatmisrvinteg) 
     user have ability to alias the functions to service names with 
-    *-S*'<service_name1>/<service_name2>:<function name>' flag. Functions are
+    *-S*'<service_name1>/<service_name2>[:<function name>]' flag. Functions are
     passed to *buildserver(8)* at build time or registered in *tmdsptchtbl_t* array
-    passed to *_tmstartserver(3)*. Firstly *-S* flags are processed,
+    passed to *_tmstartserver(3)*. If '<function name>' is not specified, then service
+    name is matched against function name. Firstly *-S* flags are processed,
     afterwards *-s*' flags are processed, meaning that it works as 
     usual including to function aliased services by *-S* services. 
     Server binaries output is controlled via *-e*'LOG_FILE', which means

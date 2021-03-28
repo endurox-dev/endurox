@@ -141,7 +141,7 @@ void somefunc (TPSVCINFO *p_svc)
     /* Just print the buffer */
     Bprint(p_ub);
     
-    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, "somefunc", 0))
+    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, p_svc->fname, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD: %s", 
                  Bstrerror(Berror));
@@ -188,6 +188,7 @@ static struct tmdsptchtbl_t tmdsptchtbl[] = {
     {"SYSADV1","TESTSV",(void (*)(TPSVCINFO *)) TESTSV, 0, 0 },
     {"SYSADV2","HELLOSV",(void (*)(TPSVCINFO *)) HELLOSV, 0, 0 },
     {"","somefunc",(void (*)(TPSVCINFO *)) somefunc, 0, 0 },
+    {"","someXfunc",(void (*)(TPSVCINFO *)) somefunc, 0, 0 },
     { NULL, NULL, NULL, 0, 0 }
 };
 
