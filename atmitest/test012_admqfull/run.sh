@@ -71,6 +71,9 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 export NDRX_TOUT=4
 export NDRX_MSGMAX=50
 export NDRX_DQMAX=50
+# For system-v store all qids
+export NDRX_SVCMAX=30
+export NDRX_MAXSVCSRVS=600
 
 
 # Default process count for Q full tests
