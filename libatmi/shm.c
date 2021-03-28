@@ -156,61 +156,6 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs,
     return EXSUCCEED;
 }
 
-/**
- * Open shared memory
- * WARNING ! Not thread safe.
- * MT protected by: called by ndrxd only (single thread)
- * @return
- */
-expublic int ndrxd_shm_open_all(void)
-{
-    int ret=EXSUCCEED;
-    
-    /**
-     * Library not initialized
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "ndrx shm library not initialized");
-        EXFAIL_OUT(ret);
-    }
-
-    /* NOTE! shm might exist already, in that case attach
-     * it might be created by ndrxd
-     */
-    if (EXSUCCEED!=ndrx_shm_open(&G_srvinfo, EXTRUE))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (EXSUCCEED!=ndrx_shm_open(&G_svcinfo, EXTRUE))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (EXSUCCEED!=ndrx_shm_open(&G_brinfo, EXTRUE))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (EXSUCCEED!=ndrx_shm_open(&ndrx_G_routcrit, EXTRUE))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (EXSUCCEED!=ndrx_shm_open(&ndrx_G_routsvc, EXTRUE))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-    
-out:
-    return ret;
-}
 
 /**
  * Set server exec status after forked exec failed
