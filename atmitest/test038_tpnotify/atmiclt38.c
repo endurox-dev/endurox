@@ -193,10 +193,13 @@ restart:
         M_calls_made++;
 
 restart2:
-        if (tpacall("SVC38_02", (char *)p_ub, 0L, 0L)<=0)
+        /* in case of blocked receive, we shall process the messages
+         * from the Q, thus do non block too.
+         */
+        if (tpacall("SVC38_02", (char *)p_ub, 0L, TPNOBLOCK)<=0)
         {
             /* try to receive something if we got limit... */
-            if (TPELIMIT==tperrno)
+            if (TPELIMIT==tperrno || TPEBLOCK==tperrno)
             {
                 NDRX_LOG(log_error, "Additional handle_replies %d", tperrno);
                 if (EXSUCCEED!=handle_replies(&p_ub, 0))
@@ -214,14 +217,6 @@ restart2:
             }
         }
         M_calls_made++;
-        if (0==i%10)
-        {	
-            if (EXSUCCEED!=handle_replies(&p_ub, 0))
-            {
-                NDRX_LOG(log_error, "handle_replies() failed");
-                EXFAIL_OUT(ret);
-            }
-        }
     }
     
     i=0; /* try for 30 sec... */
