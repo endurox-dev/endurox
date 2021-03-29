@@ -62,7 +62,7 @@ function go_out {
 . ../testenv.sh
 
 (./atmisv3 -i 123 2>&1) > ./atmisv3.log &
-sleep 1
+sleep 3
 (./atmiclt3 normal 2>&1) > ./atmiclt3.log
 RET=$?
 
