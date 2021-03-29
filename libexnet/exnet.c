@@ -263,7 +263,6 @@ expublic int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len,
 		int rcvtim = net->rcvtimeout - spent;
 		struct pollfd ufd;
 
-                spent = ndrx_stopwatch_get_delta_sec(&w);
 		memset(&ufd, 0, sizeof ufd);
 
                 NDRX_LOG(log_warn, "Socket full: %s - retry, "
