@@ -870,7 +870,7 @@ expublic int sv_serve_connect(int *service, int *status,
             }
             
             /* force close queues and remove us from conv... */
-            normal_connection_shutdown(ndrx_get_G_accepted_connection(), EXTRUE, 
+            normal_connection_shutdown(ndrx_get_G_accepted_connection(), EXFALSE, 
                     "missing tpreturn, forced cleanup");
             
             if (!(svcinfo.flags & TPNOREPLY))
