@@ -53,7 +53,7 @@ function go_out {
     echo "Test exiting with: $1"
 
     # If some alive stuff left...
-    xadmin killall atmiclt3 atmisv3
+    xadmin killall atmiclt3 atmisv3 2>/dev/null
 
     popd 2>/dev/null
     exit $1
@@ -62,7 +62,7 @@ function go_out {
 . ../testenv.sh
 
 (./atmisv3 -i 123 2>&1) > ./atmisv3.log &
-sleep 1
+sleep 3
 (./atmiclt3 normal 2>&1) > ./atmiclt3.log
 RET=$?
 
