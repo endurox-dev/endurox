@@ -94,7 +94,8 @@ function chk_count {
 
     xadmin start -i $1
     xadmin psc
-    CNT=`xadmin  psc | grep T3 | wc -l`
+    # On aix wc -l leads with spaces
+    CNT=`xadmin  psc | grep T3 | wc -l | awk '{print $1}'`
     echo "Got: [$CNT]"
     if [ "X$CNT" != "X$2" ]; then
         echo "Invalid service count: $CNT (expected $2)"
@@ -103,7 +104,7 @@ function chk_count {
 
     # after the shutdown shall be clean
     xadmin stop -i $1
-    CNT=`xadmin  psc | grep T3 | wc -l`
+    CNT=`xadmin  psc | grep T3 | wc -l | awk '{print $1}'`
     echo "Got: [$CNT] (after shutdown)"
     if [ "X$CNT" != "X0" ]; then
         echo "Invalid service count: $CNT (expected 0)"
