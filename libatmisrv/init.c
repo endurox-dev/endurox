@@ -646,8 +646,8 @@ exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), ch
                 /* OK, we have in list. So print warning and remove old one! */
                 if (existing->p_func==p_func)
                 {
-                    NDRX_LOG(log_warn, "Service with name [%s] already "
-                                    "advertised, same function - IGNORE!", svc_nm);
+                    NDRX_LOG(log_debug, "Service with name [%s] is already "
+                                    "advertised, same function.", svc_nm);
                 }
                 else
                 {
@@ -657,6 +657,10 @@ exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), ch
                                         "but pointing to different "
                                         "function - FAIL", svc_nm);
                     ndrx_TPset_error_fmt(TPEMATCH, "ERROR: Service with name [%s] "
+                                        "already advertised, "
+                                        "but pointing to different function - "
+                                        "FAIL", svc_nm);
+                    userlog("ERROR: Service with name [%s] "
                                         "already advertised, "
                                         "but pointing to different function - "
                                         "FAIL", svc_nm);
