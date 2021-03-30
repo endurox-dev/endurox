@@ -324,19 +324,19 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Check for advertise existance */
     if (NULL!=entry_chk)
     {
-        NDRX_LOG(log_warn, "Service [%s] found in array at %d", 
+        NDRX_LOG(log_info, "Service [%s] found in array at %d", 
                                 svc_nm, pos);
         
         if (entry_chk->p_func == p_func)
         {
-            NDRX_LOG(log_warn, "Advertised function ptr "
+            NDRX_LOG(log_info, "Advertised function ptr "
                                 "the same - return OK!");
             goto out;
         }
         else
         {
             ndrx_TPset_error_fmt(TPEMATCH, "Service [%s] already advertised by func. "
-                    "ptr. 0x%lx, but now requesting advertise by func. ptr. 0x%lx!",
+                    "ptr. %p, but now requesting advertise by func. ptr. %p!",
                     svc_nm, entry_chk->p_func, p_func);
             ret=EXFAIL;
             goto out;

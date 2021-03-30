@@ -646,7 +646,7 @@ exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), ch
                 /* OK, we have in list. So print warning and remove old one! */
                 if (existing->p_func==p_func)
                 {
-                    NDRX_LOG(log_debug, "Service with name [%s] is already "
+                    NDRX_LOG(log_info, "Service with name [%s] is already "
                                     "advertised, same function.", svc_nm);
                 }
                 else
