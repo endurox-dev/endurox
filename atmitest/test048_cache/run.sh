@@ -22,6 +22,7 @@ rm *.log
 > ./test.out
 # Have some terminal output...
 tail -f test.out &
+TAIL_PID=$!
 
 (
 
@@ -48,6 +49,7 @@ run_test () {
                 M_fail=$((M_fail + 1))
                 M_failstr="$M_failstr $test.sh"
 		# mvitolin 2018/04/16
+		kill -9  $TAIL_PID
 		echo "Failing on first... to have logs from the case!"
 		exit 1
         fi
@@ -82,7 +84,8 @@ run_test "22_run_nospace"
 
 echo "*** SUMMARY $M_tests tests executed. $M_ok passes, $M_fail failures ($M_failstr)"
 
-xadmin killall tail
+#xadmin killall tail
+kill -9  $TAIL_PID
 
 exit $M_fail
 
