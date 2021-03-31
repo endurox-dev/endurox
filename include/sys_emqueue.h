@@ -1,92 +1,127 @@
-/*****************************************************************************
+/**
+ * @brief Emulated message queue. Based on UNIX Network Programming
+ *  Volume 2 Second Edition interprocess Communications by W. Richard Stevens
+ *  book. This code is only used for MacOS, as there aren't any reasonable
+ *  queues available.
+ * 
+ * @file sys_emqueue.h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
  *
- * POSIX Message Queue library implemented using memory mapped files
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
- *****************************************************************************/
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #ifndef __sys_emqueue_h
 #define __sys_emqueue_h
+
+/*---------------------------Includes-----------------------------------*/
+#include <ndrx_config.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/signal.h>
 #include <time.h>
-
-#if defined(WIN32)
-#   include <fcntl.h>
-#   define EMSGSIZE    4200
-#   define O_NONBLOCK  0200000
-
-    union sigval {
-        int           sival_int;     /* integer value */
-        void          *sival_ptr;    /* pointer value */
-    };
-    struct sigevent {
-        int           sigev_notify;  /* notification type */
-        int           sigev_signo;   /* signal number */
-        union sigval  sigev_value;   /* signal value */
-    };
-    typedef int pid_t;
-    typedef int ssize_t;
-#endif
-
-/*****************************************************************************/
-
-typedef struct emq_info *mqd_t;       /* opaque datatype */
-
-struct mq_attr {
-    long mq_flags;     /* message queue flag: O_NONBLOCK */
-    long mq_maxmsg;    /* max number of messages allowed on queue */
-    long mq_msgsize;   /* max size of a message (in bytes) */
-    long mq_curmsgs;   /* number of messages currently on queue */
-};
-
-/* one emq_hdr{} per queue, at beginning of mapped file */
-struct emq_hdr {
-    struct mq_attr    emqh_attr;  /* the queue's attributes */
-    long              emqh_head;  /* index of first message */
-    long              emqh_free;  /* index of first free message */
-    long              emqh_nwait; /* #threads blocked in emq_receive() */
-    pid_t             emqh_pid;   /* nonzero PID if emqh_event set */
-    struct sigevent   emqh_event; /* for emq_notify() */
-    pthread_mutex_t   emqh_lock;  /* mutex lock */
-    pthread_cond_t    emqh_wait;  /* and condition variable */
-};
-
-/* one msg_hdr{} at the front of each message in the mapped file */
-struct msg_hdr {
-    long            msg_next;    /* index of next on linked list */
-                                 /* msg_next must be first member in struct */
-    ssize_t         msg_len;     /* actual length */
-    unsigned int    msg_prio;    /* priority */
-};
-
-/* one emq_info{} malloc'ed per process per emq_open() */
-struct emq_info {
-#if defined(WIN32)
-    HANDLE         emqi_fmap;     /* file mapping object */
-#endif
-    struct emq_hdr *emqi_hdr;      /* start of mmap'ed region */
-    long           emqi_magic;    /* magic number if open */
-    int            emqi_flags;    /* flags for this process */
-};
-#define EMQI_MAGIC  0x98765432
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
 
 /* size of message in file is rounded up for alignment */
-#define MSGSIZE(i) ((((i) + sizeof(long)-1) / sizeof(long)) * sizeof(long))
+#define NDRX_EMQ_MSGSIZE(i) ((((i) + sizeof(long)-1) / sizeof(long)) * sizeof(long))
 
-/* message queue functions */
-extern int     emq_close(mqd_t);
-extern int     emq_getattr(mqd_t, struct mq_attr *);
-extern int     emq_notify(mqd_t, const struct sigevent *);
-extern mqd_t   emq_open(const char *, int, ...);
-extern ssize_t emq_receive(mqd_t, char *, size_t, unsigned int *);
-extern int     emq_send(mqd_t, const char *, size_t, unsigned int);
-extern int     emq_setattr(mqd_t, const struct mq_attr *, struct mq_attr *);
-extern int     emq_unlink(const char *name);
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
 
-extern int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
+/** 
+ * opaque interface 
+ */
+typedef struct emq_info *mqd_t;
+
+/**
+ * Queue attributes definition
+ */
+struct mq_attr
+{
+    long mq_flags;     /**< MQ flags                        */
+    long mq_maxmsg;    /**< max messages per queue          */
+    long mq_msgsize;   /**< max message size in bytes       */
+    long mq_curmsgs;   /**< number of messages in queue     */
+};
+
+/**
+ * Message queue header
+ */
+struct emq_hdr 
+{
+    struct mq_attr    emqh_attr;  /**< queue attributes             */
+    long              emqh_head;  /**< first message index          */
+    long              emqh_free;  /**< first free message index     */
+    long              emqh_nwait; /**< number of threads waiting    */
+    pid_t             emqh_pid;   /**< notification pid             */
+    struct sigevent   emqh_event; /**< for emq_notify()             */
+    pthread_mutex_t   emqh_lock;  /**< mutex lock                   */
+    pthread_cond_t    emqh_wait;  /**< condition var                */
+};
+
+/**
+ * Message header
+ **/
+struct emq_msg_hdr
+{
+    long            msg_next;    /**< next msg index                */
+    ssize_t         msg_len;     /**< actual length                 */
+    unsigned int    msg_prio;    /**< priority                      */
+};
+
+/**
+ * Process mapped memory for queue
+ */
+struct emq_info
+{
+    
+    struct emq_hdr *emqi_hdr;     /**< mapped memory                */
+    int            emqi_flags;    /**< flags for this process       */
+};
+
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+extern NDRX_API int     emq_close(mqd_t);
+extern NDRX_API int     emq_getattr(mqd_t, struct mq_attr *);
+extern NDRX_API int     emq_notify(mqd_t, const struct sigevent *);
+extern NDRX_API mqd_t   emq_open(const char *, int, ...);
+extern NDRX_API ssize_t emq_receive(mqd_t, char *, size_t, unsigned int *);
+extern NDRX_API int     emq_send(mqd_t, const char *, size_t, unsigned int);
+extern NDRX_API int     emq_setattr(mqd_t, const struct mq_attr *, struct mq_attr *);
+extern NDRX_API int     emq_unlink(const char *name);
+
+extern NDRX_API int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
         const struct timespec *__abs_timeout); 
 
-extern  ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
+extern  NDRX_API ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
         const struct timespec * __abs_timeout);
         
 #endif
+
+/* vim: set ts=4 sw=4 et smartindent: */
