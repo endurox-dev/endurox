@@ -129,6 +129,14 @@ Default is '100'.
 Number of seconds by which run periodical scans of the expired transactions.
 Default is '1'.
 
+LIMITATIONS
+-----------
+When commit is performed for several enqueued messages within global transaction,
+each message is unblocked (made available in queue space for dequeue or automatic
+forward) separately, message by message. So this means that during the commit
+execution, even thought commit is not completed yet, part of the messages will
+appear as committed.
+
 EXIT STATUS
 -----------
 *0*::
