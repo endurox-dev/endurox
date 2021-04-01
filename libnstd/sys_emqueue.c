@@ -1,8 +1,41 @@
-/*****************************************************************************
+/**
+ * @brief Emulated message queue. Based on UNIX Network Programming
+ *  Volume 2 Second Edition interprocess Communications by W. Richard Stevens
+ *  book. This code is only used for MacOS, as there aren't any reasonable
+ *  queues available.
  *
- * POSIX Message Queue for Windows NT (emulation)
+ * @file sys_emqueue.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
  *
- *****************************************************************************/
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
+
+/*---------------------------Includes-----------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -14,9 +47,6 @@
 #include <sys/time.h>
 
 #include <ndrstandard.h>
-#if defined(WIN32)
-#   include <io.h>
-#endif
 #include "sys_emqueue.h"
 #include "sys_unix.h"
 #include "ndebug.h"
@@ -33,38 +63,34 @@
 #include <exhash.h>
 #include <nstopwatch.h>
 #include <nstd_tls.h>
-#if defined(WIN32)
-#   define S_IXUSR  0000100
-#   define sleep(a) Sleep((a)*1000)
 
-    typedef unsigned short mode_t;
-#endif
-
-    
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
 #define  LOCK_Q if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0)\
     {\
             NDRX_LOG(log_error, "EMQ: pthread_mutex_lock failed: %s", strerror(n));\
             userlog("EMQ: pthread_mutex_lock failed: %s", strerror(n));\
             errno = n;\
-            return(-1);\
+            return EXFAIL;\
     }
     
 #define MAX_TRIES   10
-exprivate  struct mq_attr defattr = { 0, 128, 1024, 0 };
-
-
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
 struct qd_hash
 {
     void *qd;
     EX_hash_handle hh; /* makes this structure hashable        */
 };
 typedef struct qd_hash qd_hash_t;
-
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+exprivate  struct mq_attr defattr = { 0, 128, 1024, 0 };
 exprivate MUTEX_LOCKDECL(M_lock);
 exprivate qd_hash_t *M_qd_hash = NULL;
-
 exprivate  int M_first = EXTRUE; /**< Had random init? */
 
+/*---------------------------Prototypes---------------------------------*/
 
 /*
  * For darwin https://www.endurox.org/issues/512
@@ -202,7 +228,7 @@ out:
 }
 
 /**
- * Check is 
+ * Check is queue registered
  * @param q
  * @return 
  */
@@ -257,34 +283,24 @@ exprivate void qd_hash_del(mqd_t qd)
  * @param path
  * @param[out] bufout where to copy the output path string 
  * @param[out] bufoutsz output buffer size
- * @return 
+ * @return ptr to output buffer
  */
 static char *get_path(const char *path, char *bufout, size_t bufoutsz)
 {
     static int first = 1;
     static char q_path[PATH_MAX]={EXEOS};
     
-/*
-    NSTD_TLS_ENTRY;
-*/
-    
     if (first)
     {
         char *p;
         if (NULL!=(p=getenv(CONF_NDRX_QPATH)))
         {
-            strcpy(q_path, p);
+            NDRX_STRCPY_SAFE(q_path, p);
         }
         
         first = 0;
     }
     
-    
-/*
-    strcpy(G_nstd_tls->emq_x, q_path);
-    strcat(G_nstd_tls->emq_x, path);
-    
-*/
     NDRX_STRCPY_SAFE_DST(bufout, q_path, bufoutsz);
     NDRX_STRCAT_S(bufout, bufoutsz, path);
 
@@ -304,38 +320,49 @@ expublic int emq_close(mqd_t emqd)
     struct emq_info *emqinfo;
 
     emqinfo = emqd;
-    if (emqinfo->emqi_magic != EMQI_MAGIC) {
+    
+    /**
+     * Check is queue registered
+     */
+    if (!qd_hash_chk((mqd_t) emqd))
+    {
+        NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
-        return(-1);
+        return EXFAIL;
     }
+    
     emqhdr = emqinfo->emqi_hdr;
     attr = &emqhdr->emqh_attr;
 
-    if (emq_notify(emqd, NULL) != 0)        /* unregister calling process */
-        return(-1);
+    if (emq_notify(emqd, NULL) != EXSUCCEED)
+    {
+        return EXFAIL;
+    }
 
-    msgsize = MSGSIZE(attr->mq_msgsize);
+    msgsize = NDRX_EMQ_MSGSIZE(attr->mq_msgsize);
     filesize = sizeof(struct emq_hdr) + (attr->mq_maxmsg *
-                      (sizeof(struct msg_hdr) + msgsize));
+                      (sizeof(struct emq_msg_hdr) + msgsize));
 
     NDRX_LOG(log_dump, "Before munmap()");
-#if defined(WIN32)
-    if (!UnmapViewOfFile(emqinfo->emqi_hdr) || !CloseHandle(emqinfo->emqi_fmap))
-#else
+    
     if (munmap(emqinfo->emqi_hdr, filesize) == -1)
-#endif
-        return(-1);
+    {
+        return EXFAIL;
+    }
+    
     NDRX_LOG(log_dump, "After munmap()");
 
-    emqinfo->emqi_magic = 0;          /* just in case */
     NDRX_FPFREE(emqinfo);
     qd_hash_del(emqd);
 
     NDRX_LOG(log_dump, "into: emq_close ret 0");
     
-    return(0);
+    return EXSUCCEED;
 }
 
+/**
+ * Read message attributes
+ */
 expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
 {
     int             n;
@@ -344,31 +371,32 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     struct emq_info *emqinfo;
 
     NDRX_LOG(log_dump, "into: emq_getattr");
-    if (!qd_hash_chk((mqd_t) emqd)) {
+    
+    /**
+     * Check is queue registered
+     */
+    if (!qd_hash_chk((mqd_t) emqd))
+    {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
-        return(-1);
+        return EXFAIL;
     }
     
     emqinfo = emqd;
-    if (emqinfo->emqi_magic != EMQI_MAGIC)
-    {
-        errno = EBADF;
-        return(-1);
-    }
     emqhdr = emqinfo->emqi_hdr;
     attr = &emqhdr->emqh_attr;
     
     LOCK_Q;
 
-    emqstat->mq_flags = emqinfo->emqi_flags;   /* per-open */
-    emqstat->mq_maxmsg = attr->mq_maxmsg;    /* remaining three per-queue */
+    /* read queue attributes: */
+    emqstat->mq_flags = emqinfo->emqi_flags;
+    emqstat->mq_maxmsg = attr->mq_maxmsg;
     emqstat->mq_msgsize = attr->mq_msgsize;
     emqstat->mq_curmsgs = attr->mq_curmsgs;
 
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_getattr ret 0");
-    return(0);
+    return EXSUCCEED;
 }
 
 /**
@@ -379,23 +407,19 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
  */
 expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
 {
-#if !defined(WIN32)
     int             n;
     pid_t           pid;
     struct emq_hdr  *emqhdr;
     struct emq_info *emqinfo;
     
-    if (!qd_hash_chk((mqd_t) emqd)) {
+    if (!qd_hash_chk((mqd_t) emqd))
+    {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
-        return(-1);
+        return EXFAIL;
     }
 
     emqinfo = emqd;
-    if (emqinfo->emqi_magic != EMQI_MAGIC) {
-        errno = EBADF;
-        return(-1);
-    }
     emqhdr = emqinfo->emqi_hdr;
     
     LOCK_Q;
@@ -405,8 +429,8 @@ expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
     {
         if (emqhdr->emqh_pid == pid)
         {
-            emqhdr->emqh_pid = 0;     /* unregister calling process */
-        }                           /* no error if c aller not registered */
+            emqhdr->emqh_pid = 0;
+        }
     } 
     else 
     {
@@ -422,15 +446,12 @@ expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
         emqhdr->emqh_event = *notification;
     }
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
-    return(0);
+    return EXSUCCEED;
 
 err:
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
-    return(-1);
-#else
-    errno = EINVAL;
-    return(-1);
-#endif
+    return EXFAIL;
+
 }
 
 /**
@@ -447,22 +468,17 @@ expublic mqd_t emq_open(const char *pathname, int oflag, ...)
     va_list              ap;
     mode_t               mode;
     char                *mptr;
-    struct stat          statbuff;
-    struct emq_hdr       *emqhdr;
-    struct msg_hdr      *msghdr;
+    struct emq_msg_hdr      *msghdr;
     struct mq_attr      *attr;
     struct emq_info      *emqinfo;
+    struct stat          statbuff;
+    struct emq_hdr       *emqhdr;
     char emq_x[PATH_MAX+1];
     pthread_mutexattr_t  mattr;
     pthread_condattr_t   cattr;
-#if defined(WIN32)
-    HANDLE fmap;
-
-    mptr = NULL;
-#else
     mptr = (char *) MAP_FAILED;
-#endif
-    created = 0;
+
+    created = EXFALSE;
     nonblock = oflag & O_NONBLOCK;
     oflag &= ~O_NONBLOCK;
     emqinfo = NULL;
@@ -472,26 +488,34 @@ expublic mqd_t emq_open(const char *pathname, int oflag, ...)
 again:
     if (oflag & O_CREAT)
     {
-        va_start(ap, oflag); /* init ap to final named argument */
+        va_start(ap, oflag);
 
-        /*mode = va_arg(ap, mode_t) & ~S_IXUSR; - gives promition to int warning on osx */
         mode = va_arg(ap, int) & ~S_IXUSR;
         attr = va_arg(ap, struct mq_attr *);
         va_end(ap);
 
-        /* open and specify O_EXCL and user-execute */
-        fd = open(get_path(pathname, emq_x, sizeof(emq_x)), oflag | O_EXCL | O_RDWR, mode | S_IXUSR);
+        /* Exclusive open, as only one instance shall perform init  */
+        fd = open(get_path(pathname, emq_x, sizeof(emq_x)), 
+                oflag | O_EXCL | O_RDWR, mode | S_IXUSR);
+        
         if (fd < 0)
         {
             if (errno == EEXIST && (oflag & O_EXCL) == 0)
-                goto exists;            /* already exists, OK */
+            {
+                goto exists;
+            }
             else
-                return((mqd_t) -1);
+            {
+                return((mqd_t) EXFAIL);
+            }
         }
-        created = 1;
-                    /* first one to create the file initializes it */
+        
+        created = EXTRUE;
+        
         if (attr == NULL)
+        {
             attr = &defattr;
+        }
         else 
         {
             if (attr->mq_maxmsg <= 0 || attr->mq_msgsize <= 0) 
@@ -501,41 +525,37 @@ again:
             }
         }
         /* calculate and set the file size */
-        msgsize = MSGSIZE(attr->mq_msgsize);
+        msgsize = NDRX_EMQ_MSGSIZE(attr->mq_msgsize);
+        
         filesize = sizeof(struct emq_hdr) + (attr->mq_maxmsg *
-                           (sizeof(struct msg_hdr) + msgsize));
-        if (lseek(fd, filesize - 1, SEEK_SET) == -1)
+                           (sizeof(struct emq_msg_hdr) + msgsize));
+        
+        if (EXFAIL == lseek(fd, filesize - 1, SEEK_SET))
+        {
             goto err;
-        if (write(fd, "", 1) == -1)
+        }
+        
+        if (EXFAIL == write(fd, "", 1))
+        {
             goto err;
+        }
 
-        /* memory map the file */
-#if defined(WIN32)
-        fmap = CreateFileMapping((HANDLE)_get_osfhandle(fd), NULL, 
-                                 PAGE_READWRITE, 0, 0, NULL);
-        if (fmap == NULL)
-            goto err;
-        mptr = MapViewOfFile(fmap, FILE_MAP_WRITE, 0, 0, filesize);
-        if (mptr == NULL)
-#else
         mptr = mmap(NULL, filesize, PROT_READ | PROT_WRITE,
                                     MAP_SHARED, fd, 0);
         if (mptr == MAP_FAILED)
-#endif
+        {
             goto err;
+        }
 
-        /* allocate one emq_info{} for the queue */
+        /* Queue info block allocation */
         if ( (emqinfo = NDRX_FPMALLOC(sizeof(struct emq_info), 0)) == NULL)
+        {
             goto err;
-#if defined(WIN32)
-        emqinfo->emqi_fmap = fmap;
-#endif
+        }
+        
         emqinfo->emqi_hdr = emqhdr = (struct emq_hdr *) mptr;
-        emqinfo->emqi_magic = EMQI_MAGIC;
         emqinfo->emqi_flags = nonblock;
 
-        /* initialize header at beginning of file */
-        /* create free list with all messages on it */
         emqhdr->emqh_attr.mq_flags = 0;
         emqhdr->emqh_attr.mq_maxmsg = attr->mq_maxmsg;
         emqhdr->emqh_attr.mq_msgsize = attr->mq_msgsize;
@@ -545,18 +565,22 @@ again:
         emqhdr->emqh_head = 0;
         index = sizeof(struct emq_hdr);
         emqhdr->emqh_free = index;
+        
         for (i = 0; i < attr->mq_maxmsg - 1; i++)
         {
-            msghdr = (struct msg_hdr *) &mptr[index];
-            index += sizeof(struct msg_hdr) + msgsize;
+            msghdr = (struct emq_msg_hdr *) &mptr[index];
+            index += sizeof(struct emq_msg_hdr) + msgsize;
             msghdr->msg_next = index;
         }
-        msghdr = (struct msg_hdr *) &mptr[index];
-        msghdr->msg_next = 0;           /* end of free list */
+        
+        msghdr = (struct emq_msg_hdr *) &mptr[index];
+        /* this means, we have no next */
+        msghdr->msg_next = 0;
 
-        /* initialize mutex & condition variable */
         if ( (i = pthread_mutexattr_init(&mattr)) != 0)
+        {
             goto pthreaderr;
+        }
 
         if ((i=pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED)) < 0)
         {
@@ -576,7 +600,7 @@ again:
 
         i = pthread_mutex_init(&emqhdr->emqh_lock, &mattr);
 
-        pthread_mutexattr_destroy(&mattr);      /* be sure to destroy */
+        pthread_mutexattr_destroy(&mattr);
         if (i != 0)
         {
             NDRX_LOG(log_error, "Failed to pthread_mutex_init: %s", strerror(i));
@@ -585,22 +609,26 @@ again:
         }
 
         if ( (i = pthread_condattr_init(&cattr)) != 0)
+        {
             goto pthreaderr;
+        }
+        
         pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
         i = pthread_cond_init(&emqhdr->emqh_wait, &cattr);
-        pthread_condattr_destroy(&cattr);       /* be sure to destroy */
+        pthread_condattr_destroy(&cattr);
+        
         if (i != 0)
+        {
             goto pthreaderr;
+        }
 
-        /* initialization complete, turn off user-execute bit */
-#if defined(WIN32)
-        if (chmod(get_path(pathname, emq_x, sizeof(emq_x)), mode) == -1)
-#else
-        if (fchmod(fd, mode) == -1)
-#endif
+        if (EXFAIL==fchmod(fd, mode))
+        {
             goto err;
+        }
         
         close(fd);
+        
         if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo))
         {
             NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
@@ -610,18 +638,22 @@ again:
         return((mqd_t) emqinfo);
     }
 exists:
+    
     /* open the file then memory map */
     if ( (fd = open(get_path(pathname, emq_x, sizeof(emq_x)), O_RDWR)) < 0)
     {
         if (errno == ENOENT && (oflag & O_CREAT))
+        {
             goto again;
+        }
+        
         goto err;
     }
 
     /* make certain initialization is complete */
     for (i = 0; i < MAX_TRIES; i++)
     {
-        if (stat(get_path(pathname, emq_x, sizeof(emq_x)), &statbuff) == -1)
+        if (EXFAIL == stat(get_path(pathname, emq_x, sizeof(emq_x)), &statbuff))
         {
             if (errno == ENOENT && (oflag & O_CREAT))
             {
@@ -630,11 +662,15 @@ exists:
             }
             goto err;
         }
+        
         if ((statbuff.st_mode & S_IXUSR) == 0)
+        {
             break;
+        }
+        
         sleep(1);
-	/*usleep(1000000);*/
     }
+
     if (i == MAX_TRIES)
     {
         errno = ETIMEDOUT;
@@ -642,25 +678,22 @@ exists:
     }
 
     filesize = statbuff.st_size;
-#if defined(WIN32)
-    fmap = CreateFileMapping((HANDLE)_get_osfhandle(fd), NULL, PAGE_READWRITE, 
-                             0, 0, NULL);                             
-    if (fmap == NULL)
-        goto err;
-    mptr = MapViewOfFile(fmap, FILE_MAP_WRITE, 0, 0, filesize);
-    if (mptr == NULL)
-#else
+    
     mptr = mmap(NULL, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    
     if (mptr == MAP_FAILED)
-#endif
+    {
         goto err;
+    }
+    
     close(fd);
 
-    /* allocate one emq_info{} for each open */
+    /* queue info block per process */
     if ( (emqinfo = NDRX_FPMALLOC(sizeof(struct emq_info), 0)) == NULL)
+    {
         goto err;
+    }
     emqinfo->emqi_hdr = (struct emq_hdr *) mptr;
-    emqinfo->emqi_magic = EMQI_MAGIC;
     emqinfo->emqi_flags = nonblock;
     
     if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo))
@@ -674,23 +707,24 @@ exists:
 pthreaderr:
     errno = i;
 err:
-    /* don't let following function calls change errno */
+
     save_errno = errno;
+
     if (created)
+    {
         unlink(get_path(pathname, emq_x, sizeof(emq_x)));
-#if defined(WIN32)
-    if (fmap != NULL) {
-        if (mptr != NULL) {
-            UnmapViewOfFile(mptr);
-        }
-        CloseHandle(fmap);
     }
-#else
+
     if (mptr != MAP_FAILED)
+    {
         munmap(mptr, filesize);
-#endif
+    }
+
     if (emqinfo != NULL)
+    {
         NDRX_FPFREE(emqinfo);
+    }
+
     close(fd);
     
     NDRX_LOG(log_dump, "into: emq_open ret -1");
@@ -719,7 +753,7 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     ssize_t         len;
     struct emq_hdr  *emqhdr;
     struct mq_attr *attr;
-    struct msg_hdr *msghdr;
+    struct emq_msg_hdr *msghdr;
     struct emq_info *emqinfo;
 
     NDRX_LOG(log_dump, "into: emq_timedreceive");
@@ -728,17 +762,13 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
-        return(-1);
+        return EXFAIL;
     }
 
     emqinfo = emqd;
-    if (emqinfo->emqi_magic != EMQI_MAGIC)
-    {
-        errno = EBADF;
-        return(-1);
-    }
-    emqhdr = emqinfo->emqi_hdr;        /* struct pointer */
-    mptr = (char *) emqhdr;          /* byte pointer */
+
+    emqhdr = emqinfo->emqi_hdr;
+    mptr = (char *) emqhdr;
     attr = &emqhdr->emqh_attr;
     
     LOCK_Q;
@@ -750,13 +780,15 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     }
     
     if (attr->mq_curmsgs == 0)
-    {            /* queue is empty */
+    {
+        
         if (emqinfo->emqi_flags & O_NONBLOCK)
         {
             errno = EAGAIN;
             goto err;
         }
-        /* wait for a message to be placed onto queue */
+        
+        /* Wait for messages */
         emqhdr->emqh_nwait++;
         while (attr->mq_curmsgs == 0)
         {
@@ -815,16 +847,19 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
 
     if ( (index = emqhdr->emqh_head) == 0)
     {
-        NDRX_LOG(log_error, "emq_timedreceive: curmsgs = %ld; head = 0",attr->mq_curmsgs);
+        NDRX_LOG(log_error, "emq_timedreceive: curmsgs = %ld; head = 0", attr->mq_curmsgs);
         abort();
     }
 
-    msghdr = (struct msg_hdr *) &mptr[index];
-    emqhdr->emqh_head = msghdr->msg_next;     /* new head of list */
+    msghdr = (struct emq_msg_hdr *) &mptr[index];
+    emqhdr->emqh_head = msghdr->msg_next;
     len = msghdr->msg_len;
-    memcpy(ptr, msghdr + 1, len);           /* copy the message itself */
+    memcpy(ptr, msghdr + 1, len);
+    
     if (priop != NULL)
+    {
         *priop = msghdr->msg_prio;
+    }
 
     /* just-read message goes to front of free list */
     msghdr->msg_next = emqhdr->emqh_free;
@@ -844,13 +879,14 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     return(len);
 
 err:
+    
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     n = errno;
     NDRX_LOG(log_dump, "emq_timedreceive - failed: %s stats: %ld wait: %ld",
             strerror(errno), attr->mq_curmsgs, emqhdr->emqh_nwait);
     errno = n;
     
-    return(-1);
+    return EXFAIL;
 }
 
 /**
@@ -871,7 +907,7 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
     struct sigevent *sigev;
     struct emq_hdr   *emqhdr;
     struct mq_attr  *attr;
-    struct msg_hdr  *msghdr, *nmsghdr, *pmsghdr;
+    struct emq_msg_hdr  *msghdr, *nmsghdr, *pmsghdr;
     struct emq_info  *emqinfo;
 
     NDRX_LOG(log_dump, "into: emq_timedsend");
@@ -880,17 +916,12 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
     {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
-        return(-1);
+        return EXFAIL;
     }
     
     emqinfo = emqd;
-    if (emqinfo->emqi_magic != EMQI_MAGIC)
-    {
-        errno = EBADF;
-        return(-1);
-    }
-    emqhdr = emqinfo->emqi_hdr;        /* struct pointer */
-    mptr = (char *) emqhdr;          /* byte pointer */
+    emqhdr = emqinfo->emqi_hdr;
+    mptr = (char *) emqhdr;
     attr = &emqhdr->emqh_attr;
     
     LOCK_Q;
@@ -962,18 +993,20 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
         userlog("emq_send: curmsgs = %ld; free = 0", attr->mq_curmsgs);
     }
 
-    nmsghdr = (struct msg_hdr *) &mptr[freeindex];
+    nmsghdr = (struct emq_msg_hdr *) &mptr[freeindex];
     nmsghdr->msg_prio = prio;
     nmsghdr->msg_len = len;
-    memcpy(nmsghdr + 1, ptr, len);          /* copy message from caller */
-    emqhdr->emqh_free = nmsghdr->msg_next;    /* new freelist head */
+    memcpy(nmsghdr + 1, ptr, len);
+    emqhdr->emqh_free = nmsghdr->msg_next;
 
-    /* find right place for message in linked list */
+    /* Search the places for message */
     index = emqhdr->emqh_head;
-    pmsghdr = (struct msg_hdr *) &(emqhdr->emqh_head);
+    pmsghdr = (struct emq_msg_hdr *) &(emqhdr->emqh_head);
+    
     while (index != 0)
     {
-        msghdr = (struct msg_hdr *) &mptr[index];
+        msghdr = (struct emq_msg_hdr *) &mptr[index];
+        
         if (prio > msghdr->msg_prio)
         {
             nmsghdr->msg_next = index;
@@ -983,27 +1016,25 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
         index = msghdr->msg_next;
         pmsghdr = msghdr;
     }
+    
     if (index == 0)
     {
-        /* queue was empty or new goes at end of list */
         pmsghdr->msg_next = freeindex;
         nmsghdr->msg_next = 0;
     }
     
+    /* sent notification if we queue is empty */
     if (attr->mq_curmsgs == 0)
     {
         if (emqhdr->emqh_pid != 0 && emqhdr->emqh_nwait == 0)
         {
             sigev = &emqhdr->emqh_event;
-#if !defined(WIN32)
+            
             if (sigev->sigev_notify == SIGEV_SIGNAL)
             {
-                /*sigqueue(emqhdr->emqh_pid, sigev->sigev_signo,
-                                         sigev->sigev_value);*/
                 kill(emqhdr->emqh_pid, sigev->sigev_signo);
             }
-#endif
-            emqhdr->emqh_pid = 0;             /* unregister */
+            emqhdr->emqh_pid = 0;
         }
     }
 
@@ -1016,7 +1047,7 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_timedsend - return 0 stats: %ld wait: %ld",
             attr->mq_curmsgs, emqhdr->emqh_nwait);
-    return(0);
+    return EXSUCCEED;
 
 err:
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
@@ -1025,7 +1056,7 @@ err:
     NDRX_LOG(log_dump, "into: emq_timedsend - return -1: %s stats: %ld wait: %ld",
             strerror(n), attr->mq_curmsgs, emqhdr->emqh_nwait);
     errno = n;
-    return(-1);
+    return EXFAIL;
 }
 
 /**
@@ -1074,15 +1105,10 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
     {
         NDRX_LOG(log_error, "Invalid queue descriptor: %p", emqd);
         errno = EBADF;
-        return(-1);
+        return EXFAIL;
     }
     
     emqinfo = emqd;
-    if (emqinfo->emqi_magic != EMQI_MAGIC)
-    {
-        errno = EBADF;
-        return(-1);
-    }
     emqhdr = emqinfo->emqi_hdr;
     attr = &emqhdr->emqh_attr;
     
@@ -1090,20 +1116,24 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
 
     if (oemqstat != NULL)
     {
-        oemqstat->mq_flags = emqinfo->emqi_flags;  /* previous attributes */
+        oemqstat->mq_flags = emqinfo->emqi_flags;
         oemqstat->mq_maxmsg = attr->mq_maxmsg;
         oemqstat->mq_msgsize = attr->mq_msgsize;
-        oemqstat->mq_curmsgs = attr->mq_curmsgs; /* and current status */
+        oemqstat->mq_curmsgs = attr->mq_curmsgs;
     }
 
     if (emqstat->mq_flags & O_NONBLOCK)
+    {
         emqinfo->emqi_flags |= O_NONBLOCK;
+    }
     else
+    {
         emqinfo->emqi_flags &= ~O_NONBLOCK;
+    }
 
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_setattr - return 0");
-    return(0);
+    return EXSUCCEED;
 }
 
 /**
@@ -1119,8 +1149,11 @@ expublic int emq_unlink(const char *pathname)
     if (unlink(get_path(pathname, emq_x, sizeof(emq_x))) == -1)
     {
         NDRX_LOG(log_dump, "into: emq_unlink ret -1");
-        return(-1);
+        return EXFAIL;
     }
     NDRX_LOG(log_dump, "into: emq_unlink ret 0");
-    return(0);
+    return EXSUCCEED;
 }
+
+
+/* vim: set ts=4 sw=4 et smartindent: */
