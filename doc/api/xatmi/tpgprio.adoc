@@ -55,7 +55,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpgprio(3)* *ndrxconfig.xml(5)*
+*tpsprio(3)* *ndrxconfig.xml(5)*
 
 COPYING
 -------
