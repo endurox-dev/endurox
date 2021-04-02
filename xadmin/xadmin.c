@@ -478,7 +478,7 @@ cmd_mapping_t M_command_map[] =
                 "\tOptional arguments: \n"
                 "\t\t -a\tPrint all slots\n"
                 "\t\t -i\tPrint in use slots\n"
-                "\t\t -w\tPrint was in use slots\n",
+                "\t\t -w\tPrint was in use slots",
                 NULL},
 };
 
