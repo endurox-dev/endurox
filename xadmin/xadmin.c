@@ -182,7 +182,7 @@ cmd_mapping_t M_command_map[] =
     {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  2, 
                 "Print process model\n"
                 "\tUsage ppm [OPTION]...\n"
-                "\t\t -2\tPrint Page 2\n"
+                "\t\t -2\tPrint Page 2"
                 ,NULL},
     {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  1, 
                 "Shared mem, print services\n"
@@ -388,7 +388,7 @@ cmd_mapping_t M_command_map[] =
                 "\tUsage: svsemids [-i] [-k]\n"
                 "\tOptional arguments: \n"
                 "\t\t -i Print System V Resource IDs only\n"
-                "\t\t -k Print System V Resource Keys only\n"
+                "\t\t -k Print System V Resource Keys only"
                 , NULL},
     {"pubfdb",    cmd_pubfdb,EXFAIL,            0,  0, 
                 "Print UBF custom fields (from DB)"
