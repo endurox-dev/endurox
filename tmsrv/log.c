@@ -233,7 +233,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     }
     
     /* Only for static... */
-    if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
+    if (!(tmflags & TMFLAGS_DYNAMIC_REG))
     {
         /* assign btid? 
         tmp->rmstatus[xai->tmrmid-1].rmstatus = XA_RM_STATUS_ACTIVE;
@@ -250,7 +250,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
             EXFAIL_OUT(ret);
         }
         
-        if (tmflags & TMTXFLAGS_TPNOSTARTXID)
+        if (tmflags & TMFLAGS_TPNOSTARTXID)
         {
             NDRX_LOG(log_info, "TPNOSTARTXID => starting as %c - prepared", 
                     XA_RM_STATUS_PREP);
@@ -340,7 +340,7 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
         NDRX_LOG(log_info, "RMID %hd/%ld added to xid_str: [%s]", 
             rmid, *btid, xai->tmxid);
         
-        if (flags & TMTXFLAGS_TPNOSTARTXID)
+        if (flags & TMFLAGS_TPNOSTARTXID)
         {
             NDRX_LOG(log_info, "TPNOSTARTXID => adding as %c - unknown", 
                     XA_RM_STATUS_UNKOWN);

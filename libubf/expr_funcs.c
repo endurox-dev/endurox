@@ -187,12 +187,15 @@ void yyerror(char *s, ...)
     if (EXFAIL!=G_error)
     {
         va_list ap;
-        va_start(ap, s);
         char errbuf[2048];
+        int len;
 
+        va_start(ap, s);
         snprintf(errbuf, sizeof(errbuf), ". Near of %d-%d: ", 
                 yylloc.first_column, yylloc.last_column);
-        vsprintf(errbuf+strlen(errbuf), s, ap);
+        len=strlen(errbuf);
+        vsnprintf(errbuf+len, sizeof(errbuf)-len, s, ap);
+        va_end(ap);
 
         if (ndrx_Bis_error())
         {
@@ -1153,19 +1156,31 @@ out:
  * Also read the value from view buffer
  * @param p_ub
  * @param rbfldid
- * @param buf
+ * @param buf allocated buffer where to unload the data for strings...
  * @param len
  * @param usrtype
  * @return 
  */
 exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid, 
-        char *buf, BFLDLEN *len, int usrtype)
+        char **buf, BFLDLEN *len, int usrtype)
 {
     int ret = EXSUCCEED;
     
     if (rbfldid->nrflds==1)
     {
-        ret=CBget(p_ub, rbfldid->bfldid, rbfldid->occ, buf, len, usrtype);
+        if (BFLD_STRING==usrtype)
+        {
+            *buf=CBgetalloc(p_ub, rbfldid->bfldid, rbfldid->occ, usrtype, NULL);
+            if (NULL==*buf)
+            {
+                ret=EXFAIL;
+            }
+            
+        }
+        else
+        {
+            ret=CBget(p_ub, rbfldid->bfldid, rbfldid->occ, *buf, len, usrtype);
+        }
     }
     else if (NULL!=rbfldid->cname)
     {
@@ -1173,13 +1188,37 @@ exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid,
          * return data even if it is NULL, so that buffer can tested agains
          * NULL values.
          */
-        ret = CBvgetr(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
-                rbfldid->cname_occ, buf, len, usrtype, BVACCESS_NOTNULL);
+        if (BFLD_STRING==usrtype)
+        {
+            *buf = CBvgetallocr(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
+                    rbfldid->cname_occ, usrtype, BVACCESS_NOTNULL, NULL);
+            if (NULL==*buf)
+            {
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            ret = CBvgetr(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
+                    rbfldid->cname_occ, buf, len, usrtype, BVACCESS_NOTNULL);
+        }
     }
     else
     {
-        ret = CBgetr (p_ub, (BFLDID *)rbfldid->fldidocc.mem,
-                            buf, len, usrtype);
+        if (BFLD_STRING==usrtype)
+        {
+            ret = CBgetallocr (p_ub, (BFLDID *)rbfldid->fldidocc.mem, usrtype, NULL);
+            
+            if (NULL==*buf)
+            {
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            ret = CBgetr (p_ub, (BFLDID *)rbfldid->fldidocc.mem,
+                                buf, len, usrtype);
+        }
     }
     
     return ret;
@@ -1383,6 +1422,11 @@ int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
  * This reads long, float/double.
  * All others are assumed as 
  */
+/**
+ * This reads FB. But takes out no string value.
+ * This reads long, float/double.
+ * All others are assumed as 
+ */
 int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
 {
     int ret=EXSUCCEED;
@@ -1404,122 +1448,108 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
      * short/long -> long
      * all true if field present.
      */
-    if (EXSUCCEED==ret)
+
+    fld_type=Bfldtype(bfldid);
+
+    if (!Bpres_unified(p_ub, &(fld->fld)))
     {
-        fld_type=Bfldtype(bfldid);
-
-        if (!Bpres_unified(p_ub, &(fld->fld)))
+        UBF_LOG(log_debug, "Field [%s] not present in fb",
+                                            fld->fld.fldnm);
+        v->value_type = VALUE_TYPE_LONG;
+        v->longval=v->boolval=EXFALSE;
+        v->is_null=EXTRUE;
+    }
+    /* In this case it is just a TRUE. */
+    else if (BFLD_STRING==fld_type || BFLD_CARRAY==fld_type || BFLD_CHAR==fld_type ||
+            NULL!=fld->fld.cname)
+    {
+        if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld),
+                        (char *)v->strval, NULL, BFLD_STRING))
         {
-            UBF_LOG(log_debug, "Field [%s] not present in fb",
-                                                fld->fld.fldnm);
-            v->value_type = VALUE_TYPE_LONG;
-            v->longval=v->boolval=EXFALSE;
-            v->is_null=EXTRUE;
-        }
-        /* In this case it is just a TRUE. */
-        else if (BFLD_STRING==fld_type || BFLD_CARRAY==fld_type || BFLD_CHAR==fld_type ||
-                NULL!=fld->fld.cname)
-        {
-            BFLDLEN len = MAX_TEXT+1;
-
-            if (NULL==(v->strval=NDRX_MALLOC(len)))
+            if (BNOTPRES==Berror)
             {
-                UBF_LOG(log_error, "Error malloc fail!");
-                ndrx_Bset_error_fmt(BMALLOC, "Error malloc fail! (cannot allocate %d)", len);
+                ndrx_Bunset_error(); /* clear error */
+                UBF_LOG(log_warn, "Failed to get [%s] as str"
+                                             " - downgrade to FALSE!",
+                                             fld->fld.fldnm);
+                v->value_type = VALUE_TYPE_FLD_STR;
+                v->longval=v->boolval=EXFALSE;
+                v->is_null=EXTRUE;
+            }
+            else /* on all other errors we are going to FAIL! */
+            {
+                UBF_LOG(log_warn, "Failed to get [%s] - %s",
+                    fld->fld.fldnm, Bstrerror(Berror));
                 ret=EXFAIL;
             }
-            else
-            {
-                v->dyn_alloc = 1; /* ensure that FREE_UP_UB_BUF can capture these */
-            }
+            /* Lets free memory right right here, why not? */
 
-            if (EXSUCCEED==ret && EXSUCCEED!=CBget_unified(p_ub, &(fld->fld),
-                            (char *)v->strval, &len, BFLD_STRING))
-            {
-                if (BNOTPRES==Berror)
-                {
-                    ndrx_Bunset_error(); /* clear error */
-                    UBF_LOG(log_warn, "Failed to get [%s] as str"
-                                                 " - downgrade to FALSE!",
-                                                 fld->fld.fldnm);
-                    v->value_type = VALUE_TYPE_FLD_STR;
-                    v->longval=v->boolval=EXFALSE;
-                    v->is_null=EXTRUE;
-                }
-                else /* on all other errors we are going to FAIL! */
-                {
-                    UBF_LOG(log_warn, "Failed to get [%s] - %s",
-                        fld->fld.fldnm, Bstrerror(Berror));
-                    ret=EXFAIL;
-                }
-                /* Lets free memory right right here, why not? */
-
-                NDRX_FREE(v->strval);
-                v->dyn_alloc = 0;
-                v->strval = NULL;
-            }
-            else if (EXSUCCEED==ret)
-            {
-                v->value_type = VALUE_TYPE_FLD_STR;
-                v->boolval=EXTRUE;
-            }
-
+            NDRX_FREE(v->strval);
+            v->dyn_alloc = EXFALSE;
+            v->strval = NULL;
         }
-        else if (BFLD_SHORT==fld_type || BFLD_LONG==fld_type)
+        else
         {
-            if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld), 
-                            (char *)&v->longval, NULL, BFLD_LONG))
+            v->value_type = VALUE_TYPE_FLD_STR;
+            v->boolval=EXTRUE;
+            v->dyn_alloc = EXTRUE;
+        }
+
+    }
+    else if (BFLD_SHORT==fld_type || BFLD_LONG==fld_type)
+    {
+        if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld), 
+                        (char *)&v->longval, NULL, BFLD_LONG))
+        {
+            if (BNOTPRES==Berror)
             {
-                if (BNOTPRES==Berror)
-                {
-                    ndrx_Bunset_error(); /* clear error */
-                    UBF_LOG(log_warn, "Failed to get [%s] as long"
-                            " - downgrade to FALSE!",
-                            fld->fld.fldnm);
-                    v->value_type = VALUE_TYPE_LONG;
-                    v->longval=v->boolval=EXFALSE;
-                    v->is_null=EXTRUE;
-                }
-                else /* on all other errors we are going to FAIL! */
-                {
-                    UBF_LOG(log_warn, "Failed to get [%s] - %s",
-                        fld->fld.fldnm, Bstrerror(Berror));
-                    ret=EXFAIL;
-                }
+                ndrx_Bunset_error(); /* clear error */
+                UBF_LOG(log_warn, "Failed to get [%s] as long"
+                        " - downgrade to FALSE!",
+                        fld->fld.fldnm);
+                v->value_type = VALUE_TYPE_LONG;
+                v->longval=v->boolval=EXFALSE;
+                v->is_null=EXTRUE;
             }
-            else
+            else /* on all other errors we are going to FAIL! */
             {
-                    v->value_type = VALUE_TYPE_LONG;
-                    v->boolval=EXTRUE;
+                UBF_LOG(log_warn, "Failed to get [%s] - %s",
+                    fld->fld.fldnm, Bstrerror(Berror));
+                ret=EXFAIL;
             }
         }
-        else if (BFLD_FLOAT==fld_type || BFLD_DOUBLE==fld_type)
+        else
         {
-            if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld), 
-                            (char *)&v->floatval, NULL, BFLD_DOUBLE))
-            {
-                if (BNOTPRES==Berror)
-                {
-                    ndrx_Bunset_error(); /* clear error */
-                    UBF_LOG(log_warn, "Failed to get [%s] as double"
-                            " - downgrade to FALSE!",
-                            fld->fld.fldnm);
-                    v->value_type = VALUE_TYPE_LONG;
-                    v->longval=v->boolval=EXFALSE;
-                    v->is_null=EXTRUE;
-                }
-                else /* on all other errors we are going to FAIL! */
-                {
-                    UBF_LOG(log_warn, "Failed to get [%s] - %s",
-                        fld->fld.fldnm, Bstrerror(Berror));
-                    ret=EXFAIL;
-                }
-            }
-            else
-            {
-                v->value_type = VALUE_TYPE_FLOAT;
+                v->value_type = VALUE_TYPE_LONG;
                 v->boolval=EXTRUE;
+        }
+    }
+    else if (BFLD_FLOAT==fld_type || BFLD_DOUBLE==fld_type)
+    {
+        if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld), 
+                        (char *)&v->floatval, NULL, BFLD_DOUBLE))
+        {
+            if (BNOTPRES==Berror)
+            {
+                ndrx_Bunset_error(); /* clear error */
+                UBF_LOG(log_warn, "Failed to get [%s] as double"
+                        " - downgrade to FALSE!",
+                        fld->fld.fldnm);
+                v->value_type = VALUE_TYPE_LONG;
+                v->longval=v->boolval=EXFALSE;
+                v->is_null=EXTRUE;
             }
+            else /* on all other errors we are going to FAIL! */
+            {
+                UBF_LOG(log_warn, "Failed to get [%s] - %s",
+                    fld->fld.fldnm, Bstrerror(Berror));
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            v->value_type = VALUE_TYPE_FLOAT;
+            v->boolval=EXTRUE;
         }
     }
 
@@ -1530,6 +1560,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
 
     return ret;
 }
+
 /**
  * Detect is string looking like float?
  * @param s

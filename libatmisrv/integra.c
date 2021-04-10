@@ -153,7 +153,8 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
             found = EXFALSE;
             while (NULL!=tab->svcnm)
             {
-                if (0==strcmp(el->svc_aliasof, tab->funcnm))
+                if ((0==strcmp(el->svc_aliasof, tab->funcnm)) ||
+                    (EXEOS==el->svc_aliasof[0] && 0==strcmp(el->svc_nm, tab->funcnm)))
                 {
                     /* advertise only if have service name */
                     if (EXSUCCEED!=tpadvertise_full(el->svc_nm, tab->p_func, tab->funcnm))
@@ -167,6 +168,22 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
                             EXFAIL_OUT(ret);
                         }
                     }
+                    
+                    /* Adding this service to exception list
+                     * in case if doing G_server_conf.advertise_all=0
+                     * As -S we shall still present in the final
+                     */
+                    if (!G_server_conf.advertise_all)
+                    {
+                        NDRX_LOG(log_debug, "Marking alias of function [%s] for advertise", el->svc_nm);
+                        if (EXSUCCEED!=ndrx_svchash_add(&ndrx_G_svchash_funcs, el->svc_nm))
+                        {
+                            NDRX_LOG(log_error, "Failed to mark service [%s] for advertise",
+                                    el->svc_nm);
+                            EXFAIL_OUT(ret);
+                        }
+                    }
+                    
                     found = EXTRUE;
                     break;
                 }

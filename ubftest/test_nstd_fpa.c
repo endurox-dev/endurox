@@ -128,7 +128,7 @@ Ensure(test_nstd_fpa_limits)
     char *ptr[NDRX_FPA_4_DNUM+1];
     char *ptr2[NDRX_FPA_4_DNUM+1];
     int i;
-    ndrx_fpapool_t stats;
+    ndrx_fpapool_t stats;    
     
     unsetenv(CONF_NDRX_FPAOPTS);
 
@@ -297,7 +297,7 @@ Ensure(test_nstd_fpa_config_memall)
  * Configure limits and verify...
  */
 Ensure(test_nstd_fpa_config_limits)
-{
+{    
     char *ptr;
     ndrx_fpapool_t stats;
     

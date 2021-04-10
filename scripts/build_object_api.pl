@@ -37,7 +37,6 @@ sub remove_white_space {
     return $ret;
 }
 
-#http://stackoverflow.com/questions/5049358/split-on-comma-but-only-when-not-in-parenthesis
 sub split_by_comma_but_not_parenthesis {
 
     my $string=shift;
@@ -46,7 +45,7 @@ sub split_by_comma_but_not_parenthesis {
     |
     [^,]*)           # split on comma outside parens
     (?:,|$)/gx);
-    
+
     return @array;
 }
 
@@ -107,7 +106,7 @@ sub open_h {
     
 my $message = <<"END_MESSAGE";
 /**
- * @brief $title
+ * \@brief $title
  *
  * \@file ${M_name}.h
  */
@@ -136,7 +135,7 @@ my $message = <<"END_MESSAGE";
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
- * contact@mavimax.com
+ * contact\@mavimax.com
  * -----------------------------------------------------------------------------
  */
 #ifndef __${M_name_upper}_H
@@ -201,9 +200,9 @@ sub open_c {
 
 my $message = <<"END_MESSAGE";
 /**
- * @brief $title
+ * \@brief $title
  *
- * @file ${M_name}.c
+ * \@file ${M_name}.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -230,7 +229,7 @@ my $message = <<"END_MESSAGE";
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
- * contact@mavimax.com
+ * contact\@mavimax.com
  * -----------------------------------------------------------------------------
  */
 #include <string.h>
@@ -245,7 +244,6 @@ my $message = <<"END_MESSAGE";
 #include <atmi_tls.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 #include <xa_cmn.h>
@@ -517,6 +515,8 @@ sub write_c {
             ||$func_name=~/^tpbegin$/
             ||$func_name=~/^tpcommit$/
             ||$func_name=~/^tpopen$/
+            ||$func_name=~/^tpsuspend$/
+            ||$func_name=~/^tpresume$/
             ||$func_name=~/^tpclose$/
             ||$func_name=~/^tppost$/
             ||$func_name=~/^tpenqueue$/
@@ -863,6 +863,12 @@ NEXT: while( my $line = <$info>)
             $line = $line.$next_line;
         }
 
+        # skip some lines which we cannot parse
+        if ($line =~ m/_tmgetsvrargs/)
+        {
+            next NEXT;
+        }
+
         #Strip off any comments found
         $line =~ s/(\/\*.*\*\/)//gi;
 
@@ -933,6 +939,7 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/tpsrvsetctxdata/
                 && $func_name !~ m/tpsrvfreectxdata/
                 && $func_name !~ m/tpunadvertise/
+                && $func_name !~ m/tpexit/
                 )
             {
                 print "skip - next\n";
@@ -946,6 +953,8 @@ NEXT: while( my $line = <$info>)
                 || $line =~ m/G_tpsvrdone__/ 
                 || $func_name =~ m/ndrx_main$/
                 || $func_name =~ m/_tmstartserver$/
+                || $func_name =~ m/_tmrunserver$/
+                || $func_name =~ m/_tmgetsvrargs$/
                 || $func_name =~ m/ndrx_main_integra/ 
                 || $func_name =~ m/ndrx_atmi_tls_get/
                 || $func_name =~ m/ndrx_atmi_tls_set/
@@ -968,8 +977,11 @@ NEXT: while( my $line = <$info>)
                 || $func_name =~ m/tpsrvgetctxdata/
                 || $func_name =~ m/tpext_delb4pollcb/
                 || $func_name =~ m/tpsvrdone/
+                || $func_name =~ m/tpsvrthrinit/
+                || $func_name =~ m/tpsvrthrdone/
                 || $func_name =~ m/tpcontinue/
                 || $func_name =~ m/tpext_delperiodcb/
+                || $func_name =~ m/tpexit/
                 )
             {
                 print "skip - next\n";
@@ -1076,8 +1088,7 @@ NEXT: while( my $line = <$info>)
                 {
                     print "Normal type...\n";
                     ($sign, $type, $name) = 
-                        ($pair=~m/^\s*(unsigned\s*)?([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
-
+                        ($pair=~m/^\s*(unsigned\s*|const\s*)?([A-Za-z0-9_]+\s*\**)\s*([A-Za-z0-9_]+)/);
                     $sign = remove_white_space($sign);
                     $type = remove_white_space($type);
                     $name = remove_white_space($name);
@@ -1099,7 +1110,7 @@ NEXT: while( my $line = <$info>)
 
                 push @func_arg_def, $pair;
 
-                print "got param (pair: [$pair]), type: [$type], name: [$name], def: [$def]\n";
+                print "got param (pair: [$pair]), sign: [$sign], type: [$type], name: [$name], def: [$def]\n";
                 push @func_arg_type, $type;
                 push @func_arg_name, $name; 
             }

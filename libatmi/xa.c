@@ -45,7 +45,7 @@
 #include <atmi_shm.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
+#include <nstdutil.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
@@ -99,6 +99,16 @@ exprivate int atmi_xa_init_thread(int do_open);
 /******************************************************************************/
 /*                          LIB INIT                                          */
 /******************************************************************************/
+
+/**
+ * Return Enduro/X null switch (special case for aix/golang) - to
+ * have atlest null switch available - thus provide internal one
+ * @return XA switch or null
+ */
+exprivate struct xa_switch_t *ndrx_aix_fix(void)
+{
+    return &tmnull_switch;
+}
 
 /**
  * Initialize current thread
@@ -180,8 +190,21 @@ expublic int atmi_xa_init(void)
 
     func = (ndrx_get_xa_switch_loader)dlsym(handle, "ndrx_get_xa_switch");
 
+/* for golang brtl runtime linkage cannot be enabled, thus processes
+ * do no see the global Enduro/X variables,
+ * we can make special exception here for nullswitch, to use
+ * built-in symbol here
+ */
+#ifdef EX_OS_AIX
+    if (ndrx_str_ends_with(G_atmi_env.xa_driverlib, "libndrxxanulls.so"))
+    {
+        func = ndrx_aix_fix;
+    }
+#endif
+
     if (!func) 
     {
+
         error = dlerror();
         NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
             G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
@@ -484,9 +507,10 @@ out:
  * Start transaction (or join..) depending on flags.
  * @param xid
  * @param flags
- * @return 
+ * @param silent_err for XAER_NOTA or XAER_DUPID errors, do not generate errors in log
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
+expublic int atmi_xa_start_entry(XID *xid, long flags, int silent_err)
 {
     int ret = EXSUCCEED;
     int need_retry;
@@ -508,7 +532,7 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
             need_retry = EXTRUE;
         }
         
-        if (!ping_try || need_retry)
+        if (!silent_err || need_retry)
         {
             NDRX_LOG(log_error, "%s - fail: %d [%s]", 
                     __func__, ret, atmi_xa_geterrstr(ret));
@@ -561,7 +585,7 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
         if (XA_OK!=ret)
         
         {
-            if (ping_try && XAER_NOTA==ret)
+            if (silent_err && (XAER_NOTA==ret || XAER_DUPID==ret))
             {
                 /* needs to set error silently.. */
                 ndrx_TPset_error_fmt_rsn_silent(TPERMERR,  
@@ -969,12 +993,12 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
         /* tell RM, then we use dynamic reg (so that it does not register 
          * local RMs work)
          */
-        tmflags|=TMTXFLAGS_DYNAMIC_REG;
+        tmflags|=TMFLAGS_DYNAMIC_REG;
     }
     
     if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
     {
-        tmflags|=TMTXFLAGS_TPNOSTARTXID;
+        tmflags|=TMFLAGS_TPNOSTARTXID;
     }
     
     if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
@@ -1112,7 +1136,7 @@ out:
  *
  * @param timeout
  * @param flags TPTXCOMMITDLOG - return when prepared
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_tpcommit(long flags)
 {
@@ -1151,6 +1175,9 @@ expublic int ndrx_tpcommit(long flags)
         
     }
             
+    /* allow commit even, if we are not the initiators,
+     * but for auto-tran this is OK
+     */
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
     {
         NDRX_LOG(log_error, "tpcommit: Not not initiator");
@@ -1449,9 +1476,9 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     }
     
     /* Now transfer current transaction data from one struct to another... */
+    
     XA_TX_COPY(tranid, G_atmi_tls->G_atmi_xa_curtx.txinfo);
     tranid->is_tx_initiator = G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator;
-    
     
     /* TODO: if join is not supported, then we terminate current transaction/BTID
      * and that shall be removed from list.
@@ -1497,9 +1524,9 @@ out:
 
 /**
  * Resume suspended transaction
- * @param tranid
- * @param flags
- * @return 
+ * @param tranid transaction id object
+ * @param flags TPTXNOOPTIM - do not use optimization known RMs
+ * @return EXUSCCEED/EXFAIL
  */
 expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
 {
@@ -1515,10 +1542,10 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
         ndrx_TPset_error_msg(TPEINVAL,  "_tpresume: trandid = NULL!");
         EXFAIL_OUT(ret);
     }
-    
-    if (0!=flags)
+       
+    if (0!= (flags & ~TPTXNOOPTIM) )
     {
-        ndrx_TPset_error_msg(TPEINVAL,  "_tpresume: flags!=0!");
+        ndrx_TPset_error_msg(TPEINVAL,  "_tpresume: flags is not 0, nor TPTXNOOPTIM");
         EXFAIL_OUT(ret);
     }
     
@@ -1532,6 +1559,12 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
     /* Copy off the tx info to call */
     XA_TX_COPY((&xai), tranid);
     
+    /* do not use optimization data... */
+    if (flags & TPTXNOOPTIM)
+    {
+        xai.tmknownrms[0]=EXEOS;
+    }
+    
     if (EXSUCCEED!=_tp_srv_join_or_new(&xai, EXFALSE, &was_join))
     {
         ndrx_TPset_error_msg(TPESYSTEM,  "_tpresume: Failed to enter in global TX!");
@@ -1540,11 +1573,12 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
     
     G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = tranid->is_tx_initiator;
     
-    NDRX_LOG(log_debug, "Resume ok xid: [%s] is_tx_initiator: %d", 
-            tranid->tmxid, tranid->is_tx_initiator);
+    NDRX_LOG(log_debug, "Resume ok xid: [%s] is_tx_initiator: %d abort_only: %d", 
+            tranid->tmxid, tranid->is_tx_initiator, 
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY);
     
 out:
-    return EXSUCCEED;
+    return ret;
 }
 
 /**
@@ -1712,7 +1746,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         
         if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
         {
-            tmflags|=TMTXFLAGS_TPNOSTARTXID;
+            tmflags|=TMFLAGS_TPNOSTARTXID;
         }
 
         
@@ -1732,7 +1766,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             EXFAIL_OUT(ret);
         }
         
-        if (tmflags & TMTXFLAGS_RMIDKNOWN)
+        if (tmflags & TMFLAGS_RMIDKNOWN)
         {
             *p_is_known = EXTRUE;
         }
@@ -1769,11 +1803,11 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         }
         /* Open new transaction in branch */
         else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, btid), 
-                TMNOFLAGS, EXFALSE))
+                TMNOFLAGS, EXTRUE)) /* silent attempt...*/
         {
             reason=atmi_xa_get_reason();
-            NDRX_LOG(log_error, "Failed to create new tx under local RM (reason: %hd)!", 
-                    reason);
+            NDRX_LOG(log_error, "Failed to create new tx under local RM (reason: %hd): %s!", 
+                    reason, atmi_xa_geterrstr(reason));
             if (XAER_DUPID == (reason=atmi_xa_get_reason()))
             {
                 /* It is already known... then join... */

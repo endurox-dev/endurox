@@ -50,7 +50,8 @@ from www.oss4aix.org. Assuming that you have freshly installed Operating System,
 we need to install *yum* tool, so that all dependencies can be 
 stratified automatically.
 
-Download and install the RPM packages from the yum_bundle.tar file from 
+Download and install the RPM packages from the 
+yum_bundle.tar (or later e.g. yum_bundle_v5.tar) file from 
 https://public.dhe.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/ .
 Ensure that install process does finish with out any errors. 
  
@@ -64,16 +65,39 @@ Once yum is up and running, install following packages needed for build:
 
 ---------------------------------------------------------------------
 # yum install flex bison libiconv curl openldap openssl zlib \
-libxml2 mktemp gcc gcc-cpp libxml2-devel
+libxml2 mktemp gcc gcc-cpp g++ libxml2-devel git bash m4 gmake
+---------------------------------------------------------------------
+
+For AIX 7.2 To install g++:
+
+---------------------------------------------------------------------
+# yum install gcc-c++
+---------------------------------------------------------------------
+
+==== Fix the issue with m4 
+
+Flex and Bison requires GNU m4 to be present on the system, thus perform
+following:
+
+---------------------------------------------------------------------
+# mv /usr/bin/m4 /usr/bin/m4.org
+# ln -s /opt/freeware/bin/m4 /usr/bin/m4
 ---------------------------------------------------------------------
 
 ==== Installing missing packages
+
+Seems that Official IBM AIX toolbox cmake tool ships as broken. 
+It changes the way how shared libraries are built. For Enduro/X all libs are
+expected to be built as System V Shared Objects (.so), but toolbox version changes
+these rules. Thus keep third party builds or compile from Kitware CMake sources.
+
+===== Installing CMake from oss4aix.org
 
 The following operations will be done from root user. This will download
 the all open source packages to local machine to /root/rpms folder.
 
 ---------------------------------------------------------------------
-# mkdir /root/rpms
+# mkdir -p /root/rpms
 # cd /root/rpms
 # ftp -i www.oss4aix.org
 # ftp -i www.oss4aix.org
@@ -98,6 +122,10 @@ Passive mode on.
 ftp> 
 ftp> 
 ftp> cd /compatible/aix71
+
+-- In case of AIX 7.2: 
+ftp> cd /compatible/aix72
+
 250 CWD command successful
 ftp> mget *
 227 Entering Passive Mode (178,254,6,100,136,212).
@@ -113,12 +141,34 @@ install only two of them:
 # rpm -i mktemp-1.7-1.aix5.1.ppc.rpm
 ---------------------------------------------------------------------
 
-*NOTE:* Seems that Official IBM AIX toolbox cmake tool ships as broken. 
-It changes the way how shared libraries are built. For Enduro/X all libs are
-expected to be built as System V Shared Objects (.so), but toolbox version changes
-these rules. Thus keep third party builds or compile from Kitware CMake sources.
+
+===== Building CMake manually from sources
+
+This will use gcc compiler.
+
+---------------------------------------------------------------------
+# su - user1
+$ mkdir tmp
+$ cd tmp
+$ wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
+$ gzip -d cmake-3.19.4.tar.gz
+$ tar -xf cmake-3.19.4.tar.gz
+$ cd cmake-3.19.4
+$ export OBJECT_MODE=64
+$ export CC=gcc
+$ export CXX=g++
+$ export CFLAGS=-maix64
+$ export CXXFLAGS=-maix64
+$ export LDFLAGS="-maix64 -Wl,-bbigtoc"
+$ ./configure --prefix=/opt/freeware
+$ gmake
+$ exit
+# cd /home/user1/tmp/cmake-3.19.4
+# make install
+---------------------------------------------------------------------
 
 === Getting the source code
+
 For test purposes we will prepare new user for which Enduro/X will built 
 (this adds the in the path the /opt/freeware/bin and xlC version 13 compiler. 
 You may modify that of your needs.
@@ -164,7 +214,7 @@ export NDRX_CONFIG=/home/user1/endurox/sampleconfig/ndrxconfig.xml
 export PATH=\$PATH:/\$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
-export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/freeware/lib:\$HOME/endurox/dist/lib
+export LIBPATH=\$LIBPATH:\$HOME/endurox/dist/lib
 
 # UBF/FML field tables
 export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
@@ -186,6 +236,8 @@ export NDRX_THREADSTACKSIZE=8192
 # currently uses default port
 #export EX_PG_PORT=5432
 #export EX_PG_DB=xe
+# additional libpath for postgres 
+#export EX_PG_LIBPATH=/opt/freeware/lib
 
 
 EOF
@@ -212,6 +264,16 @@ Once installed, database needs to be created:
 --------------------------------------------------------------------------------
 
 # su - postgres
+
+$ bash
+
+$ cat << EOF >> .profile
+PATH=/usr/bin:/etc:/usr/sbin:/usr/ucb:$HOME/bin:/usr/bin/X11:/sbin:.:/opt/freeware/bin
+EOF
+
+$ chmod +x .profile
+
+$ source .profile
 
 $ initdb -D /var/lib/postgresql/data
 -- and start it up...
@@ -245,7 +307,6 @@ stop )
 esac
 
 EOF
-
 
 # chmod +x /etc/rc.d/rc2.d/S99postgres
 
@@ -309,6 +370,8 @@ It is assumed that xlC is default compiler on the system, thus following
 shall make the building ok:
 
 ---------------------------------------------------------------------
+# su - user1
+$ bash
 $ export OBJECT_MODE=64
 $ export CC=xlc 
 $ export CXX=xlC
@@ -335,6 +398,8 @@ If you previously have installed gcc (C/C++) compiler open source package.
 Then you can build Enduro/X with GCC compiler. To prepare for GCC build, do following steps:
 
 ---------------------------------------------------------------------
+# su - user1
+$ bash
 $ cd /home/user1/endurox
 $ export OBJECT_MODE=64
 $ export CC=gcc
@@ -342,11 +407,12 @@ $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
 $ cmake -DDEFINE_DISABLEDOC=ON \
-    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
+    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib -DCMAKE_AR=/usr/bin/ar  .
 $ make
 $ make install
 ---------------------------------------------------------------------
 
+*/usr/bin/ar* seems to be required for AIX 7.2.
 
 == Unit Testing
 

@@ -208,8 +208,8 @@ extern "C" {
 #define NDRXD_ECFGAPPCONFIG         21         /**< Invalid appconfig settings   */
 #define NDRXD_EACCES             22         /**< No access to file            */
 #define NDRXD_ESYNTAX            23         /**< Syntax error during parsing  */
-
-#define NDRXD_EMAXVAL            1000
+#define NDRXD_ESYSTEM             24         /**< E/X system failure            */
+#define NDRXD_EMAXVAL            24
 
 /* This section list call types */
 #define NDRXD_CALL_TYPE_GENERIC         0   /**< Generic call type        */
@@ -412,7 +412,7 @@ struct shm_svcinfo
      * srvs is large number, but there is only on queue.
      */
     short resnr;                          
-    int resrr;                          /**< round robin server */
+    unsigned int resrr;                          /**< round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
     ndrx_shm_resid_t resids[0];         /**<  Servers id's offering this service */

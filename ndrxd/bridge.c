@@ -854,7 +854,7 @@ expublic void brd_send_periodrefresh(void)
         cur->lastrefresh_sent++;
         
         if (cur->connected && cur->flags & SRV_KEY_FLAGS_SENDREFERSH
-                && cur->lastrefresh_sent > G_app_config->brrefresh)
+                && cur->lastrefresh_sent >= G_app_config->brrefresh)
         {
             NDRX_LOG(log_debug, "About to send to node %d full refresh", 
                     cur->nodeid);

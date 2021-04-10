@@ -1174,9 +1174,21 @@ expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
 {
     int i=0;
     int ret = EXSUCCEED;
-    
+
     for (i=0;i<MAX_ATFORKS;i++)
     {
+        
+        /* If all equals just return OK */
+        
+        if (prepare==M_prepare[i] && 
+                parent==M_parent[i] &&
+                child==M_child[i]
+            )
+        {
+            /* called twice with the same data */
+            goto out;
+        }
+        
         if (NULL==M_prepare[i] && 
                 NULL==M_parent[i] &&
                 NULL==M_child[i]

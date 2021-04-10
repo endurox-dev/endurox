@@ -23,6 +23,7 @@ SYNOPSIS
         <restart_to_check>NDRXD_RESTART_TO_CHECK</restart_to_check>
         <gather_pq_stats>NDRXD_GATHER_PQ_STATS</gather_pq_stats>
         <rqaddrttl>RQADDRTTL</rqaddrttl>
+        <ddrreload>DDRRELOAD</ddrreload>
     </appconfig>
     <defaults>
         <min>MIN_SERVERS_DEFAULT</min>
@@ -161,6 +162,28 @@ SYNOPSIS
             <exec tag="CLT_EXE_TAG2" .../>
         </client>
     <clients>
+    <services>
+        <defaults prio="SVC_PRIO_DEF" 
+                 routing="SVC_ROUTE_NAME_DEF" 
+                 autotran="SVC_AUTOTRAN_DEF"
+                 trantime="SVC_TRANTIME_DEF"/>
+        ...
+        <service svcnm="SVC_SERVICE_NAME" 
+                 prio="SVC_PRIO" 
+                 routing="SVC_ROUTE_NAME" 
+                 autotran="SVC_AUTOTRAN"
+                 trantime="SVC_TRANTIME"/>
+        ...
+    </services>
+    <routing>
+        <route routing="ROUTE_NAME">
+            <field>ROUTE_FIELD</field>
+            <ranges>ROUTE_RANGES</ranges>
+            <buftype>ROUTE_BUFFER</buftype>
+            <fieldtype>ROUTE_FIELDTYPE</fieldtype>           
+        </route>
+        ...
+    </routing>
 </endurox>
 ---------------------------------------------------------------------
 
@@ -232,6 +255,23 @@ PARAMETERS
     request address queue will be unlinked.
     The value is in seconds. Checks are performed with 'SANITY_SECONDS' intervals.
     Default value is *10* seconds.
+'DDRRELOAD'::
+    This setting identifies the number of sanity cycles used to wait for updating
+    DDR routing tables on the fly with "xadmin reload" command. 
+    Default value is *60*. This deferred approach is used for
+    purpose, that it protects any processes which are in previous version of 
+    DDR routing tables and has not yet completed. Routing details are
+    stored in double buffered routing pages for lock-less operations. If using
+    smaller number of cycles, then it would increase the probability of corrupted routing,
+    if administrator is doing config reload twice in a row with routing config changed. 
+    Thus these cycles give opportunity for any processes to complete routing. 
+    Overall chance that process will get corrupted pages with this approach
+    is very low. As reload must be performed twice, and process shall be stalled
+    for some reason in routing table, which by it self is very fast operation 
+    if *ndrxd* logging is turned off, as routing basically is CPU-RAM operation. 
+    Even if any such process was unable to complete the route, 
+    the error is detected and service call might return *TPESYSTEM* and
+    corresponding ULOG message is written.
 'MIN_SERVERS_DEFAULT'::
     Default minimum number of copies of the server which needs to be started automatically.
     This can be overridden by 'MIN_SERVERS_SRV' per server.
@@ -395,40 +435,48 @@ PARAMETERS
     id is set in $NDRX_SRVMAX environment variable. Minimal server id is 1.
 'ATMI_SERVER_SYSTEM_OPTIONS'::
     Command line system options passed to ATMI server. Following parameters are
-    used by Enduro/X ATMI servers: '-N', boolean type. If present, then no services
-    will be advertised by server. In this case will be advertised only services specified
-    by '-s' flag. For example if server advertises SERVICE1, SERVICE2, SERVICE3, but '-N'
-    was specified, and '-sSERVICE3' is specified, then only service SERVICE3 will be 
-    advertised. The '-s' argument also can contain aliases for services, for example
-    '-sOTHERSVC:SERVICE2', then new service OTHERSVC will be advertised which
-    basically is the same SERVICE2 (same function used). '-s' and '-N' can be mixed.
-    '-s' can appear multiple times in system options. With one '-s' multiple services
+    used by Enduro/X ATMI servers: *-N*, boolean type. If present, then no services
+    will be advertised by server. In this case only services specified
+    by *-s* (service alias) or *-S* (function alias) flags will be advertised. 
+    For example if server advertises *SERVICE1, SERVICE2, SERVICE3*, but *-N*
+    is specified, and *-sSERVICE3* is specified, then only service *SERVICE3* will be 
+    advertised. The *-s* argument also can contain aliases for services, for example
+    *-sOTHERSVC:SERVICE2*, then new service *OTHERSVC* will be advertised which
+    basically is the same *SERVICE2* (same function used). *-s*, *-S* and *-N* can be mixed.
+    *-s* can appear multiple times in system options. With one *-s* multiple services
     can be aliased to single existing service.
-    The format is: '-s<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The ',' can be
-    used as separator too, but for certain platforms it does not work, thus '/' is
-    recommended. When using full advertise (all service) some of them can be masked
-    by '-n' flag. For example '-sSERVICE4' will advertise all, but 'SERVICE4'. Flag
-    '-n' can be repeated multiple times.
-    Server binaries output is controlled via '-e LOG_FILE', which means
-    that stdout & stderr of server is dumped to LOG_FILE.
-    There are few internal params: param '-k' is just a random key
-    for shell scripts. Another internal param is Server ID which is automatically passed
-    to binary via '-i SERVER_ID'.
+    The format is: *-s*'<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The *,* can be
+    used as separator too, but for certain platforms it does not work, thus */* is
+    recommended. Services can be masked out from final advertise by
+    by *-n* flag. For example *-nSERVICE4* will not be advertised (no matter was it
+    advertise or alias). *-n* can be repeated multiple times.
+    When Enduro/X XATMI server is build with integration lib (libatmisrvinteg) 
+    user have ability to alias the functions to service names with 
+    *-S*'<service_name1>/<service_name2>[:<function name>]' flag. Functions are
+    passed to *buildserver(8)* at build time or registered in *tmdsptchtbl_t* array
+    passed to *_tmstartserver(3)*. If '<function name>' is not specified, then service
+    name is matched against function name. Firstly *-S* flags are processed,
+    afterwards *-s*' flags are processed, meaning that it works as 
+    usual including to function aliased services by *-S* services. 
+    Server binaries output is controlled via *-e*'LOG_FILE', which means
+    that stdout & stderr of server is dumped to 'LOG_FILE'.
+    There are few internal parameters: parameter *-k* is just a random key
+    for shell scripts. Another internal parameter is Server ID which is automatically passed
+    to binary via *-i* 'SERVER_ID'.
     Enduro/X supports automatic buffer conversion for ATMI servers. 
-    Currently supported modes are 'JSON2UBF', 'UBF2JSON', these modes are activated 
-    by -x paramter in system options. These modes are passed for server functions 
-    being advertised. For example if we have service *functions* (not services) 
-    UBF1FUNC, UBF2FUNC and JSONFUNC and we want to ensure that these receive
+    Currently supported modes are *JSON2UBF*, *UBF2JSON*, these modes are activated 
+    by *-x* parameter in system options. These modes are passed for server functions 
+    being advertised. For example if we have service functions (not services) 
+    *UBF1FUNC*, *UBF2FUNC* and *JSONFUNC* and we want to ensure that these receive
     converted messages even if caller to UBF service sends JSON and vice versa, then 
     following options might be set to command line:
-    '-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON'.
-    When Enduro/X is build with integration lib (libatmisrvinteg) user have ability
-    to map the functions with -S <service_name1>/<service_name2>:<function name>
-    passed to buildserver at build time or registered in tmdsptchtbl_t array
-    passed to _tmstartserver(). The -S are processed and service array is prepared,
-    afterwards the -N and -s<service_name1> flag works as usual, with -N disable
-    all service advertise and with -s some single service may be enabled.
-
+    *-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON*. With
+    flag *-g*'<RTGRP>' it is possible to define or override the env variable 
+    *NDRX_RTGRP* - routing group code. Use *-G* flag to configure that particular server
+    shall include '@<RTGRP>' routing group suffix in service name received by
+    service function (i.e. structure *TPSVCINFO* field *name* shall contain full
+    service name with the group code, if call was routed to group), 
+    by default group name is not included even if service is routed to group.
 'ATMI_SERVER_APPLICATION_OPTIONS'::
     Application specific command line options. This follows content after sys options as:
     'system options -- app options'.
@@ -566,9 +614,79 @@ PARAMETERS
     SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
     The default is *0*.
 
+'SVC_SERVICE_NAME'::
+    Service name for which settings are being defined. Max service length is
+    *30* symbols.
+
+'SVC_PRIO'::
+    Service call default priority. If value is not set, then it it is loaded
+    from default value 'SVC_PRIO_DEF'. If default is not set, then value *50*
+    is used in the Enduro/X system. Priority is valid to be set in range of
+    *1*..*100*. This is used for Linux and FreeBSD OS. Note that values 1..100
+    may be downscaled prior doing mq_send() Posix function call, if operating
+    system has lesser number of priorities available. Consult with your operating
+    system documentation, particularly constant *MQ_PRIO_MAX*.
+
+'SVC_ROUTE_NAME'::
+    Routing criterion name. Which must reference valid routing definition under the
+    *<routing>/<route>*, value 'ROUTE_NAME'. If value is not specified, value is taken from 
+    'SVC_ROUTING_NAME_DEF'. This parameter is optional. If not set, then no
+    routing is performed for service and messages are sent to default service.
+    Max routing name length is *15* symbols.
+
+'SVC_AUTOTRAN'::
+    Automatic transaction mode for service. If parameter is set to *y* or *Y*,
+    then if XATMI service is invoked with out global transaction, the XATMI
+    server will start the transaction automatically. When server process performs
+    *tpreturn(3)*, transaction is committed in case if server returns *TPSUCCESS*
+    otherwise transaction is aborted. If process performs *tpforward(3)*, then
+    receiving server becomes transaction owner. If parameter is not specified value is
+    taken from previously defined 'SVC_AUTOTRAN_DEF' value. If it was not set,
+    then default is *N* (no auto global transactions used by server).
+    Note that this setting is extracted by XATMI server processes at the startup
+    time. If configuration is change, say from *N* to *Y*, particular XATMI server
+    processes needs to be restarted in order to enable automatic transactions
+    for particular XATMI servers.
+
+'SVC_TRANTIME'::
+    Automatic transaction life time. This parameter is used by XATMI servers starting
+    when automatic transactions are started. If value is not specified, then
+    value is taken from previously defined 'SVC_TRANTIME_DEF'. If this value also
+    is not defined, then default value is *30*.
+
+'ROUTE_NAME'::
+    This is route name using for data-dependent-routing (DDR). Route name max
+    length is *15* symbols.
+
+'ROUTE_FIELD'::
+    This is route field name. Currently Enduro/X only supports UBF buffer routing,
+    thus this field must contain valid/resolvable UBF field definition. Field
+    types accepted four routing are *BFLD_SHORT*, *BFLD_CHAR*, *BFLD_LONG*, *BFLD_FLOAT*,
+    *BFLD_DOUBLE*, *BFLD_STRING* and *BFLD_CARRAY*.
+
+'ROUTE_RANGES'::
+    Route ranges definition. Which defines the ranges by which destination service
+    group is selected. See section "DATA DEPENDENT ROUTING" bellow for syntax details.
+
+'ROUTE_BUFFER'::
+    Buffer type accepted for routing. Currently supported buffer type is *UBF*.
+    When service call is performed and routing exists for service, lookup is
+    performed by using key: 'ROUTE_NAME' and 'ROUTE_BUFFER'. Thus for one
+    service several routes might be defined. When service call is made, and
+    no matching route (if was defined any route) and/or no matching range is found,
+    error *TPESYSTEM* is returned for *tpcall(3)*, *tpacall(3)* and related
+    service routines.
+
+'ROUTE_FIELDTYPE'::
+    This specified how field shall be used in routing. Supported values are
+    *SHORT*, *CHAR*, *LONG*, *FLOAT*, *DOUBLE*, *STRING*. Where the *SHORT*
+    are internally mapped to *LONG* range, *FLOAT* is mapped to *DOUBLE*,
+    *CHAR* is mapped to *STRING*. For UBF routes, this field is optional,
+    and if it is not specified, then field type is extracted from UBF field.
+    Additionally any *BFLD_CARRAY* is mapped to *STRING*. 
+
 VARIABLE SUBSTITUTION
 ---------------------
-
 Several parameters in the ndrxconfig.xml file are processed via substitution 
 engine. Engine processes puts the environment variables or special functions
 in the place-holders. Placeholder is defined as ${'ENV_VARIABLE'} for environment
@@ -585,6 +703,155 @@ Following *FUNC* (functions) are defined:
     Decrypt base64 string in *PARAMETER* and replace the placeholder with the
     value. To get encrypted value, it is possible to use *exencrypt(8)* tool.
 
+DATA DEPENDENT ROUTING
+----------------------
+Enduro/X supports data dependent routing. There are three components which are
+required for routing:
+
+1. Server process shall be put in the group. This can be be assigning group
+code to the *NDRX_RTGRP* environment variable for particular server process.
+This variable might be set in CCTAG group for server process. Or it might
+be assigned for particular process by *<envs>*. Here not that any server process
+which advertises services, will additionally advertise each service with
+suffix "@<NDRX_RTGRP>". Thus *NDRX_RTGRP* shall use short values like 2-3 symbols
+long, as total service name length is limited to *30*, and if routing group
+name is longer, server processes would not be able to advertise. Also note that
+if this environment is present for server process, then any advertise mechanism,
+either alias or compiled service name by *buildserver(8)* or *tpadvertise(3)* call
+will make two services to appear in the system - one is default with out the
+suffix and other is with route group suffix. Only exception when working with
+route groups is that *xadmin unadv* and *xadmin readsv* would operate with single
+service name.
+
+2. Routing criterion i.e. 'SVC_ROUTE_NAME' must be defined for service in
+*<service />* tag.
+
+3. Routing criterion must be defined in *<route/>* tag.
+
+When all above is defined, the routing will be activated, when client (or servers
+code) would issue:
+
+- *tpacall(3)*
+
+- *tpcall(3)*
+
+- *tpconnect(3)*
+
+- *tpforward(3)*
+
+Also affects any other Enduro/X APIs which internally uses tpcall/tpacall. Such
+as *tpenqueue(3)*, *tpdequeue(3)*, *tpbegin(3)*, etc. but it is not recommended
+to configure routing for Enduro/X system servers or services (or at least with
+out advice from Mavimax).
+
+Routing criterions by it self operate with three data types: *LONG*, *DOUBLE*
+and *STRING*.
+
+Syntax for 'ROUTE_RANGES' is following: <min_value_1>-<max_value_1>:<group_code_1>,...,
+<min_value_N>-<max_value_N>:<group_code_N>. Additional syntax is supported, such as:
+
+- Keyword MIN - this represent any absolute minimum value, thus if value is bellow <max_value>,
+then value is in the range.
+
+- Keyword MAX - this represent any absolute maximum value, thus if value is above the
+<min_value> then value is in the range.
+
+- Single value is supported.
+
+- Keyword * (asterisk) - this presents the any value and represents whole range. This
+keyword can also be used as group, which means - use default group (i.e. it is any
+service, service name with out "@<GRP>" suffix).
+
+- Values and group names can be put in single string quotes ('). If such single quote
+is needed within the string, it can be escaped with backslash \. Double backslash \\
+is translated to single backslash.
+
+- Ranges supports max_value as negative, in such case syntax as "-100 - -45:GRPN" is supported.
+
+Ranges value are validated and processed as indicated by field typ.  
+*LONG* is limited to:
+
+--------------------------------------------------------------------------------
+
+^[+-]?([0-9])+$
+
+--------------------------------------------------------------------------------
+
+*DOUBLE* type value shall be expressed as:
+
+--------------------------------------------------------------------------------
+
+^[-+]?(([0-9]*[.]?[0-9]+([ed][-+]?[0-9]+)?))$
+
+--------------------------------------------------------------------------------
+
+For *DOUBLE* decimal separator is *.*. Also to check the equality is 
+checked with precision of 0.000001.
+
+*STRING* values may contain any printable character including newline.
+
+When processes is perform routing, first matched range is used to extract the group code.
+If range is not found or buffer type does not match with service for which routing
+is defined *TPESYSTEM* error is returned to caller. Range matching is performed
+form left to right order. Range include the range min/max values. When range is
+defined for *STRING* type, values are compared by *strcmp()* function.
+
+
+*Examples of valid routing configuration:*
+
+--------------------------------------------------------------------------------
+
+<?xml version="1.0" ?>
+<endurox>
+...
+
+    <services>
+            <defaults routing="RT1"/>
+            <service svcnm="DEBITSVC" />
+            <service svcnm="CREDIT" routing="RT2" />
+            <defaults routing="RT3" />
+            <service svcnm="TXHANDLER" />
+    </services>
+    <routing>
+
+        <route routing="RT1">
+            <field>T_LONG_FLD</field>
+            <ranges>MIN-4:GRP1,100-200:GRP4,300:GRP6,1000-22100:GRP5,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+        <route routing="RT2">
+            <field>T_STRING_FLD</field>
+            <ranges>
+                    MIN-'AAA':GRP1
+                    ,'AAB' - AAC:'GRP4'
+                    ,'HELLO\'' - HELLO5:*
+                    ,'Z' - MAX:GRP6
+            </ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+        <!-- cast value from string to double -->
+        <route routing="RT3">
+            <field>T_STRING_FLD</field>
+            <ranges>
+                    MIN - -1.1:GRP1
+                    ,-1 - 44:'GRP4'
+                    ,'44.1' - 123.15:*
+                    ,*:*
+            </ranges>
+            <buftype>UBF</buftype>
+            <fieldtype>DOUBLE</fieldtype>
+        </route>
+    <routing>
+...
+</endurox>
+
+
+Note that *DDR* settings can be changed on they fly with *xadmin reload*, but
+changes are deferred to certain amount of time. See 'DDRRELOAD'.
+
+--------------------------------------------------------------------------------
 
 COMMAND LINE ARGUMENT ESCAPE
 ----------------------------
@@ -748,8 +1015,9 @@ Sample configuration:
             <sysopt>-e /tmp/BRIDGE -r</sysopt>
             <envs>
                 <usegroup>JAVAENV</usegroup>
-                <env name="CLASSPATH">${NDRX_APPHOME}/libs/somelib.jar</env>
+                <env name="NDRX_RTGRP">GRP4</env>
                 <env name="CLASSPATH">${CLASSPATH}:${NDRX_APPHOME}/libs/${NDRX_SVPROCNAME}.jar</env>
+                <env name="CLASSPATH">${NDRX_APPHOME}/libs/somelib.jar</env>
             </envs>
             <cmdline>java</cmdline>
         </server>
@@ -768,6 +1036,26 @@ Sample configuration:
             <exec tag="TESTENV" autostart="Y"/>
         </client>
     </clients>
+    <services>
+            <defaults trantime="600" />
+            <service svcnm="SERVICE1" prio="50" routing="RT1"     autotran="Y"  />
+            <defaults autotran="Y" />
+            <service svcnm="SERVICE2" prio="50" routing="RT2"     trantime="600" />
+    </services>
+    <routing>
+        <route routing="RT1">
+            <field>T_LONG_FLD</field>
+            <ranges>MIN-4:GRP1,100-300:GRP4,1000-22100:GRP5,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+        <route routing="RT2">
+            <field>T_STRING_FLD</field>
+            <ranges>MIN-AAA:GRP1,'AAB'-'AAD':'GRP4',*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+    </routing>
 </endurox>
 ---------------------------------------------------------------------
 

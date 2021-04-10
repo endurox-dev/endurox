@@ -353,6 +353,8 @@ extern NDRX_API int ndrx_Bgetr (UBFH * p_ub, BFLDID *fldidocc,
 
 extern NDRX_API int ndrx_Bpresr (UBFH *p_ub, BFLDID *fldidocc);
 
+extern NDRX_API char * ndrx_CBgetallocr (UBFH *p_ub, BFLDID *fldidocc, int usrtype, BFLDLEN *extralen);
+
 extern NDRX_API int ndrx_CBgetr (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * len, int usrtype);
 extern NDRX_API char* ndrx_Bfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
@@ -364,6 +366,9 @@ extern NDRX_API int ndrx_Bpresr (UBFH *p_ub, BFLDID *fldidocc);
 extern NDRX_API int ndrx_Bvnullr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
 extern NDRX_API int ndrx_CBvgetr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags);
+
+extern NDRX_API char *ndrx_CBvgetallocr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+             int usrtype, long flags, BFLDLEN *extralen);
 
 extern NDRX_API void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid);
 extern NDRX_API int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid);

@@ -85,6 +85,7 @@ install (FILES
     Uunix.h
     expluginbase.h
     fpalloc.h
+    lcf.h
     DESTINATION include)
 
 install (FILES

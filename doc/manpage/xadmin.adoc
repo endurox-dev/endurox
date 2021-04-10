@@ -77,10 +77,10 @@ COMMANDS
     see *ex_env(5)*.
 *psc*::
     Print services
-*stop* [-y] [-s <server>] [-i <srvid>] [-k] [-f]::
-    Stop application domain. '-y' means do not ask for confirmation. '-s' means
+*stop* [-y] [-s <server>] [-i <srvid>] [-k] [-f] [-l]::
+    Stop application domain. *-y* means do not ask for confirmation. *-s* means
     ATMI servers binary name to be stopped, instead of whole application domain.
-    '-i' means stop specific server instance. '-k' flag will keep 'ndrxd' running,
+    *-i* means stop specific server instance. *-k* flag will keep *ndrxd* running,
     and protected servers will not be shutdown. In case if *ndrxd(8)* process
     is doing start or stop for other xadmin session (or doing internal server
     reloads in case if memory limits reached), then command will perform several
@@ -88,9 +88,15 @@ COMMANDS
     *NDRX_NORMWAITMAX* environment variable. Between attempts, 1 second sleep is
     done. In case if *stop* command was unable to send message to *ndrxd*, command
     will exit with failure, and will not wait for *ndrxd* termination.
-    In case if '-f' force flag is set, the xadmin will wait indefinitely until
+    In case if *-f* force flag is set, the xadmin will wait indefinitely until
     *ndrxd* will not be found in the system. No matter message was sent to ndrxd
-    or not. see *ex_env(5)*.
+    or not. see *ex_env(5)*. When full stop is performed, the Latent Command
+    Framework (LCF) commands are cleared and set to 'disable'. LCF memory is
+    left after the shutdown. If re-reconfiguration of LCF memory segments is
+    required (env setting NDRX_LCFMAX), then run *xadmin down* and then start
+    the application, it will create shm. If after the shutdown commands shall
+    be kept, then use *-l* option, it will leave LCF memory as is with out setting
+    to disable.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
     Reload application domain - restart server instance by instance.
     Configuration be loaded prior.
@@ -108,7 +114,10 @@ COMMANDS
 *cat*::
     Attached console to ndrxd user session in progress.
 *reload*::
-    Load new configuration.
+    Load new configuration. Note that *<services>* and *<routing>* tags are reloaded
+    in deferred mode. I.e. changes are applied after certain number sanity cycles
+    have been completed by *ndrxd(8)*. See *ndrxconfig.xml(5)* 
+    tag *<endurox>/<appconfig>/<ddrreload>*.
 *testcfg*::
     Test new configuration.
 *unadv* -i server_id -s service_name::
@@ -355,20 +364,75 @@ COMMANDS
     are set in -c argument, where possible values are *T_CLIENT*, *T_DOMAIN*,
     *T_MACHINE*, *T_QUEUE*, *T_SERVER*, *T_SERVICE*, *T_SVCGRP* and *T_BRCON*. 
     The parameter *-m* returns the output in machine readable format.
-
 *udown* [-y]::
     Remove all System V resources used by user. This includes any of: queues,
     shared memory and semaphores. '-y' is used for confirmation.
-
 *svqids* [-i] [-k]::
     Print System V queue identifiers allocated for current user. Command outputs
     Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
     printed only. If parameter *-k* is set, only keys are printed.
-
 *svsemids* [-i] [-k]::
     Print System V semaphore identifiers allocated for current user. Command outputs
     Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
     printed only. If parameter *-k* is set, only keys are printed.
+*lcf* [COMMAND] [-p <PID>] [-b <BINARY>] [-r] [-a] [-n] [-e] [-s <SLOT>] [-A <ARG_A>] [-B <ARG_B>]::
+    This is administrative interface to Latent Command Framework. When command
+    is run with out arguments, it prints *page 1* information. Build in commands 
+    given in *COMMAND* is *-1* (*page 1* infos), *-2* (*page 2* infos), *-3* (*page 3* infos).
+    Note that statistics printed are not synchronized between processes. Arguments:
+    *-p* is used for passing PID to command. *-b* is used to pass binary name
+    to command. *-r* says that pid or binary name is regular expression to match
+    several processes. *-a* says that command shall be applied to all application
+    instance binaries.  *-p*, *-b*, *-a* are exclusive.
+    *-n* says that apply command also to new binaries (just started)
+    too. *-e* says that command shall be applied to new binaries too, but command
+    for new binaries expires after *NDRX_LCFCMDEXP* time (default *60* sec). *-n*
+    and *-e* are incremental and appends default flags of the command.
+    *-A* is argument to command. *-B* is argument to command. Enduro/X provided
+    LCF commands are listed bellow. Under this xadmin command new commands might
+    appear if plugins are registering them with *ndrx_lcf_xadmin_add(3)* API
+    calls.
+*shmcfg*::
+    Command is used to print the shared memory configuration information. The
+    memory segment is the same as for *LCF*, but these settings are used for
+    other purposes. Values *shmcfgver_lcf* - LCF command version, incremented
+    with each command publication. *use_ddr* set to *1* if data-dependent-routing used
+    or per service settings are published. *ddr_page* - current page number used
+    by settings *0* or *1* as double buffering is used for lock-less operations.
+    *ddr_ver1* version number of current DDR setting.
+
+*prtsvc*::
+    Print routing services from current shared memory page. Flags *-a* means
+    all slots of linear hash. *-i* only used slots. *-w* slots which was in
+    use. By default only used slots are printed.
+
+
+ENDURO/X LCF COMMANDS
+---------------------
+*lcf disable*::
+    Disable the command at given slot. Default SLOT (*-s*) is *0*. Note by default
+    when instance is started all commands are initialized as *disable* and are
+    not executed by any binary.
+
+*lcf logrotate*::
+    Perform logrotate. Default is *-a* all binaries. And by default *-e* flag is
+    set, so that if logrotate is issued, and at particular moment some process
+    is forking, so that new process would still be able to connect to new log files,
+    as ones during the fork might be concurrently rotated away. Logrotate reopens
+    any currently open logger file. Note that *mkdir* and *bufsz* settings are
+    kept as they were defined at the point when log file was open.
+
+*lcf logchg* -A <DEBUG_STRING>::
+    Change the logging settings for process logger. The 
+    format for DEBUG_STRING is as is defined
+    for *ndrxdebug.conf(5)* debug configuration. Log facility/topic levels (*ndrx*, *tp*, *ubf*)
+    affects loggers immediately. Also levels are back propagated to thread and
+    request loggers, if those are configured with different level settings. *file* name
+    can be changed too, but this only affects only process logger output. 
+    *bufsz* and *mkdir* only affects if file name is changed, or at next file name change / reopen by
+    process logger. Note that FILE handles are shared between threads thus if process
+    is switching to some existing file open by other thread, then 
+    *bufsz* and *mkdir* is still the same as with already open file.
 
 CONFIGURATION
 -------------

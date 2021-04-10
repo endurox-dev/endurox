@@ -8,7 +8,7 @@
 |Oracle Linux 7|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol7)](http://www.silodev.com:9090/jenkins/job/endurox-ol7/)|OSX 11.4|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-osx11_4)](http://www.silodev.com:9090/jenkins/job/endurox-osx11_4/)|raspbian10_arv7l|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-raspbian10_arv7l)](http://www.silodev.com:9090/jenkins/job/endurox-raspbian10_arv7l/)|
 |SLES 12|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles12)](http://www.silodev.com:9090/jenkins/job/endurox-sles12/)|SLES 15|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles15)](http://www.silodev.com:9090/jenkins/job/endurox-sles15/)|Solaris 10|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris10-sparc)](http://www.silodev.com:9090/jenkins/job/endurox-solaris10-sparc/)|
 |Solaris 11| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris11_x86)](http://www.silodev.com:9090/jenkins/job/endurox-solaris11_x86/)|Ubuntu 14.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu14)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu14/)|Ubuntu 18.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu18)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu18/)|
-|RHEL/Oracle Linux 8| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol8)](http://www.silodev.com:9090/jenkins/job/endurox-ol8/)|||||
+|RHEL/Oracle Linux 8| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol8)](http://www.silodev.com:9090/jenkins/job/endurox-ol8/)|AIX 7.2| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-aix7_2)](http://www.silodev.com:9090/jenkins/job/endurox-aix7_2/)|||
 
 ## Overview
 
@@ -39,8 +39,8 @@ such as tpforward() and work with distributed transactions (tpbegin(),
 tpcommit(), etc.).
 
 Platform provides X/Open XATMI and XA interfaces/APIs for C/C++ applications. Enduro/X can 
-be considered as replacement for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), 
-Hitachi OpenTP1 and other XATMI middlewares.
+at some level can be considered as replacement 
+for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), Hitachi OpenTP1 and other XATMI middlewares.
 
 Dual licensed under Affero General Public License Version 3 for use in Open
 Source project or Commercial license Acquired from Mavimax Ltd 
@@ -110,7 +110,16 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
         is gaining overall performance.
 * Support of writing server daemons for multi-threaded servers 
         i.e. tpacall() to self advertised services during tpsvrinit().
-      
+* Support of Data Dependent Routing for UBF buffers.
+* XATMI service auto-transactions are supported.
+* For Linux and FreeBSD platforms call priorities are supported.
+* Enduro/X logger now supports log-rotate calls (to re-open log handles) during
+the runtime.
+* Enduro/X logger now allows to change log levels on the fly for any Enduro/X
+related process.
+* Enduro/X provides Latent Command Framework (LCF), where developers via 
+plugin interface can publish CLI commands in xadmin tool, while any Enduro/X related
+program can receive such commands via callback and perform custom action.
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
@@ -525,6 +534,12 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 - Version 7.0.46 released on 17/01/2021 (stable) Support #623
 
 - Version 7.5.16 released on 17/01/2021 (stable) Support #623
+
+- Version 7.5.18 released on 18/02/2021 (stable) Support #633
+
+- Version 7.5.20 released on 18/02/2021 (stable) Feature #213, Feature #286, Feature #401, Bug #608, Support #481, Support #644
+
+- Version 7.5.22 released on 15/02/2021 (stable) Feature #640, Support #657
 
 # Build configurations
 

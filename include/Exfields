@@ -79,6 +79,10 @@ TMTXRMERRCODE   57       long    M       Resource manager error code associated
 TMTXRMREASON    58       short   M       Reason code associated with RM
 TMTXTRYCNT      59       long    -       Transaction try count
 TMTXTRYMAXCNT   60       long    -       Transaction try count, max
+#
+# NOTE! TMTXFLAGS does not transport TPTRANID.tmtxflags
+# instead TMTXFLAGS UBF field is used for TMFLAGS values
+#
 TMTXFLAGS       61       long    -       Various TM flags...
 TMTXBTID        62       long    -       Branch Transaction ID
 

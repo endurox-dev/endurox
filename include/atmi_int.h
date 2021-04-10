@@ -152,6 +152,7 @@ extern "C" {
 #define NDRX_XA_ERSN_RMCOMMITFAIL   2006   /**< Some resource manager failed to commit */
 #define NDRX_XA_ERSN_UBFERR         2007   /**< UBF Error                     */
 #define NDRX_XA_ERSN_RMERR          2008   /**< Resource Manager Failed       */
+#define NDRX_XA_ERSN_TPENOENT       2009   /**< TMSRV is unavailable          */
 
     
 #define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */
@@ -182,9 +183,6 @@ extern "C" {
     }\
     __p_bufsz = __buf_size__;\
 }
-    
-#define NDRX_MSGPRIO_DEFAULT            0 /* Default prioity used by tpcall, tpreturn etc. */
-#define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio            */
 
 #define NDRX_XA_FLAG_NOJOIN  "NOJOIN"  /**< XA Switch does not support TMJOIN mode  */
 #define NDRX_XA_FLAG_NOSTARTXID  "NOSTARTXID"  /**< No XID in start call to RM  */
@@ -219,7 +217,7 @@ extern "C" {
                         __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
         fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
         fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
-        fprintf(stderr, "Copyright (C) 2017-2020 Mavimax Ltd. All Rights Reserved.\n\n");\
+        fprintf(stderr, "Copyright (C) 2017-2021 Mavimax Ltd. All Rights Reserved.\n\n");\
         fprintf(stderr, "This software is released under one of the following licenses:\n");\
         fprintf(stderr, "AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.\n\n");\
     }
@@ -400,6 +398,9 @@ struct atmi_lib_env
     int     ldbal;       /**< Load balance settings                         */
     int     is_clustered;/**< Will we run in cluster mode or not?           */
     
+    int     rtcrtmax; /**< size of routing criterion shared memory size  (one seg)*/
+    int     rtsvcmax; /**< one segment size of criterion memory        */
+    
     /**
      * @defgroup xa_params XA configuration parameters
      * @{
@@ -433,9 +434,8 @@ struct atmi_lib_env
     char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!)               */
     char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
     ndrx_env_priv_t integpriv;    /**< integration  private data                */
-    
     long     apiflags;            /**< API mode flags, see NDRX_APIFLAGS_*      */
-    
+    char    rtgrp[NDRX_DDR_GRP_MAX+1]; /**< routing grup setting                */
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 
@@ -745,8 +745,8 @@ extern NDRX_API pollextension_rec_t * ndrx_G_pollext;
 extern NDRX_API int ndrx_load_common_env(void);
 extern NDRX_API long ndrx_ctxid_op(int make_free, long ctxid);
 extern NDRX_API int ndrx_load_new_env(char *file);
-extern NDRX_API int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
-extern NDRX_API int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);
+extern NDRX_API int ndrx_generic_q_send(char *queue, char *data, long len, long flags, int msg_prio);
+extern NDRX_API int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, long tout, int msg_prio);
 extern NDRX_API int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags);
 extern NDRX_API ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str, 
         struct mq_attr *reply_q_attr,
@@ -808,6 +808,7 @@ extern NDRX_API char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len);
 extern NDRX_API void free_auto_buffers(void);
 extern NDRX_API int tp_internal_init(atmi_lib_conf_t *init_data);
+extern NDRX_API void ndrx_libatmi_deinit(void);
 extern NDRX_API int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
 extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
 extern NDRX_API void ndrx_dump_call_struct(int lev, tp_command_call_t *call);
@@ -821,6 +822,7 @@ extern NDRX_API int ndrx_tpisautobuf (char *buf);
 extern NDRX_API void cancel_if_expected(tp_command_call_t *call);
 /* Functions for conversation */
 extern NDRX_API int accept_connection(void);
+extern NDRX_API int ndrx_reject_connection(int err);
 extern NDRX_API int svc_fail_to_start(void);
 extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, 
         int killq, char *dbgmsg);

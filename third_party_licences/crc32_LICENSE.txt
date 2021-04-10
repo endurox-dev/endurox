@@ -1,0 +1,11 @@
+CRC-32 version 2.0.0 by Craig Bruce, 2006-04-29.
+
+This program generates the CRC-32 values for the files named in the
+command-line arguments.  These are the same CRC-32 values used by GZIP,
+PKZIP, and ZMODEM.  The Crc32_ComputeBuf() can also be detached and
+used independently.
+
+THIS PROGRAM IS PUBLIC-DOMAIN SOFTWARE.
+
+Based on the byte-oriented implementation "File Verification Using CRC"
+by Mark R. Nelson in Dr. Dobb's Journal, May 1992, pp. 64-67.

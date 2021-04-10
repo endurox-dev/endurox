@@ -261,7 +261,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
     xai.tmknownrms[0] = 0;
     
     /* we should start new transaction... (only if static...) */
-    if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
+    if (!(tmflags & TMFLAGS_DYNAMIC_REG))
     {
         /*
         if (EXSUCCEED!=(ret = atmi_xa_start_entry(&xid, 0, EXFALSE)))
@@ -275,7 +275,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
         */
         
         /* We know it only if it is not BTID resource */
-        if (!(tmflags & TMTXFLAGS_TPNOSTARTXID))
+        if (!(tmflags & TMFLAGS_TPNOSTARTXID))
         {
             xai.tmknownrms[0] = G_atmi_env.xa_rmid;
             xai.tmknownrms[1] = EXEOS;
@@ -423,7 +423,7 @@ expublic int tm_tmregister(UBFH *p_ub)
     
     if (is_already_logged)
     {
-        tmflags|=TMTXFLAGS_RMIDKNOWN;
+        tmflags|=TMFLAGS_RMIDKNOWN;
     }
     
     /* return new TID */
@@ -503,7 +503,7 @@ expublic int tm_rmstatus(UBFH *p_ub)
     
     if (is_already_logged)
     {
-        tmflags|=TMTXFLAGS_RMIDKNOWN;
+        tmflags|=TMFLAGS_RMIDKNOWN;
     }
     
     /* return new TID */

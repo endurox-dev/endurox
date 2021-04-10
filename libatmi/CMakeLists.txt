@@ -102,6 +102,7 @@ add_library (objatmi OBJECT
                 tmnull_switch.c
                 tpcrypto.c
                 multibuf.c
+                ddr_atmi.c
             )
 
 # shared libraries need PIC

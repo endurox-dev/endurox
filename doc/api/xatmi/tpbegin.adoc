@@ -35,6 +35,12 @@ Client process can suspend the global transaction by *tpsuspend(3)* and some
 other process can resume the transaction as client with suspend data. In that
  case that other process can do the commit.
 
+If service code completes auto-tran manually and then starts new transaction 
+in given call context, then this new transaction from *tpreturn(3)* and
+*tpforward(3)* perspective would be treated as continuation of the auto-tran
+i.e. *tpreturn(3)* would finish it correspondingly and *tpforward(3)* would
+receive initiator of the auto-tran.
+
 RETURN VALUE
 ------------
 On success, *tpbegin()* return zero; on error, -1 is returned, with *tperrno* 

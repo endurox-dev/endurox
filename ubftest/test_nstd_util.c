@@ -122,6 +122,21 @@ Ensure(test_nstd_strsep)
 }
 
 /**
+ * Check ndrx_str_ends_with() implementation
+ */
+Ensure(test_nstd_ends_with)
+{
+    char test_str[] = "HELLO//WORLD";
+    
+    assert_true(ndrx_str_ends_with(test_str, "WORLD"));
+    assert_false(ndrx_str_ends_with(test_str, "NONE"));
+    assert_false(ndrx_str_ends_with(test_str, "XXHELLO//WORLD"));
+    assert_true(ndrx_str_ends_with(test_str, "HELLO//WORLD"));
+    /* empty strings matches too */
+    assert_true(ndrx_str_ends_with(test_str, ""));
+}
+
+/**
  * Test argument setter and getter
  */
 Ensure(test_nstd_args)
@@ -494,6 +509,7 @@ TestSuite *ubf_nstd_util(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_nstd_strsep);
+    add_test(suite, test_nstd_ends_with);
     add_test(suite, test_nstd_args);
     add_test(suite, test_nstd_env_subs);
     add_test(suite, test_nstd_env_subs_ctx);

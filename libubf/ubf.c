@@ -58,10 +58,10 @@
 #include <typed_view.h>
 #include <ubfdb.h>
 #include <ubfutil.h>
-#include <stdarg.h>
-
-#include "expluginbase.h"
-#include "ubf_tls.h"
+#include <nstd_int.h>
+#include <expluginbase.h>
+#include <ubf_tls.h>
+#include <ndebugcmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -413,6 +413,12 @@ expublic BFLDID Bfldid (char *fldnm)
     API_ENTRY;
     
     if (EXSUCCEED!=ndrx_prepare_type_tables())
+    {
+        return BBADFLDID;
+    }
+
+    /* no such field */
+    if (NULL==fldnm || EXEOS==fldnm[0])
     {
         return BBADFLDID;
     }
@@ -1764,7 +1770,12 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
         else
         {
             /* use plugin callback */
-            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL, 0);
+            /* on entry... we need to perform locks */
+            ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
+            ndrx_Bfprint (p_ub, ((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr)->fp, 
+                    ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL, 0);
+            ndrx_debug_unlock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
+            /* on exit we need to perform unlocks */
         }
     }
 }
@@ -2532,6 +2543,49 @@ expublic int CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ,
     
 out:
     return ret;
+}
+
+/**
+ * Get view field, allocate the output buffer
+ * @param cstruct c structure from which to read the value from
+ * @param view view name
+ * @param cname filed name
+ * @param occ occurrence
+ * @param usrtype user type to cast to
+ * @param flags BVACCESS_NOTNULL
+ * @param extralen optional, on input len to alloc, on output len of data loaded
+ * @return NULL on error, if ok, ptr to data
+ */
+expublic char *CBvgetalloc(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+			int usrtype, long flags, BFLDLEN *extralen)
+{
+    int ret = EXSUCCEED;
+    char *retval = NULL;
+    API_ENTRY;
+    VIEW_ENTRY;
+
+    if (NULL==view || EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL or empty!");
+        goto out;
+    }
+    
+    if (NULL==cname || EXEOS==cname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cname is NULL or empty!");
+        goto out;
+    }
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        goto out;
+    }
+    
+    retval=ndrx_CBvgetalloc(cstruct, view, cname, occ, usrtype, flags, extralen);
+    
+out:
+    return retval;
 }
 
 /**
@@ -3673,6 +3727,36 @@ out:
 }
 
 /**
+ * Get field as string, allocate
+ * @param p_ub UBF buffer
+ * @param fldidocc fld occ path
+ * @param usrtype user type to convert to
+ * @param extralen extra len to alloc (or NULL) on return data len loaded
+ * @return NULL in case of failure, allocated (malloc) data block
+ */
+expublic char * CBgetallocr (UBFH *p_ub, BFLDID *fldidocc, int usrtype, BFLDLEN *extralen)
+{
+    char * ret = NULL;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        goto out;
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        goto out;
+    }
+    
+    ret=ndrx_CBgetallocr (p_ub, fldidocc, usrtype, extralen);
+out:
+    return ret;
+}
+
+/**
  * Recursive field find
  * @param p_ub UBF buffer to search into
  * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDOCC sequence
@@ -3805,6 +3889,41 @@ out:
 }
 
 /**
+ * Get view field with allocation recursive from UBF
+ * @param p_ub UBF buffer with view field present
+ * @param fldidocc field path
+ * @param cname field name
+ * @param occ occurrence
+ * @param usrtype dest type
+ * @param flags BVACCESS_NOTNULL if any
+ * @param extralen on input extra len to alloc, on output number of types loaded
+ * @return NULL on error, alloct ptr ok
+ */
+expublic char * CBvgetallocr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+			int usrtype, long flags, BFLDLEN *extralen)
+{
+    char * ret = NULL;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        goto out;
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        goto out;
+    }
+    
+    ret=ndrx_CBvgetallocr (p_ub, fldidocc, cname, occ, usrtype, flags, extralen);
+    
+out:
+    return ret;
+}
+
+/**
  * Test the view field for NULL value
  * @param p_ub UBF buffer into which search for the view
  * @param fldidocc fldidocc fldid,occ,fldid,occ,...,fldid (of view),occ,BBADFLDOCC
@@ -3917,6 +4036,26 @@ out:
 }
 
 /**
+ * Get as string to allocated buffer, var-args path
+ * @param p_ub UBF buffer
+ * @param extralen extra len to alloc
+ * @param usrtype user type to cast to
+ * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
+ * @return NULL on error or allocated filed
+ */
+expublic char * CBgetallocrv (UBFH *p_ub, int usrtype, BFLDLEN *extralen, ...)
+{
+    int ret = EXSUCCEED;
+    char *retval = NULL;
+    NDRX_UBF_GET_FLDIDOCC(extralen);
+    
+    retval=CBgetallocr (p_ub, fldidocc, usrtype, extralen);
+    
+out:
+    return retval;
+}
+
+/**
  * Recursive convert Buffer find, var-args
  * @param p_ub UBF buffer where to search
  * @param len data len to return (optional)
@@ -3994,6 +4133,31 @@ expublic int CBvgetrv(UBFH *p_ub, char *cname, BFLDOCC occ,
 out:
     return ret;
 }
+
+/**
+ * Convert view get value from UBF recursive view field. Varg-args
+ * @param p_ub UBF buffer which contains view in some of the levels
+ * @param cname view field name
+ * @param occ view occurrence
+ * @param usrtype user type to convert view value to
+ * @param flags BVACCESS_NOTNULL - thread null view value as BNOTPRES error
+ * @param extralen optional, on input add len, on output bytes loaded
+ * @param ... path to view field <FLDID>,<OCC>,...,<FLDID (of view)>,OCC,BBADFLDOCC
+ * @return NULL on error, allocd ptr
+ */
+expublic int CBvgetallocrv(UBFH *p_ub, char *cname, BFLDOCC occ,
+            int usrtype, long flags, BFLDLEN *extralen, ...)
+{
+    int ret = EXSUCCEED;
+    char *retval = NULL;
+    NDRX_UBF_GET_FLDIDOCC(extralen);
+    
+    retval=CBvgetallocr (p_ub, fldidocc, cname, occ, usrtype, flags, extralen);
+    
+out:
+    return ret;
+}
+
 
 /**
  * Check is view field NULL

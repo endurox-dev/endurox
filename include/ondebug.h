@@ -22,7 +22,7 @@
  * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
  * for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
@@ -69,4 +69,3 @@ extern NDRX_API void Otplogclosethread(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void Otplogsetreqfile_direct(TPCONTEXT_T *p_ctxt, char *filename);
 #endif  /* __ONDEBUG_H */
 
-/* vim: set ts=4 sw=4 et smartindent: */

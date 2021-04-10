@@ -383,7 +383,7 @@ int main(int argc, char **argv)
     ndrx_rm_def_t rmdef;
     bs_svcnm_lst_t *el, *elt;
     
-    NDRX_BANNER("BUILDSERVER Compiler");
+    NDRX_BANNER("BUILDSERVER Tool");
     
     /* clear any error... */
     _Nunset_error();

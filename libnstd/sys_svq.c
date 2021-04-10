@@ -136,11 +136,11 @@ expublic int ndrx_svq_close(mqd_t mqd)
 #endif
         /* remove from hashes... */
         ndrx_svq_mqd_close(mqd);
-        NDRX_FREE(mqd);
+        NDRX_FPFREE(mqd);
 #endif
 
 #ifdef EX_USE_SVAPOLL
-        NDRX_FREE(mqd);
+        NDRX_FPFREE(mqd);
 #endif
         
         return EXSUCCEED;
@@ -227,7 +227,8 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     int errno_save;
     
     NDRX_LOG(log_debug, "enter");
-    mq = NDRX_CALLOC(1, sizeof(struct ndrx_svq_info));
+    mq = NDRX_FPMALLOC(sizeof(struct ndrx_svq_info), 0);
+    memset(mq, 0, sizeof(struct ndrx_svq_info));
     
     if (NULL==mq)
     {
@@ -279,7 +280,7 @@ out:
     {
         if (NULL!=(mqd_t)EXFAIL)
         {
-            NDRX_FREE((char *)mq);
+            NDRX_FPFREE((char *)mq);
             mq = (mqd_t)EXFAIL;
         }
     }
@@ -446,7 +447,7 @@ out:
         NDRX_LOG(log_debug, "wait_left: %d qid: %d", wait_left, mqd->qid);
         ret = poll((void *)&msgs, nfd, wait_left);
         err=errno;
-        NDRX_LOG(log_error, "poll ret: %d qid: %d wait_left: %d", ret, mqd->qid, wait_left);
+        NDRX_LOG(log_debug, "poll ret: %d qid: %d wait_left: %d", ret, mqd->qid, wait_left);
         if (ret>0)
         {
             /* OK, can try to receive something */

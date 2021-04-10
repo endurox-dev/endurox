@@ -102,10 +102,9 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    
     if (EXFAIL == tpcall("NEWS2", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
-        NDRX_LOG(log_error, "SYSADV2 failed: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "NEWS2 failed: %s", tpstrerror(tperrno));
         ret=EXFAIL;
         goto out;
     }
@@ -113,6 +112,19 @@ int main(int argc, char** argv)
     if (0!=strcmp((p=Bfind(p_ub, T_STRING_FLD, 0, 0L)), "somefunc"))
     {
         NDRX_LOG(log_error, "sumefunc failed: got [%s]", p);
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXFAIL == tpcall("someXfunc", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "someXfunc failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (0!=strcmp((p=Bfind(p_ub, T_STRING_FLD, 0, 0L)), "someXfunc"))
+    {
+        NDRX_LOG(log_error, "someXfunc failed: got [%s]", p);
         EXFAIL_OUT(ret);
     }
     

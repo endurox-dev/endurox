@@ -51,6 +51,7 @@
 #include <atmi_int.h>
 #include <typed_buf.h>
 #include <atmi_tls.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -76,7 +77,21 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 srv_conf_t G_server_conf;
+
+/**
+ * Do not advertise these particular services
+ */
 ndrx_svchash_t *ndrx_G_svchash_skip = NULL;
+
+/**
+ * Advertised functions in case if -N is used
+ * Convert ndrx_skipsvc_add to exception_lists
+ * for ndrx_G_svchash_skip and ndrx_G_svchash_funcs
+ * -SNEWSVC:FUNC shall be added to exception list services, as otherwise -N would suppress them
+ * -T new flag would suppress service advertises from tmdsptchtbl_t, but exception
+ * list is still needed, because we want -S to be present even if -N is used.
+ */
+ndrx_svchash_t *ndrx_G_svchash_funcs = NULL;
 
 /**
  * List of defer messages so that we can call self services during the
@@ -89,10 +104,11 @@ exprivate ndrx_tpacall_defer_t *M_deferred_tpacalls = NULL;
 exprivate int ndrx_tpacall_noservice_hook_defer(char *svc, char *data, long len, long flags);
 /**
  * Add service to skip advertise list
- * @param svcnm
+ * @param hash hash handle
+ * @param svc_nm service name to add to hash
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_skipsvc_add(char *svc_nm)
+expublic int ndrx_svchash_add(ndrx_svchash_t **hash, char *svc_nm)
 {
     int ret = EXSUCCEED;
     ndrx_svchash_t *el = NULL;
@@ -107,22 +123,37 @@ expublic int ndrx_skipsvc_add(char *svc_nm)
     }
     
     NDRX_STRCPY_SAFE(el->svc_nm, svc_nm);
-    EXHASH_ADD_STR( ndrx_G_svchash_skip, svc_nm, el);
+    EXHASH_ADD_STR( *hash, svc_nm, el);
     
 out:
     return ret;
 }
 
 /**
- * Check service is it for advertise
+ * Check is service in the list
+ * Be aware we could lookup for group names, but names with out @<GRP> are then
+ * list.
+ * @param hash hash handle to check service presence there
  * @param svcnm
  * @return EXFALSE/EXTRUE
  */
-expublic int ndrx_skipsvc_chk(char *svc_nm)
+expublic int ndrx_svchash_chk(ndrx_svchash_t **hash, char *svc_nm)
 {
     ndrx_svchash_t *el = NULL;
+    char tmp[XATMI_SERVICE_NAME_LENGTH+1];
+    char *p;
     
-    EXHASH_FIND_STR( ndrx_G_svchash_skip, svc_nm, el);
+    NDRX_STRCPY_SAFE(tmp, svc_nm);
+    
+    p = strchr(tmp, NDRX_SYS_SVC_PFXC);
+    
+    if (NULL!=p)
+    {
+        *p=EXEOS;
+    }
+    
+    /* search for name with out suffix... */
+    EXHASH_FIND_STR( *hash, tmp, el);
     
     if (NULL!=el)
     {
@@ -134,14 +165,15 @@ expublic int ndrx_skipsvc_chk(char *svc_nm)
 
 /**
  * Delete hash list (un-init)
+ * @param hash hash list to clean up
  */
-expublic void ndrx_skipsvc_delhash(void)
+expublic void ndrx_svchash_cleanup(ndrx_svchash_t **hash)
 {
     ndrx_svchash_t *el = NULL, *elt = NULL;
     
-    EXHASH_ITER(hh, ndrx_G_svchash_skip, el, elt)
+    EXHASH_ITER(hh, *hash, el, elt)
     {
-        EXHASH_DEL(ndrx_G_svchash_skip, el);
+        EXHASH_DEL(*hash, el);
         NDRX_FREE(el);
     }
 }
@@ -152,17 +184,22 @@ expublic void ndrx_skipsvc_delhash(void)
  * -s<New Service1>[,|/]<New Service2>[,|/]..[,|/]<New Service N>:<existing service>
  * e.g.
  * -sNEWSVC1/NEWSVC2:EXISTINGSVC
+ *  TODO: if we are in routing group, then add @grp automatically for each alias
+ *  - Also check the length of the new service. IF does not fit, then return error.
  * @param msg1 debug msg1
- * @param argc
- * @param argv
+ * @param usegrp use groups if available
  * @return
  */
 expublic int ndrx_parse_svc_arg_cmn(char *msg1,
-        svc_entry_t **root_svc_list, char *arg)
+        svc_entry_t **root_svc_list, char *arg, int usegrp)
 {
     char alias_name[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
+    char grpsvc[MAXTIDENT*2]={EXEOS};
     char *p;
     svc_entry_t *entry=NULL;
+    char *grparr[3]={NULL, NULL, NULL};
+    int i;
+    int len;
 
     NDRX_LOG(log_debug, "Parsing %s entry: [%s]", msg1, arg);
     
@@ -181,29 +218,56 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
     p = strtok(arg, ",/");
     while (NULL!=p)
     {
-        /* allocate memory for entry */
-        if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
+        grparr[0]=p;
+        if (usegrp && G_atmi_env.rtgrp[0])
         {
-            ndrx_TPset_error_fmt(TPMINVAL, 
-                    "Failed to allocate %d bytes while parsing -s",
-                    sizeof(svc_entry_t));
-            return EXFAIL; /* <<< return FAIL! */
+            NDRX_STRCPY_SAFE(grpsvc, p);
+            NDRX_STRCAT_S(grpsvc, sizeof(grpsvc), NDRX_SYS_SVC_PFX);
+            NDRX_STRCAT_S(grpsvc, sizeof(grpsvc), G_atmi_env.rtgrp);
+            grparr[1]=grpsvc;
         }
-
-        NDRX_STRCPY_SAFE(entry->svc_nm, p);
-        entry->svc_aliasof[0]=EXEOS;
-                
-        if (EXEOS!=alias_name[0])
+        else
         {
-            NDRX_STRCPY_SAFE(entry->svc_aliasof, alias_name);
+            grparr[1]=NULL;
         }
         
-        /*
-         * Should we check duplicate names here?
-         */
-        DL_APPEND((*root_svc_list), entry);
+        for (i=0; NULL!=grparr[i]; i++)
+        {
+            
+            len = strlen(grparr[i]);
+            if (len>XATMI_SERVICE_NAME_LENGTH)
+            {
+                ndrx_TPset_error_fmt(TPEINVAL, 
+                        "Invalid service name [%s] too long %d, max allowed %d",
+                        grparr[i], len, XATMI_SERVICE_NAME_LENGTH);
+                return EXFAIL; /* <<< return FAIL! */
+            }
+            
+            /* allocate memory for entry */
+            if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
+            {
+                ndrx_TPset_error_fmt(TPEOS, 
+                        "Failed to allocate %d bytes while parsing -s",
+                        sizeof(svc_entry_t));
+                return EXFAIL; /* <<< return FAIL! */
+            }
 
-        NDRX_LOG(log_debug, "%s [%s]:[%s]", msg1, entry->svc_nm, entry->svc_aliasof);
+            NDRX_STRCPY_SAFE(entry->svc_nm, grparr[i]);
+            entry->svc_aliasof[0]=EXEOS;
+
+            if (EXEOS!=alias_name[0])
+            {
+                NDRX_STRCPY_SAFE(entry->svc_aliasof, alias_name);
+            }
+
+            /*
+             * Should we check duplicate names here?
+             */
+            DL_APPEND((*root_svc_list), entry);
+
+            NDRX_LOG(log_debug, "%s [%s]:[%s]", msg1, entry->svc_nm, entry->svc_aliasof);
+        }
+        
         p = strtok(NULL, ",/");
     }
     
@@ -217,17 +281,19 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
  */
 expublic int ndrx_parse_svc_arg(char *arg)
 {
-    return ndrx_parse_svc_arg_cmn("-s", &G_server_conf.svc_list, arg);
+    return ndrx_parse_svc_arg_cmn("-s", &G_server_conf.svc_list, arg, EXTRUE);
 }
 
 /**
  * parse -S service:function mapping flag
+ * Note that function aliases are replied much later via help of tpadveritse
+ * thus at that point group is added to the name (if having any DDR group set)
  * @param root_svc_list
  * @param arg -S flag value
  */
 expublic int ndrx_parse_func_arg(char *arg)
 {
-    return ndrx_parse_svc_arg_cmn("-S", &G_server_conf.funcsvc_list, arg);
+    return ndrx_parse_svc_arg_cmn("-S", &G_server_conf.funcsvc_list, arg, EXFALSE);
 }
 
 /*
@@ -344,6 +410,13 @@ expublic int ndrx_init(int argc, char** argv)
     char key[NDRX_MAX_KEY_SIZE]={EXEOS};
     char rqaddress[NDRX_MAX_Q_SIZE+1] = "";
     char tmp[NDRX_MAX_Q_SIZE+1];
+    int was_grp_used=EXFALSE;
+    
+    /* reply aliases later, as maybe there is -sSVC -g GRP
+     * thus if performing advertise first, we do not yet know that we are part of the
+     * group
+     */
+    string_list_t *svcalias=NULL, *svciter;
     
     /* Create ATMI context */
     ATMI_TLS_ENTRY;
@@ -365,10 +438,27 @@ expublic int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:G--")) != EXFAIL)
     {
         switch(c)
         {
+            case 'g':
+                
+                /* routing group... override here whatever we have in env... */
+                if (EXEOS!=G_atmi_env.rtgrp[0])
+                {
+                    was_grp_used=EXTRUE;
+                }
+                
+                NDRX_STRCPY_SAFE(G_atmi_env.rtgrp, optarg);
+                NDRX_LOG(log_info, "Routing group %s to [%s]",
+                        (was_grp_used?"cli override":"set"), G_atmi_env.rtgrp);
+                break;
+            case 'G':
+                /* Send @GPR encoded in service TPSVCINFO.name*/
+                G_server_conf.ddr_keep_grp=EXTRUE;
+                NDRX_LOG(log_info, "Keeping DDR group name in service names");
+                break;
             case 'k':
                 /* just ignore the key... */
                 NDRX_STRCPY_SAFE(key, optarg);
@@ -389,12 +479,21 @@ expublic int ndrx_init(int argc, char** argv)
                 
                 NDRX_STRCPY_SAFE(rqaddress, optarg);
                 break;
+                
             case 's':
-                ret=ndrx_parse_svc_arg(optarg);
+                
+                if (EXSUCCEED!=ndrx_string_list_add(&svcalias, optarg))
+                {
+                    /* probably OOM */
+                    NDRX_LOG(log_error, "Failed to populate svcalias list");
+                    EXFAIL_OUT(ret);
+                }
+
                 break;
             case 'S':
                 ret=ndrx_parse_func_arg(optarg);
                 break;
+                
             case 'x':
                 ret=ndrx_parse_xcvt_arg(optarg);
                 break;
@@ -412,7 +511,7 @@ expublic int ndrx_init(int argc, char** argv)
                 break;
             case 'n':
                 /* Do not advertise single service */
-                if (EXSUCCEED!=ndrx_skipsvc_add(optarg))
+                if (EXSUCCEED!=ndrx_svchash_add(&ndrx_G_svchash_skip, optarg))
                 {
                     ndrx_TPset_error_msg(TPESYSTEM, "Malloc failed");
                     EXFAIL_OUT(ret);
@@ -451,6 +550,22 @@ expublic int ndrx_init(int argc, char** argv)
                     {
                         userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
                     }
+                        
+                    /* ALSO! reconfigure ndrx/tp/ubf to user this log! 
+                     * if stderr currently is used...
+                     * However not sure what we could do with threads?
+                     * MQ or others if they have chosen to work with stderr
+                     * then those will not rotate...
+                     * Anyway we will do the best.
+                     */
+                    if (ndrx_debug_is_proc_stderr())
+                    {
+                        if (EXSUCCEED!=tplogconfig(LOG_CODE_UBF|LOG_CODE_NDRX|LOG_CODE_TP, EXFAIL, 
+                                NULL, NULL, G_server_conf.err_output))
+                        {
+                            NDRX_LOG(log_debug, "Failed to re-open logger");
+                        }
+                    }
                 }
                 else
                 {
@@ -473,6 +588,15 @@ expublic int ndrx_init(int argc, char** argv)
                 goto out;
                 break;
             /* add support for s */
+        }
+    }
+    
+    /* reply the aliases as we have now groups set ... */
+    LL_FOREACH(svcalias, svciter)
+    {
+        if (EXSUCCEED!=ndrx_parse_svc_arg(svciter->qname))
+        {
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -641,6 +765,9 @@ expublic int ndrx_init(int argc, char** argv)
 #endif
     
 out:
+
+    ndrx_string_list_free(svcalias);
+
     return ret;
 }
 
@@ -914,7 +1041,7 @@ int ndrx_main(int argc, char** argv)
         
         if (NULL==(env_clopt=NDRX_STRDUP(p)))
         {
-            int err;
+            int err=errno;
             
             NDRX_LOG(log_error, "%s: Failed to strdup: %s", __func__, 
                     strerror(err));

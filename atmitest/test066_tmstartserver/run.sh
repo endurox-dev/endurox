@@ -101,7 +101,6 @@ xadmin psc
 xadmin ppm
 echo "Running off client"
 
-set_dom1;
 (./atmiclt66 2>&1) > ./atmiclt-dom1.log
 #(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt66 2>&1) > ./atmiclt-dom1.log
 

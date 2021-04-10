@@ -126,6 +126,10 @@ struct svc_entry_fn
     mqd_t q_descr; /* queue descriptor */
     ndrx_stopwatch_t qopen_time;
     long xcvtflags; /* Conversion function */
+    
+    /* have flags for transaction -> authtran & timeout */
+    int autotran;       /**< shall we start transaction upport receving msg?  */
+    unsigned long trantime; /**< transaction timeout if doing autotran        */
 };
 
 /*
@@ -189,6 +193,8 @@ struct srv_conf
   
     threadpool dispthreads;     /**< thread pool for dispatch threads*/
     NDRX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync        */
+    
+    int ddr_keep_grp;           /**< shall we keep DDR group name in svcnm? */
 };
 
 typedef struct srv_conf srv_conf_t;
@@ -232,6 +238,8 @@ struct ndrx_tpacall_defer
 extern NDRX_API srv_conf_t G_server_conf;
 extern NDRX_API shm_srvinfo_t *G_shm_srv;
 extern NDRX_API pollextension_rec_t *ndrx_G_pollext;
+extern NDRX_API ndrx_svchash_t *ndrx_G_svchash_skip;
+extern NDRX_API ndrx_svchash_t *ndrx_G_svchash_funcs;
 extern NDRX_API int G_shutdown_req;
 extern NDRX_API int G_shutdown_nr_wait;   /* Number of self shutdown messages to wait */
 extern NDRX_API int G_shutdown_nr_got;    /* Number of self shutdown messages got  */
@@ -293,8 +301,9 @@ extern NDRX_API void atmisrv_un_initialize(int fork_uninit);
 
 extern NDRX_API int atmisrv_array_remove_element(void *arr, int elem, int len, int sz);
 
-extern NDRX_API int ndrx_skipsvc_chk(char *svc_nm);
-extern NDRX_API void ndrx_skipsvc_delhash(void);
+extern NDRX_API int ndrx_svchash_add(ndrx_svchash_t **hash, char *svc_nm);
+extern NDRX_API int ndrx_svchash_chk(ndrx_svchash_t **hash, char *svc_nm);
+extern NDRX_API void ndrx_svchash_cleanup(ndrx_svchash_t **hash);
 
 extern NDRX_API int ndrx_svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b);
 extern NDRX_API void ndrx_sv_advertise_lock();

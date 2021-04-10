@@ -56,16 +56,6 @@ exprivate pthread_key_t M_atmi_switch_key; /* switch the structure */
 exprivate MUTEX_LOCKDECL(M_thdata_init);
 exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
-exprivate void atmi_buffer_key_destruct( void *value );
-
-/**
- * Thread destructor
- * @param value this is malloced thread TLS
- */
-exprivate void atmi_buffer_key_destruct( void *value )
-{
-    ndrx_atmi_tls_free((void *)value);
-}
 
 /**
  * Unlock, unset G_atmi_tls, return pointer to G_atmi_tls
@@ -102,27 +92,36 @@ expublic void * ndrx_atmi_tls_get(long priv_flags)
             
             if (tls->G_atmi_xa_curtx.txinfo)
             {
+                atmi_error_t aerr;
+                int aerr_loaded=EXFALSE;
+                
+                /* suspend current error */
+                if (tls->M_atmi_error)
+                {
+                    aerr_loaded=EXTRUE;
+                    ndrx_TPsave_error(&aerr);
+                }
+                
                 tls->M_atmi_error = 0;
                 if (EXSUCCEED!=ndrx_tpsuspend(&tls->tranid, 0, EXTRUE))
                 {
+                    /*
+                     * Nothing to do here! it will fail next time when user
+                     * will try to do some DB operation... 
+                     */
                     userlog("ndrx_atmi_tls_get: Failed to suspend transaction: [%s]", 
                             tpstrerror(tperrno));
-
-#if 0
-                    Nothing to do here! it will fail next time when user
-                    will try to do some DB operation...
-                    MUTEX_UNLOCK_V(tls->mutex);
-
-                    ndrx_atmi_tls_free(tls);
-                    /* fail it. */
-                    tls = NULL;
-                    goto out;
-#endif
                 }
                 else
                 {
                     tls->global_tx_suspended = EXTRUE;
-                }        
+                }
+                
+                if (aerr_loaded)
+                {
+                    ndrx_TPrestore_error(&aerr);
+                }
+                
             }
         }
         
@@ -246,6 +245,11 @@ expublic void ndrx_atmi_tls_free(void *data)
             NDRX_FPFREE(el);
         }
         
+        if (NULL!=tls->qdisk_tls)
+        {
+            NDRX_FPFREE(tls->qdisk_tls);
+        }
+        
         NDRX_FREE((char*)data);
     }
 }
@@ -267,7 +271,7 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
         if (M_first)
         {
             pthread_key_create( &M_atmi_tls_key, 
-                    &atmi_buffer_key_destruct );
+                    &ndrx_atmi_tls_free );
             
             /* perform first time library inits..., locks, etc  */
             ndrx_tpcall_init_once();
@@ -345,6 +349,17 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     
     /* reset the hook */
     tls->pf_tpacall_noservice_hook = NULL;
+    
+    /* no priority set ... */
+    tls->prio = 0;
+    tls->prio_flags=0;
+    tls->prio_last = NDRX_MSGPRIO_DEFAULT;
+    tls->tmnull_is_open=EXFALSE;
+    tls->tmnull_rmid=EXFAIL;
+    
+    tls->qdisk_is_open=EXFALSE;
+    tls->qdisk_rmid=EXFAIL;
+    tls->qdisk_tls=NULL;
     
     /* set callback, when thread dies, we need to get the destructor 
      * to be called

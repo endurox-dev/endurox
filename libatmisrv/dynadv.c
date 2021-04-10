@@ -50,7 +50,7 @@
 #include <atmi_int.h>
 #include <atmi_shm.h>
 #include <sys_unix.h>
-
+#include <ndrx_ddr.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define READVERTISE_SLEEP_SRV       2   /* Sleep X sec for re-advertise */
@@ -308,7 +308,10 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     svc_entry_fn_t *entry_chk=NULL;
     struct ndrx_epoll_event ev;
     int sz;
-    
+    /* lookup dynamically ... OK ? */
+    int autotran=0;
+    unsigned long trantime=NDRX_DDR_TRANTIMEDFLT;
+
     for (pos=0; pos<G_server_conf.adv_service_count; pos++)
     {
         if (0==strcmp(svc_nm, G_server_conf.service_array[pos]->svc_nm))
@@ -321,19 +324,19 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Check for advertise existance */
     if (NULL!=entry_chk)
     {
-        NDRX_LOG(log_warn, "Service [%s] found in array at %d", 
+        NDRX_LOG(log_info, "Service [%s] found in array at %d", 
                                 svc_nm, pos);
         
         if (entry_chk->p_func == p_func)
         {
-            NDRX_LOG(log_warn, "Advertised function ptr "
+            NDRX_LOG(log_info, "Advertised function ptr "
                                 "the same - return OK!");
             goto out;
         }
         else
         {
             ndrx_TPset_error_fmt(TPEMATCH, "Service [%s] already advertised by func. "
-                    "ptr. 0x%lx, but now requesting advertise by func. ptr. 0x%lx!",
+                    "ptr. %p, but now requesting advertise by func. ptr. %p!",
                     svc_nm, entry_chk->p_func, p_func);
             ret=EXFAIL;
             goto out;
@@ -360,6 +363,22 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     snprintf(entry_new->listen_q, sizeof(entry_new->listen_q), NDRX_SVC_QFMT, 
             G_server_conf.q_prefix, entry_new->svc_nm);
 #endif
+    
+    /* lookup the service settings in shm... */
+    if (EXTRUE==(ret=ndrx_ddr_service_get(svc_nm, &autotran, &trantime)))
+    {
+        NDRX_LOG(log_debug, "Service [%s] found in <services> section autotran: %d trantime: %lu",
+                svc_nm, autotran, trantime);
+        entry_new->autotran = autotran;
+        entry_new->trantime = trantime;
+        ret=EXSUCCEED;
+    }
+    
+    if (EXFAIL==ret)
+    {
+        /* routing error is loaded.. */
+        EXFAIL_OUT(ret);
+    }
     
     /* We are good to go, open q? */
     

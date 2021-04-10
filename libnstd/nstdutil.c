@@ -255,7 +255,6 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
 expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
 {
     struct tm       stm;
-    long            lret;
     struct timeval  timeval;
     struct timezone timezone_val;
 
@@ -803,6 +802,29 @@ expublic double ndrx_num_time_parsecfg(char * str)
     return ret;
 }
 
+/**
+ * Print the string up to max version
+ * This assumes that buffer is atleast 2x symbols
+ * @param str string to process
+ * @param slot slot to use for temp strings
+ * @param buf_sz max len to trim of 
+ * @return ptr to printable string
+ */
+expublic char *ndrx_decode_str(char *str, char *buf, int buf_sz)
+{
+    int len = strlen(str);
+    
+    if (len < buf_sz)
+    {
+        return str;
+    }
+    
+    NDRX_STRCPY_SAFE_DST(buf, str, buf_sz);
+    
+    buf[buf_sz-2]='+';
+    
+    return buf;
+}
 
 /**
  * Decode number
@@ -1572,7 +1594,10 @@ expublic void ndrx_growlist_free(ndrx_growlist_t *list)
     if (NULL!=list->mem)
     {
         NDRX_FPFREE(list->mem);
+        /* reset list to initial state */
         list->mem=NULL;
+        list->maxindexused=EXFAIL;
+        list->itemsalloc = 0;
     }
 }
 
@@ -2194,4 +2219,54 @@ expublic void ndrx_strcat_s(char *dest, size_t dst_size, const char *src)
     NDRX_STRCAT_S(dest, dst_size, src);
     
 }
+
+/**
+ * Check that identifier is valid c style identifier
+ * @param str string to check
+ * @param max_len max allowed len
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_str_valid_cid(char *str, int max_len)
+{ 
+    int i;
+    int len = strlen(str);
+    
+    if (len < 1 || len > max_len)
+    {
+        return EXFALSE;
+    }
+    
+    if (!((str[0] >= 'a' && str[0] <= 'z') 
+          || (str[0] >= 'A' && str[1] <= 'Z') 
+          || str[0] == '_')) 
+    {
+        return EXFALSE;
+    }
+  
+    for (i = 1; i < len; i++)
+    { 
+        if (!((str[i] >= 'a' && str[i] <= 'z') 
+              || (str[i] >= 'A' && str[i] <= 'Z') 
+              || (str[i] >= '0' && str[i] <= '9') 
+              || str[i] == '_')) 
+        return EXFALSE;
+    } 
+  
+    return EXTRUE;
+}
+
+/**
+ * Check that str ends with needle
+ * @param str string
+ * @param needle what to search for str trailing
+ * @return EXTRUE, EXFALSE
+ */
+expublic int ndrx_str_ends_with(char *str, char *needle)
+{
+    int len_str = strlen(str);
+    int len_needle = strlen(needle);
+    
+    return  (len_str >= len_needle) && (0 == strcmp(str + (len_str-len_needle), needle));
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -317,7 +317,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
         {
             NDRX_LOG(log_error, "Failed to parse root element");
             ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
-            return EXFAIL;
+            EXFAIL_OUT(ret);
         }
         root_object = exjson_value_get_object(root_value);
     }

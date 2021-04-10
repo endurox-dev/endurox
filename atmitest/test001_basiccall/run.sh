@@ -58,7 +58,6 @@ export NDRX_DEBUG_CONF=`pwd`/debug-dom1.conf
 
 set | grep NDRX_
 set | grep TEST
-xadmin down -y
 
 rm *.log
 

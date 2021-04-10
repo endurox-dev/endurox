@@ -58,6 +58,7 @@
 
 #include "gencall.h"
 #include "userlog.h"
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define SLEEP_ON_FULL_Q             170000   /* Sleep 150 ms every batch..... */
@@ -87,6 +88,31 @@
             ndrx_mq_getattr(X, &__attr);\
             NDRX_LOG(log_error, "mq_flags=%ld mq_maxmsg=%ld mq_msgsize=%ld mq_curmsgs=%ld",\
                     __attr.mq_flags, __attr.mq_maxmsg, __attr.mq_msgsize, __attr.mq_curmsgs);}
+
+/**
+ * On freebsd we get <32 prios only.
+ * Also note that we assume here, that PRIO would be within range of 100.
+ */
+#ifdef MQ_PRIO_MAX
+
+#if (MQ_PRIO_MAX-1 < NDRX_MSGPRIO_MAX)
+
+    #define NDRX_PRIO_DOWNSCALE(PRIO)\
+    {\
+        PRIO=( ((float)PRIO) * (float)(MQ_PRIO_MAX-1) / (float)NDRX_MSGPRIO_MAX );\
+    }
+
+#else
+/* no scaling needed ... */
+#define NDRX_PRIO_DOWNSCALE(PRIO)
+#endif
+
+#else
+
+/* no scaling... as no priority supported by queuing sub-system */
+#define NDRX_PRIO_DOWNSCALE(PRIO)
+
+#endif
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -260,13 +286,20 @@ expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long fla
     int ret=EXSUCCEED;
     int use_tout;
     struct timespec abs_timeout;
+    int snd_prio;
     SET_TOUT_CONF;
+    
+    snd_prio = NDRX_MSGPRIO_DEFAULT;
+    
+    NDRX_PRIO_DOWNSCALE(snd_prio);
     
 restart:
 
     SET_TOUT_VALUE;
-    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+
+    /* Internal message including tpsend() will use default priority. */
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, snd_prio)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, snd_prio, &abs_timeout)))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -294,7 +327,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio)
+expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, int msg_prio)
 {
     return ndrx_generic_q_send_2(queue, data, len, flags, EXFAIL, msg_prio);
 }
@@ -311,17 +344,16 @@ expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, 
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, 
-        long tout, unsigned int msg_prio)
+        long tout, int msg_prio)
 {
     int ret=EXSUCCEED;
     mqd_t q_descr=(mqd_t)EXFAIL;
     int use_tout;
     struct timespec abs_timeout;
     long add_flags = 0;
+    int snd_prio;
     SET_TOUT_CONF;
 
-    NDRX_LOG(log_debug, "ndrx_generic_q_send_2: %ld", len);
-    
     /* Set nonblock flag to system, if provided to EnduroX */
     if (flags & TPNOBLOCK)
     {
@@ -366,10 +398,47 @@ restart_send:
         abs_timeout.tv_nsec = timeval.tv_usec*1000;
     }
 
-    NDRX_LOG(6, "use timeout: %d config: %d", 
-                use_tout, G_atmi_env.time_out);
-    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    if (0==msg_prio)
+    {
+        /* set default prio */
+        msg_prio = NDRX_MSGPRIO_DEFAULT;
+    }
+
+    /** override the message priority */
+    if (NULL!=G_atmi_tls && G_atmi_tls->prio)
+    {
+        /* override priority from tpsprio() */
+        
+        if (G_atmi_tls->prio_flags & TPABSOLUTE)
+        {
+            msg_prio = G_atmi_tls->prio;
+        }
+        else
+        {
+            /* relative change */
+            msg_prio += G_atmi_tls->prio;
+        }
+    }
+
+    if (msg_prio<NDRX_MSGPRIO_MIN)
+    {
+        /* set default prio */
+        msg_prio = NDRX_MSGPRIO_MIN;
+    }
+    else if (msg_prio>NDRX_MSGPRIO_MAX)
+    {
+        /* set default prio */
+        msg_prio = NDRX_MSGPRIO_MAX;
+    }
+
+    snd_prio=msg_prio;
+    /* freebsd needs downscale on some version limited to 32 priorities */
+    NDRX_PRIO_DOWNSCALE(snd_prio);
+            
+    NDRX_LOG(log_debug, "len: %d use timeout: %d config: %d prio: %d snd_prio: %d", 
+                len, use_tout, G_atmi_env.time_out, msg_prio, snd_prio);
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, snd_prio)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, snd_prio, &abs_timeout)))
     {
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
@@ -396,6 +465,14 @@ restart_close:
             NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_close");
             goto restart_close;
         }
+    }
+
+    /** OK, have priority of the last call */
+    if (NULL!=G_atmi_tls)
+    {
+        G_atmi_tls->prio = 0; /* reset the priority setting... */
+        G_atmi_tls->prio_flags = 0; /* reset the priority setting... */
+        G_atmi_tls->prio_last = msg_prio;
     }
 
     return ret;
@@ -936,7 +1013,7 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
     tp_command_call_t call_b;
     tp_command_call_t *call;
     char reply_to[NDRX_MAX_Q_SIZE+1] = {EXEOS};
-
+    
     /* Bug #570 */
     if (last_call->flags & TPNOREPLY)
     {
@@ -964,9 +1041,12 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
     call->rcode = rcode;
     NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
     
+    NDRX_LOG(log_debug, "error reply cd %d callseq %hd timestamp %ld queue [%s] error %ld", 
+            call->cd, call->callseq, call->timestamp, call->reply_to, call->rcode);
     if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
+        userlog("ATTENTION!! Failed to get reply queue");
         goto out;
     }
 
@@ -1076,50 +1156,6 @@ expublic atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
 out:
     return ret;
 }
-
-/**
- * Reply back to caller
- * @param tp_call
- * @param flags
- * @param rcode Error code
- * @param reply_to_q Sender id
- */
-expublic void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
-        long rcode, char *reply_to_q)
-{
-    int ret=EXSUCCEED;
-    char fn[] = "ndrx_reply_with_failure";
-    tp_command_call_t call;
-
-    NDRX_LOG(log_warn, "Replying  back to [%s] with TPESVCERR", 
-            tp_call->reply_to, reply_to_q);
-    
-    NDRX_LOG(log_error, "Dumping original call in queue:");
-    ndrx_dump_call_struct(log_error, tp_call);
-    
-    memset(&call, 0, sizeof(call));
-    call.command_id = ATMI_COMMAND_TPREPLY;
-    call.cd = tp_call->cd;
-    call.timestamp = tp_call->timestamp;
-    call.callseq = tp_call->callseq;
-    /* Give some info which server replied */
-    NDRX_STRCPY_SAFE(call.reply_to, reply_to_q);
-    call.sysflags |=SYS_FLAG_REPLY_ERROR;
-    /* Generate no entry, because we removed the queue
-     * yeah, it might be too late for TPNOENT, but this is real error */
-    call.rcode = rcode;
-    
-    NDRX_LOG(log_error, "Dumping error reply about to send:");
-    ndrx_dump_call_struct(log_error, &call);
-
-    if (EXSUCCEED!=(ret=ndrx_generic_q_send(tp_call->reply_to, (char *)&call, 
-            sizeof(call), flags, 0)))
-    {
-        NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 
-                fn, strerror(ret));
-    }
-}
-
 
 /**
  * Fix queue attributes to match the requested mode.

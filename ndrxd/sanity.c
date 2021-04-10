@@ -216,6 +216,9 @@ expublic int do_sanity_check(int finalchk)
             goto out;
         }
         
+        /* Perform any routing related checks */
+        ndrx_ddr_apply_sanity();
+        
         /* Respawn any dead processes */
         if (!finalchk)
         {

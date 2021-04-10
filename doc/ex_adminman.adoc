@@ -210,7 +210,7 @@ fs.mqueue.msg_max=10000
 # Max message size, to pass unit tests, use 1M+1K
 fs.mqueue.msgsize_max=1049600
 
-# Max number of queues for user
+# Max number of queues system-wide
 fs.mqueue.queues_max=10000
 
 EOF
@@ -321,7 +321,9 @@ not set correctly, some multi-threaded components of Enduro/X might hang during
 the startup, for example *tpbridge(8)*.
 
 --------------------------------------------------------------------------------
-cat << EOF >> /etc/security/limits
+$ su - root
+
+# cat << EOF >> /etc/security/limits
 
 user1:
         stack = 655360
@@ -329,6 +331,33 @@ user1:
         rss = -1
         fsize = -1
 EOF
+--------------------------------------------------------------------------------
+
+If during runtime following errors are faced:
+
+--------------------------------------------------------------------------------
+
+ fork: retry: Resource temporarily unavailable
+
+--------------------------------------------------------------------------------
+
+Check that number of user processes are allowed:
+
+--------------------------------------------------------------------------------
+
+$ su - root
+
+# /usr/sbin/lsattr -E -l sys0 | grep maxuproc
+maxuproc        40                                 Maximum number of PROCESSES allowed per user        True
+
+--------------------------------------------------------------------------------
+
+Updated to *2000*:
+
+--------------------------------------------------------------------------------
+
+# /usr/sbin/chdev -l sys0 -a maxuproc=2000
+
 --------------------------------------------------------------------------------
 
 === Solaris setup
@@ -1771,6 +1800,70 @@ service "HANDLER" is monitored.
 image:netxms_tps.png[caption="Figure 10: ", title="TPS Configuration"]
 
 image:netxms_tps_transf.png[caption="Figure 11: ", title="TPS transformation"]
+
+
+== Active-Active considerations
+
+This section list the notes regarding the current status of Active-Active functions
+available in Enduro/X.
+
+=== Available features
+
+Enduro/X is cluster aware and salable across several instances. Out of the box
+Enduro/X provides following cluster aware functions:
+
+- *tpbridge(8)* process ensures that XATMI services are shared across the connected
+machines (nodes).
+
+- XATMI clients can call the services across the cluster (directly connect nodes)
+and load balancing may be configured to split the network service and local
+service usage.
+
+- Enduro/X smart cache can replicate cache records across the linked machines. With
+limitation, that if link is lost between machines, the cache records might fork,
+as currently no mechanisms are provided to synchronize caches while link is restored.
+
+=== Limitations
+
+At current moment following features are missing:
+
+==== tmsrv limitations
+
+*tmsrv(8)* transaction logs are not replicated to other nodes. Thus at point of
+crash for particular node, there is no automatic rollback provided by other cluster
+nodes.
+
+Recovery can only be done by manually copying particular *tmsrv(8)* log files,
+and renaming the "TRN-<nodeid>" prefix to match recovery server ID. Also 'srvid'
+and 'rmid' must be the same on recovery server.
+
+One way to make more automatic operations of *tmsrv(8)* recovery would be to put
+the logging on cluster file system such as *GFS* or *GPFS*, use heartbeat software
+to active only single instance of particular tmsrv processes. Also here small code change
+would be required in Enduro/X, so that at activation tmsrv would use all files 
+from transaction log file directory, as currently it skips the logs from other nodes.
+This approach would assume that single folder on shared FS is used only for particular
+resource manager.
+
+Another approach for data storage would be to patch the tmsrv to use database for
+transaction log storage, thought heart beat process would be required too enable
+singleton instance of particular tmsrv. So this would assume that database has
+HA capabilities (for example Oracle RAC).
+
+==== tmqueue limitations
+
+Also similarly as tmsrv *tmqueue(8)*, has a limitations that it stores the messages
+as files on the disk locally. And that at point of crash messages would be stuck
+in the crashed node. 
+
+To provide Active-Active function, this would require shared directory between 
+Enduro/X cluster nodes for tmqueue and heart-beat which would provide singleton
+instance of particular tmqueue process (srvid). Also here tmqueue would require 
+small code change to ignore the Enduro/X cluster node id at startup when
+messages are loaded, as currently tmqueue would skip such messages.
+
+Also here for performance reasons (as cluster FS might be slow) Enduro/X could
+be modified to use database storage (and also assuming that DB is HA aware).
 
 
 [bibliography]

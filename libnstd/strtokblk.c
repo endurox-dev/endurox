@@ -132,6 +132,7 @@ expublic void ndrx_str_trim_single_right(char *input, char symb)
 
 /**
  * Tokenize string, keep blocks (e.g. quotes to gether)
+ * This returns only valid data, and not empty strings.
  * @param input input string to process
  * @param delimit token delimiter
  * @param qotesymbs list of quote symbols 
@@ -139,101 +140,110 @@ expublic void ndrx_str_trim_single_right(char *input, char symb)
  */
 expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
 {
-    static char *p = NULL;
+    /* do stuff per thread, not supported with going up to golang or java 
+     * with steps
+     */
+    static __thread char *p = NULL;
     char *token = NULL;
     char *block_sym = NULL;
     int in_block = 0;
     int block_sym_index = -1;
     int consecutive_escapes=0;
     
-    if ( input != NULL)
+    /* do not return empty strings... */
+    do
     {
-        p = input;
-        token = input;
-    }
-    else
-    {
-        token = p;
-        if ( *p == '\0')
+        if ( input != NULL)
         {
-            token = NULL;
+            p = input;
+            token = input;
         }
-    }
-
-    /* escape: \ */
-    while ( *p != '\0')
-    {	
-        /*printf("Symb: [%c] ESCAPES: %d INBLOCK: %d\n", *p, consecutive_escapes, in_block);*/
-        if ('\\'==*p)
+        else
         {
-            consecutive_escapes++;
-        }
-        else if (in_block)
-        {
-            /*no close if previous is \ of token */
-	    
-            if (qotesymbs[block_sym_index] == *p)
+            token = p;
+            if ( *p == '\0')
             {
-		    
-                /* terminate only if not escaped.. */
-                if (consecutive_escapes%2==0)
-                {   
-                    in_block = 0;
-                }
+                token = NULL;
             }
-            consecutive_escapes=0;
-            
-            p++;
-            continue;
         }
-        
-        /*no open if previous is \, then replace escaped quotes to single*/
-        else if (( block_sym = strchr ( qotesymbs, *p)) != NULL)
-        {
-            if (consecutive_escapes%2==0)
+
+        /* escape: \ */
+        while ( *p != '\0')
+        {	
+            /*printf("Symb: [%c] ESCAPES: %d INBLOCK: %d\n", *p, consecutive_escapes, in_block);*/
+            if ('\\'==*p)
             {
-                in_block = 1;
-                block_sym_index = block_sym - qotesymbs;
+                consecutive_escapes++;
+            }
+            else if (in_block)
+            {
+                /*no close if previous is \ of token */
+
+                if (qotesymbs[block_sym_index] == *p)
+                {
+
+                    /* terminate only if not escaped.. */
+                    if (consecutive_escapes%2==0)
+                    {   
+                        in_block = 0;
+                    }
+                }
+                consecutive_escapes=0;
+
                 p++;
                 continue;
             }
-            /* escape is spent... */
-            consecutive_escapes=0;
-        }
 
-        if ( strchr ( delimit, *p) != NULL)
-        {
-            *p = '\0';
+            /*no open if previous is \, then replace escaped quotes to single*/
+            else if (( block_sym = strchr ( qotesymbs, *p)) != NULL)
+            {
+                if (consecutive_escapes%2==0)
+                {
+                    in_block = 1;
+                    block_sym_index = block_sym - qotesymbs;
+                    p++;
+                    continue;
+                }
+                /* escape is spent... */
+                consecutive_escapes=0;
+            }
+
+            if ( strchr ( delimit, *p) != NULL)
+            {
+                *p = '\0';
+                p++;
+                break;
+            }
+
             p++;
-            break;
         }
-        
-        p++;
-    }
-    
-    if (block_sym_index>-1)
-    {
-        char escp_symb[2]={'\0', '\0'};
-        /* trim start & trailing symbol... if there was block */
-        ndrx_str_trim_single_left(token, qotesymbs[block_sym_index]);
 
-        if (!in_block)
+        if (block_sym_index>-1)
         {
-            ndrx_str_trim_single_right(token, qotesymbs[block_sym_index]);
-        }
+            char escp_symb[2]={'\0', '\0'};
+            /* trim start & trailing symbol... if there was block */
+            ndrx_str_trim_single_left(token, qotesymbs[block_sym_index]);
 
-        escp_symb[0]=qotesymbs[block_sym_index];
+            if (!in_block)
+            {
+                ndrx_str_trim_single_right(token, qotesymbs[block_sym_index]);
+            }
+
+            escp_symb[0]=qotesymbs[block_sym_index];
+
+            ndrx_str_unescape(token, escp_symb);
+        }
+        else if (NULL!=token)
+        {
+            /* just unescape any stuff ... */
+            ndrx_str_unescape(token, qotesymbs);
+        }
         
-        ndrx_str_unescape(token, escp_symb);
-    }
-    else if (NULL!=token)
-    {
-        /* just unescape any stuff ... */
-        ndrx_str_unescape(token, qotesymbs);
-    }
+        input = NULL;
+        
+    } while (NULL!=token && EXEOS==token[0]);
    
     return token;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
-

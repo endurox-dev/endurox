@@ -41,9 +41,12 @@
 #include <atmi.h>
 #include <ubf.h>
 #include <ndebug.h>
+#include <ndebugcmn.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
 #include <nstdutil.h>
+#include <exassert.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -55,6 +58,21 @@
 
 void do_thread_work1 ( void *ptr )
 {
+    /* 
+     * Enduro/X logging 
+     * But can be done at thread level
+     */
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_NDRX_THREAD|LOG_FACILITY_UBF_THREAD, 
+            EXFAIL, "ndrx=5 ubf=0", "TEST", "./clt-endurox.log"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to configure Enduro/X logger: %s", 
+                Nstrerror(Nerror));
+        return;
+    }
+    
+    /* write some stuff in user Enduro/X log */
+    NDRX_LOG(log_error, "Hello from NDRX!");
+    
     if (EXSUCCEED!=tplogconfig(LOG_FACILITY_TP_THREAD, EXFAIL, "file=./clt-tp-th1.log tp=5", "TEST", NULL))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to configure user TP logger: %s", 
@@ -216,11 +234,16 @@ int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
     int i;
-    
+    int sinks, refs;
     pthread_t thread1, thread2;  /* thread variables */
     
+#if 0
+    - this does not work at process level, due to fact that logger sinks cannot be swapped
+    - instead this can be done on thread logger bases
+            
     /* 
      * Enduro/X logging 
+     * ()
      */
     if (EXSUCCEED!=tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF, 
             EXFAIL, "ndrx=5 ubf=0", "TEST", "./clt-endurox.log"))
@@ -229,7 +252,7 @@ int main(int argc, char** argv)
                 Nstrerror(Nerror));
         EXFAIL_OUT(ret);
     }
-    
+#endif
     /*
      * User TP log 
      */
@@ -243,9 +266,10 @@ int main(int argc, char** argv)
     /* write some stuff in user log */
     tplog(log_error, "Hello from tp!");
     
+#if 0
     /* write some stuff in user Enduro/X log */
     NDRX_LOG(log_error, "Hello from NDRX!");
-    
+#endif
     tplog(6, "hello from level 6");
     
     /* run off two threads... (each will have it's own log file) */
@@ -318,6 +342,21 @@ int main(int argc, char** argv)
     }
     
     tplogconfig(LOG_FACILITY_TP, EXFAIL, "file=./clt-tp.log tp=6", "TEST", NULL);
+    
+    
+    /* Ensure only specific number loggers has left:
+     * if we set all to 1 x file.
+     * 
+     *  */
+    
+    ndrx_debug_refcount(&sinks, &refs);
+    
+    /* stdout and process file */
+    NDRX_ASSERT_TP_OUT((sinks==2), "There shall be only 2 process level sink, but got: %d", sinks);
+    
+    /* there shall be only 4 refs*/
+    NDRX_ASSERT_TP_OUT((refs==4), "There shall be only 4 refs (ubf, stdout, tp, ndrx): got %d", refs);
+    
 out:
 
     tplog(1, "Finishing off");

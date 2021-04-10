@@ -76,33 +76,24 @@ expublic int ndrx_sem_rwlock(ndrx_sem_t *sem, int sem_num, int typ)
     if( typ == NDRX_SEM_TYP_WRITE ) 
     {
         semops.sem_op = -sem->maxreaders;  
-        do 
-        {
-            ret = semop( sem->semid, &semops, 1 );
-            
-        } while ( ret == -1 && errno == EINTR );
     }
     else 
     {
-    
         semops.sem_op = -1;
-        
-        do 
-        {
-            
-            ret = semop( sem->semid, &semops, 1 );
-          
-        } while ( ret == -1 && errno == EINTR );
-        
     }
     
+    do 
+    {
+        ret = semop( sem->semid, &semops, 1 );
+
+    } while ( ret == -1 && errno == EINTR );
+
     if (EXFAIL==ret)
     {
         int err = errno;
         
-        NDRX_LOG(log_error, "semop() failed for type %d lock: %s", 
-                typ, strerror(err));
-        userlog("semop() failed for type %d lock: %s", 
+        /* use buffered log as my conflict with LCF */
+        userlog("ndrx_sem_rwlock: semop() failed for type %d lock: %s", 
                 typ, strerror(err));
     }
 
@@ -139,9 +130,7 @@ expublic int ndrx_sem_rwunlock(ndrx_sem_t *sem, int sem_num, int typ)
     {
         int err = errno;
         
-        NDRX_LOG(log_error, "semop() failed for type %d lock: %s", 
-                typ, strerror(err));
-        userlog("semop() failed for %d type lock: %s", 
+        userlog("ndrx_sem_rwunlock: semop() failed for %d type lock: %s", 
                 typ, strerror(err));
     }
     
@@ -158,21 +147,18 @@ expublic int ndrx_sem_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
 {
     int ret=EXSUCCEED;
     int errno_int;
-    struct sembuf semOp[2];
-       
-    semOp[0].sem_num = sem_num;
-    semOp[1].sem_num = sem_num;
-    semOp[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
-    semOp[1].sem_flg = SEM_UNDO; /* Release semaphore on exit */
+    struct sembuf semops;
+    semops.sem_num = sem_num;
+    semops.sem_flg = SEM_UNDO;
     
-    semOp[0].sem_op = 0; /* Wait for zero */
-    semOp[1].sem_op = 1; /* Add 1 to lock it*/
+    /* lock all */
+    semops.sem_op = -sem->maxreaders;  
     
 #ifdef NDRX_SEM_DEBUG
     userlog("ENTER: ndrx_lock: %s", msg);
 #endif
     
-    while(EXFAIL==(ret=semop(sem->semid, semOp, 2)) && (EINTR==errno || EAGAIN==errno))
+    while(EXFAIL==(ret=semop(sem->semid, &semops, 1)) && (EINTR==errno || EAGAIN==errno))
     {
         NDRX_LOG(log_warn, "%s: Interrupted while waiting for semaphore!!", msg);
     };
@@ -204,18 +190,17 @@ expublic int ndrx_sem_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
  */
 expublic int ndrx_sem_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
 {
-    struct sembuf semOp[1];
-       
-    semOp[0].sem_num = sem_num;
-    semOp[0].sem_flg = SEM_UNDO; /* Release semaphore on exit */
-    semOp[0].sem_op = -1; /* Decrement to unlock */
+    struct sembuf semops;
+    semops.sem_num = sem_num;
+    semops.sem_flg = SEM_UNDO;
     
+    semops.sem_op = sem->maxreaders;  
 
 #ifdef NDRX_SEM_DEBUG
     userlog("ENTER: ndrx_unlock: %s", msg);
 #endif
     
-    if (EXSUCCEED!=semop(sem->semid, semOp, 1))
+    if (EXSUCCEED!=semop(sem->semid, &semops, 1))
     {
         NDRX_LOG(log_debug, "%s/%d%/d: failed: %s", msg, 
                 sem->semid, sem_num, strerror(errno));
@@ -241,13 +226,19 @@ expublic int ndrx_sem_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
 expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
 {
     int ret=EXSUCCEED;
-    int err;
+    int err, i;
     union semun 
     {
         int val;
         struct semid_ds *buf;
         ushort *array;
     } arg;
+    
+    ushort arr[sem->nrsems];
+    memset(&arg, 0, sizeof(arg));
+
+    /* for setting initial value... */
+    arg.array = arr;
     
     /* creating the semaphore object --  sem_open() 
      * this will attach anyway?
@@ -260,36 +251,38 @@ expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
         
         if (EEXIST==err && attach_on_exists)
         {
-            NDRX_LOG(log_info, "Semaphore exists [%x] - attaching",
+            NDRX_LOG_EARLY(log_info, "Semaphore exists [%x] - attaching",
                     sem->key);
             return ndrx_sem_attach(sem);
         }
         
-        NDRX_LOG(log_error, "Failed to create sem, key[%x]: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to create sem, key[%x]: %s",
                             sem->key, strerror(err));
         ret=EXFAIL;
         goto out;
     }
-    
-    /* Reset semaphore... */
-    memset(&arg, 0, sizeof(arg));
-    arg.val = sem->maxreaders;
    
-    if (semctl(sem->semid, 0, SETVAL, arg) == -1) 
+    /* Reset semaphore... */
+    for (i=0; i< sem->nrsems; i++)
     {
-        NDRX_LOG(log_error, "Failed to reset to 0, key[%x], semid: %d: %s",
-                            sem->key, sem->semid, strerror(errno));
+        arg.array[i]=sem->maxreaders;
+    }
+    
+    if (semctl(sem->semid, i, SETALL, arg) == -1) 
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to reset to %d, key[%x], semid: %d: %s",
+                            i, sem->key, sem->semid, strerror(errno));
         ret=EXFAIL;
         goto out;
     }
     
     sem->attached = EXTRUE;
     
-    NDRX_LOG(log_warn, "Semaphore for key %x open, id: %d", 
+    NDRX_LOG_EARLY(log_warn, "Semaphore for key %x open, id: %d", 
             sem->key, sem->semid);
 out:
 
-    NDRX_LOG(log_debug, "return %d", ret);
+    NDRX_LOG_EARLY(log_debug, "return %d", ret);
 
     return ret;
 }
@@ -306,10 +299,10 @@ expublic int ndrx_sem_remove(ndrx_sem_t *sem, int force)
     /* Close that one... */
     if ((sem->attached || force) && sem->semid)
     {
-        NDRX_LOG(log_error, "Removing semid: %d", sem->semid);
+        NDRX_LOG_EARLY(log_error, "Removing semid: %d", sem->semid);
         if (EXSUCCEED!= semctl(sem->semid, 0, IPC_RMID))
         {
-            NDRX_LOG(log_warn, "semctl DEL failed err: %s", 
+            NDRX_LOG_EARLY(log_warn, "semctl DEL failed err: %s", 
                     strerror(errno));
             ret=EXFAIL;
         }
@@ -348,11 +341,11 @@ expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 {
     int ret=EXSUCCEED;
 
-    NDRX_LOG(log_debug, "enter");
+    NDRX_LOG_EARLY(log_debug, "enter");
     
     if (sem->attached)
     {
-        NDRX_LOG(log_debug, "sem, key %x, id: %d already attached", 
+        NDRX_LOG_EARLY(log_debug, "sem, key %x, id: %d already attached", 
                 sem->key, sem->semid);
         goto out;
     }
@@ -362,17 +355,17 @@ expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 
     if (EXFAIL==sem->semid) 
     {
-        NDRX_LOG(log_error, "Failed to attach sem, key [%d]: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to attach sem, key [%d]: %s",
                             sem->key, strerror(errno));
         ret=EXFAIL;
         goto out;
     }
 
-    NDRX_LOG(log_debug, "sem: [%d] attached", sem->semid);
+    NDRX_LOG_EARLY(log_debug, "sem: [%d] attached", sem->semid);
 
 out:
 
-    NDRX_LOG(log_debug, "return %d", ret);
+    NDRX_LOG_EARLY(log_debug, "return %d", ret);
     return ret;
 }
 
