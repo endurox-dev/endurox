@@ -83,9 +83,6 @@ int ndrx_ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 #if INI_USE_STACK
     char tmp_line[INI_MAX_LINE];
     char tmp_line2[INI_MAX_LINE];
-#else
-    char* tmp_line;
-    char* tmp_line2;
 #endif
     char section[MAX_SECTION] = "";
     char prev_name[MAX_NAME] = "";
@@ -111,9 +108,10 @@ int ndrx_ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
     if (!line2) {
         return -2;
     }
-#endif
+#else
     line = tmp_line;
     line2 = tmp_line2;
+#endif
 
     /* Scan through stream line by line */
     while (reader(line, INI_MAX_LINE, stream) != NULL) {

@@ -1,85 +1,29 @@
 "Configuration" "MsgSize" "CallsPerSec"
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 1 2358
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 5 2306
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 9 2247
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 13 2208
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 17 2147
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 21 2129
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 25 2046
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 29 2002
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 33 1820
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 37 1933
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 41 1883
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 45 1799
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 49 1766
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,poll,i7-2620M" 53 1767
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 1 2677
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 5 2584
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 9 2518
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 13 2493
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 17 2383
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 21 2227
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 25 2201
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 29 2149
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 33 2081
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 37 2014
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 41 1489
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 45 1772
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 49 1856
-"linux_4.5_EPOLLEXCLUSIVE,kq,epoll,i5-2520M" 53 1785
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 1 2653
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 5 2607
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 9 2523
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 13 2472
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 17 2408
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 21 2331
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 25 2288
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 29 2194
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 33 2150
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 37 1951
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 41 2079
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 45 1784
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 49 1993
-"linux_4.4_NON_EPOLLEXCLUSIVE,kq,epoll,i7-2620M" 53 1931
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 1 1922
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 5 1856
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 9 1839
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 13 1788
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 17 1750
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 21 1702
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 25 1657
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 29 1562
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 33 1558
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 37 1563
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 41 1463
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 45 1470
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 49 1475
-"linux_4.4_NON_EPOLLEXCLUSIVE,shm,poll,i7-2620M" 53 1392
-"i7_6gen_o2_4_10lin" 1 2457
-"i7_6gen_o2_4_10lin" 5 2358
-"i7_6gen_o2_4_10lin" 9 2351
-"i7_6gen_o2_4_10lin" 13 2246
-"i7_6gen_o2_4_10lin" 17 2203
-"i7_6gen_o2_4_10lin" 21 2112
-"i7_6gen_o2_4_10lin" 25 2091
-"i7_6gen_o2_4_10lin" 29 1994
-"i7_6gen_o2_4_10lin" 33 1921
-"i7_6gen_o2_4_10lin" 37 1829
-"i7_6gen_o2_4_10lin" 41 1806
-"i7_6gen_o2_4_10lin" 45 1739
-"i7_6gen_o2_4_10lin" 49 1670
-"i7_6gen_o2_4_10lin" 53 1608
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 1 1312
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 5 1332
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 9 1258
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 13 1220
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 17 1205
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 21 1179
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 25 1175
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 29 1139
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 33 1089
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 37 1061
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 41 1040
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 45 1032
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 49 984
-"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 53 976
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 1 1791
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 5 1840
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 9 1759
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 13 1731
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 17 1733
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 21 1639
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 25 1680
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 29 1646
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 33 1628
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 37 1553
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 41 1573
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 45 1530
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 49 1448
+"v7.5.22, Ubnt18.04 (kpti=off), X1 Carb (i7,ssd)" 53 1433
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 1 222
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 5 223
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 9 222
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 13 222
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 17 222
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 21 221
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 25 222
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 29 220
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 33 219
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 37 219
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 41 217
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 45 218
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 49 216
+"v7.5.22 svapoll, AIX7.2, (Power8,SAS15k)" 53 215

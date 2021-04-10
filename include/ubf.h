@@ -305,6 +305,8 @@ extern NDRX_API int Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
 
 extern NDRX_API int CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags);
+extern NDRX_API char *CBvgetalloc(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+			int usrtype, long flags, BFLDLEN *extralen);
 extern NDRX_API int CBvchg(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN len, int usrtype);
 extern NDRX_API long Bvsizeof(char *view);
@@ -361,6 +363,9 @@ extern NDRX_API int Bgetrv (UBFH * p_ub, char * buf, BFLDLEN * buflen, ...);
 extern NDRX_API int CBgetr (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen, int usrtype);
 extern NDRX_API int CBgetrv (UBFH * p_ub, char * buf, BFLDLEN * buflen, int usrtype, ...);
+
+extern NDRX_API char * CBgetallocr (UBFH *p_ub, BFLDID *fldidocc, int usrtype, BFLDLEN *extralen);
+extern NDRX_API char * CBgetallocrv (UBFH *p_ub, int usrtype, BFLDLEN *extralen, ...);
 
 extern NDRX_API char* Bfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
 extern NDRX_API char* Bfindrv (UBFH *p_ub, BFLDLEN *p_len, ...);

@@ -43,7 +43,6 @@
 #include <atmi_shm.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 #include <xa_cmn.h>
@@ -71,6 +70,9 @@ expublic rmstatus_driver_t G_rm_status_driver[] =
     /* If no transaction, then assume committed, read only: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_NOTA, XAER_NOTA, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTING},
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_INVAL,XAER_INVAL,XA_RM_STATUS_ACTIVE,        XA_TX_STAGE_ABORTING},
+    
+    /*if tmsrv is unavailable, just start the abort sequence..., only here needs to think about retries? */
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, NDRX_XA_ERSN_TPENOENT,NDRX_XA_ERSN_TPENOENT,XA_RM_STATUS_ACTIVE, XA_TX_STAGE_ABORTING},
     /* for PostgreSQL we have strange situation, that only case to work in distributed way is to mark the transaction as
      * prepared once the processing thread disconnects. Thus even transaction is active, the resource is prepared.
      */
@@ -79,6 +81,9 @@ expublic rmstatus_driver_t G_rm_status_driver[] =
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_OK,     XA_OK,     XA_RM_STATUS_COMMITTED,     XA_TX_STAGE_COMMITTED},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_RMERR,XAER_RMERR,XA_RM_STATUS_COMMIT_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_RETRY,  XA_RETRY,  XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
+    
+    /* in case of noent, we will retry: */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  NDRX_XA_ERSN_TPENOENT,  NDRX_XA_ERSN_TPENOENT,  XA_RM_STATUS_PREP, XA_TX_STAGE_COMMITTING},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURHAZ,XA_HEURHAZ,XA_RM_STATUS_COMMIT_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURCOM,XA_HEURCOM,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURRB,XA_HEURRB,  XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_COMMITTED_HEURIS},
@@ -127,6 +132,11 @@ expublic rmstatus_driver_t G_rm_status_driver[] =
 
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
+    
+    /* in case of noent, we will retry: */
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, NDRX_XA_ERSN_TPENOENT, NDRX_XA_ERSN_TPENOENT,  XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, NDRX_XA_ERSN_TPENOENT, NDRX_XA_ERSN_TPENOENT,  XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
+    
     {EXFAIL}
 };
 

@@ -379,55 +379,35 @@ int main_init(int argc, char** argv)
     /* and then shm: initialise shared memory */
     if (EXSUCCEED!=ndrx_shm_init(G_sys_config.qprefix,
                             ndrx_get_G_atmi_env()->max_servers,
-                            ndrx_get_G_atmi_env()->max_svcs))
+                            ndrx_get_G_atmi_env()->max_svcs,
+                            ndrx_get_G_atmi_env()->rtcrtmax,
+                            ndrx_get_G_atmi_env()->rtsvcmax))
     {
         ret=EXFAIL;
         NDRX_LOG(log_error, "Failed to initialise share memory lib");
         goto out;
     }
     
-    /* Open shared memory */
-    if (G_sys_config.restarting)
+    if (EXSUCCEED!=ndrx_sem_open_all(EXTRUE))
     {
-        
-        if (EXSUCCEED!=ndrx_sem_open_all())
-        {
-            ret=EXFAIL;
-            NDRX_LOG(log_error, "Failed to attach to Semaphores");
-            goto out;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Attached to semaphores OK");
-        }
-        
-        if (EXSUCCEED!=ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR))
-        {
-            ret=EXFAIL;
-            NDRX_LOG(log_error, "Failed to attach to shared memory segments");
-            goto out;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Attached to share memory");
-        }
-        
+        ret=EXFAIL;
+        NDRX_LOG(log_error, "Failed to create/attach to Semaphores");
+        goto out;
     }
-    else 
+    else
     {
-        /* Semaphores are first */
-        if (EXSUCCEED!=ndrx_sem_open_all())
-        {
-            
-            NDRX_LOG(log_error, "Failed to open semaphores!");
-            EXFAIL_OUT(ret);
-        }
-        
-        if (EXSUCCEED!=ndrxd_shm_open_all())
-        {
-            NDRX_LOG(log_error, "Failed to open shared memory segments!");
-            EXFAIL_OUT(ret);
-        }
+        NDRX_LOG(log_error, "Create/attached to semaphores OK");
+    }
+
+    if (EXSUCCEED!=ndrx_shm_open_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR, EXTRUE))
+    {
+        ret=EXFAIL;
+        NDRX_LOG(log_error, "Failed to create/attach to shared memory segments");
+        goto out;
+    }
+    else
+    {
+        NDRX_LOG(log_error, "create/attached to shared memory OK");
     }
     
     if (EXSUCCEED!=ndrxd_sigchld_init())

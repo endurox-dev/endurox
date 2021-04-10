@@ -86,7 +86,7 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log
+rm *.log
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 

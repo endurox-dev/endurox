@@ -22,7 +22,7 @@
  * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
  * for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
@@ -96,11 +96,13 @@ extern NDRX_API int Otpimport(TPCONTEXT_T *p_ctxt, char *istr, long ilen, char *
 extern NDRX_API int Otpexport(TPCONTEXT_T *p_ctxt, char *ibuf, long ilen, char *ostr, long *olen, long flags);
 extern NDRX_API void* Otpgetconn(TPCONTEXT_T *p_ctxt);
 extern NDRX_API char * Otuxgetenv(TPCONTEXT_T *p_ctxt, char *envname);
+extern NDRX_API int Otpgetcallinfo(TPCONTEXT_T *p_ctxt, const char *msg, UBFH **obuf, long flags);
+extern NDRX_API int Otpsetcallinfo(TPCONTEXT_T *p_ctxt, const char *msg, UBFH *obuf, long flags);
 extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpappthrterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
 extern NDRX_API int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int bufsize);
-extern NDRX_API int Otpviewtojson(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *buffer,  int bufsize, long flags);
+extern NDRX_API int Otpviewtojson(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *buffer,int bufsize, long flags);
 extern NDRX_API char * Otpjsontoview(TPCONTEXT_T *p_ctxt, char *view, char *buffer);
 extern NDRX_API int Otpenqueue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char *data, long len, long flags);
 extern NDRX_API int Otpdequeue(TPCONTEXT_T *p_ctxt, char *qspace, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
@@ -119,6 +121,9 @@ extern NDRX_API pid_t Ondrx_fork(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void Ondrx_atfork_child(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void Ondrx_atfork_parent(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void Ondrx_atfork_prepare(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpencrypt(TPCONTEXT_T *p_ctxt, char *input, long ilen, char *output, long *olen, long flags);
+extern NDRX_API int Otpdecrypt(TPCONTEXT_T *p_ctxt, char *input, long ilen, char *output, long *olen, long flags);
+extern NDRX_API int Otpsprio(TPCONTEXT_T *p_ctxt, int prio, long flags);
+extern NDRX_API int Otpgprio(TPCONTEXT_T *p_ctxt);
 #endif  /* __OATMI_H */
 
-/* vim: set ts=4 sw=4 et smartindent: */

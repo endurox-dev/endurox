@@ -47,9 +47,24 @@ add_library(tux SHARED $<TARGET_OBJECTS:objnstd>
                        $<TARGET_OBJECTS:objubf>
                        $<TARGET_OBJECTS:objatmi>
                        $<TARGET_OBJECTS:objatmisrvinteg>)
-
 target_link_libraries(tux ${RT_LIB} pthread)
 
+#
+# having issues with golang on aix.. cannot load -brtl libraries
+#
+SET(ADDLIB "")
+
+if(CMAKE_OS_NAME STREQUAL "AIX")
+
+add_library(ndrxaix SHARED $<TARGET_OBJECTS:objnstd>
+                       $<TARGET_OBJECTS:objubf>
+                       $<TARGET_OBJECTS:objatmi>
+                       $<TARGET_OBJECTS:objatmisrvinteg>)
+SET(ADDLIB "ndrxaix")
+# special library for aix / go
+target_link_libraries(ndrxaix ${RT_LIB} pthread)
+set_target_properties(ndrxaix PROPERTIES SUFFIX ".a")
+endif()
 
 #FML Emul
 add_library (fml SHARED 
@@ -64,7 +79,7 @@ add_library (fml32 SHARED
 # Also needs to provide dummy fml32 library for NetXMS Build
 #
 install (TARGETS 
-    tux fml fml32
+    tux fml fml32 ${ADDLIB}
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries

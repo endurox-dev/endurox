@@ -1875,6 +1875,34 @@ Ensure(test_expr_recursiv_view)
 
 }
 
+/**
+ * Test long string value handling
+ */
+Ensure(test_expr_longstr)
+{
+    char buf[2048];
+    char val[1024];
+    UBFH *p_ub = (UBFH *)buf;
+    char *tree = NULL;
+    
+    memset(val, ' ', sizeof(val));
+    
+    val[sizeof(val)-1]=EXEOS;
+    
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    assert_equal(Bchg(p_ub, T_STRING_10_FLD, 0, val, 0L), EXSUCCEED);
+    
+    tree=Bboolco ("T_STRING_10_FLD");
+    assert_not_equal(tree, NULL);
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);
+    assert_equal(Berror, 0);
+    
+    Btreefree(tree);
+    tree = NULL;
+    
+}
 
 TestSuite *ubf_expr_tests(void)
 {
@@ -1904,11 +1932,12 @@ TestSuite *ubf_expr_tests(void)
     /* #338 */
     add_test(suite, test_expr_argsval);
     
-    
     add_test(suite, test_expr_recursiv_idpars);
     add_test(suite, test_expr_recursiv_ubf);
     add_test(suite, test_expr_recursiv_view);
     
+    /* Support #633 */
+    add_test(suite, test_expr_longstr);
 
     return suite;
 }

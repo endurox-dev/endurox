@@ -61,7 +61,9 @@ extern "C" {
 #define NEWRITE            15 /**< Failed to open/write */
 #define NEEXEC             16 /**< Failed to execute */
 #define NESUPPORT          17 /**< Command not supported */
-#define NMAXVAL            17 /**< max error */
+#define NEEXISTS           18 /**< Duplicate action */
+#define NEVERSION          19 /**< API version conflict */
+#define NMAXVAL            19 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 

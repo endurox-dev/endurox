@@ -1,0 +1,144 @@
+<?xml version="1.0" ?>
+<endurox>
+    <appconfig>
+        <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
+        <!-- Sanity check time, sec -->
+        <sanity>1</sanity>
+        <!-- If process have been state changed to other than dead, exit or not running
+        but PID of program does not exists in system, then send internel message, then 
+        program have been stopped.
+        In Seconds.
+        -->
+        <checkpm>5</checkpm>
+        <!--  <sanity> timer, end -->
+        <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
+        <!-- Do process reset after 1 sec -->
+        <restart_min>1</restart_min>
+        <!-- If restart fails, then boot after +5 sec of previous wait time -->
+        <restart_step>10</restart_step>
+        <!-- If still not started, then max boot time is a 30 sec. -->
+        <restart_max>30</restart_max>
+        <!--  <sanity> timer, end -->
+        <!-- Time after attach when program will start do sanity & respawn checks,
+        starts counting after configuration load -->
+        <restart_to_check>20</restart_to_check>
+        <!-- Send full service table every 5 seconds -->
+        <brrefresh>5</brrefresh>
+        <!-- Reload DDR time (1x sanity loop) -->
+        <ddrreload>1</ddrreload>
+    </appconfig>
+    <defaults>
+        <min>1</min>
+        <max>1</max>
+        <autokill>1</autokill>
+        <!-- Do not need respawning! -->
+        <respawn>1</respawn>
+        <!-- The maximum time while process can hang in 'starting' state i.e.
+        have not completed initialisation, sec -->
+        <start_max>20</start_max>
+        <!--
+        Ping server in every X sanity units
+        -->
+        <pingtime>9</pingtime>
+        <!--
+        Max number of sanity units in which server must respond.
+        The granularity is sanity time.
+        -->
+        <ping_max>40</ping_max>
+        <!--
+        Max time to wait until process should exit on shutdown
+        -->
+        <end_max>30</end_max>
+        <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+        to process until it have been terminated. -->
+        <killtime>20</killtime>
+    </defaults>
+    <servers>
+        
+        <server name="atmi.sv84">
+            <min>1</min>
+            <max>1</max>
+            <srvid>10</srvid>
+            <envs><env name="NDRX_RTGRP">DOM1</env></envs>
+            <sysopt>-G -e ${TESTDIR}/atmisv-dom1.log -r -sT2:TESTSV</sysopt>
+        </server>
+
+        <server name="atmi.sv84">
+            <min>1</min>
+            <max>1</max>
+            <srvid>320</srvid>
+            <envs><env name="NDRX_RTGRP">DOM3</env></envs>
+            <sysopt>-G -e ${TESTDIR}/atmisv-dom13.log -r</sysopt>
+        </server>
+
+        <server name="atmi.sv84">
+            <min>1</min>
+            <max>1</max>
+            <srvid>420</srvid>
+            <envs><env name="NDRX_RTGRP">DOM4</env></envs>
+            <!-- perform dynamc adv groupt tests.. -->
+            <sysopt>-G -e ${TESTDIR}/atmisv-dom14.log -r -sDADV/DUNA:DYNADV -sT2:TESTSV</sysopt>
+        </server>
+
+        <server name="tpbridge">
+            <max>1</max>
+            <srvid>101</srvid>
+            <sysopt>-G -e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
+        </server>
+        
+        
+        <server name="exbenchsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>1420</srvid>
+            <envs><env name="NDRX_RTGRP">G1</env></envs>
+            <!-- perform dynamc adv groupt tests.. -->
+            <sysopt>-G -e ${TESTDIR}/atmisv-exbenchsv-g1.log </sysopt>
+        </server>
+
+        <server name="exbenchsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>1421</srvid>
+            <envs><env name="NDRX_RTGRP">G2</env></envs>
+            <!-- perform dynamc adv groupt tests.. -->
+            <sysopt>-G -e ${TESTDIR}/atmisv-exbenchsv-g2.log </sysopt>
+        </server>
+        
+    </servers>
+    
+    <services>
+        
+        <!-- Check the defaults... -->
+        <defaults routing="RT1" />
+        <service svcnm="TESTSV" />
+        
+        <defaults routing="RT2" />
+        <service svcnm="EXBENCH" />
+
+    </services>
+    
+    <routing>
+        <route routing="RT1">
+            <field>T_CARRAY_2_FLD</field>
+            <ranges>
+                        'A'-'C':DOM1
+                        ,'D'-MAX:DOM4
+            </ranges>
+            <buftype>UBF</buftype>
+            <fieldtype>CHAR</fieldtype>
+        </route>
+        
+        <route routing="RT2">
+            <field>T_LONG_FLD</field>
+            <ranges>
+                        1-100:G1
+                        ,100-200:G2
+            </ranges>
+            <buftype>UBF</buftype>
+        </route>
+        
+    </routing>
+</endurox>
+

@@ -48,7 +48,6 @@ fi;
 
 . ../testenv.sh
 
-xadmin down -y
 rm *.log
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 

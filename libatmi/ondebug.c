@@ -1,7 +1,5 @@
 /**
  * @brief Standard library debugging object API code (auto-generated)
- *   ondebug.c
- *   /
  *
  * @file ondebug.c
  */
@@ -24,7 +22,7 @@
  * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
  * for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
@@ -45,7 +43,6 @@
 #include <atmi_tls.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 #include <xa_cmn.h>
@@ -1458,4 +1455,3 @@ out:
 }
 
 
-/* vim: set ts=4 sw=4 et smartindent: */

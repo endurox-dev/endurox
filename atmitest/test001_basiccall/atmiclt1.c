@@ -464,11 +464,9 @@ B_warmed_up:
                 bench_call_num = call_num;
             }
 
-            ndrx_stopwatch_reset(&timer);
-            
-            
 /* Repeat the test if we did the warump for first time. */
 b_warmed_up:
+            ndrx_stopwatch_reset(&timer);
             /* Do the loop call! */
             for (i=0; i<bench_call_num; i++) /* Test the cd loop */
             {

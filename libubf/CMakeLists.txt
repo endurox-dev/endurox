@@ -36,6 +36,12 @@
 # Set minimum version
 cmake_minimum_required(VERSION 3.1)
 
+# Osx has very outdated bison,
+# thus install by brew install bison
+if(PLATFORM STREQUAL "Darwin")
+    set(BISON_EXECUTABLE "/usr/local/opt/bison/bin/bison" CACHE PATH "Bison executable")
+endif()
+
 find_package(BISON)
 find_package(FLEX)
 

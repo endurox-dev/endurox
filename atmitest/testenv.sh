@@ -1,6 +1,5 @@
 #!/bin/bash
 ##
-##
 ## @file testenv.sh
 ##
 ## -----------------------------------------------------------------------------
@@ -40,13 +39,18 @@ unset NDRX_DEBUG_CONF
 export FLDTBLDIR=../../ubftest/ubftab
 export PATH=$PATH:../../xadmin
 
-# Clean up q Space (remove all queues matching the symbol)
-xadmin qrmall ,
-# any left overs from previous tests...
-xadmin killall ndrxd
+# this is due to fact that for SystemV reasons we
+# open the shared memory segments by clients too.
+xadmin down -y >/dev/null 2>&1
 
-if [[ `xadmin poller` == "SystemV" ]]; then
-    xadmin udown -y
+# Clean up q Space (remove all queues matching the symbol)
+xadmin qrmall , > /dev/null 2>&1
+
+# any left overs from previous tests...
+xadmin killall ndrxd > /dev/null 2>&1
+
+if [[ `xadmin poller 2>/dev/null` == "SystemV" ]]; then
+        xadmin udown -y > /dev/null 2>&1
 fi
 
 # vim: set ts=4 sw=4 et smartindent:

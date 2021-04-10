@@ -242,11 +242,14 @@ extern NDRX_API int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
 extern NDRX_API char * ndrx_Bvfind_int(char *cstruct, ndrx_typedview_t *v,
 	ndrx_typedview_field_t *f, BFLDOCC occ, BFLDLEN *p_len);
 
-extern NDRX_API int ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
+extern NDRX_API char * ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
     ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, BFLDLEN *len, 
-                 int usrtype, long flags);
+                 int usrtype, long flags, int mode, int *extralen);
 extern NDRX_API int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags);
+
+extern NDRX_API char *ndrx_CBvgetalloc(char *cstruct, char *view, char *cname, BFLDOCC occ, 
+			int usrtype, long flags, BFLDLEN *extralen);
 
 extern NDRX_API int ndrx_CBvchg_int(char *cstruct, ndrx_typedview_t *v, 
         ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, 

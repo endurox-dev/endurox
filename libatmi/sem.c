@@ -39,11 +39,11 @@
 #include <errno.h>
 #include <sys/sem.h>
 
+#include <lcfint.h>
 #include <atmi.h>
 #include <atmi_shm.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
@@ -82,6 +82,8 @@ expublic int ndrxd_sem_init(char *q_prefix)
     /* Service queue ops */
     G_sem_svcop.key = G_atmi_env.ipckey + NDRX_SEM_SVC_OPS;
     G_sem_svcop.nrsems = G_atmi_env.nrsems;
+    /* have read locking for system v */
+    G_sem_svcop.maxreaders = ndrx_G_libnstd_cfg.svqreadersmax;
     NDRX_LOG(log_debug, "Using service semaphore key: [%d]", 
             G_sem_svcop.key);
     
@@ -91,16 +93,26 @@ expublic int ndrxd_sem_init(char *q_prefix)
 
 /**
  * Open semaphore
- * @return
+ * @param create shall we only attach (do not open)
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_sem_open_all(void)
+expublic int ndrx_sem_open_all(int create)
 {
     int ret=EXSUCCEED;
 
-    if (EXSUCCEED!=ndrx_sem_open(&G_sem_svcop, EXTRUE))
+    if (create)
     {
-        ret=EXFAIL;
-        goto out;
+        if (EXSUCCEED!=ndrx_sem_open(&G_sem_svcop, EXTRUE))
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        if (EXSUCCEED!=ndrx_sem_attach(&G_sem_svcop))
+        {
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
@@ -205,42 +217,25 @@ expublic int ndrx_unlock_svc_op(const char *msg)
  * Lock the access to specific service in shared mem
  * Only for poll() mode
  * @param svcnm service name
+ * @param typ lock type NDRX_SEM_TYP_READ / NDRX_SEM_TYP_WRITE
  * @return 
  */
-expublic int ndrx_lock_svc_nm(char *svcnm, const char *msg)
+expublic int ndrx_lock_svc_nm(char *svcnm, const char *msg, int typ)
 {
     int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
-#ifdef NDRX_SEM_DEBUG
-    char tmp_buf[1024];
-    
-    snprintf(tmp_buf, sizeof(tmp_buf), "ndrx_unlock_svc_nm-> semnum:%d, %s - %s", 
-            semnum, svcnm, msg);
-    
-    return ndrx_sem_lock(&G_sem_svcop, svcnm, semnum);
-    
-#else 
-    
-    return ndrx_sem_lock(&G_sem_svcop, svcnm, semnum);
-#endif
+    return ndrx_sem_rwlock(&G_sem_svcop, semnum, typ);
 }
 
 /**
  * Unlock the access to service
  * @param svcnm
+ * @param typ lock type NDRX_SEM_TYP_READ / NDRX_SEM_TYP_WRITE
  * @return 
  */
-expublic int ndrx_unlock_svc_nm(char *svcnm, const char *msg)
+expublic int ndrx_unlock_svc_nm(char *svcnm, const char *msg, int typ)
 {
     int semnum = 1 + ndrx_hash_fn(svcnm) % (G_atmi_env.nrsems-1);
-#ifdef NDRX_SEM_DEBUG
-    char tmp_buf[1024];
-
-    snprintf(tmp_buf, sizeof(tmp_buf), "ndrx_unlock_svc_nm-> semnum: %d, %s - %s", 
-            semnum, svcnm, msg);
-    return ndrx_sem_unlock(&G_sem_svcop, svcnm, semnum);
-#else
-    return ndrx_sem_unlock(&G_sem_svcop, svcnm, semnum);
-#endif
+    return ndrx_sem_rwunlock(&G_sem_svcop, semnum, typ);
 }
 
 

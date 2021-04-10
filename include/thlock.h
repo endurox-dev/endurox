@@ -69,6 +69,11 @@ extern "C" {
 #define MUTEX_LOCKDECL(X) pthread_mutex_t X = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
 
 /**
+ * Mutex init with out init
+ */
+#define MUTEX_LOCKDECLN(X) pthread_mutex_t X
+    
+/**
  * Lock the mutex
  * @param X mutex var name
  */
@@ -90,19 +95,25 @@ extern "C" {
  * Declare static initalized mutex
  * @param X mutex variable name
  */
-#define MUTEX_LOCKDECL(X) pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
+#define MUTEX_LOCKDECL(X) pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER
+    
+    
+/**
+ * Mutex init with out init
+ */
+#define MUTEX_LOCKDECLN(X) pthread_mutex_t X
     
 /**
  * Lock the mutex
  * @param X mutex var name
  */
-#define MUTEX_LOCK_V(X) pthread_mutex_lock(&X);
+#define MUTEX_LOCK_V(X) pthread_mutex_lock(&X)
     
 /**
  * Unlock the mutex
  * @param X mutex var name
  */
-#define MUTEX_UNLOCK_V(X) pthread_mutex_unlock(&X);
+#define MUTEX_UNLOCK_V(X) pthread_mutex_unlock(&X)
 
 #endif
 

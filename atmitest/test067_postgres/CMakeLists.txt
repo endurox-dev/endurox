@@ -68,7 +68,9 @@ ENDIF()
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf
 		# freebsd ecpg path...
-		/usr/local/lib) 
+		/usr/local/lib
+		# IBM AIX
+		/opt/freeware/lib) 
 
 ############################# Test - executables ###############################
 IF(NOT DEFINED DISABLE_ECPG)

@@ -45,8 +45,12 @@ else
 	cd $TESTNAME
 fi;
 
+export NDRX_SILENT=Y
 
 . ../testenv.sh
+
+# remove any shared resources
+xadmin down -y
 
 (./atmisv005 -i 999 2>&1) > ./atmisv005.log &
 sleep 1

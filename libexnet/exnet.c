@@ -102,8 +102,8 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-exprivate MUTEX_LOCKDECL(M_send_lock) 
-exprivate MUTEX_LOCKDECL(M_recv_lock) 
+exprivate MUTEX_LOCKDECL(M_send_lock);
+exprivate MUTEX_LOCKDECL(M_recv_lock); 
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate int close_socket(exnetcon_t *net);
@@ -263,7 +263,6 @@ expublic int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len,
 		int rcvtim = net->rcvtimeout - spent;
 		struct pollfd ufd;
 
-                spent = ndrx_stopwatch_get_delta_sec(&w);
 		memset(&ufd, 0, sizeof ufd);
 
                 NDRX_LOG(log_warn, "Socket full: %s - retry, "
@@ -968,6 +967,7 @@ expublic in_port_t exnet_get_port(struct sockaddr *sa)
 exprivate int open_socket(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
+    int err;
     char ip[(INET6_ADDRSTRLEN)*2];
     
     /* Try to connect! */
@@ -1006,17 +1006,18 @@ exprivate int open_socket(exnetcon_t *net)
     if (EXSUCCEED!=connect(net->sock, net->addr_cur->ai_addr, 
             net->addr_cur->ai_addrlen))
     {
+        err=errno;
         NDRX_LOG(log_error, "connect() failed for fd=%d: %d/%s",
-                        net->sock, errno, strerror(errno));
+                        net->sock, err, strerror(err));
         
-        if (ENETUNREACH==errno)
+        if (ENETUNREACH==err || ECONNREFUSED==err)
         {
             NDRX_LOG(log_error, "Try later to connect -> next ip");
             close(net->sock);
             net->sock=EXFAIL;
             goto out;
         }
-        if (EINPROGRESS!=errno)
+        if (EINPROGRESS!=err)
         {
             ret=EXFAIL;
             goto out;

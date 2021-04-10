@@ -194,7 +194,7 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
             if (!(env->flags & NDRX_ENV_ACTION_UNSET))
             {
                 env->value = NDRX_STRDUP(p);
-
+                
                 if (NULL==env->value)
                 {
                     NDRX_LOG(log_error, "Failed to strdup: %s", 
@@ -202,6 +202,9 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
                     xmlFree(p);
                     EXFAIL_OUT(ret);
                 }
+                
+                /* subsitute content? */
+                
             }
             xmlFree(p);
             

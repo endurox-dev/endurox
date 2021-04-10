@@ -93,9 +93,6 @@ extern int app_sreload(command_startstop_t *call,
         long *p_processes_started);
 extern int do_respawn_check(void);
 extern int srv_send_ping (pm_node_t *p_pm);
-extern void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
-        long rcode, char *reply_to_q);
-
 extern int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,

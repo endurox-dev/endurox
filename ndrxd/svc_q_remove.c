@@ -52,6 +52,7 @@
 #include <ndebug.h>
 #include <cmd_processor.h>
 #include <signal.h>
+#include <gencall.h>
 
 #include "userlog.h"
 
@@ -190,17 +191,8 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
             tp_command_call_t *tp_call = (tp_command_call_t *)gen_command;
             
             /* Bug #425: Check is process wait for reply? */
+            reply_with_failure(TPNOBLOCK, tp_call, NULL, NULL, TPENOENT);
             
-            if (!(tp_call->flags & TPNOREPLY))
-            {
-                ndrx_reply_with_failure(tp_call, TPNOBLOCK, TPENOENT, 
-                        G_command_state.listenq_str);
-            }
-            else
-            {
-                NDRX_LOG(log_warn, "No reply because of TPNOREPLY");
-                ndrx_dump_call_struct(log_error, tp_call);
-            }
         }
         else
         {

@@ -54,13 +54,6 @@
 /*---------------------------Externs------------------------------------*/
 extern const char ndrx_G_resource_ndrx_config[];
 /*---------------------------Macros-------------------------------------*/
-
-#define PARSE_CMD_STUFF(X)\
-        if (0==strncmp(X, "-", 1))\
-        {\
-            G_cmd_argc_logical++;\
-        }
-            
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -69,7 +62,6 @@ exprivate int M_argc;
 exprivate char **M_argv;
 
 /* Final command buffer  */
-expublic int G_cmd_argc_logical; /* logical */
 expublic int G_cmd_argc_raw; /* raw strings in argv */
 
 expublic ndrx_inicfg_section_keyval_t *G_xadmin_config = NULL;
@@ -99,122 +91,122 @@ exprivate int cmd_pmode(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
  */
 cmd_mapping_t M_command_map[] = 
 {
-    {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, 
+    {"quit",    cmd_quit,  EXFAIL,              0,  0, 
                 "Quit from command line utility"
                 , NULL},
-    {"q",       cmd_quit,  EXFAIL,              1,  1,  0, 
+    {"q",       cmd_quit,  EXFAIL,              0,  0, 
                 "Alias for `quit'"
                 , NULL},
-    {"exit",    cmd_quit,  EXFAIL,              1,  1,  0, 
+    {"exit",    cmd_quit,  EXFAIL,              0,  0, 
                 "Alias for `quit'"
                 , NULL},
-    {"echo",    cmd_echo,  EXFAIL,              1,  999,0, 
+    {"echo",    cmd_echo,  EXFAIL,              1,  0, 
                 "Echo text back to terminal"
                 , NULL},
-    {"idle",    cmd_idle,  EXFAIL,              1,  1,  2, 
+    {"idle",    cmd_idle,  EXFAIL,              0,  2, 
                 "Enter daemon process in idle state (if not started)"
                 , NULL},
-    {"help",    cmd_help,  EXFAIL,              1,  2,  0, 
+    {"help",    cmd_help,  EXFAIL,              1,  0, 
                 "Print help (this output)\n"
                 "\t args: help [command]"
                 , NULL},
-    {"h",       cmd_help,  EXFAIL,              1,  2,  0, 
+    {"h",       cmd_help,  EXFAIL,              1,  0, 
                 "Alias for `help'"
                 , NULL},
-    {"info",    cmd_help,  EXFAIL,              1,  2,  0, 
+    {"info",    cmd_help,  EXFAIL,              1,  0, 
                 "Alias for `help'"
                 , NULL},
-    {"stat",    cmd_stat,  EXFAIL,              1,  1,  2, 
+    {"stat",    cmd_stat,  EXFAIL,              0,  2, 
                 "Prints general status information"
                 , NULL},
-    {"ldcf",    cmd_ldcf,  NDRXD_COM_LDCF_RQ,   1,  1,  1, 
+    {"ldcf",    cmd_ldcf,  NDRXD_COM_LDCF_RQ,   0,  1, 
                 "Load configuration"
                 , NULL},
-    {"start",   cmd_start, NDRXD_COM_START_RQ,  1,  5,  1, 
+    {"start",   cmd_start, NDRXD_COM_START_RQ,  1,  1, 
                 "Start application domain\n"
                 "\t Also loads configuration automatically.\n"
                 "\t args: start [-y] [-s <server>] [-i <srvid>]"
                 , NULL},
-    {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,    1,  2,  1, 
+    {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,    1,  1, 
                 "Print services\n"
                 "\t args: psc [-s]\n"
                 "\t -s : print full service name", 
                 NULL},
-    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  5,  2, 
+    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  2, 
                 "Stop application domain\n"
-                "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]"
+                "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f] [-l]"
                 , NULL},
-    {"down",    cmd_fdown, EXFAIL,              1,  3,  0, 
+    {"down",    cmd_fdown, EXFAIL,              1,  0, 
                 "Force App Server shutdown & resources cleanup\n"
                 "\tUsage: down [OPTION]...\n"
                 "\tOptional arguments: \n"
                 "\t\t -y\tDo not ask for confirmation\n"
                 "\t\t -u\tRemove user resources by username", 
                 NULL},
-    {"udown",    cmd_udown, EXFAIL,              1,  2,  0, 
+    {"udown",    cmd_udown, EXFAIL,             1,  0, 
                 "Remove resources by username\n"
                 "\tUsage: udown [OPTION]...\n"
                 "\tOptional arguments: \n"
                 "\t\t -y\tDo not ask for confirmation"
                 , NULL},
-    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,     1,  1,  1, 
+    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,    0,  1, 
                 "Attached to ndrxd user session in progress"
                 , NULL},
-    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ,  1,  1,  1, 
+    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ, 0,  1, 
                 "Load new configuration"
                 , NULL},
-    {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, 
+    {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,0,  1, 
                 "Test new configuration"
                 , NULL},
-    {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 3,  3,  1,
+    {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 1,  1,
                 "Un-advertise service.\n"
                 "\t args: unadv -i server_id -s service_name"
                 , NULL},
-    {"readv",   cmd_unadv,NDRXD_COM_XADREADV_RQ, 3,  3,  1,
+    {"readv",   cmd_unadv,NDRXD_COM_XADREADV_RQ, 1,  1,
                 "Re-advertise service.\n"
                 "\t args: readv -i server_id -s service_name\n"
                 "\t might be usable if service Q was unlinked"
                 , NULL},
-    {"restart", cmd_r,    EXFAIL,                1,  4,  2, 
+    {"restart", cmd_r,    EXFAIL,                1,  2, 
                 "Restart app or service (invokes start & stop with same args!)"
                 , NULL},
-    {"r",       cmd_r,    EXFAIL,                1,  5,  2, 
+    {"r",       cmd_r,    EXFAIL,                1,  2, 
                 "Alias for `restart'"
                 , NULL},
-    {"-v",      cmd_ver,  EXFAIL,                1,  1,  0, 
+    {"-v",      cmd_ver,  EXFAIL,                0,  0, 
                 "Print version info"
                 , NULL},
-    {"ver",     cmd_ver,  EXFAIL,                1,  1,  0, 
+    {"ver",     cmd_ver,  EXFAIL,                0,  0, 
                 "Print version info, same as -v"
                 , NULL},
-    {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  2,  2, 
+    {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  2, 
                 "Print process model\n"
                 "\tUsage ppm [OPTION]...\n"
                 "\t\t -2\tPrint Page 2\n"
                 ,NULL},
-    {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  2,  1, 
+    {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  1, 
                 "Shared mem, print services\n"
                 "\t args: psvc [-r]\n"
                 "\t -r : for System V or Poll mode print resource identifers (msgid or pid)"
                 ,NULL},
-    {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,1,  1,  1, 
+    {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,0,  1, 
                 "Shared mem, print servers"
                 , NULL},
-    {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,  1,  2,  1, 
+    {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,  1,  1, 
                 "Abort app shutdown or startup.\n"
                 "\t args: abort [-y]"
                 , NULL},
-    {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, 
+    {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,1,  1, 
                 "Restarts server instance by instance\n"
                 "\t Args: sreload [-y] [-s <server>] [-i <srvid>]"
                 , NULL},
-    {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  3,  1, 
+    {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  1, 
                 "Alias for `sreload'"
                 , NULL},
-    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,              1,  1,  1, 
+    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,              0,  1, 
                 "Print service queues"
                 , NULL},
-    {"pqa",cmd_pqa,  EXFAIL,                     1,  2,  2, 
+    {"pqa",cmd_pqa,  EXFAIL,                     1,  2, 
                 "Print all queues\n"
                 "\t args: pqa [-a]\n"
                 "\t -a - print all queues "
@@ -223,33 +215,33 @@ cmd_mapping_t M_command_map[] =
     /* New XA commands: printtrans (pt), abort, commit, exsting abort move to: sabort (start/stop) 
      * abort + install ctrl+c handler 
      */
-    {"pt",        cmd_pt,EXFAIL,                 1,  1,  1, 
+    {"pt",        cmd_pt,EXFAIL,                 0,  1, 
                 "Print transactions"
                 , NULL},
-    {"printtrans",cmd_pt,EXFAIL,                 1,  1,  1, 
+    {"printtrans",cmd_pt,EXFAIL,                 0,  1, 
                 "Alias for `pt'"
                 , NULL},
-    {"abort",     cmd_abort,EXFAIL,              3,  5,  1, 
+    {"abort",     cmd_abort,EXFAIL,              1,  1, 
                 "Abort transaction\n"
                 "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]"
                 , NULL},
-    {"aborttrans",cmd_abort,EXFAIL,              3,  5,  1, 
+    {"aborttrans",cmd_abort,EXFAIL,              1,  1, 
                 "Alias for `abort'"
                 , NULL},
-    {"commit",     cmd_commit,EXFAIL,            3,  4,  1, 
+    {"commit",     cmd_commit,EXFAIL,            1,  1, 
                 "Commit transaction\n"
                 "\t args: commit -t <RM Ref> -x <XID> [-y]"
                 , NULL},
-    {"committrans",cmd_commit,EXFAIL,            3,  4,  1, 
+    {"committrans",cmd_commit,EXFAIL,            1,  1, 
                 "Alias for `commit'"
                 , NULL},
-    {"recoverlocal",cmd_recoverlocal,EXFAIL,         1,  3,  1, 
+    {"recoverlocal",cmd_recoverlocal,EXFAIL,     1,  1, 
                 "Print local local in-doubt transactions\n"
                 "\t args: recoverlocal [-s <TM SERVICE>] [-p]\n"
                 "\t -s - TMSRV which to query for transactions\n"
                 "\t -p - Parse XID and print details"
                 , NULL},
-    {"commitlocal",cmd_commitlocal,EXFAIL,         1,  5,  1, 
+    {"commitlocal",cmd_commitlocal,EXFAIL,       1,  1, 
                 "Commit local in-doubt transaction\n"
                 "\t args: commitlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
                 "\t -s - TMSRV which serves transaction\n"
@@ -257,123 +249,123 @@ cmd_mapping_t M_command_map[] =
                 "\t -y - confirm\n"
                 "\t -p - Parse XID and print details"
                 , NULL},
-    {"abortlocal",cmd_abortlocal,EXFAIL,         1,  5,  1, 
+    {"abortlocal",cmd_abortlocal,EXFAIL,         1,  1, 
                 "Abort local in-doubt transaction\n"
                 "\t args: abortlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
                 "\t -x - particular XID\n"
                 "\t -y - confirm\n"
                 "\t -p - Parse XID and print details"
                 , NULL},
-    {"forgetlocal",cmd_forgetlocal,EXFAIL,         1,  5,  1, 
+    {"forgetlocal",cmd_forgetlocal,EXFAIL,       1,  1, 
                 "Abort local in-doubt transaction\n"
                 "\t args: forgetlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
                 "\t -x - particular XID\n"
                 "\t -y - confirm\n"
                 "\t -p - Parse XID and print details"
                 , NULL},
-    {"pe",        cmd_pe,NDRXD_COM_PE_RQ,        1,  1,  1, 
+    {"pe",        cmd_pe,NDRXD_COM_PE_RQ,        0,  1, 
                 "Print env (from ndrxd)"
                 , NULL},
-    {"printenv",  cmd_pe,NDRXD_COM_PE_RQ,        2,  2,  1, 
+    {"printenv",  cmd_pe,NDRXD_COM_PE_RQ,        1,  1, 
                 "Alias for `pe'"
                 , NULL},
-    {"set",       cmd_set,NDRXD_COM_SET_RQ,     1,  99, 1, 
+    {"set",       cmd_set,NDRXD_COM_SET_RQ,      1,  1, 
                 "Set env variable. \n"
                 "\t Format: VAR=SOME VALUE (will be contact with spaces)"
                 , NULL},
-    {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ, 1,  1,  1, 
+    {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ,  1,  1, 
                 "Set env variable. Forma: VAR"
                 , NULL},
-    {"pc",        cmd_pc,EXFAIL,                1,  1,  1, 
+    {"pc",        cmd_pc,EXFAIL,                 0,  1, 
                 "Print clients"
                 , NULL},
-    {"sc",        cmd_sc,EXFAIL,                1,  4,  1, 
+    {"sc",        cmd_sc,EXFAIL,                 1,  1, 
                 "Stop client\n"
                 "\t args: sc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
                 , NULL},
-    {"bc",        cmd_bc,EXFAIL,                1,  4,  1, 
+    {"bc",        cmd_bc,EXFAIL,                 1,  1, 
                 "Boot(start) client\n"
                 "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
                 , NULL},
-    {"rc",        cmd_rc,EXFAIL,                1,  4,  1, 
+    {"rc",        cmd_rc,EXFAIL,                 1,  1, 
                 "Reload/Restart clients one-by-one\n"
                 "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
                 , NULL},
-    {"mqlc",      cmd_mqlc,EXFAIL,              1,  1,  1, 
+    {"mqlc",      cmd_mqlc,EXFAIL,               0,  1, 
                 "List persistent queue configuration"
                 , NULL},
-    {"mqlq",      cmd_mqlq,EXFAIL,              1,  1,  1, 
+    {"mqlq",      cmd_mqlq,EXFAIL,               0,  1, 
                 "List persistent queues (active/dynamic)"
                 , NULL},
-    {"mqrc",      cmd_mqrc,EXFAIL,              1,  1,  1, 
+    {"mqrc",      cmd_mqrc,EXFAIL,               0,  1, 
                 "Reload TMQ config"
                 , NULL},
-    {"mqlm",      cmd_mqlm,EXFAIL,              3,  3,  1, 
+    {"mqlm",      cmd_mqlm,EXFAIL,               1,  1, 
                 "List messages in q\n"
                 "\t args: mqlm -s <QSpace> -q <QName>"
                 , NULL},
-    {"mqdm",      cmd_mqdm,EXFAIL,              4,  4,  1, 
+    {"mqdm",      cmd_mqdm,EXFAIL,               1,  1, 
                 "Dump/peek message to stdout\n"
                 "\t args: mqdm -n <Cluster node id> -i <Server ID> -m <Message ID>"
                 , NULL},
-    {"mqch",      cmd_mqch,EXFAIL,              4,  4,  1, 
+    {"mqch",      cmd_mqch,EXFAIL,               1,  1, 
                 "Change queue config (runtime only)\n"
                 "\t args: mqch -n <Cluster node id> -i <Server ID> -q <Q def (conf format)>"
                 , NULL},
-    {"mqrm",      cmd_mqrm,EXFAIL,              4,  4,  1, 
+    {"mqrm",      cmd_mqrm,EXFAIL,               1,  1, 
                 "Remove message from Q space\n"
                 "\t args: mqrm -n <Cluster node id> -i <Server ID> -m <Message ID>"
                 , NULL},
-    {"mqmv",      cmd_mqmv,EXFAIL,              6,  6,  1, 
+    {"mqmv",      cmd_mqmv,EXFAIL,               1,  1, 
                 "Move message to different qspace/qname\n"
                 "\t args: mqmv -n <Source cluster node id> -i <Source server ID>\n"
                 "\t -m <Source Message ID> -s <Dest qspace> -q <Dest qname>"
                 , NULL},
-    {"killall",   cmd_killall,EXFAIL,           1,  999,  0, 
+    {"killall",   cmd_killall,EXFAIL,            1,  0, 
                 "Kill all processes (in ps -ef) matching the name\n"
                 "\t args: killall <name1> <name2> ... <nameN>"
                 , NULL},
-    {"qrm",       cmd_qrm,EXFAIL,               1,  999,  0, 
+    {"qrm",       cmd_qrm,EXFAIL,                1,  0, 
                 "Remove specific queue\n"
                 "\t args: qrm <qname1> <qname2> ... <qnameN>"
                 , NULL},
-    {"qrmall",    cmd_qrmall,EXFAIL,            1,  999,  0, 
+    {"qrmall",    cmd_qrmall,EXFAIL,             1,  0, 
                 "Remove queue matching the substring \n"
                 "\t args: qrmall <substr1> <substr2> ... <substrN>"
                 , NULL},
-    {"provision", cmd_provision,EXFAIL,         0,  999,  0, 
+    {"provision", cmd_provision,EXFAIL,          1,  0, 
                 "Prepare initial Enduro/X instance environment \n"
                 "\t args: provision [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]"
                , NULL},
-    {"gen",       cmd_gen,EXFAIL,               0,  999,  0, 
+    {"gen",       cmd_gen,EXFAIL,                1,  0, 
                 "Generate sources\n"
                  "\t args: gen <target> <type> [-d] "
                  "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"
                  "\t tagets/types available:"
                 , cmd_gen_help},
-    {"cs",        cmd_cs,EXFAIL,                1,  3,  1, 
+    {"cs",        cmd_cs,EXFAIL,                 1,  1, 
                 "Cache show\n"
                 "\t args: cs <cache_db_name>|-d <cache_db_name>"
                 , NULL},
-    {"cacheshow", cmd_cs,EXFAIL,                1,  3,  1, 
+    {"cacheshow", cmd_cs,EXFAIL,                 1,  1, 
                 "Alias for `cs' "
                 , NULL},
-    {"cd",        cmd_cd,EXFAIL,                3,  4,  1, 
+    {"cd",        cmd_cd,EXFAIL,                 1,  1, 
                 "Dump message in cache\n"
                 "\t args: cd -d <dbname> -k <key> [-i interpret_result]"
                 , NULL},
-    {"cachedump", cmd_cd,EXFAIL,                3,  4,  1, 
+    {"cachedump", cmd_cd,EXFAIL,                 1,  1, 
                 "Alias for `cd' "
                 , NULL},
-    {"ci",        cmd_ci,EXFAIL,                2,  4,  1, 
+    {"ci",        cmd_ci,EXFAIL,                 1,  1, 
                 "Invalidate cache\n"
                 "\t args: ci -d <dbname> [-k <key>][-r use_regexp]"
                 , NULL},
-    {"cacheinval",cmd_ci,EXFAIL,                2,  4,  1, 
+    {"cacheinval",cmd_ci,EXFAIL,                 1,  1, 
                 "Alias for `ci' "
                 , NULL},
 #if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
-    {"svmaps",    cmd_svmaps,EXFAIL,            1,  6,  0, 
+    {"svmaps",    cmd_svmaps,EXFAIL,             1,  0, 
                 "Print System V Queue mapping tables\n"
                 "\tUsage: svmaps [OPTION]...\n"
                 "\tOptional arguments: \n"
@@ -384,33 +376,33 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -w\tPrint entries which were used but now free",
                 NULL},
 #endif
-    {"svqids",    cmd_svqids,EXFAIL,            1,  3,  0, 
+    {"svqids",    cmd_svqids,EXFAIL,            1,  0, 
                 "Print System V user queue ids\n"
                 "\tUsage: svqids [-i] [-k]\n"
                 "\tOptional arguments: \n"
                 "\t\t -i Print System V Resource IDs only\n"
                 "\t\t -k Print System V Resource Keys only"
                 , NULL},
-    {"svsemids",  cmd_svsemids,EXFAIL,          1,  3,  0, 
+    {"svsemids",  cmd_svsemids,EXFAIL,          1,  0, 
                 "Print System V user semaphore ids\n"
                 "\tUsage: svsemids [-i] [-k]\n"
                 "\tOptional arguments: \n"
                 "\t\t -i Print System V Resource IDs only\n"
                 "\t\t -k Print System V Resource Keys only\n"
                 , NULL},
-    {"pubfdb",    cmd_pubfdb,EXFAIL,            1,  1,  0, 
+    {"pubfdb",    cmd_pubfdb,EXFAIL,            0,  0, 
                 "Print UBF custom fields (from DB)"
                 , NULL},
-    {"poller",    cmd_poller,EXFAIL,            1,  1,  0, 
+    {"poller",    cmd_poller,EXFAIL,            0,  0, 
                 "Print active poller sub-system"
                 , NULL},
-    {"shms",      cmd_shms,EXFAIL,              1,  1,  0, 
+    {"shms",      cmd_shms,EXFAIL,              0,  0, 
                 "Print shared memory segments"
                 , NULL},
-    {"pmode",     cmd_pmode,EXFAIL,             1,  1,  0, 
+    {"pmode",     cmd_pmode,EXFAIL,             0,  0, 
                 "Print Enduro/X build environment (ndrx_config.h)"
                 , NULL},
-    {"ps",        cmd_ps,EXFAIL,                0,  7,  0, 
+    {"ps",        cmd_ps,EXFAIL,                1,  0, 
                 "List processes\n"
                 "\tUsage: ps [OPTION]...\n"
                 "\tOptional arguments: \n"
@@ -423,7 +415,7 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -m\tPrint memory stats (pid), -p mode only (pid:rss:vsz in kb)\n"
                 "\t\t -x PID\tExclude specific pid"
                 , NULL},
-    {"appconfig", cmd_appconfig,  NDRXD_COM_APPCONFIG_RQ,    1,  2,  1, 
+    {"appconfig", cmd_appconfig,  NDRXD_COM_APPCONFIG_RQ,   1,  1, 
                 "Change/get ndrxd application cfg dynamically\n"
                 "\tUsage: appconfig SETTING [NEWVALUE]\n"
                 "\tPossible SETTING values: \n"
@@ -439,25 +431,55 @@ cmd_mapping_t M_command_map[] =
                 "\t\t rqaddrttl\tNumber of seconds for System V Request Address\n"
                     "\t\t\tto live with out servers"
                 , NULL},
-    {"dping", cmd_dping,EXFAIL,                1,  2,  1,  
+    {"dping", cmd_dping,EXFAIL,                1,  1,  
                 "Ping `ndrxd' process\n"
                 "\tUsage: dping [OPTION]...\n"
                 "\tOptional arguments: \n"
                 "\t\t -c\tNumber of pings (default 4)"
                 , NULL},
-    {"dpid", cmd_dpid,EXFAIL,                1,  1,  1,  
+    {"dpid", cmd_dpid,EXFAIL,                   0,  1,  
                 "Print ndrxd PID from pid file"
                 , NULL},
-    {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,              1,  1,  1,  
+    {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,  1,  1,  
                 "Put ndrxd in sleep (disable activity for time period), for debug\n"
                 "\tUsage: dsleep SLEEP_SECONDS"
                 , NULL},
-    {"mibget",     cmd_mibget,EXFAIL,                1,  3,  1, 
+    {"mibget",     cmd_mibget,EXFAIL,           1,  1, 
                 "Dump message in cache\n"
                 "\t args: mibget -c <T_CLASS> [-m]\n"
                 "\t\t -m\tMachine output\n"
                 "\t\t -c\tT_CLIENT|T_DOMAIN|T_MACHINE|T_QUEUE|T_SERVER|T_SERVICE|T_SVCGRP|T_BRCON"
-                , NULL}
+                , NULL},
+    {"lcf",     cmd_lcf, EXFAIL,                1,  0, 
+                "Latent Command management\n"
+                "\tUsage: lcf [COMMAND] [OPTION]...\n"
+                "\tWhen COMMAND is not present, binary prints the shared memory output\n"
+                "\tBuilt in COMMANDs:\n"
+                "\t\t -1\tPrint page 1 of LCF memory (default) \n"
+                "\t\t -2\tPrint page 2 of LCF memory\n"
+                "\t\t -3\tPrint page 3 of LCF memory\n"
+                "\tOptional arguments: \n"
+                "\t\t -p\tApply to PID\n"
+                "\t\t -b\tApply to BINARY\n"
+                "\t\t -r\tPID or BINARY is regular expression\n"
+                "\t\t -a\tApply to all binaries in application domain\n"
+                "\t\t -n\tExecute COMMAND on binary startup\n"
+                "\t\t -e\tExecute COMMAND on binary startup with command expiry\n"
+                "\t\t -s <SLOT>\tSlot number for command\n"
+                "\t\t -A\tArgument A to COMMAND\n"
+                "\t\t -B\tArgument B to COMMAND"
+                , cmd_lcf_help},
+    {"shmcfg",  cmd_shmcfg,EXFAIL,             0,  0, 
+                "Print shared memory current configuration"
+                , NULL},
+    {"prtsvc",     cmd_prtsvc,   EXFAIL,    1,  1, 
+                "Print routing services\n"
+                "\tUsage: prtsvc [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -a\tPrint all slots\n"
+                "\t\t -i\tPrint in use slots\n"
+                "\t\t -w\tPrint was in use slots\n",
+                NULL},
 };
 
 /*
@@ -612,14 +634,17 @@ exprivate void completion_handler(const char *buf, linenoiseCompletions *lc)
     int i;
     char tmp[128];
     int len;
+    int is_help=EXFALSE;
+    
+    len = strlen(buf);
     
     if (0==strncmp(buf, "help", 4))
     {
+        is_help=EXTRUE;
         for (i=0; i<N_DIM(M_command_map); i++)
         {
             snprintf(tmp, sizeof(tmp), "help %s", M_command_map[i].cmd);
-        
-            len = strlen(buf);
+            
             if (0==strncmp(tmp, buf, len))
             {
                 linenoiseAddCompletion(lc,tmp);
@@ -629,12 +654,16 @@ exprivate void completion_handler(const char *buf, linenoiseCompletions *lc)
     }
     else for (i=0; i<N_DIM(M_command_map); i++)
     {
-        len = strlen(buf);
-        
         if (0==strncmp(M_command_map[i].cmd, buf, len))
         {
             linenoiseAddCompletion(lc,M_command_map[i].cmd);
         }
+    }
+    
+    if (!is_help)
+    {
+        /* Add also LCF... */
+        cmd_lcf_completion(lc, (char *)buf);
     }
 }
 
@@ -815,7 +844,6 @@ exprivate int get_cmd(int *p_have_next)
     int ret=EXSUCCEED;
     int i;
 
-    G_cmd_argc_logical = 0;
     G_cmd_argc_raw = 0;
 
     if (M_argc > 1)
@@ -823,12 +851,6 @@ exprivate int get_cmd(int *p_have_next)
         /* Operate with command line args */   
         for (i=1; i< M_argc && G_cmd_argc_raw<MAX_ARGS; i++)
         {
-            PARSE_CMD_STUFF(M_argv[i]);
-            
-            /* have something (the command) */
-            if (!G_cmd_argc_logical)
-                G_cmd_argc_logical = 1;
-            
             /* Migrate to raw format: */
             NDRX_STRCPY_SAFE_DST(G_cmd_argv[i-1], M_argv[i], MAX_ARG_LEN);
             G_cmd_argc_raw++;
@@ -898,20 +920,13 @@ exprivate int get_cmd(int *p_have_next)
             }
         }
         
-        /* Now split the stuff */
-        p = strtok (M_buffer, ARG_DEILIM);
-        while (p != NULL && G_cmd_argc_raw < MAX_ARGS)
+        /* preserve values in quotes... as atomic values */
+        for (p = ndrx_strtokblk ( M_buffer, ARG_DEILIM, "'\""), i=0; 
+                NULL!=p && G_cmd_argc_raw<MAX_ARGS; p = ndrx_strtokblk (NULL, ARG_DEILIM, "'\""), i++)
         {
-            PARSE_CMD_STUFF(p);
-            
-            /* have something (the command) */
-            if (!G_cmd_argc_logical)
-                G_cmd_argc_logical = 1;
-            
             NDRX_STRCPY_SAFE_DST(G_cmd_argv[G_cmd_argc_raw], p, MAX_ARG_LEN);
             G_cmd_argc_raw++;
             
-            p = strtok (NULL, ARG_DEILIM);
         }
         /* We have next from stdin, if not quit command executed last */
         if (!M_quit_requested)
@@ -951,16 +966,9 @@ expublic int process_command_buffer(int *p_have_next)
     else
     {
         /* check min/max args */
-        if ( G_cmd_argc_logical < map->min_args)
+        if (!map->has_args && G_cmd_argc_raw > 1)
         {
-            fprintf(stderr, "Syntax error, too few args (min %d, max %d, got %d)!\n",
-                                map->min_args, map->max_args, G_cmd_argc_logical);
-            EXFAIL_OUT(ret);
-        }
-        else if ( G_cmd_argc_logical > map->max_args)
-        {
-            fprintf(stderr, "Syntax error, too many args (min %d, max %d, got %d)!\n",
-                                map->min_args, map->max_args, G_cmd_argc_logical);
+            fprintf(stderr, "No arguments expected for command!\n");
             EXFAIL_OUT(ret);
         }
         else if ( (NDRX_XADMIN_RPLYQREQ==map->reqidle || NDRX_XADMIN_IDLEREQ==map->reqidle)
@@ -1179,6 +1187,16 @@ expublic int ndrx_init(int need_init)
         EXFAIL_OUT(ret);
     }
     
+    /* pull-in LCFs only at later stage...
+     * so that we process none at startup, to have some management if
+     * commands are broken
+     */
+    if (EXSUCCEED!=ndrx_xadmin_lcf_init())
+    {
+        NDRX_LOG(log_error, "Failed to register LCF commands");
+        EXFAIL_OUT(ret);
+    }
+    
 out:
 
     if (NULL!=cfg)
@@ -1250,7 +1268,7 @@ int main(int argc, char** argv) {
             goto out;
         }
         /* Now process command buffer */
-        if (G_cmd_argc_logical > 0 &&
+        if (G_cmd_argc_raw > 0 &&
             EXSUCCEED!=process_command_buffer(&have_next) &&
                 /* stop processing if not tty or do not have next */
                 (!have_next || !isatty(0)))

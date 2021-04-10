@@ -4,17 +4,17 @@ Enduro/X benchmarks
 
 Overview
 --------
-This document generally contains Enduro/X benchark overview, performed on different platforms.
+This document generally contains Enduro/X benchmark overview, performed on different platforms.
 Different aspects are being tested and performance results are analyzed. Testing will cover
-funamental message exchange between client and server, synchrouns and asynchrouns aspects are tested.
+fundamental message exchange between client and server, synchronous and asynchronous aspects are tested.
 Document also covers persistent storage benchmarks.
 
-== Prepration
+== Preparation
 
 This section gives some notes how to prepare for benchmark. What packages are required to
-be installed. This assumes that standard Enduro/X build installation is peformed.
+be installed. This assumes that standard Enduro/X build installation is performed.
 
-=== Preparing on Unbuntu/Debian like system
+=== Preparing on Ubuntu/Debian like system
 
 ---------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ $ sudo apt-get install r-base
 
 ---------------------------------------------------------------------
 
-Asynchrouns tpacall()
+Asynchronous tpacall()
 ---------------------
 This tests uses one way calls to the server process. At the end of the calls it is ensured that
 all messages are processed by server. Only then results are plotted.
@@ -47,13 +47,13 @@ are started and they are interconnected with network.
 
 image:benchmark/02_tpcall_network.png[caption="Figure 3: ", title="tpcall() network benchmark", alt="tpcall_network"]
 
-Here we see that network peformance slightly fluctate. That could be related with fact now bridge is involved to transfer
+Here we see that network performance slightly fluctuate. That could be related with fact now bridge is involved to transfer
 the message over the network, and process count is bigger than CPU core count. Thus scheduler comes in work.
 
 Multi-process/multi-thread tpcall()
 -----------------------------------
 This test cases employs five ATMI servers, and one ATMI client which inside have 5x threads,
-sending messagas to the servers
+sending massages to the servers
 
 image:benchmark/03_tpcall_threads.png[caption="Figure 4: ", title="tpcall() multiproc", alt="multiprocessing"]
 
@@ -76,10 +76,10 @@ image:benchmark/06_tpcache.png[caption="Figure 6: ", title="Cache performance", 
 
 Running the benchmarks
 ----------------------
-It is possible to run benchmarkings on your ownsystem. Note that for chart plotting R language is used. If R will not
+It is possible to run benchmarks on your own system. Note that for chart plotting R language is used. If R will not
 be installed, then charts will not be generated. But results still can be read from data files. Benchmark script is
-located in 'doc/benchmark' folder, named 'build.sh <configuration name>'. The configuration name is arbritrary description
-of your system on which you perform tne tests. Shall not contain spaces. Results are plotten into text files located
+located in 'doc/benchmark' folder, named 'build.sh <configuration name>'. The configuration name is arbitrary description
+of your system on which you perform the tests. Shall not contain spaces. Results are plotted into text files located
 in same directory.
 
 NOTE: That you must enable the Q message size up till 56000 bytes. On Linux system that would mean that '/etc/rc.local' needs to be set to:
@@ -118,30 +118,6 @@ $ ls -1
 build.sh
 genchart.r
 ---------------------------------------------------------------------
-
-
-:numbered!:
-
-[bibliography]
-Additional documentation 
-------------------------
-This section lists additional related documents.
-
-[bibliography]
-.Internet resources
-- [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
-
-[glossary]
-Glossary
---------
-This section lists
-
-[glossary]
-ATMI::
-  Application Transaction Monitor Interface
-
-UBF::
-  Unified Buffer Format it is similar API as Tuxedo's FML
 
 
 ////////////////////////////////////////////////////////////////

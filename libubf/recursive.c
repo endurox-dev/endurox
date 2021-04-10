@@ -716,6 +716,42 @@ out:
 }
 
 /**
+ * Recursive get string field and alloc
+ * @param p_ub parent UBF buffer
+ * @param fldidocc array of: <field_id1>,<occ1>,..<field_idN><occN>,BBADFLDOCC
+ * @param usrtype user type to cast to
+ * @param extralen on input number of bytes to allocate extra
+ *  on output number of bytes copied to data block
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic char * ndrx_CBgetallocr (UBFH *p_ub, BFLDID *fldidocc, int usrtype, BFLDLEN *extralen)
+{
+    char *ret = NULL;
+    BFLDID bfldid;
+    BFLDOCC occ;
+    BFLDLEN len_data;
+    char debugbuf[DEBUG_STR_MAX]="";
+    
+    p_ub=ndrx_ubf_R_find(p_ub, fldidocc, &bfldid, &occ, &len_data);
+    
+    if (NULL==p_ub)
+    {
+        if (debug_get_ubf_level() > log_info)
+        {
+            ndrx_ubf_sequence_str(fldidocc, debugbuf, sizeof(debugbuf));
+            UBF_LOG(log_info, "Field not found, sequence: %s", debugbuf);
+        }
+        goto out;
+    }
+    
+    /* read the field and allocate */
+    ret=CBgetalloc(p_ub, bfldid, occ, userlog, extralen);
+    
+out:
+    return ret;
+}
+
+/**
  * Recursive find implementation
  * @param p_ub root UBF buffer
  * @param fldidocc field sequence
@@ -882,6 +918,73 @@ expublic int ndrx_CBvgetr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ
 out:
             
     UBF_LOG(log_debug, "returns %d", ret);
+
+    return ret;
+}
+
+/**
+ * Retrieve field from view which is set in UBF buffer
+ * @param p_ub UBF buffer
+ * @param fldidocc fldid,occ,fldid,occ (last if BFLD_VIEW field)
+ * @param cname field name in view
+ * @param occ occurrence of view field
+ * @param usrtype user type of buf to unload to
+ * @param flags optional BVACCESS_NOTNULL
+ * @param extralen extra len to alloc and output len
+ * @return NULL on error, ptr to data
+ */
+expublic char *ndrx_CBvgetallocr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+             int usrtype, long flags, BFLDLEN *extralen)
+{
+    char * ret = NULL;
+    BFLDID bfldid;
+    BFLDOCC iocc;
+    BFLDLEN len_data;
+    BVIEWFLD *vdata;
+    int typ;
+    char debugbuf[DEBUG_STR_MAX]="";
+    
+    p_ub=ndrx_ubf_R_find(p_ub, fldidocc, &bfldid, &iocc, &len_data);
+    
+    if (NULL==p_ub)
+    {
+        if (debug_get_ubf_level() > log_info)
+        {
+            ndrx_ubf_sequence_str(fldidocc, debugbuf, sizeof(debugbuf));
+            UBF_LOG(log_info, "Field not found, sequence: %s", debugbuf);
+        }
+        
+        goto out;
+    }
+    
+    /* check the field type, must be view */
+    typ = Bfldtype(bfldid);
+    if (BFLD_VIEW!=typ)
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Expected BFLD_VIEW(%d) got %d",
+                BFLD_VIEW, typ);
+        UBF_LOG(log_error, "Expected BFLD_VIEW(%d) got %d",
+                BFLD_VIEW, typ);
+        goto out;
+    }
+    
+    /* retrieve the VIEW */
+    vdata = (BVIEWFLD *)Bfind(p_ub, bfldid, iocc, &len_data);
+    
+    if (NULL==vdata)
+    {
+        UBF_LOG(log_error, "Failed to find %d fld occ %d", bfldid, iocc);
+        goto out;
+    }
+    
+    UBF_LOG(log_debug, "Reading view field [%s] field [%s] occ [%d] dataptr=%p",
+            vdata->vname, cname, occ, vdata->data);
+    
+    ret = CBvgetalloc(vdata->data, vdata->vname, cname, occ, usrtype, flags, extralen);
+    
+out:
+            
+    UBF_LOG(log_debug, "returns %p", ret);
 
     return ret;
 }

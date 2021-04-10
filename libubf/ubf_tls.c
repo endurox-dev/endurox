@@ -52,16 +52,6 @@ exprivate pthread_key_t M_ubf_tls_key;
 exprivate MUTEX_LOCKDECL(M_thdata_init);
 exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
-exprivate void ubf_buffer_key_destruct( void *value );
-
-/**
- * Thread destructor
- * @param value this is malloced thread TLS
- */
-exprivate void ubf_buffer_key_destruct( void *value )
-{
-    ndrx_ubf_tls_free((void *)value);
-}
 
 /**
  * Unlock, unset G_ubf_tls, return pointer to G_ubf_tls
@@ -177,7 +167,7 @@ expublic void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
         if (M_first)
         {
             pthread_key_create( &M_ubf_tls_key, 
-                    &ubf_buffer_key_destruct );
+                    &ndrx_ubf_tls_free );
             M_first = EXFALSE;
         }
         MUTEX_UNLOCK_V(M_thdata_init);

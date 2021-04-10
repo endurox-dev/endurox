@@ -502,7 +502,7 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
 {
     int ret=EXSUCCEED;
     conf_server_node_t *p_conf;
-    pm_node_t   *p_pm;
+    pm_node_t   *p_pm=NULL;
     char tmp[PATH_MAX+1];
     int cnt;
     char *p;
@@ -630,7 +630,7 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
             /* substitute env... - Feature #331, END */
 
             /* now check the hash table for server instance entry */
-            if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
+            if (p_pm->srvid < 1 || p_pm->srvid > ndrx_get_G_atmi_env()->max_servers-1)
             {
                 /* Invalid srvid  */
                 NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "(%s) Invalid server id `%d'", 
@@ -654,11 +654,16 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
                 DL_APPEND(*p_pm_model, p_pm);
                 /* Add it to the hash */
                 p_pm_hash[p_pm->srvid] = p_pm;
+                p_pm=NULL;
             }
         }/* for */
     } /* DL_FOREACH */
 
 out:
+    if (NULL!=p_pm)
+    {
+        NDRX_FREE(p_pm);
+    }
     NDRX_LOG(log_debug, "build_process_model return %d", ret);
     return ret;
 }
@@ -1369,8 +1374,11 @@ expublic int app_startup(command_startstop_t *call,
     int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
 
+    /*
     if (NULL==G_app_config && EXSUCCEED!=load_active_config(&G_app_config,
                 &G_process_model, &G_process_model_hash, &G_process_model_pid_hash))
+     */
+    if (NULL==G_app_config && EXSUCCEED!=load_active_config_live())
     {
         ret=EXFAIL;
         goto out;

@@ -17,6 +17,11 @@
 #ifndef XA_H
 #define XA_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+    
 #include <ndrx_config.h>
 /*
  * Transaction branch identification: XID and NULLXID:
@@ -186,7 +191,9 @@ typedef struct xa_switch_t * (* ndrx_get_xa_switch_loader) (void);
 #define XAER_OUTSIDE -9 /* resource manager doing work outside
                            global transaction */
 
-
+#ifdef	__cplusplus
+}
+#endif
 
 #endif /* ifndef XA_H */
 /*

@@ -22,7 +22,7 @@
  * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
  * for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
@@ -110,6 +110,7 @@ extern NDRX_API int OBwrite(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf);
 extern NDRX_API int OBwritecb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, long (*p_writef)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
 extern NDRX_API void OBtreefree(TPCONTEXT_T *p_ctxt, char *tree);
 extern NDRX_API int OBboolsetcbf(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
+extern NDRX_API int OBboolsetcbf2(TPCONTEXT_T *p_ctxt, char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname, char *arg1));
 extern NDRX_API int OBadds(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf);
 extern NDRX_API int OBchgs(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
 extern NDRX_API int OBgets(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
@@ -154,6 +155,7 @@ extern NDRX_API void OBflddbunload(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int OBflddbdrop(TPCONTEXT_T *p_ctxt, EDB_txn *txn);
 extern NDRX_API int OBflddbdel(TPCONTEXT_T *p_ctxt, EDB_txn *txn, BFLDID bfldid);
 extern NDRX_API int OBflddbadd(TPCONTEXT_T *p_ctxt, EDB_txn *txn, short fldtype, BFLDID bfldno, char *fldname);
+extern NDRX_API int OB32to16(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
+extern NDRX_API int OB16to32(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
 #endif  /* __OUBF_H */
 
-/* vim: set ts=4 sw=4 et smartindent: */

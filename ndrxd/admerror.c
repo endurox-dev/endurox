@@ -88,6 +88,7 @@ struct err_msg
     {NDRXD_ERROR(NDRXD_ECFGAPPCONFIG)},
     {NDRXD_ERROR(NDRXD_EACCES)},
     {NDRXD_ERROR(NDRXD_ESYNTAX)},
+    {NDRXD_ERROR(NDRXD_ESYSTEM)},
     {NDRXD_ERROR(NDRXD_EMAXVAL)}	/* maximum error message */
 };
 

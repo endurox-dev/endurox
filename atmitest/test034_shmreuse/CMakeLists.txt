@@ -56,6 +56,7 @@ add_executable (atmiclt34 atmiclt34.c)
 add_executable (atmiclt34_2 atmiclt34_2.c)
 add_executable (atmisv34 atmisv34.c)
 add_executable (atmisv34_2 atmisv34_2.c)
+add_executable (atmisv34_3 atmisv34_3.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
@@ -71,5 +72,7 @@ set_target_properties(atmisv34 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 target_link_libraries (atmisv34_2 atmisrvinteg atmi ubf nstd pthread ${RT_LIB})
 set_target_properties(atmisv34_2 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
+target_link_libraries (atmisv34_3 atmisrvinteg atmi ubf nstd pthread ${RT_LIB})
+set_target_properties(atmisv34_3 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 # vim: set ts=4 sw=4 et smartindent:

@@ -73,7 +73,7 @@ extern "C" {
 
 #define NDRX_XID_SERIAL_BUFSIZE     48 /**< Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /**< Number of resource managers supported */
-#define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /**< transaction is marked as abort only */
+#define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /**< transaction is marked as abort only, used in tmtxflags */
 
 #define ATMI_XA_TX_INFO_FIELDS      \
     short tmtxflags;                   /* See TMTXFLAGS_* */\
@@ -89,147 +89,6 @@ extern "C" {
 #define TPSUCCESS	0x00000002
 /** rval in tpreturn - Service failed, shutdown requested */
 #define TPEXIT      0x08000000
-
-/**
- * Posix Queue processing path prefixes
- */
-#define NDRX_FMT_SEP      ','                   /**< Seperator in qnames      */
-#define NDRX_FMT_SEP_STR  ","                   /**< Seperator in qnames      */
-#define NDRX_NDRXD        "%s,sys,bg,ndrxd"
-#define NDRX_QTYPE_NDRXD    1                   /**< ndrxd backend q          */
-#define NDRX_NDRXCLT      "%s,sys,bg,xadmin,%d"
-#define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin,"   /**< Prefix for sanity check    */
-
-
-#define NDRX_SVC_QFMT     "%s,svc,%s"            /**< Q format in epoll mode (one q multiple servers) */
-#define NDRX_SVC_QFMT_PFX "%s,svc,"              /**< Service Q prefix */
-#define NDRX_QTYPE_SVC      2                    /**< Service Q */
-#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%d"       /**< Q format in poll mode (use server id) */
-#define NDRX_ADMIN_FMT    "%s,srv,admin,%s,%d,%d"
-
-#define NDRX_SYS_SVC_PFX          "@"                    /**< Prefix used for system services */
-#define NDRX_SYS_SVC_PFXC         '@'                    /**< Prefix used for system services */
-#define NDRX_SVC_BRIDGE_STATLEN   9                      /**< Static len of bridge name       */
-#define NDRX_SVC_BRIDGE           "@TPBRIDGE%03d"        /**< Bridge service format           */
-#define NDRX_SVC_QBRDIGE          "%s,svc,@TPBRIDGE%03d" /**< Bridge service Q format         */
-    
-#define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"      /**< notify/broadcast remote dispatcher       */
-#define NDRX_SVC_TMIB     ".TMIB"               /**< Tp Management information base           */
-#define NDRX_SVC_TMIBNODE ".TMIB-%ld"         /**< Tp Management information base, node */
-#define NDRX_SVC_TMIBNODESV ".TMIB-%ld-%d"        /**< Tp Management information base, node, server */
-
-#define NDRX_SVC_RM       "@TM-%d"              /**< resource_id */
-#define NDRX_SVC_TM       "@TM-%d-%d"           /**< Node_idresource_id */
-#define NDRX_SVC_TM_I     "@TM-%d-%d-%d"        /**< Node_id,resource_id,instance/srvid */
-    
-#define NDRX_SVC_TMQ      "@TMQ-%ld-%d"         /**< Node_id,srvid */
-/* QSPACE service format */
-#define NDRX_SVC_QSPACE   "@QSP%s"              /**< Q space format string (for service) */
-    
-#define NDRX_SVC_CPM      "@CPMSVC"             /**< Client Process Monitor svc */
-    
-#define NDRX_SVC_CCONF    "@CCONF"              /**< Common-config server */
-#define NDRX_SVC_ADMIN    "@ADMINSVC"           /**< Admin service for atmiservices, logical */
-#define NDRX_SVC_REPLY    "@REPLYSVC"           /**< Reply service for atmiservices, logical */
-
-#define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
-#define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
-    
-#define NDRX_SVR_QREPLY   "%s,srv,reply,%s,%d,%d" /**< qpfx, procname, serverid, pid */
-#define NDRX_SVR_QREPLY_PFX "%s,srv,reply," /**< Prefix for sanity check. */
-#define NDRX_QTYPE_SRVRPLY  4                   /**< Server Reply Q */
-    
-/* Used for System V interface */
-#define NDRX_SVR_SVADDR_FMT "%s,srv,addr,%s,%d" /**< Server address, per proc */
-#define NDRX_SVR_RQADDR_FMT "%s,srv,rqaddr,%s" /**< Server request address   */
-/** bridge request addr */
-#define NDRX_SVR_RQADDR_BRDG "%s,srv,rqaddr,@TPBRIDGE%03d"
-
-/* this may end up in "112233-" if client is not properly initialised */
-/* NOTE: Myid contains also node_id, the client Q does not contain it
- * as it is local
- */
-#define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld" /**< pfx, name, pid, context id*/
-/* client rply q parse  */
-#define NDRX_CLT_QREPLY_PARSE "%s clt reply %s %d %ld" /**< pfx, name, pid, context_id*/
-    
-#define NDRX_CLT_QREPLY_PFX   "%s,clt,reply," /**< Prefix for sanity check */
-#define NDRX_QTYPE_CLTRPLY  5                   /**< Client Reply Q */
-#define NDRX_CLT_QREPLY_CHK   ",clt,reply," /**< (verify that it is reply q) */
-
-#define NDRX_ADMIN_SVC     "%s-%d"
-
-/* This queue basically links two process IDs for conversation */
-#define NDRX_CONV_INITATOR_Q  "%s,cnv,c,%s,%d" /**< Conversation initiator */
-#define NDRX_CONV_INITATOR_Q_PFX "%s,cnv,c," /**< Prefix for sanity check. */
-#define NDRX_QTYPE_CONVINIT 6                   /**< Conv initiator Q */
-#define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s" /**< Conversation server Q */
-#define NDRX_CONV_SRV_Q_PFX "%s,cnv,s," /**< Prefix for sanity check. */
-#define NDRX_QTYPE_CONVSRVQ 7                   /**< Conv server Q */
-
-/** binary name, server id, pid, contextid, nodeid */
-#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d"
-/** binary name, server id, pid, contextid, nodeid for parse */
-#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d"
-#define NDRX_MY_ID_SRV_NRSEPS  5 /**< Number of separators in myid of server */
-    
-/** binary name, server id, pid, contextid, nodeid, cd for parse */
-#define NDRX_MY_ID_SRV_CNV_PARSE  "srv %s %d %d %ld %d %d"
-#define NDRX_MY_ID_SRV_CNV_NRSEPS  6 /**< Number of separators in myid of server */
-    
-#define NDRX_MY_ID_CLT        "clt,%s,%d,%ld,%d" /**< cltname, pid, contextid, nodeid */
-#define NDRX_MY_ID_CLT_PARSE  "clt %s %d %ld %d" /**< cltname, pid, contextid, nodeid */
-#define NDRX_MY_ID_CLT_NRSEPS  4 /**< Number of separators in myid of client */
-    
-#define NDRX_MY_ID_CLT_CNV_PARSE  "clt %s %d %ld %d %d" /**< cltname, pid, contextid, nodeid, cd */
-#define NDRX_MY_ID_CLT_CNV_NRSEPS  5 /**< Number of separators in myid of client */
-
-/* Shared memory formats */
-#define NDRX_SHM_SRVINFO_SFX    "shm,srvinfo"       /**< Server info SHM               */
-#define NDRX_SHM_SRVINFO        "%s," NDRX_SHM_SRVINFO_SFX
-#define NDRX_SHM_SRVINFO_KEYOFSZ 0                  /**< IPC Key offset                */
-
-#define NDRX_SHM_SVCINFO_SFX    "shm,svcinfo"       /**< Service info SHM              */
-#define NDRX_SHM_SVCINFO        "%s," NDRX_SHM_SVCINFO_SFX
-#define NDRX_SHM_SVCINFO_KEYOFSZ 1                  /**< IPC Key offset                */
-    
-#define NDRX_SHM_BRINFO_SFX     "shm,brinfo"        /**< Bridge info SHM               */
-#define NDRX_SHM_BRINFO         "%s," NDRX_SHM_BRINFO_SFX
-#define NDRX_SHM_BRINFO_KEYOFSZ 2                   /**< IPC Key offset                */
-    
-#define NDRX_SHM_P2S_SFX        "shm,p2s"           /**< Posix to System V             */
-#define NDRX_SHM_P2S            "%s," NDRX_SHM_P2S_SFX
-#define NDRX_SHM_P2S_KEYOFSZ    3                   /**< IPC Key offset                */
-    
-#define NDRX_SHM_S2P_SFX        "shm,s2p"           /**< System V to Posix             */
-#define NDRX_SHM_S2P            "%s," NDRX_SHM_S2P_SFX
-#define NDRX_SHM_S2P_KEYOFSZ    4                   /**< IPC Key offset                */
-
-#define NDRX_SHM_CPM_SFX        "shm,cpm"           /**< Client process monitor        */
-#define NDRX_SHM_CPM            "%s," NDRX_SHM_CPM_SFX
-#define NDRX_SHM_CPM_KEYOFSZ    5                   /**< IPC Key offset                */
-    
-#define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
-
-#define NDRX_KEY_FMT            "-k %s"             /**< format string for process key */
-
-/* Format @C<P|D>NID/Flags/<Service name> */
-#define NDRX_CACHE_EV_PFXLEN    6                   /**< prefix len @CXNNN             */
-#define NDRX_CACHE_EV_PUT       "@CP%03d/%s/%s"     /**< Put data in cache, event      */
-#define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"     /**< Delete data form cache, event */
-#define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"     /**< Kill the database             */
-#define NDRX_CACHE_EV_MSKDEL    "@CM%03d/%s/%s"     /**< Delete by mask                */
-#define NDRX_CACHE_EV_KEYDEL    "@CE%03d/%s/%s"     /**< Delete by key                 */
-#define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"     /**< Cache event service, delete   */
-#define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"     /**< Cache managemtn service       */
-    
-#define NDRX_CACHE_EV_LEN       3                   /**< Number of chars in command    */
-    
-#define NDRX_CACHE_EV_PUTCMD    "@CP"               /**< Put command in event          */
-#define NDRX_CACHE_EV_DELCMD    "@CD"               /**< Delete command in event       */
-#define NDRX_CACHE_EV_KILCMD    "@CK"               /**< Kill/drop ache event          */
-#define NDRX_CACHE_EV_MSKDELCMD "@CM"               /**< Delete data by mask, event    */
-#define NDRX_CACHE_EV_KEYDELCMD "@CE"               /**< Delete by key event           */
 
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())
@@ -384,6 +243,7 @@ extern "C" {
 
 #define SYS_SRV_CVT_JSON2VIEW   0x00000020 /**< Message is converted from JSON to VIEW */
 #define SYS_SRV_CVT_VIEW2JSON   0x00000040 /**< Message is converted from UBF to JSON (non NULL)*/
+#define SYS_FLAG_AUTOTRAN       0x00000100 /**< Auto transaction started               */
     
 /* Test is any flag set */
 #define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON ||\
@@ -487,10 +347,15 @@ extern "C" {
  * tpbegin/tpcommit/tpclose/tpopen/tpabort/tpsuspend/tpresume 
  */
 #define TPTXCOMMITDLOG             0x00000004  /**< Commit decision logged     */
+#define TPTXNOOPTIM                0x00000100  /**< No known host optimization */
 
 /* Flags to tpscmt() - TP_COMMIT_CONTROL values, for compatibility: */
 #define TP_CMT_LOGGED              0x04  /**< return after commit has logged   */
 #define TP_CMT_COMPLETE            0x08  /**< return after commit has completed*/
+
+#define NDRX_DDR_CRITMAX             15          /**< Max len of criterion   */
+#define NDRX_DDR_GRP_MAX             15          /**< group code size        */
+#define NDRX_DDR_TRANTIMEDFLT        30          /**< Default transaction timeout */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -523,8 +388,8 @@ typedef struct tp_tranid_t TPTRANID;
 struct tpevctl_t
 {
     long flags;
-    char name1[XATMI_SERVICE_NAME_LENGTH];
-    char name2[XATMI_SERVICE_NAME_LENGTH];
+    char name1[XATMI_SERVICE_NAME_LENGTH]; /**< +1? In next major release */
+    char name2[XATMI_SERVICE_NAME_LENGTH]; /**< +1? In next major release */
 };
 typedef struct tpevctl_t TPEVCTL;
 
@@ -533,7 +398,7 @@ typedef struct tpevctl_t TPEVCTL;
  */
 typedef struct
 {
-    char	name[XATMI_SERVICE_NAME_LENGTH];
+    char	name[XATMI_SERVICE_NAME_LENGTH]; /**< +1? In next major release */
     char	*data;
     long	len;
     long	flags;
@@ -711,8 +576,8 @@ extern NDRX_API int tpsvrthrinit(int argc, char **argv);
 extern NDRX_API void tpsvrthrdone (void);
 
 /* Poller & timer extension: */
-extern NDRX_API int tpext_addpollerfd(int fd, uint32_t events, 
-        void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
+extern NDRX_API int tpext_addpollerfd(int fd, uint32_t events, void *ptr1,
+        int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
 extern NDRX_API int tpext_delpollerfd(int fd);
 extern NDRX_API int tpext_addperiodcb(int secs, int (*p_periodcb)(void));
 extern NDRX_API int tpext_delperiodcb(void);
@@ -728,7 +593,7 @@ extern NDRX_API int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 
 
 /* JSON<->VIEW buffer support */
-extern NDRX_API int tpviewtojson(char *cstruct, char *view, char *buffer,  
+extern NDRX_API int tpviewtojson(char *cstruct, char *view, char *buffer,
         int bufsize, long flags);
 extern NDRX_API char * tpjsontoview(char *view, char *buffer);
 
@@ -740,8 +605,8 @@ extern NDRX_API int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL 
 extern NDRX_API int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 
 extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnomain */
-extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
-            void (*in_tpsvrdone)(void), long flags);
+extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **),
+        void (*in_tpsvrdone)(void), long flags);
 
 /* for build compatibility: */
 extern NDRX_API int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs);
@@ -779,6 +644,10 @@ extern NDRX_API void ndrx_atfork_prepare(void);
 
 extern NDRX_API int tpencrypt(char *input, long ilen, char *output, long *olen, long flags);
 extern NDRX_API int tpdecrypt(char *input, long ilen, char *output, long *olen, long flags);
+
+extern NDRX_API int tpsprio(int prio, long flags);
+extern NDRX_API int tpgprio(void);
+
 
 #if defined(__cplusplus)
 }

@@ -59,14 +59,18 @@ extern NDRX_API int G_max_svcs;
 extern NDRX_API ndrx_shm_t G_svcinfo;
 extern NDRX_API int G_max_servers;
 extern NDRX_API ndrx_shm_t G_srvinfo;
+
+extern NDRX_API ndrx_shm_t ndrx_G_routcrit;    /**< Routing criterions */
+extern NDRX_API ndrx_shm_t ndrx_G_routsvc;     /**< Routing services   */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs);
-extern NDRX_API int ndrxd_shm_open_all(void);
+extern NDRX_API int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs,
+            int rtcrtmax, int rtsvcmax);
 extern NDRX_API int ndrxd_shm_close_all(void);
 extern NDRX_API void ndrxd_shm_srv_fork_status(int srvid, unsigned execerr);
 extern NDRX_API int ndrxd_shm_delete(void);
-extern NDRX_API int ndrx_shm_attach_all(int lev);
+extern NDRX_API int ndrx_shm_open_all(int lev, int create);
 extern NDRX_API int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge,
                         int *have_shm);
 extern NDRX_API int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len); /* poll() only */
@@ -89,7 +93,7 @@ extern NDRX_API int ndrx_shm_birdge_getnodesconnected(char *outputbuf);
 /* Semaphore driving: */
 extern NDRX_API int ndrxd_sem_init(char *q_prefix);
 extern NDRX_API int ndrx_sem_attach(ndrx_sem_t *sem);
-extern NDRX_API int ndrx_sem_open_all(void);
+extern NDRX_API int ndrx_sem_open_all(int create);
 extern NDRX_API int ndrxd_sem_close_all(void);
 extern NDRX_API int ndrxd_sem_delete(void);
 extern NDRX_API void ndrxd_sem_delete_with_init(char *q_prefix);
@@ -97,8 +101,8 @@ extern NDRX_API int ndrx_sem_attach_all(void);
 extern NDRX_API int ndrx_lock_svc_op(const char *msg);
 extern NDRX_API int ndrx_unlock_svc_op(const char *msg);
 
-extern NDRX_API int ndrx_lock_svc_nm(char *svcnm, const char *msg);
-extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm, const char *msg);
+extern NDRX_API int ndrx_lock_svc_nm(char *svcnm, const char *msg, int typ);
+extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm, const char *msg, int typ);
 
 #ifdef	__cplusplus
 }

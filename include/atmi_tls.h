@@ -66,7 +66,7 @@ extern "C" {
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-    
+        
 /**
  * Memory base Q (current with static buffer)
  * but we could migrate to dynamically allocated buffers...
@@ -81,7 +81,30 @@ struct tpmemq
     tpmemq_t *prev;
     tpmemq_t *next;
 };
+
+/**
+ * TLS malloc'd block for qdisk_xa
+ * Not moving all setting just purely to TLS, as this seems to
+ * take a lot space and tls is used by all processes, thus it would
+ * greatly increase memory footprint.
+ */
+typedef struct
+{    
+    /* Per thread data: */
+    int is_reg; /* Dynamic registration done? */
+    /*
+     * Due to fact that we might have multiple queued messages per resource manager
+     * we will name the transaction files by this scheme:
+     * - <XID_STR>-1|2|3|4|..|N
+     * we will start the processing from N back to 1 so that if we crash and retry
+     * the operation, we can handle all messages in system.
+     */
+    char filename_base[PATH_MAX+1]; /* base name of the file */
+    char filename_active[PATH_MAX+1]; /* active file name */
+    char filename_prepared[PATH_MAX+1]; /* prepared file name */
     
+} ndrx_qdisk_tls_t;
+
 /**
  * ATMI library TLS
  * Here we will have a trick, if we get at TLS, then we must automatically suspend
@@ -182,6 +205,21 @@ typedef struct
                 long len, long flags); 
     
     buffer_obj_t  nullbuf; /**< so that we have place where to set call infos */
+    
+    /** default priority setting used for calls */
+    int prio;
+    long prio_flags;
+    int prio_last;
+    
+    
+    int tmnull_is_open; /**< Null swith is open ? */
+    int tmnull_rmid; /**< Null switch RMID */
+    
+    /* Shared between threads: */
+    int qdisk_is_open;
+    int qdisk_rmid;
+    
+    ndrx_qdisk_tls_t *qdisk_tls;
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/

@@ -44,6 +44,16 @@ ELSE ($ENV{RELEASE_BUILD})
 ENDIF ($ENV{RELEASE_BUILD})
 
 find_package(LibXml2 REQUIRED)
+
+# Osx has very outdated bison,
+# thus install by brew install bison
+if(PLATFORM STREQUAL "Darwin")
+    set(BISON_EXECUTABLE "/usr/local/opt/bison/bin/bison" CACHE PATH "Bison executable")
+endif()
+
+find_package(BISON)
+find_package(FLEX)
+
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
                         ${ENDUROX_SOURCE_DIR}/libatmi
@@ -58,39 +68,47 @@ if(DEFINED EX_USE_SYSVQ)
     SET(ADDSANITY1 "sanity_sysv.c")
 endif()
 
+
+BISON_TARGET(EXPRPARSER ddr_range.y ${CMAKE_CURRENT_BINARY_DIR}/expr_range.tab.c)
+FLEX_TARGET(EXPRSCANNER ddr_range.l ${CMAKE_CURRENT_BINARY_DIR}/expr_range.lex.c)
+
 # Executables
-add_executable (ndrxd   ndrxd.c
-                        appconfig.c
-                        pmodel.c
-			admerror.c
-			cmd_processor.c
-			cmd_config.c
-			cmd_reply.c
-			cmd_startstop.c
-			cmd_srvinfo.c
-			cmd_psc.c
-			cmd_at.c
-			cmd_reload.c
-                        sanity.c
-                        respawn.c
-                        restart.c
-                        cmd_unadv.c
-                        cmd_readv.c
-                        cmd_adv.c
-                        cmd_ppm.c
-                        cmd_shm_psvc.c
-                        cmd_shm_psrv.c
-                        svc_q_remove.c
-                        bridge.c
-                        cmd_bridge.c
-			cmd_ping.c
-			cmd_pq.c
-                        cmd_env.c
-                        cmd_appconfig.c
-                        cmd_dping.c
-                        reloadonchange.c
-                        ${ADDSANITY1}
-                        cmd_blist.c
+add_executable (ndrxd  
+            ndrxd.c
+            appconfig.c
+            pmodel.c
+            admerror.c
+            cmd_processor.c
+            cmd_config.c
+            cmd_reply.c
+            cmd_startstop.c
+            cmd_srvinfo.c
+            cmd_psc.c
+            cmd_at.c
+            cmd_reload.c
+            sanity.c
+            respawn.c
+            restart.c
+            cmd_unadv.c
+            cmd_readv.c
+            cmd_adv.c
+            cmd_ppm.c
+            cmd_shm_psvc.c
+            cmd_shm_psrv.c
+            svc_q_remove.c
+            bridge.c
+            cmd_bridge.c
+            cmd_ping.c
+            cmd_pq.c
+            cmd_env.c
+            cmd_appconfig.c
+            cmd_dping.c
+            reloadonchange.c
+            ${ADDSANITY1}
+            cmd_blist.c
+            ddr_ndrxd.c
+            expr_range.lex.c
+            expr_range.tab.c
             )
 
 # Link the executable to the UBF library & others...

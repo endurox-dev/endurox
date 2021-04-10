@@ -35,6 +35,7 @@ $ su - root
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Debian 8.2
+
 The same goes on Raspbian (Raspberry Pi OS)
 ---------------------------------------------------------------------
 $ sudo apt-get update
@@ -61,6 +62,7 @@ $ sudo systemctl start postgresql
 ---------------------------------------------------------------------
 	
 ==== System level dependencies - for Ubuntu 14.04
+
 ---------------------------------------------------------------------
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc libxml2-dev \
@@ -83,6 +85,13 @@ be installed:
 ---------------------------------------------------------------------
 $ sudo apt-get install  postgresql postgresql-client libecpg-dev \
  libpq-dev postgresql-server-dev-all
+---------------------------------------------------------------------
+
+If building in 32bit mode on 64bit distro, then additional libs shall be installed
+
+---------------------------------------------------------------------
+$ sudo dpkg --add-architecture i386
+$ sudo apt-get install gcc-multilib g++-multilib libicu-dev:i386 libxml32-dev:i386 libxml3-dev:i386
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
