@@ -522,6 +522,44 @@ Ensure(test_CBgetr)
     
 }
 
+Ensure(test_CBgetallocr)
+{
+    char buf[56000];
+    long *l=0;
+    BFLDLEN extra;
+    char *ret;
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    load_recursive_data(p_ub);
+    
+    /* convert ok */
+    extra=100;
+    ret=CBgetallocr (p_ub, (int []){T_UBF_FLD,0,T_STRING_9_FLD,1,BBADFLDOCC}, 
+            BFLD_LONG, &extra);
+    assert_not_equal(ret, NULL);
+    l=(long *)ret;
+    assert_equal(*l, 20);
+    assert_equal(extra, sizeof(long));
+    memset(ret, 0, sizeof(long)+100);
+    NDRX_FREE(ret);
+    
+    /* check with out len */
+    ret=CBgetallocrv (p_ub,
+            BFLD_LONG, NULL, T_UBF_FLD,0,T_STRING_9_FLD,1,BBADFLDOCC);
+    assert_not_equal(ret, NULL);
+    l=(long *)ret;
+    assert_equal(*l, 20);
+    NDRX_FREE(ret);
+    
+    /* invalid path */
+    ret=CBgetallocrv (p_ub,
+            BFLD_LONG, NULL, BBADFLDOCC);
+    assert_equal(ret, NULL);
+    assert_equal(Berror, BBADFLD);
+    
+}
+
 Ensure(test_Bfindr)
 {
     char buf[56000];
@@ -673,6 +711,7 @@ TestSuite *ubf_embubf_tests(void)
     add_test(suite, test_Bgetr);
     
     add_test(suite, test_CBgetr);
+    add_test(suite, test_CBgetallocr);
     add_test(suite, test_Bfindr);
     add_test(suite, test_CBfindr);
     add_test(suite, test_CBvgetr);
