@@ -1949,7 +1949,6 @@ Ensure(test_Bvget_int)
     v.L_tcarray2 = 4; /* includes EOS.. */
     NDRX_STRCPY_SAFE(v.tcarray2, "521");
     
-    
     assert_equal(CBvget((char *)&v, "MYVIEW1", "tcarray2", 0, (char *)&i, 0L, 
             BFLD_INT, 0L), 
             EXSUCCEED);
@@ -1957,6 +1956,41 @@ Ensure(test_Bvget_int)
     
 }
 
+/**
+ * Test Bvgetalloc(0
+ * This is based on CBvget(), thus just check few buffer allocations
+ * 
+ */
+Ensure(test_CBvgetalloc)
+{
+    struct MYVIEW1 v;
+    char *ret;
+    BFLDLEN extra=0;
+    
+    init_MYVIEW1(&v);
+    
+    /* cast overflow test... */
+    v.tdouble2=9999991.55551111312313;
+    ret = CBvgetalloc((char *)&v, "MYVIEW1", "tdouble2", 0, BFLD_STRING, 0, &extra);
+    assert_not_equal(ret, NULL);
+    assert_equal(0==strncmp("9999991", ret, 7), EXTRUE);
+    NDRX_FREE(ret);
+    
+    /* Check other castings too.. */
+    memset(v.tcarray1, 0, sizeof(v.tcarray1));
+    
+    v.tcarray1[0]='A';
+    v.tcarray1[1]='B';
+    v.tcarray1[2]='C';
+    
+    extra=0;
+    ret = CBvgetalloc((char *)&v, "MYVIEW1", "tcarray1", 0, BFLD_STRING, 0, &extra);
+    assert_not_equal(ret, NULL);
+    assert_string_equal(ret, "ABC");
+    assert_equal(extra, 4);
+    
+    NDRX_FREE(ret);
+}
 
 /**
  * Very basic tests of the framework
@@ -1977,6 +2011,7 @@ TestSuite *vacc_CBvget_tests(void) {
     add_test(suite, test_Bvget_string);
     add_test(suite, test_Bvget_carray);
     add_test(suite, test_Bvget_int);
+    add_test(suite, test_CBvgetalloc);
             
     return suite;
 }

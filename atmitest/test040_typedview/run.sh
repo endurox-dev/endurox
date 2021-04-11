@@ -116,7 +116,7 @@ fi
 # Run unit tests
 ################################################################################
 export VIEWFILES=t40.V,t40_2.V
-./viewunit1 > viewunit1.out 2>&1
+./viewunit1 $@ > viewunit1.out 2>&1
 
 cat viewunit1.out
 
