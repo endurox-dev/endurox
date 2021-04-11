@@ -1984,6 +1984,7 @@ Ensure(test_CBvgetalloc)
     v.tcarray1[2]='C';
     
     extra=0;
+    
     ret = CBvgetalloc((char *)&v, "MYVIEW1", "tcarray1", 0, BFLD_STRING, 0, &extra);
     assert_not_equal(ret, NULL);
     assert_string_equal(ret, "ABC");
