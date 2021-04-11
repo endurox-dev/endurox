@@ -1,0 +1,10 @@
+CBGETALLOCR(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+CBgetallocr - Allocate space and get data from UBF with type convert, recursive
+
+include::recurs-common.adoc[]

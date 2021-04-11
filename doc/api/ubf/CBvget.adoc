@@ -27,7 +27,7 @@ be read, then use occ=0. 'buf' is buffer where to output the data. 'len' is used
 directions, on *input* it is used for indicating the length of the bytes for the target buffer 
 ('buf'). If the data is larger than 'len' indicated, then error *BNOSPACE* is returned. 
 Then 'len' is optional. If set to NULL, then no such checks are made, and it is assumed 
-that buffer lenght is sufficiend to store the data. 'len' is used only for *BFLD_STRING* 
+that buffer length is sufficient to store the data. 'len' is used only for *BFLD_STRING* 
 and *BFLD_CARRAY* fields. On output 'len' (if not NULL), indicates the length of data loaded in 'buf'. 
 Indicated in bytes. 'usrtype' is user type indicating the data type of the 'buf', 
 if types are different, the automatic data conversion is performed. 'flags' is either set to
@@ -72,7 +72,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*CBvchg(3)* *Bvnext(3)* *Bvsetoccur(3)* 
+*CBvgetalloc(3)* *CBvchg(3)* *Bvnext(3)* *Bvsetoccur(3)* 
 
 COPYING
 -------

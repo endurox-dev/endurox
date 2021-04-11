@@ -30,9 +30,19 @@ int CBvgetr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ,
 int CBvgetrv(UBFH *p_ub, char *cname, BFLDOCC occ,
             char *buf, BFLDLEN *len, int usrtype, long flags, ...);
 
+char * CBgetallocr (UBFH *p_ub, BFLDID *fldidocc, int usrtype, BFLDLEN *extralen);
+
+char * CBgetallocrv (UBFH *p_ub, int usrtype, BFLDLEN *extralen, ...);
+
 int Bvnullr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
 
 int Bvnullrv(UBFH *p_ub, char *cname, BFLDOCC occ, ...);
+
+char * CBvgetallocr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+                        int usrtype, long flags, BFLDLEN *extralen);
+
+char* CBvgetallocrv(UBFH *p_ub, char *cname, BFLDOCC occ,
+            int usrtype, long flags, BFLDLEN *extralen, ...);
 
 Link with '-lubf -lnstd -lm -lpthread'
 
@@ -58,6 +68,8 @@ Function mapping is following where leaf field id is executed on sub-ubf buffer:
 
 . *CBgetr(3)* and *CBgetrv(3)* translates to *CBget(3)* call.
 
+. *CBgetallocr(3)* and *CBgetallocrv(3)* translates to *CBgetalloc(3)* call.
+
 . *Bfindr(3)* and *Bfindrv(3)* translates to *Bfindr(3)* call.
 
 . *Bpresr(3)* and *Bpresrv(3)* translates to *Bpres(3)* call.
@@ -65,6 +77,10 @@ Function mapping is following where leaf field id is executed on sub-ubf buffer:
 . *CBvgetr(3)* and *CBvgetrv(3)* translates to *CBvget(3)* call. Note that here it
 is expected that leaf field in field id sequence matches the *view* typed field
 in UBF buffer. Thus on this field value in UBF buffer *CBvget(3)* is executed.
+
+. *CBvgetallocr(3)* and *CBvgetallocrv(3)* translates to *CBvgetalloc(3)* call. Note that here it
+is expected that leaf field in field id sequence matches the *view* typed field
+in UBF buffer. Thus on this field value in UBF buffer *CBvgetalloc(3)* is executed.
 
 . *Bvnullr(3)* and *Bvnullrv(3)* translates to *Bvnull(3)* call. Note that here it
 is expected that leaf field in field id sequence matches the *view* typed field

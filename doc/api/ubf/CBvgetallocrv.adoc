@@ -1,0 +1,10 @@
+CBVGETALLOCRV(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+CBvgetallocrv - Allocate space and get view sub-field from VIEW present in UBF (sub-)buffer, var-arg path
+
+include::recurs-common.adoc[]
