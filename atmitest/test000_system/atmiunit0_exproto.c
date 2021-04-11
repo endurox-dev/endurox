@@ -271,13 +271,11 @@ Ensure(test_proto_ubfcall)
     assert_equal(Bchg(p_ub, T_PTR_FLD, 1, (char *)&vptr, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_PTR_FLD, 2, (char *)&vptr_2, 0), EXSUCCEED);
     
-    fprintf(stdout, "YOPT ORG p_ub:\n");
     Bprint(p_ub);
     
     olen=0;
     assert_equal(netcallconv((char *)p_ub, 0, (char **)&p_ub5, &olen, 9000, 9000, 9000), EXSUCCEED);
             
-    fprintf(stdout, "YOPT p_ub5:\n");
     Bprint(p_ub5);
     
     /* read ptr */
@@ -294,10 +292,8 @@ Ensure(test_proto_ubfcall)
     assert_equal(Bcmp(p_ub, p_ub5), 0);
     
     
-    fprintf(stdout, "YOPT vptr:\n");
     Bvprint((char *)vptr, "UBTESTVIEW1");
     
-    fprintf(stdout, "YOPT vptr5:\n");
     Bvprint((char *)vptr5, "UBTESTVIEW1");
     
     assert_equal(Bvcmp((char *)vptr, "UBTESTVIEW1", (char *)vptr5, "UBTESTVIEW1"), 0);
