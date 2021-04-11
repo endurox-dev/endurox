@@ -75,6 +75,13 @@ Ensure(test_Bvnull)
     
     /***************************** SHORT TESTS *******************************/
     /* These fields shall not be NULL as NULL defined */
+    
+    /* if count is 0, then value is NULL too */
+    assert_equal(Bvnull((char *)&v, "tshort2", 0, "MYVIEW1"), EXTRUE);
+    assert_equal(Bvnull((char *)&v, "tshort2", 1, "MYVIEW1"), EXTRUE);
+    
+    /* thus now not null */
+    v.C_tshort2=2;
     assert_equal(Bvnull((char *)&v, "tshort2", 0, "MYVIEW1"), EXFALSE);
     assert_equal(Bvnull((char *)&v, "tshort2", 1, "MYVIEW1"), EXFALSE);
     
@@ -96,6 +103,7 @@ Ensure(test_Bvnull)
     v.tshort3[0] = 1;
     v.tshort3[2] = 2;
     
+    v.C_tshort3 = 3;
     assert_equal(Bvnull((char *)&v, "tshort3", 0, "MYVIEW1"), EXFALSE);
     assert_equal(Bvnull((char *)&v, "tshort3", 1, "MYVIEW1"), EXTRUE);
     assert_equal(Bvnull((char *)&v, "tshort3", 2, "MYVIEW1"), EXFALSE);
@@ -144,6 +152,7 @@ Ensure(test_Bvnull)
     
     
     /* Here default is 'A' */
+    v.C_tchar2=5;
     for (i=0;i<5;i++)
     {
         assert_equal(Bvnull((char *)&v, "tchar2", i, "MYVIEW1"), EXFALSE);
@@ -271,6 +280,8 @@ Ensure(test_Bvnull)
         assert_equal(Bvnull((char *)&v, "tstring2", i, "MYVIEW1"), EXTRUE);
     }
     
+    /* otherwise will be NULL as count set so. */
+    v.C_tstring3=4;
     for (i=0;i<4;i++)
     {
         assert_equal(Bvnull((char *)&v, "tstring3", i, "MYVIEW1"), EXFALSE);
