@@ -153,13 +153,15 @@ Ensure(test_cbgetalloc)
     char *c1,*c2,*c3,*c4,*c5,*c6,*c7,*c8,*c9,*c10;
     float *f1,*f2,*f3,*f4,*f5,*f6,*f7,*f8,*f9,*f10;
     double *d1,*d2,*d3,*d4,*d5,*d6,*d7,*d8,*d9,*d10;
-    char *str1,*str2,*str3,*str4,*str5,*str6,*str7,*str8,*str9,*str10;
+    char *str1,*str2,*str3,*str4,*str5,*str6,*str7,*str8,*str9,*str10,*str11;
     char *carr1,*carr2,*carr3,*carr4,*carr5,*carr6,*carr7,*carr8,*carr9,*carr10;
     ndrx_longptr_t *p1,*p2,*p3,*p4,*p5,*p6,*p7,*p8,*p9,*p10;
     
     /* not supported modes: */
     UBFH *u1;
     BVIEWFLD *v1;
+    char test_blob[5]={'A', 'B', 'C', 0x0, 'D'};
+    BFLDLEN extra;
     BFLDLEN len=0;
 
     /* Test as short */
@@ -300,13 +302,17 @@ Ensure(test_cbgetalloc)
     assert_not_equal((str5=CBgetalloc(p_ub, T_DOUBLE_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_not_equal((str6=CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_not_equal((str7=CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_STRING, 0)), NULL);
-    
     assert_not_equal((str8=CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_equal((str9=CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_equal(Berror, BEBADOP);
     assert_equal((str10=CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_equal(Berror, BEBADOP);
 
+    /* Bug #666 return correctly terminated carray */
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 3, (char *)test_blob, 5), EXSUCCEED);
+    extra=100;
+    assert_not_equal((str11=CBgetalloc(p_ub, T_CARRAY_FLD, 3, BFLD_STRING, &extra)), NULL);
+    
     assert_string_equal(str1, "88");
     assert_string_equal(str2, "-1021");
     assert_string_equal(str3, "c");
@@ -315,8 +321,11 @@ Ensure(test_cbgetalloc)
     assert_string_equal(str6, "TEST STR VAL");
     assert_string_equal(str7, "CARRAY1 TEST STRING DATA");
     assert_string_equal(str8, "0x2328");
+    /* Bug #666 fix: */
+    assert_string_equal(str11, "ABC");
+    assert_equal(extra, 4);
 
-    free(str1);free(str2);free(str3);free(str4);free(str5);free(str6);free(str7);free(str8);
+    free(str1);free(str2);free(str3);free(str4);free(str5);free(str6);free(str7);free(str8);free(str11);
 
     /* Test as carray */
     assert_not_equal((carr1=CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_CARRAY, 0)), NULL);
