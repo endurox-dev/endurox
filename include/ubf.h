@@ -384,6 +384,13 @@ extern NDRX_API int CBvgetrv(UBFH *p_ub, char *cname, BFLDOCC occ,
 extern NDRX_API int Bvnullr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
 extern NDRX_API int Bvnullrv(UBFH *p_ub, char *cname, BFLDOCC occ, ...);
 
+extern NDRX_API char * CBvgetallocr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+			int usrtype, long flags, BFLDLEN *extralen);
+
+extern NDRX_API char* CBvgetallocrv(UBFH *p_ub, char *cname, BFLDOCC occ,
+            int usrtype, long flags, BFLDLEN *extralen, ...);
+
+
 #if defined(__cplusplus)
 }
 #endif
