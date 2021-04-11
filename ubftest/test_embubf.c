@@ -603,14 +603,44 @@ Ensure(test_CBvgetr)
     assert_equal(CBvgetrv(p_ub, "tint2", 1, buf_tmp, &len, BFLD_STRING, 0,
             T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXSUCCEED);
     assert_string_equal(buf_tmp, "23232");
-    
 }
 
+Ensure(test_CBvgetallocr)
+{
+    char buf[56000];
+    BFLDLEN len;
+    UBFH *p_ub = (UBFH *)buf;
+    char *ret;
+    BFLDLEN extra;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    load_recursive_data(p_ub);
+    
+    /* get view field from recursive buffer */
+    extra=100;
+    ret=CBvgetallocrv(p_ub, "tstring0", 2, BFLD_STRING, 0, &extra,
+            T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC);
+            
+    assert_not_equal(ret, NULL);
+    assert_string_equal(ret, "\nABC\n");
+    /* + eos*/
+    assert_equal(extra, 6);
+    /* shall not core dump */
+    memset(ret, 0, 106 );
+    NDRX_FREE(ret);
+    
+    /* check type cast w/o len*/
+    
+    ret = CBvgetallocrv(p_ub, "tint2", 1, BFLD_STRING, 0, NULL,
+            T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC);
+    assert_not_equal(NULL, ret);
+    assert_string_equal(ret, "23232");
+    NDRX_FREE(ret);
+}
 
 Ensure(test_Bvnullr)
 {
     char buf[56000];
-    char buf_tmp[56000];
     UBFH *p_ub = (UBFH *)buf;
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -646,6 +676,7 @@ TestSuite *ubf_embubf_tests(void)
     add_test(suite, test_Bfindr);
     add_test(suite, test_CBfindr);
     add_test(suite, test_CBvgetr);
+    add_test(suite, test_CBvgetallocr);
     add_test(suite, test_Bvnullr);    
     return suite;
 }

@@ -4145,7 +4145,7 @@ out:
  * @param ... path to view field <FLDID>,<OCC>,...,<FLDID (of view)>,OCC,BBADFLDOCC
  * @return NULL on error, allocd ptr
  */
-expublic int CBvgetallocrv(UBFH *p_ub, char *cname, BFLDOCC occ,
+expublic char* CBvgetallocrv(UBFH *p_ub, char *cname, BFLDOCC occ,
             int usrtype, long flags, BFLDLEN *extralen, ...)
 {
     int ret = EXSUCCEED;
@@ -4155,7 +4155,7 @@ expublic int CBvgetallocrv(UBFH *p_ub, char *cname, BFLDOCC occ,
     retval=CBvgetallocr (p_ub, fldidocc, cname, occ, usrtype, flags, extralen);
     
 out:
-    return ret;
+    return retval;
 }
 
 

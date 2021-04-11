@@ -140,6 +140,7 @@ expublic char * ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
     unsigned short *L_length;
     unsigned short L_length_stor;
     char *allocbuf = NULL;
+    BFLDLEN allocbuflen = 0;
 
     UBF_LOG(log_debug, "%s enter, get %s.%s occ=%d", __func__,
             v->vname, f->cname, occ);
@@ -173,14 +174,13 @@ expublic char * ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
     
     if (CB_MODE_ALLOC==mode)
     {
-        int alloc_size;
         /* in this case we re-write the output buffer */
         if (NULL==(cvn_buf=ndrx_ubf_get_cbuf(f->typecode_full, usrtype,
                         NULL, fld_offs, *L_length,
                         &allocbuf,
-                        &alloc_size,
+                        &allocbuflen,
                         mode,
-                        extralen)))
+                        (NULL!=extralen?*extralen:0))))
         {
             UBF_LOG(log_error, "%s: get_cbuf failed!", __func__);
             ndrx_Bset_error_fmt(BEUNIX, "%s: get_cbuf failed!", __func__);
@@ -189,6 +189,7 @@ expublic char * ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
         }
         
         buf = allocbuf;
+        len = &allocbuflen;
     }
 
     cvn_buf = ndrx_ubf_convert(f->typecode_full, CNV_DIR_OUT, fld_offs, *L_length,
@@ -262,8 +263,8 @@ expublic int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ,
         EXFAIL_OUT(ret);
     }
 
-    if (EXFAIL==(ret=ndrx_CBvget_int(cstruct, v, f, occ, buf, len, 
-                                     usrtype, flags, CB_MODE_DEFAULT, NULL)))
+    if (NULL==ndrx_CBvget_int(cstruct, v, f, occ, buf, len, 
+                                     usrtype, flags, CB_MODE_DEFAULT, NULL))
     {
         /* error must be set */
         NDRX_LOG(log_error, "ndrx_CBvget_int failed");

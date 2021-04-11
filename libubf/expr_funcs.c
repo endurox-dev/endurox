@@ -1157,21 +1157,22 @@ out:
  * @param p_ub
  * @param rbfldid
  * @param buf allocated buffer where to unload the data for strings...
+ *  in case if string type is read, it is cast to double ptr
  * @param len
  * @param usrtype
  * @return 
  */
 exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid, 
-        char **buf, BFLDLEN *len, int usrtype)
+        char *buf, BFLDLEN *len, int usrtype)
 {
     int ret = EXSUCCEED;
-    
+    char **dptr = (char **)buf;
     if (rbfldid->nrflds==1)
     {
         if (BFLD_STRING==usrtype)
         {
-            *buf=CBgetalloc(p_ub, rbfldid->bfldid, rbfldid->occ, usrtype, NULL);
-            if (NULL==*buf)
+            *dptr=CBgetalloc(p_ub, rbfldid->bfldid, rbfldid->occ, usrtype, NULL);
+            if (NULL==*dptr)
             {
                 ret=EXFAIL;
             }
@@ -1179,7 +1180,7 @@ exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid,
         }
         else
         {
-            ret=CBget(p_ub, rbfldid->bfldid, rbfldid->occ, *buf, len, usrtype);
+            ret=CBget(p_ub, rbfldid->bfldid, rbfldid->occ, buf, len, usrtype);
         }
     }
     else if (NULL!=rbfldid->cname)
@@ -1190,9 +1191,9 @@ exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid,
          */
         if (BFLD_STRING==usrtype)
         {
-            *buf = CBvgetallocr(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
+            *dptr = CBvgetallocr(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
                     rbfldid->cname_occ, usrtype, BVACCESS_NOTNULL, NULL);
-            if (NULL==*buf)
+            if (NULL==*dptr)
             {
                 ret=EXFAIL;
             }
@@ -1207,9 +1208,9 @@ exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid,
     {
         if (BFLD_STRING==usrtype)
         {
-            ret = CBgetallocr (p_ub, (BFLDID *)rbfldid->fldidocc.mem, usrtype, NULL);
+            *dptr = CBgetallocr (p_ub, (BFLDID *)rbfldid->fldidocc.mem, usrtype, NULL);
             
-            if (NULL==*buf)
+            if (NULL==*dptr)
             {
                 ret=EXFAIL;
             }
@@ -1267,11 +1268,11 @@ exprivate int Bpres_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid)
 int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
 {
     int ret=EXSUCCEED;
-    char l_buf[MAX_TEXT+1];
+    char *l_buf=NULL;
     char *p_l=NULL;
     char *p_r=NULL;
-    BFLDLEN len=sizeof(l_buf);
-
+    regex_t *re;
+    int err;
     struct ast_string *ls = (struct ast_string *)l;
     struct ast_fld *lf = (struct ast_fld *)l;
     struct ast_string *rs = (struct ast_string *)r;
@@ -1279,8 +1280,8 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     if (NODE_TYPE_FLD==l->nodetype)
     {
         /* Get the value of field */
-        if (EXSUCCEED==ret && EXSUCCEED!=(ret=CBget_unified(p_ub, &(lf->fld),
-                                    l_buf, &len, BFLD_STRING)))
+        if (EXSUCCEED!=(ret=CBget_unified(p_ub, &(lf->fld),
+                                    (char *)&l_buf, NULL, BFLD_STRING)))
         {
             if (BNOTPRES==Berror)
             {
@@ -1297,11 +1298,11 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
             {
                 UBF_LOG(log_warn, "Failed to get [%s] - %s",
                                         lf->fld.fldnm, Bstrerror(Berror));
-                ret=EXFAIL;
+                EXFAIL_OUT(ret);
             }
 
         }
-        else if (EXSUCCEED==ret)
+        else
         {
             p_l = l_buf;
         }
@@ -1319,57 +1320,62 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     }
 
     /* Right string must be quoted const string! */
-    if (EXSUCCEED==ret && NODE_TYPE_STR==r->nodetype)
+    if (NODE_TYPE_STR==r->nodetype)
     {
-            p_r = rs->str;
+        p_r = rs->str;
     } /* We do not have correct right side - FAIL */
-    else if (EXSUCCEED==ret)
+    else
     {
     /* We must handle this by parser */
-            UBF_LOG(log_error, "Right side of regexp must be const string! "
-                                    "But got node type [%d]\n", r->nodetype);
-    ndrx_Bset_error_msg(BSYNTAX, "Right side of regex must be const string");
+        UBF_LOG(log_error, "Right side of regexp must be const string! "
+                                "But got node type [%d]\n", r->nodetype);
+         ndrx_Bset_error_msg(BSYNTAX, "Right side of regex must be const string");
+         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED==ret)
+
+    re = &(rs->regex.re);
+    err;
+    UBF_LOG(log_debug, "Regex left  [%s]", p_l);
+    UBF_LOG(log_debug, "Regex right [%s]", p_r);
+
+    /* Now see do we need to compile  */
+    if (!rs->regex.compiled)
     {
-        regex_t *re = &(rs->regex.re);
-        int err;
-        UBF_LOG(log_debug, "Regex left  [%s]", p_l);
-        UBF_LOG(log_debug, "Regex right [%s]", p_r);
-
-        /* Now see do we need to compile  */
-        if (!rs->regex.compiled)
+        UBF_LOG(log_debug, "Compiling regex");
+        if (EXSUCCEED!=(err=regcomp(re, p_r, REG_EXTENDED | REG_NOSUB)))
         {
-            UBF_LOG(log_debug, "Compiling regex");
-            if (EXSUCCEED!=(err=regcomp(re, p_r, REG_EXTENDED | REG_NOSUB)))
-            {
-                ndrx_report_regexp_error("regcomp", err, re);
-                ret=EXFAIL;
-            }
-            else
-            {
-                UBF_LOG(log_debug, "REGEX: Compiled OK");
-                rs->regex.compiled = 1;
-            }
+            ndrx_report_regexp_error("regcomp", err, re);
+            EXFAIL_OUT(ret);
         }
-
-        if (EXSUCCEED==ret && EXSUCCEED==regexec(re, p_l, (size_t) 0, NULL, 0))
+        else
         {
-            v->value_type=VALUE_TYPE_LONG;
-            v->longval=v->boolval=EXTRUE;
-            UBF_LOG(log_debug, "REGEX: matched!");
-        }
-        else if (EXSUCCEED==ret)
-        {
-            v->value_type=VALUE_TYPE_LONG;
-            v->longval=v->boolval=EXFALSE;
-            UBF_LOG(log_debug, "REGEX: NOT matched!");
+            UBF_LOG(log_debug, "REGEX: Compiled OK");
+            rs->regex.compiled = 1;
         }
     }
 
+    if (EXSUCCEED==regexec(re, p_l, (size_t) 0, NULL, 0))
+    {
+        v->value_type=VALUE_TYPE_LONG;
+        v->longval=v->boolval=EXTRUE;
+        UBF_LOG(log_debug, "REGEX: matched!");
+    }
+    else if (EXSUCCEED==ret)
+    {
+        v->value_type=VALUE_TYPE_LONG;
+        v->longval=v->boolval=EXFALSE;
+        UBF_LOG(log_debug, "REGEX: NOT matched!");
+    }
+
+out:
     /* Dump out the final value */
     DUMP_VALUE_BLOCK("regexp_eval", v);
+
+    if (NULL!=l_buf)
+    {
+        NDRX_FREE(l_buf);
+    }
 
     return ret;
 }
@@ -1464,7 +1470,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
             NULL!=fld->fld.cname)
     {
         if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld),
-                        (char *)v->strval, NULL, BFLD_STRING))
+                        (char *)&v->strval, NULL, BFLD_STRING))
         {
             if (BNOTPRES==Berror)
             {

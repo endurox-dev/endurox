@@ -745,7 +745,7 @@ expublic char * ndrx_CBgetallocr (UBFH *p_ub, BFLDID *fldidocc, int usrtype, BFL
     }
     
     /* read the field and allocate */
-    ret=CBgetalloc(p_ub, bfldid, occ, userlog, extralen);
+    ret=CBgetalloc(p_ub, bfldid, occ, usrtype, extralen);
     
 out:
     return ret;
