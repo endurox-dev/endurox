@@ -756,7 +756,13 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
                         b.hdr.command_code = TMQ_STORCMD_UNLOCK;
                     }
 
-                    send_unlock_notif_hdr(&b.hdr);
+                    /* if tmq server is not working at this moment
+                     * then we cannot complete the rollback
+                     */
+                    if (EXSUCCEED!=send_unlock_notif_hdr(&b.hdr))
+                    {
+                        goto xa_err;
+                    }
                 }
                 file_unlink(fname);
             }
@@ -769,6 +775,10 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
     }
     
     return XA_OK;
+    
+xa_err:
+    return XAER_RMERR;
+
 }
 
 /**
@@ -1227,7 +1237,12 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
     union tmq_block *p_block = NULL;
     FILE *f = NULL;
     char filename[PATH_MAX+1];
-    char *folders[2] = {M_folder_committed, M_folder_prepared};
+    
+    /* prepared & active messages are all locked
+     * Also if delete command is found in active, this means that committed
+     * message is locked. 
+     */
+    char *folders[3] = {M_folder_committed, M_folder_prepared, M_folder_active};
     short msg_nodeid, msg_srvid;
     char msgid[TMMSGIDLEN];
     
@@ -1237,7 +1252,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
         return XAER_RMERR;
     }
     
-    for (j = 0; j < 2; j++)
+    for (j = 0; j < 3; j++)
     {
         n = scandir(folders[j], &namelist, 0, alphasort);
         if (n < 0)
@@ -1365,8 +1380,17 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 {
                     NDRX_LOG(log_info, "Full message already read by command block!");
                 }
-                /* unlock the message */
-                p_block->msg.lockthreadid = 0;
+                
+                /* any message not committed automatically means locked */
+                if (0!=j)
+                {
+                    /* if message is active or prepared, then message is locked */
+                    p_block->msg.lockthreadid = ndrx_gettid();
+                }
+                else
+                {
+                    p_block->msg.lockthreadid = 0;
+                }
                 
                 NDRX_DUMP(log_debug, "Read message from disk", 
                         p_block->msg.msg, p_block->msg.len);
