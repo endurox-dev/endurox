@@ -135,8 +135,10 @@ Ensure(test_cbgetalloc)
     char *c1,*c2,*c3,*c4,*c5,*c6,*c7;
     float *f1,*f2,*f3,*f4,*f5,*f6,*f7;
     double *d1,*d2,*d3,*d4,*d5,*d6,*d7;
-    char *str1,*str2,*str3,*str4,*str5,*str6,*str7;
+    char *str1,*str2,*str3,*str4,*str5,*str6,*str7,*str8;
     char *carr1,*carr2,*carr3,*carr4,*carr5,*carr6,*carr7;
+    char test_blob[5]={'A', 'B', 'C', 0x0, 'D'};
+    BFLDLEN extra;
     BFLDLEN len=0;
 
     /* Test as short */
@@ -243,7 +245,12 @@ Ensure(test_cbgetalloc)
     assert_not_equal((str5=CBgetalloc(p_ub, T_DOUBLE_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_not_equal((str6=CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_not_equal((str7=CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_STRING, 0)), NULL);
-
+    
+    /* Bug #666 return correctly terminated carray */
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 3, (char *)test_blob, 5), EXSUCCEED);
+    extra=100;
+    assert_not_equal((str8=CBgetalloc(p_ub, T_CARRAY_FLD, 3, BFLD_STRING, &extra)), NULL);
+    
     assert_string_equal(str1, "88");
     assert_string_equal(str2, "-1021");
     assert_string_equal(str3, "c");
@@ -251,8 +258,12 @@ Ensure(test_cbgetalloc)
     assert_equal(strncmp(str5, "12312.1111", 10), 0);
     assert_string_equal(str6, "TEST STR VAL");
     assert_string_equal(str7, "CARRAY1 TEST STRING DATA");
+    
+    /* Bug #666 fix: */
+    assert_string_equal(str8, "ABC");
+    assert_equal(extra, 4);
 
-    free(str1);free(str2);free(str3);free(str4);free(str5);free(str6);free(str7);
+    free(str1);free(str2);free(str3);free(str4);free(str5);free(str6);free(str7);free(str8);
 
     /* Test as carray */
     assert_not_equal((carr1=CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_CARRAY, 0)), NULL);
