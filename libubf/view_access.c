@@ -183,7 +183,8 @@ expublic char * ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
                         (NULL!=extralen?*extralen:0))))
         {
             UBF_LOG(log_error, "%s: get_cbuf failed!", __func__);
-            ndrx_Bset_error_fmt(BEUNIX, "%s: get_cbuf failed!", __func__);
+            /* probably error is already set: */
+            ndrx_Bset_error_fmt(BMALLOC, "%s: get_cbuf failed!", __func__);
             /* Error should be already set */
             return NULL; /* <<<< RETURN!!!! */
         }
