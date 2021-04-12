@@ -224,9 +224,11 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  * Copy the maxing at source buffer, not checking the dest
  * N - number of symbols to test in source buffer.
  * The dest buffer is assumed to be large enough.
+ * If result string is shorter Y data and N allows, then EOS is added
  */
 #define NDRX_STRNCPY_SRC(X, Y, N) do {\
         int ndrx_I5SmWDM_len = NDRX_STRNLEN((Y), (N));\
+        if (ndrx_I5SmWDM_len < (N)) {ndrx_I5SmWDM_len++;}\
         memcpy((X), (Y), ndrx_I5SmWDM_len);\
 	} while(0)
 
