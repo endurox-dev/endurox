@@ -1329,7 +1329,7 @@ exprivate char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_
     output_buf[input_carrlen] = EXEOS;
 
     if (NULL!=out_len)
-        *out_len = input_carrlen+1; /* We have to count in EOS! */
+        *out_len = strlen(output_buf)+1; /* We have to count in EOS! */
 
     return output_buf;
 }
