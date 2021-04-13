@@ -79,7 +79,7 @@ int tpsvrinit(int argc, char **argv)
     if (EXFAIL==tpsubscribe("EVTEST", NULL, &evctl, 0L))
     {
         NDRX_LOG(log_error, "Failed to subscribe to EVTEST: %s", 
-                                        tpstrerror(tperror));
+                                        tpstrerror(tperrno));
         ret=EXFAIL;
         goto out;
     }
