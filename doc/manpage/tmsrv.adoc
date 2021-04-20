@@ -87,7 +87,8 @@ Enduro/X support static and dynamic XA registration.
 OPTIONS
 -------
 *-t* 'DEFAULT_TIMEOUT'::
-'DEFAULT_TIMEOUT' is default transaction time-out in seconds.
+'DEFAULT_TIMEOUT' is maximum transaction time-out in seconds, used in case if *tpbegin(3)* was
+started with 'timeout' *0*.
 
 *-l* 'LOG_DIR'::
 'LOG_DIR' is full path to transaction log file directory. Process at startup
