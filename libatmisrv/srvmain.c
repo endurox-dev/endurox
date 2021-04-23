@@ -534,7 +534,7 @@ expublic int ndrx_init(int argc, char** argv)
                      if (EXSUCCEED!=fcntl(fileno(f), F_SETFD, FD_CLOEXEC))
                      {
                          userlog("WARNING: Failed to set FD_CLOEXEC: %s", 
-				 strerror(errno));
+                            strerror(errno));
                      }
 
                     /* Redirect stdout & stderr to error file */
@@ -560,6 +560,7 @@ expublic int ndrx_init(int argc, char** argv)
                      */
                     if (ndrx_debug_is_proc_stderr())
                     {
+                        /* TODO: if we do logrotate, we should re-open stdout/stderr */
                         if (EXSUCCEED!=tplogconfig(LOG_CODE_UBF|LOG_CODE_NDRX|LOG_CODE_TP, EXFAIL, 
                                 NULL, NULL, G_server_conf.err_output))
                         {

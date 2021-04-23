@@ -51,81 +51,13 @@
         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
         to process until it have been terminated. -->
         <killtime>20</killtime>
-        
-        <envs group="TMQ">
-            <env name="NDRX_XA_RES_ID">1</env>
-            <env name="NDRX_XA_OPEN_STR">./QSPACE1</env>
-            <env name="NDRX_XA_CLOSE_STR">./QSPACE1</env>
-            <env name="NDRX_XA_DRIVERLIB">libndrxxaqdisks.${NDRX_LIBEXT}</env>
-            <env name="NDRX_XA_RMLIB">libndrxxaqdisk.${NDRX_LIBEXT}</env>
-            <env name="NDRX_XA_LAZY_INIT">0</env>
-        </envs>
-
     </defaults>
     <servers>
-        
-        <!-- these bellow uses driver from environment -->
-        <server name="tmsrv">
-            <max>1</max>
-            <srvid>50</srvid>
-            <sysopt>-e ${TESTDIR}/tmsrv1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
-            
-            <envs>
-                <usegroup>TMQ</usegroup>
-            </envs>
-
-        </server>
-
-        <server name="tmqueue">
-            <max>1</max>
-            <srvid>100</srvid>
-            <sysopt>-e ${TESTDIR}/tmqueue1.log -r -- -m MYSPACE -q ./q.conf -s1</sysopt>
-            
-            <envs>
-                <usegroup>TMQ</usegroup>
-            </envs>
-
-        </server>
-
-        <server name="atmi.sv82">
-            <min>1</min>
-            <max>1</max>
-            <srvid>500</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv1.log -r</sysopt>
-            
-            <envs>
-                <usegroup>TMQ</usegroup>
-            </envs>
-
-        </server>
-        
-        <server name="atmi.sv82_2">
-            <min>1</min>
-            <max>1</max>
-            <srvid>510</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv2.log -r</sysopt>
-            
-            <envs>
-                <usegroup>TMQ</usegroup>
-            </envs>
-            
-        </server>
-        
-        <server name="tpbridge">
-            <max>1</max>
-            <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
-        </server>
-        
     </servers>
-    
+
     <services>
-        <!-- test also that we re-read to N -->
-	<defaults autotran="Y" />
-        <service svcnm="TESTSV" autotran="N" />
-        <service svcnm="TESTSV2" autotran="N" />
+        <!-- Invalid auto-tran setting -->
+        <service svcnm="SERVICE2" prio="50" autotran="X" trantime="600" />
     </services>
-    
 </endurox>
 
