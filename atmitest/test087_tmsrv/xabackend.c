@@ -38,8 +38,8 @@
 #include <memory.h>
 #include <math.h>
 #include <errno.h>
-
 #include <xa.h>
+#include <userlog.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #ifdef TEST_RM1
@@ -137,7 +137,6 @@ static int get_return_code(const char *func, int *cntr)
         buffer[strcspn(buffer, "\n")] = 0;
         buffer[strcspn(buffer, "\r")] = 0;
     
-        fprintf(stderr, "Got line [%s]", buffer);
         /* format  is
          * func_name;ret1;attempts;ret2
          * where func_name is matched by func
@@ -151,7 +150,7 @@ static int get_return_code(const char *func, int *cntr)
         
         if (i!=NR_SETTINGS)
         {
-            fprintf(stderr, "Invalid settings, line %d expect args %d got %d\n", 
+            userlog( TRM ": Invalid settings, line %d expect args %d got %d\n", 
                     line, NR_SETTINGS, i);
             exit(-1);
         }
@@ -169,7 +168,7 @@ static int get_return_code(const char *func, int *cntr)
     
     if (!matched)
     {
-        fprintf(stderr, "func not found [%s]\n", func);
+        userlog(TRM ": func not found [%s]\n", func);
         exit(-1);
     }
     
@@ -186,7 +185,7 @@ static int get_return_code(const char *func, int *cntr)
         ret=atoi(all_settings[SETTING_RET2]);
     }
     
-    fprintf(stderr, "FUNC [%s] return %d\n", func, ret);
+    userlog(TRM ": FUNC [%s] return %d\n", func, ret);
     
     return ret;
 }
@@ -215,125 +214,55 @@ static int xa_close_entry(char *xa_info, int rmid, long flags)
     return XA_OK;
 }
 
+#define ATTEMPT \
+    static int attempt = 0;\
+    if (!M_is_open) \
+    {\
+        return XAER_RMERR;\
+    }\
+    userlog(TRM ": %s attempt=%d rmid=%d flags=%ld\n",\
+        __func__, attempt, rmid, flags);\
+    return get_return_code(__func__, &attempt);
+
+
 static int xa_start_entry(XID *xid, int rmid, long flags)
 {    
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
+    ATTEMPT;
 }
 
 static int xa_end_entry(XID *xid, int rmid, long flags)
 {
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
-  
+    ATTEMPT;
 }
 
 static int xa_rollback_entry(XID *xid, int rmid, long flags)
 {
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
+    ATTEMPT;
 }
 
 static int xa_prepare_entry(XID *xid, int rmid, long flags)
 {
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
+    ATTEMPT;
 }
 
 static int xa_commit_entry(XID *xid, int rmid, long flags)
 {
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
+    ATTEMPT;
 }
 
 static int xa_recover_entry(XID *xid, long count, int rmid, long flags)
 {
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
+    ATTEMPT;
 }
 
 static int xa_forget_entry(XID *xid, int rmid, long flags)
 {
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
+    ATTEMPT;
 }
 
 static int xa_complete_entry(int *handle, int *retval, int rmid, long flags)
 {
-    static int attempt = 0;
-    
-    if (!M_is_open)
-    {
-        return XAER_RMERR;
-    }
-    
-    fprintf(stderr, "%s attempt=%d rmid=%d flags=%ld\n", 
-        __func__, attempt, rmid, flags);
-
-    return get_return_code(__func__, &attempt);
+    ATTEMPT;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
