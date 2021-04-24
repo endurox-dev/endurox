@@ -66,12 +66,6 @@
             <sysopt>-e ${TESTDIR}/tmsrv_lib2.log -r -- -t1 -l${TESTDIR}/log2</sysopt>
         </server>
         
-        <server name="tmsrv_null">
-            <srvid>3</srvid>
-            <cctag>RM3</cctag>
-            <sysopt>-e ${TESTDIR}/tmsrv_null.log -r -- -t1 -l${TESTDIR}/log3</sysopt>
-        </server>
-        
         <server name="atmisv87_1">
             <min>1</min>
             <max>1</max>

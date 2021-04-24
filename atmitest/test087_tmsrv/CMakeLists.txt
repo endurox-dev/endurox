@@ -78,7 +78,7 @@ target_compile_definitions(l87_1nj PUBLIC TEST_RM1 TEST_NOJOIN)
 add_library (l87_2nj STATIC
         xabackend.c
     )
-target_compile_definitions(l87_2 PUBLIC TEST_RM2 TEST_NOJOIN)
+target_compile_definitions(l87_2nj PUBLIC TEST_RM2 TEST_NOJOIN)
 
 ################################################################################
 
