@@ -46,11 +46,13 @@
 
 #define TEST_LOGFILE    "lib1.log"
 #define TEST_RETS       "lib1.rets"
+#define TRM             "RM1"
 
 #else
 
 #define TEST_LOGFILE    "lib2.log"
 #define TEST_RETS       "lib2.rets"
+#define TRM             "RM2"
 
 #endif
 
@@ -150,7 +152,7 @@ static int get_return_code(const char *func, int *cntr)
         
         if (i!=NR_SETTINGS)
         {
-            userlog( TRM ": Invalid settings, line %d expect args %d got %d\n", 
+            userlog( TRM ": Invalid settings, line %d expect args %d got %d", 
                     line, NR_SETTINGS, i);
             exit(-1);
         }
@@ -168,7 +170,7 @@ static int get_return_code(const char *func, int *cntr)
     
     if (!matched)
     {
-        userlog(TRM ": func not found [%s]\n", func);
+        userlog(TRM ": func not found [%s]", func);
         exit(-1);
     }
     
@@ -185,7 +187,7 @@ static int get_return_code(const char *func, int *cntr)
         ret=atoi(all_settings[SETTING_RET2]);
     }
     
-    userlog(TRM ": FUNC [%s] return %d\n", func, ret);
+    userlog(TRM ": FUNC [%s] return %d", func, ret);
     
     return ret;
 }
@@ -220,10 +222,22 @@ static int xa_close_entry(char *xa_info, int rmid, long flags)
     {\
         return XAER_RMERR;\
     }\
-    userlog(TRM ": %s attempt=%d rmid=%d flags=%ld\n",\
-        __func__, attempt, rmid, flags);\
+    userlog(TRM ": %s attempt=%d rmid=%d flags=%ld (TMASYNC=%d TMONEPHASE=%d "\
+    "TMFAIL=%d TMNOWAIT=%d TMRESUME=%d TMSUCCESS=%d TMSUSPEND=%d TMSTARTRSCAN=%d TMENDRSCAN=%d TMMULTIPLE=%d TMJOIN=%d TMMIGRATE=%d)",\
+        __func__, attempt, rmid, flags,\
+	!!(flags & TMASYNC),\
+	!!(flags & TMONEPHASE),\
+	!!(flags & TMFAIL),\
+	!!(flags & TMNOWAIT),\
+	!!(flags & TMRESUME),\
+	!!(flags & TMSUCCESS),\
+	!!(flags & TMSUSPEND),\
+	!!(flags & TMSTARTRSCAN),\
+	!!(flags & TMENDRSCAN),\
+	!!(flags & TMMULTIPLE),\
+	!!(flags & TMJOIN),\
+	!!(flags & TMMIGRATE));\
     return get_return_code(__func__, &attempt);
-
 
 static int xa_start_entry(XID *xid, int rmid, long flags)
 {    

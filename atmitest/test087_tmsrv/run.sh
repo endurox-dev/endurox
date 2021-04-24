@@ -95,7 +95,6 @@ function clean_logs {
     #
     rm -rf ./log1 2>/dev/null; mkdir ./log1
     rm -rf ./log2 2>/dev/null; mkdir ./log2
-    rm -rf ./log3 2>/dev/null; mkdir ./log3
 }
 
 #
@@ -108,19 +107,6 @@ function buildprograms_logs {
     ################################################################################
     echo "Building programs..."
     ################################################################################
-
-    echo ""
-    echo "************************************************************************"
-    echo "Building tmsrv NULL ..."
-    echo "************************************************************************"
-    buildtms -o tmsrv_null -rnullsw -v
-
-    RET=$?
-
-    if [ "X$RET" != "X0" ]; then
-        echo "Failed to build tmstest: $RET"
-        go_out 1
-    fi
 
     echo ""
     echo "************************************************************************"
@@ -152,7 +138,7 @@ function buildprograms_logs {
     echo "************************************************************************"
     echo "Building atmiclt87 NULL ..."
     echo "************************************************************************"
-    buildclient -o atmiclt87 -rnullsw -l atmiclt87.c -v
+    buildclient -o atmiclt87 -rlibl87_1$LIBMODE -l atmiclt87.c -v
     RET=$?
 
     if [ "X$RET" != "X0" ]; then
@@ -287,7 +273,7 @@ xa_start_entry:0:1:0
 EOF
 
 
-NDRX_CCTAG="RM3" ./atmiclt87
+NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
@@ -335,13 +321,22 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
-NDRX_CCTAG="RM3" ./atmiclt87
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+# print the stuff
+echo "[$ERR]"
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
     echo "atmiclt87 failed"
     go_out 1
 fi
+
+if [[ $ERR != *"TPEABORT"* ]]; then
+    echo "Expected TPEABORT"
+    go_out 1
+fi
+
+# must have abort error...
 
 xadmin psc
 xadmin pt 
