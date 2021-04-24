@@ -1,0 +1,8 @@
+#
+# This is test file of the switches
+#
+nullsw:tmnull_switch:
+libl87_1:exxaswitch: -L ./ -ll87_1
+libl87_1nj:exxaswitch: -L ./ -ll87_1nj
+libl87_2:exxaswitch: -L ./ -ll87_2
+libl87_2nj:exxaswitch: -L ./ -ll87_2nj

@@ -138,6 +138,7 @@ add_subdirectory (test082_autotran)
 add_subdirectory (test084_ddr)
 add_subdirectory (test085_prio)
 add_subdirectory (test086_tmqlimit)
+add_subdirectory (test087_tmsrv)
 
 ################################################################################
 # Master test case drivere

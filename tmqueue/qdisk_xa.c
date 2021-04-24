@@ -442,6 +442,7 @@ exprivate int send_unlock_notif(union tmq_upd_block *p_upd)
 
 /**
  * Send update notification to Q server
+ * TODO: We shall implement actual file unlink operation in tmqueue.
  * @param p_upd
  * @return 
  */
@@ -458,6 +459,7 @@ exprivate int send_unlock_notif_upd(tmq_msg_upd_t *p_upd)
 
 /**
  * Used for message commit/delete
+  * TODO: We shall implement actual file unlink operation in tmqueue.
  * @param p_hdr
  * @return 
  */
