@@ -281,8 +281,7 @@ if [ "X$RET" != "X0" ]; then
     go_out 1
 fi
 
-xadmin stop -y
-xadmin start -y
+xadmin sreload -y
 
 echo ""
 echo "************************************************************************"
@@ -337,15 +336,119 @@ if [[ $ERR != *"TPEABORT"* ]]; then
 fi
 
 # must have abort error...
-
 xadmin psc
 xadmin pt 
+xadmin sreload -y
 
 echo ""
 echo "************************************************************************"
-echo "Commit retry..."
+echo "Commit failure - TPEHEURISTIC"
 echo "************************************************************************"
 
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:-3:2:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+# print the stuff
+echo "[$ERR]"
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "atmiclt87 failed"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPEHEURISTIC"* ]]; then
+    echo "Expected TPEHEURISTIC"
+    go_out 1
+fi
+
+# must have abort error...
+xadmin sreload -y
+
+echo ""
+echo "************************************************************************"
+echo "Retry on prepare... (unexpected error)"
+echo "************************************************************************"
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:4:3:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+# print the stuff
+echo "[$ERR]"
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "atmiclt87 failed"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPEABORT"* ]]; then
+    echo "Expected TPEABORT"
+    go_out 1
+fi
+
+# must have abort error...
+xadmin sreload -y
 
 go_out $RET
 
