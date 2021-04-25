@@ -1169,16 +1169,21 @@ exprivate int write_to_tx_file(char *block, int len, int unlink_failure)
     }
     
     /* Write th block */
-    /* TODO: Have hook point for simulating failure 
-     * On nth write (thus have some counter)
-     */
-    if (len!=(ret_len=fwrite(block, 1, len, f)))
+    ret_len = 0;
+    if (G_atmi_env.test_qdisk_write_fail || len!=(ret_len=fwrite(block, 1, len, f)))
     {
         int err = errno;
-        NDRX_LOG(log_error, "ERROR! Filed to write to tx file: req_len=%d, written=%d: %s",
-                len, ret_len, strerror(err));
         
-        userlog("ERROR! Filed to write to tx file: req_len=%d, written=%d: %s",
+        /* For Q/A purposes - simulate no space error, if requested */
+        if (G_atmi_env.test_qdisk_write_fail)
+        {
+            NDRX_LOG(log_error, "test point: test_qdisk_write_fail TRUE");
+            err = ENOSPC;
+        }
+        
+        NDRX_LOG(log_error, "ERROR! Failed to write to msgblock/tx file: req_len=%d, written=%d: %s",
+                len, ret_len, strerror(err));
+        userlog("ERROR! Failed to write msgblock/tx file: req_len=%d, written=%d: %s",
                 len, ret_len, strerror(err));
         
         EXFAIL_OUT(ret);

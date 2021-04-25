@@ -743,6 +743,7 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     tmq_qconfig_t * qconf;
     char msgid_str[TMMSGIDLEN_STR+1];
     char corid_str[TMCORRIDLEN_STR+1];
+    int hashed=EXFALSE, hashedcor=EXFALSE, cdl=EXFALSE;
     
     MUTEX_LOCK_V(M_q_lock);
     is_locked = EXTRUE;
@@ -815,16 +816,18 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     
     /* Add the message to end of the queue */
     CDL_APPEND(qhash->q, mmsg);
+    cdl=EXTRUE;
     
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
     EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
-    
+    hashed=EXTRUE;
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
         NDRX_LOG(log_debug, "Adding to G_corid_hash [%s]", corid_str);
         
         NDRX_STRCPY_SAFE(mmsg->corid_str, corid_str);
         EXHASH_ADD_STR_H2( G_corid_hash, corid_str, mmsg);
+        hashedcor=EXTRUE;
     }
     /* have to unlock here, because tmq_storage_write_cmd_newmsg() migth callback to
      * us and that might cause stall.
@@ -854,7 +857,10 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
         NDRX_LOG(log_info, "Mem only Q, not persisting.");   
     }
     
+    /* Add only if all OK */
+    MUTEX_LOCK_V(M_q_lock);
     qhash->numenq++;
+    MUTEX_UNLOCK_V(M_q_lock);
     
     NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] "
             "queue (DEBUG: locked %ld)",
@@ -865,9 +871,33 @@ out:
                 
     /* NOT SURE IS THIS GOOD as this might cause segmentation fault.
      * as added to mem, but failed to write to disk.
+     * Message will be kept locked, thus we can free it.
+     * Also as disk is failed, we will never get unlock by tmsrv as file
+     * is not available. Thus it is safe here.
      */
     if (EXSUCCEED!=ret && mmsg!=NULL)
     {
+        
+        /* remove messages hashes, due to failure */
+        MUTEX_LOCK_V(M_q_lock);
+        
+        if (hashed)
+        {
+            EXHASH_DEL( G_msgid_hash, mmsg);
+        }
+        
+        if (hashedcor)
+        {
+            EXHASH_DEL_H2( G_corid_hash, mmsg);
+        }
+    
+        if (cdl)
+        {
+           CDL_DELETE(qhash->q, mmsg);
+        }
+        
+        MUTEX_UNLOCK_V(M_q_lock);
+        
         NDRX_FREE(mmsg);
     }
 

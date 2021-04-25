@@ -730,7 +730,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     int ret = EXSUCCEED;
     char msg[LOG_MAX+1] = {EXEOS};
     char msg2[LOG_MAX+1] = {EXEOS};
-    int len;
+    int len, wrote;
     va_list ap;
     
     CHK_THREAD_ACCESS;
@@ -751,11 +751,28 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     /* TODO: Have hook point for simulating failure 
      * On nth log line (thus have some counter)
      */
-    if (fprintf(p_tl->f, "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg) < len)
+    wrote=0;
+    if (G_atmi_env.test_tmsrv_write_fail || 
+            (wrote=fprintf(p_tl->f, "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg)) < len)
     {
+        int err = errno;
+        
+        /* For Q/A purposes - simulate no space error, if requested */
+        if (G_atmi_env.test_tmsrv_write_fail)
+        {
+            NDRX_LOG(log_error, "test point: test_tmsrv_write_fail TRUE");
+            err = ENOSPC;
+        }
+        
+        NDRX_LOG(log_error, "ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
+                len, wrote, strerror(err));
+        userlog("ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
+                len, wrote, strerror(err));
+        
         ret=EXFAIL;
         goto out;
     }
+    
     fflush(p_tl->f);
     
 out:
