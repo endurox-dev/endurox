@@ -99,6 +99,7 @@ exprivate char M_folder_committed[PATH_MAX+1] = {EXEOS}; /**< Committed transact
 
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
+exprivate MUTEX_LOCKDECL(M_init);   /**< init lock      */
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -624,6 +625,19 @@ expublic int xa_open_entry_mkdir(char *xa_info)
 expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     int ret = XA_OK;
+    static int first = EXTRUE;
+    
+    /* mark that suspend no required by this resource... */
+    if (first)
+    {
+        MUTEX_LOCK_V(M_init);
+        if (first)
+        {
+            ndrx_xa_nosuspend(EXTRUE);
+            first=EXFALSE;
+        }
+        MUTEX_UNLOCK_V(M_init);
+    }
     
     if (G_atmi_tls->qdisk_is_open)
     {

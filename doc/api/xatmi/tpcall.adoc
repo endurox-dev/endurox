@@ -48,10 +48,11 @@ Wait for reply for infinitely.
 is set and different buffer type is received than original, 
 then error *TPEINVAL* is returned.
 
-*TPTRANSUSPEND* Suspend the current transaction in progress and continue it 
-with destination process. This is suitable in cases when *XA* adapter does not 
-allow multiple processes/sessions to have active same transaction 
-in the same transaction branch.
+*TPTRANSUSPEND* Force suspend the current transaction in progress prior 
+actual service call. This applies to resource managers which xa switch contains
+*TMNOMIGRATE* flag or is configured with *NOJOIN* or *NOSUSPEND* 
+in *NDRX_XA_FLAGS* (see *ex_env(5)*). For other cases transaction is automatically
+suspend (starting Enduro/X version *7.5.26*.
 
 *TPNOBLOCK* In case of target service request queue is full, do not wait on queue, but
 return error. The error code for this situation is *TPEBLOCK*. This affects only

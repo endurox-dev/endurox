@@ -100,7 +100,7 @@ function clean_logs {
 #
 # Build programs
 #
-function buildprograms_logs {
+function buildprograms {
 
     LIBMODE=$1
 
@@ -223,11 +223,12 @@ export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L..
 
 clean_logs;
 rm *.log
+rm ULOG*
 
 #
 # Firstly test with join
 #
-buildprograms_logs "";
+buildprograms "";
 
 xadmin start -y || go_out 1
 
@@ -449,6 +450,107 @@ fi
 
 # must have abort error...
 xadmin sreload -y
+
+# Check in logs that we did suspend (as switch is marked with migrate flags)
+if [ "X`grep suspend atmiclt87.log`" == "X" ]; then
+    echo "Expected API suspend - but not found"
+    go_out 1
+fi
+
+echo ""
+echo "************************************************************************"
+echo "Flag to NOSUSPEND flag"
+echo "************************************************************************"
+
+
+xadmin stop -y
+
+echo ""
+echo "************************************************************************"
+echo "Commit OK case ... NOSUSPEND"
+echo "************************************************************************"
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+export NDRX_XA_FLAGS=NOSUSPEND
+> atmiclt87.log
+xadmin start -y
+
+NDRX_CCTAG="RM1" ./atmiclt87
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Build atmiclt87 failed"
+    go_out 1
+fi
+
+# No join expected, as set by libraries...
+if [ "X`grep suspend atmiclt87.log`" == "X" ]; then
+    echo "No join expected (NOSUSPEND flag), but got..."
+    go_out 1
+fi
+
+#
+# Clean up & rebuild
+#
+unset NDRX_XA_FLAGS
+xadmin stop -y
+> atmiclt87.log
+
+#
+# Build with out join support (thus shall not be suspended)
+#
+buildprograms "nj";
+xadmin start -y
+
+echo ""
+echo "************************************************************************"
+echo "Commit OK case ... NJ"
+echo "************************************************************************"
+
+NDRX_CCTAG="RM1" ./atmiclt87
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Build atmiclt87 failed"
+    go_out 1
+fi
+
+# No join expected, as set by libraries...
+if [ "X`grep suspend atmiclt87.log`" != "X" ]; then
+    echo "No join expected, but got..."
+    go_out 1
+fi
 
 go_out $RET
 
