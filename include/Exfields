@@ -134,6 +134,11 @@ EX_QMSGIDSTR		    224	        string	-	String version of msgid
 EX_QNUMENQ		    225 	long	-	Number of enqueues
 EX_QNUMDEQ		    226 	long	-	Number of dequeues
 
+# file actions, as now tmqueue maintains the state of the files:
+EX_QFILENAME1	    	227 	string	-	Filename 1 for command
+EX_QFILENAME2		    228 	string	-	filename 2 for command
+EX_QFILECMD		        229 	char	-	File command
+
 ################################################################################
 # Enduro/X standard library
 ################################################################################

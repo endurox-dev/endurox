@@ -141,7 +141,9 @@ extern "C" {
 #define TPCALL_BROADCAST            0x0004 /**< Broadcast call                */
 
 /* XA TM reason codes */
-/* Lower reason includes XA error code. */    
+/* Lower reason includes XA error code. 
+ * Note! these reasons are not used in any state driving
+ */    
 #define NDRX_XA_ERSN_BASE           2000
 #define NDRX_XA_ERSN_NONE           0      /**< No reason specified for error */
 #define NDRX_XA_ERSN_LOGFAIL        2001   /**< Log failed                    */

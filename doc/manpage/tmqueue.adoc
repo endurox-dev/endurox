@@ -137,17 +137,6 @@ forward) separately, message by message. So this means that during the commit
 execution, even thought commit is not completed yet, part of the messages will
 appear as committed.
 
-If tmsrv tries to finalize some queued transaction, firstly it completes the
-message files on the disk and then notifies the tmqueue (to either unblock or 
-remove message from memory). In case if tmqueue was not available at the moment
-(was starting up and reading msg files from disk, 
-or was not responding for some reason), the tmsrv would fail to notify the tmqueue. 
-Thus the messages within the tmqueue (if it was working or 
-XATMI service queue was full for unknown reason),  might stuck at the locked condition. 
-In such scenario to unlock the messages, tmqueue process shall be restarted. 
-Any *tpcommit(3)* or *tpabort(3)* function calls, if notification failure had 
-occurred, would return any of following errors: *TPEHAZARD*, *TPEHEURISTIC* or *TPESYSTEM*.
-
 EXIT STATUS
 -----------
 *0*::
