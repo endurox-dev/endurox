@@ -358,6 +358,11 @@ expublic int atmi_xa_init(void)
                 NDRX_LOG(log_warn, "NOSTARTXID flag found");
                 ndrx_xa_nostartxid(EXTRUE);
             }
+            else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSUSPEND))
+            {
+                NDRX_LOG(log_warn, "NOSUSPEND flag found");
+                ndrx_xa_nosuspend(EXTRUE);
+            }
 
         } /* for tag.. */
     } /* if xa_flags set */
@@ -1949,6 +1954,25 @@ expublic void ndrx_xa_nojoin(int val)
     else
     {
         G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOJOIN;
+    }
+}
+
+/**
+ * Do not suspend transaction
+ * This is basically optimizatoin to avoid overhead for resources which does not require
+ * suspend
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_nosuspend(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "XA No Automatic suspend");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOSUSPEND;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOSUSPEND;
     }
 }
 

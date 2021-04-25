@@ -38,6 +38,7 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
+#include <tmenv.h>
 
 #include <xa.h>
 
@@ -48,6 +49,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate MUTEX_LOCKDECL(M_init);
 /*---------------------------Prototypes---------------------------------*/
 
 
@@ -100,11 +102,26 @@ struct xa_switch_t tmnull_switch =
  */
 expublic int ndrx_nul_xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
+    static int first = EXTRUE;
+    
+    /* mark that suspend no required by this resource... */
+    if (first)
+    {
+        MUTEX_LOCK_V(M_init);
+        if (first)
+        {
+            ndrx_xa_nosuspend(EXTRUE);
+            first=EXFALSE;
+        }
+        MUTEX_UNLOCK_V(M_init);
+    }
+    
     if (G_atmi_tls->tmnull_is_open)
     {
         NDRX_LOG(log_error, "xa_open_entry() - already open!");
         return XAER_RMERR;
     }
+    
     G_atmi_tls->tmnull_is_open = EXTRUE;
     G_atmi_tls->tmnull_rmid = rmid;
              

@@ -74,7 +74,7 @@ int check_balance(char *accnum, long *balance)
         goto out;
     }
 
-    if (EXFAIL == tpcall("BALANCE", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND|TPNOABORT))
+    if (EXFAIL == tpcall("BALANCE", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOABORT))
     {
         NDRX_LOG(log_error, "BALANCE failed: %s", tpstrerror(tperrno));
         ret=EXFAIL;
