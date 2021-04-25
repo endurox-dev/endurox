@@ -730,6 +730,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     int ret = EXSUCCEED;
     char msg[LOG_MAX+1] = {EXEOS};
     char msg2[LOG_MAX+1] = {EXEOS};
+    int len;
     va_list ap;
     
     CHK_THREAD_ACCESS;
@@ -742,7 +743,15 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
     
-    if (fprintf(p_tl->f, "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg)<0)
+    snprintf(msg2, sizeof(msg2), "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg);
+    len = strlen(msg2);
+    
+    /* check exactly how much bytes was written */
+    
+    /* TODO: Have hook point for simulating failure 
+     * On nth log line (thus have some counter)
+     */
+    if (fprintf(p_tl->f, "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg) < len)
     {
         ret=EXFAIL;
         goto out;
