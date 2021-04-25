@@ -318,7 +318,7 @@ exprivate void * signal_process(void *arg)
     
     while (!M_shutdown)
     {
-        NDRX_LOG(log_debug, "%s - before sigwait()", fn);
+        NDRX_LOG(6, "%s - before sigwait()", fn);
 
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
         /* Wait for notification signal */
@@ -330,7 +330,7 @@ exprivate void * signal_process(void *arg)
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
         }
         
-        NDRX_LOG(log_debug, "%s - after sigwait()", fn);
+        NDRX_LOG(6, "%s - after sigwait()", fn);
         
         signal_handle_event();
     }

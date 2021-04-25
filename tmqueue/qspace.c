@@ -779,6 +779,32 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     
     mmsg->msg = msg;
     
+    /* Add the hash of IDs / check that msg isn't duplicate */
+    tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str); 
+    NDRX_LOG(log_debug, "Adding to G_msgid_hash [%s]", msgid_str);
+           
+    if (NULL!=tmq_get_msg_by_msgid_str(msgid_str))
+    {
+        /* free up the msg as we terminate here... */
+        if (mmsg!=NULL)
+        {
+            NDRX_FREE(mmsg);
+        }
+        
+        if (is_recovery)
+        {
+            NDRX_LOG(log_warn, "Message with msgid [%s] already "
+                    "exists (recovery recheck - ignore)", msgid_str);
+            goto out;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Message with msgid [%s] already exists!", msgid_str);
+            userlog("Message with msgid [%s] already exists!", msgid_str);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     /* Get the entry for hash of queues: */
     if (NULL==qhash && NULL==(qhash=tmq_qhash_new(msg->hdr.qname)))
     {
@@ -788,11 +814,7 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     }
     
     /* Add the message to end of the queue */
-    CDL_APPEND(qhash->q, mmsg);    
-    
-    /* Add the hash of IDs */
-    tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str); 
-    NDRX_LOG(log_debug, "Adding to G_msgid_hash [%s]", msgid_str);
+    CDL_APPEND(qhash->q, mmsg);
     
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
     EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
@@ -1256,7 +1278,11 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
     if (NULL==mmsg)
     {   
         NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
-        EXFAIL_OUT(ret);
+        
+        /* might be a case when message file was deleted, but command block
+         * not. Thus for command block might be false re-attempt.
+         */
+        goto out;
     }
     
     switch (b->hdr.command_code)

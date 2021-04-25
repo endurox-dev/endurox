@@ -213,9 +213,9 @@ case $UNAME in
 esac
 
 # Support sanitizer
-#if [ "X`xadmin pmode 2>/dev/null | grep '#define NDRX_SANITIZE'`" != "X" ]; then
+if [ "X`xadmin pmode 2>/dev/null | grep '#define NDRX_SANITIZE'`" != "X" ]; then
     COMPFLAGS="$COMPFLAGS -fsanitize=address"
-#fi
+fi
 
 export NDRX_HOME=.
 export PATH=$PATH:$PWD/../../buildtools
