@@ -219,7 +219,7 @@ fi
 
 export NDRX_HOME=.
 export PATH=$PATH:$PWD/../../buildtools
-export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd $COMPFLAGS"
+export CFLAGS="-I../../include -L../../libatmi -L../../libatmiclt -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd $COMPFLAGS"
 
 clean_logs;
 rm *.log
