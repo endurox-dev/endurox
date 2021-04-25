@@ -1107,9 +1107,10 @@ out:
  * Write data to transaction file
  * @param block
  * @param len
+ * @param unlink_failure unlink the message file, if filed to write
  * @return SUCCEED/FAIL
  */
-exprivate int write_to_tx_file(char *block, int len)
+exprivate int write_to_tx_file(char *block, int len, int unlink_failure)
 {
     int ret = EXSUCCEED;
     XID xid;
@@ -1141,6 +1142,7 @@ exprivate int write_to_tx_file(char *block, int len)
     /* Open file for write... */
     NDRX_LOG(log_info, "Writing command file: [%s]", 
         G_atmi_tls->qdisk_tls->filename_active);
+    
     if (NULL==(f = NDRX_FOPEN(G_atmi_tls->qdisk_tls->filename_active, "a+b")))
     {
         int err = errno;
@@ -1153,6 +1155,9 @@ exprivate int write_to_tx_file(char *block, int len)
     }
     
     /* Write th block */
+    /* TODO: Have hook point for simulating failure 
+     * On nth write (thus have some counter)
+     */
     if (len!=(ret_len=fwrite(block, 1, len, f)))
     {
         int err = errno;
@@ -1166,9 +1171,15 @@ exprivate int write_to_tx_file(char *block, int len)
     }
     
 out:
-
+    
     if (NULL!=f)
     {
+        /* unlink if failed to write to the folder... */
+        if (unlink_failure && EXSUCCEED!=ret)
+        {
+            unlink(G_atmi_tls->qdisk_tls->filename_active);
+        }
+        
         NDRX_FCLOSE(f);
     }
 
@@ -1205,10 +1216,11 @@ expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     NDRX_DUMP(log_debug, "Writing new message to disk", 
                 (char *)msg, sizeof(*msg)+msg->len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len))
+    if (EXSUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len, EXTRUE))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
+        EXFAIL_OUT(ret);
     }
     /*
     msg->lockthreadid = lockt;
@@ -1238,7 +1250,7 @@ expublic int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
     NDRX_DUMP(log_debug, "Writing command block to disk", 
                 (char *)p_block, sizeof(*p_block));
     
-    if (EXSUCCEED!=write_to_tx_file((char *)p_block, sizeof(*p_block)))
+    if (EXSUCCEED!=write_to_tx_file((char *)p_block, sizeof(*p_block), EXTRUE))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
                 tmq_msgid_serialize(p_block->hdr.msgid, msgid_str));
