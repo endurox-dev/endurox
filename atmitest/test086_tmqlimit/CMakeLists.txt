@@ -60,4 +60,20 @@ target_link_libraries (atmiclt86 atmiclt atmi ubf nstd ${RT_LIB} m pthread)
 
 set_target_properties(atmiclt86 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
+
+############################# LCF test points ##################################
+add_library (t86_lcf SHARED
+                t86_lcf.c
+            )
+if(CMAKE_OS_NAME STREQUAL "CYGWIN")
+    target_link_libraries(custom_lcf atmi ubf nstd)
+elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
+    target_link_libraries(custom_lcf atmi ubf nstd)
+elseif(CMAKE_OS_NAME STREQUAL "AIX")
+    target_link_libraries(custom_lcf pthread)
+endif()
+
+################################################################################
+
+
 # vim: set ts=4 sw=4 et smartindent:
