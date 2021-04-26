@@ -57,6 +57,7 @@ exprivate int basic_diskfull(int maxmsg);
 exprivate int basic_commit_shut(int maxmsg);
 exprivate int basic_loadprep(int maxmsg);
 exprivate int basic_tmsrvdiskerr(int maxmsg);
+exprivate int basic_badmsg(int maxmsg);
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
@@ -92,6 +93,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "tmsrvdiskerr"))
     {
         return basic_tmsrvdiskerr(100);
+    }
+    else if (0==strcmp(argv[1], "badmsg"))
+    {
+        return basic_badmsg(100);
     }
     else
     {
@@ -739,4 +744,113 @@ out:
 
     return ret;
 }
+
+/**
+ * Skip bad messages on the disk
+ * @param maxmsg max messages to be ok
+ */
+exprivate int basic_badmsg(int maxmsg)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    int i;
+    
+    NDRX_LOG(log_error, "case qfull");
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Initial test... */
+    for (i=0; i<maxmsg; i++)
+    {
+        char *testbuf_ref = tpalloc("CARRAY", "", 10);
+        long len=10;
+
+        testbuf_ref[0]=0;
+        testbuf_ref[1]=1;
+        testbuf_ref[2]=2;
+        testbuf_ref[3]=3;
+        testbuf_ref[4]=4;
+        testbuf_ref[5]=5;
+        testbuf_ref[6]=6;
+        testbuf_ref[7]=7;
+        testbuf_ref[8]=8;
+        testbuf_ref[9]=9;
+
+        /* alloc output buffer */
+        if (NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+                len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(testbuf_ref);
+    }
+    
+    /* create a bad file */
+    if (EXSUCCEED!=system("touch QSPACE1/active/some_bad_message_file"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to create bad message file...");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to commit got: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=system("xadmin sreload -s tmqueue"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to retart tmqueue");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* all messages must be available - bad file ignored...*/
+    for (i=0; i<maxmsg; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 failed dequeue!");
+            EXFAIL_OUT(ret);
+        }
+        tpfree(buf);
+    }
+    
+out:
+    
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* create a bad file */
+    if (system("rm QSPACE1/active/some_bad_message_file"))
+    {
+        /* avoid warning... */
+    }
+    
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
