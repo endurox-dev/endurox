@@ -136,8 +136,8 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg);
-exprivate int read_tx_from_file(char *fname, char *block, int len);
+exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg, int *err);
+exprivate int read_tx_from_file(char *fname, char *block, int len, int *err);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -777,7 +777,7 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
     union tmq_block b;
     char *folders[2] = {M_folder_active, M_folder_prepared};
     char *fn = "xa_rollback_entry";
-
+    int err;
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
@@ -803,7 +803,7 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
             if (ndrx_file_exists(fname))
             {
                 NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
-                if (EXSUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b)))
+                if (EXSUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b), &err))
                 {
                     /* Send the notification */
                     if (TMQ_STORCMD_NEWMSG == b.hdr.command_code)
@@ -908,6 +908,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     FILE *f = NULL;
     char *fname;
     char *fname_msg;
+    int err;
     
     if (!G_atmi_tls->qdisk_is_open)
     {
@@ -922,8 +923,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     {
         
         fname=get_filename_i(i, M_folder_prepared, 0);
-        
-        if (EXSUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block)))
+        if (EXSUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block), &err))
         {
             NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
             goto xa_err;
@@ -965,7 +965,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
             }
             
             if (EXSUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd), 
-                    fname_msg, "xa_commit_entry"))
+                    fname_msg, "xa_commit_entry", &err))
             {
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
                 goto xa_err;
@@ -1059,22 +1059,24 @@ xa_retry:
  * @param p_len
  * @param fname name for debug
  * @param dbg_msg debug message
+ * @param err ptr to error code if failed to read
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg)
+exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg, int *err)
 {
     int act_read;
     int ret = EXSUCCEED;
     
+    *err=0;
     if (len!=(act_read=fread(block, 1, len, f)))
     {
-        int err = ferror(f);
+        *err = ferror(f);
         
         NDRX_LOG(log_error, "ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",
-                dbg_msg, fname, len, act_read, strerror(err));
+                dbg_msg, fname, len, act_read, strerror(*err));
         
         userlog("ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",
-            dbg_msg, fname, len, act_read, strerror(err));
+            dbg_msg, fname, len, act_read, strerror(*err));
         EXFAIL_OUT(ret);
     }
     
@@ -1087,25 +1089,27 @@ out:
  * @param fname full path to file
  * @param block buffer where to store the data block
  * @param len length to read
+ * @param err error code
  * @return 
  */
-exprivate int read_tx_from_file(char *fname, char *block, int len)
+exprivate int read_tx_from_file(char *fname, char *block, int len, int *err)
 {
     int ret = EXSUCCEED;
     FILE *f = NULL;
     
+    *err=0;
     if (NULL==(f = NDRX_FOPEN(fname, "r+b")))
     {
-        int err = errno;
+        *err = errno;
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                fname, strerror(err));
+                fname, strerror(*err));
 
         userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                fname, strerror(err));
+                fname, strerror(*err));
         EXFAIL_OUT(ret);
     }
     
-    ret = read_tx_block(f, block, len, fname, "read_tx_from_file");
+    ret = read_tx_block(f, block, len, fname, "read_tx_from_file", err);
     
 out:
 
@@ -1312,6 +1316,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
     union tmq_block *p_block = NULL;
     FILE *f = NULL;
     char filename[PATH_MAX+1];
+    int err;
     
     /* prepared & active messages are all locked
      * Also if delete command is found in active, this means that committed
@@ -1392,13 +1397,21 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                    filename, strerror(errno));
                 EXFAIL_OUT(ret);
             }
-
+            
             if (EXSUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
-                    filename, "tmq_storage_get_blocks"))
+                    filename, "tmq_storage_get_blocks", &err))
             {
-                NDRX_LOG(log_error, "Failed to read [%s]: %s", 
-                   filename, strerror(errno));
-                EXFAIL_OUT(ret);
+                NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes): %s - not loading", 
+                   filename, sizeof(*p_block), strerror(err));
+                userlog("ERROR! Failed to read [%s] hdr (%d bytes): %s - not loading", 
+                   filename, sizeof(*p_block), strerror(err));
+                
+                /* skip & continue with next */
+                NDRX_FCLOSE(f);
+                f=NULL;
+                continue;
+                
+                /* EXFAIL_OUT(ret); */
             }
             
             /* Late filter 
@@ -1449,11 +1462,20 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 {
                     if (EXSUCCEED!=read_tx_block(f, 
                             p_block->msg.msg+bytes_extra, 
-                            bytes_to_read, filename, "tmq_storage_get_blocks 2"))
+                            bytes_to_read, filename, "tmq_storage_get_blocks 2", &err))
                     {
-                        NDRX_LOG(log_error, "Failed to read [%s]: %s", 
-                           filename, strerror(errno));
+                        NDRX_LOG(log_error, "ERROR! Failed to read [%s] %d bytes: %s - not loading", 
+                           filename, bytes_to_read, strerror(err));
+                        
+                        userlog("ERROR! Failed to read [%s] %d bytes: %s - not loading", 
+                                filename, bytes_to_read, strerror(err));
+                                        /* skip & continue with next */
+                        NDRX_FCLOSE(f);
+                        f=NULL;
+                        continue;
+                        /*
                         EXFAIL_OUT(ret);
+                         */
                     }
                 }
                 else

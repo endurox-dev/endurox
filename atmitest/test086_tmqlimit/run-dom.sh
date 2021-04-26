@@ -192,8 +192,14 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 echo "Testing tmsrvdiskerr"
-
 (./atmiclt86 tmsrvdiskerr 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Testing badmsg"
+(./atmiclt86 badmsg 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
