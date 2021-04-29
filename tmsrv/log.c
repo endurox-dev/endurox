@@ -549,6 +549,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     
     /* Read line by line & call parsing functions 
      * we should also parse start of the transaction (date/time)
+     * TODO: Also check here EOF!
      */
     while (fgets(buf, sizeof(buf), (*pp_tl)->f))
     {
@@ -564,6 +565,11 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
             buf[len-1]=EXEOS;
             len--;
         }
+        
+        /* TODO: If line is bad, add NAK (0x15) flag prior \n
+         * If having such, this indicates that log file line is incomplete and
+         * shall be ignored.
+         */
         
         NDRX_LOG(log_debug, "Parsing line: [%s]", buf);
         p = strchr(buf, ':');
@@ -606,6 +612,21 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         line++;
     }
     
+    /* TODO: If log file is damaged, then add NAK char and then newline at the end of file (if there was uncompleted line) 
+     * Also - ignore empty lines
+     * We can ignore the parse errors for LOG_COMMAND_STAGE, LOG_COMMAND_RMSTAT
+     * as if there was power outage then these states maybe have not finished fully.
+     * 
+     * If we keep in active state, then timeout will kill the transaction (or it will be finished by in progress 
+     *  binary, as maybe transaction is not yet completed). Thought we might loss the infos
+     *  of some registered process, but then it would be aborted transaction anyway.
+     *  but then record might be idling in the resource.
+     * 
+     * If we had stage logged, then transaction would be completed accordingly,
+     * and would complete with those resources for which states is not yet
+     * finalized (according to logs)
+     */
+    
     /* Add transaction to the hash. We need locking here. 
      * 
      * If transaction was in prepare stage XA_TX_STAGE_PREPARING (40)
@@ -633,10 +654,15 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     NDRX_LOG(log_debug, "TX [%s] loaded OK", tmxid);
 out:
     /* Clean up if error. */
-    if (EXSUCCEED!=ret && NULL!=*pp_tl)
+    if (EXSUCCEED!=ret)
     {
-        NDRX_FREE((*pp_tl));
-        *pp_tl = NULL;
+        userlog("Failed to load/recover transaction [%s]", logfile);
+        if (NULL!=*pp_tl)
+        {
+            /* remove any stuff added... */
+            tms_remove_logfree(*pp_tl, EXFALSE);
+            *pp_tl = NULL;
+        }
     }
 
     return ret;
@@ -669,6 +695,37 @@ expublic void tms_close_logfile(atmi_xa_log_t *p_tl)
 }
 
 /**
+ * Free up log file (just memory)
+ * @param p_tl log handle
+ * @param hash_rm remove log entry from tran hash
+ */
+expublic void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm)
+{
+    int i;
+    atmi_xa_rm_status_btid_t *el, *elt;
+    
+    if (hash_rm)
+    {
+        MUTEX_LOCK_V(M_tx_hash_lock);
+        EXHASH_DEL(M_tx_hash, p_tl); 
+        MUTEX_UNLOCK_V(M_tx_hash_lock);
+    }
+
+    /* Remove branch TIDs */
+    
+    for (i=0; i<NDRX_MAX_RMS; i++)
+    {
+        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
+        {
+            EXHASH_DEL(p_tl->rmstatus[i].btid_hash, el);
+            NDRX_FREE(el);
+        }
+    }
+    
+    NDRX_FREE(p_tl);
+}
+
+/**
  * Removes also transaction from hash. Either fully
  * committed or fully aborted...
  * @param p_tl - becomes invalid after removal!
@@ -676,8 +733,7 @@ expublic void tms_close_logfile(atmi_xa_log_t *p_tl)
 expublic void tms_remove_logfile(atmi_xa_log_t *p_tl)
 {
     int have_file = EXFALSE;
-    int i;
-    atmi_xa_rm_status_btid_t *el, *elt;
+    
     if (tms_is_logfile_open(p_tl))
     {
         have_file = EXTRUE;
@@ -701,24 +757,8 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl)
     }
     
     /* Remove the log for hash! */
-    
-    MUTEX_LOCK_V(M_tx_hash_lock);
-    EXHASH_DEL(M_tx_hash, p_tl); 
-    MUTEX_UNLOCK_V(M_tx_hash_lock);
-    
-    /* Remove branch TIDs */
-    
-    for (i=0; i<NDRX_MAX_RMS; i++)
-    {
-        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
-        {
-            EXHASH_DEL(p_tl->rmstatus[i].btid_hash, el);
-            NDRX_FREE(el);
-        }
-    }
-    
-    NDRX_FREE(p_tl);
-    
+    tms_remove_logfree(p_tl, EXTRUE);
+
 }
 
 /**
@@ -731,13 +771,16 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     char msg[LOG_MAX+1] = {EXEOS};
     char msg2[LOG_MAX+1] = {EXEOS};
     int len, wrote;
+    int make_error = EXFALSE;
     va_list ap;
     
     CHK_THREAD_ACCESS;
     
     /* If log not open - just skip... */
     if (NULL==p_tl->f)
+    {
         return EXSUCCEED;
+    }
      
     va_start(ap, fmt);
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -748,19 +791,36 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     
     /* check exactly how much bytes was written */
     
-    /* TODO: Have hook point for simulating failure 
-     * On nth log line (thus have some counter)
+    if (G_atmi_env.test_tmsrv_write_fail)
+    {
+        make_error = EXTRUE;
+    }
+    
+    /* Simulate that only partial message is written in case
+     * if disk is full or crash happens
      */
     wrote=0;
-    if (G_atmi_env.test_tmsrv_write_fail || 
+    if (    /* if write file test case - write partially, also omit EOL terminator 
+             * Also... needs flag for commit crash simulation... i.e. 
+             * So that if commit crash is set, we partially write the command (stage change)
+             * and afterwards tmsrv exits.
+             * And then when flag is removed, transaction shall commit OK
+             */
+            (make_error && 
+            (wrote=fprintf(p_tl->f, "%lld:%c", ndrx_utc_tstamp(), command)) < len) ||
+            
+            /* or normal production code */
+            (!make_error && 
             (wrote=fprintf(p_tl->f, "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg)) < len)
+            
+            )
     {
         int err = errno;
         
         /* For Q/A purposes - simulate no space error, if requested */
-        if (G_atmi_env.test_tmsrv_write_fail)
+        if (make_error)
         {
-            NDRX_LOG(log_error, "test point: test_tmsrv_write_fail TRUE");
+            NDRX_LOG(log_error, "QA point: make_error TRUE");
             err = ENOSPC;
         }
         
@@ -773,9 +833,10 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
         goto out;
     }
     
-    fflush(p_tl->f);
     
 out:
+    /* flush what ever we have */
+    fflush(p_tl->f);
     return ret;
 }
 
@@ -912,7 +973,7 @@ out:
 expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
 {
     int ret = EXSUCCEED;
-    
+    int make_crash = EXFALSE; /**< Crash simulation */
     CHK_THREAD_ACCESS;
     
     if (p_tl->txstage!=stage)
@@ -921,7 +982,18 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
 
         NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd", 
                 p_tl->txstage);
-
+        
+        /* QA: commit crash test point... 
+         * Once crash flag is disabled, commit shall be finished by background
+         * process.
+         */
+        if (XA_TX_STAGE_COMMITTING==stage && G_atmi_env.test_tmsrv_commit_crash)
+        {
+            NDRX_LOG(log_debug, "QA commit crash...");
+            G_atmi_env.test_tmsrv_write_fail=EXTRUE;
+            make_crash=EXTRUE;
+        }
+        
         if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
         {
             ret=EXFAIL;
@@ -930,6 +1002,12 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
     }
     
 out:
+                
+    if (make_crash)
+    {
+        exit(1);
+    }
+
     return ret;
 }
 

@@ -432,12 +432,13 @@ struct atmi_lib_env
     char    rtgrp[NDRX_DDR_GRP_MAX+1]; /**< routing grup setting                */
     
     /**
-     * @defgroup env_tests LCF test hooks
+     * Special flags needed for QA
+     * @defgroup qa_handlers
      * @{
      */
-    
     int    test_qdisk_write_fail;   /**< Simulate disk write failure, queue    */
     int    test_tmsrv_write_fail;   /**< Simulate disk write failure, tmsrv    */
+    int    test_tmsrv_commit_crash; /**< Simualte commit crash                */
     
     /**@}*/
 };

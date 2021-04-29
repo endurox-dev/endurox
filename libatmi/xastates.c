@@ -61,80 +61,130 @@
  * 2. Get new TX state (Driven by current TX stage, and RM new status)
  * And the for file TX outcome we should select the stage with lower number...
  */
-expublic rmstatus_driver_t G_rm_status_driver[] =
+
+/* =========================================================================
+ * Driving of the PREPARING: 
+ * =========================================================================
+ */
+exprivate rmstatus_driver_t M_rm_status_driver_preparing[] =
 {  
-    /* Driving of the Preparing: */
+
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_OK,     XA_OK,     XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_RDONLY, XA_RDONLY, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
+    /* Shall we perform any action here? */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_RBBASE, XA_RBEND,  XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTING},
     /* Abort immediately... */
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_RMERR,XAER_RMERR,XA_RM_STATUS_ACTIVE,        XA_TX_STAGE_ABORTING},
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_RMERR,XAER_RMERR,XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
     /* If no transaction, then assume committed, read only: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_NOTA, XAER_NOTA, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTING},
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_INVAL,XAER_INVAL,XA_RM_STATUS_ACTIVE,        XA_TX_STAGE_ABORTING},    
-    /* Any error out of the range (catched, we scan from the start) causes abort sequence to run */
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, INT_MIN,INT_MAX,            XA_RM_STATUS_PREP,          XA_TX_STAGE_ABORTING},
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_INVAL,XAER_INVAL,XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
     /* for PostgreSQL we have strange situation, that only case to work in distributed way is to mark the transaction as
      * prepared once the processing thread disconnects. Thus even transaction is active, the resource is prepared.
      */
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_PREP,   XA_OP_NOP,     XA_OK,XA_OK,            XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
-    /* Driving of the COMMITTING */
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_PREP,   XA_OP_NOP,     XA_OK,XA_OK,          XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
+    /* If recovered from logs where decision is not yet logged */
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACT_AB, XA_OP_NOP,     XA_OK,XA_OK,          XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
+    /* Any error out of the range (catched, we scan from the start) causes abort sequence to run */
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, INT_MIN,INT_MAX,      XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
+    
+    {EXFAIL}
+};
+
+/* =========================================================================
+ * Driving of the COMMITTING 
+ * =========================================================================
+ */
+exprivate rmstatus_driver_t M_rm_status_driver_committing[] =
+{  
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_OK,     XA_OK,     XA_RM_STATUS_COMMITTED,     XA_TX_STAGE_COMMITTED},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_RMERR,XAER_RMERR,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_RETRY,  XA_RETRY,  XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURHAZ,XA_HEURHAZ,XA_RM_STATUS_COMMIT_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURCOM,XA_HEURCOM,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
+    
+    /* =============================================
+     * TODO: test this case, output? 
+     * Isn't this be swapped with bellow?
+     */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURRB,XA_HEURRB,  XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_COMMITTED_HEURIS},
     /* If only one RM, then we might switch back to aborted: */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURMIX,XA_HEURMIX,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_ABORTED},
+    /* ============================================= */
+    /* Also here shouldn't it be HEURIS? */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_RBBASE, XA_RBEND,  XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
+    /* ============================================= */
+    
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_NOTA, XAER_NOTA, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
     /* these are RO reported by end prep */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_COMMITTED_RO,XA_OP_NOP,XA_OK, XA_OK,         XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
-    
-    /* Aborting:  */
+    /* TODO: Add NOP status voting by RM status, thought if we loose the infos after the restart of the HEURIS/HAZARD no one would see
+     * these responses too, as there is no process after the restart waiting for response.
+     */
+    {EXFAIL}
+};
+
+/* =========================================================================
+ * Driving of ABORTING:  
+ * =========================================================================
+ */
+exprivate rmstatus_driver_t M_rm_status_driver_aborting[] =
+{  
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_OK,     XA_OK,     XA_RM_STATUS_ABORTED,        XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_OK,     XA_OK,     XA_RM_STATUS_ABORTED,        XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_OK,     XA_OK,     XA_RM_STATUS_ABORTED,        XA_TX_STAGE_ABORTED},
     /* these are RO reported by end prep */
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_COMMITTED_RO,XA_OP_NOP, XA_OK,     XA_OK,     XA_RM_STATUS_ABORTED,        XA_TX_STAGE_ABORTED},
     
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_RDONLY, XA_RDONLY, XA_RM_STATUS_ABORTED,        XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_RDONLY, XA_RDONLY, XA_RM_STATUS_ABORTED,        XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_RDONLY, XA_RDONLY, XA_RM_STATUS_ABORTED,        XA_TX_STAGE_ABORTED},
     
     /* TODO: is it really aborted in case if we get RMERR? */
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XAER_RMERR, XAER_RMERR,XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_RMERR, XAER_RMERR,XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_RMERR, XAER_RMERR,XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
     
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XAER_RMERR, XAER_RMERR,XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_RMERR, XAER_RMERR,XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_RMERR, XAER_RMERR,XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
     
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_HEURHAZ, XA_HEURHAZ,XA_RM_STATUS_ABORT_HAZARD,  XA_TX_STAGE_ABORTED_HAZARD},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_HEURHAZ, XA_HEURHAZ,XA_RM_STATUS_ABORT_HAZARD,  XA_TX_STAGE_ABORTED_HAZARD},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_HEURHAZ, XA_HEURHAZ,XA_RM_STATUS_ABORT_HAZARD,  XA_TX_STAGE_ABORTED_HAZARD},
     
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_HEURRB, XA_HEURRB,  XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_HEURRB, XA_HEURRB,  XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_HEURRB, XA_HEURRB,  XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS},
     
+    /* TODO: Test this: */
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_HEURCOM, XA_HEURCOM,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_HEURCOM, XA_HEURCOM,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_HEURCOM, XA_HEURCOM,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
     
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_HEURMIX, XA_HEURMIX,XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_HEURMIX, XA_HEURMIX,XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_HEURMIX, XA_HEURMIX,XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS},
     
+    /* TODO: shall we continue with aborting? If we get RMFAIL? */
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XAER_RMFAIL, XAER_RMFAIL,XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_RMFAIL, XAER_RMFAIL,XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_RMFAIL, XAER_RMFAIL,XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
     
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XAER_NOTA, XAER_NOTA,    XA_RM_STATUS_ABORTED,     XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_NOTA, XAER_NOTA,    XA_RM_STATUS_ABORTED,     XA_TX_STAGE_ABORTED},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_NOTA, XAER_NOTA,    XA_RM_STATUS_ABORTED,     XA_TX_STAGE_ABORTED},
-    
-    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_RMFAIL, XAER_RMFAIL,XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
-    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_RMFAIL, XAER_RMFAIL,XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
 
+    /* TODO: shall we continue with aborting? If we get XAER_PROTO? */
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
     
     /* Our extension allow to retry for abort case (must have for tmq) */
+    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_RETRY, XA_RETRY,      XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_RETRY, XA_RETRY,      XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_RETRY, XA_RETRY,      XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
+    
+    /* Other unknown RMstauses we can ignore here, as they have finalized the transaction already, and we live already in ABORTING stage */
     
     {EXFAIL}
 };
@@ -226,7 +276,22 @@ expublic txstate2tperrno_t G_txstage2tperrno[] =
 expublic rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 
                                                     int op, int op_retcode)
 {
-    rmstatus_driver_t *ret = G_rm_status_driver;
+    rmstatus_driver_t *ret=NULL;
+    
+    switch (txstage)
+    {
+        case XA_TX_STAGE_PREPARING:
+            ret = M_rm_status_driver_preparing;
+            break;
+        case XA_TX_STAGE_COMMITTING:
+            ret = M_rm_status_driver_committing;
+            break;    
+        case XA_TX_STAGE_ABORTING:
+            ret = M_rm_status_driver_aborting;
+            break;
+        default:
+            return NULL;
+    }
     
     while (EXFAIL!=ret->txstage)
     {
@@ -260,7 +325,22 @@ expublic rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatu
 expublic rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage, 
                                                     char next_rmstatus)
 {
-    rmstatus_driver_t *ret = G_rm_status_driver;
+    rmstatus_driver_t *ret=NULL;
+    
+    switch (txstage)
+    {
+        case XA_TX_STAGE_PREPARING:
+            ret = M_rm_status_driver_preparing;
+            break;
+        case XA_TX_STAGE_COMMITTING:
+            ret = M_rm_status_driver_committing;
+            break;    
+        case XA_TX_STAGE_ABORTING:
+            ret = M_rm_status_driver_aborting;
+            break;
+        default:
+            return NULL;
+    }
     
     while (EXFAIL!=ret->txstage)
     {

@@ -115,6 +115,7 @@ extern int tms_log_chrmstat(atmi_xa_tx_info_t *xai, short rmid,
 extern int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode);
 extern int tms_is_logfile_open(atmi_xa_log_t *p_tl);
 extern void tms_close_logfile(atmi_xa_log_t *p_tl);
+extern void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm);
 extern void tms_remove_logfile(atmi_xa_log_t *p_tl);
 extern int tms_log_info(atmi_xa_log_t *p_tl);
 extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage);
