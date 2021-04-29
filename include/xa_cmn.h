@@ -82,6 +82,7 @@ extern "C" {
 #define XA_RM_STATUS_NONE           'n' /**< Non transaction                    */
 #define XA_RM_STATUS_IDLE           'i' /**< Idle state, according to book      */
 #define XA_RM_STATUS_ACTIVE         'j' /**< RM is in joined state, book: atctive*/
+#define XA_RM_STATUS_ACT_AB         'k' /**< RM is in joined state, but must be aborted */
 #define XA_RM_STATUS_PREP           'p' /**< RM is in prepared state            */
 #define XA_RM_STATUS_ABORTED        'a' /**< RM is in abort state               */
 /** For Postgres probably we need unknown which at commit prepare leads to abort*/

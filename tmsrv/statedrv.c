@@ -201,6 +201,13 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 /* Now get the transition of the state/vote */
                 if (XA_OP_NOP == op_code)
                 {
+                    /* So this does not vote?
+                     * But if it was recovered files? And it previously voted,
+                     * the transaction should be aborted? Seems like this is
+                     * not very correct.
+                     * However this happens only if the row is defined. Thus
+                     * all decision status mappings for stage must be defined.
+                     */
                     if (NULL==(vote_txstage = xa_status_get_next_by_new_status(p_tl->txstage, 
                             el->rmstatus)))
                     {

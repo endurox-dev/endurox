@@ -53,6 +53,19 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Tmsrv crash (commit)
+ */
+exprivate int custom_tcrash(ndrx_lcf_command_t *cmd, long *p_flags)
+{
+    /* Assuming that init have finished... (sending to servers...) */
+    G_atmi_env.test_tmsrv_commit_crash = atoi(cmd->arg_a);
+    NDRX_LOG(log_error, "G_atmi_env.test_tmsrv_commit_crash=%d", 
+            G_atmi_env.test_tmsrv_commit_crash);
+
+    return 0;
+}
+
+/**
  * Queue write error setting
  */
 exprivate int custom_qwriterr(ndrx_lcf_command_t *cmd, long *p_flags)
@@ -118,6 +131,7 @@ expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
     }
     
    /* tmsrv write error command */
+    
     memset(&cfunc, 0, sizeof(cfunc));
     NDRX_STRCPY_SAFE(cfunc.cmdstr, "twriterr");
     cfunc.command=1002;
@@ -133,6 +147,34 @@ expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
     memset(&xfunc, 0, sizeof(xfunc));
     NDRX_STRCPY_SAFE(xfunc.cmdstr, "twriterr");
     xfunc.command=1002;
+    xfunc.version = cfunc.version=NDRX_LCF_XCMD_VERSION;
+    NDRX_STRCPY_SAFE(xfunc.helpstr, "Tmsrv write error simulation");
+    xfunc.dfltflags=(NDRX_LCF_FLAG_ARGA);
+    xfunc.dfltslot=4;
+    
+    if (EXSUCCEED!=ndrx_lcf_xadmin_add(&xfunc))
+    {
+        NDRX_LOG_EARLY(log_error, "TESTERROR: Failed to add func: %s", Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* tmsrv commit crash ON*/
+    
+    memset(&cfunc, 0, sizeof(cfunc));
+    NDRX_STRCPY_SAFE(cfunc.cmdstr, "tcrash");
+    cfunc.command=1003;
+    cfunc.version=NDRX_LCF_CCMD_VERSION;
+    cfunc.pf_callback=custom_tcrash;
+    
+    if (EXSUCCEED!=ndrx_lcf_func_add(&cfunc))
+    {
+        NDRX_LOG_EARLY(log_error, "TESTERROR: Failed to add func: %s", Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+    
+    memset(&xfunc, 0, sizeof(xfunc));
+    NDRX_STRCPY_SAFE(xfunc.cmdstr, "tcrash");
+    xfunc.command=1003;
     xfunc.version = cfunc.version=NDRX_LCF_XCMD_VERSION;
     NDRX_STRCPY_SAFE(xfunc.helpstr, "Tmsrv write error simulation");
     xfunc.dfltflags=(NDRX_LCF_FLAG_ARGA);

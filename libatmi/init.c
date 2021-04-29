@@ -668,6 +668,7 @@ expublic int ndrx_load_common_env(void)
     
     G_atmi_env.test_qdisk_write_fail=EXFALSE;
     G_atmi_env.test_tmsrv_write_fail=EXFALSE;
+    G_atmi_env.test_tmsrv_commit_crash=EXFALSE;
     
     NDRX_LOG(log_debug, "env loaded ok");
     G_is_env_loaded = EXTRUE;
