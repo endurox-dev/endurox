@@ -367,7 +367,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         NDRX_LOG(log_info, "Transaction completed - remove logs");
         
         /* p_tl becomes invalid! */
-        tms_remove_logfile(p_tl);
+        tms_remove_logfile(p_tl, EXTRUE);
         
         is_tx_finished = EXTRUE;
     }

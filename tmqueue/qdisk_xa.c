@@ -824,7 +824,7 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
                     if (EXSUCCEED!=send_unlock_notif_hdr(&b.hdr, fname, 
                             NULL, TMQ_FILECMD_UNLINK))
                     {
-                        goto xa_retry;
+                        goto xa_fail;
                     }
                 }
             }
@@ -841,8 +841,8 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
 xa_err:
     return XAER_RMERR;
 
-xa_retry:
-    return XA_RETRY;
+xa_fail:
+    return XAER_RMFAIL;
 }
 
 /**
@@ -943,7 +943,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
             if (EXSUCCEED!=send_unlock_notif_hdr(&block.hdr, fname,
                     to_filename, TMQ_FILECMD_RENAME))
             {
-                goto xa_retry;
+                goto xa_fail;
             }
         }
         else if (TMQ_STORCMD_UPD == block.hdr.command_code)
@@ -1002,7 +1002,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
             
             if (EXSUCCEED!=send_unlock_notif_upd(&block.upd, fname, NULL, TMQ_FILECMD_UNLINK))
             {
-                goto xa_retry;
+                goto xa_fail;
             }
             
         }
@@ -1017,7 +1017,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
              */
             if (EXSUCCEED!=send_unlock_notif_hdr(&block.hdr, fname_msg, fname, TMQ_FILECMD_UNLINK))
             {
-                goto xa_retry;
+                goto xa_fail;
             }
         }
         else
@@ -1043,14 +1043,14 @@ xa_err:
     NDRX_LOG(log_info, "Commit failed");
     return XAER_RMERR;
     
-xa_retry:
+xa_fail:
     if (NULL!=f)
     {
         NDRX_FCLOSE(f);
     }
 
-    NDRX_LOG(log_info, "Commit failed (retry)");
-    return XA_RETRY;
+    NDRX_LOG(log_info, "Commit failed (tmsrv will retry)");
+    return XAER_RMFAIL;
 }
 
 /**

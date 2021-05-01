@@ -861,6 +861,9 @@ out:
 
 /**
  * Simulate commit crash & recovery
+ * We enqueue data.
+ * Commit fails (change stage to committing, thus we perform automatic
+ * rollback)
  * @param maxmsg max messages to be ok
  */
 exprivate int basic_commit_crash(int maxmsg)
@@ -914,6 +917,36 @@ exprivate int basic_commit_crash(int maxmsg)
         tpfree(testbuf_ref);
     }
     
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: commit failed: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* start to dequeue... */
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* all messages must be available */
+    for (i=0; i<maxmsg; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 failed dequeue!");
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+    }
+    
     /* 
      * Set crash point
      */
@@ -922,9 +955,12 @@ exprivate int basic_commit_crash(int maxmsg)
         NDRX_LOG(log_error, "TESTERROR: failed to enable crash");
         EXFAIL_OUT(ret);
     }
-    /* set timeout time  */
     
-    tptoutset(15);
+    /* set timeout time  
+     * commit will fail...
+     * and all records will be rolled back (assuming in 30 sec)
+     */
+    tptoutset(30);
     
     if (EXSUCCEED==tpcommit(0))
     {
@@ -932,6 +968,13 @@ exprivate int basic_commit_crash(int maxmsg)
         EXFAIL_OUT(ret);
     }
     
+    if (tperrno!=TPETIME)
+    {
+        NDRX_LOG(log_error, "TESTERROR: expected TPETIME got %d", tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* set timeout back... */
     tptoutset(90);
     
     if (EXSUCCEED!=system("xadmin lcf tcrash -A 0 -a"))
@@ -940,15 +983,7 @@ exprivate int basic_commit_crash(int maxmsg)
         EXFAIL_OUT(ret);
     }
     
-    /* let tmsrv to complete stuff in the background... */
-    NDRX_LOG(log_debug, "Waiting for message completion...");
-    
-    /* really after the first restart it will ignore the crash flag as not new process 
-     * but let all messages to flush
-     */
-    sleep(20);
-    
-    /* all messages must be available */
+    /* all messages must be available (rolled back after crash recovery) */
     for (i=0; i<maxmsg; i++)
     {
         long len=0;

@@ -257,20 +257,13 @@ typedef struct atmi_xa_rm_status atmi_xa_rm_status_t;
  */
 struct atmi_xa_log
 {
-#if 0
-    /*  transaction id: */
-    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
-    short tmrmid; /* initial resource manager id */
-    short tmnodeid; /* initial node id */
-    short tmsrvid; /* initial TM server id */
-#endif
-    ATMI_XA_TX_INFO_FIELDS; /* tmknownrms not used!!!  */
+    ATMI_XA_TX_INFO_FIELDS;         /**< tmknownrms not used!!!  */
 
     /* Log the date & time with transaction is open*/
-    unsigned long long t_start; /* when tx started */
-    unsigned long long t_update; /* wehn tx updated (last) */
+    unsigned long long t_start;     /**< when tx started */
+    unsigned long long t_update;    /**< wehn tx updated (last) */
     
-    short   txstage;  /* In what state we are */
+    short   txstage;  /**< In what state we are */
     
     /* the list of RMs (the ID is index) statuses.
      * 0x0 indicates that RM is not in use.
@@ -284,19 +277,21 @@ struct atmi_xa_log
      */
     atmi_xa_rm_status_t rmstatus[NDRX_MAX_RMS]; /* RM=1 index is 0 */
     
-    char fname[PATH_MAX+1]; /* Full file name of the transaction log file */
+    char fname[PATH_MAX+1];    /**< Full file name of the transaction log file */
     FILE *f; /* the transaction file descriptor (where stuff is logged) */
     
     /* background processing: */
-    long trycount;       /* Number of attempts */
+    long trycount;              /**< Number of attempts */
     /* Have a timer for active transaction (to watch for time-outs)  */
-    ndrx_stopwatch_t ttimer;   /* transaction timer */
-    long txtout;  /* Number of seconds for timeout */
+    ndrx_stopwatch_t ttimer;    /**< transaction timer */
+    long txtout;                /**< Number of seconds for timeout */
     
-    int is_background;  /* Is background responsible for tx? */
-    uint64_t    lockthreadid;   /* Thread ID, locked the log entry */
+    int is_background;          /**< Is background responsible for tx? */
+    uint64_t    lockthreadid;   /**< Thread ID, locked the log entry */
     
-    EX_hash_handle hh;         /* makes this structure hashable */
+    int log_version;            /**< Log file version number*/
+    
+    EX_hash_handle hh;          /**< makes this structure hashable */
 };
 typedef struct atmi_xa_log atmi_xa_log_t;
 
