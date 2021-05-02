@@ -302,6 +302,14 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
                 goto out;
             }
             break;
+        case ATMI_XA_TMFORGET:
+            /* forget the stuff locally */
+            if (EXSUCCEED!=tm_tmforget(p_ub))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            break;
         case ATMI_XA_TMREGISTER:
             /* Some binary is telling as the different RM is involved
              * in transaction.

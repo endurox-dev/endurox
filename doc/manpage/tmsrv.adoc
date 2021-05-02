@@ -84,6 +84,42 @@ facility of environment variable override. See the manpage of 'ex_env(5)'.
 
 Enduro/X support static and dynamic XA registration.
 
+LOGGING AND RECOVERY
+--------------------
+tmsrv register all activities of the transactions and resource managers in the
+machine readable log file. Log file is used for crash recovery, where last
+state of the transaction is read and transaction is completed according to the
+target state set in log file.
+
+Each log file line contains a CRC32 checksum, which is verified during the
+recovery, any bad line is ignored, which might happen in case if data have not
+fully flushed to the disk. If during the recovery process some of the
+lines are invalid, they are ignored, and tmsrv acts with knowledge of last
+known state.
+
+When transaction is started or when new resource manager joins the transaction
+or when commit/abort request is made, logging is mandatory, i.e. if disk is
+full or permissions error, the transaction is either not started or state not
+changed.
+
+When transaction is finalized (committed or aborted) the transaction and 
+resource states are logged optionally, thus write errors are ignored 
+(but logged to ULOG). Thus if recovery is necessary at this stage, 
+transaction would be finalized according to any last valid data logged.
+
+If after crash recovery some transaction still exist in Resource Manager
+as not completed, following *xadmin(8)* commands may be used to finish them at
+particular Resource Manager level:
+
+- $ xadmin recoverlocal
+
+- $ xadmin commitlocal
+
+- $ xadmin abortlocal
+
+- $ xadmin forgetlocal
+
+
 OPTIONS
 -------
 *-t* 'DEFAULT_TIMEOUT'::
@@ -189,7 +225,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ex_env(5)* *buildtms(8)*
+*ex_env(5)* *buildtms(8)* *xadmin(8)*
 
 COPYING
 -------

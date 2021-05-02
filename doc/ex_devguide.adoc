@@ -2528,10 +2528,16 @@ types. It logs general info about transaction, information about current
 state and each Resource Managers (RM) status. The file format is simple. It is
 text file with Unix newlines. Each record is written on each text line. The
 field separator in record is colon ":". Each record starts with Unix UTC
-timestamp in milliseconds. Log handling is done in *tmsrv/log.c*
+timestamp in milliseconds. Each line is terminated semicolon (";") following 
+the CRC32 checksum as 8 hex digits. Checksum is calculate from previous line data.
+Checksum is used in crash recovery to identify bad records.
+
+Log handling is done in *tmsrv/log.c*
 source code. Following record types ("log commands") are used:
 
-- *I* - General Information about transaction
+- *I* - General Information about transaction, version V1 record.
+
+- *J* - General Information about transaction, version V2 record.
 
 - *S* - Identify stage of transaction (is it active, committing, abort, etc.)
 
@@ -2547,7 +2553,8 @@ it, what is the timeout setting.
 |=========================================================
 |Nr|Field name|Type|Mand/Opt|Version|Description
 |1|tstamp|N13|Mand|1|UTC Time stamp when record added
-|2|cmdid|Const "I"|Mand|1|Record type identifier
+|2|cmdid|Const "I"|C1|1|Record type identifier, version 1.
+|2|cmdid|Const "J"|C1|2|Record type identifier, version 2.
 |3|tmrmid|N..5|Mand|1|Resource manager ID which have started TX
 |4|tmnodeid|N..5|Mand|1|Cluster Node id which started transaction
 |5|tmsrvid|N..5|Mand|1|Transaction manager server id (srvid from ndrxconfig.xml)
@@ -2558,6 +2565,7 @@ transaction is active, thus each active RM is logged with *R* record. Thus there
 no real reason for this record. Thus from Enduro/X 6.1 this fields is not used.
 |=========================================================
 
+*C1* - One of the fields must be present, but not both.
 
 ==== Transaction stage identification
 
