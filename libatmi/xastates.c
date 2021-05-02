@@ -68,20 +68,14 @@
  */
 exprivate rmstatus_driver_t M_rm_status_driver_preparing[] =
 {  
+    /* ok: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_OK,     XA_OK,     XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
+    /* read only assumed as committed: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_RDONLY, XA_RDONLY, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
     /* If no transaction, then assume committed, read only: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_NOTA, XAER_NOTA, XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
     /* Shall we perform any action here? */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_RBBASE, XA_RBEND,  XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
-    
-#if 0
-    /* Abort immediately, any other error: makes aborting decision: */
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_RMERR,XAER_RMERR,XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
-    
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_INVAL,XAER_INVAL,XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
-#endif
-    
     /* Any error out of the range (catched, we scan from the start) causes abort sequence to run */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, INT_MIN,INT_MAX,      XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
     /* for PostgreSQL we have strange situation, that only case to work in distributed way is to mark the transaction as
@@ -100,32 +94,34 @@ exprivate rmstatus_driver_t M_rm_status_driver_preparing[] =
  */
 exprivate rmstatus_driver_t M_rm_status_driver_committing[] =
 {  
+    /* ok: */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_OK,      XA_OK,      XA_RM_STATUS_COMMITTED,     XA_TX_STAGE_COMMITTED},
+    /* In case of error: assuming heuristic results: */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_RMERR, XAER_RMERR, XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
-    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_RETRY,   XA_RETRY,   XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
+    /* If RM failed, retry (will be hazard error): */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_RMFAIL,XAER_RMFAIL,XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
+    /* If RM failed, retry (will be hazard error): */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_RETRY,   XA_RETRY,   XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
+    /* TPEHAZARD + xa_forget */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURHAZ, XA_HEURHAZ, XA_RM_STATUS_COMMIT_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD},
+    /* TPEHEURISTIC + xa_forget */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURCOM, XA_HEURCOM, XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
-    
-    /* =============================================
-     * TODO: test this case, output? 
-     * Isn't this be swapped with bellow?
-     */
-    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURRB,XA_HEURRB,  XA_RM_STATUS_ABORT_HEURIS,  XA_TX_STAGE_COMMITTED_HEURIS},
-    /* If only one RM, then we might switch back to aborted: */
-    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURMIX,XA_HEURMIX,XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_ABORTED},
-    /* ============================================= */
-    /* Also here shouldn't it be HEURIS? */
-    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_RBBASE, XA_RBEND,  XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTED},
-    /* ============================================= */
-    
-    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_NOTA, XAER_NOTA, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
+    /* TPEHEURISTIC + xa_forget */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURRB,  XA_HEURRB,  XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
+    /* TPEHEURISTIC + xa_forget */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_HEURMIX, XA_HEURMIX, XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
+    /* Rolled back: */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_RBBASE,  XA_RBEND,   XA_RM_STATUS_ABORTED,       XA_TX_STAGE_COMMITTED_HEURIS},
+    /* All unknown statuses will vote for committed: */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  INT_MIN,    INT_MAX,    XA_RM_STATUS_COMMITTED,     XA_TX_STAGE_COMMITTED},
     /* these are RO reported by end prep */
-    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_COMMITTED_RO,XA_OP_NOP,XA_OK, XA_OK,         XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
-    /* TODO: Add NOP status voting by RM status, thought if we loose the infos after the restart of the HEURIS/HAZARD no one would see
-     * these responses too, as there is no process after the restart waiting for response.
-     * TODO: What will happen if XAER_INVAL / XAER_PROTO / XAER_RMFAIL / XAER_DUPID / XAER_OUTSIDE error would be returned for commit?
-     */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_COMMITTED_RO,XA_OP_NOP,XA_OK,      XA_OK,      XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
+    /* In case of restart - same results: */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_COMMIT_HEURIS, XA_OP_NOP,  XA_OK,  XA_OK,      XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HEURIS},
+    /* In case of restart - same results: */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_ABORTED,       XA_OP_NOP,  XA_OK,  XA_OK,      XA_RM_STATUS_ABORTED,       XA_TX_STAGE_COMMITTED_HEURIS},
+    /* In case of restart - same results: */
+    {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_COMMIT_HAZARD, XA_OP_NOP,  XA_OK,  XA_OK,      XA_RM_STATUS_COMMIT_HEURIS, XA_TX_STAGE_COMMITTED_HAZARD},
     {EXFAIL}
 };
 
@@ -180,11 +176,6 @@ exprivate rmstatus_driver_t M_rm_status_driver_aborting[] =
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
     {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XAER_PROTO, XAER_PROTO,  XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
-    
-    /* Our extension allow to retry for abort case (must have for tmq) */
-    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACT_AB, XA_OP_ROLLBACK, XA_RETRY, XA_RETRY,      XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
-    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_ACTIVE, XA_OP_ROLLBACK, XA_RETRY, XA_RETRY,      XA_RM_STATUS_ACTIVE,      XA_TX_STAGE_ABORTING},
-    {XA_TX_STAGE_ABORTING, XA_RM_STATUS_PREP,   XA_OP_ROLLBACK, XA_RETRY, XA_RETRY,      XA_RM_STATUS_PREP,        XA_TX_STAGE_ABORTING},
     
     /* Other unknown RMstauses we can ignore here, as they have finalized the transaction already, and we live already in ABORTING stage */
     

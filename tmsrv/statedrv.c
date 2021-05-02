@@ -175,6 +175,26 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                             op_reason = atmi_xa_get_reason();
                             op_tperrno = tperrno;
                         }
+                        
+                        /* TODO: If we get heuristic cases, to forget... 
+                         * maybe want to move to state machine so that
+                         * we can complete in the background with retries.
+                         */
+                        if (XA_HEURHAZ==op_reason
+                                || XA_HEURCOM==op_reason
+                                || XA_HEURRB==op_reason
+                                || XA_HEURMIX==op_reason
+                                )
+                        {
+                            int tmp = tm_forget_combined(p_xai, i+1, el->btid);
+                            NDRX_LOG(log_warn, "xid: [%s] RMID %d xa_forget "
+                                    "(due to heuristic results %hd) ret: %d reason: %hd",
+                                    p_xai->tmxid, i+1, op_reason, tmp, atmi_xa_get_reason());
+                            userlog("xid: [%s] RMID %d xa_forget "
+                                    "(due to heuristic results %hd) ret: %d reason: %hd",
+                                    p_xai->tmxid, i+1, op_reason, tmp, atmi_xa_get_reason());
+                        }
+                        
                         break;
                     case XA_OP_ROLLBACK:
                         NDRX_LOG(log_info, "Rollback RMID %d", i+1);
@@ -193,7 +213,14 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 NDRX_LOG(log_info, "Operation tperrno: %d, xa return code: %d",
                                          op_tperrno, op_reason);
 
-                if (op_reason==XA_RETRY) 
+                /* In case if not preparing
+                 * allow some retries. 
+                 * TODO: Probably would want to add some sleep to wait
+                 * retry (for background ops, probably no retry processing
+                 * required at all).
+                 */
+                if (XA_TX_STAGE_PREPARING!=descr->descr 
+                        && (op_reason==XA_RETRY || op_reason==XAER_RMFAIL))
                 {
                     was_retry = EXTRUE;   
                 }

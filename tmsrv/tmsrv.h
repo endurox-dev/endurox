@@ -141,6 +141,11 @@ extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
 extern int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 extern int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
+/* Forget API */
+extern int tm_forget_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_forget_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_forget_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+
 /* Commit API */
 extern int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
 extern int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
@@ -153,6 +158,7 @@ extern int tm_tpabort(UBFH *p_ub);
 extern int tm_tmprepare(UBFH *p_ub);
 extern int tm_tmcommit(UBFH *p_ub);
 extern int tm_tmabort(UBFH *p_ub);
+extern int tm_tmforget(UBFH *p_ub);
 extern int tm_tmregister(UBFH *p_ub);
 extern int tm_rmstatus(UBFH *p_ub);
 

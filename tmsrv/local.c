@@ -215,7 +215,82 @@ expublic int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid, long bti
 out:
     return ret;
 }
+/******************************************************************************/
+/*                         FORGET SECTION                                     */
+/******************************************************************************/
+/**
+ * Forget current RM transaction
+ * @param p_xai
+ * @param[in] btid branch tid
+ * @return XA error code.
+ */
+expublic int tm_forget_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid)
+{
+    int ret = EXSUCCEED;
+    
+    /* we should start new transaction... */
+    if (EXSUCCEED!=(ret = atmi_xa_forget_entry(atmi_xa_get_branch_xid(p_xai, btid), 
+            0)))
+    {
+        NDRX_LOG(log_error, "Failed to abort transaction, btid: %ld!", btid);
+        if (NULL!=p_ub)
+        {
+            atmi_xa_set_error_fmt(p_ub, tperrno, atmi_xa_get_reason(), 
+                    "Failed to abort transaction, "
+                    "btid %ld, xa error: %d [%s]", btid, ret, atmi_xa_geterrstr(ret));
+        }
+        /* ATMI error already set by lib */
+        goto out;
+    }
+    
+out:
+    return ret;
+}
 
+/**
+ * Do remote forget call
+ * @param p_xai
+ * @return SUCCEED/FAIL
+ */
+expublic int tm_forget_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid)
+{
+    UBFH* p_ub;
+            
+    /* 
+     * Call the remote TM.
+     */
+    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMFORGET, EXTRUE, rmid, p_xai, 0L, btid);
+
+    if (NULL==p_ub)    
+        return EXFAIL;
+    else
+    {
+        tpfree((char *)p_ub);
+        return EXSUCCEED;
+    }
+}
+
+/**
+ * Combined forget of to forget. Selects automatically do the local forget or
+ * remote depending on RMID.
+ */
+expublic int tm_forget_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid)
+{
+    int ret = EXSUCCEED;
+    
+    /* Check is this local */
+    if (rmid == G_atmi_env.xa_rmid)
+    {
+        ret  = tm_forget_local(NULL, p_xai, btid);
+    }
+    else
+    {
+        ret = tm_forget_remote_call(p_xai, rmid, btid);
+    }
+    
+out:
+    return ret;
+}
 
 /******************************************************************************/
 /*                         COMMIT SECTION                                   */

@@ -75,6 +75,7 @@ extern "C" {
 #define ATMI_XA_TMPREPARE           'P' /**< Sends prepare statement to slave RM*/    
 #define ATMI_XA_TMCOMMIT            'C' /**< Sends commit to remove RM          */
 #define ATMI_XA_TMABORT             'A' /**< Master TM sends us Abort local tx  */
+#define ATMI_XA_TMFORGET            'F' /**< Master TM sends us Forget local tx  */
 #define ATMI_XA_RMSTATUS            'S' /**< Member is sending it actual status */
     
 /* Transaction status per RM */
@@ -115,7 +116,7 @@ extern "C" {
 #define XA_TX_STAGE_COMMITTED_HAZARD         55   /**< Commit, hazard           */
 #define XA_TX_STAGE_COMMITTED_HEURIS         65   /**< Commit Heuristically     */
 #define XA_TX_STAGE_COMMITTED                70   /**< Commit OK                */
-    
+
 #define XA_TX_STAGE_MAX_NEVER                100  /**< Upper never stage        */
 
 #define XA_TX_COPY(X,Y)\
