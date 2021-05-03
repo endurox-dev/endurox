@@ -75,6 +75,7 @@ extern "C" {
 #define ATMI_XA_TMPREPARE           'P' /**< Sends prepare statement to slave RM*/    
 #define ATMI_XA_TMCOMMIT            'C' /**< Sends commit to remove RM          */
 #define ATMI_XA_TMABORT             'A' /**< Master TM sends us Abort local tx  */
+#define ATMI_XA_TMFORGET            'F' /**< Master TM sends us Forget local tx  */
 #define ATMI_XA_RMSTATUS            'S' /**< Member is sending it actual status */
     
 /* Transaction status per RM */
@@ -82,8 +83,11 @@ extern "C" {
 #define XA_RM_STATUS_NONE           'n' /**< Non transaction                    */
 #define XA_RM_STATUS_IDLE           'i' /**< Idle state, according to book      */
 #define XA_RM_STATUS_ACTIVE         'j' /**< RM is in joined state, book: atctive*/
+#define XA_RM_STATUS_ACT_AB         'k' /**< RM is in joined state, but must be aborted */
 #define XA_RM_STATUS_PREP           'p' /**< RM is in prepared state            */
 #define XA_RM_STATUS_ABORTED        'a' /**< RM is in abort state               */
+#define XA_RM_STATUS_ABFORGET_HAZ   'e' /**< Aborted, needs hazard forget       */
+#define XA_RM_STATUS_ABFORGET_HEU   'f' /**< Aborted, needs heuriestic forget   */
 /** For Postgres probably we need unknown which at commit prepare leads to abort*/
 #define XA_RM_STATUS_UNKOWN         'u' /**< RM has unknown status              */
 #define XA_RM_STATUS_ABORT_HEURIS   'b' /**< Aborted houristically              */
@@ -92,6 +96,8 @@ extern "C" {
 #define XA_RM_STATUS_COMMITTED_RO   'r' /**< Committed, was read only           */
 #define XA_RM_STATUS_COMMIT_HEURIS  'h' /**< Committed, Heuristically           */
 #define XA_RM_STATUS_COMMIT_HAZARD  'z' /**< Hazrad, committed or aborted       */
+#define XA_RM_STATUS_COMFORGET_HAZ  'g' /**< Committed, needs to forget, hazard */
+#define XA_RM_STATUS_COMFORGET_HEU  'l' /**< Committed, needs to forget, heuriestic*/
     
 /* Transaction Stages */
 /* The lowest number of RM outcomes, denotes the more exact Result */
@@ -102,20 +108,34 @@ extern "C" {
 #define XA_TX_STAGE_ABORTED_HAZARD           25   /**< Abort, Hazard            */
 #define XA_TX_STAGE_ABORTED_HEURIS           30   /**< Aborted, Heuristically   */
 #define XA_TX_STAGE_ABORTED                  35   /**< Finished ok              */
+    
+/*
+ * Heuristic completion, aborting
+ */
+#define XA_TX_STAGE_ABFORGETTING             36   /**< Still aborting, heuristic finish */
+#define XA_TX_STAGE_ABFORGOT_HAZ             37   /**< Aborted, hazard        */
+#define XA_TX_STAGE_ABFORGOT_HEU             38   /**< Aborted, heuristically */
 
-/* Entered in preparing stage, with possiblity to fall back to Abort... */
+/* Entered in preparing stage, with possibility to fall back to Abort... */
 #define XA_TX_STAGE_PREPARING                40   /**< Doing prepare            */
     
-/* Commit base 
- * TODO: Might think, if first commit fails (with no TX), then we still migth roll back
- * all the stuff.
+/* 
+ * Commit base 
  */
 #define XA_TX_STAGE_COMMITTING               50   /**< Prepared                 */
 #define XA_TX_STAGE_COMMITTED_HAZARD         55   /**< Commit, hazard           */
 #define XA_TX_STAGE_COMMITTED_HEURIS         65   /**< Commit Heuristically     */
 #define XA_TX_STAGE_COMMITTED                70   /**< Commit OK                */
     
+/*
+ * Heuristic completion, commit
+ */
+#define XA_TX_STAGE_COMFORGETTING            80   /**< Still committing, heuristic finish */
+#define XA_TX_STAGE_COMFORGOT_HAZ            85   /**< Committed, heuristically  */
+#define XA_TX_STAGE_COMFORGOT_HEU            87   /**< Committed, hazard         */
+
 #define XA_TX_STAGE_MAX_NEVER                100  /**< Upper never stage        */
+#define XA_TX_STAGE_MIN_NEVER                -1   /**< lower never stage        */
 
 #define XA_TX_COPY(X,Y)\
     X->tmtxflags = Y->tmtxflags;\
@@ -256,20 +276,13 @@ typedef struct atmi_xa_rm_status atmi_xa_rm_status_t;
  */
 struct atmi_xa_log
 {
-#if 0
-    /*  transaction id: */
-    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
-    short tmrmid; /* initial resource manager id */
-    short tmnodeid; /* initial node id */
-    short tmsrvid; /* initial TM server id */
-#endif
-    ATMI_XA_TX_INFO_FIELDS; /* tmknownrms not used!!!  */
+    ATMI_XA_TX_INFO_FIELDS;         /**< tmknownrms not used!!!  */
 
     /* Log the date & time with transaction is open*/
-    unsigned long long t_start; /* when tx started */
-    unsigned long long t_update; /* wehn tx updated (last) */
+    unsigned long long t_start;     /**< when tx started */
+    unsigned long long t_update;    /**< wehn tx updated (last) */
     
-    short   txstage;  /* In what state we are */
+    short   txstage;  /**< In what state we are */
     
     /* the list of RMs (the ID is index) statuses.
      * 0x0 indicates that RM is not in use.
@@ -283,19 +296,21 @@ struct atmi_xa_log
      */
     atmi_xa_rm_status_t rmstatus[NDRX_MAX_RMS]; /* RM=1 index is 0 */
     
-    char fname[PATH_MAX+1]; /* Full file name of the transaction log file */
+    char fname[PATH_MAX+1];    /**< Full file name of the transaction log file */
     FILE *f; /* the transaction file descriptor (where stuff is logged) */
     
     /* background processing: */
-    long trycount;       /* Number of attempts */
+    long trycount;              /**< Number of attempts */
     /* Have a timer for active transaction (to watch for time-outs)  */
-    ndrx_stopwatch_t ttimer;   /* transaction timer */
-    long txtout;  /* Number of seconds for timeout */
+    ndrx_stopwatch_t ttimer;    /**< transaction timer */
+    long txtout;                /**< Number of seconds for timeout */
     
-    int is_background;  /* Is background responsible for tx? */
-    uint64_t    lockthreadid;   /* Thread ID, locked the log entry */
+    int is_background;          /**< Is background responsible for tx? */
+    uint64_t    lockthreadid;   /**< Thread ID, locked the log entry */
     
-    EX_hash_handle hh;         /* makes this structure hashable */
+    int log_version;            /**< Log file version number*/
+    
+    EX_hash_handle hh;          /**< makes this structure hashable */
 };
 typedef struct atmi_xa_log atmi_xa_log_t;
 
@@ -435,7 +450,9 @@ extern NDRX_API int _tp_srv_tell_tx_fail(void);
 
 /* State driving */
 extern NDRX_API rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 
-                                                    int op, int op_retcode);
+                                                    int op, int op_retcode,
+                                                    atmi_xa_tx_info_t *p_xai, 
+                                                    short rmid, long btid);
 extern NDRX_API rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage, 
                                                     char next_rmstatus);
 extern NDRX_API int xa_status_get_op(short txstage, char rmstatus);

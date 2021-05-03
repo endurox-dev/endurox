@@ -1,7 +1,7 @@
 /**
  * @brief Common/shared data structures between server & client.
  *
- * @file ndrxdcmn.h
+ * @file ndrx_ddr.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -187,6 +187,6 @@ extern NDRX_API int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned lo
 }
 #endif
 
-#endif	/* NDRXDCMN_H */
+#endif	/* NDRX_DDR_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */

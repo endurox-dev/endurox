@@ -115,7 +115,8 @@ extern int tms_log_chrmstat(atmi_xa_tx_info_t *xai, short rmid,
 extern int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode);
 extern int tms_is_logfile_open(atmi_xa_log_t *p_tl);
 extern void tms_close_logfile(atmi_xa_log_t *p_tl);
-extern void tms_remove_logfile(atmi_xa_log_t *p_tl);
+extern void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm);
+extern void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm);
 extern int tms_log_info(atmi_xa_log_t *p_tl);
 extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage);
 extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt, 
@@ -140,6 +141,11 @@ extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
 extern int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 extern int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
+/* Forget API */
+extern int tm_forget_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_forget_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_forget_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+
 /* Commit API */
 extern int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
 extern int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
@@ -152,6 +158,7 @@ extern int tm_tpabort(UBFH *p_ub);
 extern int tm_tmprepare(UBFH *p_ub);
 extern int tm_tmcommit(UBFH *p_ub);
 extern int tm_tmabort(UBFH *p_ub);
+extern int tm_tmforget(UBFH *p_ub);
 extern int tm_tmregister(UBFH *p_ub);
 extern int tm_rmstatus(UBFH *p_ub);
 

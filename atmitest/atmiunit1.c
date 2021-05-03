@@ -681,6 +681,12 @@ Ensure(test086_tmqlimit)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test087_tmsrv)
+{
+    int ret;
+    ret=system_dbg("test087_tmsrv/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
 
 TestSuite *atmi_test_all(void)
 {
@@ -826,7 +832,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test084_ddr);
     add_test(suite, test085_prio);
     add_test(suite, test086_tmqlimit);
-    
+    add_test(suite, test087_tmsrv);
     
     return suite;
 }

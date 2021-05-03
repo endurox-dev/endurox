@@ -2528,10 +2528,16 @@ types. It logs general info about transaction, information about current
 state and each Resource Managers (RM) status. The file format is simple. It is
 text file with Unix newlines. Each record is written on each text line. The
 field separator in record is colon ":". Each record starts with Unix UTC
-timestamp in milliseconds. Log handling is done in *tmsrv/log.c*
+timestamp in milliseconds. Each line is terminated semicolon (";") following 
+the CRC32 checksum as 8 hex digits. Checksum is calculate from previous line data.
+Checksum is used in crash recovery to identify bad records.
+
+Log handling is done in *tmsrv/log.c*
 source code. Following record types ("log commands") are used:
 
-- *I* - General Information about transaction
+- *I* - General Information about transaction, version V1 record.
+
+- *J* - General Information about transaction, version V2 record.
 
 - *S* - Identify stage of transaction (is it active, committing, abort, etc.)
 
@@ -2547,7 +2553,8 @@ it, what is the timeout setting.
 |=========================================================
 |Nr|Field name|Type|Mand/Opt|Version|Description
 |1|tstamp|N13|Mand|1|UTC Time stamp when record added
-|2|cmdid|Const "I"|Mand|1|Record type identifier
+|2|cmdid|Const "I"|C1|1|Record type identifier, version 1.
+|2|cmdid|Const "J"|C1|2|Record type identifier, version 2.
 |3|tmrmid|N..5|Mand|1|Resource manager ID which have started TX
 |4|tmnodeid|N..5|Mand|1|Cluster Node id which started transaction
 |5|tmsrvid|N..5|Mand|1|Transaction manager server id (srvid from ndrxconfig.xml)
@@ -2558,6 +2565,7 @@ transaction is active, thus each active RM is logged with *R* record. Thus there
 no real reason for this record. Thus from Enduro/X 6.1 this fields is not used.
 |=========================================================
 
+*C1* - One of the fields must be present, but not both.
 
 ==== Transaction stage identification
 
@@ -2569,13 +2577,19 @@ no real reason for this record. Thus from Enduro/X 6.1 this fields is not used.
 |3|txstage|N..2|Mand|1|*0* - transaction does no exists,
 *5* - transaction is active in processing,
 *20* - transaction is aborting,
-*25* - transaction aborted with hazard,
-*30* - heuristically aborted,
+*25* - transaction aborted with hazard (no xa_forget call),
+*30* - heuristically aborted (no xa_forget call),
 *35* - aborted ok,
+*36* - aborted/xa_forget finishing in progress,
+*37* - aborted/hazard finished (xa_forget ok),
+*38* - aborted/heuristic finished (xa_forget ok),
 *40* - preparing,
 *55* - committed (hazard),
 *65* - heuristically committed,
-*70* - committed ok
+*70* - committed ok,
+*80* - committed/xa_forget finishing in progress,
+*85* - committed/hazard finished (xa_forget ok),
+*87* - committed/heuristic finished (xa_forget ok)
 |=========================================================
 
 
@@ -2606,7 +2620,11 @@ status is being tracked
 *c*- Committed,
 *r* - Committed (was read only),
 *h* - Committed (Heuristically),
-*z* - Hazard (committed or aborted)
+*z* - Hazard (committed or aborted),
+*e* - Aborted/hazard xa_forget() call required,
+*f* - Aborted/heuristic xa_forget() call required,
+*g* - Committed/hazard xa_forget() call required,
+*l* - Committed/heuristic xa_forget() call required,
 |5|rmerrorcode|N..3|Mand|1|TP Error code when RM entered in this status. *0* -
 means no error occurred.
 |6|rmreason|NS..4|Mand|1|XA Error code for caused RM status.

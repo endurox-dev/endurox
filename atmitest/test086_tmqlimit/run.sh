@@ -48,13 +48,15 @@ else
     cd $TESTNAME
 fi;
 
+UNAME=`uname`
+
 #
 # Dynamic tests
 #
 echo "Dynamic XA driver tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdiskd.so
 
-if [ "$(uname)" == "Darwin" ]; then
+if [ "$UNAME" == "Darwin" ]; then
     export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdiskd.dylib
 fi
 
@@ -71,7 +73,7 @@ fi
 echo "Static XA driver tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdisks.so
 
-if [ "$(uname)" == "Darwin" ]; then
+if [ "$UNAME" == "Darwin" ]; then
     export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdisks.dylib
 fi
 

@@ -46,16 +46,27 @@ extern "C" {
 #define TMQ_DEFAULT_BUFSZ               1024 /* default buffer size     */
     
 /* Commands loaded into EX_QCMD: */
-#define TMQ_CMD_ENQUEUE         'E'      /* Enqueue                     */
-#define TMQ_CMD_DEQUEUE         'D'      /* Dequeue                     */
-#define TMQ_CMD_NOTIFY          'N'      /* Notify tmq for XA completion*/
-#define TMQ_CMD_MQLQ            'P'       /* Print queue                */
-#define TMQ_CMD_MQLC            'C'       /* List configuration of q    */
-#define TMQ_CMD_MQLM            'M'       /* List messages              */
-#define TMQ_CMD_MQRC            'R'       /* Reload config              */
-#define TMQ_CMD_MQCH            'H'       /* Change Q  config (runtime) */
+#define TMQ_CMD_ENQUEUE         'E'      /**< Enqueue                     */
+#define TMQ_CMD_DEQUEUE         'D'      /**< Dequeue                     */
+#define TMQ_CMD_NOTIFY          'N'      /**< Notify tmq for XA completion*/
+#define TMQ_CMD_MQLQ            'P'      /**< Print queue                 */
+#define TMQ_CMD_MQLC            'C'      /**< List configuration of q     */
+#define TMQ_CMD_MQLM            'M'      /**< List messages               */
+#define TMQ_CMD_MQRC            'R'      /**< Reload config               */
+#define TMQ_CMD_MQCH            'H'      /**< Change Q  config (runtime)  */
+
+#define TMQ_QDEF_MAX            512      /**< max buffer size for Q def   */
     
-#define TMQ_QDEF_MAX            512      /* max buffer size for Q def   */
+/**
+ * This is list of commands to manage files by tmqueue instead of xa driver
+ * so that state is fully in sync
+ * @defgroup tmqfilecmd
+ * @{
+ */
+#define TMQ_FILECMD_RENAME      'R'      /**< Rename files              */
+#define TMQ_FILECMD_UNLINK      'U'      /**< Unlink files              */
+/** @} */ /* end of tmqfilecmd */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

@@ -141,7 +141,9 @@ extern "C" {
 #define TPCALL_BROADCAST            0x0004 /**< Broadcast call                */
 
 /* XA TM reason codes */
-/* Lower reason includes XA error code. */    
+/* Lower reason includes XA error code. 
+ * Note! these reasons are not used in any state driving
+ */    
 #define NDRX_XA_ERSN_BASE           2000
 #define NDRX_XA_ERSN_NONE           0      /**< No reason specified for error */
 #define NDRX_XA_ERSN_LOGFAIL        2001   /**< Log failed                    */
@@ -184,25 +186,26 @@ extern "C" {
     __p_bufsz = __buf_size__;\
 }
 
-#define NDRX_XA_FLAG_NOJOIN  "NOJOIN"  /**< XA Switch does not support TMJOIN mode  */
-#define NDRX_XA_FLAG_NOSTARTXID  "NOSTARTXID"  /**< No XID in start call to RM  */
-#define NDRX_XA_FLAG_RECON  "RECON"    /**< Reconnect on tpbegin(), xa_start() if fails */
-#define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /**< Test the line                       */
-#define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /**< List of error codes for retry   */
+#define NDRX_XA_FLAG_NOJOIN         "NOJOIN"      /**< XA Switch does not support TMJOIN mode  */
+#define NDRX_XA_FLAG_NOSTARTXID     "NOSTARTXID"  /**< No XID in start call to RM  */
+#define NDRX_XA_FLAG_NOSUSPEND      "NOSUSPEND"   /**< No automatic suspend          */
+#define NDRX_XA_FLAG_RECON          "RECON"       /**< Reconnect on tpbegin(), xa_start() if fails */
+#define NDRX_XA_FLAG_RECON_TEST     "RECON:"      /**< Test the line                       */
+#define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32    /**< List of error codes for retry   */
     
+/**< Escape JSON strings to handler invalid UTF-8 */
+#define NDRX_APIFLAGS_JSONESCAPE        0x00000001
+#define NDRX_APIFLAGS_JSONESCAPE_CODE   "json_escape" /**< config flag code   */
+
 /**
  * Internal system flags
  * @defgroup xa_flags_sys
  * @{
  */
-#define NDRX_XA_FLAG_SYS_NOAPISUSP      0x00000001  /**< No tran susp in contexting */
-#define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported          */
-#define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No XID given in start      */
-    
-    
-/**< Escape JSON strings to handler invalid UTF-8 */
-#define NDRX_APIFLAGS_JSONESCAPE        0x00000001
-#define NDRX_APIFLAGS_JSONESCAPE_CODE   "json_escape" /**< config flag code   */
+#define NDRX_XA_FLAG_SYS_NOAPISUSP      0x00000001  /**< No tran susp in contexting   */
+#define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported            */
+#define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No XID given in start        */
+#define NDRX_XA_FLAG_SYS_NOSUSPEND      0x00000008  /**< Do not suspend automatically */
 
 /** @} */ /* xa_flags_sys */
     
@@ -436,6 +439,16 @@ struct atmi_lib_env
     ndrx_env_priv_t integpriv;    /**< integration  private data                */
     long     apiflags;            /**< API mode flags, see NDRX_APIFLAGS_*      */
     char    rtgrp[NDRX_DDR_GRP_MAX+1]; /**< routing grup setting                */
+    /**
+     * Special flags needed for QA
+     * @defgroup qa_handlers
+     * @{
+     */
+    int    test_qdisk_write_fail;   /**< Simulate disk write failure, queue    */
+    int    test_tmsrv_write_fail;   /**< Simulate disk write failure, tmsrv    */
+    int    test_tmsrv_commit_crash; /**< Simualte commit crash                */
+    
+    /**@}*/
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 

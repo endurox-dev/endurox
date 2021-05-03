@@ -158,7 +158,10 @@ Mandatory Env. Variables
     With 'NOJOIN' indicates that XA Switch does not support 'TMJOIN' mode.
     With 'NOSTARTXID' indicates that transaction session does not start with
     identifier, but only when process disconnects from transaction, it is possible
-    to give transaction id for work which has been done to database.
+    to give transaction id for work which has been done to database. *NOSUSPEND*
+    flag can be used to configure particular resource that transaction is not
+    suspended when *tpcall(3)* is issued from process which uses given resource
+    manager.
 
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
     Number of semaphores used for protecting shared memory, when Enduro/X 
