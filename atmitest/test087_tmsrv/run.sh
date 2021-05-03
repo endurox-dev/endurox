@@ -60,6 +60,30 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 export NDRX_XA_DRIVERLIB=../../xadrv/tms/libndrxxatmsx.$NDRX_EXT
 
+
+UNAME=`uname`
+
+#
+# Get the crash lib...
+#
+case $UNAME in
+
+  Darwin)
+    export NDRX_PLUGINS=libt86_lcf.dylib
+    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$TESTDIR/../test086_tmqlimit
+    ;;
+
+  AIX)
+    export NDRX_PLUGINS=libt86_lcf.so
+    export LIBPATH=$LIBPATH:$TESTDIR/../test086_tmqlimit
+    ;;
+
+  *)
+    export NDRX_PLUGINS=libt86_lcf.so
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TESTDIR/../test086_tmqlimit
+    ;;
+esac
+
 #
 # Domain 1 - here client will live
 #
@@ -331,6 +355,8 @@ verify_ulog "RM1" "xa_commit" "1";
 verify_ulog "RM1" "xa_rollback" "0";
 verify_ulog "RM1" "xa_forget" "0";
 verify_logfiles "log1" "0"
+# check number of suspends (1 - call suspend, 1 - sever end, 1 - client end)
+verify_ulog "RM1" "xa_end" "3";
 
 verify_ulog "RM2" "xa_prepare" "1";
 verify_ulog "RM2" "xa_commit" "1";
@@ -1964,11 +1990,199 @@ verify_ulog "RM2" "xa_rollback" "1";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
 
+
+echo ""
+echo "************************************************************************"
+echo "Abort Crash recovery (no duplicate ops in case of heuristic ops)"
+echo "************************************************************************"
+
+xadmin sreload -y
+xadmin lcf tcrash -A 36 -a -n
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:8:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPETIME"* ]]; then
+    echo "Expected TPETIME"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "0";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "1";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "1"
+
+verify_ulog "RM2" "xa_prepare" "0";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "1";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+# restore back... now shall complete
+sleep 10
+
+#
+# Print what ever we have in logs...
+#
+cat log1/*
+xadmin lcf tcrash -A 0 -a -n
+
+# let process to finalize
+sleep 10
+
+verify_ulog "RM1" "xa_prepare" "0";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "1";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+
+verify_ulog "RM2" "xa_prepare" "0";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "1";
+verify_ulog "RM2" "xa_forget" "1";
+verify_logfiles "log2" "0"
+
+
+echo ""
+echo "************************************************************************"
+echo "Commit Crash recovery (no duplicate ops in case of heuristic ops)"
+echo "************************************************************************"
+
+xadmin sreload -y
+xadmin lcf tcrash -A 80 -a -n
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:8:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPETIME"* ]]; then
+    echo "Expected TPETIME"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_commit" "1";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "1"
+
+verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_commit" "1";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+# restore back... now shall complete
+sleep 10
+
+#
+# Print what ever we have in logs...
+#
+cat log1/*
+xadmin lcf tcrash -A 0 -a -n
+
+# let process to finalize
+sleep 10
+
+verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_commit" "1";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+
+verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_commit" "1";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "1";
+verify_logfiles "log2" "0"
+
 echo ""
 echo "************************************************************************"
 echo "Retry on prepare... (unexpected error - suspend flag test)"
 echo "************************************************************************"
-
+clean_ulog;
 # must have abort error...
 xadmin sreload -y
 
@@ -2033,6 +2247,7 @@ echo "************************************************************************"
 echo "Commit OK case ... NOSUSPEND"
 echo "************************************************************************"
 xadmin stop -y
+clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -2084,6 +2299,9 @@ if [ "X`grep suspend atmiclt87.log`" == "X" ]; then
     go_out 1
 fi
 
+# check number of suspends (1 - sever end, 1 - client end)
+verify_ulog "RM1" "xa_end" "2";
+
 #
 # Clean up & rebuild
 #
@@ -2101,7 +2319,7 @@ echo ""
 echo "************************************************************************"
 echo "Commit OK case ... NJ"
 echo "************************************************************************"
-
+clean_ulog;
 NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
 
@@ -2115,6 +2333,9 @@ if [ "X`grep suspend atmiclt87.log`" != "X" ]; then
     echo "No join expected, but got..."
     go_out 1
 fi
+
+# check number of suspends (1 - sever end, 1 - client end)
+verify_ulog "RM1" "xa_end" "2";
 
 go_out $RET
 

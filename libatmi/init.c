@@ -71,7 +71,11 @@
 expublic int G_srv_id = EXFAIL; /* If we are server, then this will be server ID */
 expublic volatile int G_is_env_loaded = 0; /* Is environment initialised */
 /* NOTE: THIS BELLOW ONE IS NOT INITIALIZED FOR NDRXD! */
-expublic atmi_lib_env_t G_atmi_env; /* ATMI library environmental configuration */
+expublic atmi_lib_env_t G_atmi_env={
+    /* must follow first otherwise we override lcf commands at startup */
+    .test_qdisk_write_fail=EXFALSE, 
+    .test_tmsrv_write_fail=EXFALSE,
+    .test_tmsrv_commit_crash=EXFALSE}; /* ATMI library environmental configuration */
 expublic int _tmbuilt_with_thread_option = EXFALSE; /**< by default not MT */
 /*---------------------------Statics------------------------------------*/
 /* List of context slots... */
@@ -665,10 +669,6 @@ expublic int ndrx_load_common_env(void)
                 "check in previous logs why %s did not open", NDRX_SHM_LCF_SFX);
         EXFAIL_OUT(ret);
     }
-    
-    G_atmi_env.test_qdisk_write_fail=EXFALSE;
-    G_atmi_env.test_tmsrv_write_fail=EXFALSE;
-    G_atmi_env.test_tmsrv_commit_crash=EXFALSE;
     
     NDRX_LOG(log_debug, "env loaded ok");
     G_is_env_loaded = EXTRUE;

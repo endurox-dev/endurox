@@ -9,15 +9,15 @@
         program have been stopped.
         In Seconds.
         -->
-        <checkpm>5</checkpm>
+        <checkpm>1</checkpm>
         <!--  <sanity> timer, end -->
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
         <!-- Do process reset after 1 sec -->
         <restart_min>1</restart_min>
         <!-- If restart fails, then boot after +5 sec of previous wait time -->
-        <restart_step>10</restart_step>
+        <restart_step>0</restart_step>
         <!-- If still not started, then max boot time is a 30 sec. -->
-        <restart_max>30</restart_max>
+        <restart_max>1</restart_max>
         <!--  <sanity> timer, end -->
 
         <!-- Time after attach when program will start do sanity & respawn checks,
