@@ -94,6 +94,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     
     int min_in_group;
     int min_in_overall;
+    int max_in_overall;
     int try=0;
     int was_retry;
     int is_tx_finished = EXFALSE;
@@ -175,30 +176,18 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                             op_reason = atmi_xa_get_reason();
                             op_tperrno = tperrno;
                         }
-                        
-                        /* TODO: If we get heuristic cases, to forget... 
-                         * maybe want to move to state machine so that
-                         * we can complete in the background with retries.
-                         */
-                        if (XA_HEURHAZ==op_reason
-                                || XA_HEURCOM==op_reason
-                                || XA_HEURRB==op_reason
-                                || XA_HEURMIX==op_reason
-                                )
-                        {
-                            int tmp = tm_forget_combined(p_xai, i+1, el->btid);
-                            NDRX_LOG(log_warn, "xid: [%s] RMID %d xa_forget "
-                                    "(due to heuristic results %hd) ret: %d reason: %hd",
-                                    p_xai->tmxid, i+1, op_reason, tmp, atmi_xa_get_reason());
-                            userlog("xid: [%s] RMID %d xa_forget "
-                                    "(due to heuristic results %hd) ret: %d reason: %hd",
-                                    p_xai->tmxid, i+1, op_reason, tmp, atmi_xa_get_reason());
-                        }
-                        
                         break;
                     case XA_OP_ROLLBACK:
                         NDRX_LOG(log_info, "Rollback RMID %d", i+1);
                         if (EXSUCCEED!=(op_ret = tm_rollback_combined(p_xai, i+1, el->btid)))
+                        {
+                            op_reason = atmi_xa_get_reason();
+                            op_tperrno = tperrno;
+                        }
+                        break;
+                    case XA_OP_FORGET:
+                        NDRX_LOG(log_info, "Forget RMID %d", i+1);
+                        if (EXSUCCEED!=(op_ret = tm_forget_combined(p_xai, i+1, el->btid)))
                         {
                             op_reason = atmi_xa_get_reason();
                             op_tperrno = tperrno;
@@ -219,7 +208,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                  * retry (for background ops, probably no retry processing
                  * required at all).
                  */
-                if (XA_TX_STAGE_PREPARING!=descr->descr 
+                if (XA_TX_STAGE_PREPARING!=p_tl->txstage
                         && (op_reason==XA_RETRY || op_reason==XAER_RMFAIL))
                 {
                     was_retry = EXTRUE;   
@@ -249,8 +238,10 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 }
                 else
                 {
+                    /* this will ULOG unexpected return codes: */
                     if (NULL==(vote_txstage = xa_status_get_next_by_op(p_tl->txstage, 
-                            el->rmstatus, op_code, op_reason)))
+                            el->rmstatus, op_code, op_reason,
+                            p_xai, i+1, el->btid)))
                     {
                         NDRX_LOG(log_error, "Invalid stage for %hd/%c/%d/%d", 
                                 p_tl->txstage, el->rmstatus, op_code, op_reason);
@@ -299,6 +290,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         {
             min_in_group = XA_TX_STAGE_MAX_NEVER;
             min_in_overall = XA_TX_STAGE_MAX_NEVER;
+            max_in_overall = XA_TX_STAGE_MIN_NEVER;
             /* Calculate from array */
             for (i=0; i<=stagearr.maxindexused; i++)
             {
@@ -313,6 +305,13 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     min_in_overall = ve->stage;
                     NDRX_LOG(log_debug, "min_in_overall=>%d", min_in_overall);
                 }
+                
+                if (ve->stage > max_in_overall)
+                {
+                    max_in_overall = ve->stage;
+                    NDRX_LOG(log_debug, "max_in_overall=>%d", max_in_overall);
+                }
+                
 
                 /* what is this? Descr and vote_txstage will be last
                  * from the loop - wrong!
@@ -329,7 +328,18 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 }
             }/* for */
             
-            if (min_in_group!=XA_TX_STAGE_MAX_NEVER)
+            /* if min_in_overall is in completed range
+             * and max_in_overall is higher than completed
+             * then allow to switch to max_state
+             */
+            if (descr->txs_min_complete <= min_in_overall 
+                    && min_in_overall <= descr->txs_max_complete
+                    && max_in_overall> descr->txs_max_complete)
+            {
+                new_txstage=max_in_overall;
+                NDRX_LOG(log_debug, "New tx stage set by max_in_overall=>%d", new_txstage);
+            }
+            else if (min_in_group!=XA_TX_STAGE_MAX_NEVER)
             {
                 new_txstage=min_in_group;
                 NDRX_LOG(log_debug, "New tx stage set by min_in_group=>%d", new_txstage);

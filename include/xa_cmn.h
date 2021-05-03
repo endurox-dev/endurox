@@ -86,6 +86,8 @@ extern "C" {
 #define XA_RM_STATUS_ACT_AB         'k' /**< RM is in joined state, but must be aborted */
 #define XA_RM_STATUS_PREP           'p' /**< RM is in prepared state            */
 #define XA_RM_STATUS_ABORTED        'a' /**< RM is in abort state               */
+#define XA_RM_STATUS_ABFORGET_HAZ   'e' /**< Aborted, needs hazard forget       */
+#define XA_RM_STATUS_ABFORGET_HEU   'f' /**< Aborted, needs heuriestic forget   */
 /** For Postgres probably we need unknown which at commit prepare leads to abort*/
 #define XA_RM_STATUS_UNKOWN         'u' /**< RM has unknown status              */
 #define XA_RM_STATUS_ABORT_HEURIS   'b' /**< Aborted houristically              */
@@ -94,6 +96,8 @@ extern "C" {
 #define XA_RM_STATUS_COMMITTED_RO   'r' /**< Committed, was read only           */
 #define XA_RM_STATUS_COMMIT_HEURIS  'h' /**< Committed, Heuristically           */
 #define XA_RM_STATUS_COMMIT_HAZARD  'z' /**< Hazrad, committed or aborted       */
+#define XA_RM_STATUS_COMFORGET_HAZ  'g' /**< Committed, needs to forget, hazard */
+#define XA_RM_STATUS_COMFORGET_HEU  'l' /**< Committed, needs to forget, heuriestic*/
     
 /* Transaction Stages */
 /* The lowest number of RM outcomes, denotes the more exact Result */
@@ -104,20 +108,34 @@ extern "C" {
 #define XA_TX_STAGE_ABORTED_HAZARD           25   /**< Abort, Hazard            */
 #define XA_TX_STAGE_ABORTED_HEURIS           30   /**< Aborted, Heuristically   */
 #define XA_TX_STAGE_ABORTED                  35   /**< Finished ok              */
+    
+/*
+ * Heuristic completion, aborting
+ */
+#define XA_TX_STAGE_ABFORGETTING             36   /**< Still committing, heuristic finish */
+#define XA_TX_STAGE_ABFORGOT_HAZ             37   /**< Committed, hazard        */
+#define XA_TX_STAGE_ABFORGOT_HEU             38   /**< Committed, heuristically */
 
-/* Entered in preparing stage, with possiblity to fall back to Abort... */
+/* Entered in preparing stage, with possibility to fall back to Abort... */
 #define XA_TX_STAGE_PREPARING                40   /**< Doing prepare            */
     
-/* Commit base 
- * TODO: Might think, if first commit fails (with no TX), then we still migth roll back
- * all the stuff.
+/* 
+ * Commit base 
  */
 #define XA_TX_STAGE_COMMITTING               50   /**< Prepared                 */
 #define XA_TX_STAGE_COMMITTED_HAZARD         55   /**< Commit, hazard           */
 #define XA_TX_STAGE_COMMITTED_HEURIS         65   /**< Commit Heuristically     */
 #define XA_TX_STAGE_COMMITTED                70   /**< Commit OK                */
+    
+/*
+ * Heuristic completion, commit
+ */
+#define XA_TX_STAGE_COMFORGETTING            80   /**< Still committing, heuristic finish */
+#define XA_TX_STAGE_COMFORGOT_HAZ            85   /**< Committed, heuristically  */
+#define XA_TX_STAGE_COMFORGOT_HEU            87   /**< Committed, hazard         */
 
 #define XA_TX_STAGE_MAX_NEVER                100  /**< Upper never stage        */
+#define XA_TX_STAGE_MIN_NEVER                -1   /**< lower never stage        */
 
 #define XA_TX_COPY(X,Y)\
     X->tmtxflags = Y->tmtxflags;\
@@ -432,7 +450,9 @@ extern NDRX_API int _tp_srv_tell_tx_fail(void);
 
 /* State driving */
 extern NDRX_API rmstatus_driver_t* xa_status_get_next_by_op(short txstage, char rmstatus, 
-                                                    int op, int op_retcode);
+                                                    int op, int op_retcode,
+                                                    atmi_xa_tx_info_t *p_xai, 
+                                                    short rmid, long btid);
 extern NDRX_API rmstatus_driver_t* xa_status_get_next_by_new_status(short   txstage, 
                                                     char next_rmstatus);
 extern NDRX_API int xa_status_get_op(short txstage, char rmstatus);

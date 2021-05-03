@@ -57,13 +57,13 @@
         <server name="tmsrv_lib1">
             <srvid>1</srvid>
             <cctag>RM1</cctag>
-            <sysopt>-e ${TESTDIR}/tmsrv_lib1.log -r -- -t1 -l${TESTDIR}/log1</sysopt>
+            <sysopt>-e ${TESTDIR}/tmsrv_lib1.log -r -- -t1 -l${TESTDIR}/log1 -s1</sysopt>
         </server>
         
         <server name="tmsrv_lib2">
             <srvid>2</srvid>
             <cctag>RM2</cctag>
-            <sysopt>-e ${TESTDIR}/tmsrv_lib2.log -r -- -t1 -l${TESTDIR}/log2</sysopt>
+            <sysopt>-e ${TESTDIR}/tmsrv_lib2.log -r -- -t1 -l${TESTDIR}/log2 -s1</sysopt>
         </server>
         
         <server name="atmisv87_1">
