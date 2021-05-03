@@ -2577,13 +2577,19 @@ no real reason for this record. Thus from Enduro/X 6.1 this fields is not used.
 |3|txstage|N..2|Mand|1|*0* - transaction does no exists,
 *5* - transaction is active in processing,
 *20* - transaction is aborting,
-*25* - transaction aborted with hazard,
-*30* - heuristically aborted,
+*25* - transaction aborted with hazard (no xa_forget call),
+*30* - heuristically aborted (no xa_forget call),
 *35* - aborted ok,
+*36* - aborted/xa_forget finishing in progress,
+*37* - aborted/hazard finished (xa_forget ok),
+*38* - aborted/heuristic finished (xa_forget ok),
 *40* - preparing,
 *55* - committed (hazard),
 *65* - heuristically committed,
-*70* - committed ok
+*70* - committed ok,
+*80* - committed/xa_forget finishing in progress,
+*85* - committed/hazard finished (xa_forget ok),
+*87* - committed/heuristic finished (xa_forget ok)
 |=========================================================
 
 
@@ -2614,7 +2620,11 @@ status is being tracked
 *c*- Committed,
 *r* - Committed (was read only),
 *h* - Committed (Heuristically),
-*z* - Hazard (committed or aborted)
+*z* - Hazard (committed or aborted),
+*e* - Aborted/hazard xa_forget() call required,
+*f* - Aborted/heuristic xa_forget() call required,
+*g* - Committed/hazard xa_forget() call required,
+*l* - Committed/heuristic xa_forget() call required,
 |5|rmerrorcode|N..3|Mand|1|TP Error code when RM entered in this status. *0* -
 means no error occurred.
 |6|rmreason|NS..4|Mand|1|XA Error code for caused RM status.

@@ -112,9 +112,9 @@ extern "C" {
 /*
  * Heuristic completion, aborting
  */
-#define XA_TX_STAGE_ABFORGETTING             36   /**< Still committing, heuristic finish */
-#define XA_TX_STAGE_ABFORGOT_HAZ             37   /**< Committed, hazard        */
-#define XA_TX_STAGE_ABFORGOT_HEU             38   /**< Committed, heuristically */
+#define XA_TX_STAGE_ABFORGETTING             36   /**< Still aborting, heuristic finish */
+#define XA_TX_STAGE_ABFORGOT_HAZ             37   /**< Aborted, hazard        */
+#define XA_TX_STAGE_ABFORGOT_HEU             38   /**< Aborted, heuristically */
 
 /* Entered in preparing stage, with possibility to fall back to Abort... */
 #define XA_TX_STAGE_PREPARING                40   /**< Doing prepare            */
