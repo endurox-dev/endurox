@@ -265,7 +265,7 @@ expublic txstage_descriptor_t G_state_descriptor[] =
 /* Normally we jump out from PREPARING, in case if state not switched */
 {XA_TX_STAGE_PREPARING,        XA_TX_STAGE_PREPARING,        XA_TX_STAGE_PREPRO,          XA_TX_STAGE_PREPRO,           "PREPARING",                  EXTRUE},
 /* no participants: */
-{XA_TX_STAGE_PREPRO,           XA_TX_STAGE_PREPRO,        XA_TX_STAGE_PREPRO,          XA_TX_STAGE_PREPRO,              "READ_ONLY",                  EXTRUE},
+{XA_TX_STAGE_PREPRO,           XA_TX_STAGE_PREPRO,           XA_TX_STAGE_PREPRO,          XA_TX_STAGE_PREPRO,           "NO_PARTICIPANTS",            EXFALSE},
 {XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED,        "COMMITTING",                 EXFALSE},
 /* Left for compliance: */
 {XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED_HAZARD, "COMMITTED_HAZARD",           EXFALSE},
