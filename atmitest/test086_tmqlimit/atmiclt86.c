@@ -950,7 +950,7 @@ exprivate int basic_commit_crash(int maxmsg)
     /* 
      * Set crash point
      */
-    if (EXSUCCEED!=system("xadmin lcf tcrash -A 1 -a"))
+    if (EXSUCCEED!=system("xadmin lcf tcrash -A 50 -a"))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to enable crash");
         EXFAIL_OUT(ret);

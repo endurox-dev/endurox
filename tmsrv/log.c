@@ -1163,7 +1163,7 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
          * Once crash flag is disabled, commit shall be finished by background
          * process.
          */
-        if (XA_TX_STAGE_COMMITTING==stage && G_atmi_env.test_tmsrv_commit_crash)
+        if (stage>0 && stage == G_atmi_env.test_tmsrv_commit_crash)
         {
             NDRX_LOG(log_debug, "QA commit crash...");
             G_atmi_env.test_tmsrv_write_fail=EXTRUE;

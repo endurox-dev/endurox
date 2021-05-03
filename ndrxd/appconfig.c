@@ -785,12 +785,13 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         ret=EXFAIL;
         goto out;
     }
-    else if (!config->restart_step)
+    /* else if (!config->restart_step) - why  ? */
+    else if (config->restart_step < 0)
     {
-        NDRX_LOG(log_debug, "`restart_step' not set!");
+        NDRX_LOG(log_debug, "`restart_step' invalid value %d!", config->restart_step);
         NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `restart_step' "
-                "not set at <appconfig> section near line %d!", 
-                G_sys_config.config_file_short, last_line);
+                "has invalid value %d in <appconfig> section near line %d!", 
+                G_sys_config.config_file_short, config->restart_step, last_line);
         ret=EXFAIL;
         goto out;
     }
