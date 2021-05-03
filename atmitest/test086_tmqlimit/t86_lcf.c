@@ -62,6 +62,8 @@ exprivate int custom_tcrash(ndrx_lcf_command_t *cmd, long *p_flags)
     NDRX_LOG(log_error, "G_atmi_env.test_tmsrv_commit_crash=%d", 
             G_atmi_env.test_tmsrv_commit_crash);
 
+    /* seems having some issues with ASAN */
+    sleep(1);
     return 0;
 }
 
@@ -74,7 +76,8 @@ exprivate int custom_qwriterr(ndrx_lcf_command_t *cmd, long *p_flags)
     G_atmi_env.test_qdisk_write_fail = atoi(cmd->arg_a);
     NDRX_LOG(log_error, "G_atmi_env.test_qdisk_write_fail=%d", 
             G_atmi_env.test_qdisk_write_fail);
-
+    /* seems having some issues with ASAN */
+    sleep(1);
     return 0;
 }
 
@@ -88,6 +91,8 @@ exprivate int custom_twriterr(ndrx_lcf_command_t *cmd, long *p_flags)
     NDRX_LOG(log_error, "G_atmi_env.test_tmsrv_write_fail=%d", 
             G_atmi_env.test_tmsrv_write_fail);
 
+    /* seems having some issues with ASAN */
+    sleep(1);
     return 0;
 }
 
@@ -178,7 +183,7 @@ expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
     xfunc.version = cfunc.version=NDRX_LCF_XCMD_VERSION;
     NDRX_STRCPY_SAFE(xfunc.helpstr, "Tmsrv write error simulation");
     xfunc.dfltflags=(NDRX_LCF_FLAG_ARGA);
-    xfunc.dfltslot=4;
+    xfunc.dfltslot=5;
     
     if (EXSUCCEED!=ndrx_lcf_xadmin_add(&xfunc))
     {

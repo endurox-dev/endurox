@@ -106,7 +106,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     
     do
     {
-        short new_txstage = 0;
+        short new_txstage = XA_TX_STAGE_MAX_NEVER;
         int op_code = 0;
         int op_ret = 0;
         int op_reason = 0;
@@ -267,12 +267,20 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     goto out;
                 }
                 
+                /* so if it is outside of our range and jump is permitted, then
+                 * jump to lowest level we got.
+                 */
                 if ((descr->txs_stage_min>vote_txstage->next_txstage ||
-                        descr->txs_max_complete<vote_txstage->next_txstage) && descr->allow_jump)
+                        descr->txs_max_complete<vote_txstage->next_txstage) 
+                        && descr->allow_jump 
+                        && vote_txstage->next_txstage < new_txstage)
                 {
-                    NDRX_LOG(log_warn, "Stage group left!");
-
+                    /* 
+                     * jump to lowest level we got.
+                     * So aborting will win over the committing
+                     */
                     new_txstage = vote_txstage->next_txstage;
+                    NDRX_LOG(log_info, "Voting to leave group for %hd!", new_txstage);
                     /* switch the stage */
                     again = EXTRUE;
                     break;
@@ -286,7 +294,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             }
         }
         
-        if (!new_txstage)
+        if (XA_TX_STAGE_MAX_NEVER==new_txstage)
         {
             min_in_group = XA_TX_STAGE_MAX_NEVER;
             min_in_overall = XA_TX_STAGE_MAX_NEVER;
