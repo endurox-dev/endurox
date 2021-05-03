@@ -1102,13 +1102,28 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     
     TPTRANID tranid, *p_tranid;
     
-    NDRX_LOG(log_debug, "%s: enter", __func__);
+    NDRX_LOG(log_debug, "%s: enter flags=%ld tx=%p xa_flags_sys=%ld", __func__, 
+            flags, G_atmi_tls->G_atmi_xa_curtx.txinfo, G_atmi_env.xa_flags_sys);
     
     cachectl.should_cache = EXFALSE;
     cachectl.cached_rsp = EXFALSE;
 
-    if (flags & TPTRANSUSPEND)
+        /* In case if not no tran and have global tran */
+    if (    !(flags & TPNOTRAN) &&  G_atmi_tls->G_atmi_xa_curtx.txinfo &&
+            (
+                /* if forced suspend */
+                (flags & TPTRANSUSPEND) ||
+                    /* Or not marked as no join and not marked as no-suspend*/
+                    (
+                        !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN)
+                        &&  
+                        !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSUSPEND)
+                    )
+            )
+       )
     {
+        /* mark finally that suspend shall happen */
+        flags|=TPTRANSUSPEND;
         memset(&tranid, 0, sizeof(tranid));
         p_tranid = &tranid;
     }

@@ -482,6 +482,15 @@ expublic int tex_mq_notify(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
+    if (EXSUCCEED!=tmq_finalize_files(p_ub))
+    {
+        NDRX_LOG(log_error, "Failed to finalize disk files ...");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* run the file ops...
+     * if they are OK 
+     */
     if (EXSUCCEED!=tmq_unlock_msg(&b))
     {
         NDRX_LOG(log_error, "Failed to unlock message...");

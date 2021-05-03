@@ -803,7 +803,8 @@ expublic UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_a
             /* ok, in this case at prepare we shall roll back.. */
             if (TPENOENT==tperrno)
             {
-                G_atmi_tls->M_atmi_reason=NDRX_XA_ERSN_TPENOENT;
+                /* ask for retry... */
+                G_atmi_tls->M_atmi_reason=XA_RETRY;
             }
             else
             {

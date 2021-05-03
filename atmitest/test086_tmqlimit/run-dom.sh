@@ -100,7 +100,6 @@ function go_out {
     exit $1
 }
 
-
 function clean_logs {
 
     # clean-up the logs for debbuging at the error.
@@ -109,6 +108,30 @@ function clean_logs {
     done
 
 }
+
+UNAME=`uname`
+
+#
+# export the library path.
+#
+case $UNAME in
+
+  Darwin)
+    export NDRX_PLUGINS=libt86_lcf.dylib
+    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$TESTDIR
+    ;;
+
+  AIX)
+    export NDRX_PLUGINS=libt86_lcf.so
+    export LIBPATH=$LIBPATH:$TESTDIR
+    ;;
+
+  *)
+    export NDRX_PLUGINS=libt86_lcf.so
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TESTDIR
+    ;;
+esac
+
 
 # Where to store TM logs
 rm -rf ./RM1
@@ -133,6 +156,61 @@ xadmin psc
 xadmin psvc
 xadmin ppm
 clean_logs;
+rm ULOG*
+
+echo "Testing loadprep"
+(./atmiclt86 loadprep 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+# after loadprep log folders shall be cleaned up...
+xadmin stop -y
+
+# Where to store TM logs
+rm -rf ./RM1
+mkdir RM1
+
+rm -rf ./RM2
+mkdir RM2
+
+# Where to store Q messages (QSPACE1)
+rm -rf ./QSPACE1
+mkdir QSPACE1
+
+xadmin start -y
+
+echo "Testing diskfull"
+clean_logs;
+xadmin help lcf 
+
+(./atmiclt86 diskfull 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Testing tmsrvdiskerr"
+(./atmiclt86 tmsrvdiskerr 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Testing commit_crash"
+(./atmiclt86 commit_crash 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Testing badmsg"
+(./atmiclt86 badmsg 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
 
 echo "Testing qfull"
 (./atmiclt86 qfull 2>&1) >> ./atmiclt-dom1.log
@@ -140,6 +218,14 @@ RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
+
+echo "Testing commit_shut"
+(./atmiclt86 commit_shut 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
 
 go_out $RET
 

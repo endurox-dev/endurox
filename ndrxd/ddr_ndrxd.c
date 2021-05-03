@@ -41,8 +41,9 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <errno.h>
-
 #include <regex.h>
+
+#include <ndrx_intdef.h>
 #include <exregex.h>
 #include <ndrx_ddr.h>
 #include <ndrxd.h>
@@ -846,9 +847,31 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
         }
         else if (0==strcmp((char *)attr->name, "autotran"))
         {
-            if ('y'==*p || 'Y'==*p)
+            /* y/Y */
+            if (NDRX_SETTING_TRUE1==*p || NDRX_SETTING_TRUE2==*p)
             {
                 p_svc->routsvc.autotran=EXTRUE;
+            } /* n/N - Bug #675 */
+            else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE1==*p)
+            {
+                p_svc->routsvc.autotran=EXFALSE;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "(%s) Invalid autotran setting [%s] in <services> "
+                        "section, expected values [%c%c%c%c]", 
+                        G_sys_config.config_file_short, p,
+                        NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2);
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
+                    "(%s) Invalid autotran setting [%s] in <services> "
+                        "section, expected values [%c%c%c%c]", 
+                        G_sys_config.config_file_short, p,
+                        NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2);
+
+                xmlFree(p);
+                EXFAIL_OUT(ret);
             }
         }
         else if (0==strcmp((char *)attr->name, "trantime"))

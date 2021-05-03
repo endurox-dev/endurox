@@ -48,6 +48,7 @@
 
 #include <exnet.h>
 #include <ndrxdcmn.h>
+#include <qcommon.h>
 
 #include "tmqd.h"
 #include "../libatmisrv/srv_int.h"
@@ -102,5 +103,99 @@ expublic char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
     NDRX_LOG(log_debug, "CORID after serialize: [%s]", corid_str_out);
     
     return corid_str_out;
+}
+
+/**
+ * Finalize file commands (before notifications unlock q space)
+ * Also only one type of ops are supported either batch remove or batch rename
+ * @param p_ub UBF 
+ * @return 
+ */
+expublic int tmq_finalize_files(UBFH *p_ub)
+{
+    int ret = EXSUCCEED;
+    BFLDOCC occ, occs = Boccur(p_ub, EX_QFILECMD);
+    char cmd;
+    char *fname1, *fname2;
+    
+    /* rename -> mandatory. Also if on remove file does not exists, this is the
+     *  same as removed OK
+     * first unlink -> mandatory
+     * second unlink -> optional 
+     */
+    
+    for (occ=0; occ<occs; occ++)
+    {
+        if (EXSUCCEED!=Bget(p_ub, EX_QFILECMD, occ, &cmd, NULL))
+        {
+            NDRX_LOG(log_error, "Failed to get EX_QFILECMD at occ %d: %s", 
+                    occ, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        fname1 = Bfind(p_ub, EX_QFILENAME1, occ, NULL);
+
+        if (NULL==fname1)
+        {
+            NDRX_LOG(log_error, "Failed to find EX_QFILENAME1 occ %d: %s", 
+                    occ, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (TMQ_FILECMD_UNLINK==cmd)
+        {            
+            NDRX_LOG(log_debug, "Unlinking file [%s]", fname1);
+
+            if (EXSUCCEED!=unlink(fname1))
+            {
+                if (ENOENT!=errno)
+                {
+                    int err = errno;
+                    NDRX_LOG(log_error, "Failed to unlinking file [%s] occ %d: %s", 
+                            fname1, occ, strerror(err));
+                    userlog("Failed to unlinking file [%s] occ %d: %s", 
+                            fname1, occ, strerror(err));
+                    
+                    if (0==occ)
+                    {
+                        /* this is critical file */
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                }
+            }
+        }
+        else if (TMQ_FILECMD_RENAME==cmd)
+        {
+            fname2 = Bfind(p_ub, EX_QFILENAME2, occ, NULL);
+            
+            if (NULL==fname1)
+            {
+                NDRX_LOG(log_error, "Failed to find EX_QFILENAME2 occ %d: %s", 
+                        occ, Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_LOG(log_debug, "About to rename: [%s] -> [%s]",
+                    fname1, fname2);
+            if (EXSUCCEED!=rename(fname1, fname2))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to rename file [%s] -> [%s] occ %d: %s", 
+                        fname1, fname2, occ, strerror(err));
+                userlog("Failed to rename file [%s] -> [%s] occ %d: %s", 
+                        fname1, fname2, occ, strerror(err));
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Unsupported file command %c", cmd);
+            EXFAIL_OUT(ret);   
+        }
+    }
+    
+out:
+    return ret;
 }
 /* vim: set ts=4 sw=4 et smartindent: */
