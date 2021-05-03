@@ -71,7 +71,7 @@ exprivate rmstatus_driver_t M_rm_status_driver_preparing[] =
     /* ok: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_OK,     XA_OK,     XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
     /* read only assumed as committed: */
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_RDONLY, XA_RDONLY, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTED},
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XA_RDONLY, XA_RDONLY, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTING},
     /* If no transaction, then assume committed, read only: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_NOTA, XAER_NOTA, XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTING},
     /* Shall we perform any action here? */
@@ -84,6 +84,10 @@ exprivate rmstatus_driver_t M_rm_status_driver_preparing[] =
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_PREP,   XA_OP_NOP,     XA_OK,XA_OK,          XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
     /* If recovered from logs where decision is not yet logged, but was logged that this particular RM wants abort: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACT_AB, XA_OP_NOP,     XA_OK,XA_OK,          XA_RM_STATUS_ACT_AB,        XA_TX_STAGE_ABORTING},
+    /* If restarted, vote for abort, thought after the restart we enter automatically in abort sequence */
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ABORTED,XA_OP_NOP,     XA_OK,XA_OK,          XA_RM_STATUS_ABORTED,       XA_TX_STAGE_ABORTING},
+    /* if restarted, vote for commit */
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_COMMITTED_RO,XA_OP_NOP,XA_OK,XA_OK,          XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTING},
     
     {EXFAIL}
 };
@@ -257,9 +261,8 @@ expublic txstage_descriptor_t G_state_descriptor[] =
 {XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS,   "ABORTED_HEURIS",             EXFALSE},
 /* Left for compliance: */
 {XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,         XA_TX_STAGE_ABORTED,          "ABORTED",                    EXFALSE},
-/* This assumes that after preparing follows committing, and this is the group. The completed min is: XA_TX_STAGE_COMMITTED_HAZARD
- * and not XA_TX_STAGE_PREPARING! */
-{XA_TX_STAGE_PREPARING,        XA_TX_STAGE_PREPARING,        XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED,        "PREPARING",                  EXTRUE},
+/* Normally we jump out from PREPARING */
+{XA_TX_STAGE_PREPARING,        XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL,             "PREPARING",                  EXTRUE},
 {XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED,        "COMMITTING",                 EXFALSE},
 /* Left for compliance: */
 {XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED_HAZARD, "COMMITTED_HAZARD",           EXFALSE},
@@ -291,7 +294,6 @@ expublic txstate2tperrno_t G_txstage2tperrno[] =
 {XA_TX_STAGE_ABORTING,         XA_OP_COMMIT,    TPEHAZARD},
 {XA_TX_STAGE_ABORTED_HAZARD,   XA_OP_COMMIT,    TPEHAZARD},
 {XA_TX_STAGE_ABORTED_HEURIS,   XA_OP_COMMIT,    TPEHEURISTIC},
-/* Extra check on exit, if abort was requested, then translate to SUCCEED */
 {XA_TX_STAGE_ABORTED,          XA_OP_COMMIT,    TPEABORT},
 {XA_TX_STAGE_PREPARING,        XA_OP_COMMIT,    TPESYSTEM},
 {XA_TX_STAGE_COMMITTING,       XA_OP_COMMIT,    TPEHAZARD},
@@ -311,7 +313,6 @@ expublic txstate2tperrno_t G_txstage2tperrno[] =
 {XA_TX_STAGE_ABORTING,         XA_OP_ROLLBACK,  TPEHAZARD},
 {XA_TX_STAGE_ABORTED_HAZARD,   XA_OP_ROLLBACK,  TPEHAZARD},
 {XA_TX_STAGE_ABORTED_HEURIS,   XA_OP_ROLLBACK,  TPEHEURISTIC},
-/* Extra check on exit, if abort was requested, then translate to SUCCEED */
 {XA_TX_STAGE_ABORTED,          XA_OP_ROLLBACK,  EXSUCCEED},
 {XA_TX_STAGE_PREPARING,        XA_OP_ROLLBACK,  TPESYSTEM},
 {XA_TX_STAGE_COMMITTING,       XA_OP_ROLLBACK,  TPEHAZARD},

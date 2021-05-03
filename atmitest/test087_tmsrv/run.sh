@@ -425,6 +425,278 @@ verify_ulog "RM2" "xa_rollback" "0";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
 
+
+echo ""
+echo "************************************************************************"
+echo "Commit OK read only ... (both)"
+echo "************************************************************************"
+
+xadmin sreload -y
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:3:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:3:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+NDRX_CCTAG="RM1" ./atmiclt87
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Build atmiclt87 failed"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+
+verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+
+echo ""
+echo "************************************************************************"
+echo "Commit fail read only + aborted"
+echo "************************************************************************"
+
+xadmin sreload -y
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:3:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:-4:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPEABORT"* ]]; then
+    echo "Expected TPEABORT"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+
+verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+echo ""
+echo "************************************************************************"
+echo "Commit fail aborted + aborting"
+echo "************************************************************************"
+
+xadmin sreload -y
+clean_ulog;
+
+# this is aborted
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:-4:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+# lower the rank to aborting...
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:-6:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPEABORT"* ]]; then
+    echo "Expected TPEABORT"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+
+verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "1";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+
+echo ""
+echo "************************************************************************"
+echo "Commit fail aborting + aborted"
+echo "************************************************************************"
+
+xadmin sreload -y
+clean_ulog;
+
+# Lowest rank
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:-6:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+# Does not upgrade
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:-4:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPEABORT"* ]]; then
+    echo "Expected TPEABORT"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "1";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+
+verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
 echo ""
 echo "************************************************************************"
 echo "Commit PREP XAER_NOTA  ..."
@@ -2177,6 +2449,99 @@ verify_ulog "RM2" "xa_commit" "1";
 verify_ulog "RM2" "xa_rollback" "0";
 verify_ulog "RM2" "xa_forget" "1";
 verify_logfiles "log2" "0"
+
+echo ""
+echo "************************************************************************"
+echo "Automatic rollback of active records"
+echo "************************************************************************"
+
+xadmin sreload -y
+xadmin lcf tcrash -A 40 -a -n
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+ERR=`NDRX_TOUT=5 NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPETIME"* ]]; then
+    echo "Expected TPETIME"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "0";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "1"
+
+verify_ulog "RM2" "xa_prepare" "0";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+#
+# Print what ever we have in logs...
+#
+cat log1/*
+
+# Transaction shall roll back due to expiry
+sleep 20
+
+verify_ulog "RM1" "xa_prepare" "0";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "1";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+
+verify_ulog "RM2" "xa_prepare" "0";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "1";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+
+# disable the command
+xadmin lcf disable -s 5
 
 echo ""
 echo "************************************************************************"
