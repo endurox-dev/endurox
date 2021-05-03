@@ -2584,6 +2584,7 @@ no real reason for this record. Thus from Enduro/X 6.1 this fields is not used.
 *37* - aborted/hazard finished (xa_forget ok),
 *38* - aborted/heuristic finished (xa_forget ok),
 *40* - preparing,
+*41* - preparing (no participants),
 *55* - committed (hazard),
 *65* - heuristically committed,
 *70* - committed ok,
