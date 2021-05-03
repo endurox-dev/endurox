@@ -62,7 +62,7 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    if (0!=tpbegin(60, 0))
+    if (0!=tpbegin(15, 0))
     {
         fprintf(stderr, "Failed to tpbegin: %s\n", tpstrerror(tperrno));
         ret=-1;
