@@ -66,11 +66,11 @@ add_library (t86_lcf SHARED
                 t86_lcf.c
             )
 if(CMAKE_OS_NAME STREQUAL "CYGWIN")
-    target_link_libraries(custom_lcf atmi ubf nstd)
+    target_link_libraries(t86_lcf atmi ubf nstd)
 elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
-    target_link_libraries(custom_lcf atmi ubf nstd)
+    target_link_libraries(t86_lcf atmi ubf nstd)
 elseif(CMAKE_OS_NAME STREQUAL "AIX")
-    target_link_libraries(custom_lcf pthread)
+    target_link_libraries(t86_lcf pthread)
 endif()
 
 ################################################################################
