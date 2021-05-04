@@ -1472,6 +1472,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                                         /* skip & continue with next */
                         NDRX_FCLOSE(f);
                         f=NULL;
+                        NDRX_FREE((char *)p_block);
+                        p_block = NULL;
                         continue;
                         /*
                         EXFAIL_OUT(ret);
