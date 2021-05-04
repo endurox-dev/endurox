@@ -1113,13 +1113,14 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
     
     /* Read first time stamp */
     TOKEN_READ("info", "tstamp");
-    p_tl->t_start = atol(p);
+    p_tl->t_start = strtoull (p, NULL, 10);
     
     tdiff = ndrx_utc_tstamp() - p_tl->t_start;
     /* adjust the timer...  */
     ndrx_stopwatch_reset(&p_tl->ttimer);
     ndrx_stopwatch_minus(&p_tl->ttimer, tdiff);
-    NDRX_LOG(log_debug, "Transaction age: %lld ms", ndrx_stopwatch_get_delta(&p_tl->ttimer));
+    NDRX_LOG(log_debug, "Transaction age: %ld ms (t_start: %llu tdiff: %lld)",
+        ndrx_stopwatch_get_delta(&p_tl->ttimer), p_tl->t_start, tdiff);
              
     /* read tmrmid, tmnodeid, tmsrvid = ignore, but they must be in place! */
     TOKEN_READ("info", "cmdid");
