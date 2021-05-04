@@ -613,7 +613,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         /* If this is initial line && record J
          * or log_version > 0, perform checksuming.
          */
-        if (!infos_ok && LOG_COMMAND_J==*p || (*pp_tl)->log_version > LOG_VERSION_1)
+        if ((!infos_ok && LOG_COMMAND_J==*p) || ((*pp_tl)->log_version > LOG_VERSION_1))
         {
             char *rs = strchr(buf, LOG_RS_SEP);
             unsigned long crc32_calc=0, crc32_got=0;
