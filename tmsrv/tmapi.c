@@ -611,6 +611,34 @@ out:
     return ret;
 }
 
+/**
+ * Forget entry
+ * @param p_ub req buf
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tm_tmforget(UBFH *p_ub)
+{
+    int ret = EXSUCCEED;
+    atmi_xa_tx_info_t xai;
+    
+    NDRX_LOG(log_debug, "tm_tmforget called.");
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, 0))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
+                    "Failed to read transaction info!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* read xai from FB... */
+    if (EXSUCCEED!=(ret = tm_forget_local(p_ub, &xai, xai.btid)))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
 /******************************************************************************/
 /*                         COMMAND LINE API                                   */
 /******************************************************************************/

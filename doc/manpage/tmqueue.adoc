@@ -137,6 +137,8 @@ forward) separately, message by message. So this means that during the commit
 execution, even thought commit is not completed yet, part of the messages will
 appear as committed.
 
+Flag *NOJOIN* is not supported for XA libndrxxaqdisks and libndrxxaqdiskd drivers.
+
 EXIT STATUS
 -----------
 *0*::

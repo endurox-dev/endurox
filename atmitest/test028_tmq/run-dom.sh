@@ -140,6 +140,7 @@ mkdir QSPACE1
 
 cp q.conf.tpl q.conf
 
+clean_logs;
 set_dom1;
 # clean up anything left from prevoius tests...
 xadmin down -y

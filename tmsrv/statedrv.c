@@ -94,6 +94,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     
     int min_in_group;
     int min_in_overall;
+    int max_in_overall;
     int try=0;
     int was_retry;
     int is_tx_finished = EXFALSE;
@@ -105,7 +106,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     
     do
     {
-        short new_txstage = 0;
+        short new_txstage = XA_TX_STAGE_MAX_NEVER;
         int op_code = 0;
         int op_ret = 0;
         int op_reason = 0;
@@ -184,6 +185,14 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                             op_tperrno = tperrno;
                         }
                         break;
+                    case XA_OP_FORGET:
+                        NDRX_LOG(log_info, "Forget RMID %d", i+1);
+                        if (EXSUCCEED!=(op_ret = tm_forget_combined(p_xai, i+1, el->btid)))
+                        {
+                            op_reason = atmi_xa_get_reason();
+                            op_tperrno = tperrno;
+                        }
+                        break;
                     default:
                         NDRX_LOG(log_error, "Invalid opcode %d", op_code);
                         ret=TPESYSTEM;
@@ -193,7 +202,14 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 NDRX_LOG(log_info, "Operation tperrno: %d, xa return code: %d",
                                          op_tperrno, op_reason);
 
-                if (op_reason==XA_RETRY) 
+                /* In case if not preparing
+                 * allow some retries. 
+                 * TODO: Probably would want to add some sleep to wait
+                 * retry (for background ops, probably no retry processing
+                 * required at all).
+                 */
+                if (XA_TX_STAGE_PREPARING!=p_tl->txstage
+                        && (op_reason==XA_RETRY || op_reason==XAER_RMFAIL))
                 {
                     was_retry = EXTRUE;   
                 }
@@ -201,6 +217,13 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 /* Now get the transition of the state/vote */
                 if (XA_OP_NOP == op_code)
                 {
+                    /* So this does not vote?
+                     * But if it was recovered files? And it previously voted,
+                     * the transaction should be aborted? Seems like this is
+                     * not very correct.
+                     * However this happens only if the row is defined. Thus
+                     * all decision status mappings for stage must be defined.
+                     */
                     if (NULL==(vote_txstage = xa_status_get_next_by_new_status(p_tl->txstage, 
                             el->rmstatus)))
                     {
@@ -215,8 +238,10 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 }
                 else
                 {
+                    /* this will ULOG unexpected return codes: */
                     if (NULL==(vote_txstage = xa_status_get_next_by_op(p_tl->txstage, 
-                            el->rmstatus, op_code, op_reason)))
+                            el->rmstatus, op_code, op_reason,
+                            p_xai, i+1, el->btid)))
                     {
                         NDRX_LOG(log_error, "Invalid stage for %hd/%c/%d/%d", 
                                 p_tl->txstage, el->rmstatus, op_code, op_reason);
@@ -242,12 +267,20 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     goto out;
                 }
                 
+                /* so if it is outside of our range and jump is permitted, then
+                 * jump to lowest level we got.
+                 */
                 if ((descr->txs_stage_min>vote_txstage->next_txstage ||
-                        descr->txs_max_complete<vote_txstage->next_txstage) && descr->allow_jump)
+                        descr->txs_max_complete<vote_txstage->next_txstage) 
+                        && descr->allow_jump 
+                        && vote_txstage->next_txstage < new_txstage)
                 {
-                    NDRX_LOG(log_warn, "Stage group left!");
-
+                    /* 
+                     * jump to lowest level we got.
+                     * So aborting will win over the committing
+                     */
                     new_txstage = vote_txstage->next_txstage;
+                    NDRX_LOG(log_info, "Voting to leave group for %hd!", new_txstage);
                     /* switch the stage */
                     again = EXTRUE;
                     break;
@@ -261,10 +294,11 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             }
         }
         
-        if (!new_txstage)
+        if (XA_TX_STAGE_MAX_NEVER==new_txstage)
         {
             min_in_group = XA_TX_STAGE_MAX_NEVER;
             min_in_overall = XA_TX_STAGE_MAX_NEVER;
+            max_in_overall = XA_TX_STAGE_MIN_NEVER;
             /* Calculate from array */
             for (i=0; i<=stagearr.maxindexused; i++)
             {
@@ -279,6 +313,13 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     min_in_overall = ve->stage;
                     NDRX_LOG(log_debug, "min_in_overall=>%d", min_in_overall);
                 }
+                
+                if (ve->stage > max_in_overall)
+                {
+                    max_in_overall = ve->stage;
+                    NDRX_LOG(log_debug, "max_in_overall=>%d", max_in_overall);
+                }
+                
 
                 /* what is this? Descr and vote_txstage will be last
                  * from the loop - wrong!
@@ -295,7 +336,18 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 }
             }/* for */
             
-            if (min_in_group!=XA_TX_STAGE_MAX_NEVER)
+            /* if min_in_overall is in completed range
+             * and max_in_overall is higher than completed
+             * then allow to switch to max_state
+             */
+            if (descr->txs_min_complete <= min_in_overall 
+                    && min_in_overall <= descr->txs_max_complete
+                    && max_in_overall> descr->txs_max_complete)
+            {
+                new_txstage=max_in_overall;
+                NDRX_LOG(log_debug, "New tx stage set by max_in_overall=>%d", new_txstage);
+            }
+            else if (min_in_group!=XA_TX_STAGE_MAX_NEVER)
             {
                 new_txstage=min_in_group;
                 NDRX_LOG(log_debug, "New tx stage set by min_in_group=>%d", new_txstage);
@@ -325,7 +377,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             again = EXTRUE;
         }
         
-        /* if switched to committing & requested descision logged, then return */
+        /* if switched to committing & requested decision logged, then return */
         if ( (flags & TP_CMT_LOGGED) && XA_TX_STAGE_COMMITTING == descr->txstage)
         {
             NDRX_LOG(log_info, "Decision logged for commit return");
@@ -360,7 +412,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         NDRX_LOG(log_info, "Transaction completed - remove logs");
         
         /* p_tl becomes invalid! */
-        tms_remove_logfile(p_tl);
+        tms_remove_logfile(p_tl, EXTRUE);
         
         is_tx_finished = EXTRUE;
     }

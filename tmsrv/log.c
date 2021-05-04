@@ -69,9 +69,13 @@
 /*---------------------------Macros-------------------------------------*/
 #define LOG_MAX         1024
 
-#define LOG_COMMAND_STAGE           'S' /* Identify stage of txn */
-#define LOG_COMMAND_I               'I' /* Info about txn */
-#define LOG_COMMAND_RMSTAT          'R' /* Log the RM status */
+#define LOG_COMMAND_STAGE           'S' /**< Identify stage of txn           */
+#define LOG_COMMAND_I               'I' /**< Info about txn                  */
+#define LOG_COMMAND_J               'J' /**< Version 2 format with checksums */
+#define LOG_COMMAND_RMSTAT          'R' /**< Log the RM status               */
+
+#define LOG_VERSION_1                1   /**< Initial version                  */
+#define LOG_VERSION_2                2   /**< Version 1, contains crc32 checks */
 
 #define CHK_THREAD_ACCESS if (ndrx_gettid()!=p_tl->lockthreadid)\
     {\
@@ -81,7 +85,7 @@
                 p_tl->tmxid, ndrx_gettid(), p_tl->lockthreadid);\
         return EXFAIL;\
     }
-
+#define LOG_RS_SEP  ';'            /**< record seperator               */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -94,7 +98,6 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
 exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl);
-
 
 /**
  * Unlock transaction
@@ -187,6 +190,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
         long *btid)
 {
     int ret = EXSUCCEED;
+    int hash_added = EXFALSE;
     atmi_xa_log_t *tmp = NULL;
     atmi_xa_rm_status_btid_t *bt;
     /* 1. Add stuff to hash list */
@@ -206,7 +210,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     tmp->t_start = ndrx_utc_tstamp();
     tmp->t_update = ndrx_utc_tstamp();
     tmp->txtout = txtout;
-    
+    tmp->log_version = LOG_VERSION_2;   /**< Now with CRC32 groups */
     ndrx_stopwatch_reset(&tmp->ttimer);
     
     /* lock for us, yet it is not shared*/
@@ -270,12 +274,21 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     EXHASH_ADD_STR( M_tx_hash, tmxid, tmp);
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
+    hash_added = EXTRUE;
+    
 out:
     
     /* unlock */
-    if (NULL!=tmp)
+    if (EXSUCCEED!=ret)
     {
-        tms_unlock_entry(tmp);
+        tms_remove_logfile(tmp, hash_added);
+    }
+    else
+    {
+        if (NULL!=tmp)
+        {
+            tms_unlock_entry(tmp);
+        }
     }
     return ret;
 }
@@ -513,7 +526,8 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     char buf[1024]; /* Should be enough... */
     char *p;
     int line = 1;
-    
+    int got_term_last=EXFALSE, infos_ok=EXFALSE, missing_term_in_file=EXFALSE;
+    int wrote, err;
     *pp_tl = NULL;
     
     if (NULL==(*pp_tl = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
@@ -530,7 +544,6 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     
     NDRX_STRCPY_SAFE((*pp_tl)->fname, logfile);
     
-    /* TODO: might want to check buffer sizes? */
     len = strlen(tmxid);
     if (len>sizeof((*pp_tl)->tmxid)-1)
     {
@@ -539,33 +552,53 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     }
     
     NDRX_STRCPY_SAFE((*pp_tl)->tmxid, tmxid);
-    (*pp_tl)->is_background = EXTRUE;
+    /* we start with active... */
+    (*pp_tl)->txstage = XA_TX_STAGE_ACTIVE;
+
     /* Open the file */
     if (EXSUCCEED!=tms_open_logfile(*pp_tl, "r+"))
     {
         NDRX_LOG(log_error, "Failed to open transaction file!");
         EXFAIL_OUT(ret);
     }
-    
+
     /* Read line by line & call parsing functions 
      * we should also parse start of the transaction (date/time)
      */
     while (fgets(buf, sizeof(buf), (*pp_tl)->f))
     {
+        got_term_last = EXFALSE;
         len = strlen(buf);
-        if ('\n'==buf[len-1])
+        
+        if (1 < len && '\n'==buf[len-1])
         {
             buf[len-1]=EXEOS;
             len--;
+            got_term_last = EXTRUE;
         }
-        
-        if ('\r'==buf[len-1])
+
+        /* if somebody operated with Windows... */
+        if (1 < len && '\r'==buf[len-1])
         {
             buf[len-1]=EXEOS;
             len--;
         }
         
         NDRX_LOG(log_debug, "Parsing line: [%s]", buf);
+        
+        if (!got_term_last)
+        {
+            /* Corrupted file, terminator expected 
+             * - mark record as corrupted.
+             * - Also we will try to repair the situation, if last line was corrupted
+             * then we mark with with NAK.
+             */
+            missing_term_in_file = EXTRUE;
+            continue;
+        }
+        
+        /* If there was power off, then we might get corrupted lines...
+         */
         p = strchr(buf, ':');
         
         if (NULL==p)
@@ -577,26 +610,105 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         p++;
         
         /* Classify & parse record */
-        NDRX_LOG(log_debug, "Record: %c", *p);
+        NDRX_LOG(log_error, "Record: %c log_version: %d", *p, (*pp_tl)->log_version);
+        
+        /* If this is initial line && record J
+         * or log_version > 0, perform checksuming.
+         */
+        if ((!infos_ok && LOG_COMMAND_J==*p) || ((*pp_tl)->log_version > LOG_VERSION_1))
+        {
+            char *rs = strchr(buf, LOG_RS_SEP);
+            unsigned long crc32_calc=0, crc32_got=0;
+            
+            if (NULL==rs)
+            {
+                NDRX_LOG(log_error, "TMSRV log file [%s] missing %c sep on line [%s] - ignore line", 
+                            logfile, LOG_RS_SEP, buf);
+                userlog("TMSRV log file [%s] missing %c sep on line [%s] - ignore line", 
+                            logfile, LOG_RS_SEP, buf);
+                continue;
+            }
+            
+            *rs = EXEOS;
+            rs++;
+            
+            /* Now we get crc32 */
+            crc32_calc = ndrx_Crc32_ComputeBuf(0, buf, strlen(buf));
+            sscanf(rs, "%lx", &crc32_got);
+            
+            /* verify the log... */
+            if (crc32_calc!=crc32_got)
+            {
+                NDRX_LOG(log_error, "TMSRV log file [%s] invalid log [%s] line "
+                        "crc32 calc: [%lx] vs rec: [%lx] - ignore line", 
+                        logfile, buf, crc32_calc, crc32_got);
+                userlog("TMSRV log file [%s] invalid log [%s] line "
+                        "crc32 calc: [%lx] vs rec: [%lx] - ignore line", 
+                         logfile, buf, crc32_calc, crc32_got);
+                continue;
+            }
+            
+        }
+        
         switch (*p)
         {
-            case LOG_COMMAND_I: 
+            /* Version 0: */
+            case LOG_COMMAND_I:
+            /* Version 1: */
+            case LOG_COMMAND_J:
+                
+                if (infos_ok)
+                {
+                    NDRX_LOG(log_error, "TMSRV log file [%s] duplicate info block", 
+                            logfile);
+                    userlog("TMSRV log file [%s] duplicate info block", 
+                            logfile);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* set the version number */
+                (*pp_tl)->log_version = *p - LOG_COMMAND_I + 1;
+                
                 if (EXSUCCEED!=tms_parse_info(buf, *pp_tl))
                 {
                     EXFAIL_OUT(ret);
                 }
+                
+                infos_ok = EXTRUE;
                 break;
             case LOG_COMMAND_STAGE: 
+                
+                if (!infos_ok)
+                {
+                    NDRX_LOG(log_error, "TMSRV log file [%s] Info record required first", 
+                            logfile);
+                    userlog("TMSRV log file [%s] Info record required first", 
+                            logfile);
+                    EXFAIL_OUT(ret);
+                }
+                
                 if (EXSUCCEED!=tms_parse_stage(buf, *pp_tl))
                 {
                     EXFAIL_OUT(ret);
                 }
+                
                 break;
             case LOG_COMMAND_RMSTAT:
+                
+                if (!infos_ok)
+                {
+                    NDRX_LOG(log_error, "TMSRV log file [%s] Info record required first", 
+                            logfile);
+                    userlog("TMSRV log file [%s] Info record required first", 
+                            logfile);
+                    EXFAIL_OUT(ret);
+                }
+                
                 if (EXSUCCEED!=tms_parse_rmstatus(buf, *pp_tl))
                 {
                     EXFAIL_OUT(ret);
                 }
+                
                 break;
             default:
                 NDRX_LOG(log_warn, "Unknown record %c on line %d", *p, line);
@@ -605,6 +717,82 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         
         line++;
     }
+    
+    /* check was last read OK */
+    if (!feof((*pp_tl)->f))
+    {
+        err = ferror((*pp_tl)->f);
+        
+        NDRX_LOG(log_error, "TMSRV log file [%s] failed to read: %s", 
+                    logfile, strerror(err));
+        userlog("TMSRV log file [%s] failed to read: %s", 
+                    logfile, strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!infos_ok)
+    {
+        NDRX_LOG(log_error, "TMSRV log file [%s] no [%c] info record - not loading", 
+                    logfile, LOG_COMMAND_J);
+        userlog("TMSRV log file [%s] no [%c] info record - not loading", 
+                    logfile, LOG_COMMAND_J);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* so that next time we can parse OK */
+    if (missing_term_in_file)
+    {
+        /* so last line bad, lets fix... */
+        if (got_term_last)
+        {
+            NDRX_LOG(log_error, "TMSRV log file [%s] - invalid read, "
+                    "previous lines seen without \\n", 
+                    logfile);
+            userlog("TMSRV log file [%s] - invalid read, "
+                    "previous lines without \\n", 
+                    logfile);
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            /* append with \n */
+            NDRX_LOG(log_error, "Terminating last line (with out checksum)");
+
+            wrote=fprintf((*pp_tl)->f, "\n");
+
+            if (wrote!=1)
+            {
+                err = ferror((*pp_tl)->f);
+                NDRX_LOG(log_error, "TMSRV log file [%s] failed to terminate line: %s", 
+                        logfile, strerror(err));
+                userlog("TMSRV log file [%s] failed to terminate line: %s", 
+                        logfile, strerror(err));
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    
+    /* if not active, then no one waits for on as due to restart... 
+     * if we are still active, then there is chance that somebody will ask
+     * for completion.
+     */
+    if (XA_TX_STAGE_ACTIVE != (*pp_tl)->txstage)
+    {
+        /* thus it will start to drive it by background thread
+         */
+        (*pp_tl)->is_background = EXTRUE;
+    }
+    
+    /* 
+     * If we keep in active state, then timeout will kill the transaction (or it will be finished by in progress 
+     *  binary, as maybe transaction is not yet completed). Thought we might loss the infos
+     *  of some registered process, but then it would be aborted transaction anyway.
+     *  but then record might be idling in the resource.
+     * 
+     * If we had stage logged, then transaction would be completed accordingly,
+     * and would complete with those resources for which states is not yet
+     * finalized (according to logs)
+     */
     
     /* Add transaction to the hash. We need locking here. 
      * 
@@ -633,10 +821,15 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     NDRX_LOG(log_debug, "TX [%s] loaded OK", tmxid);
 out:
     /* Clean up if error. */
-    if (EXSUCCEED!=ret && NULL!=*pp_tl)
+    if (EXSUCCEED!=ret)
     {
-        NDRX_FREE((*pp_tl));
-        *pp_tl = NULL;
+        userlog("Failed to load/recover transaction [%s]", logfile);
+        if (NULL!=*pp_tl)
+        {
+            /* remove any stuff added... */
+            tms_remove_logfree(*pp_tl, EXFALSE);
+            *pp_tl = NULL;
+        }
     }
 
     return ret;
@@ -669,15 +862,46 @@ expublic void tms_close_logfile(atmi_xa_log_t *p_tl)
 }
 
 /**
+ * Free up log file (just memory)
+ * @param p_tl log handle
+ * @param hash_rm remove log entry from tran hash
+ */
+expublic void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm)
+{
+    int i;
+    atmi_xa_rm_status_btid_t *el, *elt;
+    
+    if (hash_rm)
+    {
+        MUTEX_LOCK_V(M_tx_hash_lock);
+        EXHASH_DEL(M_tx_hash, p_tl); 
+        MUTEX_UNLOCK_V(M_tx_hash_lock);
+    }
+
+    /* Remove branch TIDs */
+    
+    for (i=0; i<NDRX_MAX_RMS; i++)
+    {
+        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
+        {
+            EXHASH_DEL(p_tl->rmstatus[i].btid_hash, el);
+            NDRX_FREE(el);
+        }
+    }
+    
+    NDRX_FREE(p_tl);
+}
+
+/**
  * Removes also transaction from hash. Either fully
  * committed or fully aborted...
  * @param p_tl - becomes invalid after removal!
+ * @param hash_rm remove from hash lists
  */
-expublic void tms_remove_logfile(atmi_xa_log_t *p_tl)
+expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
 {
     int have_file = EXFALSE;
-    int i;
-    atmi_xa_rm_status_btid_t *el, *elt;
+    
     if (tms_is_logfile_open(p_tl))
     {
         have_file = EXTRUE;
@@ -701,55 +925,107 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl)
     }
     
     /* Remove the log for hash! */
-    
-    MUTEX_LOCK_V(M_tx_hash_lock);
-    EXHASH_DEL(M_tx_hash, p_tl); 
-    MUTEX_UNLOCK_V(M_tx_hash_lock);
-    
-    /* Remove branch TIDs */
-    
-    for (i=0; i<NDRX_MAX_RMS; i++)
-    {
-        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
-        {
-            EXHASH_DEL(p_tl->rmstatus[i].btid_hash, el);
-            NDRX_FREE(el);
-        }
-    }
-    
-    NDRX_FREE(p_tl);
-    
+    tms_remove_logfree(p_tl, hash_rm);
+
 }
 
 /**
  * We should have universal log writter
- * TODO: Does not check number of chars written...
  */
 exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *fmt, ...)
 {
     int ret = EXSUCCEED;
     char msg[LOG_MAX+1] = {EXEOS};
     char msg2[LOG_MAX+1] = {EXEOS};
+    int len, wrote, exp;
+    int make_error = EXFALSE;
+    unsigned long crc32;
     va_list ap;
     
     CHK_THREAD_ACCESS;
     
     /* If log not open - just skip... */
     if (NULL==p_tl->f)
+    {
         return EXSUCCEED;
+    }
      
     va_start(ap, fmt);
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
     
-    if (fprintf(p_tl->f, "%lld:%c:%s\n", ndrx_utc_tstamp(), command, msg)<0)
+    snprintf(msg2, sizeof(msg2), "%lld:%c:%s", ndrx_utc_tstamp(), command, msg);
+    len = strlen(msg2);
+    
+    /* check exactly how much bytes was written */
+    
+    if (G_atmi_env.test_tmsrv_write_fail)
     {
+        make_error = EXTRUE;
+    }
+    
+    crc32 = ndrx_Crc32_ComputeBuf(0, msg2, len);
+    
+    /* Simulate that only partial message is written in case
+     * if disk is full or crash happens
+     */
+    wrote=0;
+    
+    /* if write file test case - write partially, also omit EOL terminator 
+     * Also... needs flag for commit crash simulation... i.e. 
+     * So that if commit crash is set, we partially write the command (stage change)
+     * and afterwards tmsrv exits.
+     * And then when flag is removed, transaction shall commit OK
+     */
+    if (p_tl->log_version == LOG_VERSION_1)
+    {
+        NDRX_LOG(log_debug, "Log format: v%d", p_tl->log_version);
+        
+        exp = len+1;
+        if (make_error)
+        {
+            exp++;
+        }
+        wrote=fprintf(p_tl->f, "%s\n", msg2);
+    }
+    else
+    {
+        /* version 2+ */
+        exp = len+8+1+1;
+        
+        if (make_error)
+        {
+            crc32+=1;
+            exp++;
+        }
+        
+        wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
+    }
+    
+    if (wrote != exp)
+    {
+        int err = errno;
+        
+        /* For Q/A purposes - simulate no space error, if requested */
+        if (make_error)
+        {
+            NDRX_LOG(log_error, "QA point: make_error TRUE");
+            err = ENOSPC;
+        }
+        
+        NDRX_LOG(log_error, "ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
+                exp, wrote, strerror(err));
+        userlog("ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
+                exp, wrote, strerror(err));
+        
         ret=EXFAIL;
         goto out;
     }
-    fflush(p_tl->f);
+    
     
 out:
+    /* flush what ever we have */
+    fflush(p_tl->f);
     return ret;
 }
 
@@ -787,7 +1063,7 @@ expublic int tms_log_info(atmi_xa_log_t *p_tl)
      *
      */
     
-    if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_I, "%hd:%hd:%hd:%ld:%s", 
+    if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_J, "%hd:%hd:%hd:%ld:%s", 
             p_tl->tmrmid, p_tl->tmnodeid, p_tl->tmsrvid, p_tl->txtout, rmsbuf))
     {
         ret=EXFAIL;
@@ -833,11 +1109,19 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
     char *p2;
     char *saveptr1 = NULL;
     int rmid;
+    long long tdiff;
     
     /* Read first time stamp */
     TOKEN_READ("info", "tstamp");
-    p_tl->t_start = atol(p);
+    p_tl->t_start = strtoull (p, NULL, 10);
     
+    tdiff = ndrx_utc_tstamp() - p_tl->t_start;
+    /* adjust the timer...  */
+    ndrx_stopwatch_reset(&p_tl->ttimer);
+    ndrx_stopwatch_minus(&p_tl->ttimer, tdiff);
+    NDRX_LOG(log_debug, "Transaction age: %ld ms (t_start: %llu tdiff: %lld)",
+        ndrx_stopwatch_get_delta(&p_tl->ttimer), p_tl->t_start, tdiff);
+             
     /* read tmrmid, tmnodeid, tmsrvid = ignore, but they must be in place! */
     TOKEN_READ("info", "cmdid");
     /* Basically we ignore these values, and read from current process!!!: */
@@ -886,16 +1170,27 @@ out:
 expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
 {
     int ret = EXSUCCEED;
-    
+    int make_crash = EXFALSE; /**< Crash simulation */
     CHK_THREAD_ACCESS;
     
     if (p_tl->txstage!=stage)
     {
         p_tl->txstage = stage;
 
-        NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd", 
-                p_tl->txstage);
-
+        NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd (cc %d)", 
+                p_tl->txstage, G_atmi_env.test_tmsrv_commit_crash);
+        
+        /* QA: commit crash test point... 
+         * Once crash flag is disabled, commit shall be finished by background
+         * process.
+         */
+        if (stage>0 && stage == G_atmi_env.test_tmsrv_commit_crash)
+        {
+            NDRX_LOG(log_debug, "QA commit crash...");
+            G_atmi_env.test_tmsrv_write_fail=EXTRUE;
+            make_crash=EXTRUE;
+        }
+        
         if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
         {
             ret=EXFAIL;
@@ -904,6 +1199,12 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
     }
     
 out:
+                
+    if (make_crash)
+    {
+        exit(1);
+    }
+
     return ret;
 }
 
@@ -1094,7 +1395,7 @@ expublic int tm_chk_tx_status(atmi_xa_log_t *p_tl)
         }
         
         /* p_tl becomes invalid! */
-        tms_remove_logfile(p_tl);
+        tms_remove_logfile(p_tl, EXTRUE);
          
     }
     else
