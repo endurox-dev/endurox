@@ -145,15 +145,15 @@ then no more attempts to complete the transaction are done. The counter is resta
 'tmsrv' reboot. Default is set to '100'.
 
 [*-r* 'XA_RETRIES']::
-This is number of attempts on resource manager when it returns *XA_RETRY* during
-the commit. So lets say we have issued *tpcommit()* and some involved database
-is returning *XA_RETRY*. If '-r' is set above 2, then during the processing
-of 'tpcommit()', the xa commit to database will be retries one more time. If
-DB returns any other error than *XA_RETRY* or succeeds, the transaction is proceeded.
-If retry is returned again, then *TPEHAZARD* is returned to caller, transaction
-is moved to background thread, and will by processed by '-m' tries. But also here
-every '-m' try for *XA_RETRY* will be multiplied by '-r' attempts.
-Default value is seto to '3'. 
+This is number of attempts on resource manager when it returns *XA_RETRY* or *XAER_RMFAIL* 
+during the commit or other type of operations (in case of *XAER_RMFAIL*). 
+So lets say we have issued *tpcommit()* and some involved database is returning 
+*XA_RETRY*. If '-r' is set above 2, then during the processing
+of 'tpcommit()', the xa commit to database will be retries one more time.
+If XA_RETRY is returned again for third time, then *TPEHAZARD* is returned to caller, 
+transaction is moved to background thread, and will by processed 
+by '-m' tries. But also here every '-m' try for *XA_RETRY*/*XAER_RMFAIL* will 
+be multiplied by '-r' attempts. Default value is set to '3'. 
 
 [*-p* 'THREAD_POOL_SIZE']::
 This is the number of threads processing incoming requests. If all threads are busy, then

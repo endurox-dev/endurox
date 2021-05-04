@@ -552,7 +552,9 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     }
     
     NDRX_STRCPY_SAFE((*pp_tl)->tmxid, tmxid);
-    (*pp_tl)->is_background = EXTRUE;
+    /* we start with active... */
+    (*pp_tl)->txstage = XA_TX_STAGE_ACTIVE;
+
     /* Open the file */
     if (EXSUCCEED!=tms_open_logfile(*pp_tl, "r+"))
     {
@@ -768,6 +770,17 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                 EXFAIL_OUT(ret);
             }
         }
+    }
+    
+    /* if not active, then no one waits for on as due to restart... 
+     * if we are still active, then there is chance that somebody will ask
+     * for completion.
+     */
+    if (XA_TX_STAGE_ACTIVE != (*pp_tl)->txstage)
+    {
+        /* thus it will start to drive it by background thread
+         */
+        (*pp_tl)->is_background = EXTRUE;
     }
     
     /* 
@@ -1096,11 +1109,18 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
     char *p2;
     char *saveptr1 = NULL;
     int rmid;
+    long long tdiff;
     
     /* Read first time stamp */
     TOKEN_READ("info", "tstamp");
     p_tl->t_start = atol(p);
     
+    tdiff = ndrx_utc_tstamp() - p_tl->t_start;
+    /* adjust the timer...  */
+    ndrx_stopwatch_reset(&p_tl->ttimer);
+    ndrx_stopwatch_minus(&p_tl->ttimer, tdiff);
+    NDRX_LOG(log_debug, "Transaction age: %lld ms", ndrx_stopwatch_get_delta(&p_tl->ttimer));
+             
     /* read tmrmid, tmnodeid, tmsrvid = ignore, but they must be in place! */
     TOKEN_READ("info", "cmdid");
     /* Basically we ignore these values, and read from current process!!!: */
@@ -1156,8 +1176,8 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
     {
         p_tl->txstage = stage;
 
-        NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd", 
-                p_tl->txstage);
+        NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd (cc %d)", 
+                p_tl->txstage, G_atmi_env.test_tmsrv_commit_crash);
         
         /* QA: commit crash test point... 
          * Once crash flag is disabled, commit shall be finished by background

@@ -124,7 +124,7 @@ expublic int ndrx_xadmin_lcf_init(void)
     
     /* first argument is mandatory */
     xcmd.dfltflags = NDRX_LCF_FLAG_ARGA;
-    NDRX_STRCPY_SAFE(xcmd.helpstr, "Perform logrotate");
+    NDRX_STRCPY_SAFE(xcmd.helpstr, "Change logging settings");
 
     if (EXSUCCEED!=ndrx_lcf_xadmin_add_int(&xcmd))
     {
