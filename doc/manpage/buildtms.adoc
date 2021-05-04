@@ -32,7 +32,7 @@ The command line template, how C compiler is invoked, is following:
 -L<NDRX_HOME>/{lib|lib64}] [<RM_libs>] -latmisrvinteg -latmi -lubf -lnstd
 --------------------------------------------------------------------------------
 
-All filesystem path related buffers internally are set to 5120 bytes + EOS byte,
+All file system path related buffers internally are set to 5120 bytes + EOS byte,
 thus for example if build command is longer than 5120, it will be truncated
 to 5120.
 
@@ -60,12 +60,7 @@ OPTIONS
 COBOL mode. Reserved for future use.
 
 *-o* filename::
-Output file name for compiler. If not specified, then default is *SERVER*.
-
-[*-l* lastfiles]::
-Arguments to be passed to compiler command line. Typically here source file names, object
-file names or library settings are passed. These names are included in compilation command
-after Enduro/X libraries (from left to right).
+Output binary file name.
 
 [*-r* rm_name]::
 This is resource manager name. The resource manager according the specified name
@@ -80,7 +75,7 @@ File format is described in *buildserver(8)* manpage.
 
 [*-k*]::
 Keep the the generate source code with the main function. If not set, the file
-is deleted when *buildserver* finishes.
+is deleted when *buildtms* finishes.
 
 [*-v*]::
 Verbose mode. This will print the build command to stderr.

@@ -71,7 +71,11 @@
 expublic int G_srv_id = EXFAIL; /* If we are server, then this will be server ID */
 expublic volatile int G_is_env_loaded = 0; /* Is environment initialised */
 /* NOTE: THIS BELLOW ONE IS NOT INITIALIZED FOR NDRXD! */
-expublic atmi_lib_env_t G_atmi_env; /* ATMI library environmental configuration */
+expublic atmi_lib_env_t G_atmi_env={
+    /* must follow first otherwise we override lcf commands at startup */
+    .test_qdisk_write_fail=EXFALSE, 
+    .test_tmsrv_write_fail=EXFALSE,
+    .test_tmsrv_commit_crash=EXFALSE}; /* ATMI library environmental configuration */
 expublic int _tmbuilt_with_thread_option = EXFALSE; /**< by default not MT */
 /*---------------------------Statics------------------------------------*/
 /* List of context slots... */

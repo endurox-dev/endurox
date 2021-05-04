@@ -40,11 +40,6 @@ handler. This affects only underlying mq_* function calls.
 *TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply 
 for infinitely. Global transaction time-out still applies.
 
-*TPTRANSUSPEND* Suspend the current transaction in progress and continue 
-it with destination process. This is suitable in cases when *XA* adapter does 
-not allow multiple processes/sessions to have active same
-transaction in the same transaction branch. 
-
 *TPSENDONLY* At the call point, caller want's to enter in send only mode.
 
 *TPRECVONLY*  At the call point, caller want's to ender in receive only mode.

@@ -102,6 +102,9 @@
 #define	EX_QMSGIDSTR	((BFLDID32)167772484)	/* number: 324	 type: string */
 #define	EX_QNUMENQ	((BFLDID32)33554757)	/* number: 325	 type: long */
 #define	EX_QNUMDEQ	((BFLDID32)33554758)	/* number: 326	 type: long */
+#define	EX_QFILENAME1	((BFLDID32)167772487)	/* number: 327	 type: string */
+#define	EX_QFILENAME2	((BFLDID32)167772488)	/* number: 328	 type: string */
+#define	EX_QFILECMD	((BFLDID32)67109193)	/* number: 329	 type: char */
 #define	EX_NERROR_CODE	((BFLDID32)400)	/* number: 400	 type: short */
 #define	EX_NERROR_MSG	((BFLDID32)167772561)	/* number: 401	 type: string */
 #define	EX_NREQLOGFILE	((BFLDID32)167772562)	/* number: 402	 type: string */

@@ -172,8 +172,9 @@ expublic int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid,
     {
         /* only if new status is higher than old status
          * used by registering transaction
+         * During the transaction we register with XA_RM_STATUS_NULL
          */
-        if (rmstatus > (*bt)->rmstatus)
+        if (XA_RM_STATUS_NULL!=rmstatus)
         {
             (*bt)->rmstatus = rmstatus;
             (*bt)->rmerrorcode = rmerrorcode;
