@@ -5,7 +5,7 @@
  *   - active
  *   - prepared
  *   - committed
- *   Initialy file will be named after the XID
+ *   Initially file will be named after the XID
  *   Once it becomes committed, it is named after message_id
  *   If we have a update to Q (try counter for example)
  *   Then we issue new transaction file with different command inside, but it contains
@@ -15,7 +15,7 @@
  *   If the command is delete, then we unlink the file.
  *   Once Queue record is completed (rolled back or committed) we shall send ACK
  *   of COMMAND BLOCK back to queue server via TPCALL command to QSPACE server.
- *   this will allow to synchornize internal status of the messages.
+ *   this will allow to synchronize internal status of the messages.
  *   Initially (active) file is named is named after XID. When doing commit, it is
  *   renamed to msg_id.
  *   If we restore the system after the restart, then committed & prepare directory is scanned.
@@ -305,7 +305,7 @@ exprivate int file_move(int i, char *from_folder, char *to_folder)
     f = get_filename_i(i, from_folder, 0);
     t = get_filename_i(i, to_folder, 1);
         
-    NDRX_LOG(log_error, "Rename [%s]->[%s]", 
+    NDRX_LOG(log_info, "Rename [%s]->[%s]", 
                 f,t);
 
     if (EXSUCCEED!=rename(f, t))
@@ -1277,6 +1277,7 @@ expublic int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
                 tmq_msgid_serialize(p_block->hdr.msgid, msgid_str));
+        EXFAIL_OUT(ret);
     }
     
 out:

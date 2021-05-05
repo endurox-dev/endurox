@@ -364,41 +364,56 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     
     if (qctl_in.flags & TPQGETBYMSGID)
     {
-        if (NULL==(p_msg = tmq_msg_dequeue_by_msgid(qctl_in.msgid, qctl_in.flags)))
+        if (NULL==(p_msg = tmq_msg_dequeue_by_msgid(qctl_in.msgid, qctl_in.flags, 
+                &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
         {
             char msgid_str[TMMSGIDLEN_STR+1];
-            
+            int lev = log_info;
             tmq_msgid_serialize(qctl_in.msgid, msgid_str);
             
-            NDRX_LOG(log_error, "tmq_dequeue: no message found for given msgid [%s]", 
-                    msgid_str);
-            NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: no message "
-                    "found for given msgid");
-            qctl_out.diagnostic = QMENOMSG;
+            if (qctl_out.diagnostic!=QMENOMSG)
+            {
+                lev=log_error;
+            }
+            
+            NDRX_LOG(lev, "tmq_dequeue: no message found for given msgid [%s] %ld: %s", 
+                    msgid_str, qctl_out.diagnostic, qctl_out.diagmsg);
+            
             EXFAIL_OUT(ret);
         }
     }
     else if (qctl_in.flags & TPQGETBYCORRID)
     {
-        if (NULL==(p_msg = tmq_msg_dequeue_by_corid(qctl_in.corrid, qctl_in.flags)))
+        if (NULL==(p_msg = tmq_msg_dequeue_by_corid(qctl_in.corrid, qctl_in.flags, 
+                &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
         {
             char corid_str[TMCORRIDLEN_STR+1];
+            int lev = log_info;
+            
+            if (qctl_out.diagnostic!=QMENOMSG)
+            {
+                lev=log_error;
+            }
             
             tmq_corid_serialize(qctl_in.corrid, corid_str);
             
-            NDRX_LOG(log_error, "tmq_dequeue: no message found for given msgid [%s]", 
-                    corid_str);
-            NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: no message "
-                    "found for given msgid");
-            qctl_out.diagnostic = QMENOMSG;
+            NDRX_LOG(lev, "tmq_dequeue: no message found for given msgid [%s] %ld: %s", 
+                    corid_str,qctl_out.diagnostic, qctl_out.diagmsg);
             EXFAIL_OUT(ret);
         }
     }
-    else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE)))
+    else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE, 
+            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
     {
-        NDRX_LOG(log_error, "tmq_dequeue: no message in Q [%s]", qname);
-        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: no message in Q!");
-        qctl_out.diagnostic = QMENOMSG;
+        int lev = log_info;
+            
+        if (qctl_out.diagnostic!=QMENOMSG)
+        {
+            lev=log_error;
+        }
+        
+        NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] %ld: %s", qname,
+                qctl_out.diagnostic, qctl_out.diagmsg);
         
         EXFAIL_OUT(ret);
     }
