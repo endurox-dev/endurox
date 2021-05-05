@@ -160,7 +160,8 @@ exprivate void fwd_q_list_rm(void)
 exprivate tmq_msg_t * get_next_msg(void)
 {
     tmq_msg_t * ret = NULL;
-    
+    long qerr = EXSUCCEED;
+    char msgbuf[128];
     if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
     {
         fwd_q_list_rm();
@@ -180,9 +181,10 @@ exprivate tmq_msg_t * get_next_msg(void)
     while (NULL!=M_next_fwd_q_cur)
     {
         /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE)))
+        if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
+                &qerr, msgbuf, sizeof(msgbuf))))
         {
-            NDRX_LOG(log_debug, "Not messages for dequeue");
+            NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", qerr, msgbuf);
         }
         else
         {
