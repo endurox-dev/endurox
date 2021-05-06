@@ -1468,6 +1468,10 @@ expublic int ndrx_svq_event_init(void)
         
     if (first)
     {
+#if 0
+        - OS will remove all the resources used.
+          this code causes core dumps, if some process performs exit() in the middle
+          of processing.
         /* have exit handler */
         if (EXSUCCEED!=atexit(ndrx_svq_event_atexit))
         {
@@ -1478,6 +1482,7 @@ expublic int ndrx_svq_event_init(void)
                     strerror(err));
             EXFAIL_OUT(ret);
         }
+#endif
     
         if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
                 /* no need for child resume! */
