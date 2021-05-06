@@ -966,9 +966,11 @@ out:
 /**
  * Get the fifo message from Q
  * @param qname queue to lookup.
+ * @param diagnostic specific queue error code
  * @return NULL (no msg), or ptr to msg
  */
-expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
+expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
+        char *diagmsg, size_t diagmsgsz)
 {
     tmq_qhash_t *qhash;
     tmq_memmsg_t *node = NULL;
@@ -978,6 +980,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_qconfig_t *qconf;
     
+    *diagnostic=EXSUCCEED;
     
     NDRX_LOG(log_debug, "FIFO/LIFO dequeue for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
@@ -1083,26 +1086,40 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
             /* unlock msg... */
             ret->lockthreadid = 0;
             ret = NULL;
+            *diagnostic=QMEOS;
+            NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
             goto out;
         }
     }
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);
+
+    /* set default error code */
+    if (NULL==ret && EXSUCCEED==*diagnostic)
+    {
+        NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: no message in Q!", diagmsgsz);
+        *diagnostic=QMENOMSG;
+    }
+
     return ret;
 }
 
 /**
  * Dequeue message by msgid
  * @param msgid
+ * @param diagnostic queue error code, if any
  * @return 
  */
-expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
+expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, 
+        char *diagmsg, size_t diagmsgsz)
 {
     tmq_msg_t * ret = NULL;
     union tmq_block block;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_memmsg_t *mmsg;
+    
+    *diagnostic=EXSUCCEED;
     
     MUTEX_LOCK_V(M_q_lock);
        
@@ -1116,7 +1133,6 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
         NDRX_LOG(log_error, "Message not found by msgid_str [%s]", msgid_str);
         goto out;
     }
-    
 
     ret = mmsg->msg;
 
@@ -1140,26 +1156,40 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags)
             /* unlock msg... */
             ret->lockthreadid = 0;
             ret = NULL;
+            *diagnostic=QMEOS;
+            NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
             goto out;
         }
     }
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);
+
+    /* set default error code */
+    if (NULL==ret && EXSUCCEED==*diagnostic)
+    {
+        NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: no message in Q!", diagmsgsz);
+        *diagnostic=QMENOMSG;
+    }
+
     return ret;
 }
 
 /**
  * Dequeue message by corid
  * @param msgid
+ * @param diagnostic queue error code (if any)
  * @return 
  */
-expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
+expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags, long *diagnostic, 
+        char *diagmsg, size_t diagmsgsz)
 {
     tmq_msg_t * ret = NULL;
     union tmq_block block;
     char corid_str[TMCORRIDLEN_STR+1];
     tmq_memmsg_t *mmsg;
+    
+    *diagnostic=EXSUCCEED;
     
     MUTEX_LOCK_V(M_q_lock);
        
@@ -1196,12 +1226,22 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags)
             /* unlock msg... */
             ret->lockthreadid = 0;
             ret = NULL;
+            *diagnostic=QMEOS;
+            NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
             goto out;
         }
     }
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);
+
+    /* set default error code */
+    if (NULL==ret && EXSUCCEED==*diagnostic)
+    {
+        NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: no message in Q!", diagmsgsz);
+        *diagnostic=QMENOMSG;
+    }
+
     return ret;
 }
 
