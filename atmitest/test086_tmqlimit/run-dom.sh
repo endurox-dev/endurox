@@ -233,6 +233,13 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "Testing deqwriteerr"
+(./atmiclt86  deqwriteerr 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
 
 go_out $RET
 
