@@ -365,6 +365,10 @@ exprivate int basic_tmsrvrestart(int maxmsg)
         NDRX_LOG(log_error, "TESTERROR: failed to start tmsrv");
         EXFAIL_OUT(ret);
     }
+
+    /* let tmsrv to load the logs in background... */
+    sleep(5);
+    
     
     /* also.. here all message shall be locked */
     for (i=0; i<1; i++)
