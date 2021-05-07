@@ -216,7 +216,7 @@ extern void thread_shutdown(void *ptr, int *p_finish_off);
 /* Q space api: */
 extern int tmq_reload_conf(char *cf);
 extern int tmq_qconf_addupd(char *qconfstr, char *name);
-extern int tmq_msg_add(tmq_msg_t *msg, int is_recovery);
+extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
 extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, char *diagmsg, size_t diagmsgsz);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
