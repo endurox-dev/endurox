@@ -16,24 +16,24 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This is special ATMI server which is used for transactional persistent queue operations.
-'tmqueue' is backend server used by 'tpenqueue()' and 'tpdequeue()' calls. Queue server
-works in pair with 'tmsrv' instance, where both 'tmqueue' and 'tmsrv' are configured in
+*tmqueue* is backend server used by *tpenqueue* and *tpdequeue()* calls. Queue server
+works in pair with *tmsrv(8)* instance, where both *tmqueue* and *tmsrv* are configured in
 XA environment which uses 'NDRX_XA_RMLIB=libndrxxaqdisk.so' and 
-'NDRX_XA_DRIVERLIB=libndrxxaqdisks.so'(static registration driver) or 
-'NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so'(dynamic registration driver). 
+*NDRX_XA_DRIVERLIB=libndrxxaqdisks.so* (static registration driver) or 
+*NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so* (dynamic registration driver). 
 Each message basically is file in file-system which synchronously is kept in 
-queue server's memory. The files in file system are staged between 'active', 
-'prepared' and 'committed' states. During the 'active' and 'prepared' stages 
+queue server's memory. The files in file system are staged between *active*, 
+*prepared* and *committed* states. During the *active* and *prepared* stages 
 messages are made after the XA transaction ID (with sequence number after dash).
-when message is committed, it is stored in 'committed' folder, where file name 
+when message is committed, it is moved to *committed* directory, where filename 
 contains the actual message id. This infrastructure also is used for issuing XA 
-commands which does the remove and update of the message i.e. at the commit moment 
+commands which does the remove or update of the message i.e. at the commit moment 
 command files are used to update/remove committed message.
 
-The folder where to store the processing qspace files are 'NDRX_XA_OPEN_STR' 
-and 'NDRX_XA_CLOSE_STR' environment variables. You may combine multiple instances 
-of 'tmqueue' for the same qspace, but it is recommended to keep qspace folders 
-different. However, it shall also work with same folder.
+The folder where to store the processing qspace files are *NDRX_XA_OPEN_STR* 
+and *NDRX_XA_CLOSE_STR* environment variables. Is is possible to combine 
+multiple instances of *tmqueue* for the same qspace, but it is recommended to 
+keep qspace folders different. However, it shall also work with same folder.
 
 The queue server internally uses thread pools for handling the work. Multiple 
 thread pools are used to avoid the deadlocking where internal processing might 
@@ -41,17 +41,17 @@ do the XA driver calls which in the end sends notifications to the same server b
 
 Three thread-pools are used:
 
-1) First one is for accepting the ATMI 'tpcall()' requests. 
+1) First one is for accepting the ATMI *tpcall(3)* requests. 
 
 2) Second thread pool is used by forward services (which basically are senders
 for automatic queues). 
 
 3) Third thread pool is used by notifications received from transaction manager 
 (TM). TM notifies the queue server for completion (commit) of the message. So 
-that 'tmqueue' can unlock the message in memory. 
+that *tmqueue* can unlock the message in memory. 
 
 
-Every instance of 'tmqueue' will advertise following list of services:
+Every instance of *tmqueue* will advertise following list of services:
 
 1. @TMQ-<Cluster Node ID>-<Server ID>
 
@@ -73,15 +73,22 @@ then on success, the response message from invoked service is submitted to
 reply queue. If message destination service fails for number of attempts,
 then message is forwarded to 'TPQFAILUREQ', in this case original 'TPQCTL' is preserved.
 
-During the startup, 'tmqueue' will try to read from disk the messages, if there 
-are any 'committed' 'prepared'.
+During the startup, *tmqueue* will read messages from the disk. All messages are read.
+Messages from *active* and *prepared* directories are read and status for them
+is set to locked (no dequeue possible). Messages from *committed* folder are 
+read without the lock flag. However, other command files (delete, update) from 
+*active' and *prepared* directories are analyzed and they will lock the messages too, 
+as they are indicating that transaction are progress.
 
-The 'tpenqueue()' and 'tpdequeue()' can be invoked either as part of the global
- transaction or not. If global transaction is not used, then 'tmqueue' will 
+In case if *tmqueue* was shutdown with incomplete transactions, the *tmsrv(8)*
+will be responsible for finalizing the transactions when *tmqueue* will be started.
+
+The *tpenqueue(3)* and *tpdequeue(3)* can be invoked either as part of the global
+ transaction or not. If global transaction is not used, then *tmqueue* will 
 open the transactions internally.
 
 For more usage of the persistent queues, configuration, command line and codding samples, 
-see 'atmitests/test028_tmq' folder.
+see *atmitests/test028_tmq* folder.
 
 
 OPTIONS
@@ -139,6 +146,48 @@ appear as committed.
 
 Flag *NOJOIN* is not supported for XA libndrxxaqdisks and libndrxxaqdiskd drivers.
 
+ASSUMPTIONS
+-----------
+To ensure transactionality of the message files, following assumptions are used:
+
+- File system file rename operation is atomic.
+
+- Disk sector writes are assumed to be atomic. Thought even if for some reason 
+they are not atomic, then Enduro/X will be able to guarantee
+message consistency in case if disk sector is written from left to right or from
+right to left.
+
+- In case if disk sector writes are not atomic (normally they should be), then
+requirement for disk sub-system is to not to corrupt the file contents. Either
+to have old data bytes or new data bytes written. Disk must not write any random
+data in case of power loss or any other accident.
+
+DISK FAILURE HANDLING
+---------------------
+In case if new message is being added and message file cannot be added  
+(disk full or other error) in *active* folder, *tperror* is set to 
+*TPEDIAGNOSTIC* and *QMEOS* error is set in *TPQCTL.diagnostic*. If empty file
+was created it is removed.
+
+In case if manual dequeue is performed, and *tmqueue* cannot create command file
+(used by tmsrv for completion of two phase commit), dequeue operation will fail
+with *TPEDIAGNOSTIC*/*QMEOS*. Any empty command files are removed.
+
+In case if queue is automatic, forward process takes the message from the memory 
+and sends to the process, when result is known the command file is issued for 
+two phase commit completion. In case of disk failure, command file is not written,
+empty file is removed. The transaction is aborted. In this particular case,
+messages in *tmqueue* messages are not unlocked. Thus if there was disk issues,
+the *tmqueue* shall be restarted, to proceed with enqueued message processing.
+
+In case if message/command files in the *active* folder are corrupted for some
+reason, the *tmqueue* process at the startup will detect such files and if 
+their age according to creation date/time in FS is older than *-h* setting,
+then files are removed. Such files in *committed* or *prepared* folders are not
+removed, error message is printed in the log and *tmqueue* will proceed with
+loading of the next message.
+
+
 EXIT STATUS
 -----------
 *0*::
@@ -153,7 +202,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)* *q.conf(5)* *ex_env(5)*
+*xadmin(8)* *q.conf(5)* *ex_env(5)* *tmsrv(8)*
 
 COPYING
 -------

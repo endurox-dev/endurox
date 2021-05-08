@@ -228,7 +228,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",
             p_msg->hdr.qname);
     
-    if (EXSUCCEED!=tmq_msg_add(p_msg, EXFALSE))
+    if (EXSUCCEED!=tmq_msg_add(&p_msg, EXFALSE))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to enqueue!");
         userlog("tmq_enqueue: failed to enqueue!");

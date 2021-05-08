@@ -66,6 +66,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <assert.h>
 
 #include <atmi.h>
 #include <ubf.h>
@@ -1053,10 +1054,27 @@ xa_fail:
     return XAER_RMFAIL;
 }
 
+#define READ_BLOCK(BUF, LEN) \
+    if (LEN!=(act_read=fread(BUF, 1, LEN, f)))\
+    {\
+        *err = ferror(f);\
+        \
+        NDRX_LOG(log_error, "ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",\
+                dbg_msg, fname, LEN, act_read, strerror(*err));\
+        \
+        userlog("ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",\
+            dbg_msg, fname, LEN, act_read, strerror(*err));\
+        EXFAIL_OUT(ret);\
+    }
+
+
 /**
  * Reads the header block
- * @param block
- * @param p_len
+ * Either full read or partial.
+ * - Check header validity if ftell() position is 0.
+ * @param block where to unload the data
+ * @param p_len for TMQ_STORCMD_NEWMSG this indicates number of mandatory bytes to read
+ *  for other message types, validate the read size against the actual structure size.
  * @param fname name for debug
  * @param dbg_msg debug message
  * @param err ptr to error code if failed to read
@@ -1066,19 +1084,87 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *db
 {
     int act_read;
     int ret = EXSUCCEED;
+    int offset = 0;
+    tmq_cmdheader_t *p_hdr;
+    if (0==ftell(f))
+    {
+        assert(len >= sizeof(tmq_cmdheader_t));
+        /* read header */
+        READ_BLOCK(block, sizeof(tmq_cmdheader_t));
+        /* validate header */
+        p_hdr = (tmq_cmdheader_t *)block;
+        
+        /* validate magics and command code... */
+        if (0!=strncmp(p_hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN))
+        {
+            NDRX_LOG(log_error, "ERROR ! file [%s] invalid magic1: expected: [%s] got [%*s] command [%c]", 
+                    fname, TMQ_MAGIC, TMQ_MAGIC_LEN, p_hdr->magic, p_hdr->command_code);
+            NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));
+            userlog("ERROR ! file [%s] invalid magic1: expected: [%s] got [%*s] command [%c]", 
+                    fname, TMQ_MAGIC, TMQ_MAGIC_LEN, p_hdr->magic, p_hdr->command_code);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0!=strncmp(p_hdr->magic2, TMQ_MAGIC2, TMQ_MAGIC_LEN))
+        {
+            NDRX_LOG(log_error, "ERROR ! file [%s] invalid magic2: expected: [%s] got [%*s] command [%c]", 
+                    fname, TMQ_MAGIC2, TMQ_MAGIC_LEN, p_hdr->magic2, p_hdr->command_code);
+            NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));
+            userlog("ERROR ! file [%s] invalid magic2: expected: [%s] got [%*s] command [%c]", 
+                    fname, TMQ_MAGIC2, TMQ_MAGIC_LEN, p_hdr->magic2, p_hdr->command_code);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* validate command code */
+        switch (p_hdr->command_code)
+        {
+            case TMQ_STORCMD_NEWMSG:
+                /* as this is biggest message & dynamic size: */
+                len = len - sizeof(tmq_cmdheader_t);
+                break;
+            case TMQ_STORCMD_UPD:
+                
+                if (len > sizeof(tmq_cmdheader_t))
+                {
+                    len = sizeof(tmq_msg_upd_t) - sizeof(tmq_cmdheader_t);
+                }
+                break;
+            case TMQ_STORCMD_DEL:
+                
+                if (len > sizeof(tmq_cmdheader_t))
+                {
+                    len = sizeof(tmq_msg_del_t) - sizeof(tmq_cmdheader_t);
+                }
+                break;
+            case TMQ_STORCMD_UNLOCK:
+                
+                if (len > sizeof(tmq_cmdheader_t))
+                {
+                    len = sizeof(tmq_msg_unl_t) - sizeof(tmq_cmdheader_t);
+                }
+                break;
+            default:
+                NDRX_LOG(log_error, "ERROR ! file [%s] invalid command code [%c]", 
+                    fname, p_hdr->command_code);
+                NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));
+                userlog("ERROR ! file [%s] invalid command code [%c]", 
+                    fname, p_hdr->command_code);
+                EXFAIL_OUT(ret);
+
+                break;
+        }
+        
+        offset = sizeof(tmq_cmdheader_t);
+    }
+    
+    if (len > 0)
+    {
+        READ_BLOCK((block+offset), len);
+    }
+    
     
     *err=0;
-    if (len!=(act_read=fread(block, 1, len, f)))
-    {
-        *err = ferror(f);
-        
-        NDRX_LOG(log_error, "ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",
-                dbg_msg, fname, len, act_read, strerror(*err));
-        
-        userlog("ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",
-            dbg_msg, fname, len, act_read, strerror(*err));
-        EXFAIL_OUT(ret);
-    }
+    
     
 out:
     return ret;
@@ -1088,7 +1174,7 @@ out:
  * Read the block file file
  * @param fname full path to file
  * @param block buffer where to store the data block
- * @param len length to read
+ * @param len length to read.
  * @param err error code
  * @return 
  */
@@ -1121,20 +1207,78 @@ out:
     return ret;
 }
 
+/** Write th block */
+#define WRITE_TO_DISK(PTR, OFFSET, LEN) \
+    ret_len = 0;\
+    if (G_atmi_env.test_qdisk_write_fail || LEN!=(ret_len=fwrite( ((char *)PTR) + OFFSET, 1, LEN, f)))\
+    {\
+        int err = errno;\
+        /* For Q/A purposes - simulate no space error, if requested */\
+        if (G_atmi_env.test_qdisk_write_fail)\
+        {\
+            NDRX_LOG(log_error, "test point: test_qdisk_write_fail TRUE");\
+            err = ENOSPC;\
+        }\
+        NDRX_LOG(log_error, "ERROR! Failed to write to msgblock/tx file [%s]: "\
+                            "offset=%d req_len=%d, written=%d: %s",\
+                            G_atmi_tls->qdisk_tls->filename_active,\
+                            OFFSET, LEN, ret_len, strerror(err));\
+        userlog("ERROR! Failed to write msgblock/tx file [%s]: "\
+                "offset=%d req_len=%d, written=%d: %s",\
+                G_atmi_tls->qdisk_tls->filename_active,\
+                OFFSET, LEN, ret_len, strerror(err));\
+        EXFAIL_OUT(ret);\
+    }
+
+/** flush changes to disk  */
+#define WRITE_FLUSH \
+    ret_len = 0;\
+    if (EXSUCCEED!=fflush(f))\
+    {\
+        int err = errno;\
+        NDRX_LOG(log_error, "ERROR! fflush() on [%s] failed: %s", \
+            G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
+        userlog("ERROR! fflush() on [%s] failed: %s", \
+            G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
+        EXFAIL_OUT(ret);\
+    }
+
+#define WRITE_REWIND \
+        if (EXSUCCEED!=fseek(f, 0L, SEEK_SET))\
+        {\
+            int err = errno;\
+            NDRX_LOG(log_error, "ERROR! fseek() rewind on [%s] failed: %s", \
+                G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
+            userlog("ERROR! fseek() rewind on [%s] failed: %s", \
+                G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
+            EXFAIL_OUT(ret);\
+        }
+
 /**
  * Write data to transaction file
  * @param block
  * @param len
- * @param unlink_failure unlink the message file, if filed to write
+ * @param new_file the message file is new
  * @return SUCCEED/FAIL
  */
-exprivate int write_to_tx_file(char *block, int len, int unlink_failure)
+exprivate int write_to_tx_file(char *block, int len, int new_file)
 {
     int ret = EXSUCCEED;
     XID xid;
     size_t ret_len;
     FILE *f = NULL;
     int ax_ret;
+    char mode_str[16];
+    tmq_cmdheader_t dum;
+    
+    if (new_file)
+    {
+        NDRX_STRCPY_SAFE(mode_str, "wb");
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(mode_str, "a+b");
+    }
     
     if (ndrx_get_G_atmi_env()->xa_sw->flags & TMREGISTER && !G_atmi_tls->qdisk_tls->is_reg)
     {
@@ -1158,10 +1302,10 @@ exprivate int write_to_tx_file(char *block, int len, int unlink_failure)
     set_filenames();
     
     /* Open file for write... */
-    NDRX_LOG(log_info, "Writing command file: [%s]", 
-        G_atmi_tls->qdisk_tls->filename_active);
+    NDRX_LOG(log_info, "Writing command file: [%s] mode: [%s]", 
+        G_atmi_tls->qdisk_tls->filename_active, mode_str);
     
-    if (NULL==(f = NDRX_FOPEN(G_atmi_tls->qdisk_tls->filename_active, "a+b")))
+    if (NULL==(f = NDRX_FOPEN(G_atmi_tls->qdisk_tls->filename_active, mode_str)))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
@@ -1172,33 +1316,30 @@ exprivate int write_to_tx_file(char *block, int len, int unlink_failure)
         EXFAIL_OUT(ret);
     }
     
-    /* Write th block */
-    ret_len = 0;
-    if (G_atmi_env.test_qdisk_write_fail || len!=(ret_len=fwrite(block, 1, len, f)))
+    if (new_file && len > sizeof(tmq_cmdheader_t))
     {
-        int err = errno;
-        
-        /* For Q/A purposes - simulate no space error, if requested */
-        if (G_atmi_env.test_qdisk_write_fail)
-        {
-            NDRX_LOG(log_error, "test point: test_qdisk_write_fail TRUE");
-            err = ENOSPC;
-        }
-        
-        NDRX_LOG(log_error, "ERROR! Failed to write to msgblock/tx file: req_len=%d, written=%d: %s",
-                len, ret_len, strerror(err));
-        userlog("ERROR! Failed to write msgblock/tx file: req_len=%d, written=%d: %s",
-                len, ret_len, strerror(err));
-        
-        EXFAIL_OUT(ret);
+        memset(&dum, 0, sizeof(dum));
+        WRITE_TO_DISK((&dum), 0, sizeof(tmq_cmdheader_t));
+        WRITE_FLUSH;
+        WRITE_TO_DISK(block, sizeof(tmq_cmdheader_t), len - sizeof(tmq_cmdheader_t));
+        WRITE_REWIND;
+        /* Write now full header */
+        WRITE_TO_DISK(block, 0, sizeof(tmq_cmdheader_t));
     }
+    else
+    {
+        /* single step write... */
+        WRITE_TO_DISK(block, 0, len);
+    }
+    
+    WRITE_FLUSH;
     
 out:
     
     if (NULL!=f)
     {
         /* unlink if failed to write to the folder... */
-        if (unlink_failure && EXSUCCEED!=ret)
+        if (new_file && EXSUCCEED!=ret)
         {
             unlink(G_atmi_tls->qdisk_tls->filename_active);
         }
@@ -1227,7 +1368,7 @@ expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
 {
     int ret = EXSUCCEED;
     char tmp[TMMSGIDLEN_STR+1];
-    
+    size_t len;
     /*
     uint64_t lockt =  msg->lockthreadid;
     
@@ -1236,10 +1377,13 @@ expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     NO NO NO !!!! We still need a lock!
     */
     
-    NDRX_DUMP(log_debug, "Writing new message to disk", 
-                (char *)msg, sizeof(*msg)+msg->len);
+     /* detect the actual len... */
+    len = tmq_get_block_len((char *)msg);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)msg, sizeof(*msg)+msg->len, EXTRUE))
+    NDRX_DUMP(log_debug, "Writing new message to disk", 
+                (char *)msg, len);
+    
+    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, EXTRUE))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
@@ -1258,25 +1402,69 @@ out:
 }
 
 /**
+ * Get the data size from any block
+ * @param data generic data block 
+ * @return data size or 0 on error (should not happen anyway)
+ */
+expublic size_t tmq_get_block_len(char *data)
+{
+    size_t ret = 0;
+    
+    tmq_cmdheader_t *p_hdr = (tmq_cmdheader_t *)data;
+    tmq_msg_t *p_msg;
+    tmq_msg_del_t *p_del;
+    tmq_msg_upd_t *p_upd;
+    tmq_msg_unl_t *p_unl;
+    
+    switch (p_hdr->command_code)
+    {
+        case TMQ_STORCMD_NEWMSG:
+            p_msg = (tmq_msg_t *)data;
+            ret = sizeof(*p_msg) + p_msg->len;
+            break;
+        case TMQ_STORCMD_UPD:
+            ret = sizeof(*p_upd);
+            break;
+        case TMQ_STORCMD_DEL:
+            ret = sizeof(*p_del);
+            break;
+        case TMQ_STORCMD_UNLOCK:
+            ret = sizeof(*p_unl);
+            break;
+        default:
+            NDRX_LOG(log_error, "Unknown command code: %c", p_hdr->command_code);
+            break;
+    }
+    
+    return ret;
+}
+
+/**
  * Delete/Update message block write
  * @param p_block ptr to union of commands
  * @return SUCCEED/FAIL
  */
-expublic int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr)
+expublic int tmq_storage_write_cmd_block(char *data, char *descr)
 {
     int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
+    size_t len;
+    tmq_cmdheader_t *p_hdr = (tmq_cmdheader_t *)data;
+    
+    
+    /* detect the actual len... */
+    len = tmq_get_block_len((char *)data);
     
     NDRX_LOG(log_info, "Writing command block: %s msg [%s]", descr, 
-            tmq_msgid_serialize(p_block->hdr.msgid, msgid_str) );
+            tmq_msgid_serialize(p_hdr->msgid, msgid_str));
     
     NDRX_DUMP(log_debug, "Writing command block to disk", 
-                (char *)p_block, sizeof(*p_block));
+                (char *)data, len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)p_block, sizeof(*p_block), EXTRUE))
+    if (EXSUCCEED!=write_to_tx_file((char *)data, len, EXTRUE))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
-                tmq_msgid_serialize(p_block->hdr.msgid, msgid_str));
+                tmq_msgid_serialize(p_hdr->msgid, msgid_str));
         EXFAIL_OUT(ret);
     }
     
@@ -1399,6 +1587,9 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 EXFAIL_OUT(ret);
             }
             
+            /* here we read maximum header size.
+             * For smaller messages (fixed struct messages) all data is read
+             */
             if (EXSUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
                     filename, "tmq_storage_get_blocks", &err))
             {
