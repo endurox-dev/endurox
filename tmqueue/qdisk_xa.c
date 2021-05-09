@@ -137,8 +137,10 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg, int *err);
-exprivate int read_tx_from_file(char *fname, char *block, int len, int *err);
+exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg, 
+        int *err, int *tmq_err);
+exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
+        int *tmq_err);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -173,7 +175,6 @@ struct xa_switch_t ndrxqdynsw =
     .xa_forget_entry = xa_forget_entry_dyn,
     .xa_complete_entry = xa_complete_entry_dyn
 };
-
 
 /**
  * Set filename base
@@ -778,7 +779,7 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
     union tmq_block b;
     char *folders[2] = {M_folder_active, M_folder_prepared};
     char *fn = "xa_rollback_entry";
-    int err;
+    int err, tmq_err;
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
@@ -804,7 +805,8 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
             if (ndrx_file_exists(fname))
             {
                 NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
-                if (EXSUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b), &err))
+                if (EXSUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b), 
+                        &err, &tmq_err))
                 {
                     /* Send the notification */
                     if (TMQ_STORCMD_NEWMSG == b.hdr.command_code)
@@ -909,7 +911,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     FILE *f = NULL;
     char *fname;
     char *fname_msg;
-    int err;
+    int err, tmq_err;
     
     if (!G_atmi_tls->qdisk_is_open)
     {
@@ -924,7 +926,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     {
         
         fname=get_filename_i(i, M_folder_prepared, 0);
-        if (EXSUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block), &err))
+        if (EXSUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block), &err, &tmq_err))
         {
             NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
             goto xa_err;
@@ -966,7 +968,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
             }
             
             if (EXSUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd), 
-                    fname_msg, "xa_commit_entry", &err))
+                    fname_msg, "xa_commit_entry", &err, &tmq_err))
             {
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
                 goto xa_err;
@@ -1054,19 +1056,38 @@ xa_fail:
     return XAER_RMFAIL;
 }
 
-#define READ_BLOCK(BUF, LEN) \
-    if (LEN!=(act_read=fread(BUF, 1, LEN, f)))\
-    {\
-        *err = ferror(f);\
-        \
-        NDRX_LOG(log_error, "ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",\
-                dbg_msg, fname, LEN, act_read, strerror(*err));\
-        \
-        userlog("ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",\
-            dbg_msg, fname, LEN, act_read, strerror(*err));\
-        EXFAIL_OUT(ret);\
-    }
+#define READ_BLOCK(BUF, LEN) do {\
+        if (LEN!=(act_read=fread(BUF, 1, LEN, f)))\
+        {\
+            *err = ferror(f);\
+            \
+            if (EXSUCCEED==*err)\
+            {\
+                *tmq_err = TMQ_ERR_EOF;\
+            }\
+            NDRX_LOG(log_error, "ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s, tmq_err: %d",\
+                    dbg_msg, fname, LEN, act_read, (*err==0?"EOF":strerror(*err)), *tmq_err);\
+            \
+            userlog("ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s, tmq_err: %d",\
+                dbg_msg, fname, LEN, act_read, (*err==0?"EOF":strerror(*err)), *tmq_err);\
+            EXFAIL_OUT(ret);\
+        }\
+    } while (0)
 
+/** verify magic */
+#define VERIFY_MAGIC(FIELD, MAGIC_VAL, LEN, DESCR, ERROR_CODE) do { \
+        /* validate magics and command code... */\
+        if (0!=strncmp(FIELD, MAGIC_VAL, LEN))\
+        {\
+            NDRX_LOG(log_error, "ERROR! file [%s] invalid %s: expected: [%s] got [%*s] command [%x]", \
+                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code);\
+            NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));\
+            userlog("ERROR! file [%s] invalid %s: expected: [%s] got [%*s] command [%x]", \
+                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code);\
+            *tmq_err = ERROR_CODE;\
+            EXFAIL_OUT(ret);\
+        }\
+    } while(0)
 
 /**
  * Reads the header block
@@ -1078,14 +1099,21 @@ xa_fail:
  * @param fname name for debug
  * @param dbg_msg debug message
  * @param err ptr to error code if failed to read
+ * @param tmq_err internal error code
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg, int *err)
+exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, 
+        char *dbg_msg, int *err, 
+        int *tmq_err)
 {
     int act_read;
     int ret = EXSUCCEED;
     int offset = 0;
     tmq_cmdheader_t *p_hdr;
+    
+    *err=0;
+    *tmq_err = 0;
+    
     if (0==ftell(f))
     {
         assert(len >= sizeof(tmq_cmdheader_t));
@@ -1095,25 +1123,10 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *db
         p_hdr = (tmq_cmdheader_t *)block;
         
         /* validate magics and command code... */
-        if (0!=strncmp(p_hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN))
-        {
-            NDRX_LOG(log_error, "ERROR ! file [%s] invalid magic1: expected: [%s] got [%*s] command [%c]", 
-                    fname, TMQ_MAGIC, TMQ_MAGIC_LEN, p_hdr->magic, p_hdr->command_code);
-            NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));
-            userlog("ERROR ! file [%s] invalid magic1: expected: [%s] got [%*s] command [%c]", 
-                    fname, TMQ_MAGIC, TMQ_MAGIC_LEN, p_hdr->magic, p_hdr->command_code);
-            EXFAIL_OUT(ret);
-        }
-        
-        if (0!=strncmp(p_hdr->magic2, TMQ_MAGIC2, TMQ_MAGIC_LEN))
-        {
-            NDRX_LOG(log_error, "ERROR ! file [%s] invalid magic2: expected: [%s] got [%*s] command [%c]", 
-                    fname, TMQ_MAGIC2, TMQ_MAGIC_LEN, p_hdr->magic2, p_hdr->command_code);
-            NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));
-            userlog("ERROR ! file [%s] invalid magic2: expected: [%s] got [%*s] command [%c]", 
-                    fname, TMQ_MAGIC2, TMQ_MAGIC_LEN, p_hdr->magic2, p_hdr->command_code);
-            EXFAIL_OUT(ret);
-        }
+        VERIFY_MAGIC(p_hdr->magic,  TMQ_MAGICBASE,  TMQ_MAGICBASE_LEN,  "base magic1",  TMQ_ERR_CORRUPT);
+        VERIFY_MAGIC(p_hdr->magic2, TMQ_MAGICBASE2, TMQ_MAGICBASE_LEN,  "base magic2",  TMQ_ERR_CORRUPT);
+        VERIFY_MAGIC(p_hdr->magic,  TMQ_MAGIC,      TMQ_MAGIC_LEN,      "magic1",       TMQ_ERR_VERSION);
+        VERIFY_MAGIC(p_hdr->magic2, TMQ_MAGIC2,     TMQ_MAGIC_LEN,      "magic2",       TMQ_ERR_VERSION);
         
         /* validate command code */
         switch (p_hdr->command_code)
@@ -1144,11 +1157,12 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *db
                 }
                 break;
             default:
-                NDRX_LOG(log_error, "ERROR ! file [%s] invalid command code [%c]", 
-                    fname, p_hdr->command_code);
+                NDRX_LOG(log_error, "ERROR! file [%s] invalid command code [%x]", 
+                    fname, (unsigned int)p_hdr->command_code);
                 NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));
-                userlog("ERROR ! file [%s] invalid command code [%c]", 
-                    fname, p_hdr->command_code);
+                userlog("ERROR! file [%s] invalid command code [%x]", 
+                    fname, (unsigned int)p_hdr->command_code);
+                *tmq_err = TMQ_ERR_CORRUPT;
                 EXFAIL_OUT(ret);
 
                 break;
@@ -1163,9 +1177,6 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *db
     }
     
     
-    *err=0;
-    
-    
 out:
     return ret;
 }
@@ -1176,9 +1187,11 @@ out:
  * @param block buffer where to store the data block
  * @param len length to read.
  * @param err error code
+ * @param tmq_err internal error code
  * @return 
  */
-exprivate int read_tx_from_file(char *fname, char *block, int len, int *err)
+exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
+        int *tmq_err)
 {
     int ret = EXSUCCEED;
     FILE *f = NULL;
@@ -1195,7 +1208,7 @@ exprivate int read_tx_from_file(char *fname, char *block, int len, int *err)
         EXFAIL_OUT(ret);
     }
     
-    ret = read_tx_block(f, block, len, fname, "read_tx_from_file", err);
+    ret = read_tx_block(f, block, len, fname, "read_tx_from_file", err, tmq_err);
     
 out:
 
@@ -1489,6 +1502,10 @@ out:
     return ret;    
 }
 
+/** continue with dirent free */
+#define DIRENT_CONTINUE \
+            NDRX_FREE(namelist[n]);\
+            continue;\
 /**
  * Restore messages from storage device.
  * TODO: File naming include 03d so that multiple tasks per file sorts alphabetically.
@@ -1505,7 +1522,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
     union tmq_block *p_block = NULL;
     FILE *f = NULL;
     char filename[PATH_MAX+1];
-    int err;
+    int err, tmq_err;
     
     /* prepared & active messages are all locked
      * Also if delete command is found in active, this means that committed
@@ -1541,8 +1558,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
             if (0==strcmp(namelist[n]->d_name, ".") || 
                 0==strcmp(namelist[n]->d_name, ".."))
             {
-                NDRX_FREE(namelist[n]);
-                continue;
+                DIRENT_CONTINUE;
             }
 
             /* filter nodeid & serverid from the filename... */
@@ -1563,8 +1579,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 {
                     NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
                         nodeid, srvid, msg_nodeid, msg_srvid);
-                    NDRX_FREE(namelist[n]);
-                    continue;
+                    DIRENT_CONTINUE;
                 }
             }
             
@@ -1591,19 +1606,27 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
              * For smaller messages (fixed struct messages) all data is read
              */
             if (EXSUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
-                    filename, "tmq_storage_get_blocks", &err))
+                    filename, "tmq_storage_get_blocks", &err, &tmq_err))
             {
-                NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes): %s - not loading", 
-                   filename, sizeof(*p_block), strerror(err));
-                userlog("ERROR! Failed to read [%s] hdr (%d bytes): %s - not loading", 
-                   filename, sizeof(*p_block), strerror(err));
+                NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - not loading", 
+                   filename, sizeof(*p_block), tmq_err, (err==0?"EOF":strerror(err)) );
+                userlog("ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - not loading", 
+                   filename, sizeof(*p_block), tmq_err, (err==0?"EOF":strerror(err)) );
                 
                 /* skip & continue with next */
                 NDRX_FCLOSE(f);
                 f=NULL;
-                continue;
+
+                NDRX_FREE((char *)p_block);
+                p_block = NULL;
                 
-                /* EXFAIL_OUT(ret); */
+                if (2==j)
+                {
+                    /* perform cleanups if possible */
+                    tmq_housekeep(filename, tmq_err);
+                }
+                
+                DIRENT_CONTINUE;
             }
             
             /* Late filter 
@@ -1616,10 +1639,11 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
             {
                 NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
                     nodeid, srvid, p_block->hdr.nodeid, p_block->hdr.srvid);
-                NDRX_FREE(namelist[n]);
+                
                 NDRX_FREE((char *)p_block);
                 p_block = NULL;
-                continue;
+                
+                DIRENT_CONTINUE;
             }
             
             NDRX_DUMP(log_debug, "Got command block",  p_block, sizeof(*p_block));
@@ -1654,7 +1678,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 {
                     if (EXSUCCEED!=read_tx_block(f, 
                             p_block->msg.msg+bytes_extra, 
-                            bytes_to_read, filename, "tmq_storage_get_blocks 2", &err))
+                            bytes_to_read, filename, "tmq_storage_get_blocks 2", &err, &tmq_err))
                     {
                         NDRX_LOG(log_error, "ERROR! Failed to read [%s] %d bytes: %s - not loading", 
                            filename, bytes_to_read, strerror(err));
@@ -1666,10 +1690,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                         f=NULL;
                         NDRX_FREE((char *)p_block);
                         p_block = NULL;
-                        continue;
-                        /*
-                        EXFAIL_OUT(ret);
-                         */
+                        
+                        DIRENT_CONTINUE;
                     }
                 }
                 else

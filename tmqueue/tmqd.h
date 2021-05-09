@@ -51,11 +51,11 @@ extern "C" {
 extern pthread_t G_forward_thread;
 extern int G_forward_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Macros-------------------------------------*/
-#define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs */
-#define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
-#define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
-#define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
-#define TXTOUT_DFLT             30   /* Default XA transaction timeout      */
+#define SCAN_TIME_DFLT          10  /**< Every 10 sec try to complete TXs */
+#define MAX_TRIES_DFTL          100 /**< Try count for transaction completion */
+#define TOUT_CHECK_TIME         1   /**< Check for transaction timeout, sec   */
+#define THREADPOOL_DFLT         10  /**< Default number of threads spawned   */
+#define TXTOUT_DFLT             30  /**< Default XA transaction timeout      */
 
 #define TMQ_MODE_FIFO           'F' /**< fifo q mode                        */
 #define TMQ_MODE_LIFO           'L' /**< lifo q mode                        */
@@ -74,23 +74,20 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
  */
 typedef struct
 {
-    long dflt_timeout; /* how long monitored transaction can be open        */
-    /*char data_dir[PATH_MAX];  Where to write tx log files  - NO NEED, handed by XA driver */
-    int scan_time;      /* Number of seconds retries */
-    char qspace[XATMI_SERVICE_NAME_LENGTH+1]; /* where the Q files live */
-    char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
-    char qconfig[PATH_MAX+1]; /* Queue config file  */
+    long dflt_timeout;  /**< how long monitored transaction can be open     */
+    int scan_time;      /**< Number of seconds retries                      */
+    char qspace[XATMI_SERVICE_NAME_LENGTH+1];   /**< where the Q files live */
+    char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service name      */
+    char qconfig[PATH_MAX+1]; /**< Queue config file                        */
+    int threadpoolsize;       /**< thread pool size                         */
+    int housekeeptime;        /**< Number of seconds active+corrupted cleanup*/
+    threadpool thpool;        /**< threads for service                      */
     
-    int threadpoolsize; /* thread pool size */
+    int notifpoolsize;        /**< Notify thread pool size                  */
+    threadpool notifthpool;   /**< Notify (loop back) threads for service (callbacks from TMSRV) */
     
-    
-    threadpool thpool; /* threads for service */
-    
-    int notifpoolsize; /* Notify thread pool size */
-    threadpool notifthpool; /* Notify (loop back) threads for service (callbacks from TMSRV) */
-    
-    int fwdpoolsize; /* forwarder thread pool size */
-    threadpool fwdthpool; /* threads for forwarder */
+    int fwdpoolsize;          /**< forwarder thread pool size               */
+    threadpool fwdthpool;     /**< threads for forwarder                    */
     
 } tmqueue_cfg_t;
 
@@ -112,12 +109,12 @@ typedef struct thread_server thread_server_t;
 typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
-    char msgid_str[TMMSGIDLEN_STR+1]; /* we might store msgid in string format... */
-    char corid_str[TMCORRIDLEN_STR+1]; /* hash for correlator            */
-    /* We should have hash handler of message hash */
-    EX_hash_handle hh; /* makes this structure hashable (for msgid)        */
-    EX_hash_handle h2; /* makes this structure hashable (for corid)        */
-    /* We should also have a linked list handler   */
+    char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
+    char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator            */
+    /** We should have hash handler of message hash */
+    EX_hash_handle hh; /**< makes this structure hashable (for msgid)        */
+    EX_hash_handle h2; /**< makes this structure hashable (for corid)        */
+    /** We should also have a linked list handler   */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
     
@@ -131,13 +128,13 @@ typedef struct tmq_qhash tmq_qhash_t;
 struct tmq_qhash
 {
     char qname[TMQNAMELEN+1];
-    long succ; /* Succeeded auto messages */
-    long fail; /* failed auto messages */
+    long succ;      /**< Succeeded auto messages                */
+    long fail;      /**< failed auto messages                   */
     
-    long numenq; /* Enqueued messages (even locked)                   */
-    long numdeq; /* Dequeued messages (removed, including aborts)     */
+    long numenq;    /**< Enqueued messages (even locked)        */
+    long numdeq;    /**< Dequeued messages (removed, including aborts)     */
     
-    EX_hash_handle hh; /* makes this structure hashable        */
+    EX_hash_handle hh; /**< makes this structure hashable        */
     tmq_memmsg_t *q;
 };
 
@@ -171,11 +168,11 @@ typedef struct fwd_qlist fwd_qlist_t;
 struct fwd_qlist
 {
     char qname[TMQNAMELEN+1];
-    long succ; /* Succeeded auto messages */
-    long fail; /* failed auto messages */
+    long succ; /**< Succeeded auto messages */
+    long fail; /**< failed auto messages */
     
-    long numenq; /* Succeeded auto messages */
-    long numdeq; /* failed auto messages */
+    long numenq; /**< Succeeded auto messages */
+    long numdeq; /**< failed auto messages */
     
     fwd_qlist_t *next;
     fwd_qlist_t *prev;

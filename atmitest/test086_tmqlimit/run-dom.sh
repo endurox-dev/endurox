@@ -56,6 +56,7 @@ export PATH=$PATH:$TESTDIR
 export NDRX_TOUT=90
 export NDRX_LIBEXT="so"
 export NDRX_ULOG=$TESTDIR
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -240,6 +241,57 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "Testing corrupted file houskeeping"
+
+echo "Creating 1KB block... of zeros"
+dd if=/dev/zero of=./QSPACE1/active/zero_block count=1024 bs=1
+touch ./QSPACE1/active/empty_file
+touch ./QSPACE1/prepared/empty_file
+
+xadmin stop -s tmqueue
+xadmin start -s tmqueue
+
+# files must exist as 30 sec is not passed...
+if [[ ! -f ./QSPACE1/active/zero_block ]]; then
+    echo "./QSPACE1/active/zero_block must exist (as not yet expired)!"
+    go_out -1
+fi
+
+if [[ ! -f ./QSPACE1/active/empty_file ]]; then
+    echo "./QSPACE1/active/empty_file must exist (as not yet expired)!"
+    go_out -1
+fi
+
+if [[ ! -f ./QSPACE1/prepared/empty_file ]]; then
+    echo "./QSPACE1/prepared/empty_file must exist (no expiry)!"
+    go_out -1
+fi
+
+echo "Sleep 33.."
+sleep 33
+
+xadmin stop -s tmqueue
+xadmin start -s tmqueue
+
+# files must be removed as 30 sec passed
+if [[ -f ./QSPACE1/active/zero_block ]]; then
+    echo "./QSPACE1/active/zero_block must be removed (expired)!"
+    go_out -1
+fi
+
+if [[ -f ./QSPACE1/active/empty_file ]]; then
+    echo "./QSPACE1/active/empty_file must be removed (expired)!"
+    go_out -1
+fi
+
+# only active folder is housekeeped
+if [[ ! -f ./QSPACE1/prepared/empty_file ]]; then
+    echo "./QSPACE1/prepared/empty_file must exist (no expiry)!"
+    go_out -1
+fi
+
+# cleanup...
+rm ./QSPACE1/prepared/empty_file
 
 go_out $RET
 
