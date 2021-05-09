@@ -36,32 +36,18 @@
 #include <string.h>
 #include <errno.h>
 #include <regex.h>
-#include <utlist.h>
-#include <dirent.h>
-#include <pthread.h>
-#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
-#include <atmi_int.h>
-#include <typed_buf.h>
-#include <ndrstandard.h>
-#include <ubf.h>
 #include <Exfields.h>
-#include <tperror.h>
-#include <exnet.h>
-#include <ndrxdcmn.h>
 
 #include "tmqd.h"
-#include "../libatmisrv/srv_int.h"
 #include "nstdutil.h"
 #include "userlog.h"
-#include <xa_cmn.h>
-#include <atmi_int.h>
-#include <ndrxdiag.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
