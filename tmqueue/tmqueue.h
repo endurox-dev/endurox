@@ -59,6 +59,10 @@ extern "C" {
 #define TMQ_MAGIC2              "END2"      /**< magic of tmq record, end   */
 #define TMQ_MAGIC_LEN           4           /**< the len of message magic   */
 
+#define TMQ_MAGICBASE           "ETQ"       /**< magic without version      */
+#define TMQ_MAGICBASE2          "END"       /**< magic without version, end */
+#define TMQ_MAGICBASE_LEN       3           /**< magic without version      */
+    
 #define TMQ_STORCMD_NEWMSG          'N'     /**< Command code - new message */
 #define TMQ_STORCMD_UPD             'U'     /**< Command code - update msg  */
 #define TMQ_STORCMD_DEL             'D'     /**< Command code - delete msg  */
@@ -75,6 +79,21 @@ extern "C" {
     
     
 #define TMQ_SYS_ASYNC_CPLT    0x00000001    /**< Complete message in async mode */
+    
+/**
+ * List of tmq specific internal errors
+ * @defgroup tmq_errors
+ * @{
+ */
+
+#define TMQ_ERR_VERSION          1          /**< Version error              */
+#define TMQ_ERR_EOF              2          /**< File is truncated          */
+#define TMQ_ERR_CORRUPT          3          /**< File contents are corrupted*/
+    
+/** @} */ /* end of tmq_errors */
+    
+    
+#define TMQ_HOUSEKEEP_DEFAULT   (60*60)     /**< houskeep 1 hour            */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -207,6 +226,8 @@ extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
 extern int tmq_storage_write_cmd_block(char *p_block, char *descr);
 extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block), 
         short nodeid, short srvid);
+extern void tmq_housekeep(char *filename, int tmq_err);
+extern void tmq_configure_housekeep(int housekeep);
    
     
 #ifdef	__cplusplus

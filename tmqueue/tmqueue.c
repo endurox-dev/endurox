@@ -341,8 +341,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
+    G_tmqueue_cfg.housekeeptime= TMQ_HOUSEKEEP_DEFAULT;
+    
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:h:")) != -1)
     {
         if (optarg)
         {
@@ -387,6 +389,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
             case 't': 
                 G_tmqueue_cfg.dflt_timeout = atol(optarg);
+                break;
+            case 'h':
+                G_tmqueue_cfg.housekeeptime = atoi(optarg);
                 break;
             default:
                 /*return FAIL;*/
@@ -435,6 +440,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_tmqueue_cfg.dflt_timeout = TXTOUT_DFLT;
     }
     
+    /* set housekeeping time */
+    tmq_configure_housekeep(G_tmqueue_cfg.housekeeptime);
+    
     NDRX_LOG(log_info, "Recovery scan time set to [%d]",
                             G_tmqueue_cfg.scan_time);
     
@@ -449,7 +457,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     NDRX_LOG(log_info, "Local transaction tout set to: [%ld]", 
             G_tmqueue_cfg.dflt_timeout );
-    
     
     /* we should open the XA  */
     NDRX_LOG(log_debug, "About to Open XA Entry!");
