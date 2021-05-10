@@ -57,6 +57,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_library (ndrxxaqdisk SHARED
                 tmqutil.c
                 qdisk_xa.c
+                housekeep.c
             )
 
 add_library (ndrxxaqdisks SHARED

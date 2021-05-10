@@ -176,7 +176,7 @@ expublic void tmq_msgid_gen(char *msgid)
             +sizeof(short)
             ,(char *)&(srv_id), sizeof(short));    
     
-    NDRX_LOG(log_error, "MSGID: struct size: %d", sizeof(exuuid_t)+sizeof(short)+ sizeof(short));
+    NDRX_LOG(log_debug, "MSGID: struct size: %d", sizeof(exuuid_t)+sizeof(short)+ sizeof(short));
 }
 
 
