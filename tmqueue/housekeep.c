@@ -42,8 +42,7 @@
 
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <atmi.h>
-#include <Exfields.h>
+#include <sys_unix.h>
 
 #include "tmqd.h"
 #include "nstdutil.h"
@@ -106,7 +105,12 @@ expublic void tmq_housekeep(char *filename, int tmq_err)
     }
     
     clock_gettime(CLOCK_REALTIME, &tm);
+
+#ifdef EX_OS_DARWIN
+    diff = ndrx_timespec_get_delta(&tm, &buf.st_ctimespec) / 1000;
+#else
     diff = ndrx_timespec_get_delta(&tm, &buf.st_ctim) / 1000;
+#endif
     
     NDRX_LOG(log_warn, "File age is [%ld] limit [%d]", diff, M_housekeep);
     
