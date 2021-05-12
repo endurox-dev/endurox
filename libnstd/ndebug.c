@@ -650,7 +650,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         len = strlen(tmp_ptr->filename_th_template);
         len2 = 3; /* len of .%u */
 
-        if (len+len2 <= sizeof(tmpfname))
+        if (len+len2 <= tmpfnamesz)
         {
             /* Use the name */
             NDRX_STRCPY_SAFE(tmp_ptr->filename_th_template, tmpfname);
@@ -880,7 +880,7 @@ expublic void ndrx_init_debug(void)
     G_stdout_debug.level = log_debug;
     
     /* default bufsz  */
-    G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
+    G_tp_debug.buffer_size = G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
 
     G_tp_debug.buf_lines = G_ubf_debug.buf_lines = G_ndrx_debug.buf_lines = 1;
     G_tp_debug.level = G_ubf_debug.level = G_ndrx_debug.level = log_debug;
