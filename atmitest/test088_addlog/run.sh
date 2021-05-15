@@ -73,8 +73,8 @@ function go_out {
     exit $1
 }
 
-rm *.log
-rm ULOG*
+rm *.log 2>/dev/null
+rm ULOG* 2>/dev/null
 
 xadmin down -y
 xadmin start -y || go_out 1
