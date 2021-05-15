@@ -522,11 +522,19 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
         }
         else
         {
+            int fd = fileno(mysink->fp);
             /* OK New name is set */
             mysink->fname_org[0] = EXEOS;
             if (mysink->fname!=toname)
             {
                 NDRX_STRCPY_SAFE(mysink->fname, toname);
+            }
+            
+            if (mysink->flags & NDRX_LOG_FSYNCSTD)
+            {
+                /* update stdout/stderr */
+                dup2(fd, STDOUT_FILENO);
+                dup2(fd, STDERR_FILENO);
             }
         }
     }
@@ -622,6 +630,17 @@ expublic int ndrx_debug_is_proc_stderr(void)
     MUTEX_UNLOCK_V(M_sink_lock);
     
     return ret;
+}
+
+/**
+ * Link stderr / stdout to ndrx logger file
+ * if so logrotate shall dup2 on stdout and stderr loggers
+ */
+expublic void ndrx_debug_proc_link_ndrx(void)
+{
+    MUTEX_LOCK_V(M_sink_lock);
+    ((ndrx_debug_file_sink_t*)G_ndrx_debug.dbg_f_ptr)->flags|=NDRX_LOG_FSYNCSTD;
+    MUTEX_UNLOCK_V(M_sink_lock);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
