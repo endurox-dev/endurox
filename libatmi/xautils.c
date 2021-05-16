@@ -489,8 +489,8 @@ expublic int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms
                         src_tmknownrms, dst_tmknownrms);
                 EXFAIL_OUT(ret);
             }
-            NDRX_LOG(log_info, "1--> %c", dst_tmknownrms[len2]);
-            NDRX_LOG(log_info, "2--> %c", src_tmknownrms[i]);
+            NDRX_LOG(log_info, "1--> 0x%x", (unsigned int)dst_tmknownrms[len2]);
+            NDRX_LOG(log_info, "2--> 0x%x", (unsigned int)src_tmknownrms[i]);
             
             dst_tmknownrms[len2] = src_tmknownrms[i];
             dst_tmknownrms[len2+1] = EXEOS;

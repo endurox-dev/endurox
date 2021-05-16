@@ -139,7 +139,7 @@ add_subdirectory (test084_ddr)
 add_subdirectory (test085_prio)
 add_subdirectory (test086_tmqlimit)
 add_subdirectory (test087_tmsrv)
-
+add_subdirectory (test088_addlog)
 ################################################################################
 # Master test case drivere
 add_executable (atmiunit1 atmiunit1.c)

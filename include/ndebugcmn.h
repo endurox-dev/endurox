@@ -54,6 +54,7 @@ extern "C" {
 #define NDRX_LOG_FOSHSTDERR   0x00004 /**< This is OS handler, stderr   */
 #define NDRX_LOG_FOSHSTDOUT   0x00008 /**< This is OS handler, stdout   */
 #define NDRX_LOG_FLOCK        0x00010 /**< Perform locking when write to file */
+#define NDRX_LOG_FSYNCSTD      0x00020 /**< Sync stdout/stderr with fd   */
         
 #define NDRX_LOG_OSSTDERR     "/dev/stderr" /**< This OS handler, stderr*/
 #define NDRX_LOG_OSSTDOUT     "/dev/stdout" /**< This OS handler, stdout*/
