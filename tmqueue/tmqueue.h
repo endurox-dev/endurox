@@ -53,27 +53,47 @@ extern "C" {
  * 1. Native, 32 byte binary byte array
  * 2. String, Base64, 
  */
-#define TMQ_DEFAULT_Q           "@" /* Symbol for default Q */
+#define TMQ_DEFAULT_Q           "@"         /**< Symbol for default Q       */
 
-#define TMQ_MAGIC               "ETMQ" /* magic of tmq record      */
-#define TMQ_MAGIC_LEN           4      /* the len of message magic */
+#define TMQ_MAGIC               "ETQ3"      /**< magic of tmq record        */
+#define TMQ_MAGIC2              "END3"      /**< magic of tmq record, end   */
+#define TMQ_MAGIC_LEN           4           /**< the len of message magic   */
 
-#define TMQ_STORCMD_NEWMSG          'N'      /* Command code - new message */
-#define TMQ_STORCMD_UPD             'U'      /* Command code - update msg  */
-#define TMQ_STORCMD_DEL             'D'      /* Command code - delete msg  */
-#define TMQ_STORCMD_UNLOCK          'L'      /* Command code - unlock msg  */
+#define TMQ_MAGICBASE           "ETQ"       /**< magic without version      */
+#define TMQ_MAGICBASE2          "END"       /**< magic without version, end */
+#define TMQ_MAGICBASE_LEN       3           /**< magic without version      */
+    
+#define TMQ_STORCMD_NEWMSG          'N'     /**< Command code - new message */
+#define TMQ_STORCMD_UPD             'U'     /**< Command code - update msg  */
+#define TMQ_STORCMD_DEL             'D'     /**< Command code - delete msg  */
+#define TMQ_STORCMD_UNLOCK          'L'     /**< Command code - unlock msg  */
     
 
 /**
  * Status codes of the message
  */
-#define TMQ_STATUS_ACTIVE       'A'      /* Message is active          */
-#define TMQ_STATUS_DONE         'D'      /* Message is done            */
-#define TMQ_STATUS_EXPIRED      'E'      /* Message is expired  or tries exceeded  */
-#define TMQ_STATUS_SUSPENDED    'S'      /* Message is suspended       */
+#define TMQ_STATUS_ACTIVE       'A'         /**< Message is active          */
+#define TMQ_STATUS_DONE         'D'         /**< Message is done            */
+#define TMQ_STATUS_EXPIRED      'E'         /**< Message is expired  or tries exceeded  */
+#define TMQ_STATUS_SUSPENDED    'S'         /**< Message is suspended       */
     
     
-#define TMQ_SYS_ASYNC_CPLT    0x00000001    /* Complete message in async mode */
+#define TMQ_SYS_ASYNC_CPLT    0x00000001    /**< Complete message in async mode */
+    
+/**
+ * List of tmq specific internal errors
+ * @defgroup tmq_errors
+ * @{
+ */
+
+#define TMQ_ERR_VERSION          1          /**< Version error              */
+#define TMQ_ERR_EOF              2          /**< File is truncated          */
+#define TMQ_ERR_CORRUPT          3          /**< File contents are corrupted*/
+    
+/** @} */ /* end of tmq_errors */
+    
+    
+#define TMQ_HOUSEKEEP_DEFAULT   (60*60)     /**< houskeep 1 hour            */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -83,14 +103,16 @@ extern "C" {
  */
 typedef struct
 {
-    char magic[4];          /* File magic                            */
+    char magic[4];          /**< File magic   1                             */
     short srvid;
     short nodeid;
     char qname[TMQNAMELEN+1];
     char qspace[XATMI_SERVICE_NAME_LENGTH+1];
-    char command_code;     /* command code, see TMQ_CMD*             */
-    char msgid[TMMSGIDLEN]; /* message_id                            */
-    long flags;             /* Copy of message flags                 */
+    char command_code;      /**< command code, see TMQ_CMD*                 */
+    char msgid[TMMSGIDLEN]; /**< message_id                                 */
+    long flags;             /**< Copy of message flags                      */
+    char reserved[64];      /**< Reversed space for future upgrades         */
+    char magic2[4];         /**< File magic                                 */
 } tmq_cmdheader_t;
 
 /** 
@@ -98,22 +120,26 @@ typedef struct
  */
 typedef struct
 {
+    /** Lets have first 512 bytes of dynamic infos:
+     * so that update fits in one sector update, if in future
+     * we perform optimizations:
+     */
     tmq_cmdheader_t hdr;
-    TPQCTL qctl;            /* Queued message */
-    uint64_t lockthreadid;  /* Locked thread id */
-    char status;            /* Status of the message */
-    long trycounter;        /* try counter */
-    long msgtstamp;         /* epoch up to second */
-    long msgtstamp_usec;    /* 1/10^6 sec */
-    int msgtstamp_cntr;     /* Message counter for same time interval */
-    long trytstamp;         /* epoch up to second */
-    long trytstamp_usec;    /* 1/10^6 sec */
+    uint64_t lockthreadid;  /**< Locked thread id                           */
+    char status;            /**< Status of the message                      */
+    long trycounter;        /**< try counter                                */
+    long msgtstamp;         /**< epoch up to second                         */
+    long msgtstamp_usec;    /**< 1/10^6 sec                                 */
+    int msgtstamp_cntr;     /**< Message counter for same time interval     */
+    long trytstamp;         /**< epoch up to second                         */
+    long trytstamp_usec;    /**< 1/10^6 sec                                 */
     
-    /* Message log (stored only in file) */
-    long len;               /* msg len */
-    char msg[0];            /* the memory segment for structure shall be large 
+    TPQCTL qctl;            /**< Queued message                             */
+    /* Message log (stored only in file)                                    */
+    long len;               /**< msg len                                    */
+    char msg[0];            /**< the memory segment for structure shall be large 
                              * enough to handle the message len 
-                             * indexed by the array   */
+                             * indexed by the array                         */
 } tmq_msg_t;
 
 /**
@@ -124,6 +150,16 @@ typedef struct
     tmq_cmdheader_t hdr;
     
 } tmq_msg_del_t;
+
+
+/**
+ * Command: unlock
+ */
+typedef struct
+{
+    tmq_cmdheader_t hdr;
+    
+} tmq_msg_unl_t;
 
 /** 
  * Command: updcounter
@@ -184,10 +220,13 @@ extern char * tmq_corid_serialize(char *corid_in, char *corid_str_out);
 extern int tmq_finalize_files(UBFH *p_ub);
     
 /* From storage driver: */
+extern size_t tmq_get_block_len(char *data);
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
-extern int tmq_storage_write_cmd_block(union tmq_block *p_block, char *descr);
+extern int tmq_storage_write_cmd_block(char *p_block, char *descr);
 extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block), 
         short nodeid, short srvid);
+extern void tmq_housekeep(char *filename, int tmq_err);
+extern void tmq_configure_housekeep(int housekeep);
    
     
 #ifdef	__cplusplus

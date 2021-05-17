@@ -138,6 +138,7 @@ extern NDRX_API int ndrx_debug_reopen_all(void);
 extern NDRX_API int tplogconfig_int(int logger, int lev, char *debug_string, char *module, 
         char *new_file, long flags);
 extern NDRX_API int ndrx_debug_is_proc_stderr(void);
+extern NDRX_API void ndrx_debug_proc_link_ndrx(void);
 
 extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode, 
         ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink);

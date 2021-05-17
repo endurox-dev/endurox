@@ -156,7 +156,7 @@ function verify_logfiles {
     rmlog=$1
     count=$2
 
-    cnt=`ls -1 ./$rmlog/TRN* 2>/dev/null | wc -l`
+    cnt=`ls -1 ./$rmlog/TRN* 2>/dev/null | wc -l | awk '{print $1}'`
 
     if [[ "X$cnt" != "X$count" ]]; then
         echo "$rmid expected $rmlog to have $count logs but got $cnt"
