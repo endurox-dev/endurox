@@ -253,7 +253,8 @@ expublic txstage_descriptor_t G_state_descriptor[] =
 {
 /* txstage                     txs_stage_min                 txs_min_complete             txs_max_complete  descr   allow_jump */
 {XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL,             "NULL",                       EXFALSE},
-{XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL,             "ACTIVE",                     EXFALSE},
+/* we get outside the ACTIVE state by API call or timeout */
+{XA_TX_STAGE_ACTIVE,           XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL,             "ACTIVE",                     EXFALSE},
 {XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTING,         XA_TX_STAGE_ABORTED_HAZARD,  XA_TX_STAGE_ABORTED,          "ABORTING",                   EXFALSE},
 /* Left for compliance: */
 {XA_TX_STAGE_ABORTED_HAZARD,   XA_TX_STAGE_ABORTED_HAZARD,   XA_TX_STAGE_ABORTED_HAZARD,  XA_TX_STAGE_ABORTED_HAZARD,   "ABORTED_HAZARD",             EXFALSE},
@@ -261,8 +262,10 @@ expublic txstage_descriptor_t G_state_descriptor[] =
 {XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,   XA_TX_STAGE_ABORTED_HEURIS,  XA_TX_STAGE_ABORTED_HEURIS,   "ABORTED_HEURIS",             EXFALSE},
 /* Left for compliance: */
 {XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,          XA_TX_STAGE_ABORTED,         XA_TX_STAGE_ABORTED,          "ABORTED",                    EXFALSE},
-/* Normally we jump out from PREPARING */
-{XA_TX_STAGE_PREPARING,        XA_TX_STAGE_NULL,             XA_TX_STAGE_NULL,            XA_TX_STAGE_NULL,             "PREPARING",                  EXTRUE},
+/* Normally we jump out from PREPARING, in case if state not switched */
+{XA_TX_STAGE_PREPARING,        XA_TX_STAGE_PREPARING,        XA_TX_STAGE_PREPRO,          XA_TX_STAGE_PREPRO,           "PREPARING",                  EXTRUE},
+/* no participants: */
+{XA_TX_STAGE_PREPRO,           XA_TX_STAGE_PREPRO,           XA_TX_STAGE_PREPRO,          XA_TX_STAGE_PREPRO,           "NO_PARTICIPANTS",            EXFALSE},
 {XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTING,       XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED,        "COMMITTING",                 EXFALSE},
 /* Left for compliance: */
 {XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD,XA_TX_STAGE_COMMITTED_HAZARD, "COMMITTED_HAZARD",           EXFALSE},
@@ -296,6 +299,7 @@ expublic txstate2tperrno_t G_txstage2tperrno[] =
 {XA_TX_STAGE_ABORTED_HEURIS,   XA_OP_COMMIT,    TPEHEURISTIC},
 {XA_TX_STAGE_ABORTED,          XA_OP_COMMIT,    TPEABORT},
 {XA_TX_STAGE_PREPARING,        XA_OP_COMMIT,    TPESYSTEM},
+{XA_TX_STAGE_PREPRO,           XA_OP_COMMIT,    EXSUCCEED},
 {XA_TX_STAGE_COMMITTING,       XA_OP_COMMIT,    TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HAZARD, XA_OP_COMMIT,    TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HEURIS, XA_OP_COMMIT,    TPEHEURISTIC},
@@ -315,6 +319,8 @@ expublic txstate2tperrno_t G_txstage2tperrno[] =
 {XA_TX_STAGE_ABORTED_HEURIS,   XA_OP_ROLLBACK,  TPEHEURISTIC},
 {XA_TX_STAGE_ABORTED,          XA_OP_ROLLBACK,  EXSUCCEED},
 {XA_TX_STAGE_PREPARING,        XA_OP_ROLLBACK,  TPESYSTEM},
+/* Not expected prepare completed with abort call:  */
+{XA_TX_STAGE_PREPRO,           XA_OP_ROLLBACK,  TPESYSTEM},
 {XA_TX_STAGE_COMMITTING,       XA_OP_ROLLBACK,  TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HAZARD, XA_OP_ROLLBACK,  TPEHAZARD},
 {XA_TX_STAGE_COMMITTED_HEURIS, XA_OP_ROLLBACK,  TPEHEURISTIC},

@@ -5191,14 +5191,11 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 	off_t size, rsize;
 
 	rc = edb_fopen(env, fname, EDB_O_LOCKS, mode, &env->me_lfd);
-	NDRX_LOG(log_debug, "%s: edb_fopen fname [%s]: %d", __func__, fname, rc);
 	if (rc) {
 		/* Omit lockfile if read-only env on read-only filesystem */
 		if (rc == EDB_ERRCODE_ROFS && (env->me_flags & EDB_RDONLY)) {
 			return EDB_SUCCESS;
 		}
-		NDRX_LOG(log_debug, "%s: edb_fopen fname [%s]: %d - FAIL",
-			__func__, fname, rc);
 		goto fail;
 	}
 

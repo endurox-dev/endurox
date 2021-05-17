@@ -118,7 +118,8 @@ extern "C" {
 
 /* Entered in preparing stage, with possibility to fall back to Abort... */
 #define XA_TX_STAGE_PREPARING                40   /**< Doing prepare            */
-    
+#define XA_TX_STAGE_PREPRO                   41   /**< No participants joined   */
+
 /* 
  * Commit base 
  */

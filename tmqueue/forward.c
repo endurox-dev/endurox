@@ -160,7 +160,8 @@ exprivate void fwd_q_list_rm(void)
 exprivate tmq_msg_t * get_next_msg(void)
 {
     tmq_msg_t * ret = NULL;
-    
+    long qerr = EXSUCCEED;
+    char msgbuf[128];
     if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
     {
         fwd_q_list_rm();
@@ -180,9 +181,10 @@ exprivate tmq_msg_t * get_next_msg(void)
     while (NULL!=M_next_fwd_q_cur)
     {
         /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE)))
+        if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
+                &qerr, msgbuf, sizeof(msgbuf))))
         {
-            NDRX_LOG(log_debug, "Not messages for dequeue");
+            NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", qerr, msgbuf);
         }
         else
         {
@@ -214,7 +216,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     int tperr;
     union tmq_block cmd_block;
     int tout;
-    
+    int disk_err=EXFALSE;
     if (!M_is_xa_open)
     {
         if (EXSUCCEED!=tpopen()) /* init the lib anyway... */
@@ -361,11 +363,12 @@ out:
         
         cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
         
-        if (EXSUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                 "Removing completed message..."))
         {
             userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
                     msgid_str);
+            disk_err=EXTRUE;
         }
     }
     else
@@ -404,11 +407,12 @@ out:
             
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
         
-            if (EXSUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+            if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                     "Removing expired message..."))
             {
                 userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
                         msgid_str);
+                disk_err=EXTRUE;
             }
         }
         else
@@ -418,22 +422,36 @@ out:
         
             cmd_block.hdr.command_code = TMQ_STORCMD_UPD;
             
-            if (EXSUCCEED!=tmq_storage_write_cmd_block(&cmd_block, 
+            if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                     "Update message command"))
             {
                 userlog("Failed to issue update command to xa for msgid_str [%s]", 
                         msgid_str);
+                disk_err=EXTRUE;
             }
         }
     }
     
     /* commit the transaction */
-    if (EXSUCCEED!=tpcommit(0))
+    if (disk_err)
+    {
+        userlog("tmq forward: msg [%s] aborting due to disk error", 
+                msgid_str);
+        NDRX_LOG(log_error, "tmq forward: msg [%s] aborting due to disk error", 
+                msgid_str);
+        tpabort(0);
+    }
+    else if (EXSUCCEED!=tpcommit(0))
     {
         userlog("Failed to commit: %s", tpstrerror(tperrno));
         NDRX_LOG(log_error, "Failed to commit!");
         tpabort(0);
     }
+    
+    /* if disk failed, maybe that's fine that messages stay locked
+     * after the restart there will be retry, but at-least we does not make
+     * infinite loop of attempts
+     */
     
     return;
 }

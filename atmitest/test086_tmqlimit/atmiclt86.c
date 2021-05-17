@@ -60,6 +60,7 @@ exprivate int basic_loadprep(int maxmsg);
 exprivate int basic_tmsrvdiskerr(int maxmsg);
 exprivate int basic_badmsg(int maxmsg);
 exprivate int basic_commit_crash(int maxmsg);
+exprivate int basic_deqwriteerr(int maxmsg);
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
@@ -107,6 +108,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "commit_crash"))
     {
         return basic_commit_crash(100);
+    }
+    else if (0==strcmp(argv[1], "deqwriteerr"))
+    {
+        return basic_deqwriteerr(100);
     }
     else
     {
@@ -301,7 +306,7 @@ exprivate int basic_tmsrvrestart(int maxmsg)
     TPQCTL qc;
     int i;
     
-    NDRX_LOG(log_error, "case qfull");
+    NDRX_LOG(log_error, "case basic_tmsrvrestart");
     if (EXSUCCEED!=tpbegin(9999, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to begin");
@@ -360,6 +365,10 @@ exprivate int basic_tmsrvrestart(int maxmsg)
         NDRX_LOG(log_error, "TESTERROR: failed to start tmsrv");
         EXFAIL_OUT(ret);
     }
+
+    /* let tmsrv to load the logs in background... */
+    sleep(5);
+    
     
     /* also.. here all message shall be locked */
     for (i=0; i<1; i++)
@@ -473,7 +482,7 @@ exprivate int basic_commit_shut(int maxmsg)
     TPQCTL qc;
     int i;
     
-    NDRX_LOG(log_error, "case qfull");
+    NDRX_LOG(log_error, "case basic_commit_shut");
     if (EXSUCCEED!=tpbegin(9999, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to begin");
@@ -581,6 +590,161 @@ out:
 }
 
 /**
+ * Dequeue write error (disk full on command file) must be reported
+ * @param maxmsg max messages to be ok
+ */
+exprivate int basic_deqwriteerr(int maxmsg)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    int i;
+    
+    NDRX_LOG(log_error, "case basic_deqwriteerr");
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Initial test... */
+    for (i=0; i<maxmsg; i++)
+    {
+        char *testbuf_ref = tpalloc("CARRAY", "", 10);
+        long len=10;
+
+        testbuf_ref[0]=0;
+        testbuf_ref[1]=1;
+        testbuf_ref[2]=2;
+        testbuf_ref[3]=3;
+        testbuf_ref[4]=4;
+        testbuf_ref[5]=5;
+        testbuf_ref[6]=6;
+        testbuf_ref[7]=7;
+        testbuf_ref[8]=8;
+        testbuf_ref[9]=9;
+
+        /* alloc output buffer */
+        if (NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+                len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(testbuf_ref);
+    }
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: commit failed: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=system("xadmin lcf qwriterr -A 1 -a"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: xadmin lcf qwriterr -A 1 -a failed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* all messages must be available */
+    for (i=0; i<1; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeue must fail!!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (tperrno!=TPEDIAGNOSTIC)
+        {
+            NDRX_LOG(log_error, "TESTERROR: TPEDIAGNOSTIC expected, got: %d!", tperrno);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (QMEOS!=qc.diagnostic)
+        {
+            NDRX_LOG(log_error, "TESTERROR: QMEOS expected, got: %d!", qc.diagnostic);
+            EXFAIL_OUT(ret);
+        }   
+        tpfree(buf);
+
+    }
+    
+    /* terminate the transaction */
+    tpabort(0);
+    
+    
+     if (EXSUCCEED!=system("xadmin lcf qwriterr -A 0 -a"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: xadmin lcf qwriterr -A 0 -a failed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* all messages must be available */
+    for (i=0; i<maxmsg; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeue failed!: %s %ld", 
+                    tpstrerror(tperrno), qc.diagnostic);
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+        
+    }
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to tpcommit");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
+
+/**
  * Load prepared messages (also tmq scans this twice, thus check that no problem)
  * @param maxmsg
  * @return 
@@ -591,7 +755,7 @@ exprivate int basic_loadprep(int maxmsg)
     TPQCTL qc;
     int i;
     
-    NDRX_LOG(log_error, "case qfull");
+    NDRX_LOG(log_error, "case basic_loadprep");
     if (EXSUCCEED!=tpbegin(9999, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to begin");
@@ -683,7 +847,7 @@ exprivate int basic_diskfull(int maxmsg)
     TPQCTL qc;
     int i;
     
-    NDRX_LOG(log_error, "case qfull");
+    NDRX_LOG(log_error, "case basic_diskfull");
     
     if (EXSUCCEED!=tpbegin(9999, 0))
     {
@@ -815,7 +979,7 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
     TPQCTL qc;
     int i;
     
-    NDRX_LOG(log_error, "case qfull");
+    NDRX_LOG(log_error, "case basic_tmsrvdiskerr");
     
     if (EXSUCCEED!=tpbegin(9999, 0))
     {
@@ -936,7 +1100,7 @@ exprivate int basic_badmsg(int maxmsg)
     TPQCTL qc;
     int i;
     
-    NDRX_LOG(log_error, "case qfull");
+    NDRX_LOG(log_error, "case basic_badmsg");
     if (EXSUCCEED!=tpbegin(9999, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to begin");

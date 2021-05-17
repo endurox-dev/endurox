@@ -877,6 +877,16 @@ request logger, 'u' - UBF thread logger, 'v' - UBF request logger.
 
 - 'MESSAGE' - logged user message.
 
+=== XATMI server STDERR/STDOUT linking with the logger
+
+If XATMI server binary log file is set to *stderr* in *ndrxdebug.conf(5)* (either 
+file=/dev/stderr or empty file=) and *-e* flag is set in clopt for the XATMI
+server process, then process level loggers (*ndrx*/*ubf*/*tp*) also logs to this
+file. In such case if logrotate ("*xadmin(8)* lcf logrotate") is performed or
+process level logger file name is changed via *tplogconfig(3)*), then XATMI
+server's *stdout* and *stderr* is also re-directed to changed file name via
+*dup2()* Unix system call.
+
 == Queuing mechanisms
 
 This chapter describes different Enduro/X message transport mechanisms which are
@@ -2584,6 +2594,7 @@ no real reason for this record. Thus from Enduro/X 6.1 this fields is not used.
 *37* - aborted/hazard finished (xa_forget ok),
 *38* - aborted/heuristic finished (xa_forget ok),
 *40* - preparing,
+*41* - preparing (no participants),
 *55* - committed (hazard),
 *65* - heuristically committed,
 *70* - committed ok,
