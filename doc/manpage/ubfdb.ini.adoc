@@ -14,7 +14,6 @@ SYNOPSIS
 ---------------------------------------------------------------------
 [@ubfdb[/CCTAG]]
 cachedb=DBNAME_DB
-resource=DATABASE_DIRECTORY
 max_readers=MAX_READERS
 map_size=MAP_SIZE
 perms=DB_PERMISSIONS
