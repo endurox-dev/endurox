@@ -310,6 +310,79 @@ out:
                 0L);
 }
 
+/**
+ * Fetch testing
+ */
+void FETCH (TPSVCINFO *p_svc)
+{
+
+    EXEC SQL BEGIN DECLARE SECTION;
+    char h_typecode[17];
+    EXEC SQL END DECLARE SECTION;
+    int ret = EXSUCCEED;
+    long rsplen = 0;
+    char *odata;
+
+    EXEC SQL DECLARE type_cursor CURSOR FOR
+        SELECT TYPECODE
+        FROM ACCOUNT_TYPES;
+
+    if (sqlca.sqlcode != 0)
+    {
+        NDRX_LOG(log_error, "Failed to select: %d: %.70s",
+                sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+        EXFAIL_OUT(ret);
+    }
+
+    EXEC SQL OPEN type_cursor;
+
+    if (sqlca.sqlcode != 0)
+    {
+        NDRX_LOG(log_error, "Failed to select: %d: %.70s",
+                sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+        EXFAIL_OUT(ret);
+    }
+
+    for ( ;; )
+    {
+
+        /* Fetching data */
+        EXEC SQL FETCH type_cursor 
+            INTO :h_typecode;
+
+        if ( sqlca.sqlcode == 100 )
+        {
+            NDRX_LOG(log_debug, "EOF");
+            goto out;
+        }
+
+        if ( sqlca.sqlcode != 0 )
+        {
+            NDRX_LOG(log_error, "Failed to fetch: %d: %.70s",
+                sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+            EXFAIL_OUT(ret);
+        }
+
+        /* Perform service call (to have suspend) */
+        odata=NULL;
+        if (EXSUCCEED!=tpcall("DEL", NULL, 0, &odata, &rsplen, 0))
+        {
+            NDRX_LOG(log_error, "Failed to call DEL: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+    }
+
+out:
+    EXEC SQL CLOSE type_cursor;
+
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                NULL,
+                0L,
+                0L);
+
+}
 
 /**
  * Do initialization
@@ -340,6 +413,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise("ACCCLEAN", ACCCLEAN))
     {
         NDRX_LOG(log_error, "Failed to initialize ACCCLEAN!");
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=tpadvertise("FETCH", FETCH))
+    {
+        NDRX_LOG(log_error, "Failed to initialize FETCH!");
         EXFAIL_OUT(ret);
     }
     
