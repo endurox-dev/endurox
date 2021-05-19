@@ -81,6 +81,7 @@ expublic void tmq_housekeep(char *filename, int tmq_err)
     long diff;
     struct stat buf;
     struct timespec tm;
+    struct timespec tm2;
     
     NDRX_LOG(log_warn, "Housekeeping file [%s]", filename);
     if (M_housekeep<=0)
@@ -108,6 +109,10 @@ expublic void tmq_housekeep(char *filename, int tmq_err)
 
 #ifdef EX_OS_DARWIN
     diff = ndrx_timespec_get_delta(&tm, &buf.st_ctimespec) / 1000;
+#elif EX_OS_AIX
+    tm2.tv_sec = buf.st_ctime;
+    tm2.tv_nsec = buf.st_ctime_n;
+    diff = ndrx_timespec_get_delta(&tm, &tm2) / 1000;
 #else
     diff = ndrx_timespec_get_delta(&tm, &buf.st_ctim) / 1000;
 #endif
