@@ -72,7 +72,7 @@ struct ndrx_xid_list
 expublic __thread char ndrx_G_PG_conname[65]={EXEOS}; /**< connection name    */
 /*---------------------------Statics------------------------------------*/
 
-exprivate MUTEX_LOCKDECL(M_conndata_lock);
+exprivate MUTEX_LOCKDECL(M_open_lock);
 exprivate ndrx_pgconnect_t M_conndata; /**< parsed connection data            */
 exprivate int M_conndata_ok = EXFALSE; /**< Is connection parsed ok & cached? */
 
@@ -236,6 +236,7 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
 {
     int ret = XA_OK;
     static int conn_counter = 0;
+    static int first = EXTRUE;
     int connid;
     
     if (CONN_OPEN==M_status)
@@ -245,23 +246,36 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
         goto out;
     }
     
+    /* mark that join is not supported */
+    if (first)
+    {
+        MUTEX_LOCK_V(M_open_lock);
+        if (first)
+        {
+            /* no join pls... */
+            ndrx_xa_nojoin(EXTRUE);
+            first=EXFALSE;
+        }
+        MUTEX_UNLOCK_V(M_open_lock);
+    }
+
     /* try parse config */
     if (!M_conndata_ok)
     {
-        MUTEX_LOCK_V(M_conndata_lock);
+        MUTEX_LOCK_V(M_open_lock);
         
         if (!M_conndata_ok)
         {
             if (EXSUCCEED!=ndrx_pg_xa_cfgparse(xa_info, &M_conndata))
             {
                 NDRX_LOG(log_error, "Failed to parse Open string!");
-                MUTEX_UNLOCK_V(M_conndata_lock);
+                MUTEX_UNLOCK_V(M_open_lock);
                 ret = XAER_INVAL;
                 goto out;
             }
             
             M_conndata_ok = EXTRUE;
-            MUTEX_UNLOCK_V(M_conndata_lock);
+            MUTEX_UNLOCK_V(M_open_lock);
         }
     }
     
@@ -275,7 +289,7 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
         long usec;
         
         /* use the same lock for connection naming.. */
-        MUTEX_LOCK_V(M_conndata_lock);
+        MUTEX_LOCK_V(M_open_lock);
         connid = conn_counter;
         
         conn_counter++;
@@ -285,7 +299,7 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
             conn_counter = 0;
         }
         
-        MUTEX_UNLOCK_V(M_conndata_lock);
+        MUTEX_UNLOCK_V(M_open_lock);
         
         ndrx_get_dt_local(&date, &time, &usec);
         

@@ -621,7 +621,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
         atmi_xa_cpy_xai_to_call(call, G_atmi_tls->G_atmi_xa_curtx.txinfo);
         
         if (call->flags & TPTRANSUSPEND && NULL!=p_tranid &&
-                EXSUCCEED!=ndrx_tpsuspend(p_tranid, 0, EXFALSE))
+                EXSUCCEED!=ndrx_tpsuspend(p_tranid, TPTXTMSUSPEND, EXFALSE))
         {
             EXFAIL_OUT(ret);
         }
@@ -1048,7 +1048,7 @@ out:
         }
         
         /* resume the transaction */
-        if (EXSUCCEED!=ndrx_tpresume(p_tranid, 0) && EXSUCCEED==ret)
+        if (EXSUCCEED!=ndrx_tpresume(p_tranid, TPTXTMSUSPEND) && EXSUCCEED==ret)
         {
             ret=EXFAIL;
         }

@@ -270,7 +270,7 @@ expublic int main( int argc, char** argv )
                 if (BBADFLDID==M_fld)
                 {
                     NDRX_LOG(log_error, "Failed to resolve field id [%s]: %s", 
-                            Bstrerror(Berror));
+                            optarg, Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
                 break;
