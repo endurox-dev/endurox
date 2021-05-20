@@ -10,7 +10,7 @@ q.conf - persistent, Transactional Message Queue (TMQ) configuration file
 
 SYNOPSIS
 --------
-<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretryinc=<RETRY_WAIT_INC>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>]
+<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>]
 
 
 DESCRIPTION
@@ -44,7 +44,7 @@ DEBUG CONFIGURATION FILE SYNTAX
 	Number of seconds to be waited before starting to send the message to service. Node that
 	the minimum wait time is defined by tmqueue '-s' scan time flag which makes the periodic sleeps
 	before scanning the messages to be sent. This is setting used by automatic queues.
-*RETRY_WAIT_INC*::
+*RETRY_WAIT*::
 	Increase number of seconds to wait for next retry of forwarding message to service.
 	This setting is used only by automatic queues.
 *WAIT_MAX*::
@@ -64,12 +64,12 @@ Sample configuration:
 #
 # @(#) EnduroX Persistent Queue Configuration
 #
-@,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+@,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,mode=fifo
 # This will take other settings from default:
 TESTA,svcnm=-,autoq=n,waitinit=5
 
 # Automatic queue: Will try to send messages to TESTSVC
-LTESTB,svcnm=TESTSVC,autoq=y,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=0,memonly=n,mode=lifo
+LTESTB,svcnm=TESTSVC,autoq=y,waitinit=1,waitretry=1,waitretrymax=0,memonly=n,mode=lifo
 ---------------------------------------------------------------------
 
 When using common-configuration then above sample is moved to ini files. The sample section would look like:
@@ -79,12 +79,12 @@ When using common-configuration then above sample is moved to ini files. The sam
 # @(#) EnduroX Persistent Queue Configuration
 #
 [@queue]
-@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,mode=fifo
 # This will take other settings from default:
 TESTA=svcnm=-,autoq=n,waitinit=5
 
 # Automatic queue: Will try to send messages to TESTSVC
-LTESTB=svcnm=TESTSVC,autoq=y,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=0,memonly=n,mode=lifo
+LTESTB=svcnm=TESTSVC,autoq=y,waitinit=1,waitretry=1,waitretrymax=0,memonly=n,mode=lifo
 ---------------------------------------------------------------------
 
 For common configuration sub-sections can be used by *cctag*, for example if you have following in your
@@ -113,7 +113,7 @@ Then queues can be defined in sub-section per server cctag, for example:
 #Q defaults (common)
 #
 [@queue]
-@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,mode=fifo
 
 #
 # manual queue, overridden to lifo
@@ -125,7 +125,7 @@ queue1=mode=lifo
 # Automatic queue
 #
 [@queue/qs2]
-queue2=svcnm=TESTSV,autoq=y,tries=3,waitinit=1,waitretry=5,waitretryinc=2,waitretrymax=10
+queue2=svcnm=TESTSV,autoq=y,tries=3,waitinit=1,waitretry=5,waitretrymax=10
 ---------------------------------------------------------------------
 
 BUGS
