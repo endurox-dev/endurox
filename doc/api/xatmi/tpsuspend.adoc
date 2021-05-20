@@ -39,8 +39,8 @@ xa transaction start and if that fails, then attempt *TM_JOIN*.
 flag instead of *TMSUCCESS*. If this flag is used, then 'tranid' shall not be
 used in other thread/process that this particular which performed suspend. The
 benefit for this flag is that certain XA resources might allow to resume operations
-on cursors, etc. . This applies to XA switches which support join operation (
-i.e. is not disabled by *NOJOIN* or *NOSUSPEND* in *NDRX_XA_FLAGS*).
+on cursors, etc. . This applies to XA switches which support join operation
+and join is not disabled by *NOJOIN* flag in *NDRX_XA_FLAGS*.
 
 RETURN VALUE
 ------------
