@@ -83,6 +83,8 @@ exprivate int M_msgsize = 0;        /**< effective message size */
 exprivate int M_fork = EXFALSE;     /**< Use forking */
 exprivate int M_fd[2]={EXFAIL, EXFAIL}; /**< pipe channel for forking clients to report stats */
 exprivate int M_svcnum = 0;        /**< No multi-services used */
+/** persistent queue mode, queue space */
+exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
 /* Lock  */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -99,6 +101,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     char *rcv_buf;
     long rcvlen;
     long sent=0;
+    TPQCTL qc;
     ndrx_stopwatch_t w;
     
     if (NULL==buf)
@@ -135,12 +138,38 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         {
             tpsprio(M_prio, TPABSOLUTE);
         }
+        
         rcv_buf=NULL;
-        if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
+        
+        if (M_qspace[0])
         {
-            NDRX_LOG(log_error, "Failed to call [%s]: %s", 
-                    svcnm, tpstrerror(tperrno));
-            exit(-1);
+            /* Run enq to SVCNM */
+            memset(&qc, 0, sizeof(qc));
+            if (EXSUCCEED!=tpenqueue(M_qspace, svcnm, &qc, buf, 0, 0))
+            {
+                NDRX_LOG(log_error, "tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                exit(-1);
+            }
+
+            /* Run deq from SVCNM */
+            memset(&qc, 0, sizeof(qc));
+            if (EXSUCCEED!=tpdequeue(M_qspace, svcnm, &qc, (char **)&rcv_buf, &rcvlen, 0))
+            {
+                NDRX_LOG(log_error, "tpdequeue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                exit(-1);
+            }
+
+        }
+        else
+        {
+            if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
+            {
+                NDRX_LOG(log_error, "Failed to call [%s]: %s", 
+                        svcnm, tpstrerror(tperrno));
+                exit(-1);
+            }
         }
         
         if (NULL!=rcv_buf)
@@ -191,6 +220,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -S <size>        Random data size, default 1024\n");
     fprintf(stderr, "  -F               Use forking instead of threading\n");
     fprintf(stderr, "  -N <svcnum>      Number of services\n");
+    fprintf(stderr, "  -Q <qspname>     Persistent queue mode. Queue space name (thread enq+deq)\n");
    
 }
 
@@ -222,10 +252,13 @@ expublic int main( int argc, char** argv )
      * -N <number_of_services_modulus>
      */
     
-    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:Q:")) != -1)
     {
         switch (c)
         {
+            case 'Q':
+                NDRX_STRCPY_SAFE(M_qspace, optarg);
+                break;
             case 'N':
                 M_svcnum = atoi(optarg);
                 break;
@@ -300,6 +333,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_nr_threads=%d", M_nr_threads);
     NDRX_LOG(log_info, "M_fork=%d", M_fork);
     NDRX_LOG(log_info, "M_svcnum=%d", M_svcnum);
+    NDRX_LOG(log_info, "M_qspace=[%s]", M_qspace);
     
     /* allocate the buffer & fill with random data */
     
