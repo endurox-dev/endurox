@@ -149,15 +149,7 @@ To ensure transactionality of the message files, following assumptions are used:
 
 - File system file rename operation is atomic.
 
-- Disk sector writes are assumed to be atomic. Thought even if for some reason 
-they are not atomic, then Enduro/X will be able to guarantee
-message consistency in case if disk sector is written from left to right or from
-right to left.
-
-- In case if disk sector writes are not atomic (normally they should be), then
-requirement for disk sub-system is to not to corrupt the file contents. Either
-to have old data bytes or new data bytes written. Disk must not write any random
-data in case of power loss or any other accident.
+- Disk sector writes are assumed to be atomic.
 
 DISK FAILURE HANDLING
 ---------------------
@@ -176,6 +168,9 @@ two phase commit completion. In case of disk failure, command file is not writte
 empty file is removed. The transaction is aborted. In this particular case,
 messages in *tmqueue* messages are not unlocked. Thus if there was disk issues,
 the *tmqueue* shall be restarted, to proceed with enqueued message processing.
+The same rule applies to cases when *replyqueue* or *failurequeue* was configured.
+If there were problem with enqueue to these queue, transaction is aborted,
+and messages are not unlocked, till the *tmqueue* restart.
 
 In case if message/command files in the *active* folder are corrupted for some
 reason, the *tmqueue* process at the startup will detect such files and if 
