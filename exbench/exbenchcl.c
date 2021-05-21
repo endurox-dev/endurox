@@ -85,6 +85,7 @@ exprivate int M_fd[2]={EXFAIL, EXFAIL}; /**< pipe channel for forking clients to
 exprivate int M_svcnum = 0;        /**< No multi-services used */
 /** persistent queue mode, queue space */
 exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
+exprivate int M_autoq = EXFALSE;   /**< Use autoq testing                   */
 /* Lock  */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -138,9 +139,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         {
             tpsprio(M_prio, TPABSOLUTE);
         }
-        
-        rcv_buf=NULL;
-        
+                
         if (M_qspace[0])
         {
             /* Run enq to SVCNM */
@@ -152,13 +151,17 @@ expublic void thread_process(void *ptr, int *p_finish_off)
                 exit(-1);
             }
 
-            /* Run deq from SVCNM */
-            memset(&qc, 0, sizeof(qc));
-            if (EXSUCCEED!=tpdequeue(M_qspace, svcnm, &qc, (char **)&rcv_buf, &rcvlen, 0))
+            if (!M_autoq)
             {
-                NDRX_LOG(log_error, "tpdequeue() failed %s diag: %d:%s", 
-                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
-                exit(-1);
+                /* Run deq from SVCNM */
+                memset(&qc, 0, sizeof(qc));
+                rcv_buf=NULL;
+                if (EXSUCCEED!=tpdequeue(M_qspace, svcnm, &qc, (char **)&rcv_buf, &rcvlen, 0))
+                {
+                    NDRX_LOG(log_error, "tpdequeue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                    exit(-1);
+                }
             }
 
         }
@@ -184,6 +187,45 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     MUTEX_LOCK_V(M_wait_mutex);
     M_msg_sent+=sent;
     MUTEX_UNLOCK_V(M_wait_mutex);
+
+    /* Wait on queue to finish ... 
+     * Additionally, if we have several servers running
+     * then @TMQ servers running, then we shall peek
+     * them all for the stats, if all queues are empty,
+     * only then terminate
+     */
+    if (M_qspace[0] && M_autoq)
+    {
+        int done = EXFALSE;
+        do
+        {
+            memset(&qc, 0, sizeof(qc));
+            qc.flags|=TPQPEEK;
+            rcv_buf=NULL;
+            if (EXSUCCEED!=tpdequeue(M_qspace, svcnm, &qc, (char **)&rcv_buf, &rcvlen, 0))
+            {
+                if (tperrno==TPEDIAGNOSTIC && QMENOMSG==qc.diagnostic)
+                {
+                    done=EXTRUE;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "tpdequeue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                    exit(-1);
+                }
+            }
+            else
+            {
+                if (NULL!=rcv_buf)
+                {
+                    tpfree(rcv_buf);
+                }
+                sleep(1);
+            }
+            
+        } while (!done);
+    }
     
 out:
     
@@ -221,6 +263,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -F               Use forking instead of threading\n");
     fprintf(stderr, "  -N <svcnum>      Number of services\n");
     fprintf(stderr, "  -Q <qspname>     Persistent queue mode. Queue space name (thread enq+deq)\n");
+    fprintf(stderr, "  -A               Auto queue testing (forwarding)\n");
    
 }
 
@@ -252,10 +295,13 @@ expublic int main( int argc, char** argv )
      * -N <number_of_services_modulus>
      */
     
-    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:Q:")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:Q:A")) != -1)
     {
         switch (c)
         {
+            case 'A':
+                M_autoq = EXTRUE;
+                break;
             case 'Q':
                 NDRX_STRCPY_SAFE(M_qspace, optarg);
                 break;
@@ -334,6 +380,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_fork=%d", M_fork);
     NDRX_LOG(log_info, "M_svcnum=%d", M_svcnum);
     NDRX_LOG(log_info, "M_qspace=[%s]", M_qspace);
+    NDRX_LOG(log_info, "M_autoq=[%d]", M_autoq);
     
     /* allocate the buffer & fill with random data */
     
