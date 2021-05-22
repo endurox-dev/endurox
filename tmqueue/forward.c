@@ -413,9 +413,7 @@ out:
             }
             
             tmq_update_q_stats(msg->hdr.qname, 0, 1);
-            
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
-        
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                     "Removing expired message..."))
             {

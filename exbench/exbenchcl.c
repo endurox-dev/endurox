@@ -167,6 +167,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         }
         else
         {
+            rcv_buf=NULL;
             if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
             {
                 NDRX_LOG(log_error, "Failed to call [%s]: %s", 
