@@ -48,7 +48,7 @@
 
 Ensure(test_nstd_mtest7)
 {
-    int i = 0, j = 0, rc;
+    int rc;
     EDB_env *env;
     EDB_txn *txn;
     char errdet[PATH_MAX];
