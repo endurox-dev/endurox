@@ -5,7 +5,7 @@ Q.CONF(5)
 
 NAME
 ----
-q.conf - persistent, Transactional Message Queue (TMQ) configuration file
+q.conf - Persistent, Transactional Message Queue (TMQ) configuration file
 
 
 SYNOPSIS
@@ -17,14 +17,21 @@ DESCRIPTION
 -----------
 'q.conf' defines the message queues for 'tmqueue'. The filename is passed to 'tmqueue' in 
 application '-q' parameter. This file can be shared between multiple 'tmqueue' servers.
-It is recommended to define default queue (special name is '@'). So that during operations if
-specific queue is not found, then settings are taken from default queue. The queue definitions
-also might not be complete. If so, then defaults are used for other parameters. It is recommended
-to define default queue first. So that it can be using for other queue missing parameter defaulting.
+It is recommended to define default queue (special name is '@'). So that during 
+operations if specific queue is not found, then settings are taken from 
+default queue. The queue definitions also might not be complete. If so, then
+defaults are used for other parameters. It is recommended to define default 
+queue first. So that it can be using for other queue missing parameter defaulting.
 
-Whitespace/empty lines are ignored. File may contains comments which are started at the beginning of the
+Whitespace/empty lines are ignored. File may contains comments which are 
+started at the beginning of the
 line with '#' symbol.
 
+If for automatic queues number of 'TRIES' attempts are exceeded for the message
+(due to failed service calls), messages are deleted from queue space. 
+Prior delete message may be put in failure queue if such is set in 
+*tpenqueue(3)* parameter *TPQCTL.failurequeue* field and flag *TPQFAILUREQ* is
+added to *TPQCTL.flags*.
 
 DEBUG CONFIGURATION FILE SYNTAX
 -------------------------------
@@ -135,6 +142,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)* *common_configuration(guides)*
+*tpenqueue(3)* *tpdequeue(3)*
 
 COPYING
 -------
