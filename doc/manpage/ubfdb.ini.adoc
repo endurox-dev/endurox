@@ -13,7 +13,7 @@ SYNOPSIS
 
 ---------------------------------------------------------------------
 [@ubfdb[/CCTAG]]
-cachedb=DBNAME_DB
+resource=DATABASE_DIRECTORY
 max_readers=MAX_READERS
 map_size=MAP_SIZE
 perms=DB_PERMISSIONS
@@ -30,12 +30,14 @@ order to use following functions: *Bflddbname(3)*, *Bflddbload(3)*,
 
 DATABASE DEFINITION
 -------------------
-
 *CCTAG*::
     Is optional configuration sub-section. All processes which are willing to 
     use the specific database shall be configured under this tag. Otherwise
     the global tag could be used, that will be visible by all local domain
     processes.
+*DATABASE_DIRECTORY*::
+    This is file system directory where UBF database is located. 
+    The directory must exist when application is started. Parameter is *mandatory*.
 *DATABASE_DIRECTORY*::
     This is file system directory where UBF custom field database is located.
     Parameter is *mandatory*, in case if '[@ubfdb]' section is defined.
