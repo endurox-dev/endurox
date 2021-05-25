@@ -86,6 +86,8 @@ exprivate int M_svcnum = 0;        /**< No multi-services used */
 /** persistent queue mode, queue space */
 exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
 exprivate int M_autoq = EXFALSE;   /**< Use autoq testing                   */
+exprivate int M_enqonly = EXFALSE;   /**< Persisten q, enqueue only         */
+exprivate long M_numreq = EXFALSE;   /**< Number of requests                */
 /* Lock  */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -127,11 +129,11 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         NDRX_STRCPY_SAFE(svcnm, M_svcnm);
     }
     
-    ndrx_stopwatch_reset(&w);
-    
     /* re-lock.. */
     MUTEX_LOCK_V(M_wait_mutex);
     MUTEX_UNLOCK_V(M_wait_mutex);
+
+    ndrx_stopwatch_reset(&w);
     
     while ((!M_fork && M_do_run) || (M_fork && ndrx_stopwatch_get_delta_sec(&w) < M_runtime))
     {
@@ -151,7 +153,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
                 exit(-1);
             }
 
-            if (!M_autoq)
+            if (!M_autoq && !M_enqonly)
             {
                 /* Run deq from SVCNM */
                 memset(&qc, 0, sizeof(qc));
@@ -182,6 +184,11 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         }
         
         sent++;
+        /* enqueue number of messages only... */
+        if (M_numreq && sent >= M_numreq)
+        {
+            break;
+        }
     }
     
     /* publish results... */
@@ -265,6 +272,8 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -N <svcnum>      Number of services\n");
     fprintf(stderr, "  -Q <qspname>     Persistent queue mode. Queue space name (thread enq+deq)\n");
     fprintf(stderr, "  -A               Auto queue testing (forwarding)\n");
+    fprintf(stderr, "  -E               Persist only\n");
+    fprintf(stderr, "  -R <msgnum>      Number of requests (time or nr first to stop)\n");
    
 }
 
@@ -296,12 +305,18 @@ expublic int main( int argc, char** argv )
      * -N <number_of_services_modulus>
      */
     
-    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:Q:A")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:Q:AER:")) != -1)
     {
         switch (c)
         {
             case 'A':
                 M_autoq = EXTRUE;
+                break;
+            case 'R':
+                M_numreq = atol(optarg);
+                break;
+            case 'E':
+                M_enqonly = EXTRUE;
                 break;
             case 'Q':
                 NDRX_STRCPY_SAFE(M_qspace, optarg);
@@ -382,6 +397,8 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_svcnum=%d", M_svcnum);
     NDRX_LOG(log_info, "M_qspace=[%s]", M_qspace);
     NDRX_LOG(log_info, "M_autoq=[%d]", M_autoq);
+    NDRX_LOG(log_info, "M_enqonly=[%d]", M_autoq);
+    NDRX_LOG(log_info, "M_numreq=[%ld]", M_numreq);
     
     /* allocate the buffer & fill with random data */
     
@@ -542,14 +559,22 @@ expublic int main( int argc, char** argv )
         /* let threads to prepare */
         sleep(2);
 
-        ndrx_stopwatch_reset(&w);
-
         MUTEX_UNLOCK_V(M_wait_mutex);
+        ndrx_stopwatch_reset(&w);
 
         /* let it run... */
         while (ndrx_stopwatch_get_delta_sec(&w) < M_runtime)
         {
+            /* If all threads have made exit, assume it was
+             * request based run
+             */
             sleep(1);
+            
+            if (M_nr_threads==ndrx_thpool_nr_not_working(M_threads))
+            {
+                NDRX_LOG(log_debug, "All threads did exit.");
+                break;
+            }
         }
         M_do_run=EXFALSE;
 
