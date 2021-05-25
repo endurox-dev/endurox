@@ -38,7 +38,7 @@ Also there is no possibility for other processes to join the existing work and
 see work done by other session. Thus for example if one server process in same
 transaction performs some insert and other process tries insert on table which
 has foreign key to first insert, it will fail, as FK will not be seen. Thus
-Enduro/X needs to work on branch-transactions mode with out join feature. The
+Enduro/X needs to work on branch-transactions mode without join feature. The
 mode of PostgreSQL driver is the same as enabled by *NDRX_XA_FLAG* with value
 *NOJOIN*. 
 
@@ -66,7 +66,7 @@ status call to TMSRV fails with error *TPEMATCH*. In this case local process
 rolls back the prepared transaction.
 
 5. When tpabort is executed, the xa_end() within tpabort() process performs
-abort with out executing prepare.
+abort without executing prepare.
 
 The driver can be used for standard libpq programming and for using ECPG
 precompiler. Internally the libndrxxaecpg driver manages connection by help of
