@@ -45,6 +45,12 @@ that function returns when commit is completed.
 TX API is base on TP API. This function is based on *tpcommit(3)* and it is possible
 to mix these two API kinds.
 
+It is forbidden to perform *tx_commit()* having any transactional outstanding calls.
+Enduro/X does not explicitly check such calls in progress (direct and/or subsequent 
+tpacall, conversational session). If commit is performed in such scenario, 
+that might result with orphan active transaction branches, or partial commit 
+even having abort-only marking in outstanding call.
+
 RETURN VALUE
 ------------
 On success, *tx_commit()* return *TX_OK*; on error, error code is returned
