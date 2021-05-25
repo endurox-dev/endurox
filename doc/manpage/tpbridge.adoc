@@ -145,7 +145,7 @@ IPC queue (if any).
 
 5. If attempts are reached or TTL expired (if configured), message is discarded. 
 
-6. In case if message by it self is timed (i.e. tpcall() with out *TPNOTIME* flag)
+6. In case if message by it self is timed (i.e. tpcall() without *TPNOTIME* flag)
 and it expire, the message is discarded.
 
 7. In case if queue destination queue is broken (attempt did no end with *EAGAIN* or

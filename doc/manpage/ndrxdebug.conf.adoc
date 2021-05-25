@@ -53,7 +53,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     Enduro/X logger attempts to open log file and the output directory is missing
     i.e. fopen() gives *ENOENT* error, the logger will attempt to create the
     missing folders below recursively. This functionality might be helpful if
-    system is running in active-active mode with out shared disk volume and
+    system is running in active-active mode without shared disk volume and
     using request file logging in different folders. Thus if call is routed
     to other cluster node, it can create the exact file name locally with
     performing log file switching.

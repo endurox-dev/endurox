@@ -251,7 +251,7 @@ PARAMETERS
     it's change time is updated. And if current time minus change time is
     less than 'RQADDRTTL', then queue is not unlinked (in this time server will
     be able to add record to service shared memory). Also with this comes a fact
-    that there must be no server processes with out any service. For those
+    that there must be no server processes without any service. For those
     request address queue will be unlinked.
     The value is in seconds. Checks are performed with 'SANITY_SECONDS' intervals.
     Default value is *10* seconds.
@@ -278,7 +278,7 @@ PARAMETERS
 'MAX_SERVERS_DEFAULT'::
     Max number of ATMI server copies per ATMI server entry. The difference between
     MIN and MAX servers means the number of standby servers configured. They can be started
-    by hand with out system re-configuration. But they are not booted automatically at
+    by hand without system re-configuration. But they are not booted automatically at
     system startup. You will have to start them with $ xadmin start -s <server_name>
     or by $ xadmin start -i <server_id>. This can be overridden by 'MAX_SERVERS_SRV'.
 'MAX_DISPTHREADS_DEFAULT'::
@@ -636,7 +636,7 @@ PARAMETERS
 
 'SVC_AUTOTRAN'::
     Automatic transaction mode for service. If parameter is set to *y* or *Y*,
-    then if XATMI service is invoked with out global transaction, the XATMI
+    then if XATMI service is invoked without global transaction, the XATMI
     server will start the transaction automatically. When server process performs
     *tpreturn(3)*, transaction is committed in case if server returns *TPSUCCESS*
     otherwise transaction is aborted. If process performs *tpforward(3)*, then
@@ -718,7 +718,7 @@ long, as total service name length is limited to *30*, and if routing group
 name is longer, server processes would not be able to advertise. Also note that
 if this environment is present for server process, then any advertise mechanism,
 either alias or compiled service name by *buildserver(8)* or *tpadvertise(3)* call
-will make two services to appear in the system - one is default with out the
+will make two services to appear in the system - one is default without the
 suffix and other is with route group suffix. Only exception when working with
 route groups is that *xadmin unadv* and *xadmin readsv* would operate with single
 service name.
@@ -760,7 +760,7 @@ then value is in the range.
 
 - Keyword * (asterisk) - this presents the any value and represents whole range. This
 keyword can also be used as group, which means - use default group (i.e. it is any
-service, service name with out "@<GRP>" suffix).
+service, service name without "@<GRP>" suffix).
 
 - Values and group names can be put in single string quotes ('). If such single quote
 is needed within the string, it can be escaped with backslash \. Double backslash \\

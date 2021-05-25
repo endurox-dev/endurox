@@ -109,7 +109,7 @@ or setting the fields (memory error). See Enduro/X logs for more details.
 - *-13* (*TAELIMIT*): Number of open cursors limit reached. Limits is configured
 in *tpadmsv(8)* configuration. Basically this means that some problem exists i.e.
 requesters have made several requests for information in short period of time
- with out fetching cursors till the end.
+ without fetching cursors till the end.
 
 
 T_CLIENT CLASS
@@ -262,7 +262,7 @@ made to boot it up till the current moment.
 T_SERVICE CLASS
 ---------------
 This class describes the services defined and available in the system, 
-with out dynamic information.
+without dynamic information.
 
 Object fields returned for *T_SERVICE* class are following:
 
