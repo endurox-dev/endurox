@@ -469,7 +469,7 @@ If new queues needs to be defined or parameters of existing queues needs to be c
 you may use 'mqrc' (reload config) command. This sends request to all 'tmqueue' server to re-read
 the config.
 
-Meanwhile you may define new queue during the runtime (with out changing the config) or update existing one.
+Meanwhile you may define new queue during the runtime (without changing the config) or update existing one.
 Lets say we want to change 'MYQ2' to manual queue. You may do this in following way by using
 'mqch' (change) command:
 

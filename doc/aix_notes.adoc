@@ -53,7 +53,7 @@ stratified automatically.
 Download and install the RPM packages from the 
 yum_bundle.tar (or later e.g. yum_bundle_v5.tar) file from 
 https://public.dhe.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/ .
-Ensure that install process does finish with out any errors. 
+Ensure that install process does finish without any errors. 
  
 ---------------------------------------------------------------------
 # tar -xvf yum_bundle.tar
@@ -540,7 +540,7 @@ for example test028 (tmqueue). While this happens it
 == Conclusions
 At finish you have a configured system which is read to process the transactions
 by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
-to other same architecture machines and run it there with out need of building.
+to other same architecture machines and run it there without need of building.
 
 :numbered!:
 

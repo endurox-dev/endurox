@@ -129,9 +129,17 @@ void ndrx_thpool_wait(threadpool);
 
 /**
  * Wait for one thread to become free
- * @param thpool_p
+ * @param thpool_p thread pool
  */
 void ndrx_thpool_wait_one(threadpool);
+
+/**
+ * Get number of non working and non job scheduled threads
+ * @param threadpool thread pool
+ * @return number of threads fully free (no job scheduled)
+ */
+int ndrx_thpool_nr_not_working(threadpool);
+
 
 /**
  * Wait for at least one thread to become free

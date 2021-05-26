@@ -1000,7 +1000,7 @@ Loads Oracle DB Resource Manager. Resource manager driver is loaded
 from library set in *NDRX_XA_RMLIB* env variable.
 
 . *libndrxxanulls(8)* - null switch ('tmnull_switch'). This basically allows processes to participate
-in global transaction, but with out any linkage to any real resource managers.
+in global transaction, but without any linkage to any real resource managers.
 The *NDRX_XA_RMLIB* parameter shall be set to "-" (indicate that value is empty).
 
 . *libndrxxapq(8)* (PQ Driver) and *libndrxxaecpg(8)* (ECPG/PQ Driver) - these
