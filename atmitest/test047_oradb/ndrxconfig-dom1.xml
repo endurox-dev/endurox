@@ -62,9 +62,16 @@
             <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1 -m10</sysopt>
         </server>
         <server name="atmi.sv47">
+            <min>1</min>
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/atmisv47.log -r</sysopt>
+        </server>
+        <server name="atmi.sv47">
+            <min>1</min>
+            <max>1</max>
+            <srvid>102</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv47_2.log -r -N -sDEL:ACCCLEAN</sysopt>
         </server>
     </servers>
 </endurox>

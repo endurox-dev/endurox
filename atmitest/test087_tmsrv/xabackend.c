@@ -35,11 +35,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <math.h>
 #include <errno.h>
+#include <ndrstandard.h>
 #include <xa.h>
 #include <userlog.h>
+#include <tmenv.h>
+#include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #ifdef TEST_RM1
@@ -68,6 +69,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate MUTEX_LOCKDECL(M_init);
 __thread int M_is_open = 0;
 __thread int M_rmid = -1;
 __thread int M_is_reg = 0; /* Dynamic registration done? */
@@ -91,11 +93,7 @@ static int xa_complete_entry(int *handle, int *retval, int rmid, long flags);
 struct xa_switch_t exxaswitch = 
 { 
     .name = "exxaswitch",
-#ifdef TEST_NOJOIN
-    .flags = TMNOMIGRATE,
-#else
     .flags = TMNOFLAGS,
-#endif
     .version = 0,
     .xa_open_entry = xa_open_entry,
     .xa_close_entry = xa_close_entry,
@@ -132,7 +130,6 @@ static int get_return_code(const char *func, int *cntr)
       exit(1);
     }
 
-    
     while (fgets(buffer, MAX_LEN - 1, fp))
     {
         /* Remove trailing newline */
@@ -194,6 +191,22 @@ static int get_return_code(const char *func, int *cntr)
 
 static int xa_open_entry(char *xa_info, int rmid, long flags)
 {
+    static int first=EXTRUE;
+
+#ifdef TEST_NOJOIN
+    /* mark that suspend no required by this resource... */
+    if (first)
+    {
+        MUTEX_LOCK_V(M_init);
+        if (first)
+        {
+            ndrx_xa_nojoin(EXTRUE);
+            first=EXFALSE;
+        }
+        MUTEX_UNLOCK_V(M_init);
+    }
+#endif
+    
     if (M_is_open)
     {
         return XAER_RMERR;

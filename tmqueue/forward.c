@@ -352,10 +352,14 @@ out:
             memset(&ctl, 0, sizeof(ctl));
                     
             if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
-                    call_buf, call_len, TPNOTRAN))
+                    call_buf, call_len, 0))
             {
                 NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
                         msg->qctl.replyqueue, tpstrerror(tperrno));
+                userlog("Failed to enqueue to replyqueue [%s]: %s", 
+                        msg->qctl.replyqueue, tpstrerror(tperrno));
+                disk_err=EXTRUE;
+                goto finalize;
             }
         }
         
@@ -366,9 +370,12 @@ out:
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                 "Removing completed message..."))
         {
+            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                    msgid_str);
             userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
                     msgid_str);
             disk_err=EXTRUE;
+            goto finalize;
         }
     }
     else
@@ -400,19 +407,24 @@ out:
                 {
                     NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
                             msg->qctl.failurequeue, tpstrerror(tperrno));
+                    userlog("Failed to enqueue to failurequeue [%s]: %s", 
+                            msg->qctl.failurequeue, tpstrerror(tperrno));
+                    disk_err=EXTRUE;
+                    goto finalize;
                 }
             }
             
             tmq_update_q_stats(msg->hdr.qname, 0, 1);
-            
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
-        
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                     "Removing expired message..."))
             {
+                NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                        msgid_str);
                 userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
                         msgid_str);
                 disk_err=EXTRUE;
+                goto finalize;
             }
         }
         else
@@ -425,21 +437,26 @@ out:
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                     "Update message command"))
             {
+                NDRX_LOG(log_error, "Failed to issue update command to xa for msgid_str [%s]", 
+                        msgid_str);
                 userlog("Failed to issue update command to xa for msgid_str [%s]", 
                         msgid_str);
                 disk_err=EXTRUE;
+                goto finalize;
             }
         }
     }
-    
+
+finalize:
     /* commit the transaction */
     if (disk_err)
     {
-        userlog("tmq forward: msg [%s] aborting due to disk error", 
+        userlog("tmq forward: msg [%s] aborting finalize error", 
                 msgid_str);
-        NDRX_LOG(log_error, "tmq forward: msg [%s] aborting due to disk error", 
+        NDRX_LOG(log_error, "tmq forward: msg [%s] aborting due finalize error", 
                 msgid_str);
         tpabort(0);
+        /* Unlock the message....? */
     }
     else if (EXSUCCEED!=tpcommit(0))
     {

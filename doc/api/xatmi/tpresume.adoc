@@ -31,6 +31,11 @@ resume is done by other process than which did the suspend.
 this flag set, this process even for previously involved RMs will perform 
 xa transaction start and if that fails, then attempt *TM_JOIN*.
 
+*TPTXTMSUSPEND* Indicates that 'tranid' was suspended (*tpsuspend(3)*) with this flag (i.e.
+which resulted in *TMSUSPEND* xa flag). And now transaction would be resumed
+with *TMRESUME* xa flag instead of *TMJOIN*. This applies to XA switches 
+which support join operation and join is not disabled by *NOJOIN* flag
+in *NDRX_XA_FLAGS*.
 
 RETURN VALUE
 ------------

@@ -845,6 +845,7 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_nstd_mtest5());
     add_suite(suite, ubf_nstd_mtest6_dupcursor());
     add_suite(suite, ubf_nstd_mtest6());
+    add_suite(suite, ubf_nstd_mtest7());
     
     /*
      * UBF tests

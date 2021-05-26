@@ -44,7 +44,7 @@ This function is available only for XATMI servers.
 This can be suitable in case if buffer is already made free by initial service thread
 and the target server/service does not know anything about given pointer. E.g.
 the context is copied to different process. If context is copied to other process
-with out using this flag, then segmentation fault is possible at *tpreturn()*
+without using this flag, then segmentation fault is possible at *tpreturn()*
 or *tpforward()*.
 
 RETURN VALUE

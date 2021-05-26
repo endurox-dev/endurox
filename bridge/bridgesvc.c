@@ -293,6 +293,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.qfullaction = EXFAIL;
     G_bridge_cfg.qfullactionsvc = EXFAIL;
     G_bridge_cfg.net.periodic_clock_time = BR_PERIODIC_CLOCK_SND; /* Send clock sync periodically */
+    /* Bug #689 */
+    G_bridge_cfg.max_roundtrip = BR_MAX_ROUNDTRIP;
 
     /* init the spinlock... */
     NDRX_SPIN_INIT_V(G_bridge_cfg.timediff_lock);

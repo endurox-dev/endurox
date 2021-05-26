@@ -488,7 +488,7 @@ SQL> quit
 
 ---------------------------------------------------------------------
 
-Once this is done, the test shall execute with out the problems.
+Once this is done, the test shall execute without the problems.
 
 
 === Testing PostgreSQL
@@ -580,7 +580,7 @@ Now PostgreSQL is ready for Enduro/X testing.
 
 At finish you have a configured system which is read to process the transactions
 by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
-to other same architecture machine and run it there with out need of building.
+to other same architecture machine and run it there without need of building.
 This process is described in <<BINARY_INSTALL>> guide.
 
 :numbered!:

@@ -230,11 +230,14 @@ expublic int atmi_xa_init(void)
     NDRX_LOG(log_info, "Using XA %s", 
             (G_atmi_env.xa_sw->flags&TMREGISTER)?"dynamic registration":"static registration");
 
+    /* why ?
+     * still we can suspend / resume and join even TMNOMIGRATE is set
     if (G_atmi_env.xa_sw->flags & TMNOMIGRATE)
     {
         NDRX_LOG(log_warn, "XA Switch has TMNOMIGRATE flag -> fallback to nojoin");
         ndrx_xa_nojoin(EXTRUE);
     }
+     */
 
     /* Parse the flags... and store the config 
      * This is done for Feature #160. Customer have an issue with xa_start
@@ -1431,17 +1434,19 @@ out:
 expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
 {
     int ret=EXSUCCEED;
+    long xa_flags = TMSUCCESS;
+    
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY; */
-    NDRX_LOG(log_info, "Suspending global transaction...");
+    NDRX_LOG(log_info, "Suspending global transaction: atmi flags %lx", flags);
     if (NULL==tranid)
     {
         ndrx_TPset_error_msg(TPEINVAL,  "_tpsuspend: trandid = NULL!");
         EXFAIL_OUT(ret);
     }
     
-    if (0!=flags)
+    if (0!= (flags & ~TPTXTMSUSPEND) )
     {
-        ndrx_TPset_error_msg(TPEINVAL,  "_tpsuspend: flags!=0!");
+        ndrx_TPset_error_msg(TPEINVAL,  "_tpsuspend: flags is not 0, nor TPTXTMSUSPEND");
         EXFAIL_OUT(ret);
     }
     
@@ -1450,6 +1455,15 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
         NDRX_LOG(log_error, "_tpsuspend: Not in global TX");
         ndrx_TPset_error_msg(TPEPROTO,  "_tpsuspend: Not in global TX");
         EXFAIL_OUT(ret);
+    }
+    
+    /* 
+     * for no-join we will continue as is with TMSUCCESS, as TMSUSPEND
+     * is not supported 100%
+     */
+    if ( (flags & TPTXTMSUSPEND) && !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN))
+    {
+        xa_flags = TMSUSPEND;
     }
     
 #if 0
@@ -1508,20 +1522,20 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
         
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), xa_flags, EXFALSE)))
         {
-            NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
-            userlog("Failed to end XA api: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
+            NDRX_LOG(log_error, "Failed to end XA api: %d [%s] flags: %lx", 
+                    ret, atmi_xa_geterrstr(ret), xa_flags);
+            userlog("Failed to end XA api: %d [%s] flags: %lx", 
+                    ret, atmi_xa_geterrstr(ret), xa_flags);
             goto out;
         }
     }
 
     atmi_xa_reset_curtx();
     
-    NDRX_LOG(log_debug, "Suspend ok xid: [%s]", 
-            tranid->tmxid);
+    NDRX_LOG(log_debug, "Suspend ok xid: [%s] xa flags: %lx", 
+            tranid->tmxid, xa_flags);
 out:
 
     return ret;
@@ -1537,6 +1551,7 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
 {
     int ret=EXSUCCEED;
     int was_join = EXFALSE;
+    long join_flag = TMJOIN;
     atmi_xa_tx_info_t xai;
     
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ETNRY; */
@@ -1548,10 +1563,22 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
         EXFAIL_OUT(ret);
     }
        
-    if (0!= (flags & ~TPTXNOOPTIM) )
+    if (0!= (flags & ~ (TPTXNOOPTIM | TPTXTMSUSPEND)) )
     {
-        ndrx_TPset_error_msg(TPEINVAL,  "_tpresume: flags is not 0, nor TPTXNOOPTIM");
+        ndrx_TPset_error_msg(TPEINVAL,  "_tpresume: flags is not 0, "
+                "nor TPTXNOOPTIM, nor TPTXTMSUSPEND");
         EXFAIL_OUT(ret);
+    }
+    
+    /* Resume the trany 
+     * Also if operating in nojoin mode, then there is no need for this flag.
+     * Thought all could be handled in _tp_srv_join_or_new
+     * but anyway for consistency will leave this peace of code here.
+     */
+    if ( (flags & TPTXTMSUSPEND)
+            && !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN))
+    {
+        join_flag = TMRESUME;
     }
     
     /* NOTE: TPEMATCH - not tracked. */
@@ -1570,7 +1597,7 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
         xai.tmknownrms[0]=EXEOS;
     }
     
-    if (EXSUCCEED!=_tp_srv_join_or_new(&xai, EXFALSE, &was_join))
+    if (EXSUCCEED!=_tp_srv_join_or_new(&xai, EXFALSE, &was_join, join_flag))
     {
         ndrx_TPset_error_msg(TPESYSTEM,  "_tpresume: Failed to enter in global TX!");
         EXFAIL_OUT(ret);
@@ -1611,7 +1638,7 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
     }
     
     if (EXSUCCEED!=_tp_srv_join_or_new(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
-            EXTRUE, &was_join))
+            EXTRUE, &was_join, TMJOIN))
     {
         ret = TMER_TMERR;
         goto out;
@@ -1661,15 +1688,18 @@ expublic int _tp_srv_join_or_new_from_call(tp_command_call_t *call,
      */
     XA_TX_COPY((&xai), call)
     
-    return _tp_srv_join_or_new(&xai, is_ax_reg_callback, &is_known);
+    return _tp_srv_join_or_new(&xai, is_ax_reg_callback, &is_known, TMJOIN);
 }
+
 /**
  * Process should try to join the XA, if fails, then create new transaction
  * @param call
- * @return 
+ * @param join_flag override the default join setting (for TMRESUME)
+ *  default for callers shall be TMJOIN
+ * @return SUCCEED/FAIL
  */
 expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
-        int is_ax_reg_callback, int *p_is_known)
+        int is_ax_reg_callback, int *p_is_known, long join_flag)
 {
     int ret = EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -1726,7 +1756,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         /* Continue with static ...  ok it is known, then just join the transaction */
         else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, 
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), 
-                TMJOIN, EXFALSE))
+                join_flag, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to join transaction!");
             EXFAIL_OUT(ret);
@@ -1796,7 +1826,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         else if (*p_is_known)
         {
             if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, btid), 
-                    TMJOIN, EXFALSE))
+                    join_flag, EXFALSE))
             {
                 NDRX_LOG(log_error, "Failed to join transaction!");
                 EXFAIL_OUT(ret);
@@ -1819,7 +1849,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 *p_is_known=EXTRUE;
                 
                 if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, btid), 
-                        TMJOIN, EXFALSE))
+                        join_flag, EXFALSE))
                 {
                     NDRX_LOG(log_error, "Failed to join transaction!");
                     EXFAIL_OUT(ret);

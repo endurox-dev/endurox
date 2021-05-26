@@ -36,7 +36,7 @@ thread is idling, the shutdown process will take a place immediately.
 
 Internally tpexit() sends the administrative shutdown message to it self.
 If admin queue at the moment is full (blocking), the tpexit() will perform direct
-exit(-1) of the process, with out performing clean shutdown i.e. 
+exit(-1) of the process, without performing clean shutdown i.e. 
 *tpsvrdone(3)* and *tpsvrthrdone(3)* callbacks will not be invoked.
 
 When *tpreturn(3)* is called with *TPEXIT* flag, internally this function is invoked.
