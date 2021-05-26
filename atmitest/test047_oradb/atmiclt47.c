@@ -302,6 +302,29 @@ int main(int argc, char** argv)
         }
     }
 
+    NDRX_LOG(log_debug, "Checking fetch + tpcall in tran");
+
+    if (EXSUCCEED != tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "tpbegin failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    if (EXFAIL == tpcall("FETCH", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "FETCH failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    if (EXSUCCEED != tpcommit(0))
+    {
+        NDRX_LOG(log_error, "tpcommit failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
     
 out:
 

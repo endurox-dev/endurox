@@ -343,6 +343,25 @@ void ndrx_thpool_wait_one(thpool_* thpool_p)
     MUTEX_UNLOCK_V(thpool_p->thcount_lock);
 }
 
+
+/**
+ * Get number of non working and non job scheduled threads
+ * @param thpool_p thread pool
+ * @return number of threads fully free (no job scheduled)
+ */
+int ndrx_thpool_nr_not_working(thpool_* thpool_p)
+{
+    int nr;
+    
+    MUTEX_LOCK_V(thpool_p->thcount_lock);
+
+    nr = thpool_p->num_threads - thpool_p->num_threads_working - thpool_p->jobqueue.len;
+    
+    MUTEX_UNLOCK_V(thpool_p->thcount_lock);
+    
+    return nr;
+}
+
 /**
  * Is one thread available?
  * @param thpool_p 

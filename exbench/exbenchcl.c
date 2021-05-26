@@ -83,6 +83,11 @@ exprivate int M_msgsize = 0;        /**< effective message size */
 exprivate int M_fork = EXFALSE;     /**< Use forking */
 exprivate int M_fd[2]={EXFAIL, EXFAIL}; /**< pipe channel for forking clients to report stats */
 exprivate int M_svcnum = 0;        /**< No multi-services used */
+/** persistent queue mode, queue space */
+exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
+exprivate int M_autoq = EXFALSE;   /**< Use autoq testing                   */
+exprivate int M_enqonly = EXFALSE;   /**< Persisten q, enqueue only         */
+exprivate long M_numreq = EXFALSE;   /**< Number of requests                */
 /* Lock  */
 /*---------------------------Prototypes---------------------------------*/
 
@@ -99,6 +104,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     char *rcv_buf;
     long rcvlen;
     long sent=0;
+    TPQCTL qc;
     ndrx_stopwatch_t w;
     
     if (NULL==buf)
@@ -123,11 +129,11 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         NDRX_STRCPY_SAFE(svcnm, M_svcnm);
     }
     
-    ndrx_stopwatch_reset(&w);
-    
     /* re-lock.. */
     MUTEX_LOCK_V(M_wait_mutex);
     MUTEX_UNLOCK_V(M_wait_mutex);
+
+    ndrx_stopwatch_reset(&w);
     
     while ((!M_fork && M_do_run) || (M_fork && ndrx_stopwatch_get_delta_sec(&w) < M_runtime))
     {
@@ -135,12 +141,41 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         {
             tpsprio(M_prio, TPABSOLUTE);
         }
-        rcv_buf=NULL;
-        if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
+                
+        if (M_qspace[0])
         {
-            NDRX_LOG(log_error, "Failed to call [%s]: %s", 
-                    svcnm, tpstrerror(tperrno));
-            exit(-1);
+            /* Run enq to SVCNM */
+            memset(&qc, 0, sizeof(qc));
+            if (EXSUCCEED!=tpenqueue(M_qspace, svcnm, &qc, buf, 0, 0))
+            {
+                NDRX_LOG(log_error, "tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                exit(-1);
+            }
+
+            if (!M_autoq && !M_enqonly)
+            {
+                /* Run deq from SVCNM */
+                memset(&qc, 0, sizeof(qc));
+                rcv_buf=NULL;
+                if (EXSUCCEED!=tpdequeue(M_qspace, svcnm, &qc, (char **)&rcv_buf, &rcvlen, 0))
+                {
+                    NDRX_LOG(log_error, "tpdequeue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                    exit(-1);
+                }
+            }
+
+        }
+        else
+        {
+            rcv_buf=NULL;
+            if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
+            {
+                NDRX_LOG(log_error, "Failed to call [%s]: %s", 
+                        svcnm, tpstrerror(tperrno));
+                exit(-1);
+            }
         }
         
         if (NULL!=rcv_buf)
@@ -149,12 +184,56 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         }
         
         sent++;
+        /* enqueue number of messages only... */
+        if (M_numreq && sent >= M_numreq)
+        {
+            break;
+        }
     }
     
     /* publish results... */
     MUTEX_LOCK_V(M_wait_mutex);
     M_msg_sent+=sent;
     MUTEX_UNLOCK_V(M_wait_mutex);
+
+    /* Wait on queue to finish ... 
+     * Additionally, if we have several servers running
+     * then @TMQ servers running, then we shall peek
+     * them all for the stats, if all queues are empty,
+     * only then terminate
+     */
+    if (M_qspace[0] && M_autoq)
+    {
+        int done = EXFALSE;
+        do
+        {
+            memset(&qc, 0, sizeof(qc));
+            qc.flags|=TPQPEEK;
+            rcv_buf=NULL;
+            if (EXSUCCEED!=tpdequeue(M_qspace, svcnm, &qc, (char **)&rcv_buf, &rcvlen, 0))
+            {
+                if (tperrno==TPEDIAGNOSTIC && QMENOMSG==qc.diagnostic)
+                {
+                    done=EXTRUE;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "tpdequeue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                    exit(-1);
+                }
+            }
+            else
+            {
+                if (NULL!=rcv_buf)
+                {
+                    tpfree(rcv_buf);
+                }
+                sleep(1);
+            }
+            
+        } while (!done);
+    }
     
 out:
     
@@ -191,6 +270,10 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -S <size>        Random data size, default 1024\n");
     fprintf(stderr, "  -F               Use forking instead of threading\n");
     fprintf(stderr, "  -N <svcnum>      Number of services\n");
+    fprintf(stderr, "  -Q <qspname>     Persistent queue mode. Queue space name (thread enq+deq)\n");
+    fprintf(stderr, "  -A               Auto queue testing (forwarding)\n");
+    fprintf(stderr, "  -E               Persist only\n");
+    fprintf(stderr, "  -R <msgnum>      Number of requests (time or nr first to stop)\n");
    
 }
 
@@ -222,10 +305,22 @@ expublic int main( int argc, char** argv )
      * -N <number_of_services_modulus>
      */
     
-    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:Q:AER:")) != -1)
     {
         switch (c)
         {
+            case 'A':
+                M_autoq = EXTRUE;
+                break;
+            case 'R':
+                M_numreq = atol(optarg);
+                break;
+            case 'E':
+                M_enqonly = EXTRUE;
+                break;
+            case 'Q':
+                NDRX_STRCPY_SAFE(M_qspace, optarg);
+                break;
             case 'N':
                 M_svcnum = atoi(optarg);
                 break;
@@ -270,7 +365,7 @@ expublic int main( int argc, char** argv )
                 if (BBADFLDID==M_fld)
                 {
                     NDRX_LOG(log_error, "Failed to resolve field id [%s]: %s", 
-                            Bstrerror(Berror));
+                            optarg, Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
                 break;
@@ -300,6 +395,10 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_nr_threads=%d", M_nr_threads);
     NDRX_LOG(log_info, "M_fork=%d", M_fork);
     NDRX_LOG(log_info, "M_svcnum=%d", M_svcnum);
+    NDRX_LOG(log_info, "M_qspace=[%s]", M_qspace);
+    NDRX_LOG(log_info, "M_autoq=[%d]", M_autoq);
+    NDRX_LOG(log_info, "M_enqonly=[%d]", M_autoq);
+    NDRX_LOG(log_info, "M_numreq=[%ld]", M_numreq);
     
     /* allocate the buffer & fill with random data */
     
@@ -460,14 +559,22 @@ expublic int main( int argc, char** argv )
         /* let threads to prepare */
         sleep(2);
 
-        ndrx_stopwatch_reset(&w);
-
         MUTEX_UNLOCK_V(M_wait_mutex);
+        ndrx_stopwatch_reset(&w);
 
         /* let it run... */
         while (ndrx_stopwatch_get_delta_sec(&w) < M_runtime)
         {
+            /* If all threads have made exit, assume it was
+             * request based run
+             */
             sleep(1);
+            
+            if (M_nr_threads==ndrx_thpool_nr_not_working(M_threads))
+            {
+                NDRX_LOG(log_debug, "All threads did exit.");
+                break;
+            }
         }
         M_do_run=EXFALSE;
 

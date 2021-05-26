@@ -2397,7 +2397,7 @@ as virtual process names. That might be simpler for admins to understand
 to whom the queue belongs to.
 
 
-=== Booting processes as XATMI servers with out CLOPT
+=== Booting processes as XATMI servers without CLOPT
 
 There could be server processes like Tomcat or JBoss App servers which we might
 want to boot as XATMI servers. For these command line options cannot be passed

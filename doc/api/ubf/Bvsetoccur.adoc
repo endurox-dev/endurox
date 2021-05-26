@@ -21,7 +21,7 @@ DESCRIPTION
 -----------
 Function is used to set array length in the 'C_<field>' (count field) if configured
 in view file with flag 'C'. If flag is not used in view (count field not present
-in view) then function will just return succeed with out changing anything.
+in view) then function will just return succeed without changing anything.
 
 RETURN VALUE
 ------------
