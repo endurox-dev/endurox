@@ -45,10 +45,10 @@ Improvements over Tuxedo:
     executed between nodes;
 . Much simpler configuration reload during running app. Just edit 'ndrxconf.xml' and run 'xadmin reload' command;
 Tuxedo UBB configuration file is much harder to update in running up;
-. System can run with out the main Enduro/X daemon (ndrxd). It is much like running the Tuxedo with 
+. System can run without the main Enduro/X daemon (ndrxd). It is much like running the Tuxedo with 
     out Bulletin Board, which is not possible for Tuxedo. Even if 'ndrxd' daemon dies for 
     some reason, it is possible to start in back in running application server 
-    instance with out service interruption;
+    instance without service interruption;
 . Simple TMQUEUE setup. Allows run-time configuration updates and defaulted queue setups;
 . Provides infrastructure for client process administration.
 . User accessible logging infrastructure.
@@ -336,7 +336,7 @@ withing timeframe, they being restarted.
 	.. If process dies who was the only which provides some service
 then SRVCERR response is sent back to caller
 	.. For long shutdown (not in time frame), processes are forcibly killed
-. The run-time is possible with out local central ATMI Monitor (ndrxd). 
+. The run-time is possible without local central ATMI Monitor (ndrxd). 
 As long as other servers are running, system will work.
 . It is possible to restart ndrxd during the runtime. Runtime will not be interrupted.
 When doing restarting, ndrxd must be started in recovery mode.

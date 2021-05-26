@@ -95,7 +95,7 @@ COMMANDS
     left after the shutdown. If re-reconfiguration of LCF memory segments is
     required (env setting NDRX_LCFMAX), then run *xadmin down* and then start
     the application, it will create shm. If after the shutdown commands shall
-    be kept, then use *-l* option, it will leave LCF memory as is with out setting
+    be kept, then use *-l* option, it will leave LCF memory as is without setting
     to disable.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
     Reload application domain - restart server instance by instance.
@@ -237,7 +237,7 @@ COMMANDS
     than global timeout specified in 'NDRX_TOUT' env variable (or cconfig '[@global]'
     section). Also time needed for stopping shall be counted in. If the timeout
     occurs, cpmsrv will complete the operation anyway. The 'wait_time' can be
-    used in cases when reloading the binaries with out service interruption,
+    used in cases when reloading the binaries without service interruption,
     in that case 'wait_time' should contain the *cpmsrv's* interval check 
     time ('-i' flag) because for start operation binary is only marked for 
     boot and not the booted. Basically this executes sc/bc for each of the 
@@ -377,7 +377,7 @@ COMMANDS
     printed only. If parameter *-k* is set, only keys are printed.
 *lcf* [COMMAND] [-p <PID>] [-b <BINARY>] [-r] [-a] [-n] [-e] [-s <SLOT>] [-A <ARG_A>] [-B <ARG_B>]::
     This is administrative interface to Latent Command Framework. When command
-    is run with out arguments, it prints *page 1* information. Build in commands 
+    is run without arguments, it prints *page 1* information. Build in commands 
     given in *COMMAND* is *-1* (*page 1* infos), *-2* (*page 2* infos), *-3* (*page 3* infos).
     Note that statistics printed are not synchronized between processes. Arguments:
     *-p* is used for passing PID to command. *-b* is used to pass binary name

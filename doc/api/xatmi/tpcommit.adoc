@@ -31,7 +31,13 @@ tpcommit() is allowed for autotran started transactions for configured service
 or in service to which autotran stared transaction call was forwarded. 
 After executing commit server process normally will leave a transaction.
 
-By default tpcommit performs full commit.
+By default *tpcommit()* performs full commit.
+
+It is forbidden to perform *tpcommit()* having any transactional outstanding calls.
+Enduro/X does not explicitly check such calls in progress (direct and/or subsequent 
+tpacall, conversational session). If commit is performed in such scenario, 
+that might result with orphan active transaction branches, or partial commit 
+even having abort-only marking in outstanding call.
 
 *Valid flags*
 
@@ -44,7 +50,6 @@ RETURN VALUE
 ------------
 On success, *tpcommit()* return zero; on error, -1 is returned, 
 with *tperrno* set to indicate the error.
-
 
 ERRORS
 ------

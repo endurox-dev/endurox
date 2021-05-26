@@ -199,7 +199,7 @@ DATABASE FLAGS
     record is part of the keygroup, otherwise 'F' flag (full) is sent.
 *timesync*::
     In case if of network update received (add to cache) message, the message
-    will be added to cache with out replacing the existing record. The caller
+    will be added to cache without replacing the existing record. The caller
     will receive the latest record by time stamp.
 *scandup*::
     In case of *timesync* mode, the database may accumulate duplicate records,
