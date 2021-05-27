@@ -111,7 +111,7 @@ void _TH_TESTSVFN (void *ptr, int *p_finish_off)
     }
     
     if (EXFAIL==ret)
-        NDRX_LOG(log_debug, "ALARM!!! WE GOT FAIL TESTERROR!!!!!");
+        NDRX_LOG(log_debug, "WE GOT FAIL TESTERROR!!!!!");
 
     
 out:
