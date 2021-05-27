@@ -1079,11 +1079,11 @@ xa_fail:
         /* validate magics and command code... */\
         if (0!=strncmp(FIELD, MAGIC_VAL, LEN))\
         {\
-            NDRX_LOG(log_error, "ERROR! file [%s] invalid %s: expected: [%s] got [%*s] command [%x]", \
-                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code);\
+            NDRX_LOG(log_error, "ERROR! file: [%s] invalid %s: expected: [%s] got: [%.*s] command: [%x] error_code: %d", \
+                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code, ERROR_CODE);\
             NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));\
-            userlog("ERROR! file [%s] invalid %s: expected: [%s] got [%*s] command [%x]", \
-                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code);\
+            userlog("ERROR! file: [%s] invalid %s: expected: [%s] got: [%.*s] command: [%x] error_code: %d", \
+                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code, ERROR_CODE);\
             *tmq_err = ERROR_CODE;\
             EXFAIL_OUT(ret);\
         }\
