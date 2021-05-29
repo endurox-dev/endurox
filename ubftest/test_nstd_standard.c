@@ -419,6 +419,23 @@ Ensure(test_nstd_strtokblk)
         char test1[]="    ";
         chk_token(test1, NULL, 0);
     }while(0);
+
+    do {
+        char test1[]="HELLO ''";
+        chk_token(test1, (char*[]){"HELLO", ""}, 2);
+    }while(0);
+    
+
+    do {
+        char test1[]="''";
+        chk_token(test1, (char*[]){""}, 1);
+    }while(0);
+    
+    
+    do {
+        char test1[]="''a''";
+        chk_token(test1, (char*[]){"a"}, 1);
+    }while(0);
     
 }
 

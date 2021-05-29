@@ -34,6 +34,8 @@
 #include <ndrx_config.h>
 #include <ndrstandard.h>
 #include <string.h>
+#include <stdio.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -107,26 +109,14 @@ expublic void ndrx_str_unescape(char *input, char *symbs)
 }
 
 /**
- * Remove single char from left
+ * Remove char from left
  * @param input input string to process
  * @param symb symbol to remove from left
  */
-expublic void ndrx_str_trim_single_left(char *input, char symb)
+expublic void ndrx_str_trim_left_single(char *input, char symb)
 {
     int len=strlen(input);
     char *p = strchr(input, symb);
-    memmove(p, p+1, len-(p-input)); /* includes eos... */
-}
-
-/**
- * Remove single char from right
- * @param input input string to process
- * @param symb symbol to remove from right
- */
-expublic void ndrx_str_trim_single_right(char *input, char symb)
-{
-    int len=strlen(input);
-    char *p = strrchr(input, symb);
     memmove(p, p+1, len-(p-input)); /* includes eos... */
 }
 
@@ -149,7 +139,7 @@ expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
     int in_block = 0;
     int block_sym_index = -1;
     int consecutive_escapes=0;
-    
+     
     /* do not return empty strings... */
     do
     {
@@ -170,27 +160,35 @@ expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
         /* escape: \ */
         while ( *p != '\0')
         {	
-            /*printf("Symb: [%c] ESCAPES: %d INBLOCK: %d\n", *p, consecutive_escapes, in_block);*/
+            /* printf("Symb: [%c] ESCAPES: %d INBLOCK: %d\n", *p, consecutive_escapes, in_block); */
             if ('\\'==*p)
             {
                 consecutive_escapes++;
             }
             else if (in_block)
             {
+                int do_inc = EXTRUE;
+                
                 /*no close if previous is \ of token */
-
                 if (qotesymbs[block_sym_index] == *p)
                 {
 
                     /* terminate only if not escaped.. */
                     if (consecutive_escapes%2==0)
                     {   
+                        /* p++; - remove symbol on the fly... */
+                        ndrx_str_trim_left_single(p, qotesymbs[block_sym_index]);
                         in_block = 0;
+                        do_inc = EXFALSE;
                     }
                 }
                 consecutive_escapes=0;
-
-                p++;
+                
+                if (do_inc)
+                {
+                    p++;
+                }
+                
                 continue;
             }
 
@@ -201,8 +199,10 @@ expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
                 {
                     in_block = 1;
                     block_sym_index = block_sym - qotesymbs;
-                    //token++;
-                    p++;
+                    
+                    /* p++; - remove symbol on the fly... */
+                    ndrx_str_trim_left_single(p, qotesymbs[block_sym_index]);
+                    
                     continue;
                 }
                 /* escape is spent... */
@@ -222,13 +222,6 @@ expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
         if (block_sym_index>-1)
         {
             char escp_symb[2]={'\0', '\0'};
-            /* trim start & trailing symbol... if there was block */
-            ndrx_str_trim_single_left(token, qotesymbs[block_sym_index]);
-
-            if (!in_block)
-            {
-                ndrx_str_trim_single_right(token, qotesymbs[block_sym_index]);
-            }
 
             escp_symb[0]=qotesymbs[block_sym_index];
 
@@ -242,7 +235,7 @@ expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
         
         input = NULL;
         
-    } while (NULL!=token && EXEOS==token[0]);
+    } while (NULL!=token && EXEOS==token[0] && EXFAIL==block_sym_index);
    
     return token;
 }
