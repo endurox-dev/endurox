@@ -1,6 +1,6 @@
 /**
- * @brief Test abort rules
- *
+ * @brief Test abort rules, includes standard tpcall() and tpenqueue/tpdequeue()
+ *  Support #634
  * @file abortrules.c
  */
 /* -----------------------------------------------------------------------------
@@ -66,6 +66,7 @@ expublic int basic_abort_rules(int maxmsg)
     TPQCTL qc;
     int i;
     long olen;
+    int cd=99;
     char *buf=NULL;
     
     NDRX_LOG(log_error, "case basic_abort_rules");
@@ -86,6 +87,14 @@ expublic int basic_abort_rules(int maxmsg)
                     && TPEINVAL==tperrno), "NOENT call failed");
     NDRX_ASSERT_TP_OUT(EXSUCCEED==tpcommit(0), "failed to commit");
     
+    /* no abort tpgetreply on invalid cd */
+    NDRX_LOG(log_error, "Test tpcall + TPEBADDESC");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpbegin(60, 0), "failed to start tran");
+    NDRX_ASSERT_TP_OUT( 
+                (EXFAIL==tpgetrply(&cd, &buf, &olen,0) 
+                    && TPEBADDESC==tperrno), "TPEBADDESC notmatched");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpcommit(0), "failed to commit");
+    
     /* standard abort: */
     NDRX_LOG(log_error, "Test @TM-1 junk msg");
     NDRX_ASSERT_TP_OUT(EXSUCCEED==tpbegin(60, 0), "failed to start tran");
@@ -97,6 +106,19 @@ expublic int basic_abort_rules(int maxmsg)
     /* QMENOMSG -> no abort tpdeq */
     NDRX_ASSERT_TP_OUT(EXSUCCEED==tpbegin(60, 0), "failed to start tran");
     memset(&qc, 0, sizeof(qc));
+    NDRX_ASSERT_TP_OUT(
+            (   EXFAIL==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &olen, 0) 
+                && TPEDIAGNOSTIC==tperrno 
+                && QMENOMSG==qc.diagnostic
+            ),
+            "Failed to dequeue: %ld", qc.diagnostic
+            );
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpcommit(0), "failed to commit");
+    
+    /* QMENOMSG -> no abort tpdeq | PEEK */
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpbegin(60, 0), "failed to start tran");
+    memset(&qc, 0, sizeof(qc));
+    qc.flags|=TPQPEEK;
     NDRX_ASSERT_TP_OUT(
             (   EXFAIL==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &olen, 0) 
                 && TPEDIAGNOSTIC==tperrno 

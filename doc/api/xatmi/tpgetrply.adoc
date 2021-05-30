@@ -26,7 +26,9 @@ descriptor to which value might be set, in that case only matched reply is
 returned, other messages are dropped. 'data' and 'len' are field used for 
 storing the reply messages. Fields must be allocated by *tpalloc()*. 
 In case if *TPGETANY* flag is used, then any first response which is 
-received is returned to user application.
+received is returned to user application. In case of error, global transaction 
+is marked for abort (if associated with current thread), except if *TPNOABORT* flag was 
+specified or particular error code indicates that global transaction is not aborted.
 
 *Valid flags*
 
@@ -65,12 +67,16 @@ Note that *tpstrerror()* for last calls returns generic error message plus
 custom message with debug info from last call.
 
 *TPEBLOCK* *TPENOBLOCK* was specified in flags and no message is in queue.
+Global transaction is not marked for abort only, if one was associated 
+with current thread.
 
 *TPEINVAL* Invalid parameter is given to function. Particularly pointer 
-parameters are NULL.
+parameters are NULL. Global transaction is not marked for abort only, 
+if one was associated with current thread.
 
 *TPEBADDESC* 'cd' parameter points to not issued or canceled call descriptor
-and *TPGETANY* flag was not specified.
+and *TPGETANY* flag was not specified. Global transaction is not marked for 
+abort only, if one was associated with current thread.
 
 *TPETIME* Service did not reply in given time ('NDRX_TOUT' time). 
 
@@ -91,7 +97,8 @@ at XATMI server code failed. Or server failed to join global transaction. See
 reasons in log file.
 
 *TPEITYPE* There was problem with XATMI data type buffer, not supported by service
-or corrupted.
+or corrupted. Global transaction is not marked for abort only, 
+if one was associated with current thread.
 
 EXAMPLE
 -------
