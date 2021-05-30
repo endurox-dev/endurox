@@ -819,7 +819,7 @@ expublic int ndrx_tpgetrply (int *cd,
     ssize_t rply_len;
     unsigned prio;
     size_t pbuf_len;
-    tp_command_call_t *rply;
+    tp_command_call_t *rply=NULL;
     typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
     int is_abort_only = EXFALSE; /* Should we abort global tx (if open) */
@@ -1062,10 +1062,10 @@ out:
         
     }
 
-    if (G_atmi_tls->G_atmi_xa_curtx.txinfo && 
-            0==strcmp(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid, rply->tmxid) &&
-            EXSUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
-            rply->tmknownrms))
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo && NULL!=rply
+            && 0==strcmp(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid, rply->tmxid)
+            && EXSUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
+                rply->tmknownrms))
     {
         /* set system error */
         NDRX_LOG(log_error, "Failed to atmi_xa_update_known_rms()");
