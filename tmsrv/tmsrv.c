@@ -410,6 +410,7 @@ void TPTMSRV (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Zero buffer received!");
         userlog("Zero buffer received!");
+        NDRX_FREE(thread_data);
         EXFAIL_OUT(ret);
     }
     

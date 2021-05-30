@@ -241,6 +241,61 @@ extern "C" {
     
 /** The 31 bit on, indicates that connection is servers accept one */
 #define NDRX_CONV_SRVMASK       0x40000000
+    
+/**
+ * XATMI IPC internal flags (i.e. value for sysflags fields of the atmi call structs)
+ * @defgroup sysflags
+ * @{
+ */
+#define SYS_FLAG_REPLY_ERROR    0x00000001
+#define SYS_CONVERSATION        0x00000002 /**< We have or was open conversation      */
+/* buffer management flags: */
+#define NDRX_SYS_SRV_THREAD     SYS_SRV_THREAD /**< value from xatmi.h                */
+#define SYS_SRV_CVT_JSON2UBF    0x00000008 /**< Message is converted from JSON to UBF */
+#define SYS_SRV_CVT_UBF2JSON    0x00000010 /**< Message is converted from UBF to JSON */
+
+#define SYS_SRV_CVT_JSON2VIEW   0x00000020 /**< Message is converted from JSON to VIEW */
+#define SYS_SRV_CVT_VIEW2JSON   0x00000040 /**< Message is converted from UBF to JSON (non NULL)*/
+#define SYS_FLAG_AUTOTRAN       0x00000100 /**< Auto transaction started               */
+/* Test is any flag set */
+#define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON ||\
+        X & SYS_SRV_CVT_JSON2VIEW || X & SYS_SRV_CVT_VIEW2JSON)
+    
+/** @} */ /* sysflags */
+
+    
+/** tpcall() abort only check start */
+#define NDRX_ABORT_START(IS_ABORT_ONLY) \
+/* Do not abort, if TPNOTRAN specified. */ \
+    /* Feature #299 */ \
+    if ( !(flags & TPNOTRAN) && !(flags & TPNOABORT) && \
+	G_atmi_tls->G_atmi_xa_curtx.txinfo && \
+        /* no abort if already aborted */ \
+        !(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY) && \
+	(EXSUCCEED!=ret || IS_ABORT_ONLY)) \
+    { \
+        int abort_needed = EXTRUE; \
+        switch (tperrno) \
+        { \
+            case TPENOENT: \
+            case TPEINVAL: \
+            case TPEITYPE: \
+            case TPEBLOCK: \
+                NDRX_LOG(log_info, "No abort marking needed"); \
+                abort_needed=EXFALSE; \
+                break; \
+        }
+
+/** tpcall() abort only end block*/
+#define NDRX_ABORT_END(IS_ABORT_ONLY) \
+        if (abort_needed) \
+        { \
+            NDRX_LOG(log_warn, "Marking current transaction as abort only!"); \
+            /* later should be handled by transaction initiator! */ \
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY; \
+        } \
+    }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**

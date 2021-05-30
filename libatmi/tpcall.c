@@ -1067,21 +1067,16 @@ out:
             EXSUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
             rply->tmknownrms))
     {
+        /* set system error */
+        NDRX_LOG(log_error, "Failed to atmi_xa_update_known_rms()");
+        ndrx_TPoverride_code(TPESYSTEM);
         ret = EXFAIL;
     }
 
-    /* Do not abort, if TPNOTRAN specified. */
-    /* Feature #299 */
-    if ( !(flags & TPNOTRAN) && !(flags & TPNOABORT) &&
-	G_atmi_tls->G_atmi_xa_curtx.txinfo &&
-	(EXSUCCEED!=ret || is_abort_only))
-    {
-        NDRX_LOG(log_warn, "Marking current transaction as abort only!");
-        
-        /* later should be handled by transaction initiator! */
-        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
-    }
-
+    /* Abort only marking section */
+    NDRX_ABORT_START(is_abort_only)
+    NDRX_ABORT_END(is_abort_only)
+            
     /* free up the system buffer */
     if (NULL!=pbuf)
     {
