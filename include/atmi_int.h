@@ -278,6 +278,7 @@ extern "C" {
         switch (tperrno) \
         { \
             case TPENOENT: \
+            case TPEBADDESC: \
             case TPEINVAL: \
             case TPEITYPE: \
             case TPEBLOCK: \
