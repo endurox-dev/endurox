@@ -49,6 +49,7 @@
 #include <typed_buf.h>
 #include <qcommon.h>
 #include <exbase64.h>
+#include <atmi_tls.h>
 
 #include "tperror.h"
 /*---------------------------Externs------------------------------------*/
@@ -365,10 +366,8 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     long tmp_len;
     UBFH *p_ub = NULL;
     short buftype;
-    atmi_error_t errbuf;
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
     
-    memset(&errbuf, 0, sizeof(errbuf));
     
     NDRX_SYSBUF_MALLOC_WERR_OUT(tmp, tmp_len, ret);
     
@@ -398,6 +397,8 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
         ndrx_TPset_error_fmt(TPEINVAL,  "%s: NULL ctl!", __func__);
         EXFAIL_OUT(ret);
     }
+    
+    ctl->diagnostic=0;
     
     if (EXFAIL==tptypes(data, NULL, NULL))
     {
@@ -490,11 +491,9 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
         snprintf(qspacesvc, sizeof(qspacesvc), NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
     }
     
-    if (EXFAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
+    if (EXFAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags|TPNOABORT))
     {
         int tpe = tperrno;
-        
-        ndrx_TPsave_error(&errbuf);/* save the error */
         
         NDRX_LOG(log_error, "%s failed: %s", qspace, tpstrerror(tpe));
         if (TPESVCFAIL!=tpe)
@@ -512,9 +511,8 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     /* the call is ok (or app failed), convert back. */
     if (EXSUCCEED!=tmq_tpqctl_from_ubf_enqrsp(p_ub, ctl))
     {
-        
-        ndrx_TPset_error_fmt(TPEINVAL,  "%s: failed convert ctl "
-                "to internal UBF buf!", __func__);
+        NDRX_LOG(log_error, "Failed convert ctl to internal UBF buf!");
+        ndrx_TPoverride_code(TPESYSTEM);   
         EXFAIL_OUT(ret);
     }
     
@@ -530,16 +528,33 @@ out:
     }
 
     /* restore the error if have */
-    if (errbuf.atmi_error)
+    if (0!=tperrno)
     {
+        atmi_error_t err;
+        ndrx_TPsave_error(&err);
+        
         if (ctl->diagnostic)
         {
-            errbuf.atmi_error = TPEDIAGNOSTIC;
-            NDRX_STRCPY_SAFE(errbuf.atmi_error_msg_buf, 
+            err.atmi_error = TPEDIAGNOSTIC;
+            NDRX_STRCPY_SAFE(err.atmi_error_msg_buf, 
                     "error details in TPQCTL diag fields");
         }
+        ndrx_TPrestore_error(&err);
         
-        ndrx_TPrestore_error(&errbuf);
+        /* Special abort section */
+        NDRX_ABORT_START(EXFALSE)
+                   
+        if (TPEDIAGNOSTIC==tperrno &&
+                (   QMEINVAL==ctl->diagnostic 
+                 || QMEBADQUEUE==ctl->diagnostic
+                )
+            )
+        {
+            abort_needed=EXFALSE;
+        }
+
+        NDRX_ABORT_END(EXFALSE)
+                
     }
     else
     {
@@ -577,11 +592,8 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
     char cmd = TMQ_CMD_DEQUEUE;
     short buftyp;
     typed_buffer_descr_t *descr;
-    atmi_error_t errbuf;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ);
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
-    
-    memset(&errbuf, 0, sizeof(errbuf));
     
     if (NULL==qspace || (EXEOS==*qspace && !nodeid && !srvid))
     {
@@ -600,6 +612,8 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
         ndrx_TPset_error_fmt(TPEINVAL,  "%s: NULL ctl!", __func__);
         EXFAIL_OUT(ret);
     }
+    
+    ctl->diagnostic=0;
     
     if (NULL==data)
     {
@@ -666,12 +680,10 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
         snprintf(qspacesvc, sizeof(qspacesvc), NDRX_SVC_TMQ, (long)nodeid, (int)srvid);
     }
     
-    if (EXFAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, flags))
+    if (EXFAIL == tpcall(qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 
+            flags | TPNOABORT))
     {
-        int tpe = tperrno;
-            
-        ndrx_TPsave_error(&errbuf);/* save the error */
-                
+        int tpe = tperrno;                
         NDRX_LOG(log_error, "%s failed: %s", qspace, tpstrerror(tpe));
         if (TPESVCFAIL!=tpe)
         {
@@ -723,7 +735,7 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
                         flags);
         if (EXSUCCEED!=ret)
         {
-            ndrx_TPset_error_fmt(TPEINVAL,  "%s: Failed to prepare incoming buffer: %s", 
+            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to prepare incoming buffer: %s", 
                     __func__, Bstrerror(Berror));
             
             NDRX_FREE(data_extra);
@@ -735,9 +747,8 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
     /* the call is ok (or app failed), convert back. */
     if (EXSUCCEED!=tmq_tpqctl_from_ubf_deqrsp(p_ub, ctl))
     {
-        
-        ndrx_TPset_error_fmt(TPEINVAL,  "%s: failed convert ctl "
-                "to internal UBF buf!", __func__);
+        NDRX_LOG(log_error, "Failed convert ctl to internal UBF buf!");
+        ndrx_TPoverride_code(TPESYSTEM);
         EXFAIL_OUT(ret);
     }
     
@@ -753,16 +764,31 @@ out:
     }
 
     /* restore the error if have */
-    if (errbuf.atmi_error)
+    if (0!=tperrno)
     {
+        atmi_error_t err;
+        ndrx_TPsave_error(&err);
+        
         if (ctl->diagnostic)
         {
-            errbuf.atmi_error = TPEDIAGNOSTIC;
-            NDRX_STRCPY_SAFE(errbuf.atmi_error_msg_buf, 
+            err.atmi_error = TPEDIAGNOSTIC;
+            NDRX_STRCPY_SAFE(err.atmi_error_msg_buf, 
                     "error details in TPQCTL diag fields");
         }
+        ndrx_TPrestore_error(&err);
         
-        ndrx_TPrestore_error(&errbuf);
+        /* Special abort section */
+        NDRX_ABORT_START(EXFALSE)
+                   
+        if (TPEDIAGNOSTIC==tperrno &&
+                (      QMEINVAL==ctl->diagnostic 
+                    || QMENOMSG==ctl->diagnostic
+                    || QMEBADQUEUE==ctl->diagnostic))
+        {
+            abort_needed=EXFALSE;
+        }
+
+        NDRX_ABORT_END(EXFALSE)
     }
 
 

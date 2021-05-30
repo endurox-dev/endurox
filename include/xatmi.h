@@ -234,20 +234,8 @@ extern "C" {
 #define NDRX_CACHE_FLAGS_MAX    512        /**< Max flags string size            */
     
 /* EnduroX system ATMI flags */
-#define SYS_FLAG_REPLY_ERROR    0x00000001
-#define SYS_CONVERSATION        0x00000002 /**< We have or was open conversation */
-#define SYS_SRV_THREAD          0x00000004 /**< This is new server thread        */
-/* buffer management flags: */
-#define SYS_SRV_CVT_JSON2UBF    0x00000008 /**< Message is converted from JSON to UBF */
-#define SYS_SRV_CVT_UBF2JSON    0x00000010 /**< Message is converted from UBF to JSON */
-
-#define SYS_SRV_CVT_JSON2VIEW   0x00000020 /**< Message is converted from JSON to VIEW */
-#define SYS_SRV_CVT_VIEW2JSON   0x00000040 /**< Message is converted from UBF to JSON (non NULL)*/
-#define SYS_FLAG_AUTOTRAN       0x00000100 /**< Auto transaction started               */
     
-/* Test is any flag set */
-#define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON ||\
-        X & SYS_SRV_CVT_JSON2VIEW || X & SYS_SRV_CVT_VIEW2JSON)
+#define SYS_SRV_THREAD          0x00000004 /**< This is new server thread        */
     
 #define tpadvertise(_SVCNM, _FNADDR) tpadvertise_full(_SVCNM, _FNADDR, #_FNADDR)
 

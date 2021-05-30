@@ -736,9 +736,10 @@ out:
  * In two phase commit mode, we need to unlock message only when it is enqueued on disk.
  * 
  * @param msg double ptr to message
+ * @param diag qctl for diag purposes.
  * @return 
  */
-expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
+expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
 {
     int ret = EXSUCCEED;
     int is_locked = EXFALSE;
@@ -766,6 +767,13 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
     {
         NDRX_LOG(log_error, "queue config not found! Cannot enqueue!");
         userlog("queue config not found! Cannot enqueue!");
+        
+        if (NULL!=diag)
+        {
+            diag->diagnostic = QMEBADQUEUE;
+            snprintf(diag->diagmsg, sizeof(diag->diagmsg), "Queue [%s] not defined",
+                    (*msg)->hdr.qname);
+        }
         EXFAIL_OUT(ret);
     }
     
@@ -854,6 +862,14 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
             if (EXSUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
             {
                 NDRX_LOG(log_error, "Failed to add message to persistent store!");
+                
+                /* set the OS error */
+                if (NULL!=diag)
+                {
+                    diag->diagnostic = QMEOS;
+                    snprintf(diag->diagmsg, sizeof(diag->diagmsg), "Failed to persist msg");
+                }
+                
                 EXFAIL_OUT(ret);
             }
         }
@@ -863,7 +879,9 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
         NDRX_LOG(log_info, "Mem only Q, not persisting.");   
     }
     
-    /* Add only if all OK */
+    /* Add only if all OK 
+     * Note locked here...
+     */
     MUTEX_LOCK_V(M_q_lock);
     qhash->numenq++;
     MUTEX_UNLOCK_V(M_q_lock);
@@ -877,7 +895,14 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
     *msg = NULL;
     
 out:
+     
                 
+    if (is_locked)
+    {
+        MUTEX_UNLOCK_V(M_q_lock);
+        is_locked=EXFALSE;   
+    }
+
     /* NOT SURE IS THIS GOOD as this might cause segmentation fault.
      * as added to mem, but failed to write to disk.
      * Message will be kept locked, thus we can free it.
@@ -886,7 +911,6 @@ out:
      */
     if (EXSUCCEED!=ret && mmsg!=NULL)
     {
-        
         /* remove messages hashes, due to failure */
         MUTEX_LOCK_V(M_q_lock);
         
@@ -909,11 +933,6 @@ out:
         
         NDRX_FREE(mmsg);
         mmsg=NULL;
-    }
-
-    if (is_locked)
-    {
-        MUTEX_UNLOCK_V(M_q_lock);
     }
 
     /* free up message, if it is not used anymore. */
@@ -1009,19 +1028,25 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
      * - Increase counter
      * - Remove the message.
      */
-    if (NULL==(qhash = tmq_qhash_get(qname)))
-    {
-        NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
-        goto out;
-    }
     
     if (NULL==(qconf=tmq_qconf_get_with_default(qname, NULL)))
     {
         
         NDRX_LOG(log_error, "Failed to get q config [%s]", 
                 qname);
+        
+        *diagnostic=QMEBADQUEUE;
+        snprintf(diagmsg, diagmsgsz, "Queue [%s] not defined", qname);
+        
         goto out;
     }
+    
+    if (NULL==(qhash = tmq_qhash_get(qname)))
+    {
+        NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
+        goto out;
+    }
+    
     NDRX_LOG(log_debug, "mode: %s", TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
     
     /* Start from first one & loop over the list while 
@@ -1475,8 +1500,7 @@ exprivate int process_block(union tmq_block **p_block)
     {
         case TMQ_STORCMD_NEWMSG:
             
-            
-            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE))
+            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE, NULL))
             {
                 NDRX_LOG(log_error, "Failed to enqueue!");
                 EXFAIL_OUT(ret);
