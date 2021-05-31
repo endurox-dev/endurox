@@ -61,6 +61,7 @@ exprivate int basic_tmsrvdiskerr(int maxmsg);
 exprivate int basic_badmsg(int maxmsg);
 exprivate int basic_commit_crash(int maxmsg);
 exprivate int basic_deqwriteerr(int maxmsg);
+extern int basic_abort_rules(int maxmsg);
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
@@ -112,6 +113,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "deqwriteerr"))
     {
         return basic_deqwriteerr(100);
+    }
+    else if (0==strcmp(argv[1], "abortrules"))
+    {
+        return basic_abort_rules(1);
     }
     else
     {
@@ -695,7 +700,7 @@ exprivate int basic_deqwriteerr(int maxmsg)
     tpabort(0);
     
     
-     if (EXSUCCEED!=system("xadmin lcf qwriterr -A 0 -a"))
+    if (EXSUCCEED!=system("xadmin lcf qwriterr -A 0 -a"))
     {
         NDRX_LOG(log_error, "TESTERROR: xadmin lcf qwriterr -A 0 -a failed");
         EXFAIL_OUT(ret);
@@ -901,7 +906,7 @@ exprivate int basic_diskfull(int maxmsg)
         NDRX_LOG(log_error, "tpenqueue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
         
-        if (TPEDIAGNOSTIC!=tperrno || QMESYSTEM!=qc.diagnostic)
+        if (TPEDIAGNOSTIC!=tperrno || QMEOS!=qc.diagnostic)
         {
             NDRX_LOG(log_error, "TESTERROR: expected tperrno==TPEDIAGNOSTIC got %d and qc.diagnostic==QMESYSTEM got %d",
                     tperrno, qc.diagnostic);

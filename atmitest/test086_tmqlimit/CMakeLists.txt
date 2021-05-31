@@ -52,7 +52,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmiclt86 atmiclt86.c)
+add_executable (atmiclt86 atmiclt86.c abortrules.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...

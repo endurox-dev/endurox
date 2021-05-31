@@ -37,10 +37,14 @@ from *ndrxconfig.xml(5).
 Functions are transactional and can participate in user's global transaction. 
 It is not possible to enqueue and dequeue message within same global transaction.
 
+In case of error, global transaction (if associated with current thread) is marked for
+abort, except if *TPNOABORT* flag was specified or particular error code
+indicates that global transaction is not marked for abort.
+
 *Valid flags*
 
-*TPNOTRAN* Do not run the equeue in the users global transaction. 
-In this case *tmqueue* will open it's own transaction, and will commit 
+*TPNOTRAN* Do not run the enqueue in the users global transaction. 
+In this case *tmqueue(8)* will open it's own transaction, and will commit 
 transaction upon return.
 
 *TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler.
@@ -115,17 +119,19 @@ with debug info from last function call.
 
 *TPEINVAL* 'data' is NULL, 'qspace' is NULL, or 'nodeid' and 'srvid' is 0. 
 Error can be generate in case if 'qname' is empty or NULL. 'ctl' is NULL or 
-'data' does not point to *tpalloc()* allocated buffer.
+'data' does not point to *tpalloc()* allocated buffer. Global transaction is 
+not marked for abort only, if one was associated with current thread.
 
-*TPENOENT* Tmqueue server is not available.
+*TPENOENT* *tmqueue(8)* server is not available. Global transaction is 
+not marked for abort only, if one was associated with current thread.
 
 *TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
 
 *TPEDIAGNOSTIC* More information is provided in 'TPQCTL.diagnostic' field.
 
-*TPESVCFAIL* Tmqueue Service returned 'TPFAIL'. This is application level failure.
+*TPESVCFAIL* *tmqueue(8)* Service returned 'TPFAIL'. This is application level failure.
 
-*TPESVCERR* Tmqueue service got system level failure. Server died during the 
+*TPESVCERR* *tmqueue(8)* service got system level failure. Server died during the 
 message presence in service queue.
 
 *TPESYSTEM* Enduro/X internal error occurred. See logs for more info.
@@ -133,17 +139,22 @@ message presence in service queue.
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info.
 
+*TPEBLOCK* XATMI IPC Service request queue was full and *TPNOBLOCK* 
+flag was specified. Global transaction is not marked for abort only, 
+if one was associated with current thread.
+
 *Values for 'TPQCTL.diagnostic'*
 
-*QMEINVAL* Invalid request bugffer.
+*QMEINVAL* Invalid request buffer / *TPQCTL*. Global transaction is 
+not marked for abort only, if one was associated with current thread.
 
 *QMEOS* Operating system problems. Might be insufficient memory.
 
 *QMESYSTEM* Enduro/X internal problems. Might be issues with saving 
 messages to disk.
 
-*TPEBLOCK* XATMI IPC Service request queue was full and *TPNOBLOCK* 
-flag was specified.
+*QMEBADQUEUE* Queue not defined and default (@) queue settings are not defined too.
+Global transaction is not marked for abort only, if one was associated with current thread.
 
 
 EXAMPLE
