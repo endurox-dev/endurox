@@ -401,7 +401,7 @@ out:
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
                 if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
-                        call_buf, call_len, TPNOTRAN))
+                        call_buf, call_len, 0))
                 {
                     NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
                             msg->qctl.failurequeue, tpstrerror(tperrno));
@@ -411,6 +411,8 @@ out:
                     goto finalize;
                 }
             }
+
+            /* TODO: Process the error Q: */
             
             tmq_update_q_stats(msg->hdr.qname, 0, 1);
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
