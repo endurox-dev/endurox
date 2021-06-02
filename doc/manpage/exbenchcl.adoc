@@ -1,0 +1,218 @@
+EXBENCHCL(8)
+============
+:doctype: manpage
+
+
+NAME
+----
+exbenchcl - Enduro/X benchmark tool
+
+
+SYNOPSIS
+--------
+exbenchcl ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+*exbenchcl* is Enduro/X benchmark tool. Tool is used for benchmarking standard
+*tpcall(3)* request/reply messages. Also tool supports persistent queue *tpenqueue(3)*
+and *tpdequeue(3)* benchmarking. Tools supports multi-threading and multi-processing.
+Test duration can be limited either by specified runtime in seconds or by optional
+number of messages processed by each processing unit (thread or processes).
+
+Currently supported data buffer format is *UBF*. Data loaded to UBF is loaded
+in following way (may be combined):
+
+. Data loaded from command line argument *-b* which is in format of *tpjsontoubf(3)*
+
+. Random data generated and set in specified UBF CARRAY field in CLI options.
+
+
+The benchmark result is appended to benchmark output file, in following format:
+
+--------------------------------------------------------------------------------
+
+"Configuration" "MsgSize" "CallsPerSec"
+"<config_name>" <msg_size_in_bytes> <calls_per_second>
+"<config_name>" <msg_size_in_bytes> <calls_per_second>
+...
+
+--------------------------------------------------------------------------------
+
+When performing benchmark to persistent queue, the default mode is to enqueue
+and dequeue message. To ensure that all messages can be dequeued, *tmqueue(8)*
+process must be started with 1 copy (*<min />* tag set to 1). If performing 
+automatic forward tests *-A* or enqueue only (*-E* flag), then several
+*tmqueue* processes can be started.
+
+*WARNING*: Binary is experimental and may be changed in future releases (including
+but not limited with replaced CLI flags, etc).
+
+ENVIRONMENT
+-----------
+[*NDRX_BENCH_FILE*]::
+Benchmark output text file name. If not set, default name *test.out* is written
+in current directory.
+
+[*NDRX_BENCH_CONFIGNAME*]::
+Configuration name used in benchmark file. If not specified, default value *test*
+is used.
+
+OPTIONS
+-------
+[*-n* 'NR_OF_THREADS']::
+Number of worker threads. In fork mode (*-F*), this configures the number of worker
+forked processes. Default is *1*.
+
+[*-s* 'CALL_SERVICE_NAME']::
+This configures the target service name. For queue testing mode (*-Q* specified), 
+this identifies the target persistent queue name. In case if using multiple 
+service (*-N* specified) names or queues, then actual service / queue name used 
+by thread is constructed 'CALL_SERVICE_NAME' appended with NNN, formatted as 
+current thread number by modulus of the total number of services (*-N* value). 
+Total service name length must not be longer than 30 symbols (name is truncated 
+to 30 chars). Default is *EXBENCH*.
+
+[*-t* 'RUN_TIME_SECONDS']::
+Number of seconds for test to run. The default is *60*.
+
+[*-d* 'OUTPUT_DIRECTOR']::
+Optional flag for changing output directory where object file is generated. If
+parameter is not set, current directory is used.
+
+[*-b* 'SAMPLE_DATA_STRING']::
+UBF sample data in form of *tpjsontoubf(3)*. 1024 bytes are allocated for target
+buffer.
+
+[*-S* 'RANDOM_DATA_SIZE']::
+This specified random field size (field specified by *-f*) in bytes. The default
+value is *1024*.
+
+[*-p* 'PRIO']::
+Absolute call priority, if specified then before *tpcall(3)* or *tpenqueue(3)*
+the *tpsprio(3)* is executed by worker thread or process.
+
+[*-P*]::
+Plot the results in benchmark output file. If this parameter is not specified,
+results are not written to benchmark output file.
+
+[*-f* 'UBF_FIELD_NAME']::
+This parameter specifies CARRAY typed field name were random blob data of size specified
+by *-S* shall be loaded.
+
+[*-F*]::
+Use fork mode, instead of threads.
+
+[*-N* 'NUMBER_OF_SERVICES']::
+This parameter enables multi service/queue mode and in the same time specifies 
+total number of services or queues used in test. The default value is *0*, meaning
+that service name specified in *-s* is used without appending with the service/queue
+number.
+
+[*-Q* 'QUEUE_SPACE_NAME']::
+This parameter if set enables persistent queue tests and at the same time it
+specifies the queue space name used for *tpenqueue(3)* and *tpdequeue(3)* calls.
+
+[*-A*]::
+Enable testing of *tmqueue(8)* automatic forwarding queue. During the test
+specified run-time, messages are enqueued only. Once time (or message count
+*-R*) have been exceeded, the worker thread/process will perform periodic
+peek to message queue, to ensure that count is 0 (thus all messages have been
+forwarded). By default if *-A* or *-E* flags are not specified, then persistent
+queue benchmark is performed as pair of *tpenqueue(3)* and *tpdequeue(3)* operations.
+
+[*-E*]::
+Persist messages only (for *-Q* mode). Thus only *tpenqueue(3)* is executed.
+
+[*-R* 'NUMBER_OF_REQUESTS']::
+If set, then this parameter limits the benchmarking additionally to number
+of messages processed by worker thread. Benchmark will terminate in either
+time is reached or number of requests reached, which ever comes first. Total
+number of requests is made by test is multiplied by worker thread/process count.
+
+[*-h*]::
+Print usage.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+
+CONFIGURATION EXAMPLE
+---------------------
+
+Responder service in *ndrxconfig.xml(5)*, single service name mode *-N* (not set or 0).
+
+--------------------------------------------------------------------------------
+
+    <server name="exbenchsv">
+            <srvid>1800</srvid>
+            <min>15</min>
+            <max>15</max>
+            <sysopt>-e /tmp/EXBENCH</sysopt>
+    </server>
+
+--------------------------------------------------------------------------------
+
+Responder service in *ndrxconfig.xml(5)*, multi-service mode, 5 services:
+
+--------------------------------------------------------------------------------
+
+    <server name="exbenchsv">
+            <srvid>1800</srvid>
+            <min>15</min>
+            <max>15</max>
+            <sysopt>-e /tmp/EXBENCH</sysopt>
+            <appopt>-N5</appopt>
+    </server>
+
+--------------------------------------------------------------------------------
+
+EXAMPLE
+-------
+
+Benchmark of UBF buffer at 1024 bytes with 5 threads:
+
+--------------------------------------------------------------------------------
+
+$ exbenchcl -n5 -P -t20 -b "{}" -f EX_DATA -S1024
+
+--------------------------------------------------------------------------------
+
+Benchmark of 10 threads, to 5 service names
+
+--------------------------------------------------------------------------------
+
+$ exbenchcl -n10 -P -t20 -b "{}" -f EX_DATA -S1024 -N5
+
+--------------------------------------------------------------------------------
+
+Persistent queue benchmark to queue space named *SAMPLESPACE*. Queue name
+used is *TESTQ1*:
+
+--------------------------------------------------------------------------------
+
+$ exbenchcl -n10 -P -t20 -b "{}" -f EX_DATA -S1024 -QSAMPLESPACE -sTESTQ1
+
+--------------------------------------------------------------------------------
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+
+SEE ALSO
+--------
+*exbenchsv(8)* *ndrxconfig.xml(5)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
