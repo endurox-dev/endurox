@@ -494,7 +494,7 @@ xadmin start -y
 echo "Echo wait 5 for DDR update to apply..."
 sleep 5
 
-exbenchcl -n5 -P  -B "UBF" -t60 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
+exbenchcl -n5 -P -t60 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
 BENCHPID_PID=$!
 
 for ((n=0;n<20;n++)); do

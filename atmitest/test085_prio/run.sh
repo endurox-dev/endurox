@@ -121,13 +121,13 @@ if [[ "$POLLER" == "epoll" || "$POLLER" == "kqueue" ]]; then
     echo "*** Default is lower"
     export NDRX_BENCH_FILE="bench.def.log"
     export NDRX_BENCH_CONFIGNAME="results"
-    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
+    exbenchcl -n5 -P  -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
     BENCHPIDDEF_PID=$!
 
     # event this is started later, it shall fill take a priority over...
     export NDRX_BENCH_FILE="bench.70.log"
     export NDRX_BENCH_CONFIGNAME="results"
-    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 -p 70 &
+    exbenchcl -n5 -P  -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 -p 70 &
     BENCHPID70_PID=$!
 
     # wait for pids...
@@ -159,13 +159,13 @@ if [[ "$POLLER" == "epoll" || "$POLLER" == "kqueue" ]]; then
 
     export NDRX_BENCH_FILE="bench.def.log"
     export NDRX_BENCH_CONFIGNAME="results"
-    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
+    exbenchcl -n5 -P  -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
     BENCHPIDDEF_PID=$!
 
     # event this is started later, it shall fill take a priority over...
     export NDRX_BENCH_FILE="bench.70.log"
     export NDRX_BENCH_CONFIGNAME="results"
-    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 -p 70 &
+    exbenchcl -n5 -P  -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 -p 70 &
     BENCHPID70_PID=$!
 
     # wait for pids...
