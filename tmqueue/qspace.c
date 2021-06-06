@@ -82,6 +82,7 @@
 #define TMQ_QC_MEMONLY          "memonly"
 #define TMQ_QC_MODE             "mode"
 #define TMQ_QC_TXTOUT           "txtout"    /**< transaction timeout override */
+#define TMQ_QC_ERRORQ           "errorq"    /**< Name of the error queue, opt */
 
 #define EXHASH_FIND_STR_H2(head,findstr,out)                                     \
     EXHASH_FIND(h2,head,findstr,strlen(findstr),out)
@@ -202,6 +203,10 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     if (0==strcmp(key, TMQ_QC_SVCNM))
     {
         NDRX_STRCPY_SAFE(qconf->svcnm, value);
+    }
+    else if (0==strcmp(key, TMQ_QC_ERRORQ))
+    {
+        NDRX_STRCPY_SAFE(qconf->errorq, value);
     }
     else if (0==strcmp(key, TMQ_QC_TRIES))
     {
@@ -370,20 +375,23 @@ exprivate tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defa
  * Return string version of Q config
  * @param qname
  * @param p_is_defaulted
- * @return 
+ * @param out_buf space where to print queue config
+ * @param out_bufsz output buffer size
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
+expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, size_t out_bufsz)
 {
     tmq_qconfig_t * qdef = NULL;
     int ret = EXSUCCEED;
     
     MUTEX_LOCK_V(M_q_lock);
+
     if (NULL==(qdef=tmq_qconf_get_with_default(qname, p_is_defaulted)))
     {
         EXFAIL_OUT(ret);
     }
     
-    sprintf(out_buf, "%s,svcnm=%s,autoq=%c,tries=%d,waitinit=%d,waitretry=%d,"
+    snprintf(out_buf, out_bufsz, "%s,svcnm=%s,autoq=%c,tries=%d,waitinit=%d,waitretry=%d,"
                         "waitretryinc=%d,waitretrymax=%d,mode=%s,txtout=%d",
             qdef->qname, 
             qdef->svcnm, 
@@ -395,6 +403,12 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
             qdef->waitretrymax,
             qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo",
             qdef->txtout);
+
+    if (EXEOS!=qdef->errorq[0])
+    {
+        int len = strlen(out_buf);
+        snprintf(out_buf+len, out_bufsz-len, ",errorq=%s", qdef->errorq);
+    }
 
 out:
     MUTEX_UNLOCK_V(M_q_lock);
@@ -556,8 +570,8 @@ out:
  */
 expublic int tmq_qconf_addupd(char *qconfstr, char *name)
 {
-    tmq_qconfig_t * qconf;
-    tmq_qconfig_t * dflt;
+    tmq_qconfig_t * qconf=NULL;
+    tmq_qconfig_t * dflt=NULL;
     char * p;
     char * p2;
     int got_default = EXFALSE;
@@ -1490,9 +1504,10 @@ out:
 /**
  * Process message blocks on disk read (after cold startup)
  * @param p_block
- * @return 
+ * @param state TMQ_TXSTATE_ according to 
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate int process_block(union tmq_block **p_block)
+exprivate int process_block(union tmq_block **p_block, int state)
 {
     int ret = EXSUCCEED;
     
@@ -1508,11 +1523,21 @@ exprivate int process_block(union tmq_block **p_block)
             
             break;
         default:
+            
             if (EXSUCCEED!=tmq_lock_msg((*p_block)->hdr.msgid))
             {
-                NDRX_LOG(log_error, "Failed to lock message!");
-                EXFAIL_OUT(ret);
+                if (TMQ_TXSTATE_PREPARED==state 
+                        && TMQ_STORCMD_DEL==(*p_block)->hdr.command_code)
+                {
+                    NDRX_LOG(log_info, "Delete command and message not found - assume deleted");
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Failed to lock message!");
+                    EXFAIL_OUT(ret);
+                }
             }
+            
             break;
     }
     

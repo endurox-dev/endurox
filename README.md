@@ -545,7 +545,7 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 
 - Version 7.5.26 released on 11/04/2021 (stable) Bug #602, Support #671, Support #677, Support #673, Bug #624
 
-- Version 7.5.28 released on 30/05/2021 (stable) Support #634
+- Version 7.5.28 released on 30/05/2021 (stable) Support #634, Feature #699
 
 # Build configurations
 
