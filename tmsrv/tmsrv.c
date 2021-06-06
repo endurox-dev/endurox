@@ -795,7 +795,7 @@ exprivate void tx_tout_check_th(void *ptr)
                 {
                     NDRX_LOG(log_error, "XID [%s] was-tout but found in progress "
                         "(txstage %hd spent %ld, limit: %ld sec) - aborting...!", 
-                        p_tl->txstage, p_tl->tmxid, tspent, p_tl->txtout);
+                        p_tl->tmxid, p_tl->txstage, tspent, p_tl->txtout);
                 }
             }
         }
