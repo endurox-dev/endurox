@@ -210,6 +210,10 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     tmq_qconfig_t qconf;
     char *call_buf = NULL;
     long call_len = 0;
+    
+    char *rply_buf = NULL;
+    long rply_len = 0;
+    
     typed_buffer_descr_t *descr;
     char msgid_str[TMMSGIDLEN_STR+1];
     char *fn = "thread_process_forward";
@@ -217,6 +221,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     union tmq_block cmd_block;
     int tout;
     int disk_err=EXFALSE;
+    
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
+    
     if (!M_is_xa_open)
     {
         if (EXSUCCEED!=tpopen()) /* init the lib anyway... */
@@ -281,19 +288,31 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
             NDRX_LOG(log_error, "Failed to start tran!");
-            /* unlock the message */
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-            return;
+            /* keep the msg locked: */
+            
+            disk_err=EXTRUE;
+            goto finalize;
         }
     }
     
     /* call the service */
-    NDRX_LOG(log_info, "Sending request to service: [%s]", qconf.svcnm);
     
-    if (EXFAIL == tpcall(qconf.svcnm, call_buf, call_len, (char **)&call_buf, &call_len,0))
+    /* substitute the special service name  */
+    if (0==strcmp(qconf.svcnm, TMQ_QUEUE_SERVICE))
+    {
+        NDRX_STRCPY_SAFE(svcnm, qconf.qname);
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(svcnm, qconf.svcnm);
+    }
+    
+    NDRX_LOG(log_info, "Sending request to service: [%s]", svcnm);
+    
+    if (EXFAIL == tpcall(svcnm, call_buf, call_len, (char **)&rply_buf, &rply_len,0))
     {
         tperr = tperrno;
-        NDRX_LOG(log_error, "%s failed: %s", qconf.svcnm, tpstrerror(tperr));
+        NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperr));
         
         /* Bug #421 if called in transaction, then abort current one
          * because need to increment the counters in new transaction
@@ -326,10 +345,15 @@ out:
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
             NDRX_LOG(log_error, "Failed to start tran!");
-            /* unlock the message */
+            /* unlock the message -> for stablity tests... */
             tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-
-            return;
+            goto out_free;
+            
+            /* keep the msg locked: 
+            
+            disk_err=EXTRUE;
+            goto finalize;*/
+            
         }
     }
 
@@ -350,7 +374,7 @@ out:
             memset(&ctl, 0, sizeof(ctl));
                     
             if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
-                    call_buf, call_len, 0))
+                    rply_buf, rply_len, 0))
             {
                 NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
                         msg->qctl.replyqueue, tpstrerror(tperrno));
@@ -388,32 +412,7 @@ out:
         {
             NDRX_LOG(log_error, "Message [%s] expired", msgid_str);
             
-            if (msg->qctl.flags & TPQFAILUREQ)
-            {
-                TPQCTL ctl;
-                NDRX_LOG(log_warn, "TPQFAILUREQ defined, sending answer buffer to "
-                    "[%s] q in [%s] namespace", 
-                    msg->qctl.failurequeue, msg->hdr.qspace);
-                
-
-                /* Send response to reply Q (load the data in FB with call details)
-                 * Keep the original flags... */
-                memcpy(&ctl, &msg->qctl, sizeof(ctl));
-
-                if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
-                        call_buf, call_len, 0))
-                {
-                    NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
-                            msg->qctl.failurequeue, tpstrerror(tperrno));
-                    userlog("Failed to enqueue to failurequeue [%s]: %s", 
-                            msg->qctl.failurequeue, tpstrerror(tperrno));
-                    disk_err=EXTRUE;
-                    goto finalize;
-                }
-            }
-
-            /* TODO: Process the error Q: */
-            
+            /* test before eqn... */
             tmq_update_q_stats(msg->hdr.qname, 0, 1);
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
@@ -425,6 +424,53 @@ out:
                         msgid_str);
                 disk_err=EXTRUE;
                 goto finalize;
+            }
+            
+            if (msg->qctl.flags & TPQFAILUREQ && NULL!=rply_buf)
+            {
+                TPQCTL ctl;
+                NDRX_LOG(log_warn, "TPQFAILUREQ defined and non NULL reply, enqueue answer buffer to "
+                    "[%s] q in [%s] namespace", 
+                    msg->qctl.failurequeue, msg->hdr.qspace);
+                
+
+                /* Send response to reply Q (load the data in FB with call details)
+                 * Keep the original flags... */
+                memcpy(&ctl, &msg->qctl, sizeof(ctl));
+
+                if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
+                        rply_buf, rply_len, 0))
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
+                            msg->qctl.failurequeue, tpstrerror(tperrno));
+                    userlog("Failed to enqueue to failurequeue [%s]: %s", 
+                            msg->qctl.failurequeue, tpstrerror(tperrno));
+                    disk_err=EXTRUE;
+                    goto finalize;
+                }
+            }
+            
+            if (EXEOS!=qconf.errorq[0])
+            {
+                TPQCTL ctl;
+                NDRX_LOG(log_warn, "ERRORQ defined, enqueue answer buffer to "
+                    "[%s] q in [%s] namespace", qconf.errorq, msg->hdr.qspace);
+                
+
+                /* Send org msg to error queue.
+                 * Keep the original flags... */
+                memcpy(&ctl, &msg->qctl, sizeof(ctl));
+
+                if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, qconf.errorq, &ctl, 
+                        call_buf, call_len, 0))
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue to errorq [%s]: %s", 
+                            qconf.errorq, tpstrerror(tperrno));
+                    userlog("Failed to enqueue to errorq [%s]: %s", 
+                            qconf.errorq, tpstrerror(tperrno));
+                    disk_err=EXTRUE;
+                    goto finalize;
+                }
             }
         }
         else
@@ -448,21 +494,43 @@ out:
     }
 
 finalize:
+    
     /* commit the transaction */
     if (disk_err)
     {
-        userlog("tmq forward: msg [%s] aborting finalize error", 
+        userlog("tmq forward unrecoverable error (disk/tmsrv): msg [%s] aborting. "
+                "Please restart tmqueue for message retry", 
                 msgid_str);
-        NDRX_LOG(log_error, "tmq forward: msg [%s] aborting due finalize error", 
+        NDRX_LOG(log_error, "tmq forward unrecoverable error  (disk/tmsrv): msg [%s] aborting. "
+                "Please restart tmqueue for message retry", 
                 msgid_str);
-        tpabort(0);
-        /* Unlock the message....? */
+        if (tpgetlev())
+        {
+            tpabort(0);
+        }
+        /* Unlock the message....? 
+         * needs to think about it.
+         * As if we get unrecoverable error, we might just keep looping
+         * and sending messages out...
+         * Thus now admin shall restart the tmqueue to proceed.
+         */
     }
     else if (EXSUCCEED!=tpcommit(0))
     {
         userlog("Failed to commit: %s", tpstrerror(tperrno));
         NDRX_LOG(log_error, "Failed to commit!");
         tpabort(0);
+    }
+
+out_free:
+    if (NULL!=call_buf)
+    {
+        tpfree(call_buf);
+    }
+
+    if (NULL!=rply_buf)
+    {
+        tpfree(rply_buf);
     }
     
     /* if disk failed, maybe that's fine that messages stay locked
@@ -530,16 +598,6 @@ out:
 expublic void * forward_process(void *arg)
 {
     NDRX_LOG(log_error, "***********BACKGROUND PROCESS START ********");
-    
-   /* 1. Read the transaction records from disk */ 
-    /* background_read_log(); */
-    
-   /* 2. Loop over the transactions and:
-    * - Check for in-progress timeouts
-    * - Try to abort abortable
-    * - Try co commit commitable
-    * - Use timers counters from the cli params. 
-    */
     
     tmq_thread_init();
     forward_loop();

@@ -62,6 +62,8 @@ exprivate int basic_badmsg(int maxmsg);
 exprivate int basic_commit_crash(int maxmsg);
 exprivate int basic_deqwriteerr(int maxmsg);
 extern int basic_abort_rules(int maxmsg);
+extern int basic_errorq(void);
+
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
@@ -117,6 +119,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "abortrules"))
     {
         return basic_abort_rules(1);
+    }
+    else if (0==strcmp(argv[1], "errorq"))
+    {
+        return basic_errorq();
     }
     else
     {

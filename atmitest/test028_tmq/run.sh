@@ -36,6 +36,7 @@
 export TESTNO="028"
 export TESTNAME_SHORT="tmq"
 export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
+export NDRX_SILENT=Y
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then

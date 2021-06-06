@@ -83,6 +83,7 @@
 #include "nstdutil.h"
 #include "Exfields.h"
 #include "atmi_tls.h"
+#include "tmqd.h"
 #include <qcommon.h>
 #include <xa_cmn.h>
 #include <ubfutil.h>
@@ -805,7 +806,7 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
             if (ndrx_file_exists(fname))
             {
                 NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
-                if (EXSUCCEED==read_tx_from_file(fname, (char *)&b, sizeof(b), 
+                if (EXFAIL!=read_tx_from_file(fname, (char *)&b, sizeof(b), 
                         &err, &tmq_err))
                 {
                     /* Send the notification */
@@ -926,7 +927,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
     {
         
         fname=get_filename_i(i, M_folder_prepared, 0);
-        if (EXSUCCEED!=read_tx_from_file(fname, (char *)&block, sizeof(block), &err, &tmq_err))
+        if (EXFAIL==read_tx_from_file(fname, (char *)&block, sizeof(block), &err, &tmq_err))
         {
             NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
             goto xa_err;
@@ -967,7 +968,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
                 goto xa_err;
             }
             
-            if (EXSUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd), 
+            if (EXFAIL==read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd), 
                     fname_msg, "xa_commit_entry", &err, &tmq_err))
             {
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
@@ -1100,13 +1101,14 @@ xa_fail:
  * @param dbg_msg debug message
  * @param err ptr to error code if failed to read
  * @param tmq_err internal error code
- * @return EXSUCCEED/EXFAIL
+ * @return EXFAIL or number of bytes read
  */
 exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, 
         char *dbg_msg, int *err, 
         int *tmq_err)
 {
     int act_read;
+    int read = 0;
     int ret = EXSUCCEED;
     int offset = 0;
     tmq_cmdheader_t *p_hdr;
@@ -1119,6 +1121,9 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname,
         assert(len >= sizeof(tmq_cmdheader_t));
         /* read header */
         READ_BLOCK(block, sizeof(tmq_cmdheader_t));
+        
+        read+=sizeof(tmq_cmdheader_t);
+        
         /* validate header */
         p_hdr = (tmq_cmdheader_t *)block;
         
@@ -1132,11 +1137,13 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname,
         switch (p_hdr->command_code)
         {
             case TMQ_STORCMD_NEWMSG:
+                NDRX_LOG(log_debug, "Command: New message");
                 /* as this is biggest message & dynamic size: */
                 len = len - sizeof(tmq_cmdheader_t);
                 break;
             case TMQ_STORCMD_UPD:
                 
+                NDRX_LOG(log_debug, "Command: Update message");
                 if (len > sizeof(tmq_cmdheader_t))
                 {
                     len = sizeof(tmq_msg_upd_t) - sizeof(tmq_cmdheader_t);
@@ -1144,12 +1151,16 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname,
                 break;
             case TMQ_STORCMD_DEL:
                 
+                NDRX_LOG(log_debug, "Command: Delete message");
+                
                 if (len > sizeof(tmq_cmdheader_t))
                 {
                     len = sizeof(tmq_msg_del_t) - sizeof(tmq_cmdheader_t);
                 }
                 break;
             case TMQ_STORCMD_UNLOCK:
+                
+                NDRX_LOG(log_debug, "Command: Unlock message");
                 
                 if (len > sizeof(tmq_cmdheader_t))
                 {
@@ -1174,11 +1185,22 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname,
     if (len > 0)
     {
         READ_BLOCK((block+offset), len);
+        
+        read+=len;
+        
     }
     
     
 out:
-    return ret;
+                
+    if (EXSUCCEED==ret)
+    {
+        return read;
+    }
+    else
+    {    
+        return ret;
+    }
 }
 
 /**
@@ -1188,7 +1210,7 @@ out:
  * @param len length to read.
  * @param err error code
  * @param tmq_err internal error code
- * @return 
+ * @return EXFAIL or number of bytes read
  */
 exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
         int *tmq_err)
@@ -1512,7 +1534,7 @@ out:
  * @param process_block callback function to process the data block
  * @return SUCCEED/FAIL
  */
-expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block),
+expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block, int state),
             short nodeid, short srvid)
 {
     int ret = EXSUCCEED;
@@ -1523,6 +1545,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
     FILE *f = NULL;
     char filename[PATH_MAX+1];
     int err, tmq_err;
+    int read;
+    int state;
     
     /* prepared & active messages are all locked
      * Also if delete command is found in active, this means that committed
@@ -1545,6 +1569,24 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
     
     for (j = 0; j < N_DIM(folders); j++)
     {
+        
+        switch (j)
+        {
+            case 0:
+                /* committed */
+                state=TMQ_TXSTATE_COMMITTED;
+                break;
+            case 1:
+            case 3:
+                /* prepared */
+                state=TMQ_TXSTATE_PREPARED;
+                break;
+            case 2:
+                /* active */
+                state=TMQ_TXSTATE_ACTIVE;
+                break;
+        }
+        
         n = scandir(folders[j], &namelist, 0, alphasort);
         if (n < 0)
         {
@@ -1605,8 +1647,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
             /* here we read maximum header size.
              * For smaller messages (fixed struct messages) all data is read
              */
-            if (EXSUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
-                    filename, "tmq_storage_get_blocks", &err, &tmq_err))
+            if (EXFAIL==(read=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
+                    filename, "tmq_storage_get_blocks", &err, &tmq_err)))
             {
                 NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - not loading", 
                    filename, sizeof(*p_block), tmq_err, (err==0?"EOF":strerror(err)) );
@@ -1646,7 +1688,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 DIRENT_CONTINUE;
             }
             
-            NDRX_DUMP(log_debug, "Got command block",  p_block, sizeof(*p_block));
+            NDRX_DUMP(log_debug, "Got command block", p_block, read);
             
             /* if it is message, the re-alloc  */
             if (TMQ_STORCMD_NEWMSG==p_block->hdr.command_code)
@@ -1676,7 +1718,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 
                 if (bytes_to_read > 0)
                 {
-                    if (EXSUCCEED!=read_tx_block(f, 
+                    if (EXFAIL==read_tx_block(f, 
                             p_block->msg.msg+bytes_extra, 
                             bytes_to_read, filename, "tmq_storage_get_blocks 2", &err, &tmq_err))
                     {
@@ -1710,7 +1752,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                     p_block->msg.lockthreadid = 0;
                 }
                 
-                NDRX_DUMP(log_debug, "Read message from disk", 
+                NDRX_DUMP(6, "Read message from disk", 
                         p_block->msg.msg, p_block->msg.len);
             }
             
@@ -1720,7 +1762,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
             /* Process message block 
              * It is up to caller to free the mem & make null
              */
-            if (EXSUCCEED!=process_block(&p_block))
+            if (EXSUCCEED!=process_block(&p_block, state))
             {
                 NDRX_LOG(log_error, "Failed to process block!");
                 EXFAIL_OUT(ret);

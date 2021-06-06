@@ -112,8 +112,36 @@ expublic int tm_tpabort(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
+    /* if processing in background (say time-out rollback, the commit shall not be
+     * accepted)
+     */
+    if (p_tl->is_background || XA_TX_STAGE_ACTIVE!=p_tl->txstage)
+    {
+        userlog("Cannot abort xid [%s] is_background: (%d) stage: (%hd)", 
+                xai.tmxid, p_tl->is_background, p_tl->txstage);
+        NDRX_LOG(log_error, "Cannot abort xid [%s] is_background: (%d) stage: (%hd)", 
+                xai.tmxid, p_tl->is_background, p_tl->txstage);
+        
+        if (p_tl->txstage >=XA_TX_STAGE_PREPARING)
+        {            
+            atmi_xa_set_error_fmt(p_ub, TPEPROTO, NDRX_XA_ERSN_INPROGRESS, 
+                "Cannot abort xid [%s] is_background: (%d) stage: (%hd) (>=preparing)", 
+                xai.tmxid, p_tl->is_background, p_tl->txstage);
+        }
+        else
+        {
+            /* assume completed heuristically (probably was time-out) */
+            atmi_xa_set_error_fmt(p_ub, TPEHEURISTIC, NDRX_XA_ERSN_INPROGRESS, 
+                "xid [%s] is_background: (%d) stage: (%hd) (is aborting)", 
+                xai.tmxid, p_tl->is_background, p_tl->txstage);
+        }
+        
+        tms_unlock_entry(p_tl);
+        
+        EXFAIL_OUT(ret);
+    }
+    
     /* Switch the state to aborting... */
-
     if (EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_ABORTING))    
     {
         NDRX_LOG(log_error, "Failed to log ABORTING stage!");
@@ -180,6 +208,33 @@ expublic int tm_tpcommit(UBFH *p_ub)
          */
         atmi_xa_set_error_fmt(p_ub, TPEABORT, NDRX_XA_ERSN_NOTX, 
                 "Transaction with xid [%s] not logged - probably was tout+abort", xai.tmxid);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* if processing in background (say time-out rollback, the commit shall not be
+     * accepted)
+     */
+    if (p_tl->is_background || XA_TX_STAGE_ACTIVE!=p_tl->txstage)
+    {
+        userlog("Cannot commit xid [%s] is_background: (%d) stage: (%hd)", 
+                xai.tmxid, p_tl->is_background, p_tl->txstage);
+        NDRX_LOG(log_error, "Cannot commit xid [%s] is_background: (%d) stage: (%hd)", 
+                xai.tmxid, p_tl->is_background, p_tl->txstage);
+        if (p_tl->txstage >=XA_TX_STAGE_PREPARING )
+        {
+            atmi_xa_set_error_fmt(p_ub, TPEPROTO, NDRX_XA_ERSN_INPROGRESS, 
+                    "Cannot commit xid [%s] is_background: (%d) stage: (%hd) (>=is preparing)", 
+                    xai.tmxid, p_tl->is_background, p_tl->txstage);
+        }
+        else
+        {
+            atmi_xa_set_error_fmt(p_ub, TPEABORT, NDRX_XA_ERSN_INPROGRESS, 
+                    "Cannot commit xid [%s] is_background: (%d) stage: (%hd) (is aborting)", 
+                    xai.tmxid, p_tl->is_background, p_tl->txstage);
+        }
+        
+        tms_unlock_entry(p_tl);
+        
         EXFAIL_OUT(ret);
     }
     
