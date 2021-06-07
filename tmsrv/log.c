@@ -332,6 +332,16 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
         EXFAIL_OUT(ret);
     }
     
+    /* if processing in background (say time-out rollback, the commit shall not be
+     * accepted)
+     */
+    if (p_tl->is_background || XA_TX_STAGE_ACTIVE!=p_tl->txstage)
+    {
+        NDRX_LOG(log_error, "cannot register xid [%s] is_background: (%d) stage: (%hd)", 
+                xai->tmxid, p_tl->is_background, p_tl->txstage);
+        EXFAIL_OUT(ret);
+    }
+    
     /*
     if (p_tl->rmstatus[rmid-1].rmstatus && NULL!=p_is_already_logged)
     {
@@ -1025,7 +1035,13 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     
 out:
     /* flush what ever we have */
-    fflush(p_tl->f);
+    if (EXSUCCEED!=fflush(p_tl->f))
+    {
+        int err=errno;
+        userlog("ERROR! Failed to fflush(): %s", strerror(err));
+        NDRX_LOG(log_error, "ERROR! Failed to fflush(): %s", strerror(err));
+    }
+    /*fsync(fileno(p_tl->f));*/
     return ret;
 }
 
