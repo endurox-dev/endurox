@@ -56,6 +56,14 @@
 	</defaults>
 	<servers>
 
+            <!-- Responder -->
+            <server name="atmi.sv86">
+                <min>1</min>
+                <max>1</max>
+                <srvid>10</srvid>
+                <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+            </server>
+        
             <server name="tmsrv">
                 <max>1</max>
                 <srvid>50</srvid>

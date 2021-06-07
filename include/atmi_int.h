@@ -155,6 +155,7 @@ extern "C" {
 #define NDRX_XA_ERSN_UBFERR         2007   /**< UBF Error                     */
 #define NDRX_XA_ERSN_RMERR          2008   /**< Resource Manager Failed       */
 #define NDRX_XA_ERSN_TPENOENT       2009   /**< TMSRV is unavailable          */
+#define NDRX_XA_ERSN_INPROGRESS     2010   /**< Action already in progress    */
 
     
 #define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */

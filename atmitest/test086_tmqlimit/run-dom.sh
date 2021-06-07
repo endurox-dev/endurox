@@ -159,6 +159,14 @@ xadmin ppm
 clean_logs;
 rm ULOG*
 
+echo "Testing errorq"
+(./atmiclt86 errorq 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
 echo "Testing abortrules"
 (./atmiclt86 abortrules 2>&1) >> ./atmiclt-dom1.log
 RET=$?

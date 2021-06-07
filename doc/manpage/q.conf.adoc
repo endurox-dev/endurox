@@ -10,7 +10,7 @@ q.conf - Persistent, Transactional Message Queue (TMQ) configuration file
 
 SYNOPSIS
 --------
-<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>]
+<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>][,errorq=<ERRORQ>]
 
 
 DESCRIPTION
@@ -28,40 +28,43 @@ started at the beginning of the
 line with '#' symbol.
 
 If for automatic queues number of 'TRIES' attempts are exceeded for the message
-(due to failed service calls), messages are deleted from queue space. 
-Prior delete message may be put in failure queue if such is set in 
-*tpenqueue(3)* parameter *TPQCTL.failurequeue* field and flag *TPQFAILUREQ* is
-added to *TPQCTL.flags*.
+(due to failed service calls), messages are deleted from queue space. If *errorq*
+setting is configured for queue, request message is enqueued to this queue, prior
+deleting it from forward queue.
 
 DEBUG CONFIGURATION FILE SYNTAX
 -------------------------------
 
 *QUEUE_NAME>*::
-	Queue name. For default queue use '@' symbol. Max name length is 15 symbols.
+    Queue name. For default queue use *@* symbol. Max name length is 15 symbols.
 *SERVICE_NAME*::
-	Service name to forward the message to. This is used for automatic queues. For manual queues
-	you may put some dummy value into. 
+    Service name to forward the message to. This is used for automatic queues. For manual queues
+    you may put some dummy value into. Special value *@* for service name identifies
+    that service name is the same as queue name.
 *AUTOMATIC_Q*::
-	*Y* (*y*) - automatic queue. *T* (*t*) - automatic and call is performed in 
+    *Y* (*y*) - automatic queue. *T* (*t*) - automatic and call is performed in 
     global transaction. *N*(*n*) - not automatic.
 *TRIES*::
-	Number of tires to send the message to 'SERVICE_NAME' service. I.e retry will be done in case
-	if call returns the error. Parameter is used by automatic queues.
+    Number of tires to send the message to 'SERVICE_NAME' service. I.e retry will be done in case
+    if call returns the error. Parameter is used by automatic queues.
 *INIT_WAIT*::
-	Number of seconds to be waited before starting to send the message to service. Node that
-	the minimum wait time is defined by tmqueue '-s' scan time flag which makes the periodic sleeps
-	before scanning the messages to be sent. This is setting used by automatic queues.
+    Number of seconds to be waited before starting to send the message to service. Node that
+    the minimum wait time is defined by tmqueue '-s' scan time flag which makes the periodic sleeps
+    before scanning the messages to be sent. This is setting used by automatic queues.
 *RETRY_WAIT*::
-	Increase number of seconds to wait for next retry of forwarding message to service.
-	This setting is used only by automatic queues.
+    Increase number of seconds to wait for next retry of forwarding message to service.
+    This setting is used only by automatic queues.
 *WAIT_MAX*::
-	Maximum number of seconds to wait after taking in account 'RETRY_WAIT_INC'.
+    Maximum number of seconds to wait after taking in account 'RETRY_WAIT_INC'.
 *MODE*::
 	Queue mode, can be *fifo* or *lifo*. This setting affects 'tpdequeue()'.
 *TXTOUT*::
     Transaction timeout, either global (target service call is made in within global
     transaction) if using *T* for 'autoq' or local timeout for transaction.
-
+*ERRORQ*::
+	Name of the queue where to put failed automatic forward when messages. To 
+    this queue request messages are enqueued, prior messages are removed from
+    forward queue.
 
 EXAMPLE
 -------

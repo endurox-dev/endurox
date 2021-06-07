@@ -669,7 +669,8 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
     DL_FOREACH_SAFE(list,el,tmp)
     {
         is_default = EXFALSE;
-        if (EXSUCCEED==tmq_build_q_def(el->qname, &is_default, qdef))
+
+        if (EXSUCCEED==tmq_build_q_def(el->qname, &is_default, qdef, sizeof(qdef)))
         {
             NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
             

@@ -762,31 +762,41 @@ exprivate void tx_tout_check_th(void *ptr)
         if ((tspent = ndrx_stopwatch_get_delta_sec(&el->p_tl.ttimer)) > 
                 el->p_tl.txtout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
         {
-            NDRX_LOG(log_error, "XID [%s] timed out "
-                    "(spent %ld, limit: %ld sec) - aborting...!", 
-                    el->p_tl.tmxid, tspent, 
-                    el->p_tl.txtout);
-            
-            userlog("XID [%s] timed out "
-                    "(spent %ld, limit: %ld sec) - aborting...!", 
-                    el->p_tl.tmxid, tspent, 
-                    el->p_tl.txtout);
             
             if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0)))
             {
-                XA_TX_COPY((&xai), p_tl);
+                if (XA_TX_STAGE_ACTIVE==p_tl->txstage)
+                {
+                    XA_TX_COPY((&xai), p_tl);
+                    
+                    NDRX_LOG(log_error, "XID [%s] timed out "
+                        "(spent %ld, limit: %ld sec) - aborting...!", 
+                        el->p_tl.tmxid, tspent, 
+                        el->p_tl.txtout);
+            
+                    userlog("XID [%s] timed out "
+                            "(spent %ld, limit: %ld sec) - aborting...!", 
+                            el->p_tl.tmxid, tspent, 
+                            el->p_tl.txtout);
 
-                tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
-                /* NOTE: We might want to move this to background processing
-                 * because for example, oracle in some cases does long aborts...
-                 * thus it slows down general processing
-                 * BUT: if we want to move it to background, we should protect
-                 * transaction log from concurrent access, e.g.
-                 * - background does the abort()
-                 * - meanwhile foreground calls commit()
-                 * This can be reached with per transaction locking...
-                 */
-                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L);
+                    tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
+                    /* NOTE: We might want to move this to background processing
+                     * because for example, oracle in some cases does long aborts...
+                     * thus it slows down general processing
+                     * BUT: if we want to move it to background, we should protect
+                     * transaction log from concurrent access, e.g.
+                     * - background does the abort()
+                     * - meanwhile foreground calls commit()
+                     * This can be reached with per transaction locking...
+                     */
+                    tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L);
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "XID [%s] was-tout but found in progress "
+                        "(txstage %hd spent %ld, limit: %ld sec) - aborting...!", 
+                        p_tl->tmxid, p_tl->txstage, tspent, p_tl->txtout);
+                }
             }
         }
         LL_DELETE(tx_list,el);
