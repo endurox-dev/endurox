@@ -249,19 +249,12 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                         goto out;
                     }
 
-                    /* Log RM status change... */
-                    if (EXSUCCEED!=tms_log_rmstatus(p_tl, el, vote_txstage->next_rmstatus, 
-                            tperrno, op_reason))
-                    {
-                        NDRX_LOG(log_error, "Halting transaction [%s] completion - "
-                                "disk error, try later (failed to log rmstatus)", 
-                        p_xai->tmxid);
-                        userlog("Halting transaction [%s] completion - "
-                                "disk error, try later (failed to log rmstatus)", 
-                                p_xai->tmxid);
-                        ret=TPEOS;
-                        goto out;
-                    }
+                    /* Log RM status change... 
+                     * not very critical, as we will retry with last op.
+                     * if not logged.
+                     */
+                    tms_log_rmstatus(p_tl, el, vote_txstage->next_rmstatus, 
+                            tperrno, op_reason);
                 }
                 /* Stage switching... */
                 vote.btid = el->btid;
@@ -382,17 +375,33 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         /* Finally switch the stage & run again! */
         if (new_txstage!=descr->txstage && new_txstage!=XA_TX_STAGE_MAX_NEVER)
         {
-            if (EXSUCCEED!=tms_log_stage(p_tl, new_txstage))
+            int is_forced = EXTRUE;
+            
+            if (XA_TX_STAGE_COMMITTING==new_txstage)
             {
-                NDRX_LOG(log_error, "Halting transaction [%s] completion - disk error, "
-                        "try later (failed to log txstage)", 
-                        p_xai->tmxid);
-                userlog("Halting transaction [%s] completion - disk error, "
-                        "try later (failed to log txstage)", 
-                        p_xai->tmxid);
-                ret=TPEOS;
-                goto out;
+                is_forced = EXFALSE;
             }
+            
+            /* this will return FAIL only if we are switching to committing: */
+            if (EXSUCCEED!=tms_log_stage(p_tl, new_txstage, is_forced))
+            {
+                /* critical point here is if we decided to go for commit
+                 * and we was not able to log that, then we must
+                 * flip to abort.
+                 * - If there will be no log after the restart, it shall pass
+                 * under the timeout condition.
+                 * - If we were in "preparing" stage, then it would be switched
+                 * to aborting automatically.
+                 */
+                NDRX_LOG(log_error, "Failed to log committing decision [%s] - disk error, "
+                    "aborting...", p_xai->tmxid);
+                userlog("Failed to log committing decision [%s] - disk error, "
+                    "aborting...", p_xai->tmxid);
+
+                new_txstage = XA_TX_STAGE_ABORTING;
+                tms_log_stage(p_tl, new_txstage, EXTRUE);
+            }
+            
             again = EXTRUE;
         }
         
