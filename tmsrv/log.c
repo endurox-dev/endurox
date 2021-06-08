@@ -782,16 +782,11 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         }
     }
     
-    /* if not active, then no one waits for on as due to restart... 
-     * if we are still active, then there is chance that somebody will ask
-     * for completion.
+    /* thus it will start to drive it by background thread
+     * Any transaction will be completed in background.
      */
-    if (XA_TX_STAGE_ACTIVE != (*pp_tl)->txstage)
-    {
-        /* thus it will start to drive it by background thread
-         */
-        (*pp_tl)->is_background = EXTRUE;
-    }
+    (*pp_tl)->is_background = EXTRUE;
+    
     
     /* 
      * If we keep in active state, then timeout will kill the transaction (or it will be finished by in progress 
@@ -810,22 +805,18 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
      * We need to abort it because, there is no chance that caller will get
      * response back.
      */
-    if (XA_TX_STAGE_PREPARING == (*pp_tl)->txstage)
+    if (XA_TX_STAGE_PREPARING == (*pp_tl)->txstage 
+            || XA_TX_STAGE_ACTIVE == (*pp_tl)->txstage)
     {
-        NDRX_LOG(log_error, "XA Transaction [%s] was in preparing stage and "
+        NDRX_LOG(log_error, "XA Transaction [%s] was in active or preparing stage and "
                 "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
         
-        userlog("XA Transaction [%s] was in preparing stage and "
+        userlog("XA Transaction [%s] was in  acitve or preparing stage and "
                 "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
         
         /* change the status (+ log) */
         (*pp_tl)->lockthreadid = ndrx_gettid();
-        if (EXSUCCEED!=tms_log_stage(*pp_tl, XA_TX_STAGE_ABORTING))
-        {
-            (*pp_tl)->lockthreadid = 0;
-            NDRX_LOG(log_error, "Failed to log stage change! Disk error?");
-            EXFAIL_OUT(ret);
-        }
+        tms_log_stage(*pp_tl, XA_TX_STAGE_ABORTING, EXTRUE);
         (*pp_tl)->lockthreadid = 0;
     }
     
@@ -1189,9 +1180,10 @@ out:
  * Change tx state + write transaction stage
  * FORMAT: <STAGE_CODE>
  * @param p_tl
- * @return 
+ * @param forced is decision forced? I.e. no restore on error.
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
+expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
 {
     int ret = EXSUCCEED;
     short stage_org=EXFAIL;
@@ -1256,11 +1248,17 @@ out:
     /* If failed to log the stage switch, restore original transaction
      * stage
      */
-    if (EXSUCCEED!=ret && EXFAIL!=stage_org)
+
+    if (forced)
+    {
+        return EXSUCCEED;
+    }
+    else if (EXSUCCEED!=ret && EXFAIL!=stage_org)
     {
         p_tl->txstage = stage_org;
     }
 
+    /* if not forced, get the real result */
     return ret;
 }
 

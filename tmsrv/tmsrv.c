@@ -779,14 +779,7 @@ exprivate void tx_tout_check_th(void *ptr)
                             el->p_tl.tmxid, tspent, 
                             el->p_tl.txtout);
 
-                    
-                    if (EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_ABORTING))
-                    {
-                        NDRX_LOG(log_error, "Failed to switch transaction to "
-                                "aborting stage - try next");
-                        tms_unlock_entry(p_tl);
-                        continue;
-                    }
+                    tms_log_stage(p_tl, XA_TX_STAGE_ABORTING, EXTRUE);
                     
                     /* NOTE: We might want to move this to background processing
                      * because for example, oracle in some cases does long aborts...
