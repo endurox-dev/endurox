@@ -992,7 +992,7 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
     
     NDRX_LOG(log_error, "case basic_tmsrvdiskerr");
     
-    if (EXSUCCEED!=tpbegin(9999, 0))
+    if (EXSUCCEED!=tpbegin(20, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to begin");
         EXFAIL_OUT(ret);
@@ -1058,9 +1058,12 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
     }
     
     /* stuff shall be rolled back... */
-    if (TPEABORT!=tperrno)
+    /* maybe better it would be to have TPEABORT, but current if storage is not working
+     * we will give TPEOS error
+     */
+    if (TPEOS!=tperrno)
     {
-        NDRX_LOG(log_error, "TESTERROR: Expected TPEABORT got %d", tperrno);
+        NDRX_LOG(log_error, "TESTERROR: Expected TPEOS got %d", tperrno);
         EXFAIL_OUT(ret);
     }
     
@@ -1070,6 +1073,11 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
         NDRX_LOG(log_error, "TESTERROR: failed to enable write failure");
         EXFAIL_OUT(ret);
     }
+
+    /* let time-out engine to rollback ... as TPEOS will let transaction
+     * to expiry
+     */
+    sleep(60);
     
     /* no messages in queue, as rolled back.. */
     for (i=0; i<1; i++)

@@ -250,8 +250,18 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     }
 
                     /* Log RM status change... */
-                    tms_log_rmstatus(p_tl, el, vote_txstage->next_rmstatus, 
-                            tperrno, op_reason);
+                    if (EXSUCCEED!=tms_log_rmstatus(p_tl, el, vote_txstage->next_rmstatus, 
+                            tperrno, op_reason))
+                    {
+                        NDRX_LOG(log_error, "Halting transaction [%s] completion - "
+                                "disk error, try later (failed to log rmstatus)", 
+                        p_xai->tmxid);
+                        userlog("Halting transaction [%s] completion - "
+                                "disk error, try later (failed to log rmstatus)", 
+                                p_xai->tmxid);
+                        ret=TPEOS;
+                        goto out;
+                    }
                 }
                 /* Stage switching... */
                 vote.btid = el->btid;
@@ -319,7 +329,6 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     max_in_overall = ve->stage;
                     NDRX_LOG(log_debug, "max_in_overall=>%d", max_in_overall);
                 }
-                
 
                 /* what is this? Descr and vote_txstage will be last
                  * from the loop - wrong!
@@ -373,7 +382,17 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         /* Finally switch the stage & run again! */
         if (new_txstage!=descr->txstage && new_txstage!=XA_TX_STAGE_MAX_NEVER)
         {
-            tms_log_stage(p_tl, new_txstage);
+            if (EXSUCCEED!=tms_log_stage(p_tl, new_txstage))
+            {
+                NDRX_LOG(log_error, "Halting transaction [%s] completion - disk error, "
+                        "try later (failed to log txstage)", 
+                        p_xai->tmxid);
+                userlog("Halting transaction [%s] completion - disk error, "
+                        "try later (failed to log txstage)", 
+                        p_xai->tmxid);
+                ret=TPEOS;
+                goto out;
+            }
             again = EXTRUE;
         }
         
