@@ -820,7 +820,12 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         
         /* change the status (+ log) */
         (*pp_tl)->lockthreadid = ndrx_gettid();
-        tms_log_stage(*pp_tl, XA_TX_STAGE_ABORTING);
+        if (EXSUCCEED!=tms_log_stage(*pp_tl, XA_TX_STAGE_ABORTING))
+        {
+            (*pp_tl)->lockthreadid = 0;
+            NDRX_LOG(log_error, "Failed to log stage change! Disk error?");
+            EXFAIL_OUT(ret);
+        }
         (*pp_tl)->lockthreadid = 0;
     }
     
@@ -1177,6 +1182,9 @@ out:
     return ret;
 }
 
+#define CRASH_CLASS_EXIT            0 /**< exit at crash                  */
+#define CRASH_CLASS_NO_WRITE        1 /**< Do not write and report error  */
+
 /**
  * Change tx state + write transaction stage
  * FORMAT: <STAGE_CODE>
@@ -1186,39 +1194,71 @@ out:
 expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
 {
     int ret = EXSUCCEED;
+    short stage_org=EXFAIL;
+    /* <Crash testing> */
     int make_crash = EXFALSE; /**< Crash simulation */
+    int crash_stage, crash_class;
+    /* </Crash testing> */
+    
     CHK_THREAD_ACCESS;
     
     if (p_tl->txstage!=stage)
     {
+        stage_org = p_tl->txstage;
         p_tl->txstage = stage;
 
         NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd (cc %d)", 
                 p_tl->txstage, G_atmi_env.test_tmsrv_commit_crash);
         
+        
+        /* <Crash testing> */
+        
         /* QA: commit crash test point... 
          * Once crash flag is disabled, commit shall be finished by background
          * process.
          */
-        if (stage>0 && stage == G_atmi_env.test_tmsrv_commit_crash)
+        crash_stage = G_atmi_env.test_tmsrv_commit_crash % 100;
+        crash_class = G_atmi_env.test_tmsrv_commit_crash / 100;
+        
+        
+        /* let write && exit */
+        if (stage > 0 && crash_class==CRASH_CLASS_EXIT && stage == crash_stage)
         {
             NDRX_LOG(log_debug, "QA commit crash...");
             G_atmi_env.test_tmsrv_write_fail=EXTRUE;
             make_crash=EXTRUE;
         }
         
-        if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
+        /* no write & report error */
+        if (stage > 0 && crash_class==CRASH_CLASS_NO_WRITE && stage == crash_stage)
+        {
+            NDRX_LOG(log_debug, "QA no write crash");
+            ret=EXFAIL;
+        }
+        /* </Crash testing> */
+        else if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
         {
             ret=EXFAIL;
             goto out;
         }
+        
     }
     
 out:
                 
+    /* <Crash testing> */
     if (make_crash)
     {
         exit(1);
+    }
+    /* </Crash testing> */
+
+    /* If failed to log the stage switch, restore original transaction
+     * stage
+     */
+    if (EXSUCCEED!=ret && EXFAIL!=stage_org)
+    {
+        p_tl->txstage = stage_org;
     }
 
     return ret;
@@ -1350,80 +1390,6 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
    
 out:
     return ret;    
-}
-
-
-/**
- * Return the current transactions status
- * TODO: We also need a worker thread which will complete the stucked transactions.
- * TODO: We should close log file here too!!!!!
- * @param p_tl
- * @return 
- */
-expublic int tm_chk_tx_status(atmi_xa_log_t *p_tl)
-{
-    int ret = TPEHEURISTIC; /* By default we have heuristic descision */
-    int i;
-    int all_aborted = EXTRUE;
-    int all_committed = EXTRUE;
-    atmi_xa_rm_status_btid_t *el, *elt;
-    CHK_THREAD_ACCESS;
-    
-    for (i=0; i<NDRX_MAX_RMS; i++)
-    {
-        /* HASH Iterate over the branches */
-        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
-        {
-            if (!(XA_RM_STATUS_COMMITTED == el->rmstatus ||
-                XA_RM_STATUS_COMMITTED_RO == el->rmstatus)
-                    )
-            {
-                all_committed = EXFALSE;
-                break;
-            }
-
-            if (!(XA_RM_STATUS_ABORTED == el->rmstatus ||
-                XA_RM_STATUS_COMMITTED_RO == el->rmstatus)
-                    )
-            {
-                all_aborted = EXFALSE;
-                break;
-            }
-        } /* Hash iter */
-    }
-    
-    if (all_aborted || all_committed)
-    {
-        ret = EXSUCCEED;
-        /* TODO: We should unlink the transaction log file... 
-         * (and remove from hash) */
-        
-        if (all_committed)
-        {
-            /* Mark transaction as committed */
-            tms_log_stage(p_tl, XA_TX_STAGE_COMMITTED);
-        }
-        
-        if (all_aborted)
-        {
-            /* Mark transaction as committed */
-            tms_log_stage(p_tl, XA_TX_STAGE_ABORTED);
-        }
-        
-        /* p_tl becomes invalid! */
-        tms_remove_logfile(p_tl, EXTRUE);
-         
-    }
-    else
-    {
-        /* Move it to background: */
-        NDRX_LOG(log_warn, "Transaction with xid: [%s] moved to "
-                "background for completion...", p_tl->tmxid);
-        p_tl->is_background = EXTRUE;
-    }
-
-out:
-    return ret;
 }
 
 /**
