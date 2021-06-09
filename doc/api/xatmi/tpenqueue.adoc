@@ -161,6 +161,13 @@ EXAMPLE
 -------
 See *atmitest/test028_tmq/atmiclt28.c* for sample code.
 
+LIMITATIONS
+-----------
+Under the same global transaction, it is forbidden to call *tpenqueue()* concurrently -
+either from multiple threads, or by multiple processes e.g. using *tpacall(3)*
+to active transaction in other process which are performing *tpenqueue()* while
+service caller also performs *tpenqueue()*.
+
 BUGS
 ----
 Report bugs to support@mavimax.com

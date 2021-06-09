@@ -801,10 +801,10 @@ expublic UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_a
         if (!G_atmi_tls->M_atmi_reason)
         {
             /* ok, in this case at prepare we shall roll back.. */
-            if (TPENOENT==tperrno)
+            if (TPENOENT==tperrno || TPETIME==tperrno)
             {
                 /* ask for retry... */
-                G_atmi_tls->M_atmi_reason=XA_RETRY;
+                G_atmi_tls->M_atmi_reason=XAER_RMFAIL;
             }
             else
             {
