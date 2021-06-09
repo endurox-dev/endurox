@@ -129,6 +129,8 @@ expublic int basic_crashloop(void)
     /* disable autoQ so that we can read results,  restart q if any parked msgs.. */
     NDRX_ASSERT_VAL_OUT(EXSUCCEED==system("xadmin killall tmqueue"), "system() failed");
 
+    /* let tmqueue to boot back: */
+    sleep(10);
     NDRX_LOG(log_error, "xadmin mqch -n1 -i 100 -qERROR,autoq=n"); 
     NDRX_ASSERT_VAL_OUT(EXSUCCEED==system("xadmin mqch -n1 -i 100 -qERROR,autoq=n"), "system() failed");
     
