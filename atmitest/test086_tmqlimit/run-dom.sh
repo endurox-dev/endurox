@@ -169,6 +169,17 @@ fi
 
 # print what's left in q...
 xadmin mqlq
+xadmin pt
+
+STATS=`xadmin mqlq | grep "ERROR         0     0"`
+
+echo "Stats: [$STATS]"
+
+if [[ "X$STATS" == "X" ]]; then
+    echo "Expecting ERROR queue to be fully empty!"
+    go_out -1
+fi
+
 clean_logs;
 rm ULOG*
 
