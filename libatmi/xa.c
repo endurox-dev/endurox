@@ -1626,7 +1626,7 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
     int was_join = EXFALSE;
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_warn, "ax_reg called");
+    NDRX_LOG(log_info, "ax_reg called");
     if (NULL==G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "ERROR: No global transaction registered "
@@ -1667,7 +1667,7 @@ out:
  */
 int ax_unreg(int rmid, long flags)
 {
-    NDRX_LOG(log_warn, "ax_unreg called");
+    NDRX_LOG(log_info, "ax_unreg called");
     return EXSUCCEED;
 }
 

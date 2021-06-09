@@ -159,6 +159,19 @@ xadmin ppm
 clean_logs;
 rm ULOG*
 
+echo "Testing crashloop"
+(./atmiclt86 crashloop 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
+# print what's left in q...
+xadmin mqlq
+clean_logs;
+rm ULOG*
+
 echo "Testing errorq"
 (./atmiclt86 errorq 2>&1) >> ./atmiclt-dom1.log
 RET=$?

@@ -1127,6 +1127,8 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
     
+    /* TODO: Unlock here?  */
+    
     /* Is it must not be a peek and must not be an autoq */
     if (!(flags & TPQPEEK) && !is_auto)
     {   
@@ -1201,6 +1203,9 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     
     del.hdr.command_code = TMQ_STORCMD_DEL;
     
+    
+    /* TODO: Unlock here?  */
+    
     if (!(flags & TPQPEEK))
     {
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&del, 
@@ -1267,6 +1272,9 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags, long *dia
     
     /* Issue command for msg remove */
     memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
+    
+    
+    /* TODO: Unlock here?  */
     
     if (!(flags & TPQPEEK))   
     {    
