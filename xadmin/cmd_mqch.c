@@ -140,7 +140,7 @@ expublic int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     }
     else
     {
-        printf("Succeed\n");
+        printf("OK\n");
     }
     
 out:

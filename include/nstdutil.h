@@ -121,7 +121,23 @@ extern "C" {
  * Test mode is used...
  */
 #define NDRX_STDF_TEST              0x00000001  /**< This is test mode      */
+
+
+/**
+ * File syncing config / library
+ * @defgroup fsync
+ * @{
+ */    
+#define NDRX_FSYNC_FSYNC            0x00000001  /**< Sync mode fsync     */
+#define NDRX_FSYNC_FSYNC_STR        "fsync"     /**< config keyword      */
     
+#define NDRX_FSYNC_FDATASYNC        0x00000002  /**< Sync mode fdatasync */
+#define NDRX_FSYNC_FDATASYNC_STR    "fdatasync" /**< config keyword      */
+
+#define NDRX_FSYNC_DSYNC            0x00000004  /**< Sync folders        */
+#define NDRX_FSYNC_DSYNC_STR        "dsync"     /**< config keyword      */
+/** @} */ /* end of fsync */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

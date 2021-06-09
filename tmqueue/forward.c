@@ -162,6 +162,7 @@ exprivate tmq_msg_t * get_next_msg(void)
     tmq_msg_t * ret = NULL;
     long qerr = EXSUCCEED;
     char msgbuf[128];
+
     if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
     {
         fwd_q_list_rm();
@@ -189,9 +190,17 @@ exprivate tmq_msg_t * get_next_msg(void)
         else
         {
             NDRX_LOG(log_debug, "Dequeued message");
-            goto out;
         }
+
+        /* schedule next queue ... */
         M_next_fwd_q_cur = M_next_fwd_q_cur->next;
+    
+        /* done with this loop if having msg.. */
+        if (NULL!=ret)
+        {
+            break;
+        }
+
     }
     
 out:
