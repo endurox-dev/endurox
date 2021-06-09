@@ -138,7 +138,7 @@ expublic int basic_crashloop(void)
     NDRX_ASSERT_VAL_OUT(EXSUCCEED==system("xadmin mqlc"), "system() failed");
     
     /* Wait messages to settle down */
-    sleep(45);
+    sleep(60);
     
     /* print some statistics.. */
     NDRX_LOG(log_error, "xadmin pt");
@@ -183,6 +183,8 @@ expublic int basic_crashloop(void)
     
 out:
 
+    NDRX_LOG(log_error, "xadmin pt (exit)");
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==system("xadmin pt"), "system() failed");
     if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
