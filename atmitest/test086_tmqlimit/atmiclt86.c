@@ -63,6 +63,7 @@ exprivate int basic_commit_crash(int maxmsg);
 exprivate int basic_deqwriteerr(int maxmsg);
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
+extern int basic_crashloop(void);
 
 int main(int argc, char** argv)
 {
@@ -123,6 +124,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "errorq"))
     {
         return basic_errorq();
+    }
+    else if (0==strcmp(argv[1], "crashloop"))
+    {
+        return basic_crashloop();
     }
     else
     {
