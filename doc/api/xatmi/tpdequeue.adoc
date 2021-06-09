@@ -162,6 +162,13 @@ EXAMPLE
 -------
 See *atmitest/test028_tmq/atmiclt28.c* for sample code.
 
+LIMITATIONS
+-----------
+Under the same global transaction, it is forbidden to call *tpdequeue()* concurrently -
+either from multiple threads, or by multiple processes e.g. using *tpacall(3)*
+to active transaction in other process which are performing *tpdequeue()* while
+service caller also performs *tpdequeue()*.
+
 BUGS
 ----
 Report bugs to support@mavimax.com
