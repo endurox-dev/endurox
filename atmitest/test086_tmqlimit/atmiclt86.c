@@ -370,68 +370,8 @@ exprivate int basic_tmsrvrestart(int maxmsg)
         NDRX_LOG(log_error, "TESTERROR: failed to stop tmsrv");
         EXFAIL_OUT(ret);
     }
-    
-    if (EXSUCCEED!=system("xadmin start -s tmsrv"))
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to start tmsrv");
-        EXFAIL_OUT(ret);
-    }
 
-    /* let tmsrv to load the logs in background... */
-    sleep(5);
-    
-    
-    /* also.. here all message shall be locked */
-    for (i=0; i<1; i++)
-    {
-        long len=0;
-        char *buf;
-        buf = tpalloc("CARRAY", "", 100);
-        memset(&qc, 0, sizeof(qc));
-
-        /* This shall be updated so that we do not need to use TPNOABORT  */
-        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
-        {
-            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, even already in progress!");
-            EXFAIL_OUT(ret);
-        }
-        
-        tpfree(buf);
-    }
-    
-    if (EXSUCCEED!=tpcommit(0))
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to commit");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* check that number of messages are available... */
-    NDRX_LOG(log_error, "About to dequeue %d messages", maxmsg);
-    
-    if (EXSUCCEED!=tpbegin(9999, 0))
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to begin");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* all messages must be available */
-    for (i=0; i<maxmsg; i++)
-    {
-        long len=0;
-        char *buf;
-        buf = tpalloc("CARRAY", "", 100);
-        memset(&qc, 0, sizeof(qc));
-
-        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
-        {
-            NDRX_LOG(log_error, "TESTERROR: TEST1 failed dequeue!");
-            EXFAIL_OUT(ret);
-        }
-        
-        tpfree(buf);
-    }
-    
-    /* restart tmqueue.... */
+    /* restart tmqueue.... / reload msgs... */
     if (EXSUCCEED!=system("xadmin stop -s tmqueue"))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to stop tmqueue");
@@ -443,9 +383,38 @@ exprivate int basic_tmsrvrestart(int maxmsg)
         NDRX_LOG(log_error, "TESTERROR: failed to start tmqueue");
         EXFAIL_OUT(ret);
     }
-    
+
+    /* also.. here all messages shall be locked */
+    for (i=0; i<1; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        /* This shall be updated so that we do not need to use TPNOABORT  */
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, even already in progress!");
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(buf);
+    }
+        
     /* dequeue must fail as we have already dequeued the messages */
     /* try just 1 msg. */
+    
+    if (EXSUCCEED!=system("xadmin start -s tmsrv"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to start tmsrv");
+        EXFAIL_OUT(ret);
+    }
+
+    /* let tmsrv to load the logs in background... and perform abort... */
+    sleep(20);
+    
+    /* also.. here all message shall be removed. */
     for (i=0; i<1; i++)
     {
         long len=0;
@@ -463,7 +432,7 @@ exprivate int basic_tmsrvrestart(int maxmsg)
         tpfree(buf);
     }
     
-    if (EXSUCCEED!=tpcommit(0))
+    if (EXSUCCEED==tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to commit");
         EXFAIL_OUT(ret);
@@ -992,7 +961,7 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
     
     NDRX_LOG(log_error, "case basic_tmsrvdiskerr");
     
-    if (EXSUCCEED!=tpbegin(9999, 0))
+    if (EXSUCCEED!=tpbegin(20, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to begin");
         EXFAIL_OUT(ret);
@@ -1049,8 +1018,8 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
     }
     
     /* commit shall fail, as failed to log stuff
-     * we shall get abort error
-     *  */
+     * abort can complete with out disk
+     */
     if (EXSUCCEED==tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: it shall fail to commit, as transactions ar marked for abort!");
@@ -1058,16 +1027,12 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
     }
     
     /* stuff shall be rolled back... */
+    /* maybe better it would be to have TPEABORT, but current if storage is not working
+     * we will give TPEOS error
+     */
     if (TPEABORT!=tperrno)
     {
         NDRX_LOG(log_error, "TESTERROR: Expected TPEABORT got %d", tperrno);
-        EXFAIL_OUT(ret);
-    }
-    
-    /* reset write error back to norm. */
-    if (EXSUCCEED!=system("xadmin lcf twriterr -A 0 -a"))
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to enable write failure");
         EXFAIL_OUT(ret);
     }
     
@@ -1088,9 +1053,17 @@ exprivate int basic_tmsrvdiskerr(int maxmsg)
         
         tpfree(buf);
     }
+
     
 out:
     
+    /* reset write error back to norm. */
+    if (EXSUCCEED!=system("xadmin lcf twriterr -A 0 -a"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to enable write failure");
+        EXFAIL_OUT(ret);
+    }
+
     if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));

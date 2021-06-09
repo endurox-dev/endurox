@@ -118,7 +118,7 @@ extern void tms_close_logfile(atmi_xa_log_t *p_tl);
 extern void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm);
 extern void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm);
 extern int tms_log_info(atmi_xa_log_t *p_tl);
-extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage);
+extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced);
 extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt, 
         char rmstatus, int rmerrorcode, short rmreason);
 extern int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl);

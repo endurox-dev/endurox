@@ -142,13 +142,7 @@ expublic int tm_tpabort(UBFH *p_ub)
     }
     
     /* Switch the state to aborting... */
-    if (EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_ABORTING))    
-    {
-        NDRX_LOG(log_error, "Failed to log ABORTING stage!");
-        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_LOGFAIL, 
-                "Cannot log [%s] tx!", xai.tmxid);
-        EXFAIL_OUT(ret);
-    }
+    tms_log_stage(p_tl, XA_TX_STAGE_ABORTING, EXTRUE);
     
     /* Call internal version of abort */
     if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L)))
@@ -251,10 +245,12 @@ expublic int tm_tpcommit(UBFH *p_ub)
     */
     
     /* Log that we start commit... */
-    if (EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_PREPARING))    
+    if (EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_PREPARING, EXFALSE))
     {
-        NDRX_LOG(log_error, "Failed to log tx - abort!");
+        NDRX_LOG(log_error, "Failed to log preparing stage");
         do_abort = EXTRUE;
+        atmi_xa_set_error_fmt(p_ub, TPEABORT, NDRX_XA_ERSN_LOGFAIL, 
+                    "Failed to log preparing stage");
         EXFAIL_OUT(ret);
     }
     
@@ -274,14 +270,15 @@ out:
     {
         NDRX_LOG(log_warn, "About to rollback transaction!");
         
-        tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
-
+        tms_log_stage(p_tl, XA_TX_STAGE_ABORTING, EXTRUE);
+        
         /* Call internal version of abort */
-        if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL, 0L)))
+        if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L)))
         {
             atmi_xa_override_error(p_ub, ret);
             ret=EXFAIL;
         }
+        
     }
 
     return ret;
@@ -801,13 +798,13 @@ expublic int tm_aborttrans(UBFH *p_ub)
     NDRX_LOG(log_debug, "Got RMID: [%hd]", tmrmid);
     
     /* Switch transaction to aborting (if not already) */
-    tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
+    tms_log_stage(p_tl, XA_TX_STAGE_ABORTING, EXTRUE);
+    
     if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, tmrmid, 0L)))
     {
         atmi_xa_set_error_fmt(p_ub, ret, NDRX_XA_ERSN_RMERR, 
                 "Failed to abort transaction");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -839,7 +836,10 @@ expublic int tm_status(UBFH *p_ub)
     /* optional */
     Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
     
-    /* Lookup for log. And then try to abort... */
+    /* Lookup for log. And then try to abort...
+     * TODO: in case if timed-out, we shall return different error.
+     * maybe TPETIME.
+     */
     if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME)))
     {
         /* Generate error */

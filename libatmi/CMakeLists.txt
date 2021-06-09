@@ -70,7 +70,6 @@ add_library (objatmi OBJECT
                 brsupport.c
                 xa.c
                 xautils.c
-                xastates.c
                 exparson.c
                 ubf2exjson.c
                 view2exjson.c
