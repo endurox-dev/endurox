@@ -64,9 +64,9 @@
  */
 typedef struct 
 {
-    short rmid; /**< RM ID is voting    */
-    char stage; /**< to stage           */
-    long btid;  /**< with branch id     */
+    short rmid;  /**< RM ID is voting    */
+    short stage; /**< to stage           */
+    long btid;   /**< with branch id     */
 } btid_vote_t;
 
 /*---------------------------Globals------------------------------------*/
@@ -92,9 +92,10 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     ndrx_growlist_t stagearr; /**< grow list of voted stages */
     btid_vote_t vote;
     
-    int min_in_group;
-    int min_in_overall;
-    int max_in_overall;
+    short min_in_group;
+    short min_in_overall;
+    short max_in_overall;
+    short rm_vote_next_txstage;
     int try=0;
     int was_retry;
     int is_tx_finished = EXFALSE;
@@ -235,6 +236,9 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                         */
                         continue;
                     }
+                    
+                    rm_vote_next_txstage = vote_txstage->next_txstage;
+                    
                 }
                 else
                 {
@@ -248,23 +252,39 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                         ret=TPESYSTEM;
                         goto out;
                     }
-
+                    
                     /* Log RM status change... 
                      * not very critical, as we will retry with last op.
                      * if not logged.
+                     * BUt if prepare logging fails, vote for aborting.
                      */
-                    tms_log_rmstatus(p_tl, el, vote_txstage->next_rmstatus, 
-                            tperrno, op_reason);
+                    if (EXSUCCEED!=tms_log_rmstatus(p_tl, el, vote_txstage->next_rmstatus, 
+                            tperrno, op_reason) && XA_TX_STAGE_PREPARING==p_tl->txstage)
+                    {
+                        /* vote for abort */
+                        NDRX_LOG(log_error, "Failed to log RMID %d status during "
+                                "preparing of [%s]- disk error, "
+                                "aborting...", i+1, p_xai->tmxid);
+                        userlog("Failed to log RMID %d status during "
+                                "preparing of [%s]- disk error, "
+                                "aborting...", i+1, p_xai->tmxid);
+                        rm_vote_next_txstage = XA_TX_STAGE_ABORTING;
+                    }
+                    else
+                    {
+                        rm_vote_next_txstage = vote_txstage->next_txstage;
+                    }
+                    
                 }
                 /* Stage switching... */
                 vote.btid = el->btid;
                 vote.rmid = el->rmid;
-                vote.stage = vote_txstage->next_txstage;
+                vote.stage = rm_vote_next_txstage;
                 
                 if (EXSUCCEED!=ndrx_growlist_append(&stagearr, &vote))
                 {
                     NDRX_LOG(log_error, "Failed to add rmid=%hd, btid=%hd to "
-                            "stagearr with stage=%c",
+                            "stagearr with stage=%hd",
                             vote.rmid, vote.btid, vote.stage);
                     ret=TPESYSTEM;
                     goto out;
@@ -273,16 +293,16 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 /* so if it is outside of our range and jump is permitted, then
                  * jump to lowest level we got.
                  */
-                if ((descr->txs_stage_min>vote_txstage->next_txstage ||
-                        descr->txs_max_complete<vote_txstage->next_txstage) 
+                if ((descr->txs_stage_min > rm_vote_next_txstage ||
+                        descr->txs_max_complete < rm_vote_next_txstage) 
                         && descr->allow_jump 
-                        && vote_txstage->next_txstage < new_txstage)
+                        && rm_vote_next_txstage < new_txstage)
                 {
                     /* 
                      * jump to lowest level we got.
                      * So aborting will win over the committing
                      */
-                    new_txstage = vote_txstage->next_txstage;
+                    new_txstage = rm_vote_next_txstage;
                     NDRX_LOG(log_info, "Voting to leave group for %hd!", new_txstage);
                     /* switch the stage */
                     again = EXTRUE;
@@ -307,20 +327,20 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             {
                 btid_vote_t *ve = stagearr.mem+sizeof(btid_vote_t)*i;
                 
-                NDRX_LOG(log_info, "RM %hd btid=%ld votes for stage: %d", 
+                NDRX_LOG(log_info, "RM %hd btid=%ld votes for stage: %hd", 
                         ve->rmid, ve->btid, ve->stage);
 
                 /* Bug #150 */
                 if (ve->stage < min_in_overall)
                 {
                     min_in_overall = ve->stage;
-                    NDRX_LOG(log_debug, "min_in_overall=>%d", min_in_overall);
+                    NDRX_LOG(log_debug, "min_in_overall=>%hd", min_in_overall);
                 }
                 
                 if (ve->stage > max_in_overall)
                 {
                     max_in_overall = ve->stage;
-                    NDRX_LOG(log_debug, "max_in_overall=>%d", max_in_overall);
+                    NDRX_LOG(log_debug, "max_in_overall=>%hd", max_in_overall);
                 }
 
                 /* what is this? Descr and vote_txstage will be last
@@ -334,7 +354,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                         min_in_group < ve->stage)
                 {
                     min_in_group = ve->stage;
-                    NDRX_LOG(log_debug, "min_in_group=>%d", min_in_group);
+                    NDRX_LOG(log_debug, "min_in_group=>%hd", min_in_group);
                 }
             }/* for */
             
@@ -347,17 +367,17 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     && max_in_overall> descr->txs_max_complete)
             {
                 new_txstage=max_in_overall;
-                NDRX_LOG(log_debug, "New tx stage set by max_in_overall=>%d", new_txstage);
+                NDRX_LOG(log_debug, "New tx stage set by max_in_overall=>%hd", new_txstage);
             }
             else if (min_in_group!=XA_TX_STAGE_MAX_NEVER)
             {
                 new_txstage=min_in_group;
-                NDRX_LOG(log_debug, "New tx stage set by min_in_group=>%d", new_txstage);
+                NDRX_LOG(log_debug, "New tx stage set by min_in_group=>%hd", new_txstage);
             }
             else
             {
                 new_txstage=min_in_overall;
-                NDRX_LOG(log_debug, "New tx stage set by min_in_overall=>%d", new_txstage);
+                NDRX_LOG(log_debug, "New tx stage set by min_in_overall=>%hd", new_txstage);
             }
             
             if (XA_TX_STAGE_MAX_NEVER==new_txstage)

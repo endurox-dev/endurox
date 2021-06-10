@@ -403,6 +403,11 @@ extern NDRX_API void ndrx_strcat_s(char *dest, size_t dst_size, const char *src)
 
 /** @} */ /* end of stringops */
 
+extern NDRX_API int ndrx_fsync_dsync(char *dir, long flags);
+extern NDRX_API int ndrx_fsync_fsync(FILE *file, long flags);
+extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
+
+
 #ifdef	__cplusplus
 }
 #endif

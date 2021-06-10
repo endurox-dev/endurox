@@ -108,13 +108,12 @@ extern TestSuite *ubf_nstd_mtest6(void);
 extern TestSuite *ubf_nstd_mtest7(void);
 extern TestSuite *test_nstd_macros(void);
 extern TestSuite *ubf_nstd_fpa(void);
-
 extern TestSuite * ubf_nstd_debug(void);
 extern TestSuite * ubf_nstd_standard(void);
 extern TestSuite *ubf_nstd_util(void);
 extern TestSuite *ubf_nstd_lh(void);
-
 extern TestSuite *ubf_nstd_atomicadd(void);
+extern TestSuite *ubf_nstd_fsync(void);
 
 #ifdef	__cplusplus
 }

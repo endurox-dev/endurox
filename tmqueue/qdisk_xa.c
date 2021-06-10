@@ -637,6 +637,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         if (first)
         {
             ndrx_xa_nosuspend(EXTRUE);
+            /* parse FSYNC */
             first=EXFALSE;
         }
         MUTEX_UNLOCK_V(M_init);
@@ -864,11 +865,14 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
 {
     int i;
     int names_max;
-
+    int did_move = EXFALSE;
+    int ret = XA_OK;
+    
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_prepare_entry() - XA not open!");
-        return XAER_RMERR;
+        ret=XAER_RMERR;
+        goto out;
     }
 
     set_filename_base(xid, rmid);
@@ -878,12 +882,26 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
     {
         if (EXSUCCEED!=file_move(i, M_folder_active, M_folder_prepared))
         {
-            return XAER_RMERR;
+            ret=XAER_RMERR;
+            goto out;
+        }
+        
+        did_move=EXTRUE;
+    }
+    
+    if (did_move)
+    {
+        /* sync the  */
+        if (EXSUCCEED!=ndrx_fsync_dsync(M_folder_prepared, G_atmi_env.xa_fsync_flags))
+        {
+            NDRX_LOG(log_error, "Failed to dsync [%s]", M_folder_prepared);
+            ret=XAER_RMERR;
+            goto out;
         }
     }
     
-    return XA_OK;
-    
+out:
+    return ret; 
 }
 
 /**
@@ -1290,7 +1308,8 @@ out:
         }
 
 /**
- * Write data to transaction file
+ * Write data to transaction file.
+ * TODO: think about temp files.
  * @param block
  * @param len
  * @param new_file the message file is new
@@ -1368,6 +1387,26 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
     }
     
     WRITE_FLUSH;
+    
+    /* sync the file, if required so... 
+     * file updates are optional..
+     */
+    if (new_file) 
+    {
+        if (EXSUCCEED!=ndrx_fsync_fsync(f, G_atmi_env.xa_fsync_flags))
+        {
+            NDRX_LOG(log_error, "failed to fsync");
+            EXFAIL_OUT(ret);
+        }
+        
+        /* run dsync to persist the file */
+        if (EXSUCCEED!=ndrx_fsync_dsync(M_folder_active, G_atmi_env.xa_fsync_flags))
+        {
+            NDRX_LOG(log_error, "Failed to dsync [%s]", M_folder_active);
+            ret=XAER_RMERR;
+            goto out;
+        }
+    }
     
 out:
     
