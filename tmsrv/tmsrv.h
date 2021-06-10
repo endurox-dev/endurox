@@ -68,19 +68,19 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
  */
 typedef struct
 {
-    long dflt_timeout; /* how long monitored transaction can be open        */
+    long dflt_timeout; /**, how long monitored transaction can be open        */
     char tlog_dir[PATH_MAX]; /* Where to write tx log files                 */
-    int scan_time;      /* Number of seconds retries */
-    long max_tries;      /* Number of tries for running session for single 
+    int scan_time;      /**< Number of seconds retries */
+    long max_tries;      /**< Number of tries for running session for single 
                          * transaction, until stop processing it 
                          * (in this process session) */
-    int tout_check_time; /* seconds used for detecting transaction timeout   */
-    int threadpoolsize; /* thread pool size */
-    /* Number of foreground retries in stage for XA_RETRY */
+    int tout_check_time; /**< seconds used for detecting transaction timeout   */
+    int threadpoolsize; /**< thread pool size */
+    /** Number of foreground retries in stage for XA_RETRY */
     int xa_retries;
     
-    int ping_time; /* Number of seconds for interval of doing "pings" to db */
-    int ping_mode_jointran; /* PING with join non existent transaction */
+    int ping_time; /**< Number of seconds for interval of doing "pings" to db */
+    int ping_mode_jointran; /**< PING with join non existent transaction */
     threadpool thpool;
 } tmsrv_cfg_t;
 
