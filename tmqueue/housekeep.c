@@ -137,6 +137,10 @@ expublic void tmq_housekeep(char *filename, int tmq_err)
                     filename, strerror(err));
         }
     }
+
+    /* TODO: if file is older than M_housekeep and TMSRV is not aware
+     * of it, remove the file -> do not load...
+     */
     
 out:
     

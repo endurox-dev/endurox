@@ -53,7 +53,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Test - executables ###############################
 add_executable (atmi.sv86 atmisv86.c ../../libatmisrv/rawmain_integra.c)
-add_executable (atmiclt86 atmiclt86.c abortrules.c errorq.c)
+add_executable (atmiclt86 atmiclt86.c abortrules.c errorq.c crashloop.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...

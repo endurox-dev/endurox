@@ -240,6 +240,8 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
                     tpstrerror(tperrno));
             userlog("Failed to tpopen() by worker thread: %s", tpstrerror(tperrno));
+            disk_err=EXTRUE;
+            goto finalize;
         }
         else
         {
@@ -354,14 +356,14 @@ out:
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
             NDRX_LOG(log_error, "Failed to start tran!");
-            /* unlock the message -> for stablity tests... */
+            /* unlock the message -> for stablity tests... 
             tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-            goto out_free;
+            goto out_free;*/
             
-            /* keep the msg locked: 
+            /* keep the msg locked: */
             
             disk_err=EXTRUE;
-            goto finalize;*/
+            goto finalize;
             
         }
     }

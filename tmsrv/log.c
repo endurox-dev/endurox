@@ -811,7 +811,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         NDRX_LOG(log_error, "XA Transaction [%s] was in active or preparing stage and "
                 "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
         
-        userlog("XA Transaction [%s] was in  acitve or preparing stage and "
+        userlog("XA Transaction [%s] was in  active or preparing stage and "
                 "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
         
         /* change the status (+ log) */

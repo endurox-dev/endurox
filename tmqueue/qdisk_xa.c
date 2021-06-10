@@ -1671,6 +1671,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 DIRENT_CONTINUE;
             }
             
+            /* TODO: Check for file age / validity -> consult with tmsrv? */
+
             /* Late filter 
              * Not sure what will happen if file will be processed/removed
              * by other server if for example we boot up...read the folder
@@ -1820,6 +1822,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         return XAER_RMERR;
     }
     
+    /* TODO: Scan the prepared folder and return the list. */
     NDRX_LOG(log_error, "WARNING! xa_recover_entry() - STUB!");
     
     return 0; /* no transactions found */
