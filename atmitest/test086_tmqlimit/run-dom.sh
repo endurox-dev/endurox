@@ -160,6 +160,11 @@ clean_logs;
 rm ULOG*
 
 ###################################################
+# for darwin missing robost locks may stall the testing
+# thus it is not possible to test this func here
+###################################################
+
+if [ "$UNAME" != "Darwin" ]; then
 echo "Testing crashloop"
 # use custom timeout
 export NDRX_TOUT=30
@@ -192,6 +197,7 @@ xadmin start -y
 
 clean_logs;
 rm ULOG*
+fi
 ###################################################
 
 echo "Testing errorq"
