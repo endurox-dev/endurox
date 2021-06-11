@@ -160,38 +160,44 @@ clean_logs;
 rm ULOG*
 
 ###################################################
-echo "Testing crashloop"
-# use custom timeout
-export NDRX_TOUT=30
-xadmin stop -y
-xadmin start -y
-(./atmiclt86 crashloop 2>&1) >> ./atmiclt-dom1.log
-RET=$?
-if [[ "X$RET" != "X0" ]]; then
-    xadmin psc
-    go_out $RET
+# for darwin /emq missing robost locks may stall the testing
+# thus it is not possible to test this func here
+###################################################
+
+if [ `xadmin poller` != "emq" ]; then
+    echo "Testing crashloop"
+    # use custom timeout
+    export NDRX_TOUT=30
+    xadmin stop -y
+    xadmin start -y
+    (./atmiclt86 crashloop 2>&1) >> ./atmiclt-dom1.log
+    RET=$?
+    if [[ "X$RET" != "X0" ]]; then
+        xadmin psc
+        go_out $RET
+    fi
+
+    # print what's left in q...
+    xadmin mqlq
+    xadmin pt
+
+    STATS=`xadmin mqlq | grep "ERROR         0     0"`
+
+    echo "Stats: [$STATS]"
+
+    if [[ "X$STATS" == "X" ]]; then
+        echo "Expecting ERROR queue to be fully empty!"
+        go_out -1
+    fi
+
+    # restore tout:
+    export NDRX_TOUT=90
+    xadmin stop -y
+    xadmin start -y
+
+    clean_logs;
+    rm ULOG*
 fi
-
-# print what's left in q...
-xadmin mqlq
-xadmin pt
-
-STATS=`xadmin mqlq | grep "ERROR         0     0"`
-
-echo "Stats: [$STATS]"
-
-if [[ "X$STATS" == "X" ]]; then
-    echo "Expecting ERROR queue to be fully empty!"
-    go_out -1
-fi
-
-# restore tout:
-export NDRX_TOUT=90
-xadmin stop -y
-xadmin start -y
-
-clean_logs;
-rm ULOG*
 ###################################################
 
 echo "Testing errorq"

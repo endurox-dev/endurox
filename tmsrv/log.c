@@ -965,9 +965,26 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     
     /* check exactly how much bytes was written */
     
-    if (G_atmi_env.test_tmsrv_write_fail)
+    if (1==G_atmi_env.test_tmsrv_write_fail)
     {
         make_error = EXTRUE;
+    }
+    else if (2==G_atmi_env.test_tmsrv_write_fail)
+    {
+        static int first = EXTRUE;
+        
+        if (first)
+        {
+            srand ( time(NULL) );
+            first=EXFALSE;
+        }
+        
+        /* generate 25% random errors */
+        if (rand() % 4 == 0)
+        {
+            make_error = EXTRUE;
+        }
+        
     }
     
     crc32 = ndrx_Crc32_ComputeBuf(0, msg2, len);
@@ -1212,7 +1229,6 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         crash_stage = G_atmi_env.test_tmsrv_commit_crash % 100;
         crash_class = G_atmi_env.test_tmsrv_commit_crash / 100;
         
-        
         /* let write && exit */
         if (stage > 0 && crash_class==CRASH_CLASS_EXIT && stage == crash_stage)
         {
@@ -1233,7 +1249,14 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             ret=EXFAIL;
             goto out;
         }
-        
+
+        /* in case if switching to committing, we must sync the log & directory */
+        if (XA_TX_STAGE_COMMITTING==stage &&
+            (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) || 
+                EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags)))
+        {
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:

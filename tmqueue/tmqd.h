@@ -96,6 +96,7 @@ typedef struct
     
     int fwdpoolsize;          /**< forwarder thread pool size               */
     threadpool fwdthpool;     /**< threads for forwarder                    */
+    long fsync_flags;         /**< special flags for disk sync              */
     
 } tmqueue_cfg_t;
 
