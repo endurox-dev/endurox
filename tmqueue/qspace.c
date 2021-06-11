@@ -1029,11 +1029,13 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     tmq_msg_del_t block;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_qconfig_t *qconf;
+    int is_locked=EXFALSE;
     
     *diagnostic=EXSUCCEED;
     
     NDRX_LOG(log_debug, "FIFO/LIFO dequeue for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
+    is_locked=EXTRUE;
     
     /* Find the non locked message in memory */
     
@@ -1127,7 +1129,8 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
     
-    /* TODO: Unlock here?  */
+    MUTEX_UNLOCK_V(M_q_lock);
+    is_locked=EXFALSE;
     
     /* Is it must not be a peek and must not be an autoq */
     if (!(flags & TPQPEEK) && !is_auto)
@@ -1141,7 +1144,10 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
+            MUTEX_LOCK_V(M_q_lock);
             ret->lockthreadid = 0;
+            MUTEX_UNLOCK_V(M_q_lock);
+            
             ret = NULL;
             *diagnostic=QMEOS;
             NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
@@ -1150,7 +1156,11 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     }
     
 out:
-    MUTEX_UNLOCK_V(M_q_lock);
+        
+    if (is_locked)
+    {
+        MUTEX_UNLOCK_V(M_q_lock);
+    }
 
     /* set default error code */
     if (NULL==ret && EXSUCCEED==*diagnostic)
