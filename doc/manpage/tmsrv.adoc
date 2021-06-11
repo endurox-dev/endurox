@@ -119,6 +119,18 @@ particular Resource Manager level:
 
 - $ xadmin forgetlocal
 
+By default *tmsrv* writes log files to disk and uses *fflush()* unix call to
+persist the data. This call submits the message only to Operating System kernel,
+but does not guarantee that data is written to disk. Thus if power outage happens
+some transaction information may be lost. Thus for critical systems it is
+recommended to use special flags which instruct the *tmsrv* to perform disk
+synchronization when commit decision have been taken. These flags shall be
+set in *NDRX_XA_FLAGS*: *FSYNC* or *FDATASYNC* and *DSYNC*. The *FSYNC* or 
+*FDATASYNC* corresponds to *fsync()* and *fdatasync()* unix calls to flush
+the data to disk. *DSYNC* ensures that log file directory structure is flushed
+to disk. *FDATASYNC* is bit faster than *FSYNC*, as it does not update the
+file last change and other insignificant attributes). Usage of these flags may
+significantly reduce the transaction TPS performance.
 
 OPTIONS
 -------
