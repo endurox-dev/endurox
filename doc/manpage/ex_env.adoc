@@ -168,11 +168,7 @@ Mandatory Env. Variables
     (i.e. *fsync()* is performed on log file directory). In case if using *tmqueue(8)*
     then these flags also affect that the way how messages are persisted to disk.
     Note that *FSYNC*, *FDATASYNC* and *DSYNC* may significantly slow down 
-    the distributed transaction processing, due to fact that default sync
-    approach is *fflush()* Unix call, which only ensures that data for disk
-    is sent to OS kernel, instead of directly to the disk. Thus default
-    approach with *fflush()* poses some risk to data corruption 
-    in case of power outage.
+    the distributed transaction processing.
 
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
     Number of semaphores used for protecting shared memory, when Enduro/X 
