@@ -61,7 +61,7 @@ Ensure(test_nstd_fsync)
     char filename[]="/tmp/ubf-test-XXXXXX";
     char buf[128];
     assert_not_equal(mkstemp(filename), EXFAIL);
-    assert_not_equal((f=fopen(filename, "r")), NULL);
+    assert_not_equal((f=fopen(filename, "w")), NULL);
     
     /* should parse OK */
     NDRX_STRCPY_SAFE(buf, "fsync,nosync");
