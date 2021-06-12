@@ -179,6 +179,13 @@ then files are removed. Such files in *committed* or *prepared* folders are not
 removed, error message is printed in the log and *tmqueue* will proceed with
 loading of the next message.
 
+To ensure that messages does not corrupt in case of power outage, disk synchronization
+flags shall be reviewed, and if necessary, shall be set. Please read *ex_env(5)*
+and *libndrxxaqdisks(8)* how to set *FSYNC*, *FDATASYNC* and *DSYNC* flags in
+*NDRX_XA_FLAGS* parameter. By default *tmsrv(8)* and persistent queue disk driver 
+uses only fflush() Unix call to send disk data changes to OS kernel, 
+which may not persist the data to disk immediately.
+
 
 EXIT STATUS
 -----------
@@ -194,7 +201,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)* *q.conf(5)* *ex_env(5)* *tmsrv(8)*
+*xadmin(8)* *q.conf(5)* *ex_env(5)* *tmsrv(8)* *libndrxxaqdisks(8)*
 
 COPYING
 -------
