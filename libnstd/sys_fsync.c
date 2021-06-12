@@ -198,6 +198,12 @@ expublic int ndrx_fsync_dsync(char *dir, long flags)
             EXFAIL_OUT(ret);
         }
 
+#ifdef EX_OS_AIX
+        /* On aix getting "Bad file number" 
+         * thus only what we can do is ignore these errors
+         */
+        fsync_range(fd, O_DSYNC, 0, 0);
+#else
         if (EXSUCCEED!=fsync(fd))
         {
             int err = errno;
@@ -207,6 +213,7 @@ expublic int ndrx_fsync_dsync(char *dir, long flags)
                     dir, fd, strerror(err));
             EXFAIL_OUT(ret);
         }        
+#endif
     }
     
 out:
