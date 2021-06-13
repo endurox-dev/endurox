@@ -59,9 +59,11 @@ image:benchmark/03_tpcall_threads.png[caption="Figure 4: ", title="tpcall() mult
 
 Persisted storage benchmark, tpenqueue()
 ----------------------------------------
-This test gets much lower results, because all messages are being saved to disk. Also note that internally
-Enduro/X uses distributed transaction manager to coordinate the save of the message, thus processing of 
-XA transaction takes some disk resources too.
+This test gets much lower results, because all messages are being saved to disk. 
+Also note that internally Enduro/X uses distributed transaction manager to 
+coordinate the save of the message, thus processing of XA transaction takes 
+some disk resources too. This benchmark uses only fflush() unix system call 
+to flush the data, thus at power outage data corruption still is possible.
 
 image:benchmark/05_persistent_storage.png[caption="Figure 5: ", title="Persistent storage", alt="persistent_storage"]
 
