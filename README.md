@@ -233,8 +233,11 @@ performance")
 ## Persistent storage (message enqueue to disk via tpenqueue())
 The number here are lower because messages are being saved to disk. 
 Also internally XA transaction is used, which also requires logging to stable 
-storage. This benchmark uses only fflush() unix system call to flush the
-data, thus at power outage data corruption still is possible.
+storage. This benchmark uses default Enduro/X setting for data
+flushing to disk which is fflush() Unix system call. Fflush() does not guarantee data
+consistence at power outage event. For fully guaranteed data consistence, 
+flags (FSYNC/FDATASYNC/DSYNC) can be set for XA resource. However expect much 
+lower TPS performance.
 
 ![Alt text](doc/benchmark/05_persistent_storage.png?raw=true "Network 
 tpenqueue() performance")
