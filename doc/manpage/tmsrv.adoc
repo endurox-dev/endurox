@@ -127,10 +127,13 @@ recommended to use special flags which instruct the *tmsrv* to perform disk
 synchronization when commit decision have been taken. These flags shall be
 set in *NDRX_XA_FLAGS*: *FSYNC* or *FDATASYNC* and *DSYNC*. The *FSYNC* or 
 *FDATASYNC* corresponds to *fsync()* and *fdatasync()* unix calls to flush
-the data to disk. *DSYNC* ensures that log file directory structure is flushed
-to disk. *FDATASYNC* is bit faster than *FSYNC*, as it does not update the
+the transaction log data to disk. *DSYNC* ensures that log file directory structure 
+is flushed to disk. *FDATASYNC* is bit faster than *FSYNC*, as it does not update the
 file last change and other insignificant attributes). Usage of these flags may
-significantly reduce the transaction TPS performance.
+significantly reduce the transaction TPS performance. *DSYNC* usage depends
+on the operating system. It is necessary for Linux and Solaris operating systems.
+For other operating systems, please consult with vendors manuals, when directory
+fsync is needed for new files to be persisted.
 
 OPTIONS
 -------
