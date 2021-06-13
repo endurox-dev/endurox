@@ -233,7 +233,8 @@ performance")
 ## Persistent storage (message enqueue to disk via tpenqueue())
 The number here are lower because messages are being saved to disk. 
 Also internally XA transaction is used, which also requires logging to stable 
-storage.
+storage. This benchmark uses only fflush() unix system call to flush the
+data, thus at power outage data corruption still is possible.
 
 ![Alt text](doc/benchmark/05_persistent_storage.png?raw=true "Network 
 tpenqueue() performance")
