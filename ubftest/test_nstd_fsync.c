@@ -37,6 +37,7 @@
 #include <cgreen/cgreen.h>
 #include <ubf.h>
 #include <ndrstandard.h>
+#include <nstopwatch.h>
 #include <string.h>
 #include <ndebug.h>
 #include <exbase64.h>
@@ -101,9 +102,28 @@ Ensure(test_nstd_fsync)
  */
 Ensure(test_nstd_dsync)
 {
+    ndrx_stopwatch_t w;
+    long cnt=0, err=EXSUCCEED;
+
     assert_equal(ndrx_fsync_dsync("/tmp/", NDRX_FSYNC_DSYNC), EXSUCCEED);
     assert_equal(ndrx_fsync_dsync("/no/such/directory/endurox", NDRX_FSYNC_DSYNC), EXFAIL);
     assert_equal(ndrx_fsync_dsync("/no/such/directory/endurox", 0), EXSUCCEED);
+
+    ndrx_stopwatch_reset(&w);
+    do
+    {
+        if (ndrx_fsync_dsync("/tmp", NDRX_FSYNC_DSYNC)!=EXSUCCEED)
+        {
+            err=EXFAIL;
+            break;
+        }
+
+        cnt++;
+    } while (ndrx_stopwatch_get_delta_sec(&w) < 1);
+
+    assert_equal(err, EXSUCCEED);
+    fprintf(stderr, "dsync per second: %ld\n", cnt);
+
 }
 
 /**
