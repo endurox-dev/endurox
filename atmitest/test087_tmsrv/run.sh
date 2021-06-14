@@ -2342,7 +2342,7 @@ cat log1/*
 xadmin lcf tcrash -A 0 -a -n
 
 # let process to finalize
-sleep 10
+sleep 15
 
 verify_ulog "RM1" "xa_prepare" "0";
 verify_ulog "RM1" "xa_commit" "0";
