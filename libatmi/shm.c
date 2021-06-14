@@ -416,7 +416,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     if (EXTRUE==use_cluster)
     {
         int csrvs = psvcinfo->csrvs;
-        int cluster_node = rand()%psvcinfo->csrvs+1;
+        int cluster_node;
         int i;
         int got_node = 0;
         int try = 0;
@@ -494,6 +494,8 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     {
         int resid;
         int resrr;
+        int svc_ok = EXTRUE;
+        int resnr;
         
         /* ###################### CRITICAL SECTION ############################### */
         /* lock for round-robin... */
@@ -512,15 +514,47 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         NDRX_ATOMIC_ADD(&psvcinfo->resrr, 1);
         
         /* just chose the one  */
-        resrr = psvcinfo->resrr % psvcinfo->resnr;
-        resid = psvcinfo->resids[resrr].resid;
+        
+        /* well if we were getting here and resnr was reset to 0
+         * due to dead servers, we might get SIGFPE
+         * Thus if resnr is 0, then no servers are available.
+         * Also verify that service name matches, not?
+         * maybe something else already installed?
+         */
+        resnr = psvcinfo->resnr;
+        
+        if (resnr<=0)
+        {
+            NDRX_LOG(log_error, "svc [%s] resnr=%d", resnr);
+            svc_ok=EXFALSE;
+        }
+        else if (0!=strcmp(psvcinfo->service, svc))
+        {
+            /* check service */
+            NDRX_LOG(log_error, "shm reset: [%s] vs [%s]", 
+                    psvcinfo->service, svc);
+            svc_ok=EXFALSE;
+        }
+        
+        if (svc_ok)
+        {
+            resrr = psvcinfo->resrr % resnr;
+            resid = psvcinfo->resids[resrr].resid;
+        }
         
         if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__, NDRX_SEM_TYP_READ))
         {
             NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
             EXFAIL_OUT(ret);
         }
+        
         /* ###################### CRITICAL SECTION, END ########################## */
+        
+        if (!svc_ok)
+        {
+            NDRX_LOG(log_error, "Service [%s] was removed during lookup", svc);
+            EXFAIL_OUT(ret);
+        }
         
         /* OK we got an resource id, lets translate it to actual queue */
         

@@ -1,5 +1,6 @@
 /**
  * @brief Persistent storage durability API 
+ *  TODO: For MacOS which support F_FULLSYNC, use this fcntl command
  *
  * @file sys_fsync.c
  */
@@ -152,7 +153,12 @@ expublic int ndrx_fsync_fsync(FILE *file, long flags)
     }
     else if (flags & NDRX_FSYNC_FDATASYNC)
     {
+#ifdef EX_OS_DARWIN
+        /* no fdatasync (warning) on macos */
+        if (EXSUCCEED!=fsync(fd))
+#else
         if (EXSUCCEED!=fdatasync(fd))
+#endif
         {
             int err = errno;
             NDRX_LOG(log_error, "%s: fdatasync() failed on %p / %d: %s", __func__,
