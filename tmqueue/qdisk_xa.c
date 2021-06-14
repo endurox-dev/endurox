@@ -1399,6 +1399,15 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
             EXFAIL_OUT(ret);
         }
         
+#if 0
+        /* TODO: if disk is restarted for some reason between 
+         * this stage and prepare/commit, then this might go unoticed.
+         * thus safest approach would be that tmqueue would keep in memory
+         * messages associated with transactions
+         * and even tmqueue could prepare the prepare phase and verify that
+         * on disk there is enough messages in active folder, if not
+         * report the error.
+         */
         /* run dsync to persist the file */
         if (EXSUCCEED!=ndrx_fsync_dsync(M_folder_active, G_atmi_env.xa_fsync_flags))
         {
@@ -1406,6 +1415,7 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
             ret=XAER_RMERR;
             goto out;
         }
+#endif
     }
     
 out:
