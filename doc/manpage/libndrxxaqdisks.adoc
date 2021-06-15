@@ -21,7 +21,7 @@ NDRX_XA_CLOSE_STR=/path/to/data/directory
 NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
 NDRX_XA_RMLIB=libndrxxaqdisk.so
 NDRX_XA_LAZY_INIT=1
-[NDRX_XA_FLAGS=[FSYNC][;FDATASYNC][;DSYNC]]
+[NDRX_XA_FLAGS=[FSYNC|FDATASYNC][;DSYNC]]
 --------------------------------------------------------------------------------
 
 DESCRIPTION
