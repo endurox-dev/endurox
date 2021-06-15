@@ -64,7 +64,7 @@ expublic PGconn * ndrx_pg_connect(ndrx_pgconnect_t *conndata, char *connname)
 {
     PGconn *ret = NULL;
     
-    NDRX_LOG(log_debug, "Establishing ECPG connection: [%s]", conndata);
+    NDRX_LOG(log_debug, "Establishing ECPG connection: [%s]", connname);
     
     /* OK, try to open, with out autocommit please!
      */
