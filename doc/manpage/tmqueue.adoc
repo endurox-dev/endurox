@@ -116,7 +116,7 @@ Also this thread pool is utilized by 'xadmin mqX' commands. Default is '10'.
 
 [*-u* 'NOTIFY_THREAD_POOL_SIZE']::
 This is number of threads which are processing callbacks from XA driver 
-(for operation completion notifications).
+(for operation completion notifications). Default value is '10'.
 
 [*-f* 'FORWARD_THREAD_POOL_SIZE']::
 This is number of worker threads for forwarder. Default value is '10'.
