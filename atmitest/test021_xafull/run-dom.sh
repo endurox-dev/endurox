@@ -58,6 +58,7 @@ export PATH=$PATH:$TESTDIR
 # Override timeout!
 export NDRX_TOUT=20
 export NDRX_ULOG=$TESTDIR
+export NDRX_SILENT=Y
 
 rm -rf $TESTDIR/RM1
 rm -rf $TESTDIR/RM2
@@ -424,6 +425,65 @@ fi
 ################################################################################
 # Normal tests
 ################################################################################
+
+echo "Housekeep invalid journals (15s)"
+
+touch ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_1
+echo "1449414167259:S:40" > ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_2
+echo "1449414167260:R:1:p:0:0" > ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_3
+echo "1449414167259:I:1:1:50:5:1,2" > ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_4
+echo "1449414167259:I:1:1:50:5:1,2" >> ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_4
+
+# 15 sec these files shall be alive
+# thus after restart files shall be in place..
+xadmin restart -s tmsrv
+
+if [ ! -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_1 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_1 does not exist!"
+    go_out -1
+fi
+
+if [ ! -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_2 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_2 does not exist!"
+    go_out -1
+fi
+
+if [ ! -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_3 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_3 does not exist!"
+    go_out -1
+fi
+
+if [ ! -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_4 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_4 does not exist!"
+    go_out -1
+fi
+
+sleep 17
+
+xadmin restart -s tmsrv
+
+# now logs shall be zapped
+
+if [ -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_1 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_1 does exist!"
+    go_out -1
+fi
+
+if [ -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_2 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_2 does exist!"
+    go_out -1
+fi
+
+if [ -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_3 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_3 does exist!"
+    go_out -1
+fi
+
+if [ -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_4 ]; then
+    echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_4 does exist!"
+    go_out -1
+fi
+
 
 echo "Testing journal recovery..."
 cp ./test_data/* ./RM1

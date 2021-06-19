@@ -468,9 +468,10 @@ int tpsvrinit(int argc, char **argv)
     memset(&G_tmsrv_cfg, 0, sizeof(G_tmsrv_cfg));
     
     G_tmsrv_cfg.ping_mode_jointran = EXTRUE;
+    G_tmsrv_cfg.housekeeptime = TMSRV_HOUSEKEEP_DEFAULT;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "P:t:s:l:c:m:p:r:R")) != -1)
+    while ((c = getopt(argc, argv, "P:t:s:l:c:m:p:r:Rh:")) != -1)
     {
 
 	if (optarg)
@@ -514,6 +515,9 @@ int tpsvrinit(int argc, char **argv)
             case 'R':
                 /* in this case use tran listing (xa_recover)*/
                 G_tmsrv_cfg.ping_mode_jointran = EXFALSE;
+                break;
+            case 'h':
+                G_tmsrv_cfg.housekeeptime = atoi(optarg);
                 break;
             case 'P':
                 /* Ping will run with timeout timer interval...
@@ -578,6 +582,9 @@ int tpsvrinit(int argc, char **argv)
     
     NDRX_LOG(log_debug, "Foreground retries in stage [%d]",
                             G_tmsrv_cfg.xa_retries);
+    
+    NDRX_LOG(log_debug, "Housekeep time for corrupted logs: [%d] (sec)",
+                            G_tmsrv_cfg.housekeeptime);
     
     NDRX_LOG(log_debug, "About to initialize XA!");
     
