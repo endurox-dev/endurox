@@ -537,7 +537,9 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     char *p;
     int line = 1;
     int got_term_last=EXFALSE, infos_ok=EXFALSE, missing_term_in_file=EXFALSE;
+    int do_housekeep = EXFALSE;
     int wrote, err;
+    long diff;
     *pp_tl = NULL;
     
     if (NULL==(*pp_tl = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
@@ -673,6 +675,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                             logfile);
                     userlog("TMSRV log file [%s] duplicate info block", 
                             logfile);
+                    do_housekeep=EXTRUE;
                     EXFAIL_OUT(ret);
                 }
                 
@@ -694,6 +697,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                             logfile);
                     userlog("TMSRV log file [%s] Info record required first", 
                             logfile);
+                    do_housekeep=EXTRUE;
                     EXFAIL_OUT(ret);
                 }
                 
@@ -711,6 +715,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                             logfile);
                     userlog("TMSRV log file [%s] Info record required first", 
                             logfile);
+                    do_housekeep=EXTRUE;
                     EXFAIL_OUT(ret);
                 }
                 
@@ -746,6 +751,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                     logfile, LOG_COMMAND_J);
         userlog("TMSRV log file [%s] no [%c] info record - not loading", 
                     logfile, LOG_COMMAND_J);
+        do_housekeep=EXTRUE;
         EXFAIL_OUT(ret);
     }
     
@@ -826,6 +832,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     
     NDRX_LOG(log_debug, "TX [%s] loaded OK", tmxid);
 out:
+
     /* Clean up if error. */
     if (EXSUCCEED!=ret)
     {
@@ -833,8 +840,34 @@ out:
         if (NULL!=*pp_tl)
         {
             /* remove any stuff added... */
+            
+            if (tms_is_logfile_open(*pp_tl))
+            {
+                tms_close_logfile(*pp_tl);
+            }
+            
             tms_remove_logfree(*pp_tl, EXFALSE);
             *pp_tl = NULL;
+        }
+    }
+
+    /* clean up corrupted files */
+    if (do_housekeep)
+    {
+        /* remove old corrupted logs... */
+        if ((diff=ndrx_file_age(logfile)) > G_tmsrv_cfg.housekeeptime)
+        {
+            NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                    logfile, diff, G_tmsrv_cfg.housekeeptime);
+            userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                    logfile, diff, G_tmsrv_cfg.housekeeptime);
+
+            if (EXSUCCEED!=unlink(logfile))
+            {
+                err = errno;
+                NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
+                userlog("Failed to unlink [%s]: %s", strerror(err));
+            }
         }
     }
 

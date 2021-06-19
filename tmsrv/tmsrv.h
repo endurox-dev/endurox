@@ -46,19 +46,22 @@ extern "C" {
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Macros-------------------------------------*/
-#define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs */
+#define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs    */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
-#define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
+#define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec  */
 #define THREADPOOL_DFLT         10  /* Default number of threads spawned   */
 
 #define XA_RETRIES_DFLT         3   /* number of foreground retries */
 
-#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements   */
-#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements   */
-#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?      */
+#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements  */
+#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements  */
+#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?     */
 
 
 #define NDRX_LOCK_WAIT_TIME         5000    /**< lock wait time b4 give up */
+
+
+#define TMSRV_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min  */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -82,6 +85,9 @@ typedef struct
     int ping_time; /**< Number of seconds for interval of doing "pings" to db */
     int ping_mode_jointran; /**< PING with join non existent transaction */
     threadpool thpool;
+    
+    int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
+    
 } tmsrv_cfg_t;
 
 struct thread_server
