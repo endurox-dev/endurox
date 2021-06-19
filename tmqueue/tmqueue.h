@@ -93,7 +93,7 @@ extern "C" {
 /** @} */ /* end of tmq_errors */
     
     
-#define TMQ_HOUSEKEEP_DEFAULT   (60*60)     /**< houskeep 1 hour            */
+#define TMQ_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min     */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

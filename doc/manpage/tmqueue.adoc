@@ -131,7 +131,7 @@ folder shall be unlinked. Flag is needed for purpose that concurrent processes
 might be witting the file and it is not yet completed. Thus longer the delay will
 ensure that no race condition would caused for concurrent processes. If file
 is older than given seconds, during the *tmqueue* startup, such damaged file
-will be unlinked. Default value is *3600* (1 hour).
+will be unlinked. Default value is *5400* (1 hour 30 min).
 
 LIMITATIONS
 -----------

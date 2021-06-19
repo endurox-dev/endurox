@@ -198,6 +198,10 @@ with *-P* flag set.
 [*-R*]::
 Enable xa_recover() call for PINGs instead of xa_start(). See *-P* flag description.
 
+[*-h* 'HOUSEKEEP_TIMEOUT']::
+Number of seconds after which corrupted transaction log files are removed at
+tmsrv startup. Default value is *5400* (1 hour 30 min).
+
 XA RECOVER SETTINGS FOR ORACLE DB
 ---------------------------------
 The -R mode might not be enabled in database for user. I.e. user is not allowed
