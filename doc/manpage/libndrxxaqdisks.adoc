@@ -40,6 +40,9 @@ contain global transaction id with sequence number suffix.
 names are set to message id. Here only message files are stored, and no other
 command blocks (.e.g. nor delete, nor update files).
 
+*NDRX_XA_OPEN_STR* specified directory cannot be shared between different 
+*tmqueue(8)* processes having different *NDRX_XA_RES_ID*.
+
 Command block files have following types:
 
 - New message, including message blob.

@@ -255,6 +255,8 @@ out:
 
 /**
  * Filter the service names, return TRUE for those which matches individual TMs
+ * Well we shall work only at resource ID level.
+ * Thus only on -1
  * @param svcnm
  * @return TRUE/FALSE
  */
@@ -278,7 +280,7 @@ exprivate int tmfilter(char *svcnm)
         }
     }
     
-    if (3==cnt)
+    if (1==cnt)
         return EXTRUE;
     else
         return EXFALSE;
