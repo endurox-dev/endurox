@@ -48,6 +48,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <fcntl.h>
+#include <sys_unix.h>
 #include <nstd_tls.h>
 #include <termios.h>
 #include <nstdutil.h>
