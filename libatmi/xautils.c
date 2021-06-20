@@ -189,6 +189,9 @@ expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
 
 /**
  * Deserialize - make system XID
+ * @param xid_str serialized xid, by atmi_xa_serialize_xid
+ * @param xid_out place where to unload the xid.
+ * @return NULL in case of error
  */
 expublic XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
 {
@@ -196,10 +199,13 @@ expublic XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
     size_t tot_len = 0;
     long l;
     
-    NDRX_LOG(log_debug, "atmi_xa_deserialize_xid - enter");
-    NDRX_LOG(log_debug, "Serialized xid: [%s]", xid_str);    
+    NDRX_LOG(log_debug, "atmi_xa_deserialize_xid enter (xid_str): [%s]: ", xid_str);
     
-    ndrx_xa_base64_decode(xid_str, strlen((char *)xid_str), &tot_len, (char *)tmp);
+    if (NULL==ndrx_xa_base64_decode(xid_str, strlen((char *)xid_str), &tot_len, (char *)tmp))
+    {
+        NDRX_LOG(log_error, "Failed to b64 decode: [%s]", xid_str);
+        goto out;
+    }
     
     NDRX_LOG(log_debug, "xid deserialization total len: %d", tot_len);
     NDRX_DUMP(log_debug, "XID data for deserialization", tmp, tot_len);
@@ -234,7 +240,7 @@ expublic XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
     memcpy(xid_out->data+MAXGTRIDSIZE, tmp+6, NDRX_XID_TRID_LEN+NDRX_XID_BQUAL_LEN);
  
     NDRX_DUMP(log_debug, "Original XID restored ", xid_out, sizeof(*xid_out));
-    
+out:
     return xid_out;
        
 }

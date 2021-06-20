@@ -49,6 +49,7 @@ extern "C" {
 #include <ubf_tls.h>
 #include <tx.h>
 #include <setjmp.h>
+#include <dirent.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -216,6 +217,12 @@ typedef struct
     /* Shared between threads: */
     int qdisk_is_open;
     int qdisk_rmid;
+    /** List of prepared transactions */
+    struct dirent **qdisk_recover_namelist;
+    /** Current iterator of the recover */
+    int qdisk_recover_i;
+    /** Is scanning open ? */
+    int qdisk_recover_open;
     
     ndrx_qdisk_tls_t *qdisk_tls;
     
