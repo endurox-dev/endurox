@@ -1522,7 +1522,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     /* <sub tlv> */
                     off_stop = *proto_buf_offset;
                     /* Put back len there.. */
-                    len_written = (short)(off_stop - off_start);
+                    len_written = (int)(off_stop - off_start);
                     if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset,
                             proto_bufsz))
                     {
