@@ -50,7 +50,7 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-
+export NDRX_SILENT=Y
 export NDRX_TOUT=30
 
 #
@@ -121,7 +121,9 @@ RET=0
 
 xadmin psc
 xadmin ppm
-echo "Running off client"
+################################################################################
+echo "Running off client - native mode"
+################################################################################
 
 set_dom1;
 (./atmiclt42 2>&1) > ./atmiclt-dom1.log
@@ -132,6 +134,31 @@ RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
+
+
+################################################################################
+echo "Running off client - protocol mode"
+################################################################################
+
+xadmin stop -i 101
+xadmin start -i 200
+set_dom2;
+xadmin stop -i 101
+xadmin start -i 200
+set_dom1;
+
+echo "Wait 30 for connect..."
+sleep 30
+
+set_dom1;
+(./atmiclt42 2>&1) >> ./atmiclt-dom1.log
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
