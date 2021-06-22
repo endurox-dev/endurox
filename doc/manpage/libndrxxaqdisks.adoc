@@ -1,5 +1,5 @@
-LIBNDRXXAWSMQS(8)
-=================
+LIBNDRXXAQDISKS(8)
+==================
 :doctype: manpage
 
 
@@ -77,20 +77,25 @@ Operations with disk are following for *tpenqueue(3)*:
 
 - New file containing the new message command block (including message buffer content)
 is create in *active* directory. If configured *FSYNC* or *FDATASYNC* flags, 
-the file contents are synchronized to disk with fsync() or fdatasync().
+the file contents are synchronized to disk with fsync() or fdatasync(). File
+name corresponds to global transaction id, with "-NNN" suffix, where NNN is command
+block sequence number in the transactions.
 
 - When prepare happens (tpcommit() issued), command file (new message) is 
 moved to *prepared* directory, if *DSYNC* flag is set, fsync() call is 
 used to synchronize directory to disk.
 
 - When commit happens from 2PC, message file is moved to *committed* directory.
-If *DSYNC* is set, directory is synchronized with fsync().
+If *DSYNC* is set, directory is synchronized with fsync(). During the move of
+the message files, the file is renamed to match the message id, instead of 
+transaction id.
 
 Operations with disk are following for *tpdequeue(3)*:
 
 - New file containing delete message command block file is create in *active* directory. 
 If configured *FSYNC* or *FDATASYNC* flags, the file contents are synchronized 
-to disk with fsync() or fdatasync().
+to disk with fsync() or fdatasync(). File name corresponds to global transaction id, 
+with "-NNN" suffix, where NNN is command block sequence number in the transactions.
 
 - When prepare happens (tpcommit()), command file (delete message) is 
 moved to *prepared* directory, if *DSYNC* flag is set, fsync() call is 
