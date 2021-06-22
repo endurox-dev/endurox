@@ -189,9 +189,31 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int err;
     ndrx_thstop_command_call_t *p_cmd;
     char *buf = NULL;
+    sigset_t set;
     
     /* init the TLS thread */
     _Nunset_error();
+    
+    /* mask all signals, as this thread shall not break any ongoing processes
+     * with signal scheduling
+     */
+    if (EXSUCCEED!=sigfillset(&set))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to fill signal array: %s", strerror(err));
+        userlog("Failed to fill signal array: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=pthread_sigmask(SIG_BLOCK, &set, NULL))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        userlog("Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        EXFAIL_OUT(ret);
+    }
     
     /* Wait for message to arrive
      * and post to main thread if have any..

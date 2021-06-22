@@ -2342,7 +2342,7 @@ cat log1/*
 xadmin lcf tcrash -A 0 -a -n
 
 # let process to finalize
-sleep 10
+sleep 15
 
 verify_ulog "RM1" "xa_prepare" "0";
 verify_ulog "RM1" "xa_commit" "0";
@@ -2507,17 +2507,17 @@ if [[ $ERR != *"TPETIME"* ]]; then
 fi
 
 #verify results ops...
-verify_ulog "RM1" "xa_prepare" "0";
-verify_ulog "RM1" "xa_commit" "0";
-verify_ulog "RM1" "xa_rollback" "0";
-verify_ulog "RM1" "xa_forget" "0";
-verify_logfiles "log1" "1"
+#verify_ulog "RM1" "xa_prepare" "0";
+#verify_ulog "RM1" "xa_commit" "0";
+#verify_ulog "RM1" "xa_rollback" "0";
+#verify_ulog "RM1" "xa_forget" "0";
+#verify_logfiles "log1" "1"
 
-verify_ulog "RM2" "xa_prepare" "0";
-verify_ulog "RM2" "xa_commit" "0";
-verify_ulog "RM2" "xa_rollback" "0";
-verify_ulog "RM2" "xa_forget" "0";
-verify_logfiles "log2" "0"
+#verify_ulog "RM2" "xa_prepare" "0";
+#verify_ulog "RM2" "xa_commit" "0";
+#verify_ulog "RM2" "xa_rollback" "0";
+#verify_ulog "RM2" "xa_forget" "0";
+#verify_logfiles "log2" "0"
 
 #
 # Print what ever we have in logs...
@@ -2525,8 +2525,9 @@ verify_logfiles "log2" "0"
 cat log1/*
 
 # Transaction shall roll back due to expiry
-sleep 20
+#sleep 20
 
+# we get automatic rollback:
 verify_ulog "RM1" "xa_prepare" "0";
 verify_ulog "RM1" "xa_commit" "0";
 verify_ulog "RM1" "xa_rollback" "1";

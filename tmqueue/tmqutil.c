@@ -56,6 +56,7 @@
 #include <atmi_int.h>
 #include <exuuid.h>
 #include <exbase64.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -116,7 +117,10 @@ expublic int tmq_finalize_files(UBFH *p_ub)
     int ret = EXSUCCEED;
     BFLDOCC occ, occs = Boccur(p_ub, EX_QFILECMD);
     char cmd;
-    char *fname1, *fname2;
+    char fname1[PATH_MAX+1];
+    char fname2[PATH_MAX+1];
+    BFLDLEN len;
+    char *p;
     
     /* rename -> mandatory. Also if on remove file does not exists, this is the
      *  same as removed OK
@@ -133,11 +137,10 @@ expublic int tmq_finalize_files(UBFH *p_ub)
             EXFAIL_OUT(ret);
         }
         
-        fname1 = Bfind(p_ub, EX_QFILENAME1, occ, NULL);
-
-        if (NULL==fname1)
+        len=sizeof(fname1);
+        if (EXSUCCEED!=Bget(p_ub, EX_QFILENAME1, occ, fname1, &len))
         {
-            NDRX_LOG(log_error, "Failed to find EX_QFILENAME1 occ %d: %s", 
+            NDRX_LOG(log_error, "Failed to get EX_QFILENAME1 at occ %d: %s", 
                     occ, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
@@ -164,20 +167,39 @@ expublic int tmq_finalize_files(UBFH *p_ub)
                     
                 }
             }
+            
+            if (0==occ)
+            {
+                /* get the folder form file name */
+                p=strrchr(fname1, '/');
+                
+                if (NULL!=p)
+                {
+                    *p=EXEOS;
+                }
+                
+                if (EXSUCCEED!=ndrx_fsync_dsync(fname1, G_atmi_env.xa_fsync_flags))
+                {
+                    NDRX_LOG(log_error, "Failed to dsync [%s]", fname1);
+                    ret=XAER_RMERR;
+                    goto out;
+                }
+            }
         }
         else if (TMQ_FILECMD_RENAME==cmd)
         {
-            fname2 = Bfind(p_ub, EX_QFILENAME2, occ, NULL);
             
-            if (NULL==fname1)
+            len=sizeof(fname2);
+            if (EXSUCCEED!=Bget(p_ub, EX_QFILENAME2, occ, fname2, &len))
             {
-                NDRX_LOG(log_error, "Failed to find EX_QFILENAME2 occ %d: %s", 
+                NDRX_LOG(log_error, "Failed to get EX_QFILENAME2 at occ %d: %s", 
                         occ, Bstrerror(Berror));
                 EXFAIL_OUT(ret);
             }
             
             NDRX_LOG(log_debug, "About to rename: [%s] -> [%s]",
                     fname1, fname2);
+            
             if (EXSUCCEED!=rename(fname1, fname2))
             {
                 int err = errno;
@@ -186,6 +208,21 @@ expublic int tmq_finalize_files(UBFH *p_ub)
                 userlog("Failed to rename file [%s] -> [%s] occ %d: %s", 
                         fname1, fname2, occ, strerror(err));
                 EXFAIL_OUT(ret);
+            }
+            
+            /* get the folder form file name */
+            p=strrchr(fname2, '/');
+
+            if (NULL!=p)
+            {
+                *p=EXEOS;
+            }
+
+            if (EXSUCCEED!=ndrx_fsync_dsync(fname2, G_atmi_env.xa_fsync_flags))
+            {
+                NDRX_LOG(log_error, "Failed to dsync [%s]", fname2);
+                ret=XAER_RMERR;
+                goto out;
             }
         }
         else

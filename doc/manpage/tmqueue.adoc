@@ -116,7 +116,7 @@ Also this thread pool is utilized by 'xadmin mqX' commands. Default is '10'.
 
 [*-u* 'NOTIFY_THREAD_POOL_SIZE']::
 This is number of threads which are processing callbacks from XA driver 
-(for operation completion notifications).
+(for operation completion notifications). Default value is '10'.
 
 [*-f* 'FORWARD_THREAD_POOL_SIZE']::
 This is number of worker threads for forwarder. Default value is '10'.
@@ -131,7 +131,7 @@ folder shall be unlinked. Flag is needed for purpose that concurrent processes
 might be witting the file and it is not yet completed. Thus longer the delay will
 ensure that no race condition would caused for concurrent processes. If file
 is older than given seconds, during the *tmqueue* startup, such damaged file
-will be unlinked. Default value is *3600* (1 hour).
+will be unlinked. Default value is *5400* (1 hour 30 min).
 
 LIMITATIONS
 -----------
@@ -179,6 +179,13 @@ then files are removed. Such files in *committed* or *prepared* folders are not
 removed, error message is printed in the log and *tmqueue* will proceed with
 loading of the next message.
 
+To ensure that messages does not corrupt in case of power outage, disk synchronization
+flags shall be reviewed, and if necessary, shall be set. Please read *ex_env(5)*
+and *libndrxxaqdisks(8)* how to set *FSYNC*, *FDATASYNC* and *DSYNC* flags in
+*NDRX_XA_FLAGS* parameter. By default *tmsrv(8)* and persistent queue disk driver 
+uses only fflush() Unix call to send disk data changes to OS kernel, 
+which may not persist the data to disk immediately.
+
 
 EXIT STATUS
 -----------
@@ -194,7 +201,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)* *q.conf(5)* *ex_env(5)* *tmsrv(8)*
+*xadmin(8)* *q.conf(5)* *ex_env(5)* *tmsrv(8)* *libndrxxaqdisks(8)*
 
 COPYING
 -------

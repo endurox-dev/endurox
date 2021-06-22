@@ -1,0 +1,120 @@
+LIBNDRXXAQDISKS(8)
+==================
+:doctype: manpage
+
+
+NAME
+----
+libndrxxaqdisks - Enduro/X TMQ static XA switch loader
+libndrxxaqdiskd - Enduro/X TMQ dynamic registration XA switch loader
+
+
+SYNOPSIS
+--------
+libndrxxaqdisks.so
+libndrxxaqdiskd.so
+
+--------------------------------------------------------------------------------
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=/path/to/data/directory
+NDRX_XA_CLOSE_STR=/path/to/data/directory
+NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+NDRX_XA_LAZY_INIT=1
+[NDRX_XA_FLAGS=[FSYNC|FDATASYNC][;DSYNC]]
+--------------------------------------------------------------------------------
+
+DESCRIPTION
+-----------
+This is Enduro/X *tmqueue(8)* XA driver loader and actual disk based message
+queue driver. When library is started, it prepare the following directories,
+under the *NDRX_XA_OPEN_STR:*
+
+- 'NDRX_XA_OPEN_STR'/*active* - used for active command block files. File names
+contain global transaction id with sequence number suffix.
+
+- 'NDRX_XA_OPEN_STR'/*prepared* - used for prepared command block files. File names
+contain global transaction id with sequence number suffix.
+
+- 'NDRX_XA_OPEN_STR'/*committed* - used for committed command block files. File
+names are set to message id. Here only message files are stored, and no other
+command blocks (.e.g. nor delete, nor update files).
+
+Command block files have following types:
+
+- New message, including message blob.
+
+- Update message command file (used for automatic forward queue updates). Contains
+updated header information to replace in message file.
+
+- Delete message (after dequeue).
+
+Each command block file refers to one message only, thus sequence numbers are
+used for keeping them linked to one global. Thought this architecture partially 
+breaks the Atomicity property of ACID, as committed or rollbacked messages
+in queue appears one by one, instead of all by once.
+
+*NDRX_XA_FLAGS* configuration:
+
+- Set flag *FSYNC* to ensure the enqueued message contents are flushed to disk.
+
+- Set flag *FDATASYNC* instead of *FSYNC*, to ensure that message contents are
+persisted to disk, but file modification time stamps are not updated (for
+faster flushing reasons).
+
+- Conditionally set *DSYNC* (for Linux and Solaris), to synchronize file system
+contents to disk when new message file is created. For other operating systems,
+please consult with vendor manuals, when directory must flushed (fsync()) in order
+to persist the new file.
+
+- The default approach by tmqueue disk queue driver is to use fflush() unix call
+to submit changes to OS kernel, instead to disk.
+
+NB: If using *FSYNC*, *FDATASYNC*, *DSYNC* expect performance impact of the
+message processing.
+
+Operations with disk are following for *tpenqueue(3)*:
+
+- New file containing the new message command block (including message buffer content)
+is create in *active* directory. If configured *FSYNC* or *FDATASYNC* flags, 
+the file contents are synchronized to disk with fsync() or fdatasync(). File
+name corresponds to global transaction id, with "-NNN" suffix, where NNN is command
+block sequence number in the transactions.
+
+- When prepare happens (tpcommit() issued), command file (new message) is 
+moved to *prepared* directory, if *DSYNC* flag is set, fsync() call is 
+used to synchronize directory to disk.
+
+- When commit happens from 2PC, message file is moved to *committed* directory.
+If *DSYNC* is set, directory is synchronized with fsync(). During the move of
+the message files, the file is renamed to match the message id, instead of 
+transaction id.
+
+Operations with disk are following for *tpdequeue(3)*:
+
+- New file containing delete message command block file is create in *active* directory. 
+If configured *FSYNC* or *FDATASYNC* flags, the file contents are synchronized 
+to disk with fsync() or fdatasync(). File name corresponds to global transaction id, 
+with "-NNN" suffix, where NNN is command block sequence number in the transactions.
+
+- When prepare happens (tpcommit()), command file (delete message) is 
+moved to *prepared* directory, if *DSYNC* flag is set, fsync() call is 
+used to synchronize directory to disk.
+
+- When commit happens of 2PC, the dequeued message is removed from *committed*
+directory. If *DSYNC* is set, *committed* directory is synchronized with disk. 
+Afterwards command block of delete message is removed from *prepared* directory.
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tmqueue(8)* *ndrxconfig.xml(5)* *tmsrv(8)* *ex_env(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

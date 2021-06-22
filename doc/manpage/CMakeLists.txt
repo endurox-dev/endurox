@@ -43,7 +43,7 @@ set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            viewc buildclient buildserver buildtms exencrypt exdecrypt libcryptohost
            edb_dump edb_copy edb_stat edb_load tpcachebtsv tpcached tpcachesv
            libndrxxapq libndrxxaecpg libndrxxawsmqs libndrxxaoras tpadmsv libndrxxanulls
-           libndrxxatmsx)
+           libndrxxatmsx exbenchcl exbenchsv libndrxxaqdisks)
 
 set(HTML_FILES ${MAN5_NAMES} ${MAN8_NAMES})
 

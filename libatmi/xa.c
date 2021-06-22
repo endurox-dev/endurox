@@ -246,6 +246,7 @@ expublic int atmi_xa_init(void)
      * at xa_start allow to retry with xa_close(), xa_open() and xa_start.
      */
     NDRX_LOG(log_debug, "xa_flags = [%s]", G_atmi_env.xa_flags);
+    G_atmi_env.xa_fsync_flags=0;
     if (EXEOS!=G_atmi_env.xa_flags[0])
     {
         char *tag_ptr;
@@ -365,6 +366,21 @@ expublic int atmi_xa_init(void)
             {
                 NDRX_LOG(log_warn, "NOSUSPEND flag found");
                 ndrx_xa_nosuspend(EXTRUE);
+            }
+            else if (0==strcmp(tag_token, NDRX_XA_FLAG_FSYNC))
+            {
+                NDRX_LOG(log_warn, "XA FSYNC flag found");
+                G_atmi_env.xa_fsync_flags|=NDRX_FSYNC_FSYNC;
+            }
+            else if (0==strcmp(tag_token, NDRX_XA_FLAG_FDATASYNC))
+            {
+                NDRX_LOG(log_warn, "XA FDATASYNC flag found");
+                G_atmi_env.xa_fsync_flags|=NDRX_FSYNC_FDATASYNC;
+            }
+            else if (0==strcmp(tag_token, NDRX_XA_FLAG_DSYNC))
+            {
+                NDRX_LOG(log_warn, "XA DSYNC flag found");
+                G_atmi_env.xa_fsync_flags|=NDRX_FSYNC_DSYNC;
             }
 
         } /* for tag.. */
@@ -1626,7 +1642,7 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
     int was_join = EXFALSE;
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_warn, "ax_reg called");
+    NDRX_LOG(log_info, "ax_reg called");
     if (NULL==G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "ERROR: No global transaction registered "
@@ -1667,7 +1683,7 @@ out:
  */
 int ax_unreg(int rmid, long flags)
 {
-    NDRX_LOG(log_warn, "ax_unreg called");
+    NDRX_LOG(log_info, "ax_unreg called");
     return EXSUCCEED;
 }
 

@@ -94,6 +94,9 @@ expublic void background_unlock(void)
 
 /**
  * Read the logfiles from the disk (if any we have there...)
+ * MUST be during the startup, otherwise if front services start to
+ * work, we might re-parse online logs, and for example we might switch the
+ * status to ABORTING... if one was preparing...
  * @return 
  */
 expublic int background_read_log(void)
@@ -150,7 +153,7 @@ expublic int background_read_log(void)
                    NDRX_LOG(log_error, "Failed to resume transaction: [%s]", 
                        fnamefull);
                    NDRX_FREE(namelist[n]); /* mem leak fixes */
-                   ret=EXFAIL;
+                   /* ret=EXFAIL; ??? */
                    continue;
                }
                
@@ -298,10 +301,10 @@ expublic void * background_process(void *arg)
     
     tm_thread_init();
     
-   /* 1. Read the transaction records from disk */ 
-    background_read_log();
+/*    background_read_log();*/
     
-   /* 2. Loop over the transactions and:
+    
+   /* Loop over the transactions and:
     * - Check for in-progress timeouts
     * - Try to abort abortable
     * - Try co commit commitable
@@ -325,6 +328,20 @@ expublic int background_process_init(void)
 {
     int ret=EXSUCCEED;
     pthread_attr_t pthread_custom_attr;
+    
+    /* Read the transaction records from disk
+     * shall be done before services open
+     * otherwise we might start to read logs
+     * from online txns, and if they are preparing,
+     * we might set here them to aborting..
+     */ 
+    if (EXSUCCEED!=background_read_log())
+    {
+        NDRX_LOG(log_error, "Failed to recover logs");
+        userlog("Failed to recover logs");
+        EXFAIL_OUT(ret);
+    }
+    
     pthread_attr_init(&pthread_custom_attr);
     /* clean up resources after exit.. 
     pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);

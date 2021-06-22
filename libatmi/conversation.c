@@ -1282,8 +1282,11 @@ out:
 
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
-        if (TPEV_DISCONIMM == *revent ||  TPEV_SVCERR == *revent ||  
-                TPEV_SVCFAIL == *revent)
+        if ( (TPEV_DISCONIMM == *revent ||  TPEV_SVCERR == *revent ||  
+                TPEV_SVCFAIL == *revent) && 
+                /* Only if not already aborted. */
+                !(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+            )
         {
              NDRX_LOG(log_warn, "tprcv error (revent=%ld) - mark "
                      "transaction as abort only!", *revent);
@@ -1296,8 +1299,11 @@ out:
         if (0==strcmp(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid, rply->tmxid))
                 
         {
-            if (rply->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+            if (rply->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY &&
+                    !(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+                    )
             {
+                NDRX_LOG(log_warn, "Mark transaction as abort only from reply!");
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
             }
             
@@ -1308,6 +1314,8 @@ out:
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
                         rply->tmknownrms))
             {
+                NDRX_LOG(log_warn, "Failed to update known RMS: mark "
+                     "transaction as abort only!");
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
                 ret=EXFAIL;
             }
