@@ -1,0 +1,76 @@
+EXBENCHSV(8)
+============
+:doctype: manpage
+
+
+NAME
+----
+exbenchsv - Enduro/X benchmark tool responder service
+
+
+SYNOPSIS
+--------
+exbenchsv ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+
+This is dummy echo responder service used as back-end for *exbenchcl(8)* tool
+responder. The service just returns succeed response with the same buffer for
+very service call. Default service name advertised is *EXBENCH*. The service
+works with any XATMI buffer type.
+
+OPTIONS
+-------
+[*-N* 'CALL_SERVICE_NAME']::
+Number of service names to advertise. If parameter is not set, then common
+service name is advertised, either default or a value provided by *-s* flag.
+If parameter is set, and is > 0, the service name is appended with NNN formatted
+number which is calculated as Server ID modulus 1000 modulus 'CALL_SERVICE_NAME'
+(i.e.: (tpgetsrvid() % 1000) % svcnum). Thus it is possible to boot several
+service names, with having several servers advertising single service name.
+
+[*-s* 'SERVICE_NAME']::
+Service name to advertise. Default value is *EXBENCH*.
+
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+
+CONFIGURATION EXAMPLE
+---------------------
+
+Responder service in *ndrxconfig.xml(5)*:
+
+--------------------------------------------------------------------------------
+
+    <server name="exbenchsv">
+            <srvid>1800</srvid>
+            <min>15</min>
+            <max>15</max>
+            <sysopt>-e /tmp/EXBENCH</sysopt>
+    </server>
+
+--------------------------------------------------------------------------------
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+
+SEE ALSO
+--------
+*exbenchcl(8)* *ndrxconfig.xml(5)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

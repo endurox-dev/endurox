@@ -66,6 +66,14 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
 #define TMQ_AUTOQ_AUTOTX        'T' /**< Automatic, transactional           */
 #define TMQ_AUTOQ_ALLFLAGS      "NYT" /**< list of all flasg                */
 #define TMQ_AUTOQ_ISAUTO(X) ((TMQ_AUTOQ_AUTO==X) || (TMQ_AUTOQ_AUTOTX==X))
+
+
+#define TMQ_TXSTATE_ACTIVE      0   /**< Active message                     */
+#define TMQ_TXSTATE_PREPARED    1   /**< Prepared msg                       */
+#define TMQ_TXSTATE_COMMITTED   2   /**< Committed msg                      */
+
+#define TMQ_QUEUE_SERVICE       "@" /**< Special name when service matches queue name */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -88,6 +96,7 @@ typedef struct
     
     int fwdpoolsize;          /**< forwarder thread pool size               */
     threadpool fwdthpool;     /**< threads for forwarder                    */
+    long fsync_flags;         /**< special flags for disk sync              */
     
 } tmqueue_cfg_t;
 
@@ -157,6 +166,7 @@ struct tmq_qconfig
     int memonly;    /**< is queue memory only                           */
     char mode;      /**< queue mode fifo/lifo                           */
     int txtout;     /**< transaction timeout (override if > -1)         */
+    char errorq[TMQNAMELEN];     /**< Error queue name, optional        */
     
     EX_hash_handle hh; /**< makes this structure hashable               */
 };
@@ -213,7 +223,7 @@ extern void thread_shutdown(void *ptr, int *p_finish_off);
 /* Q space api: */
 extern int tmq_reload_conf(char *cf);
 extern int tmq_qconf_addupd(char *qconfstr, char *name);
-extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery);
+extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
 extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, char *diagmsg, size_t diagmsgsz);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
@@ -222,7 +232,7 @@ extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
-extern int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf);
+extern int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, size_t out_bufsz);
 extern tmq_memmsg_t *tmq_get_msglist(char *qname);
     
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);

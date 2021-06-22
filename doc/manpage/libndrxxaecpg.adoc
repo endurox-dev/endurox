@@ -232,7 +232,7 @@ int main(int argc, char** argv)
 
     if (SUCCEED!=tpcommit(0))
     {
-        fprintf(stderr, "TESTERROR: Commit OK, must fail!\n");
+        fprintf(stderr, "Commit failed: %s\n", tpstrerror(tperrno));
         ret = FAIL;
         goto out;
     }
@@ -341,7 +341,7 @@ int main(int argc, char** argv)
     
     if (SUCCEED!=tpcommit(0))
     {
-        fprintf(stderr, "TESTERROR: Commit OK, must fail!\n");
+        fprintf(stderr, "Commit failed: %s\n", tpstrerror(tperrno));
         ret = FAIL;
         goto out;
     }

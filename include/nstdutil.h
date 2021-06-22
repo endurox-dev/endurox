@@ -121,7 +121,23 @@ extern "C" {
  * Test mode is used...
  */
 #define NDRX_STDF_TEST              0x00000001  /**< This is test mode      */
+
+
+/**
+ * File syncing config / library
+ * @defgroup fsync
+ * @{
+ */    
+#define NDRX_FSYNC_FSYNC            0x00000001  /**< Sync mode fsync     */
+#define NDRX_FSYNC_FSYNC_STR        "fsync"     /**< config keyword      */
     
+#define NDRX_FSYNC_FDATASYNC        0x00000002  /**< Sync mode fdatasync */
+#define NDRX_FSYNC_FDATASYNC_STR    "fdatasync" /**< config keyword      */
+
+#define NDRX_FSYNC_DSYNC            0x00000004  /**< Sync folders        */
+#define NDRX_FSYNC_DSYNC_STR        "dsync"     /**< config keyword      */
+/** @} */ /* end of fsync */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -367,12 +383,12 @@ extern NDRX_API int ndrx_is_numberic(char *str);
 
 extern NDRX_API void ndrx_read_silent(char *buf, size_t bufsz);
 extern NDRX_API int ndrx_get_password(char *msg, char *buf, size_t bufsz);
-extern NDRX_API void ndrx_str_trim_single_right(char *input, char symb);
-extern NDRX_API void ndrx_str_trim_single_left(char *input, char symb);
+extern NDRX_API void ndrx_str_trim_left_single(char *input, char symb);
 extern NDRX_API void ndrx_str_unescape(char *input, char *symbs);
 extern NDRX_API char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs);
 extern NDRX_API int ndrx_str_valid_cid(char *str, int max_len);
 extern NDRX_API int ndrx_str_ends_with(char *str, char *needle);
+extern NDRX_API long ndrx_file_age(char *fname);
 
 /* String handling, where macros does not work: */
 
@@ -387,6 +403,11 @@ extern NDRX_API void ndrx_strncpy_eos(char *dest, const char *src, size_t n, siz
 extern NDRX_API void ndrx_strcat_s(char *dest, size_t dst_size, const char *src);
 
 /** @} */ /* end of stringops */
+
+extern NDRX_API int ndrx_fsync_dsync(char *dir, long flags);
+extern NDRX_API int ndrx_fsync_fsync(FILE *file, long flags);
+extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
+
 
 #ifdef	__cplusplus
 }

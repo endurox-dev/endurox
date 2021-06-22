@@ -155,6 +155,7 @@ extern "C" {
 #define NDRX_XA_ERSN_UBFERR         2007   /**< UBF Error                     */
 #define NDRX_XA_ERSN_RMERR          2008   /**< Resource Manager Failed       */
 #define NDRX_XA_ERSN_TPENOENT       2009   /**< TMSRV is unavailable          */
+#define NDRX_XA_ERSN_INPROGRESS     2010   /**< Action already in progress    */
 
     
 #define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */
@@ -187,11 +188,14 @@ extern "C" {
 }
 
 #define NDRX_XA_FLAG_NOJOIN         "NOJOIN"      /**< XA Switch does not support TMJOIN mode  */
-#define NDRX_XA_FLAG_NOSTARTXID     "NOSTARTXID"  /**< No XID in start call to RM  */
-#define NDRX_XA_FLAG_NOSUSPEND      "NOSUSPEND"   /**< No automatic suspend          */
+#define NDRX_XA_FLAG_NOSTARTXID     "NOSTARTXID"  /**< No XID in start call to RM      */
+#define NDRX_XA_FLAG_NOSUSPEND      "NOSUSPEND"   /**< No automatic suspend            */
 #define NDRX_XA_FLAG_RECON          "RECON"       /**< Reconnect on tpbegin(), xa_start() if fails */
-#define NDRX_XA_FLAG_RECON_TEST     "RECON:"      /**< Test the line                       */
+#define NDRX_XA_FLAG_RECON_TEST     "RECON:"      /**< Test the line                   */
 #define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32    /**< List of error codes for retry   */
+#define NDRX_XA_FLAG_FSYNC          "FSYNC"       /**< Perform Fsync                   */
+#define NDRX_XA_FLAG_FDATASYNC      "FDATASYNC"   /**< Perform Fdatasync               */
+#define NDRX_XA_FLAG_DSYNC          "DSYNC"       /**< Perform directory sync          */
     
 /**< Escape JSON strings to handler invalid UTF-8 */
 #define NDRX_APIFLAGS_JSONESCAPE        0x00000001
@@ -248,6 +252,61 @@ extern "C" {
     
     
 #define NDRX_MBUF_FLAG_NOCALLINFO   0x00000001  /**< Do not serialize callinfo  for mbuf*/
+/**
+ * XATMI IPC internal flags (i.e. value for sysflags fields of the atmi call structs)
+ * @defgroup sysflags
+ * @{
+ */
+#define SYS_FLAG_REPLY_ERROR    0x00000001
+#define SYS_CONVERSATION        0x00000002 /**< We have or was open conversation      */
+/* buffer management flags: */
+#define NDRX_SYS_SRV_THREAD     SYS_SRV_THREAD /**< value from xatmi.h                */
+#define SYS_SRV_CVT_JSON2UBF    0x00000008 /**< Message is converted from JSON to UBF */
+#define SYS_SRV_CVT_UBF2JSON    0x00000010 /**< Message is converted from UBF to JSON */
+
+#define SYS_SRV_CVT_JSON2VIEW   0x00000020 /**< Message is converted from JSON to VIEW */
+#define SYS_SRV_CVT_VIEW2JSON   0x00000040 /**< Message is converted from UBF to JSON (non NULL)*/
+#define SYS_FLAG_AUTOTRAN       0x00000100 /**< Auto transaction started               */
+/* Test is any flag set */
+#define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON ||\
+        X & SYS_SRV_CVT_JSON2VIEW || X & SYS_SRV_CVT_VIEW2JSON)
+    
+/** @} */ /* sysflags */
+
+    
+/** tpcall() abort only check start */
+#define NDRX_ABORT_START(IS_ABORT_ONLY) \
+/* Do not abort, if TPNOTRAN specified. */ \
+    /* Feature #299 */ \
+    if ( !(flags & TPNOTRAN) && !(flags & TPNOABORT) && \
+	G_atmi_tls->G_atmi_xa_curtx.txinfo && \
+        /* no abort if already aborted */ \
+        !(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY) && \
+	(EXSUCCEED!=ret || IS_ABORT_ONLY)) \
+    { \
+        int abort_needed = EXTRUE; \
+        switch (tperrno) \
+        { \
+            case TPENOENT: \
+            case TPEBADDESC: \
+            case TPEINVAL: \
+            case TPEITYPE: \
+            case TPEBLOCK: \
+                NDRX_LOG(log_info, "No abort marking needed"); \
+                abort_needed=EXFALSE; \
+                break; \
+        }
+
+/** tpcall() abort only end block*/
+#define NDRX_ABORT_END(IS_ABORT_ONLY) \
+        if (abort_needed) \
+        { \
+            NDRX_LOG(log_warn, "Marking current transaction as abort only!"); \
+            /* later should be handled by transaction initiator! */ \
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY; \
+        } \
+    }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -446,9 +505,11 @@ struct atmi_lib_env
      */
     int    test_qdisk_write_fail;   /**< Simulate disk write failure, queue    */
     int    test_tmsrv_write_fail;   /**< Simulate disk write failure, tmsrv    */
-    int    test_tmsrv_commit_crash; /**< Simualte commit crash                */
+    int    test_tmsrv_commit_crash; /**< Simualte commit crash                 */
     
     /**@}*/
+    
+    long xa_fsync_flags;            /** Special tmqueue flags                  */
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 

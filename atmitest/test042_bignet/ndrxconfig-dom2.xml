@@ -65,8 +65,15 @@
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
-            <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
             <appopt>-n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0</appopt>
+        </server>
+	<server name="tpbridge">
+            <min>0</min>
+            <max>1</max>
+            <srvid>200</srvid>
+            <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
+            <appopt>-n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0 -f</appopt>
         </server>
     </servers>
 </endurox>

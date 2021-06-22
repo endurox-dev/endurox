@@ -28,9 +28,11 @@ described by type. When caller receives response, it is stored in 'odata'
 buffer which must be also allocated by *tpcalloc()*. If the allocated buffer 
 size is shorter then received one, then Enduro/X will automatically realloc the 
 buffer to new size. 'olen' is mandatory field, where the received buffer length 
-is stored. If *TPNOTRAN* is not specified and current process is in global 
+is stored. If *TPNOTRAN* is not specified and current thread is in global 
 transaction, then system will make destination process run in 
-same destination process.
+same destination process. In case of error, global transaction (if associated 
+with current thread) is marked for abort, except if *TPNOABORT* flag was 
+specified or particular error code indicates that global transaction is not aborted.
 
 *Valid flags*
 
@@ -74,10 +76,14 @@ Note that *tpstrerror()* returns generic error message plus custom message with
 debug info from last function call.
 
 *TPEINVAL* Invalid parameter is given to function. Either service name is NULL.
+Global transaction is not marked for abort only, if one was associated 
+with current thread.
 
 *TPEOTYPE* Flags does not allow to change the response buffer type.
 
 *TPENOENT* No service ('svc' parameter) advertised in system.
+Global transaction is not marked for abort only, if one was associated 
+with current thread.
 
 *TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
 
@@ -95,13 +101,16 @@ when reply was received, transaction was expired at *tmsrv(8)*.
 or debugs for more info.
 
 *TPEBLOCK* Service request queue was full and *TPNOBLOCK* flag was specified.
+Global transaction is not marked for abort only, if one was associated 
+with current thread.
 
 *TPETRAN* Called service is configured as auto-tran, but internal *tpbegin(3)*
 at XATMI server code failed. Or server failed to join global transaction. See
 reasons in log file.
 
 *TPEITYPE* There was problem with XATMI data type buffer, not supported by service
-or corrupted.
+or corrupted. Global transaction is not marked for abort only, if one was associated 
+with current thread.
 
 EXAMPLE
 -------

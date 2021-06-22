@@ -46,19 +46,22 @@ extern "C" {
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Macros-------------------------------------*/
-#define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs */
+#define SCAN_TIME_DFLT          10  /* Every 10 sec try to complete TXs    */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
-#define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec   */
+#define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec  */
 #define THREADPOOL_DFLT         10  /* Default number of threads spawned   */
 
 #define XA_RETRIES_DFLT         3   /* number of foreground retries */
 
-#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements   */
-#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements   */
-#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?      */
+#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements  */
+#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements  */
+#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?     */
 
 
 #define NDRX_LOCK_WAIT_TIME         5000    /**< lock wait time b4 give up */
+
+
+#define TMSRV_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min  */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -68,20 +71,23 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
  */
 typedef struct
 {
-    long dflt_timeout; /* how long monitored transaction can be open        */
+    long dflt_timeout; /**, how long monitored transaction can be open        */
     char tlog_dir[PATH_MAX]; /* Where to write tx log files                 */
-    int scan_time;      /* Number of seconds retries */
-    long max_tries;      /* Number of tries for running session for single 
+    int scan_time;      /**< Number of seconds retries */
+    long max_tries;      /**< Number of tries for running session for single 
                          * transaction, until stop processing it 
                          * (in this process session) */
-    int tout_check_time; /* seconds used for detecting transaction timeout   */
-    int threadpoolsize; /* thread pool size */
-    /* Number of foreground retries in stage for XA_RETRY */
+    int tout_check_time; /**< seconds used for detecting transaction timeout   */
+    int threadpoolsize; /**< thread pool size */
+    /** Number of foreground retries in stage for XA_RETRY */
     int xa_retries;
     
-    int ping_time; /* Number of seconds for interval of doing "pings" to db */
-    int ping_mode_jointran; /* PING with join non existent transaction */
+    int ping_time; /**< Number of seconds for interval of doing "pings" to db */
+    int ping_mode_jointran; /**< PING with join non existent transaction */
     threadpool thpool;
+    
+    int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
+    
 } tmsrv_cfg_t;
 
 struct thread_server
@@ -118,7 +124,7 @@ extern void tms_close_logfile(atmi_xa_log_t *p_tl);
 extern void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm);
 extern void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm);
 extern int tms_log_info(atmi_xa_log_t *p_tl);
-extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage);
+extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced);
 extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt, 
         char rmstatus, int rmerrorcode, short rmreason);
 extern int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl);

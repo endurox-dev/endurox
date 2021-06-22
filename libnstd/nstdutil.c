@@ -48,6 +48,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <fcntl.h>
+#include <sys_unix.h>
 #include <nstd_tls.h>
 #include <termios.h>
 #include <nstdutil.h>
@@ -2267,6 +2268,41 @@ expublic int ndrx_str_ends_with(char *str, char *needle)
     int len_needle = strlen(needle);
     
     return  (len_str >= len_needle) && (0 == strcmp(str + (len_str-len_needle), needle));
+}
+
+/**
+ * Return file age in seconds
+ * @param fname file name to check
+ * @return (-1 on failure) or number of seconds of file age
+ */
+expublic long ndrx_file_age(char *fname)
+{
+    struct stat buf;
+    struct timespec tm;
+    struct timespec tm2;
+    long diff=EXFAIL;
+    
+        /* get the age of the file */
+    if (EXSUCCEED!=stat(fname, &buf))
+    {
+        NDRX_LOG(log_error, "Failed to stat [%s]: %s", fname, strerror(errno));
+        goto out;
+    }
+    
+    clock_gettime(CLOCK_REALTIME, &tm);
+
+#ifdef EX_OS_DARWIN
+    diff = ndrx_timespec_get_delta(&tm, &buf.st_ctimespec) / 1000;
+#elif EX_OS_AIX
+    tm2.tv_sec = buf.st_ctime;
+    tm2.tv_nsec = buf.st_ctime_n;
+    diff = ndrx_timespec_get_delta(&tm, &tm2) / 1000;
+#else
+    diff = ndrx_timespec_get_delta(&tm, &buf.st_ctim) / 1000;
+#endif
+    
+out:
+    return diff;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

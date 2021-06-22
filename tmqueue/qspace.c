@@ -82,6 +82,7 @@
 #define TMQ_QC_MEMONLY          "memonly"
 #define TMQ_QC_MODE             "mode"
 #define TMQ_QC_TXTOUT           "txtout"    /**< transaction timeout override */
+#define TMQ_QC_ERRORQ           "errorq"    /**< Name of the error queue, opt */
 
 #define EXHASH_FIND_STR_H2(head,findstr,out)                                     \
     EXHASH_FIND(h2,head,findstr,strlen(findstr),out)
@@ -202,6 +203,10 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     if (0==strcmp(key, TMQ_QC_SVCNM))
     {
         NDRX_STRCPY_SAFE(qconf->svcnm, value);
+    }
+    else if (0==strcmp(key, TMQ_QC_ERRORQ))
+    {
+        NDRX_STRCPY_SAFE(qconf->errorq, value);
     }
     else if (0==strcmp(key, TMQ_QC_TRIES))
     {
@@ -370,20 +375,23 @@ exprivate tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defa
  * Return string version of Q config
  * @param qname
  * @param p_is_defaulted
- * @return 
+ * @param out_buf space where to print queue config
+ * @param out_bufsz output buffer size
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
+expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, size_t out_bufsz)
 {
     tmq_qconfig_t * qdef = NULL;
     int ret = EXSUCCEED;
     
     MUTEX_LOCK_V(M_q_lock);
+
     if (NULL==(qdef=tmq_qconf_get_with_default(qname, p_is_defaulted)))
     {
         EXFAIL_OUT(ret);
     }
     
-    sprintf(out_buf, "%s,svcnm=%s,autoq=%c,tries=%d,waitinit=%d,waitretry=%d,"
+    snprintf(out_buf, out_bufsz, "%s,svcnm=%s,autoq=%c,tries=%d,waitinit=%d,waitretry=%d,"
                         "waitretryinc=%d,waitretrymax=%d,mode=%s,txtout=%d",
             qdef->qname, 
             qdef->svcnm, 
@@ -395,6 +403,12 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
             qdef->waitretrymax,
             qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo",
             qdef->txtout);
+
+    if (EXEOS!=qdef->errorq[0])
+    {
+        int len = strlen(out_buf);
+        snprintf(out_buf+len, out_bufsz-len, ",errorq=%s", qdef->errorq);
+    }
 
 out:
     MUTEX_UNLOCK_V(M_q_lock);
@@ -556,8 +570,8 @@ out:
  */
 expublic int tmq_qconf_addupd(char *qconfstr, char *name)
 {
-    tmq_qconfig_t * qconf;
-    tmq_qconfig_t * dflt;
+    tmq_qconfig_t * qconf=NULL;
+    tmq_qconfig_t * dflt=NULL;
     char * p;
     char * p2;
     int got_default = EXFALSE;
@@ -736,9 +750,10 @@ out:
  * In two phase commit mode, we need to unlock message only when it is enqueued on disk.
  * 
  * @param msg double ptr to message
+ * @param diag qctl for diag purposes.
  * @return 
  */
-expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
+expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
 {
     int ret = EXSUCCEED;
     int is_locked = EXFALSE;
@@ -766,6 +781,13 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
     {
         NDRX_LOG(log_error, "queue config not found! Cannot enqueue!");
         userlog("queue config not found! Cannot enqueue!");
+        
+        if (NULL!=diag)
+        {
+            diag->diagnostic = QMEBADQUEUE;
+            snprintf(diag->diagmsg, sizeof(diag->diagmsg), "Queue [%s] not defined",
+                    (*msg)->hdr.qname);
+        }
         EXFAIL_OUT(ret);
     }
     
@@ -854,6 +876,14 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
             if (EXSUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
             {
                 NDRX_LOG(log_error, "Failed to add message to persistent store!");
+                
+                /* set the OS error */
+                if (NULL!=diag)
+                {
+                    diag->diagnostic = QMEOS;
+                    snprintf(diag->diagmsg, sizeof(diag->diagmsg), "Failed to persist msg");
+                }
+                
                 EXFAIL_OUT(ret);
             }
         }
@@ -863,7 +893,9 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
         NDRX_LOG(log_info, "Mem only Q, not persisting.");   
     }
     
-    /* Add only if all OK */
+    /* Add only if all OK 
+     * Note locked here...
+     */
     MUTEX_LOCK_V(M_q_lock);
     qhash->numenq++;
     MUTEX_UNLOCK_V(M_q_lock);
@@ -877,7 +909,14 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery)
     *msg = NULL;
     
 out:
+     
                 
+    if (is_locked)
+    {
+        MUTEX_UNLOCK_V(M_q_lock);
+        is_locked=EXFALSE;   
+    }
+
     /* NOT SURE IS THIS GOOD as this might cause segmentation fault.
      * as added to mem, but failed to write to disk.
      * Message will be kept locked, thus we can free it.
@@ -886,7 +925,6 @@ out:
      */
     if (EXSUCCEED!=ret && mmsg!=NULL)
     {
-        
         /* remove messages hashes, due to failure */
         MUTEX_LOCK_V(M_q_lock);
         
@@ -909,11 +947,6 @@ out:
         
         NDRX_FREE(mmsg);
         mmsg=NULL;
-    }
-
-    if (is_locked)
-    {
-        MUTEX_UNLOCK_V(M_q_lock);
     }
 
     /* free up message, if it is not used anymore. */
@@ -996,11 +1029,13 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     tmq_msg_del_t block;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_qconfig_t *qconf;
+    int is_locked=EXFALSE;
     
     *diagnostic=EXSUCCEED;
     
     NDRX_LOG(log_debug, "FIFO/LIFO dequeue for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
+    is_locked=EXTRUE;
     
     /* Find the non locked message in memory */
     
@@ -1009,19 +1044,25 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
      * - Increase counter
      * - Remove the message.
      */
-    if (NULL==(qhash = tmq_qhash_get(qname)))
-    {
-        NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
-        goto out;
-    }
     
     if (NULL==(qconf=tmq_qconf_get_with_default(qname, NULL)))
     {
         
         NDRX_LOG(log_error, "Failed to get q config [%s]", 
                 qname);
+        
+        *diagnostic=QMEBADQUEUE;
+        snprintf(diagmsg, diagmsgsz, "Queue [%s] not defined", qname);
+        
         goto out;
     }
+    
+    if (NULL==(qhash = tmq_qhash_get(qname)))
+    {
+        NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
+        goto out;
+    }
+    
     NDRX_LOG(log_debug, "mode: %s", TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
     
     /* Start from first one & loop over the list while 
@@ -1088,6 +1129,9 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
     
+    MUTEX_UNLOCK_V(M_q_lock);
+    is_locked=EXFALSE;
+    
     /* Is it must not be a peek and must not be an autoq */
     if (!(flags & TPQPEEK) && !is_auto)
     {   
@@ -1100,7 +1144,10 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
+            MUTEX_LOCK_V(M_q_lock);
             ret->lockthreadid = 0;
+            MUTEX_UNLOCK_V(M_q_lock);
+            
             ret = NULL;
             *diagnostic=QMEOS;
             NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
@@ -1109,7 +1156,11 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     }
     
 out:
-    MUTEX_UNLOCK_V(M_q_lock);
+        
+    if (is_locked)
+    {
+        MUTEX_UNLOCK_V(M_q_lock);
+    }
 
     /* set default error code */
     if (NULL==ret && EXSUCCEED==*diagnostic)
@@ -1161,6 +1212,9 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     memcpy(&del.hdr, &ret->hdr, sizeof(ret->hdr));
     
     del.hdr.command_code = TMQ_STORCMD_DEL;
+    
+    
+    /* TODO: Unlock here?  */
     
     if (!(flags & TPQPEEK))
     {
@@ -1228,6 +1282,9 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags, long *dia
     
     /* Issue command for msg remove */
     memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
+    
+    
+    /* TODO: Unlock here?  */
     
     if (!(flags & TPQPEEK))   
     {    
@@ -1465,9 +1522,10 @@ out:
 /**
  * Process message blocks on disk read (after cold startup)
  * @param p_block
- * @return 
+ * @param state TMQ_TXSTATE_ according to 
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate int process_block(union tmq_block **p_block)
+exprivate int process_block(union tmq_block **p_block, int state)
 {
     int ret = EXSUCCEED;
     
@@ -1475,8 +1533,7 @@ exprivate int process_block(union tmq_block **p_block)
     {
         case TMQ_STORCMD_NEWMSG:
             
-            
-            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE))
+            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE, NULL))
             {
                 NDRX_LOG(log_error, "Failed to enqueue!");
                 EXFAIL_OUT(ret);
@@ -1484,11 +1541,21 @@ exprivate int process_block(union tmq_block **p_block)
             
             break;
         default:
+            
             if (EXSUCCEED!=tmq_lock_msg((*p_block)->hdr.msgid))
             {
-                NDRX_LOG(log_error, "Failed to lock message!");
-                EXFAIL_OUT(ret);
+                if (TMQ_TXSTATE_PREPARED==state 
+                        && TMQ_STORCMD_DEL==(*p_block)->hdr.command_code)
+                {
+                    NDRX_LOG(log_info, "Delete command and message not found - assume deleted");
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Failed to lock message!");
+                    EXFAIL_OUT(ret);
+                }
             }
+            
             break;
     }
     

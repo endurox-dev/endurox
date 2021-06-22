@@ -266,7 +266,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -s <svcnm>       Service to call\n");
     fprintf(stderr, "  -t <time>        Number of seconds to run\n");
     fprintf(stderr, "  -f <fldnm>       Ubf field name to fill with random data\n");
-    fprintf(stderr, "  -b <data>        Initial data. For UBF it is JSON\n");
+    fprintf(stderr, "  -b <data>        Initial UBF data. In tpjsontoubf() format.\n");
     fprintf(stderr, "  -S <size>        Random data size, default 1024\n");
     fprintf(stderr, "  -F               Use forking instead of threading\n");
     fprintf(stderr, "  -N <svcnum>      Number of services\n");
@@ -300,12 +300,16 @@ expublic int main( int argc, char** argv )
      * -S <random_data_size>
      * -P - do plot
      * -p <call_priority>
-     * -B <buffer type UBF, STRING, etc..)
      * -F - use forking mode
      * -N <number_of_services_modulus>
      */
     
-    while ((c = getopt (argc, argv, "n:s:t:b:r:S:p:B:Pf:FN:Q:AER:")) != -1)
+    /* Currently Only UBF is supported
+     * TODO: in future releases use tpimport() to teterminte the buffer format
+     */
+    M_buftype = ndrx_get_buffer_descr("UBF", NULL);
+
+    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:")) != -1)
     {
         switch (c)
         {
@@ -326,9 +330,6 @@ expublic int main( int argc, char** argv )
                 break;
             case 'F':
                 M_fork = EXTRUE;
-                break;
-            case 'B':
-                M_buftype = ndrx_get_buffer_descr(optarg, NULL);
                 break;
             case 'p':
                 M_prio = atoi(optarg);
@@ -409,7 +410,7 @@ expublic int main( int argc, char** argv )
         EXFAIL_OUT(ret);
     }
     
-    M_master_buf = tpalloc(M_buftype->type, NULL, M_rndsize*2);
+    M_master_buf = tpalloc(M_buftype->type, NULL, 1024 + M_rndsize*2);
     
     if (NULL==M_master_buf)
     {
@@ -463,7 +464,7 @@ expublic int main( int argc, char** argv )
     
     if (!getenv("NDRX_BENCH_CONFIGNAME"))
     {
-        snprintf(run_ver, sizeof(run_ver), "msg size: %d", M_msgsize);
+        snprintf(run_ver, sizeof(run_ver), "test");
         setenv("NDRX_BENCH_CONFIGNAME", run_ver, EXTRUE);
     }
     

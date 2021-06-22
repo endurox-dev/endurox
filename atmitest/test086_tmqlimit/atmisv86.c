@@ -1,7 +1,7 @@
 /**
- * @brief Postgres ECPG Connection
+ * @brief Service reply responder
  *
- * @file ecpg.c
+ * @file atmisv86.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,21 +31,16 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "atmi_shm.h"
-#include "utlist.h"
-
-#include <xa.h>
-#include <ecpglib.h>
-#include <pgxa.h>
-#include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -55,60 +50,53 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Perform connect
- * @param conndata parsed connection data
- * @param connname connection name
- * @return NULL (connection failed) or connection object
+ * Standard service entry
  */
-expublic PGconn * ndrx_pg_connect(ndrx_pgconnect_t *conndata, char *connname)
+void FAILSVC (TPSVCINFO *p_svc)
 {
-    PGconn *ret = NULL;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
     
-    NDRX_LOG(log_debug, "Establishing ECPG connection: [%s]", connname);
     
-    /* OK, try to open, with out autocommit please!
-     */
-    if (!ECPGconnect (__LINE__, conndata->c, conndata->url, conndata->user, 
-            conndata->password, connname, EXFALSE))
+    if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "RSP", 0))
     {
-        NDRX_LOG(log_error, "ECPGconnect failed, code %ld state: [%s]: %s", 
-                (long)sqlca.sqlcode, sqlca.sqlstate, sqlca.sqlerrm.sqlerrmc);
-        ret = NULL;
-        goto out;
+        NDRX_LOG(log_error, "TESTERROR: failed to update buffer: %s",
+            Bstrerror(Berror));
     }
     
-    ret = ECPGget_PGconn(connname);
-    if (NULL==ret)
-    {
-        NDRX_LOG(log_error, "Postgres error: failed to get PQ connection!");
-        ret = NULL;
-        goto out;
-    }
     
+out:
+    tpreturn(  TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Do initialisation
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    int ret = EXSUCCEED;
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("FAILSVC", FAILSVC))
+    {
+        NDRX_LOG(log_error, "Failed to initialise FAILSVC!");
+        EXFAIL_OUT(ret);
+    }
 out:
     return ret;
 }
 
 /**
- * disconnect from postgres
- * @param conn current connection object
- * @param connname connection name
- * @return EXSUCCEED/EXFAIL
+ * Do de-initialisation
  */
-expublic int ndrx_pg_disconnect(PGconn *conn, char *connname)
+void NDRX_INTEGRA(tpsvrdone)(void)
 {
-    int ret = EXSUCCEED;
-    
-    NDRX_LOG(log_debug, "Closing ECPG connection: [%s]", connname);
-    
-    if (!ECPGdisconnect(__LINE__, connname))
-    {
-        NDRX_LOG(log_error, "ECPGdisconnect failed: %s", 
-                PQerrorMessage(conn));
-        EXFAIL_OUT(ret);
-    }
-out:
-    return ret;
+    NDRX_LOG(log_debug, "tpsvrdone called");
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

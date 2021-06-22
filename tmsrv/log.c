@@ -332,6 +332,16 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
         EXFAIL_OUT(ret);
     }
     
+    /* if processing in background (say time-out rollback, the commit shall not be
+     * accepted)
+     */
+    if (p_tl->is_background || XA_TX_STAGE_ACTIVE!=p_tl->txstage)
+    {
+        NDRX_LOG(log_error, "cannot register xid [%s] is_background: (%d) stage: (%hd)", 
+                xai->tmxid, p_tl->is_background, p_tl->txstage);
+        EXFAIL_OUT(ret);
+    }
+    
     /*
     if (p_tl->rmstatus[rmid-1].rmstatus && NULL!=p_is_already_logged)
     {
@@ -527,7 +537,9 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     char *p;
     int line = 1;
     int got_term_last=EXFALSE, infos_ok=EXFALSE, missing_term_in_file=EXFALSE;
+    int do_housekeep = EXFALSE;
     int wrote, err;
+    long diff;
     *pp_tl = NULL;
     
     if (NULL==(*pp_tl = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
@@ -663,6 +675,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                             logfile);
                     userlog("TMSRV log file [%s] duplicate info block", 
                             logfile);
+                    do_housekeep=EXTRUE;
                     EXFAIL_OUT(ret);
                 }
                 
@@ -684,6 +697,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                             logfile);
                     userlog("TMSRV log file [%s] Info record required first", 
                             logfile);
+                    do_housekeep=EXTRUE;
                     EXFAIL_OUT(ret);
                 }
                 
@@ -701,6 +715,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                             logfile);
                     userlog("TMSRV log file [%s] Info record required first", 
                             logfile);
+                    do_housekeep=EXTRUE;
                     EXFAIL_OUT(ret);
                 }
                 
@@ -736,6 +751,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                     logfile, LOG_COMMAND_J);
         userlog("TMSRV log file [%s] no [%c] info record - not loading", 
                     logfile, LOG_COMMAND_J);
+        do_housekeep=EXTRUE;
         EXFAIL_OUT(ret);
     }
     
@@ -772,16 +788,11 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         }
     }
     
-    /* if not active, then no one waits for on as due to restart... 
-     * if we are still active, then there is chance that somebody will ask
-     * for completion.
+    /* thus it will start to drive it by background thread
+     * Any transaction will be completed in background.
      */
-    if (XA_TX_STAGE_ACTIVE != (*pp_tl)->txstage)
-    {
-        /* thus it will start to drive it by background thread
-         */
-        (*pp_tl)->is_background = EXTRUE;
-    }
+    (*pp_tl)->is_background = EXTRUE;
+    
     
     /* 
      * If we keep in active state, then timeout will kill the transaction (or it will be finished by in progress 
@@ -800,17 +811,18 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
      * We need to abort it because, there is no chance that caller will get
      * response back.
      */
-    if (XA_TX_STAGE_PREPARING == (*pp_tl)->txstage)
+    if (XA_TX_STAGE_PREPARING == (*pp_tl)->txstage 
+            || XA_TX_STAGE_ACTIVE == (*pp_tl)->txstage)
     {
-        NDRX_LOG(log_error, "XA Transaction [%s] was in preparing stage and "
+        NDRX_LOG(log_error, "XA Transaction [%s] was in active or preparing stage and "
                 "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
         
-        userlog("XA Transaction [%s] was in preparing stage and "
+        userlog("XA Transaction [%s] was in  active or preparing stage and "
                 "tmsrv is restarted - ABORTING", (*pp_tl)->tmxid);
         
         /* change the status (+ log) */
         (*pp_tl)->lockthreadid = ndrx_gettid();
-        tms_log_stage(*pp_tl, XA_TX_STAGE_ABORTING);
+        tms_log_stage(*pp_tl, XA_TX_STAGE_ABORTING, EXTRUE);
         (*pp_tl)->lockthreadid = 0;
     }
     
@@ -820,6 +832,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     
     NDRX_LOG(log_debug, "TX [%s] loaded OK", tmxid);
 out:
+
     /* Clean up if error. */
     if (EXSUCCEED!=ret)
     {
@@ -827,8 +840,34 @@ out:
         if (NULL!=*pp_tl)
         {
             /* remove any stuff added... */
+            
+            if (tms_is_logfile_open(*pp_tl))
+            {
+                tms_close_logfile(*pp_tl);
+            }
+            
             tms_remove_logfree(*pp_tl, EXFALSE);
             *pp_tl = NULL;
+        }
+    }
+
+    /* clean up corrupted files */
+    if (do_housekeep)
+    {
+        /* remove old corrupted logs... */
+        if ((diff=ndrx_file_age(logfile)) > G_tmsrv_cfg.housekeeptime)
+        {
+            NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                    logfile, diff, G_tmsrv_cfg.housekeeptime);
+            userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                    logfile, diff, G_tmsrv_cfg.housekeeptime);
+
+            if (EXSUCCEED!=unlink(logfile))
+            {
+                err = errno;
+                NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
+                userlog("Failed to unlink [%s]: %s", strerror(err));
+            }
         }
     }
 
@@ -959,9 +998,26 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     
     /* check exactly how much bytes was written */
     
-    if (G_atmi_env.test_tmsrv_write_fail)
+    if (1==G_atmi_env.test_tmsrv_write_fail)
     {
         make_error = EXTRUE;
+    }
+    else if (2==G_atmi_env.test_tmsrv_write_fail)
+    {
+        static int first = EXTRUE;
+        
+        if (first)
+        {
+            srand ( time(NULL) );
+            first=EXFALSE;
+        }
+        
+        /* generate 25% random errors */
+        if (rand() % 4 == 0)
+        {
+            make_error = EXTRUE;
+        }
+        
     }
     
     crc32 = ndrx_Crc32_ComputeBuf(0, msg2, len);
@@ -1025,7 +1081,13 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     
 out:
     /* flush what ever we have */
-    fflush(p_tl->f);
+    if (EXSUCCEED!=fflush(p_tl->f))
+    {
+        int err=errno;
+        userlog("ERROR! Failed to fflush(): %s", strerror(err));
+        NDRX_LOG(log_error, "ERROR! Failed to fflush(): %s", strerror(err));
+    }
+    /*fsync(fileno(p_tl->f));*/
     return ret;
 }
 
@@ -1161,50 +1223,98 @@ out:
     return ret;
 }
 
+#define CRASH_CLASS_EXIT            0 /**< exit at crash                  */
+#define CRASH_CLASS_NO_WRITE        1 /**< Do not write and report error  */
+
 /**
  * Change tx state + write transaction stage
  * FORMAT: <STAGE_CODE>
  * @param p_tl
- * @return 
+ * @param forced is decision forced? I.e. no restore on error.
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage)
+expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
 {
     int ret = EXSUCCEED;
+    short stage_org=EXFAIL;
+    /* <Crash testing> */
     int make_crash = EXFALSE; /**< Crash simulation */
+    int crash_stage, crash_class;
+    /* </Crash testing> */
+    
     CHK_THREAD_ACCESS;
     
     if (p_tl->txstage!=stage)
     {
+        stage_org = p_tl->txstage;
         p_tl->txstage = stage;
 
         NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd (cc %d)", 
                 p_tl->txstage, G_atmi_env.test_tmsrv_commit_crash);
         
+        
+        /* <Crash testing> */
+        
         /* QA: commit crash test point... 
          * Once crash flag is disabled, commit shall be finished by background
          * process.
          */
-        if (stage>0 && stage == G_atmi_env.test_tmsrv_commit_crash)
+        crash_stage = G_atmi_env.test_tmsrv_commit_crash % 100;
+        crash_class = G_atmi_env.test_tmsrv_commit_crash / 100;
+        
+        /* let write && exit */
+        if (stage > 0 && crash_class==CRASH_CLASS_EXIT && stage == crash_stage)
         {
             NDRX_LOG(log_debug, "QA commit crash...");
             G_atmi_env.test_tmsrv_write_fail=EXTRUE;
             make_crash=EXTRUE;
         }
         
-        if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
+        /* no write & report error */
+        if (stage > 0 && crash_class==CRASH_CLASS_NO_WRITE && stage == crash_stage)
+        {
+            NDRX_LOG(log_debug, "QA no write crash");
+            ret=EXFAIL;
+        }
+        /* </Crash testing> */
+        else if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
         {
             ret=EXFAIL;
             goto out;
+        }
+
+        /* in case if switching to committing, we must sync the log & directory */
+        if (XA_TX_STAGE_COMMITTING==stage &&
+            (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) || 
+                EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags)))
+        {
+            EXFAIL_OUT(ret);
         }
     }
     
 out:
                 
+    /* <Crash testing> */
     if (make_crash)
     {
         exit(1);
     }
+    /* </Crash testing> */
 
+    /* If failed to log the stage switch, restore original transaction
+     * stage
+     */
+
+    if (forced)
+    {
+        return EXSUCCEED;
+    }
+    else if (EXSUCCEED!=ret && EXFAIL!=stage_org)
+    {
+        p_tl->txstage = stage_org;
+    }
+
+    /* if not forced, get the real result */
     return ret;
 }
 
@@ -1334,80 +1444,6 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
    
 out:
     return ret;    
-}
-
-
-/**
- * Return the current transactions status
- * TODO: We also need a worker thread which will complete the stucked transactions.
- * TODO: We should close log file here too!!!!!
- * @param p_tl
- * @return 
- */
-expublic int tm_chk_tx_status(atmi_xa_log_t *p_tl)
-{
-    int ret = TPEHEURISTIC; /* By default we have heuristic descision */
-    int i;
-    int all_aborted = EXTRUE;
-    int all_committed = EXTRUE;
-    atmi_xa_rm_status_btid_t *el, *elt;
-    CHK_THREAD_ACCESS;
-    
-    for (i=0; i<NDRX_MAX_RMS; i++)
-    {
-        /* HASH Iterate over the branches */
-        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
-        {
-            if (!(XA_RM_STATUS_COMMITTED == el->rmstatus ||
-                XA_RM_STATUS_COMMITTED_RO == el->rmstatus)
-                    )
-            {
-                all_committed = EXFALSE;
-                break;
-            }
-
-            if (!(XA_RM_STATUS_ABORTED == el->rmstatus ||
-                XA_RM_STATUS_COMMITTED_RO == el->rmstatus)
-                    )
-            {
-                all_aborted = EXFALSE;
-                break;
-            }
-        } /* Hash iter */
-    }
-    
-    if (all_aborted || all_committed)
-    {
-        ret = EXSUCCEED;
-        /* TODO: We should unlink the transaction log file... 
-         * (and remove from hash) */
-        
-        if (all_committed)
-        {
-            /* Mark transaction as committed */
-            tms_log_stage(p_tl, XA_TX_STAGE_COMMITTED);
-        }
-        
-        if (all_aborted)
-        {
-            /* Mark transaction as committed */
-            tms_log_stage(p_tl, XA_TX_STAGE_ABORTED);
-        }
-        
-        /* p_tl becomes invalid! */
-        tms_remove_logfile(p_tl, EXTRUE);
-         
-    }
-    else
-    {
-        /* Move it to background: */
-        NDRX_LOG(log_warn, "Transaction with xid: [%s] moved to "
-                "background for completion...", p_tl->tmxid);
-        p_tl->is_background = EXTRUE;
-    }
-
-out:
-    return ret;
 }
 
 /**

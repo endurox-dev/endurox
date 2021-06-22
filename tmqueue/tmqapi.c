@@ -59,6 +59,21 @@
 #include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/** Check diagnostic code, if or QMEINVAL or (QMENOMSG) -> No abort */
+#define SET_NO_ABORT do {\
+            if (EXSUCCEED!=ret)\
+            {\
+                switch(qctl_out.diagnostic)\
+                {\
+                    case QMEINVAL:\
+                    case QMENOMSG:\
+                        *p_sysflags|=NDRX_SYS_NOABORT;\
+                        break;\
+                }\
+            }\
+        } while (0)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -93,6 +108,8 @@ expublic int tmq_enqueue(UBFH *p_ub)
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
     
+    memset(&qctl_out, 0, sizeof(qctl_out));
+    
     ndrx_debug_dump_UBF(log_info, "tmq_enqueue called with", p_ub);
     
     if (!M_is_xa_open)
@@ -123,8 +140,6 @@ expublic int tmq_enqueue(UBFH *p_ub)
             local_tx = EXTRUE;
         }
     }
-    
-    memset(&qctl_out, 0, sizeof(qctl_out));
     
     if (NULL==(data = Bgetalloc(p_ub, EX_DATA, 0, &len)))
     {
@@ -218,14 +233,17 @@ expublic int tmq_enqueue(UBFH *p_ub)
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",
             p_msg->hdr.qname);
     
-    if (EXSUCCEED!=tmq_msg_add(&p_msg, EXFALSE))
+    if (EXSUCCEED!=tmq_msg_add(&p_msg, EXFALSE, &qctl_out))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to enqueue!");
         userlog("tmq_enqueue: failed to enqueue!");
         
-        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: failed to enqueue!");
-        
-        qctl_out.diagnostic = QMESYSTEM;
+        /* set generic error, if not already provided */
+        if (EXSUCCEED==qctl_out.diagnostic)
+        {
+            NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: failed to enqueue!");
+            qctl_out.diagnostic = QMESYSTEM;
+        }
         
         EXFAIL_OUT(ret);
     }
@@ -252,14 +270,17 @@ out:
         {
             NDRX_LOG(log_error, "Aborting transaction");
             tpabort(0);
-        } else
+        } 
+        else
         {
             NDRX_LOG(log_info, "Committing transaction!");
+            
             if (EXSUCCEED!=tpcommit(0))
             {
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
                 NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                qctl_out.diagnostic = QMESYSTEM;
                 ret=EXFAIL;
             }
         }
@@ -273,6 +294,8 @@ out:
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to generate response buffer!");
         userlog("tmq_enqueue: failed to generate response buffer!");
+        ret=EXFAIL;
+        /* set error! */
     }
 
     return ret;
@@ -281,7 +304,7 @@ out:
 /**
  * Dequeue message
  * @param p_ub
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int tmq_dequeue(UBFH **pp_ub)
 {
@@ -298,6 +321,9 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_dequeue()");
     
+    memset(&qctl_in, 0, sizeof(qctl_in));
+    memset(&qctl_out, 0, sizeof(qctl_out));
+    
     ndrx_debug_dump_UBF(log_info, "tmq_dequeue called with", *pp_ub);
     
     if (!M_is_xa_open)
@@ -313,8 +339,6 @@ expublic int tmq_dequeue(UBFH **pp_ub)
             M_is_xa_open = EXTRUE;
         }
     }
-    
-    memset(&qctl_in, 0, sizeof(qctl_in));
     
     if (EXSUCCEED!=tmq_tpqctl_from_ubf_deqreq(*pp_ub, &qctl_in))
     {
@@ -337,8 +361,6 @@ expublic int tmq_dequeue(UBFH **pp_ub)
             local_tx = EXTRUE;
         }
     }
-    
-    memset(&qctl_out, 0, sizeof(qctl_out));
     
     if (EXSUCCEED!=Bget(*pp_ub, EX_QNAME, 0, qname, 0))
     {
@@ -426,7 +448,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
         userlog("failed to set EX_DATA!");
         
         NDRX_STRCPY_SAFE(qctl_out.diagmsg, "failed to set EX_DATA!");
-        qctl_out.diagnostic = QMEINVAL;
+        qctl_out.diagnostic = QMESYSTEM;
         
         /* Unlock msg if it was peek */
         if (TPQPEEK & qctl_in.flags)
@@ -462,6 +484,7 @@ out:
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
                 NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                qctl_out.diagnostic = QMESYSTEM;
                 ret=EXFAIL;
             }
         }
@@ -475,6 +498,7 @@ out:
     {
         NDRX_LOG(log_error, "tmq_dequeue: failed to generate response buffer!");
         userlog("tmq_dequeue: failed to generate response buffer!");
+        ret=EXFAIL;
     }
 
     return ret;
@@ -623,7 +647,8 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
     DL_FOREACH_SAFE(list,el,tmp)
     {
         is_default = EXFALSE;
-        if (EXSUCCEED==tmq_build_q_def(el->qname, &is_default, qdef))
+
+        if (EXSUCCEED==tmq_build_q_def(el->qname, &is_default, qdef, sizeof(qdef)))
         {
             NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
             

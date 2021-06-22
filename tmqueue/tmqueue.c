@@ -52,7 +52,6 @@
 #include <ndrxdcmn.h>
 
 #include "tmqd.h"
-#include "../libatmisrv/srv_int.h"
 #include "tperror.h"
 #include "userlog.h"
 #include <xa_cmn.h>

@@ -56,6 +56,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_library (objtms OBJECT
                     tmsrv.c 
                     xasrvutil.c 
+                    xastates.c 
                     log.c 
                     local.c 
                     background.c 

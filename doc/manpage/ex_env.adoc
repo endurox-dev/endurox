@@ -146,22 +146,29 @@ Mandatory Env. Variables
 
 *NDRX_XA_FLAGS*='XADMIN_XA_FLAGS'::
     Special for XA sub-system. It is semicolon separated tags with values.
-    currently tags 'RECON', 'NOJOIN' and 'NOSTARTXID' are defined.
-    'RECON' tag defines the number of attempts
+    currently tags *RECON*, *NOJOIN* and *NOSTARTXID* are defined.
+    *RECON* tag defines the number of attempts
     of xa_close()/xa_open() and doing xa_start() again in case if original
     xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
     closed the connection. The format for the tag is:
-    'RECON:<comma separated list of error codes e.g. 4,-8,* - any err>:<number 
+    *RECON*:<comma separated list of error codes e.g. 4,-8,* - any err>:<number 
     of attempts>:<sleep between attempts milli-sec>'
-    example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
+    example: *RECON*':*:3:100', meaning reconnect on any xa_start error, do the
     3x attempts, sleep 100 milliseconds between attempts.
-    With 'NOJOIN' indicates that XA Switch does not support 'TMJOIN' mode.
-    With 'NOSTARTXID' indicates that transaction session does not start with
+    With *NOJOIN* indicates that XA Switch does not support *TMJOIN* mode.
+    With *NOSTARTXID* indicates that transaction session does not start with
     identifier, but only when process disconnects from transaction, it is possible
     to give transaction id for work which has been done to database. *NOSUSPEND*
     flag can be used to configure particular resource that transaction is not
     suspended when *tpcall(3)* is issued from process which uses given resource
-    manager.
+    manager. Flag *FSYNC* ensures that *tmsrv(8)* log contents at commit decision are
+    written to disk with *fsync()*. *FDATASYNC* ensures that *tmsrv(8)* commit decision
+    is written to disk with *fdatasync()*. *DSYNC* ensures that *tmsrv*
+    commit decision log file is synchronized with file-system directory structure
+    (i.e. *fsync()* is performed on log file directory). In case if using *tmqueue(8)*
+    then these flags also affect that the way how messages are persisted to disk.
+    Note that *FSYNC*, *FDATASYNC* and *DSYNC* may significantly slow down 
+    the distributed transaction processing.
 
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
     Number of semaphores used for protecting shared memory, when Enduro/X 
@@ -559,7 +566,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)* *viewc(8)* 
-*tpadmsv(8)*
+*tpadmsv(8)* *tmqueue(8)* *tmsrv(8)*
 
 COPYING
 -------

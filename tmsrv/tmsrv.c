@@ -410,6 +410,7 @@ void TPTMSRV (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Zero buffer received!");
         userlog("Zero buffer received!");
+        NDRX_FREE(thread_data);
         EXFAIL_OUT(ret);
     }
     
@@ -467,9 +468,10 @@ int tpsvrinit(int argc, char **argv)
     memset(&G_tmsrv_cfg, 0, sizeof(G_tmsrv_cfg));
     
     G_tmsrv_cfg.ping_mode_jointran = EXTRUE;
+    G_tmsrv_cfg.housekeeptime = TMSRV_HOUSEKEEP_DEFAULT;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "P:t:s:l:c:m:p:r:R")) != -1)
+    while ((c = getopt(argc, argv, "P:t:s:l:c:m:p:r:Rh:")) != -1)
     {
 
 	if (optarg)
@@ -513,6 +515,9 @@ int tpsvrinit(int argc, char **argv)
             case 'R':
                 /* in this case use tran listing (xa_recover)*/
                 G_tmsrv_cfg.ping_mode_jointran = EXFALSE;
+                break;
+            case 'h':
+                G_tmsrv_cfg.housekeeptime = atoi(optarg);
                 break;
             case 'P':
                 /* Ping will run with timeout timer interval...
@@ -577,6 +582,9 @@ int tpsvrinit(int argc, char **argv)
     
     NDRX_LOG(log_debug, "Foreground retries in stage [%d]",
                             G_tmsrv_cfg.xa_retries);
+    
+    NDRX_LOG(log_debug, "Housekeep time for corrupted logs: [%d] (sec)",
+                            G_tmsrv_cfg.housekeeptime);
     
     NDRX_LOG(log_debug, "About to initialize XA!");
     
@@ -761,31 +769,42 @@ exprivate void tx_tout_check_th(void *ptr)
         if ((tspent = ndrx_stopwatch_get_delta_sec(&el->p_tl.ttimer)) > 
                 el->p_tl.txtout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
         {
-            NDRX_LOG(log_error, "XID [%s] timed out "
-                    "(spent %ld, limit: %ld sec) - aborting...!", 
-                    el->p_tl.tmxid, tspent, 
-                    el->p_tl.txtout);
-            
-            userlog("XID [%s] timed out "
-                    "(spent %ld, limit: %ld sec) - aborting...!", 
-                    el->p_tl.tmxid, tspent, 
-                    el->p_tl.txtout);
             
             if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0)))
             {
-                XA_TX_COPY((&xai), p_tl);
+                if (XA_TX_STAGE_ACTIVE==p_tl->txstage)
+                {
+                    XA_TX_COPY((&xai), p_tl);
+                    
+                    NDRX_LOG(log_error, "XID [%s] timed out "
+                        "(spent %ld, limit: %ld sec) - aborting...!", 
+                        el->p_tl.tmxid, tspent, 
+                        el->p_tl.txtout);
+            
+                    userlog("XID [%s] timed out "
+                            "(spent %ld, limit: %ld sec) - aborting...!", 
+                            el->p_tl.tmxid, tspent, 
+                            el->p_tl.txtout);
 
-                tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
-                /* NOTE: We might want to move this to background processing
-                 * because for example, oracle in some cases does long aborts...
-                 * thus it slows down general processing
-                 * BUT: if we want to move it to background, we should protect
-                 * transaction log from concurrent access, e.g.
-                 * - background does the abort()
-                 * - meanwhile foreground calls commit()
-                 * This can be reached with per transaction locking...
-                 */
-                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L);
+                    tms_log_stage(p_tl, XA_TX_STAGE_ABORTING, EXTRUE);
+                    
+                    /* NOTE: We might want to move this to background processing
+                     * because for example, oracle in some cases does long aborts...
+                     * thus it slows down general processing
+                     * BUT: if we want to move it to background, we should protect
+                     * transaction log from concurrent access, e.g.
+                     * - background does the abort()
+                     * - meanwhile foreground calls commit()
+                     * This can be reached with per transaction locking...
+                     */
+                    tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L);
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "XID [%s] was-tout but found in progress "
+                        "(txstage %hd spent %ld, limit: %ld sec) - aborting...!", 
+                        p_tl->tmxid, p_tl->txstage, tspent, p_tl->txtout);
+                }
             }
         }
         LL_DELETE(tx_list,el);

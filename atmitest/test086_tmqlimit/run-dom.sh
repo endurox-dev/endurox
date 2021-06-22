@@ -159,6 +159,98 @@ xadmin ppm
 clean_logs;
 rm ULOG*
 
+
+################################################################################
+# Test the fsync flags...
+################################################################################
+
+export NDRX_XA_FLAGS="FSYNC;DSYNC"
+
+xadmin stop -y
+xadmin start -y
+
+echo "Testing FSYNC;DSYNC"
+(./atmiclt86 enqdeq 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+export NDRX_XA_FLAGS="FDATASYNC;DSYNC"
+
+xadmin stop -y
+xadmin start -y
+
+echo "Testing FDATASYNC;DSYNC"
+(./atmiclt86 enqdeq 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+unset NDRX_XA_FLAGS
+
+xadmin stop -y
+xadmin start -y
+
+################################################################################
+
+###################################################
+# for darwin /emq missing robost locks may stall the testing
+# thus it is not possible to test this func here
+###################################################
+
+if [ `xadmin poller` != "emq" ]; then
+    echo "Testing crashloop"
+    # use custom timeout
+    export NDRX_TOUT=30
+    xadmin stop -y
+    xadmin start -y
+    (./atmiclt86 crashloop 2>&1) >> ./atmiclt-dom1.log
+    RET=$?
+    if [[ "X$RET" != "X0" ]]; then
+        xadmin psc
+        go_out $RET
+    fi
+
+    # print what's left in q...
+    xadmin mqlq
+    xadmin pt
+
+    STATS=`xadmin mqlq | grep "ERROR         0     0"`
+
+    echo "Stats: [$STATS]"
+
+    if [[ "X$STATS" == "X" ]]; then
+        echo "Expecting ERROR queue to be fully empty!"
+        go_out -1
+    fi
+
+    # restore tout:
+    export NDRX_TOUT=90
+    xadmin stop -y
+    xadmin start -y
+
+    clean_logs;
+    rm ULOG*
+fi
+###################################################
+
+echo "Testing errorq"
+(./atmiclt86 errorq 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
+echo "Testing abortrules"
+(./atmiclt86 abortrules 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
 echo "Testing loadprep"
 (./atmiclt86 loadprep 2>&1) >> ./atmiclt-dom1.log
 RET=$?
@@ -213,8 +305,8 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-echo "Testing qfull"
-(./atmiclt86 qfull 2>&1) >> ./atmiclt-dom1.log
+echo "Testing tmqrestart"
+(./atmiclt86 tmqrestart 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
