@@ -188,7 +188,14 @@ exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
     /* Setup the call buffer... */
     if (NULL==p_ub)
     {
-        NDRX_LOG(log_error, "Failed to alloc FB!");        
+        NDRX_LOG(log_error, "Failed to alloc FB!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* reset the call buffer only to request fields... */
+    if (EXSUCCEED!=atmi_xa_reset_tm_call(p_ub))
+    {
+        NDRX_LOG(log_error, "Failed to prepare UBF for TM call!");
         EXFAIL_OUT(ret);
     }
     

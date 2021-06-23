@@ -541,6 +541,34 @@ out:
 }
 
 /**
+ * reset UBF field only to leave call fields in
+ * @param p_ub UBF buffer
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int atmi_xa_reset_tm_call(UBFH *p_ub)
+{
+    int ret = EXSUCCEED;
+    BFLDID fldlist [] = 
+    {
+        TMPROCESSID
+        , TMCMD
+        , TMCALLERRM
+        , BBADFLDID
+    };
+    
+    if (EXSUCCEED!=Bproj(p_ub, fldlist))
+    {
+        NDRX_LOG(log_error, "Failed to reset ubf buffer for tm call");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+
+
+/**
  * Allocate stanard TM call FB
  * @param pp_ub
  * @return NULL (error) or allocated FB
