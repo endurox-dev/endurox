@@ -418,6 +418,7 @@ extern NDRX_API int atmi_xa_is_current_rm_known(char *tmknownrms);
 extern NDRX_API void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo);
 
 extern NDRX_API UBFH * atmi_xa_alloc_tm_call(char cmd);
+extern NDRX_API int atmi_xa_reset_tm_call(UBFH *p_ub);
 extern NDRX_API int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai);
 extern NDRX_API void atmi_xa_reset_curtx(void);
 extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);

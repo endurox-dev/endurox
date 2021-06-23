@@ -1882,9 +1882,21 @@ exprivate void dirent_free(struct dirent **namelist, int n)
 
 /** continue with dirent free */
 #define RECOVER_CONTINUE \
-            NDRX_FREE(G_atmi_tls->qdisk_recover_namelist[G_atmi_tls->qdisk_recover_i]);\
+            NDRX_FREE(G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]);\
             continue;\
    
+/** Close cursor */
+#define RECOVER_CLOSE_CURSOR \
+        /* reset any stuff left open from previous scan... */\
+        if (NULL!=G_atmi_tls->qdisk_tls->recover_namelist)\
+        {\
+            dirent_free(G_atmi_tls->qdisk_tls->recover_namelist, G_atmi_tls->qdisk_tls->recover_i);\
+            G_atmi_tls->qdisk_tls->recover_namelist = NULL;\
+        }\
+        G_atmi_tls->qdisk_tls->recover_open=EXFALSE;\
+        G_atmi_tls->qdisk_tls->recover_i=0;\
+        G_atmi_tls->qdisk_tls->recover_last_loaded=EXFALSE;\
+
 /**
  * Lists currently prepared transactions
  * NOTE! Currently messages does not store RMID.
@@ -1918,7 +1930,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         goto out;
     }
     
-    if (!G_atmi_tls->qdisk_recover_open && ! (flags & TMSTARTRSCAN))
+    if (!G_atmi_tls->qdisk_tls->recover_open && ! (flags & TMSTARTRSCAN))
     {
         NDRX_LOG(log_error, "ERROR: Scan not open and TMSTARTRSCAN not specified");
         ret=XAER_INVAL;
@@ -1926,21 +1938,19 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
     }
     
     /* close the scan */
-    if (flags & TMSTARTRSCAN && NULL!=G_atmi_tls->qdisk_recover_namelist)
+    if (flags & TMSTARTRSCAN)
     {
-        dirent_free(G_atmi_tls->qdisk_recover_namelist, G_atmi_tls->qdisk_recover_i);
-        G_atmi_tls->qdisk_recover_namelist = NULL;
-        G_atmi_tls->qdisk_recover_open=EXFALSE;
-        G_atmi_tls->qdisk_recover_i=0;
+        /* if was not open, no problem.. */
+        RECOVER_CLOSE_CURSOR;
     }
     
     /* start the scan if requested so ...  */
     if (flags & TMSTARTRSCAN)
     {
-        G_atmi_tls->qdisk_recover_i = scandir(M_folder_prepared, 
-                &G_atmi_tls->qdisk_recover_namelist, 0, alphasort);
+        G_atmi_tls->qdisk_tls->recover_i = scandir(M_folder_prepared, 
+                &G_atmi_tls->qdisk_tls->recover_namelist, 0, alphasort);
         
-        if (G_atmi_tls->qdisk_recover_i < 0)
+        if (G_atmi_tls->qdisk_tls->recover_i < 0)
         {
             err=errno;
             NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
@@ -1951,11 +1961,11 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             goto out;
         }
         
-        G_atmi_tls->qdisk_recover_open=EXTRUE;
+        G_atmi_tls->qdisk_tls->recover_open=EXTRUE;
     }
     
     /* nothing to return */
-    if (NULL==G_atmi_tls->qdisk_recover_namelist)
+    if (NULL==G_atmi_tls->qdisk_tls->recover_namelist)
     {
         ret=0;
         goto out;
@@ -1963,9 +1973,9 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
     
     /** start to unload xids, we got to match the same names */
     while ((count - current_unload_pos) > 0 && 
-            G_atmi_tls->qdisk_recover_i--)
+            G_atmi_tls->qdisk_tls->recover_i--)
     {
-        fname = G_atmi_tls->qdisk_recover_namelist[G_atmi_tls->qdisk_recover_i]->d_name;
+        fname = G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]->d_name;
         
         if (0==strcmp(fname, ".") || 
             0==strcmp(fname, ".."))
@@ -1999,8 +2009,12 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
          */
         
         /* check is it duplicate? */
-        if (current_unload_pos>0 &&
-                0==memcmp(&xid[current_unload_pos-1], &xtmp, sizeof(XID))
+        if ( (current_unload_pos>0 &&
+                0==memcmp(&xid[current_unload_pos-1], &xtmp, sizeof(XID)))
+                /* if it was processed in previous scan: 
+                 */
+                || (G_atmi_tls->qdisk_tls->recover_last_loaded 
+                        && 0==memcmp(&G_atmi_tls->qdisk_tls->recover_last, &xtmp, sizeof(XID)))
                 )
         {
             NDRX_LOG(log_debug, "Got part [%s] of xid [%s]", p, fname);
@@ -2017,6 +2031,13 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         RECOVER_CONTINUE;
     }
     
+    if (ret>0)
+    {
+        /* save the last xid for reetry skipping.. */
+        memcpy(&G_atmi_tls->qdisk_tls->recover_last, &xid[ret-1], sizeof(XID));
+        G_atmi_tls->qdisk_tls->recover_last_loaded=EXTRUE;
+    }
+    
 out:
 
     /* terminate the scan */
@@ -2024,18 +2045,13 @@ out:
 
     if (    ret>=0 
             && ( (flags & TMENDRSCAN)  || ret < count)
-            && G_atmi_tls->qdisk_recover_open
+            && G_atmi_tls->qdisk_tls->recover_open
             )
     {
         NDRX_LOG(log_debug, "recover: closing cursor");
         
-        if (NULL!=G_atmi_tls->qdisk_recover_namelist)
-        {
-            dirent_free(G_atmi_tls->qdisk_recover_namelist, G_atmi_tls->qdisk_recover_i);
-            G_atmi_tls->qdisk_recover_namelist=NULL;
-            G_atmi_tls->qdisk_recover_i=0;
-        }
-        G_atmi_tls->qdisk_recover_open=EXFALSE;
+        /* if was not open, no problem.. */
+        RECOVER_CLOSE_CURSOR;
     }
 
     return ret; /* no transactions found */
