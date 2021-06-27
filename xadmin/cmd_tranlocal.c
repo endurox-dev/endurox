@@ -114,7 +114,8 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm, short parse)
             /* print raw xid */
             STDOUT_DUMP(log_info,"RAW XID", &xid, sizeof(xid));
             
-            if (NDRX_XID_FORMAT_ID==xid.formatID)
+            if (NDRX_XID_FORMAT_ID==xid.formatID ||
+                    NDRX_XID_FORMAT_ID==(long)ntohll(xid.formatID))
             {
                 short nodeid;
                 short srvid;

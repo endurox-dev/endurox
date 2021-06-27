@@ -158,6 +158,7 @@ extern "C" {
 #define TMFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged      */
 #define TMFLAGS_TPNOSTARTXID     0x00000010  /**< internal, end makes prepare */
 #define TMFLAGS_DYNAMIC_REG      0x00000020  /**< TX initiator uses dyanmic reg */
+#define TMFLAGS_NOCON            0x00000040  /**< Do conversational API       */
 
 #define XA_OP_NOP                       0
 #define XA_OP_START                     1
