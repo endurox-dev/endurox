@@ -1,0 +1,11 @@
+TMRECOVERSV(8)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tmrecoversv - Transaction Recovery / Housekeeping Server
+
+include::tmrecover-common.adoc[]
+
