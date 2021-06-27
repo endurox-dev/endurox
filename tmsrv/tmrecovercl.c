@@ -68,7 +68,7 @@ out:
     tpterm();
 
     /* error or OK */
-    if (0>ret)
+    if (0 > ret)
     {
         return ret;
     }
