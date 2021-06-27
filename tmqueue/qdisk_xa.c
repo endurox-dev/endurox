@@ -784,6 +784,8 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
     char *folders[2] = {M_folder_active, M_folder_prepared};
     char *fn = "xa_rollback_entry";
     int err, tmq_err;
+    int num_proc = 0;
+    
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
@@ -833,12 +835,10 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
                     {
                         goto xa_fail;
                     }
+                    
+                    num_proc++;
                 }
-                else
-                {
-                    /* failed to read! */
-                    goto xa_err;
-                }
+                /* leave corrupted files as is... */
             }
             else
             {
@@ -848,7 +848,14 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
         }
     }
     
-    return XA_OK;
+    if (num_proc==0)
+    {
+        return XAER_NOTA;
+    }
+    else
+    {
+        return XA_OK;
+    }
     
 xa_err:
     return XAER_RMERR;

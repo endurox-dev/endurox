@@ -1,8 +1,7 @@
 /**
- * @brief Stock transaction manager with default null switch.
- *  It will pick up what ever driver will be set by dynamic xa driver library setting.
+ * @brief Command line utility for transactino recovery
  *
- * @file tmsrvmain.c
+ * @file tprecovercl.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -37,47 +36,46 @@
 #include <stdlib.h>
 #include <ndebug.h>
 #include <atmi.h>
-#include <ndrstandard.h>
-#include <ubf.h>
-#include <string.h>
-#include <unistd.h>
-#include <xa.h>
+#include "tmrecover.h"
 /*---------------------------Externs------------------------------------*/
-/* Buildserver auto generated extern service list */
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-/* Auto generated system advertise table */
-expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
-    { NULL, NULL, NULL, 0, 0 }
-};
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Main entry for tmsrv
+ * Main entry for tmrecovercl
  */
 int main( int argc, char** argv )
 {
-    _tmbuilt_with_thread_option=0;
-    struct tmsvrargs_t tmsvrargs =
-    {
-        &tmnull_switch,
-        &ndrx_G_tmdsptchtbl[0],
-        0,
-        tpsvrinit,
-        tpsvrdone,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    };
+    int ret = EXSUCCEED;
     
-    return( _tmstartserver( argc, argv, &tmsvrargs ));
+    
+    if (EXSUCCEED!=tpinit(NULL))
+    {
+        NDRX_LOG(log_error, "Failed to init!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = ndrx_tmrecover_do();
+    
+    fprintf(stderr, "Rolled back %d transaction branches\n", ret);
+    
+out:
+    
+    tpterm();
+
+    /* error or OK */
+    if (0>ret)
+    {
+        return ret;
+    }
+    else
+    {
+        return EXSUCCEED;
+    }
     
 }
 
