@@ -688,6 +688,13 @@ Ensure(test088_addlog)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test089_tmrecover)
+{
+    int ret;
+    ret=system_dbg("test089_tmrecover/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -832,6 +839,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test086_tmqlimit);
     add_test(suite, test087_tmsrv);
     add_test(suite, test088_addlog);
+    add_test(suite, test089_tmrecover);
     
     return suite;
 }

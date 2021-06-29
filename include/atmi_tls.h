@@ -49,6 +49,7 @@ extern "C" {
 #include <ubf_tls.h>
 #include <tx.h>
 #include <setjmp.h>
+#include <dirent.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -92,6 +93,7 @@ typedef struct
 {    
     /* Per thread data: */
     int is_reg; /* Dynamic registration done? */
+    
     /*
      * Due to fact that we might have multiple queued messages per resource manager
      * we will name the transaction files by this scheme:
@@ -99,9 +101,20 @@ typedef struct
      * we will start the processing from N back to 1 so that if we crash and retry
      * the operation, we can handle all messages in system.
      */
-    char filename_base[PATH_MAX+1]; /* base name of the file */
-    char filename_active[PATH_MAX+1]; /* active file name */
-    char filename_prepared[PATH_MAX+1]; /* prepared file name */
+    char filename_base[PATH_MAX+1];     /**< base name of the file */
+    char filename_active[PATH_MAX+1];   /**< active file name */
+    char filename_prepared[PATH_MAX+1]; /**< prepared file name */
+    
+    /** List of prepared transactions */
+    struct dirent **recover_namelist;
+    /** Current iterator of the recover */
+    int recover_i;
+    /** last xid recovered in previous scan */
+    XID recover_last;
+    /** is recover last loaded ? */
+    int recover_last_loaded;
+    /** Is scanning open ? */
+    int recover_open;
     
 } ndrx_qdisk_tls_t;
 
@@ -216,6 +229,7 @@ typedef struct
     /* Shared between threads: */
     int qdisk_is_open;
     int qdisk_rmid;
+
     
     ndrx_qdisk_tls_t *qdisk_tls;
     

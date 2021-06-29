@@ -114,7 +114,8 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm, short parse)
             /* print raw xid */
             STDOUT_DUMP(log_info,"RAW XID", &xid, sizeof(xid));
             
-            if (NDRX_XID_FORMAT_ID==xid.formatID)
+            if (NDRX_XID_FORMAT_ID==xid.formatID ||
+                    NDRX_XID_FORMAT_ID==(long)ntohll(xid.formatID))
             {
                 short nodeid;
                 short srvid;
@@ -188,7 +189,14 @@ exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
     /* Setup the call buffer... */
     if (NULL==p_ub)
     {
-        NDRX_LOG(log_error, "Failed to alloc FB!");        
+        NDRX_LOG(log_error, "Failed to alloc FB!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* reset the call buffer only to request fields... */
+    if (EXSUCCEED!=atmi_xa_reset_tm_call(p_ub))
+    {
+        NDRX_LOG(log_error, "Failed to prepare UBF for TM call!");
         EXFAIL_OUT(ret);
     }
     
@@ -255,6 +263,8 @@ out:
 
 /**
  * Filter the service names, return TRUE for those which matches individual TMs
+ * Well we shall work only at resource ID level.
+ * Thus only on -1
  * @param svcnm
  * @return TRUE/FALSE
  */
@@ -278,7 +288,7 @@ exprivate int tmfilter(char *svcnm)
         }
     }
     
-    if (3==cnt)
+    if (1==cnt)
         return EXTRUE;
     else
         return EXFALSE;

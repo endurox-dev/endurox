@@ -153,6 +153,18 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "Checking tmrecover stats..."
+
+if [[ "X`grep 'Rolled back 0 orphan transactions branches' tmrecovercl.log`" == "X" ]]; then
+    echo "Expecting 'Rolled back 0 orphan transactions branches' in tmrecovercl.log but not found"
+    go_out -1
+fi
+
+if [[ "X`grep 'Rolled back 900 orphan transactions branches' tmrecovercl.log`" == "X" ]]; then
+    echo "Expecting 'Rolled back 900 orphan transactions branches' in tmrecovercl.log but not found"
+    go_out -1
+fi
+
 ################################################################################
 # Queue test...
 ################################################################################
@@ -386,8 +398,8 @@ fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-        echo "Test error detected!"
-        RET=-2
+    echo "Test error detected!"
+    RET=-2
 fi
 
 go_out $RET
