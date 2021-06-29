@@ -257,7 +257,7 @@ expublic int _tpext_delperiodcb(void)
 {
     int ret=EXSUCCEED;
     
-    NDRX_LOG(log_debug, "Disabling periodical callback, was: 0x%lx",
+    NDRX_LOG(log_debug, "Disabling periodical callback, was: %p",
             G_server_conf.p_periodcb);
     G_server_conf.p_periodcb = NULL;
     G_server_conf.periodcb_sec = 0;
