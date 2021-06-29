@@ -84,6 +84,7 @@ expublic int tm_tpabort(UBFH *p_ub)
     int ret = EXSUCCEED;
     atmi_xa_tx_info_t xai;
     atmi_xa_log_t *p_tl = NULL;
+    int locke;
     
     NDRX_LOG(log_debug, "tm_tpabort() called");
     
@@ -103,12 +104,22 @@ expublic int tm_tpabort(UBFH *p_ub)
     }
     
     /* read tx from hash */
-    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, NDRX_LOCK_WAIT_TIME)))
+    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
-        NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
-                xai.tmxid);
-        atmi_xa_set_error_fmt(p_ub, TPEPROTO, NDRX_XA_ERSN_NOTX, 
-                "Transaction with xid [%s] not logged", xai.tmxid);
+        if (locke)
+        {
+            NDRX_LOG(log_error, "Lock xid [%s] timed out", 
+                    xai.tmxid);
+            atmi_xa_set_error_fmt(p_ub, TPETIME, NDRX_XA_ERSN_LOCK, 
+                    "Lock xid [%s] timed out", xai.tmxid);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
+                    xai.tmxid);
+            atmi_xa_set_error_fmt(p_ub, TPEPROTO, NDRX_XA_ERSN_NOTX, 
+                    "Transaction with xid [%s] not logged", xai.tmxid);
+        }
         EXFAIL_OUT(ret);
     }
     
@@ -171,6 +182,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
     atmi_xa_log_t *p_tl = NULL;
     int do_abort = EXFALSE;
     long tmflags;
+    int locke;
     NDRX_LOG(log_debug, "tm_tpcommit() called");
     
     /* 1. get transaction from hash */
@@ -192,16 +204,23 @@ expublic int tm_tpcommit(UBFH *p_ub)
     }
     
     /* read tx from hash */
-    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, NDRX_LOCK_WAIT_TIME)))
+    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
-        NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
-                xai.tmxid);
-        /* - Will regsiter as rolled back!!!
-        atmi_xa_set_error_fmt(p_ub, TPEPROTO, NDRX_XA_ERSN_NOTX, 
-                "Transaction with xid [%s] not logged", xai.tmxid);
-         */
-        atmi_xa_set_error_fmt(p_ub, TPEABORT, NDRX_XA_ERSN_NOTX, 
-                "Transaction with xid [%s] not logged - probably was tout+abort", xai.tmxid);
+        if (locke)
+        {
+            NDRX_LOG(log_error, "Lock xid [%s] timed out", 
+                    xai.tmxid);
+            atmi_xa_set_error_fmt(p_ub, TPETIME, NDRX_XA_ERSN_LOCK, 
+                    "Lock xid [%s] timed out", xai.tmxid);   
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
+                    xai.tmxid);
+            atmi_xa_set_error_fmt(p_ub, TPEABORT, NDRX_XA_ERSN_NOTX, 
+                    "Transaction with xid [%s] not logged - probably was tout+abort", 
+                    xai.tmxid);
+        }
         EXFAIL_OUT(ret);
     }
     
@@ -764,6 +783,7 @@ expublic int tm_aborttrans(UBFH *p_ub)
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     short tmrmid = EXFAIL;
     atmi_xa_tx_info_t xai;
+    int locke;
     /* We should try to abort transaction
      Thus basically we need to lock the transaction on which we work on.
      Otherwise, we can conflict with background.
@@ -782,11 +802,19 @@ expublic int tm_aborttrans(UBFH *p_ub)
     Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
     
     /* Lookup for log. And then try to abort... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
         /* Generate error */
-        atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
-                tmxid);
+        if (locke)
+        {
+            atmi_xa_set_error_fmt(p_ub, TPETIME, 0, "Lock xid [%s] timed out", 
+                    tmxid);
+        }
+        else
+        {
+            atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found [%s]", 
+                    tmxid);
+        }
         EXFAIL_OUT(ret);
     }
     
@@ -823,7 +851,7 @@ expublic int tm_status(UBFH *p_ub)
     int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl = NULL;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
-    short tmrmid = EXFAIL;
+    int locke;
     
     if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, 0L))
     {
@@ -833,18 +861,23 @@ expublic int tm_status(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    /* optional */
-    Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
-    
     /* Lookup for log. And then try to abort...
-     * TODO: in case if timed-out, we shall return different error.
+     * in case if timed-out, we shall return different error.
      * maybe TPETIME.
      */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
         /* Generate error */
-        atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
-                tmxid);
+        if (locke)
+        {
+            atmi_xa_set_error_fmt(p_ub, TPETIME, 0, "Lock xid [%s] timed out", 
+                    tmxid);
+        }
+        else
+        {
+            atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found [%s]", 
+                    tmxid);
+        }
         EXFAIL_OUT(ret);
     }
     
@@ -876,6 +909,8 @@ expublic int tm_committrans(UBFH *p_ub)
     atmi_xa_log_t *p_tl;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     atmi_xa_tx_info_t xai;
+    int locke;
+    
     /* We should try to commit transaction
      Thus basically we need to lock the transaction on which we work on.
      Otherwise, we can conflict with background.
@@ -891,11 +926,19 @@ expublic int tm_committrans(UBFH *p_ub)
     }
     
     /* Lookup for log. And then try to commit... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
         /* Generate error */
-        atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
-                tmxid);
+        if (locke)
+        {
+            atmi_xa_set_error_fmt(p_ub, TPETIME, 0, "Lock xid [%s] timed out", 
+                    tmxid);
+        }
+        else
+        {
+            atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found [%s]", 
+                    tmxid);
+        }
         EXFAIL_OUT(ret);
     }
     
@@ -1013,9 +1056,10 @@ out:
  * @param cd connection descriptor
  * @param cmd op code
  * @param xid ptr XID
+ * @param flags TMTXFLAGS flags value
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int tm_proclocal_single(UBFH *p_ub, int cd, char cmd, XID *xid)
+exprivate int tm_proclocal_single(UBFH *p_ub, int cd, char cmd, XID *xid, long flags)
 {
     int ret = EXSUCCEED;
     char tmp[1024];
@@ -1042,8 +1086,20 @@ exprivate int tm_proclocal_single(UBFH *p_ub, int cd, char cmd, XID *xid)
             break;
     }
     
+    /* In case if working on non-conv mode
+     * return the failure
+     * and load the results
+     */
+    
     /* load the result in UBF */
     ndrx_TPset_error_ubf(p_ub);
+    
+    
+    if (flags & TMFLAGS_NOCON)
+    {
+        NDRX_LOG(log_debug, "No con call: %d", ret);
+        goto out;
+    }
     
     ret = EXSUCCEED;
     
@@ -1095,8 +1151,16 @@ expublic int tm_proclocal(char cmd, UBFH *p_ub, int cd)
     int i;
     size_t out_len = 0;
     BFLDLEN len;
+    long tmtxflags=0;
     
     /* if there is single tran, then process it, if not, then loop over */
+    
+    if (Bpres(p_ub, TMTXFLAGS, 0) &&
+            EXSUCCEED!=Bget(p_ub, TMTXFLAGS, 0, (char *)&tmtxflags, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to get TMTXFLAGS: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
     
     if (Bpres(p_ub, TMXID, 0))
     {
@@ -1111,7 +1175,7 @@ expublic int tm_proclocal(char cmd, UBFH *p_ub, int cd)
         ndrx_xa_base64_decode((unsigned char *)onestr, strlen(onestr), 
                 &out_len, (char *)&one);
         
-        if (EXSUCCEED!=tm_proclocal_single(p_ub, cd, cmd, &one))
+        if (EXSUCCEED!=tm_proclocal_single(p_ub, cd, cmd, &one, tmtxflags))
         {
             NDRX_DUMP(log_error, "Failed to process local xid", &one, sizeof(one));
             EXFAIL_OUT(ret);
@@ -1134,7 +1198,7 @@ expublic int tm_proclocal(char cmd, UBFH *p_ub, int cd)
         
         for (i=0; i<ret; i++)
         {   
-            if (EXSUCCEED!=tm_proclocal_single(p_ub, cd, cmd, &arraxid[i]))
+            if (EXSUCCEED!=tm_proclocal_single(p_ub, cd, cmd, &arraxid[i], tmtxflags))
             {
                 NDRX_DUMP(log_error, "Failed to process local xid", &arraxid[i], 
                         sizeof(arraxid[i]));
