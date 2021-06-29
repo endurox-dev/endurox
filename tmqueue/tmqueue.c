@@ -343,7 +343,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_tmqueue_cfg.housekeeptime= TMQ_HOUSEKEEP_DEFAULT;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:h:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:h:u:")) != -1)
     {
         if (optarg)
         {
