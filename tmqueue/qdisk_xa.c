@@ -639,7 +639,6 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         if (first)
         {
             ndrx_xa_nosuspend(EXTRUE);
-            /* parse FSYNC */
             first=EXFALSE;
         }
         MUTEX_UNLOCK_V(M_init);
@@ -666,7 +665,11 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
     G_atmi_tls->qdisk_tls->filename_base[0]=EXEOS;
     G_atmi_tls->qdisk_tls->filename_active[0]=EXEOS;
     G_atmi_tls->qdisk_tls->filename_prepared[0]=EXEOS;
-    
+
+    G_atmi_tls->qdisk_tls->recover_namelist = NULL;
+    G_atmi_tls->qdisk_tls->recover_open=EXFALSE;
+    G_atmi_tls->qdisk_tls->recover_i=EXFAIL;
+    G_atmi_tls->qdisk_tls->recover_last_loaded=EXFALSE;
             
     G_atmi_tls->qdisk_is_open = EXTRUE;
     G_atmi_tls->qdisk_rmid = rmid;
@@ -1901,7 +1904,7 @@ exprivate void dirent_free(struct dirent **namelist, int n)
             G_atmi_tls->qdisk_tls->recover_namelist = NULL;\
         }\
         G_atmi_tls->qdisk_tls->recover_open=EXFALSE;\
-        G_atmi_tls->qdisk_tls->recover_i=0;\
+        G_atmi_tls->qdisk_tls->recover_i=EXFAIL;\
         G_atmi_tls->qdisk_tls->recover_last_loaded=EXFALSE;\
 
 /**
