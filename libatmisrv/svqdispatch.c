@@ -1408,14 +1408,6 @@ expublic int sv_wait_for_request(void)
     char *msg_buf = NULL;
     size_t msgsize_max = NDRX_MSGSIZEMAX;
     
-    if (G_server_conf.periodcb_sec)
-    {
-        tout = G_server_conf.periodcb_sec*1000;
-    }
-    else
-    {
-        tout=EXFAIL; /* Timeout disabled */
-    }
     
     ndrx_stopwatch_reset(&dbg_time);
     ndrx_stopwatch_reset(&periodic_cb);
@@ -1425,8 +1417,17 @@ expublic int sv_wait_for_request(void)
             if shutdown request then wait for all queued jobs to finish. 
             G_shutdown_nr_got <  G_shutdown_nr_wait - why? */))
     {
-        /* Support for periodical invocation of custom function! */
+        /* moved here as tout might change by callback api */
+        if (G_server_conf.periodcb_sec)
+        {
+            tout = G_server_conf.periodcb_sec*1000;
+        }
+        else
+        {
+            tout=EXFAIL; /* Timeout disabled */
+        }
         
+        /* Support for periodical invocation of custom function! */   
         /* Invoke before poll function */
         if (G_server_conf.p_b4pollcb
                 && EXSUCCEED!=G_server_conf.p_b4pollcb())

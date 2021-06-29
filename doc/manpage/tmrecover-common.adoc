@@ -1,0 +1,70 @@
+SYNOPSIS
+--------
+*tmrecovercl*
+
+*tmrecoversv* ['SERVER OPTIONS']
+
+
+DESCRIPTION
+-----------
+
+Transaction manager recovery processes. These tools are used to find and rollback
+in the Enduro/X application prepared orphan transactions. *tmrecovercl*
+is client version, which performs single system scan. *tmrecoversv* is server process 
+which shall be put in the *ndrxconfig.xml(5)* at the end of the server startup
+sequence, so that at each boot housekeeping on transactions is performed. 
+*tmrecoversv* can be configure to perform periodic scans for orphan prepared 
+transactions.
+
+The algorithm of the tools is following:
+
+- Query all '@TM-X' services to return xa_recover() list of raw XIDs.
+
+- Tool detects the XID format which belongs to Enduro/X. In the XID format 
+originating Enduro/X cluster node id, resource manager id, and server id is encoded.
+
+- Tool requests originating *tmsrv(8)* to check for base XID (with out current RMid and 
+current branch id) existence.
+
+- If transaction status is *TPEMATCH* (transaction not found in the tmsrv logs),
+current '@TM-X' service is requested to rollback raw branch XID.
+
+- For reducing the overhead of transaction checking, if there are many transaction
+branches, base XID results from tmsrv are cached.
+
+It is safe to run the tools at the any time, as during the normal transaction
+operations logs exist in corresponding tmsrv instances, and thus no rollback
+is performed.
+
+
+SERVER OPTIONS
+--------------
+[*-s* 'SCAN_TIME']::
+Number of seconds after which to start the scan for the orphan transactions.
+The default value is *30*. Normally *tmrecoversv* shall be put at the end of
+application startup sequence and this scan time gives a system time-frame for
+any bridges to connect, thus allowing to collect orphans from cluster nodes.
+
+[*-p*]::
+Perform scans periodically. By default *tmrecoversv* performs scan only once.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrxconfig.xml(5)* *tmsrv(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
+#include <signal.h>
 
 #include <atmi.h>
 #include <ubf.h>
@@ -771,6 +772,137 @@ int main(int argc, char** argv)
         sql_insert();
     }
     
+    
+    /**************************************************************************/
+    NDRX_LOG(log_debug, "tmrecovercl test...");
+    /**************************************************************************/
+    
+    sql_delete();
+    
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    for (i=0; i<900; i++)
+    {
+        if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }    
+
+        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TESTSV failed: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* test that we have 0 records here... */
+    if (EXSUCCEED!=(ret=(int)sql_count()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* run recover here...
+     * shall recover 0 transactions... as all of them are alive...
+     */
+    
+    if (EXSUCCEED!=(ret=system("tmrecovercl")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tmrecovercl: %d", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* set larger timeout, as in slow machines we might get timeout here...*/
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to commit: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (900!=(ret=(int)sql_count()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 900", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    /**************************************************************************/
+    NDRX_LOG(log_debug, "tmrecovercl test (lost logs)");
+    /**************************************************************************/
+    
+    sql_delete();
+    
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    for (i=0; i<900; i++)
+    {
+        if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }    
+
+        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TESTSV failed: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* test that we have 0 records here... */
+    if (EXSUCCEED!=(ret=(int)sql_count()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=system("rm -f ./RM1/*")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to remove RM1: %d", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=system("rm -f ./RM2/*")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to remove RM1: %d", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* restart tmsrv... now it does not know anything about transactions */
+    if (EXSUCCEED!=(ret=system("xadmin stop -s tmsrv; xadmin start -s tmsrv")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tmsrv restart failed.: %d", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=system("tmrecovercl")))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tmrecovercl: %d", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* set larger timeout, as in slow machines we might get timeout here...*/
+    if (EXSUCCEED==tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Commit must fail!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=(ret=(int)sql_count()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = EXSUCCEED;
     
 out:
     
