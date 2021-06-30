@@ -1,8 +1,8 @@
 /**
- * @brief Stock transaction manager with default null switch.
- *  It will pick up what ever driver will be set by dynamic xa driver library setting.
+ * @brief Transaction recover server process. Used to clean up the transactions
+ *  after the boot or periodically during the application runtime.
  *
- * @file tmsrvmain.c
+ * @file tprecoversv.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -35,19 +35,19 @@
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <ndebug.h>
-#include <atmi.h>
-#include <ndrstandard.h>
-#include <ubf.h>
 #include <string.h>
 #include <unistd.h>
-#include <xa.h>
+#include <getopt.h>
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include "tmrecover.h"
 /*---------------------------Externs------------------------------------*/
-/* Buildserver auto generated extern service list */
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+exprivate int M_periodic = EXFALSE;    /**< by default single scan */
 /*---------------------------Statics------------------------------------*/
 /* Auto generated system advertise table */
 expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
@@ -55,6 +55,96 @@ expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
 };
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Transaction recover scan start
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int recover_scan(void)
+{
+    int ret = EXSUCCEED;
+    
+    NDRX_LOG(log_debug, "Recover scan started");
+    
+    /* recover transactions */
+    ret = ndrx_tmrecover_do();
+    
+    if (EXSUCCEED==ret && !M_periodic)
+    {
+        /* remove our selves from periodic scanning as we are done
+         */
+        tpext_delperiodcb();
+    }
+    
+    return ret;
+}
+
+/**
+ * Standard server init
+ * @param argc
+ * @param argv
+ * @return 
+ */
+int tpsvrinit (int argc, char **argv)
+{
+    /* register periodic callback
+     * - used to wait for bridges to establish 
+     * - used for single & periodic recover scans.
+     */
+    int ret=EXSUCCEED;
+    /* scan after 30 sec */
+    int scan_time = 30;
+    int c;
+    
+    /* Parse command line  */
+    while ((c = getopt(argc, argv, "s:p")) != -1)
+    {
+
+	if (optarg)
+        {
+            NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "got %c", c);
+        }
+
+        switch(c)
+        {
+            case 's': 
+                scan_time = atoi(optarg);
+                NDRX_LOG(log_info, "Transaction scan time set to: %d", scan_time);
+                break;
+                /* status directory: */
+            case 'p':
+                M_periodic=EXTRUE;
+                NDRX_LOG(log_info, "Periodic scan enabled");
+                break;
+            default:
+                /*return FAIL;*/
+                break;
+        }
+    }
+    
+    /* Register timer check (needed for time-out detection) */
+    if (EXSUCCEED!=tpext_addperiodcb(scan_time, recover_scan))
+    {
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    
+out:
+    return ret;
+}
+
+/**
+ * Standard server done
+ */
+void tpsvrdone(void)
+{
+    /* nothing todo */
+}
 /**
  * Main entry for tmsrv
  */

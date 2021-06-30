@@ -157,7 +157,7 @@ expublic char * ndrx_xa_base64_encode(unsigned char *data,
  * @param input_length input len
  * @param output_length output data len (ptr to). Only output len, no len checking.
  * @param decoded_data decoded output data
- * @return 
+ * @return NULL in case of error
  */
 expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
                              size_t input_length,
