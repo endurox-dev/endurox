@@ -169,6 +169,7 @@ with the same *NDRX_XA_RES_ID*).  Calls are forbidden either from multiple threa
 or from multiple processes e.g. using *tpacall(3)* to active transaction in other processes which 
 are performing *tpenqueue()* while service caller also performs *tpenqueue()*.
 Possible consequences are undefined and may include message loss.
+
 BUGS
 ----
 Report bugs to support@mavimax.com
