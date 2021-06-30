@@ -50,6 +50,7 @@
 #include <regex.h>
 #include <utlist.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -330,10 +331,9 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             }
             break;
         case ATMI_XA_RECOVERLOCAL:
-            if (EXSUCCEED!=tm_recoverlocal(p_ub, cd))
+            if (EXFAIL==tm_recoverlocal(p_ub, cd))
             {
-                ret=EXFAIL;
-                goto out;
+                EXFAIL_OUT(ret);
             }
             break;
         case ATMI_XA_COMMITLOCAL:
@@ -770,7 +770,7 @@ exprivate void tx_tout_check_th(void *ptr)
                 el->p_tl.txtout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
         {
             
-            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0)))
+            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0, NULL)))
             {
                 if (XA_TX_STAGE_ACTIVE==p_tl->txstage)
                 {

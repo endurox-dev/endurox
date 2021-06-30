@@ -128,9 +128,10 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
  * foreground operations.
  * @param tmxid - serialized XID
  * @param[in] dowait milliseconds to wait for lock, before give up
+ * @param[out] locke lock error
  * @return NULL or log entry
  */
-expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait)
+expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait, int *locke)
 {
     atmi_xa_log_t *r = NULL;
     ndrx_stopwatch_t w;
@@ -138,6 +139,11 @@ expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait)
     if (dowait)
     {
         ndrx_stopwatch_reset(&w);
+    }
+    
+    if (NULL!=locke)
+    {
+        *locke=EXFALSE;
     }
     
 restart:
@@ -165,6 +171,13 @@ restart:
                     "lock time: %d msec",
                     tmxid, r->lockthreadid, dowait);
             r = NULL;
+            
+            /* cannot get lock */
+            if (NULL!=locke)
+            {
+                *locke=EXTRUE;
+            }
+            
         }
         else
         {
@@ -318,9 +331,9 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
      * 
     */
     
-    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, NDRX_LOCK_WAIT_TIME)))
+    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, NDRX_LOCK_WAIT_TIME, NULL)))
     {
-        NDRX_LOG(log_error, "No transaction under xid_str: [%s]", 
+        NDRX_LOG(log_error, "No transaction/lock timeout under xid_str: [%s]", 
                 xai->tmxid);
         ret=EXFAIL;
         goto out_nolock;
@@ -405,17 +418,28 @@ expublic int tms_log_chrmstat(atmi_xa_tx_info_t *xai, short rmid,
     int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl= NULL;
     atmi_xa_rm_status_btid_t *bt = NULL;
+    int locke;
     
     NDRX_LOG(log_debug, "xid: [%s] BTID %ld change status to [%c]",
             xai->tmxid, btid, rmstatus);
     
-    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, NDRX_LOCK_WAIT_TIME)))
+    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
-        NDRX_LOG(log_error, "No transaction under xid_str: [%s] - match ", 
-                xai->tmxid);
-        
-        atmi_xa_set_error_fmt(p_ub, TPEMATCH, NDRX_XA_ERSN_NOTX, 
-                    "Failed to get transaction or locked for processing!");
+        if (locke)
+        {
+            NDRX_LOG(log_error, "Lock acquire timed out for xid_str: [%s] - TPETIME", 
+                    xai->tmxid);
+            atmi_xa_set_error_fmt(p_ub, TPETIME, NDRX_XA_ERSN_LOCK, 
+                        "Failed to acquire locked!");
+        }
+        else
+        {
+            NDRX_LOG(log_error, "No transaction under xid_str: [%s] - match ", 
+                    xai->tmxid);
+
+            atmi_xa_set_error_fmt(p_ub, TPEMATCH, NDRX_XA_ERSN_NOTX, 
+                        "Failed to get transaction or locked for processing!");
+        }
         
         ret=EXFAIL;
         goto out_nolock;

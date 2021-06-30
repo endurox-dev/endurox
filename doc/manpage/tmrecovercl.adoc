@@ -1,0 +1,11 @@
+TMRECOVERCL(8)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tmrecovercl - Transaction Recovery / Housekeeping Command Line Tool
+
+include::tmrecover-common.adoc[]
+
