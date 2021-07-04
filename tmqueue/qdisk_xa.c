@@ -143,6 +143,8 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *db
 exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
         int *tmq_err);
 
+exprivate void dirent_free(struct dirent **namelist, int n);
+
 struct xa_switch_t ndrxqstatsw = 
 { 
     .name = "ndrxqstatsw",
@@ -637,7 +639,6 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         if (first)
         {
             ndrx_xa_nosuspend(EXTRUE);
-            /* parse FSYNC */
             first=EXFALSE;
         }
         MUTEX_UNLOCK_V(M_init);
@@ -664,7 +665,11 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
     G_atmi_tls->qdisk_tls->filename_base[0]=EXEOS;
     G_atmi_tls->qdisk_tls->filename_active[0]=EXEOS;
     G_atmi_tls->qdisk_tls->filename_prepared[0]=EXEOS;
-    
+
+    G_atmi_tls->qdisk_tls->recover_namelist = NULL;
+    G_atmi_tls->qdisk_tls->recover_open=EXFALSE;
+    G_atmi_tls->qdisk_tls->recover_i=EXFAIL;
+    G_atmi_tls->qdisk_tls->recover_last_loaded=EXFALSE;
             
     G_atmi_tls->qdisk_is_open = EXTRUE;
     G_atmi_tls->qdisk_rmid = rmid;
@@ -782,6 +787,8 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
     char *folders[2] = {M_folder_active, M_folder_prepared};
     char *fn = "xa_rollback_entry";
     int err, tmq_err;
+    int num_proc = 0;
+    
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
@@ -831,7 +838,10 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
                     {
                         goto xa_fail;
                     }
+                    
+                    num_proc++;
                 }
+                /* leave corrupted files as is... */
             }
             else
             {
@@ -841,7 +851,14 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
         }
     }
     
-    return XA_OK;
+    if (num_proc==0)
+    {
+        return XAER_NOTA;
+    }
+    else
+    {
+        return XA_OK;
+    }
     
 xa_err:
     return XAER_RMERR;
@@ -1680,8 +1697,19 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
 
             if (NULL==(f=NDRX_FOPEN(filename, "rb")))
             {
+                err = errno;
                 NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
-                   filename, strerror(errno));
+                   filename, strerror(err));
+                
+                /* if we get the error, that file does not exist,
+                 * then possibly file belongs to other tmq.
+                 * so really no error
+                 */
+                if (ENOENT==err)
+                {
+                    DIRENT_CONTINUE;
+                }
+
                 EXFAIL_OUT(ret);
             }
 
@@ -1735,6 +1763,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 
                 NDRX_FREE((char *)p_block);
                 p_block = NULL;
+                NDRX_FCLOSE(f);
                 
                 DIRENT_CONTINUE;
             }
@@ -1827,18 +1856,11 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
     
 out:
 
+    /* this will check for struct init or not init */
     if (NULL!=namelist)
     {
-        /* Hmm possible memory leak? We might want to delete all
-         * n records... */
-        
-        while (n>=0)
-        {
-            NDRX_FREE(namelist[n]);
-            n--;
-        }
-        NDRX_FREE(namelist);
-        namelist = NULL;
+        dirent_free(namelist, n);
+        namelist=NULL;
     }
 
     if (NULL!=p_block)
@@ -1855,26 +1877,194 @@ out:
 }
 
 /**
- * CURRENTLY NOT USED!!!
- * @param sw
- * @param xid
- * @param count
- * @param rmid
+ * Free up the current scan of the directory entries
+ * used by recover
+ */
+exprivate void dirent_free(struct dirent **namelist, int n)
+{
+    while (n>=0)
+    {
+        NDRX_FREE(namelist[n]);
+        n--;
+    }
+    NDRX_FREE(namelist);
+}
+
+/** continue with dirent free */
+#define RECOVER_CONTINUE \
+            NDRX_FREE(G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]);\
+            continue;\
+   
+/** Close cursor */
+#define RECOVER_CLOSE_CURSOR \
+        /* reset any stuff left open from previous scan... */\
+        if (NULL!=G_atmi_tls->qdisk_tls->recover_namelist)\
+        {\
+            dirent_free(G_atmi_tls->qdisk_tls->recover_namelist, G_atmi_tls->qdisk_tls->recover_i);\
+            G_atmi_tls->qdisk_tls->recover_namelist = NULL;\
+        }\
+        G_atmi_tls->qdisk_tls->recover_open=EXFALSE;\
+        G_atmi_tls->qdisk_tls->recover_i=EXFAIL;\
+        G_atmi_tls->qdisk_tls->recover_last_loaded=EXFALSE;\
+
+/**
+ * Lists currently prepared transactions
+ * NOTE! Currently messages does not store RMID.
+ * This means that one directory cannot shared between several 
+ * @param sw XA switch
+ * @param xid where to unload the xids
+ * @param count positions avaialble
+ * @param rmid RM id
  * @param flags
- * @return 
+ * @return error or nr Xids recovered
  */
 expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
 {
+    int ret = XA_OK;
+    int err;
+    XID xtmp;
+    char *p, *fname;
+    int current_unload_pos=0; /* where to unload the stuff.. */
+    
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_recover_entry() - XA not open!");
-        return XAER_RMERR;
+        ret=XAER_PROTO;
+        goto out;
     }
     
-    /* TODO: Scan the prepared folder and return the list. */
-    NDRX_LOG(log_error, "WARNING! xa_recover_entry() - STUB!");
+    if (NULL==xid && count >0)
+    {
+        NDRX_LOG(log_error, "ERROR: xid is NULL and count >0");
+        ret=XAER_INVAL;
+        goto out;
+    }
     
-    return 0; /* no transactions found */
+    if (!G_atmi_tls->qdisk_tls->recover_open && ! (flags & TMSTARTRSCAN))
+    {
+        NDRX_LOG(log_error, "ERROR: Scan not open and TMSTARTRSCAN not specified");
+        ret=XAER_INVAL;
+        goto out;
+    }
+    
+    /* close the scan */
+    if (flags & TMSTARTRSCAN)
+    {
+        /* if was not open, no problem.. */
+        RECOVER_CLOSE_CURSOR;
+    }
+    
+    /* start the scan if requested so ...  */
+    if (flags & TMSTARTRSCAN)
+    {
+        G_atmi_tls->qdisk_tls->recover_i = scandir(M_folder_prepared, 
+                &G_atmi_tls->qdisk_tls->recover_namelist, 0, alphasort);
+        
+        if (G_atmi_tls->qdisk_tls->recover_i < 0)
+        {
+            err=errno;
+            NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
+                    M_folder_prepared, strerror(err));
+            userlog("Failed to scan q directory [%s]: %s", 
+                    M_folder_prepared, strerror(err));
+            ret=XAER_RMERR;
+            goto out;
+        }
+        
+        G_atmi_tls->qdisk_tls->recover_open=EXTRUE;
+    }
+    
+    /* nothing to return */
+    if (NULL==G_atmi_tls->qdisk_tls->recover_namelist)
+    {
+        ret=0;
+        goto out;
+    }
+    
+    /** start to unload xids, we got to match the same names */
+    while ((count - current_unload_pos) > 0 && 
+            G_atmi_tls->qdisk_tls->recover_i--)
+    {
+        fname = G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]->d_name;
+        
+        if (0==strcmp(fname, ".") || 
+            0==strcmp(fname, ".."))
+        {
+            RECOVER_CONTINUE;
+        }
+        
+        p = strchr(fname, '-');
+        
+        /* invalid file name, skip... */
+        if (NULL==p)
+        {
+            NDRX_LOG(log_error, "Invalid prepared name [%s] - skip", fname);
+            RECOVER_CONTINUE;
+        }
+                
+        /* terminate so that we have good name */
+        *p = EXEOS;
+        p++;
+        
+        if (NULL==atmi_xa_deserialize_xid(fname, &xtmp))
+        {
+            NDRX_LOG(log_error, "Failed to deserialize xid: %s - skip", fname);
+            RECOVER_CONTINUE;
+        }
+        
+        /* TODO: if we will support several RMIDs in the same folder
+         * then we need to read the file block and check the RMID
+         * currently file blocks does not contain RMID. Thus that would
+         * require to be appended.
+         */
+        
+        /* check is it duplicate? */
+        if ( (current_unload_pos>0 &&
+                0==memcmp(&xid[current_unload_pos-1], &xtmp, sizeof(XID)))
+                /* if it was processed in previous scan: 
+                 */
+                || (G_atmi_tls->qdisk_tls->recover_last_loaded 
+                        && 0==memcmp(&G_atmi_tls->qdisk_tls->recover_last, &xtmp, sizeof(XID)))
+                )
+        {
+            NDRX_LOG(log_debug, "Got part [%s] of xid [%s]", p, fname);
+            RECOVER_CONTINUE;
+        }
+            
+        /* Okey unload the xid finally */
+        memcpy(&xid[current_unload_pos], &xtmp, sizeof(XID));
+        
+        
+        NDRX_LOG(log_debug, "Xid [%s] unload to position %d", fname, current_unload_pos);
+        ret++;
+        current_unload_pos++;
+        RECOVER_CONTINUE;
+    }
+    
+    if (ret>0)
+    {
+        /* save the last xid for reetry skipping.. */
+        memcpy(&G_atmi_tls->qdisk_tls->recover_last, &xid[ret-1], sizeof(XID));
+        G_atmi_tls->qdisk_tls->recover_last_loaded=EXTRUE;
+    }
+    
+out:
+
+    /* terminate the scan */
+    NDRX_LOG(log_debug, "recover: count=%ld, ret=%d", count, ret);
+
+    if (    ret>=0 
+            && ( (flags & TMENDRSCAN)  || ret < count)
+            && G_atmi_tls->qdisk_tls->recover_open
+            )
+    {
+        NDRX_LOG(log_debug, "recover: closing cursor");
+        
+        /* if was not open, no problem.. */
+        RECOVER_CLOSE_CURSOR;
+    }
+
+    return ret; /* no transactions found */
 }
 
 /**

@@ -1,18 +1,18 @@
 /**
- * @brief Stock transaction manager with default null switch.
- *  It will pick up what ever driver will be set by dynamic xa driver library setting.
+ * @brief Transaction Manager recovery
  *
- * @file tmsrvmain.c
+ * @file tmrecover.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -32,53 +32,26 @@
  * -----------------------------------------------------------------------------
  */
 
+#ifndef TMRECOVER_H
+#define	TMRECOVER_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 /*---------------------------Includes-----------------------------------*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <ndebug.h>
-#include <atmi.h>
-#include <ndrstandard.h>
-#include <ubf.h>
-#include <string.h>
-#include <unistd.h>
-#include <xa.h>
 /*---------------------------Externs------------------------------------*/
-/* Buildserver auto generated extern service list */
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/*---------------------------Globals------------------------------------*/
-/*---------------------------Statics------------------------------------*/
-/* Auto generated system advertise table */
-expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
-    { NULL, NULL, NULL, 0, 0 }
-};
 /*---------------------------Prototypes---------------------------------*/
-
-/**
- * Main entry for tmsrv
- */
-int main( int argc, char** argv )
-{
-    _tmbuilt_with_thread_option=0;
-    struct tmsvrargs_t tmsvrargs =
-    {
-        &tmnull_switch,
-        &ndrx_G_tmdsptchtbl[0],
-        0,
-        tpsvrinit,
-        tpsvrdone,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    };
     
-    return( _tmstartserver( argc, argv, &tmsvrargs ));
+extern int ndrx_tmrecover_do(void);
     
+#ifdef	__cplusplus
 }
+#endif
+
+#endif	/* TMRECOVER_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -419,7 +419,19 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     "aborting...", p_xai->tmxid);
 
                 new_txstage = XA_TX_STAGE_ABORTING;
-                tms_log_stage(p_tl, new_txstage, EXTRUE);
+                /* it is super critial to mark that we are going for abort
+                 * otherwise if above logs OK, network disk is removed
+                 * we start to abort, program is restarted,
+                 * disk restored, then we start to commit
+                 * this we might get partial abort / partial commit
+                 * so after the restart, we might re-process logs correclty
+                 * if available.
+                 */
+                if (EXSUCCEED!=tms_log_stage(p_tl, new_txstage, EXFALSE))
+                {
+                    userlog("tmsrv logging device does not work - terminating");
+                    exit(EXFAIL);
+                }
             }
             
             again = EXTRUE;
