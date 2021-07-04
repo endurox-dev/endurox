@@ -57,14 +57,12 @@ DEBUG CONFIGURATION FILE SYNTAX
 *WAIT_MAX*::
     Maximum number of seconds to wait after taking in account 'RETRY_WAIT_INC'.
 *MODE*::
-	Queue mode, can be *fifo* or *lifo*. This setting affects 'tpdequeue()'.
+	   Queue mode, can be *fifo* or *lifo*. This setting affects 'tpdequeue()'.
 *TXTOUT*::
     Transaction timeout, either global (target service call is made in within global
     transaction) if using *T* for 'autoq' or local timeout for transaction.
 *ERRORQ*::
-	Name of the queue where to put failed automatic forward when messages. To 
-    this queue request messages are enqueued, prior messages are removed from
-    forward queue.
+	   Name of the queue where to put failed/expired automatic forward request messages.
 
 EXAMPLE
 -------

@@ -97,6 +97,21 @@ add_executable (tmsrv
                 )
 target_link_libraries (tmsrv tms atmisrvinteg atmi ubf exuuid nstd ${RT_LIB} ${TMSRV_ADD_DEP} pthread)
 set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
+
+add_executable (tmrecoversv 
+                tmrecoversv.c
+                tmrecover.c
+                )
+target_link_libraries (tmrecoversv atmisrvinteg atmi ubf exuuid nstd ${RT_LIB} pthread)
+set_target_properties(tmrecoversv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
+add_executable (tmrecovercl 
+                tmrecovercl.c
+                tmrecover.c
+                )
+target_link_libraries (tmrecovercl atmiclt atmi ubf nstd ${RT_LIB} pthread)
+set_target_properties(tmrecovercl PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 #
@@ -111,6 +126,8 @@ install (TARGETS
 # Install bin
 install (TARGETS 
     tmsrv
+    tmrecovercl
+    tmrecoversv
     DESTINATION bin)
 
 # vim: set ts=4 sw=4 et smartindent:

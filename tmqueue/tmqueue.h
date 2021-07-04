@@ -106,6 +106,9 @@ typedef struct
     char magic[4];          /**< File magic   1                             */
     short srvid;
     short nodeid;
+    /* TODO: Consider adding rmid, if running different queue spaces in 
+     * the same folder
+     */
     char qname[TMQNAMELEN+1];
     char qspace[XATMI_SERVICE_NAME_LENGTH+1];
     char command_code;      /**< command code, see TMQ_CMD*                 */

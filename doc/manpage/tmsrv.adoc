@@ -119,6 +119,17 @@ particular Resource Manager level:
 
 - $ xadmin forgetlocal
 
+*WARNING:* These commands does not consult with the originatig transaction
+managers for the transaction statuses, thus these command shall be used only
+when system is idling (not processing any useful workload and it is known that
+there some records at resources locked / stuck at prepare stage).
+
+To collect and rollback any orphaned prepared transactions, it is recommended
+to configure singled *tmrecoversv(8)* copy at the end of *ndrxconfig.xml(5)*
+server startup sequence, so that this server automatically would collect any
+broken transaction branches. Or after the system startup, manually invoke 
+*tmrecovercl(5)* command line tool to perform transaction collection and rollback.
+
 By default *tmsrv* writes log files to disk and uses *fflush()* unix call to
 persist the data. This call submits the message only to Operating System kernel,
 but does not guarantee that data is written to disk. Thus if power outage happens
@@ -244,7 +255,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ex_env(5)* *buildtms(8)* *xadmin(8)*
+*ex_env(5)* *buildtms(8)* *xadmin(8)* *tmrecoversv(8)* *tmrecovercl(8)*
 
 COPYING
 -------
