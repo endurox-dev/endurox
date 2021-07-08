@@ -33,7 +33,7 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
