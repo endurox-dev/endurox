@@ -464,7 +464,7 @@ out:
             if (EXEOS!=qconf.errorq[0])
             {
                 TPQCTL ctl;
-                NDRX_LOG(log_warn, "ERRORQ defined, enqueue answer buffer to "
+                NDRX_LOG(log_warn, "ERRORQ defined, enqueue request buffer to "
                     "[%s] q in [%s] namespace", qconf.errorq, msg->hdr.qspace);
                 
 
