@@ -525,7 +525,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         
         if (resnr<=0)
         {
-            NDRX_LOG(log_error, "svc [%s] resnr=%d", resnr);
+            NDRX_LOG(log_error, "svc [%s] resnr=%d", svc, resnr);
             svc_ok=EXFALSE;
         }
         else if (0!=strcmp(psvcinfo->service, svc))

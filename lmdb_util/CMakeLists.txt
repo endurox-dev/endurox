@@ -33,7 +33,7 @@
 ##
 
 # Set a minimum version
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 # Make sure the compiler can find inclxmemcke files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
