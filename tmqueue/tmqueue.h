@@ -210,6 +210,10 @@ union tmq_upd_block {
 };
 
 /*---------------------------Globals------------------------------------*/
+
+extern char ndrx_G_qspace[];    /**< Name of the queue space            */
+extern char ndrx_G_qspacesvc[]; /**< real service name                  */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
  
@@ -222,6 +226,7 @@ extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 extern void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid);
 extern char * tmq_corid_serialize(char *corid_in, char *corid_str_out);
 extern int tmq_finalize_files(UBFH *p_ub);
+extern void tmq_set_tmqueue(int setting);
     
 /* From storage driver: */
 extern size_t tmq_get_block_len(char *data);

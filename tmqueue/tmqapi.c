@@ -212,7 +212,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
     
     /* Build up the message. */
     tmq_setup_cmdheader_newmsg(&p_msg->hdr, p_msg->hdr.qname, 
-            tpgetnodeid(), G_server_conf.srv_id, G_tmqueue_cfg.qspace, p_msg->qctl.flags);
+            tpgetnodeid(), G_server_conf.srv_id, ndrx_G_qspace, p_msg->qctl.flags);
     
     /* Return the message id. */
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
@@ -597,9 +597,9 @@ expublic int tmq_mqlq(UBFH *p_ub, int cd)
     
         tmq_get_q_stats(el->qname, &msgs, &locked);
                 
-        NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
+        NDRX_LOG(log_debug, "returning %s/%s", ndrx_G_qspace, el->qname);
         
-        if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
+        if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, ndrx_G_qspace, 0L) ||
             EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
             EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
             EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
@@ -672,7 +672,7 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
 
         if (EXSUCCEED==tmq_build_q_def(el->qname, &is_default, qdef, sizeof(qdef)))
         {
-            NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
+            NDRX_LOG(log_debug, "returning %s/%s", ndrx_G_qspace, el->qname);
             
             flags[0] = EXEOS;
             
@@ -682,7 +682,7 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
             }
             
 
-            if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
+            if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, ndrx_G_qspace, 0L) ||
                 EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
                 EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
                 EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||

@@ -92,16 +92,18 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+expublic char ndrx_G_qspace[XATMI_SERVICE_NAME_LENGTH+1];   /**< Name of the queue space  */
+expublic char ndrx_G_qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service name      */
 /*---------------------------Statics------------------------------------*/
 
 exprivate char M_folder[PATH_MAX+1] = {EXEOS}; /**< Where to store the q data         */
 exprivate char M_folder_active[PATH_MAX+1] = {EXEOS}; /**< Active transactions        */
 exprivate char M_folder_prepared[PATH_MAX+1] = {EXEOS}; /**< Prepared transactions    */
 exprivate char M_folder_committed[PATH_MAX+1] = {EXEOS}; /**< Committed transactions  */
-
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
 exprivate MUTEX_LOCKDECL(M_init);   /**< init lock      */
+exprivate int M_is_tmqueue = EXFALSE;   /**< is this process a tmqueue ?        */
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -178,6 +180,16 @@ struct xa_switch_t ndrxqdynsw =
     .xa_forget_entry = xa_forget_entry_dyn,
     .xa_complete_entry = xa_complete_entry_dyn
 };
+
+
+/**
+ * Mark the current instance as part or not as part of tmqueue
+ * @param setting EXTRUE/EXFALSE
+ */
+expublic void tmq_set_tmqueue(int setting)
+{
+    M_is_tmqueue = setting;
+}
 
 /**
  * Set filename base
@@ -615,22 +627,25 @@ expublic int xa_open_entry_mkdir(char *xa_info)
     NDRX_LOG(log_info, "Prepared M_folder_prepared=[%s]", M_folder_prepared);
     NDRX_LOG(log_info, "Prepared M_folder_committed=[%s]", M_folder_committed);
     
-    M_folder_set=EXTRUE;
     
     return XA_OK;
 }
+
 /**
- * Open API
- * @param sw
- * @param xa_info
+ * Open API.
+ * Now keeps the settings of the queue space too.
+ * @param sw Current switch
+ * @param xa_info New format: dir="/path_to_dir",qspace='SAMPLESPACE' (escaped)
  * @param rmid
  * @param flags
- * @return 
+ * @return XA_ return codes
  */
 expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
-    int ret = XA_OK;
+    int ret = XA_OK, err, i;
     static int first = EXTRUE;
+    char *info_tmp = NULL;
+    char *p, *val;
     
     /* mark that suspend no required by this resource... */
     if (first)
@@ -674,6 +689,10 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
     G_atmi_tls->qdisk_is_open = EXTRUE;
     G_atmi_tls->qdisk_rmid = rmid;
     
+#define UNLOCK_OUT MUTEX_UNLOCK_V(M_folder_lock);\
+                ret=XAER_RMERR;\
+                goto out;
+                
     /* Load only once? */
     if (!M_folder_set)
     {
@@ -682,16 +701,82 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         
         if (!M_folder_set)
         {
-            ret=xa_open_entry_mkdir(xa_info);
+            
+            info_tmp = NDRX_STRDUP(xa_info);
+            
+            if (NULL==info_tmp)
+            {
+                err=errno;
+                NDRX_LOG(log_error, "Failed to strdup: %s", strerror(err));
+                userlog("Failed to strdup: %s", strerror(err));
+                UNLOCK_OUT;
+            }
+            
+            /* qspace='HELLO', datadir='YOPT' */
+#define ARGS_DELIM      ", \t"
+#define ARGS_QUOTE      "'\""
+#define ARG_DIR         "dir"
+#define ARG_QSPACE      "qspace"
+            
+            /* preserve values in quotes... as atomic values */
+            for (p = ndrx_strtokblk ( info_tmp, ARGS_DELIM, ARGS_QUOTE), i=0; 
+                    NULL!=p;
+                    p = ndrx_strtokblk (NULL, ARGS_DELIM, ARGS_QUOTE), i++)
+            {
+                if (NULL!=(val = strchr(p, '=')))
+                {
+                    *val = EXEOS;
+                    val++;
+                }
+                
+                /* set data dir. */
+                if (0==strcmp(ARG_DIR, p))
+                {
+                    /* Do parse of the string... */
+                    ret=xa_open_entry_mkdir(val);
+                    
+                    if (EXSUCCEED!=ret)
+                    {
+                        NDRX_LOG(log_error, "Failed to prepare data directory [%s]", val);
+                        UNLOCK_OUT;
+                    }   
+                }
+                else if (0==strcmp(ARG_QSPACE, p))
+                {
+                    NDRX_STRCPY_SAFE(ndrx_G_qspace, val);
+                }
+                /* all other ignored... */
+            }
+            
+            if (EXEOS==ndrx_G_qspace[0])
+            {
+                NDRX_LOG(log_error, "[%s] setting not found in open string!", ARG_QSPACE);
+                UNLOCK_OUT;
+            }
+            
+            if (EXEOS==M_folder[0])
+            {
+                NDRX_LOG(log_error, "[%s] setting not found in open string!", ARG_DIR);
+                UNLOCK_OUT;
+            }
+            
+            snprintf(ndrx_G_qspacesvc, sizeof(ndrx_G_qspacesvc),
+                    NDRX_SVC_QSPACE, ndrx_G_qspace);
+
+            NDRX_LOG(log_debug, "Qspace set to: [%s]", ndrx_G_qspace);
+            NDRX_LOG(log_debug, "Qspace svc set to: [%s]", ndrx_G_qspacesvc);
+            M_folder_set=EXTRUE;
+            
         }   
         MUTEX_UNLOCK_V(M_folder_lock);
         
-        if (XA_OK!=ret)
-        {
-            NDRX_LOG(log_error, "Failed to prepare message folders");
-        }
     }
-             
+out:
+    
+    if (NULL!=info_tmp)
+    {
+        NDRX_FREE(info_tmp);
+    }
     return ret;
 }
 /**

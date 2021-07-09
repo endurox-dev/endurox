@@ -84,8 +84,10 @@ typedef struct
 {
     long dflt_timeout;  /**< how long monitored transaction can be open     */
     int scan_time;      /**< Number of seconds retries                      */
+#if 0
     char qspace[XATMI_SERVICE_NAME_LENGTH+1];   /**< where the Q files live */
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service name      */
+#endif
     char qconfig[PATH_MAX+1]; /**< Queue config file                        */
     int threadpoolsize;       /**< thread pool size                         */
     int housekeeptime;        /**< Number of seconds active+corrupted cleanup*/
