@@ -356,12 +356,20 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
         switch(c)
         {
-            case 'm': /* My qspace.. */ 
+            case 'm': 
+                
+#if 0
+                /* My qspace.. */ 
                 NDRX_STRCPY_SAFE(G_tmqueue_cfg.qspace, optarg);
                 snprintf(G_tmqueue_cfg.qspacesvc, sizeof(G_tmqueue_cfg.qspacesvc),
                         NDRX_SVC_QSPACE, optarg);
                 NDRX_LOG(log_debug, "Qspace set to: [%s]", G_tmqueue_cfg.qspace);
-                NDRX_LOG(log_debug, "Qspace svc set to: [%s]", G_tmqueue_cfg.qspacesvc);
+                NDRX_LOG(log_debug, "Qspace svc set to: [%s]", G_tmqueue_cfg.qspacesvc);          
+#endif
+                /* Ask to convert: */
+                NDRX_LOG(log_error, "ERROR ! Please convert queue settings to NDRX_XA_OPEN_STR (dir=,qspace=)");
+                EXFAIL_OUT(ret);
+                
                 break;
                 
             case 'q':
@@ -405,12 +413,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             NDRX_LOG(log_error, "Failed to read CCONFIG's @queue section!");
             EXFAIL_OUT(ret);
         }
-    }
-    
-    if (EXEOS==G_tmqueue_cfg.qspace[0])
-    {
-        NDRX_LOG(log_error, "qspace not set (-m <qspace name> flag)");
-        EXFAIL_OUT(ret);
     }
     
     /* Check the parameters & default them if needed */
@@ -459,10 +461,20 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* we should open the XA  */
     NDRX_LOG(log_debug, "About to Open XA Entry!");
+    
     if (EXSUCCEED!=tpopen())
     {
         EXFAIL_OUT(ret);
     }
+    
+    /* mark the qdisk that we are tmqueue
+     * for direct log calls
+     * So what let to do for others is just to start the transaction
+     * join for other is just ignored.
+     */
+    tmq_set_tmqueue(EXTRUE);
+    
+    /* we shall read the Q space now... */
     
     /* Recover the messages from disk */
     if (EXSUCCEED!=tmq_load_msgs())
@@ -489,7 +501,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED!=tpadvertise(G_tmqueue_cfg.qspacesvc, TMQUEUE))
+    if (EXSUCCEED!=tpadvertise(ndrx_G_qspacesvc, TMQUEUE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
         EXFAIL_OUT(ret);
