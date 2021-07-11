@@ -63,6 +63,7 @@ $ brew install bison
 
 
 === Getting the source code
+
 For test purposes we will parepare new user for which Enduro/X will built.
 
 ---------------------------------------------------------------------
@@ -104,7 +105,10 @@ which means that by enabled SIP (System Integrity Protection), the variable is d
 pass all ATMI tests, you have to disable SIP.
 
 ---------------------------------------------------------------------
-cat << EOF > $HOME/ndrx_home
+
+$ bash
+
+$ cat << EOF > $HOME/ndrx_home
 #!/bin/bash
 
 echo "Loading ndrx_home ..."
@@ -122,10 +126,15 @@ export FLDTBLDIR=/Users/user1/endurox/ubftest/ubftab
 
 # For testing firstly use original folder where dynamic libraries were built:
 for f in libthpool libexuuid libcgreen libubf libnstd libnetproto libatmi libpsstdlib libps libexnet libatmisrv libatmiclt tmqueue; do
-
-	export DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH:/Users/user1/endurox/$f
-	echo $f
+	export DYLD_FALLBACK_LIBRARY_PATH=\$DYLD_FALLBACK_LIBRARY_PATH:/Users/user1/endurox/$f
 done
+
+
+export NDRX_QPATH=/tmp/mq
+
+if [ ! -d "\$NDRX_QPATH" ]; then
+	mkdir \$NDRX_QPATH
+fi
 
 # Speedup a bit q open & close
 export NDRX_MSGMAX=100
