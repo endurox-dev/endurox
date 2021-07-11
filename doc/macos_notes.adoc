@@ -125,7 +125,7 @@ export PATH=$PATH:/Users/user1/endurox/dist/bin
 export FLDTBLDIR=/Users/user1/endurox/ubftest/ubftab
 
 # For testing firstly use original folder where dynamic libraries were built:
-for f in libthpool libexuuid libcgreen libubf libnstd libnetproto libatmi libpsstdlib libps libexnet libatmisrv libatmiclt tmqueue; do
+for f in libthpool libexuuid libcgreen libubf libnstd libnetproto libatmi libpsstdlib libps libexnet libatmisrv libatmiclt tmqueue tmsrv; do
 	export DYLD_FALLBACK_LIBRARY_PATH=\$DYLD_FALLBACK_LIBRARY_PATH:/Users/user1/endurox/$f
 done
 
