@@ -110,10 +110,20 @@ extern "C" {
  being appropriate or not.
  http://pubs.opengroup.org/onlinepubs/009695299/basedefs/time.h.html */
 
+#ifndef CLOCK_MONOTONIC
+
 /* XXX only supports a single timer */
 #define TIMER_ABSTIME -1
 #define CLOCK_REALTIME CALENDAR_CLOCK
 #define CLOCK_MONOTONIC SYSTEM_CLOCK
+
+
+#else
+
+/* clocks defined */
+#define EX_OS_DARWIN_HAVE_CLOCK	1
+
+#endif
     
 #define NDRX_OSX_COND_FIX_ATTEMPTS      100 /**< to avoid race condition */
 
@@ -229,7 +239,10 @@ struct mdrx_sysv_res
 };
 
 #ifdef EX_OS_DARWIN
+
+#ifndef EX_OS_DARWIN_HAVE_CLOCK
 typedef int clockid_t;
+#endif
 
 
 /**
@@ -289,7 +302,7 @@ struct  ndrx_pollfd
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-#ifdef EX_OS_DARWIN
+#if defined(EX_OS_DARWIN) && !defined(EX_OS_DARWIN_HAVE_CLOCK)
 extern int clock_gettime(clockid_t clk_id, struct timespec *tp);
 #endif
 
