@@ -253,7 +253,7 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, char command_code, char stat
         EXFAIL_OUT(ret);
     }
     
-    cmd->seqno;
+    cmd->seqno=seqno;
     cmd->command_code=command_code;
     cmd->status=status;
     cmd->p_msg=p_msg;
