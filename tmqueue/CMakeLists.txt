@@ -58,6 +58,7 @@ add_library (ndrxxaqdisk SHARED
                 tmqutil.c
                 qdisk_xa.c
                 housekeep.c
+                qtran.c
             )
 
 add_library (ndrxxaqdisks SHARED
@@ -72,7 +73,7 @@ add_library (ndrxxaqdiskd SHARED
                 qdisk_xa_common.c
             )
 ############################# Executables ######################################
-add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
+add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c qtran.c
                         ../libatmisrv/rawmain_integra.c)
 
 SET (TMQUEUE_ADD_DEP "")

@@ -1246,6 +1246,10 @@ out:
 
 /**
  * Dequeue message by corid
+ * TODO: there may be many corid messages. Thus each queue must have hash
+ *  of correlators. Where each hash entry would contains CDL list of related
+ *  messages. Dequeue must check the validity of the messages (locked / not locked).
+ *  Search shall be performed in fifo or lifo order.
  * @param msgid
  * @param diagnostic queue error code (if any)
  * @return 

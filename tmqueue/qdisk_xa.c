@@ -819,6 +819,12 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
         NDRX_LOG(log_error, "ERROR! xa_start_entry() - XA not open!");
         return XAER_RMERR;
     }
+    
+    /* if we are tmq -> for join, perform lookup.
+     * for start check, if tran exists -> error, if not exists, start
+     * if doing from other process call the tmqueue for start/join (just chk)
+     */
+    
     return XA_OK;
 }
 
@@ -849,6 +855,8 @@ expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags
         
         G_atmi_tls->qdisk_tls->is_reg = EXFALSE;
     }
+    
+    /* no special processing for tran */
     
 out:
 

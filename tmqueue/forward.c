@@ -387,10 +387,22 @@ out:
             if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
                     rply_buf, rply_len, 0))
             {
-                NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
-                        msg->qctl.replyqueue, tpstrerror(tperrno));
-                userlog("Failed to enqueue to replyqueue [%s]: %s", 
-                        msg->qctl.replyqueue, tpstrerror(tperrno));
+                if (TPEDIAGNOSTIC==tperrno)
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s diag: %d:%s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno),
+                            msg->qctl.diagnostic, msg->qctl.diagmsg);
+                    userlog("Failed to enqueue to replyqueue [%s]: %s diag: %d:%s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno),
+                            msg->qctl.diagnostic, msg->qctl.diagmsg);
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno));
+                    userlog("Failed to enqueue to replyqueue [%s]: %s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno));
+                }
                 disk_err=EXTRUE;
                 goto finalize;
             }
@@ -452,10 +464,22 @@ out:
                 if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
                         rply_buf, rply_len, 0))
                 {
-                    NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
-                            msg->qctl.failurequeue, tpstrerror(tperrno));
-                    userlog("Failed to enqueue to failurequeue [%s]: %s", 
-                            msg->qctl.failurequeue, tpstrerror(tperrno));
+                    if (TPEDIAGNOSTIC==tperrno)
+                    {
+                        NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s diag: %d:%s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno),
+                                msg->qctl.diagnostic, msg->qctl.diagmsg);
+                        userlog("Failed to enqueue to failurequeue [%s]: %s diag: %d:%s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno),
+                                msg->qctl.diagnostic, msg->qctl.diagmsg);
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno));
+                        userlog("Failed to enqueue to failurequeue [%s]: %s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno));
+                    }
                     disk_err=EXTRUE;
                     goto finalize;
                 }
