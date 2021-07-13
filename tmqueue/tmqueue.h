@@ -154,8 +154,16 @@ typedef struct
 typedef struct
 {
     tmq_cmdheader_t hdr;
-    
 } tmq_msg_del_t;
+
+/**
+ * Dummy command
+ * Transaction marker
+ */
+typedef struct
+{
+    tmq_cmdheader_t hdr;
+} tmq_msg_dum_t;
 
 
 /**
@@ -201,6 +209,7 @@ union tmq_block {
     tmq_msg_t msg;
     tmq_msg_del_t del;
     tmq_msg_upd_t upd;
+    tmq_msg_dum_t dum;
 };
 
 /**
@@ -208,7 +217,9 @@ union tmq_block {
  */
 union tmq_upd_block {
     tmq_cmdheader_t hdr;
+    tmq_msg_del_t del;
     tmq_msg_upd_t upd;
+    tmq_msg_dum_t dum;
 };
 
 /*---------------------------Globals------------------------------------*/

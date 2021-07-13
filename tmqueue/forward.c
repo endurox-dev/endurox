@@ -295,6 +295,10 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         NDRX_LOG(log_debug, "Service invocation shall be performed in "
                 "transactional mode...");
         
+        /* TODO: Increment the try counter of the msg, not?
+         * or perform the delay on forward engine
+         * as the issue might common for all forward messages
+         */
         if (EXSUCCEED!=tpbegin(tout, 0))
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
@@ -412,6 +416,9 @@ out:
         
         cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
         
+        /* TODO: If write fails, increment the try counter?
+         * so that msg is being delayed?
+         */
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                 "Removing completed message..."))
         {
