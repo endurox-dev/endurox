@@ -74,7 +74,7 @@ add_library (ndrxxaqdiskd SHARED
             )
 ############################# Executables ######################################
 add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c qtran.c
-                        ../libatmisrv/rawmain_integra.c)
+                        tmqsrvmain.c)
 
 SET (TMQUEUE_ADD_DEP "")
 if(${CMAKE_OS_NAME} STREQUAL "AIX")

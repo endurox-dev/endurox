@@ -224,6 +224,19 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
                 EXFAIL_OUT(ret);
             }
             break;
+        case TMQ_CMD_STARTTRAN:
+        case TMQ_CMD_ABORTTRAN:
+        case TMQ_CMD_PREPARETRAN:
+        case TMQ_CMD_COMMITRAN:
+            
+            /* start Q space transaction */
+            if (XA_OK!=ndrx_xa_qminiservce(p_ub, cmd))
+            {
+                EXFAIL_OUT(ret);
+            }
+            
+            break;
+            
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
             ret=EXFAIL;
@@ -331,7 +344,7 @@ out:
 /*
  * Do initialization
  */
-int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+int tpsvrinit(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     signed char c;
@@ -467,13 +480,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    /* mark the qdisk that we are tmqueue
-     * for direct log calls
-     * So what let to do for others is just to start the transaction
-     * join for other is just ignored.
-     */
-    tmq_set_tmqueue(EXTRUE);
-    
     /* we shall read the Q space now... */
     
     /* Recover the messages from disk */
@@ -550,7 +556,7 @@ out:
 /**
  * Do de-initialization
  */
-void NDRX_INTEGRA(tpsvrdone)(void)
+void tpsvrdone(void)
 {
     int i;
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
