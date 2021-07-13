@@ -225,19 +225,14 @@ exprivate char *set_filename_base_tmxid(char *tmxid)
 }
 
 /**
- * Set the real filename (this includes the number postfix.)
- * We need to test file if existance in:
- * - active
- * - prepared folders
+ * Get the next file name for current transaction
  * 
- * if file exists, we increment the counter. We start from 1.
- * 
- * @param xid
- * @param rmid
- * @param filename where to store the output file name
+ * @return EXSUCCEED (names set) / EXFAIL (transaction not found)
  */
-exprivate void set_filenames(void)
+exprivate int set_filenames(void)
 {
+    
+#if 0
     int i;
     
     for (i=1;;i++)
@@ -253,9 +248,46 @@ exprivate void set_filenames(void)
             break;
         }
     }
+#endif
+    
+    /* get next sequence number of tran 
+     * tmxid is encoded in G_atmi_tls->qdisk_tls->filename_base
+     * thus lookup the transaction, and get the next number
+     */
+    
+    int ret = EXSUCCEED;
+    int locke=EXFALSE;
+    int seqno;
+    qtran_log_t * p_tl = tmq_log_get_entry(G_atmi_tls->qdisk_tls->filename_base, 
+        NDRX_LOCK_WAIT_TIME, &locke);
+    
+    if (NULL==p_tl)
+    {
+        NDRX_LOG(log_error, "Transaction [%s] not found", 
+                G_atmi_tls->qdisk_tls->filename_base);
+        EXFAIL_OUT(ret);
+    }
+    
+    seqno = tmq_log_next(p_tl);
+    
+    snprintf(G_atmi_tls->qdisk_tls->filename_active, sizeof(G_atmi_tls->qdisk_tls->filename_active), 
+                "%s/%s-%03d", M_folder_active, G_atmi_tls->qdisk_tls->filename_base, seqno);
+    
+    snprintf(G_atmi_tls->qdisk_tls->filename_prepared, sizeof(G_atmi_tls->qdisk_tls->filename_prepared), 
+            "%s/%s-%03d", M_folder_prepared, G_atmi_tls->qdisk_tls->filename_base, seqno);
+        
     NDRX_LOG(log_info, "Filenames set to: [%s] [%s]", 
                 G_atmi_tls->qdisk_tls->filename_active, 
                 G_atmi_tls->qdisk_tls->filename_prepared);
+out:
+                
+    /* if not recursive lock, then release */
+    if (NULL!=p_tl && !locke)
+    {
+        tmq_log_unlock(p_tl);
+    }
+
+    return ret;
 }
 
 /**
@@ -1267,6 +1299,15 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
      * prepared resources with XAER_NOTA transaction would assume that committed OK
      */
     
+    if (NULL==p_tl->cmds)
+    {
+        /* add dummy command 
+         * transaction shall stay locked, as no other processes shall 
+         * concurrently request anything from this.
+         */
+        
+    }
+    
     /* process command by command to stage to prepared ... */
     DL_FOREACH_SAFE(p_tl->cmds, el, elt)
     {
@@ -1797,7 +1838,16 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
         G_atmi_tls->qdisk_tls->is_reg = EXTRUE;
     }
     
-    set_filenames();
+    if (new_file)
+    {
+        /* get the current transaction? 
+         * If the same thread is locked, then no problem...
+         */
+        if (EXSUCCEED!=set_filenames())
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
     
     /* Open file for write... */
     NDRX_LOG(log_info, "Writing command file: [%s] mode: [%s]", 
@@ -1842,24 +1892,6 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
             NDRX_LOG(log_error, "failed to fsync");
             EXFAIL_OUT(ret);
         }
-        
-#if 0
-        /* TODO: if disk is restarted for some reason between 
-         * this stage and prepare/commit, then this might go unoticed.
-         * thus safest approach would be that tmqueue would keep in memory
-         * messages associated with transactions
-         * and even tmqueue could prepare the prepare phase and verify that
-         * on disk there is enough messages in active folder, if not
-         * report the error.
-         */
-        /* run dsync to persist the file */
-        if (EXSUCCEED!=ndrx_fsync_dsync(M_folder_active, G_atmi_env.xa_fsync_flags))
-        {
-            NDRX_LOG(log_error, "Failed to dsync [%s]", M_folder_active);
-            ret=XAER_RMERR;
-            goto out;
-        }
-#endif
     }
     
 out:
@@ -1874,6 +1906,8 @@ out:
         
         NDRX_FCLOSE(f);
     }
+
+    /* if message written OK, then add the command to the log */
 
     return ret;
 }
@@ -1943,6 +1977,7 @@ expublic size_t tmq_get_block_len(char *data)
     tmq_msg_del_t *p_del;
     tmq_msg_upd_t *p_upd;
     tmq_msg_unl_t *p_unl;
+    tmq_msg_dum_t *p_dum;
     
     switch (p_hdr->command_code)
     {
@@ -1958,6 +1993,9 @@ expublic size_t tmq_get_block_len(char *data)
             break;
         case TMQ_STORCMD_UNLOCK:
             ret = sizeof(*p_unl);
+            break;
+        case TMQ_STORCMD_DUM:
+            ret = sizeof(*p_dum);
             break;
         default:
             NDRX_LOG(log_error, "Unknown command code: %c", p_hdr->command_code);

@@ -126,6 +126,7 @@ extern qtran_log_list_t* tmq_copy_hash2list(int copy_mode);
 extern void tmq_tx_hash_lock(void);
 extern void tmq_tx_hash_unlock(void);
 extern int tmq_log_unlock(qtran_log_t *p_tl);
+extern int tmq_log_next(qtran_log_t *p_tl);
 
 #ifdef	__cplusplus
 }

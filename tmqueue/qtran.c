@@ -77,6 +77,18 @@ exprivate MUTEX_LOCKDECL(M_qtran_hash_lock);   /**< Transaction hash lock  */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Get next sequence number
+ * @param p_tl transaction (must be locked)
+ * @return next seq no 
+ */
+expublic int tmq_log_next(qtran_log_t *p_tl)
+{
+    p_tl->seqno++;
+    
+    return p_tl->seqno;
+}
+
+/**
  * Unlock transaction
  * @param p_tl
  * @return SUCCEED/FAIL
@@ -103,6 +115,8 @@ expublic int tmq_log_unlock(qtran_log_t *p_tl)
  * transaction (ether abort, or new register branch, etc...) and some stalled
  * PG process wants to finish the work off. Thus we need to waited lock for
  * foreground operations.
+ * TODO: if log is locked by the same thread, then set the locke, but continue.
+ *  As there might be re-cursive usage.
  * @param tmxid - serialized XID
  * @param[in] dowait milliseconds to wait for lock, before give up
  * @param[out] locke lock error
@@ -129,7 +143,7 @@ restart:
     
     if (NULL!=r)
     {
-        if (r->lockthreadid)
+        if (r->lockthreadid && r->lockthreadid!=ndrx_gettid())
         {
             if (dowait && ndrx_stopwatch_get_delta(&w) < dowait)
             {
@@ -155,6 +169,16 @@ restart:
                 *locke=EXTRUE;
             }
             
+        }
+        else if (r->lockthreadid)
+        {
+            NDRX_LOG(log_info, "Transaction [%s] sub-locked for thread_id: %" PRIu64,
+                    tmxid, r->lockthreadid);
+            
+            /* give hint that no unlocking shall be done
+             * as already locked.
+             */
+            *locke=EXTRUE;
         }
         else
         {
@@ -222,10 +246,11 @@ out:
 }
 
 /**
- * Add command to the log 
+ * Add command to the log
  * @param tmxid transaction id (serialized)
  * @param seqno command sequence number
- * @param b command block
+ * @param b command block, convert to char *block, so that we detect the
+ *  type and length here internally. With having base block set to zeros.
  * @param p_msg ptr to actual message
  * @param entry_status status according to XA_RM_STATUS* consts
  * @return EXSUCCEED/EXFAIL
