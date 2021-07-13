@@ -194,6 +194,13 @@ expublic int tmq_log_start(char *tmxid)
     tmp->t_update = ndrx_utc_tstamp();
     ndrx_stopwatch_reset(&tmp->ttimer);
     
+    /* TODO: write initial tran-info message...
+     * if we add initial message, we can overwrite this active file
+     * with actual msg contents. As in case if we have read-only branch
+     * we need some infos that transaction actually exists.
+     * But to avoid more moves + fsync, we will re-write this file.
+     */
+    
     /* lock for us, yet it is not shared*/
     tmp->lockthreadid = ndrx_gettid();
     
@@ -229,7 +236,6 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, union tmq_upd_block *b, tmq_
     int ret = EXSUCCEED;
     qtran_log_t *p_tl= NULL;
     qtran_log_cmd_t *cmd=NULL;
-    tmq_msg_upd_t *p_upd;
     
     NDRX_LOG(log_info, "Adding Q tran cmd: [%s] seqno: %d, "
             "command_code: %c, status: %c, p_msg: %p",

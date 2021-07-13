@@ -67,6 +67,8 @@ extern "C" {
 #define TMQ_STORCMD_UPD             'U'     /**< Command code - update msg  */
 #define TMQ_STORCMD_DEL             'D'     /**< Command code - delete msg  */
 #define TMQ_STORCMD_UNLOCK          'L'     /**< Command code - unlock msg  */
+#define TMQ_STORCMD_DUM             'M'     /**< Command code - dummy msg
+                                            for transaction identification  */
     
 
 /**

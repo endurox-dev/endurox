@@ -1254,6 +1254,19 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
     
     p_tl->txstage = XA_TX_STAGE_PREPARING;
     
+    /* TODO:  
+     * Read active records -> as normal. If file cannot be read, create dummy
+     * record for given tran. And thus if having active record or prepared+active 
+     * at startup will automatically mean that transaction is abort-only. 
+     * 
+     * At the startup, all abort-only transaction shall be aborted
+     * 
+     * If doing prepare with empty RO transaction, inject dummy command prior
+     * (transaction marking) so that at restart we have transaction log and
+     * thus we can respond commit OK, thought might be optional as TMSRV
+     * prepared resources with XAER_NOTA transaction would assume that committed OK
+     */
+    
     /* process command by command to stage to prepared ... */
     DL_FOREACH_SAFE(p_tl->cmds, el, elt)
     {
@@ -1268,6 +1281,7 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
         
         el->cmd_status = XA_RM_STATUS_PREP;
         NDRX_LOG(log_info, "tmxid [%s] seq %d prepared OK", tmxid, el->seqno);
+        did_move=EXTRUE;
     }
     
     if (did_move)
