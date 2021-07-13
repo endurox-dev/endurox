@@ -54,6 +54,12 @@ extern "C" {
 #define TMQ_CMD_MQLM            'M'      /**< List messages               */
 #define TMQ_CMD_MQRC            'R'      /**< Reload config               */
 #define TMQ_CMD_MQCH            'H'      /**< Change Q  config (runtime)  */
+    
+/* XA Commands: */
+#define TMQ_CMD_STARTTRAN       'b'      /**< Start new transaction       */
+#define TMQ_CMD_ABORTTRAN       'a'      /**< Rollback entry              */
+#define TMQ_CMD_PREPARETRAN     'p'      /**< Prepare entry               */
+#define TMQ_CMD_COMMITRAN       'c'      /**< Commit entry                */
 
 #define TMQ_QDEF_MAX            512      /**< max buffer size for Q def   */
     

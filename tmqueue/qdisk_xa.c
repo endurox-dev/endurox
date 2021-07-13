@@ -87,6 +87,7 @@
 #include <qcommon.h>
 #include <xa_cmn.h>
 #include <ubfutil.h>
+#include "qtran.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -147,6 +148,9 @@ exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
 
 exprivate void dirent_free(struct dirent **namelist, int n);
 
+exprivate int xa_rollback_entry_tmq(char *tmxid, long flags);
+exprivate int xa_prepare_entry_tmq(char *tmxid, long flags);
+
 struct xa_switch_t ndrxqstatsw = 
 { 
     .name = "ndrxqstatsw",
@@ -197,11 +201,25 @@ expublic void tmq_set_tmqueue(int setting)
  * @param rmid
  * @return 
  */
-exprivate char *set_filename_base(XID *xid, int rmid)
+exprivate char *set_filename_base(XID *xid)
 {
     atmi_xa_serialize_xid(xid, G_atmi_tls->qdisk_tls->filename_base);
     
     NDRX_LOG(log_debug, "Base file name built [%s]", G_atmi_tls->qdisk_tls->filename_base);
+    
+    return G_atmi_tls->qdisk_tls->filename_base;
+}
+
+/**
+ * Set base xid
+ * @param tmxid xid string
+ * @return ptr to buffer
+ */
+exprivate char *set_filename_base_tmxid(char *tmxid)
+{
+    NDRX_STRCPY_SAFE(G_atmi_tls->qdisk_tls->filename_base, tmxid);
+    
+    NDRX_LOG(log_debug, "Base file name set [%s]", G_atmi_tls->qdisk_tls->filename_base);
     
     return G_atmi_tls->qdisk_tls->filename_base;
 }
@@ -368,10 +386,8 @@ exprivate int send_unlock_notif(union tmq_upd_block *p_upd, char *fname1,
         char *fname2, char fcmd)
 {
     int ret = EXSUCCEED;
-    long rsplen;
     char cmd = TMQ_CMD_NOTIFY;
-    char tmp[TMMSGIDLEN_STR+1];
-    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
+
     int len1=0, len2=0, filesover=0;
     UBFH *p_ub = NULL;
     
@@ -462,33 +478,13 @@ exprivate int send_unlock_notif(union tmq_upd_block *p_upd, char *fname1,
             }
     }
     
-    /* We need to send also internal command (what we are doing with the struct) */
-    
-    NDRX_LOG(log_info, "Calling QSPACE [%s] for msgid_str [%s] unlock",
-                p_upd->hdr.qspace, tmq_msgid_serialize(p_upd->hdr.msgid, tmp));
-    
-    ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
-    
-    /*Call The TMQ- server */
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TMQ, (long)p_upd->hdr.nodeid, 
-        (int)p_upd->hdr.srvid);
-
-    NDRX_LOG(log_debug, "About to notify [%s]", svcnm);
-            
-    if (p_upd->hdr.flags & TPQASYNC)
+    if (EXSUCCEED!=(ret = tex_mq_notify(p_ub)))
     {
-        if (EXFAIL == tpacall(svcnm, (char *)p_ub, 0L, TPNOTRAN))
-        {
-            NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-    }
-    else if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTRAN))
-    {
-        NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
+        NDRX_LOG(log_error, "tex_mq_notify failed");
         EXFAIL_OUT(ret);
     }
-    out:
+    
+out:
 
     if (NULL!=p_ub)
     {
@@ -532,7 +528,6 @@ exprivate int send_unlock_notif_hdr(tmq_cmdheader_t *p_hdr, char *fname1,
     union tmq_upd_block block;
     
     memset(&block, 0, sizeof(block));
-    
     memcpy(&block.hdr, p_hdr, sizeof(*p_hdr));
     
     return send_unlock_notif(&block, fname1, fname2, fcmd);
@@ -803,6 +798,184 @@ expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
 }
 
 /**
+ * TMQ queue internal version of transaction starting
+ * @return XA error code
+ */
+exprivate int xa_start_entry_tmq(char *tmxid, long flags)
+{
+    int locke = EXFALSE;
+    qtran_log_t * p_tl = NULL;
+    int ret = XA_OK;
+    
+    set_filename_base_tmxid(tmxid);
+    
+    /* Firstly try to locate the tran */
+    p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke);
+
+    if ( (flags & TMJOIN) || (flags & TMRESUME) )
+    {
+        if (NULL==p_tl && !locke)
+        {
+            NDRX_LOG(log_error, "Xid [%s] TMJOIN/TMRESUME but tran not found",
+                    tmxid);
+            ret = XAER_NOTA;
+            goto out;
+        }
+
+        NDRX_LOG(log_info, "Xid [%s] join OK", tmxid);
+    }
+    else
+    {
+        /* this is new tran */
+        if (NULL!=p_tl || locke)
+        {
+            NDRX_LOG(log_error, "Cannot start Xid [%s] already in progress",
+                    tmxid);
+            ret = XAER_DUPID;
+            goto out;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Queue transaction Xid [%s] started OK", tmxid);
+        }
+    }
+    
+out:
+    
+    if (NULL!=p_tl)
+    {
+        tmq_log_unlock(p_tl);
+    }
+
+    return ret;
+}
+
+/**
+ * Minimal XA call to tmqueue, used by external processes.
+ * @param tmxid serialized xid
+ * @param cmd TMQ_CMD* command code
+ * @return XA error code
+ */
+exprivate int ndrx_xa_qminicall(char *tmxid, char cmd)
+{
+    long rsplen;
+    UBFH *p_ub = NULL;
+    long ret = XA_OK;
+   
+    p_ub = (UBFH *)tpalloc("UBF", "", 1024 );
+    
+    if (NULL==p_ub)
+    {
+        NDRX_LOG(log_error, "Failed to allocate notif buffer");
+        ret = XAER_RMERR;
+        goto out;
+    }
+    
+    if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to setup EX_QMSGID!");
+        ret = XAER_RMERR;
+        goto out;
+    }
+    
+    if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to setup TMXID!");
+        ret = XAER_RMERR;
+        goto out;
+    }
+    
+    NDRX_LOG(log_info, "Calling QSPACE [%s] for tmxid [%s], command %c",
+                ndrx_G_qspacesvc, tmxid, cmd);
+    
+    ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
+
+    if (EXFAIL == tpcall(ndrx_G_qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, 
+        &rsplen, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "%s failed: %s", ndrx_G_qspacesvc, tpstrerror(tperrno));
+        ret = XAER_RMERR;
+        /* continue to get the buffer: */
+    }
+    
+    ndrx_debug_dump_UBF(log_info, "Reply from RM", p_ub);
+    
+    /* try to get the result of the OP */
+    if (Bpres(p_ub, TMTXRMERRCODE, 0) &&
+            EXSUCCEED!=Bget(p_ub, TMTXRMERRCODE, 0, (char *)&ret, 0L))
+    {
+        NDRX_LOG(log_debug, "Failed to get TMTXRMERRCODE: %s", Bstrerror(Berror));
+        ret = XAER_RMERR;
+    }
+    
+out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    NDRX_LOG(log_info, "returns %d", ret);
+    
+    return ret;
+}
+
+/**
+ * Serve the transaction call
+ * @param p_ub UBF buffer
+ * @param cmd tmq command code
+ * @return XA error code
+ */
+expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
+{
+    BFLDLEN len;
+    long ret = XA_OK;
+    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
+    
+    if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to setup TMXID!");
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    switch (cmd)
+    {
+        case TMQ_CMD_STARTTRAN:
+            ret = xa_start_entry_tmq(tmxid, 0);
+            break;
+        case TMQ_CMD_ABORTTRAN:
+            ret = xa_rollback_entry_tmq(tmxid, 0);
+            break;
+        case TMQ_CMD_PREPARETRAN:
+            ret = xa_prepare_entry_tmq(tmxid, 0);
+            break;
+        case TMQ_CMD_COMMITRAN:
+            
+            /* TODOO: */
+            break;
+        default:
+            NDRX_LOG(log_error, "Invalid command code [%c]", cmd);
+            ret = XAER_INVAL;
+            break;
+    }
+    
+out:
+            
+    NDRX_LOG(log_info, "returns XA status: %d", ret);
+    
+    if (EXSUCCEED!=Bchg(p_ub, TMTXRMERRCODE, 0, (char *)&ret, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to setup TMTXRMERRCODE: %s", 
+                Bstrerror(Berror));
+        ret = XAER_RMERR;
+    }
+
+    return ret;
+}
+
+
+/**
  * Set the file name of transaciton file (the base)
  * If exists and join - ok. Otherwise fail.
  * @param xa_info
@@ -812,20 +985,39 @@ expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
  */
 expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    set_filename_base(xid, rmid);
+    char *tmxid;
+    int ret = XA_OK;
     
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_start_entry() - XA not open!");
-        return XAER_RMERR;
+        ret = XAER_RMERR;
+        goto out;
     }
+    
+    tmxid = set_filename_base(xid);
     
     /* if we are tmq -> for join, perform lookup.
      * for start check, if tran exists -> error, if not exists, start
      * if doing from other process call the tmqueue for start/join (just chk)
      */
     
-    return XA_OK;
+    if (M_is_tmqueue)
+    {
+        ret = xa_start_entry_tmq(tmxid, flags);
+    }
+    else if (! ( (flags & TMJOIN) || (flags & TMRESUME) ))
+    {
+        /* in case if no join from external process
+         * request the tmsrv to start the transaction
+         * also we are interested in return code
+         */
+        ret=ndrx_xa_qminicall(tmxid, TMQ_CMD_STARTTRAN);
+    }
+    
+out:
+
+    return ret;
 }
 
 /**
@@ -864,23 +1056,19 @@ out:
 }
 
 /**
- * Remove any transaction file (we might have multiple here
- * @param sw
- * @param xid
- * @param rmid
- * @param flags
- * @return 
+ * Internal TMQ version of rollback
+ * @param tmxid xid serialized
+ * @param flags any flags
+ * @return  XA error code
  */
-expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
 {
-    int i, j;
-    int names_max;
-    char *fname;
     union tmq_block b;
-    char *folders[2] = {M_folder_active, M_folder_prepared};
-    char *fn = "xa_rollback_entry";
-    int err, tmq_err;
-    int num_proc = 0;
+    char *fn = "xa_rollback_entry_tmq";
+    qtran_log_cmd_t *el, *elt;
+    
+    int locke = EXFALSE;
+    qtran_log_t * p_tl = NULL;
     
     if (!G_atmi_tls->qdisk_is_open)
     {
@@ -888,115 +1076,198 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
         return XAER_RMERR;
     }
     
-    set_filename_base(xid, rmid);
-    names_max = get_filenames_max();
+    set_filename_base_tmxid(tmxid);
     
-    NDRX_LOG(log_info, "%s: %d", fn, names_max);
+    /* Firstly try to locate the tran */
+    p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke);
     
-    /* send notification, that message is removed, but firstly we need to 
-     * understand what kind of message it was.
-     * - If new msg: send delete to server
-     * - If any otgher: send simple unlock
-     */
-    for (i=names_max; i>=1; i--)
+    if (NULL==p_tl)
     {
-        for (j = 0; j<2; j++)
+        if (locke)
         {
-            fname = get_filename_i(i, folders[j], 0);
-            
-            if (ndrx_file_exists(fname))
-            {
-                NDRX_LOG(log_debug, "%s: Processing file exists [%s]", fn, fname);
-                if (EXFAIL!=read_tx_from_file(fname, (char *)&b, sizeof(b), 
-                        &err, &tmq_err))
-                {
-                    /* Send the notification */
-                    if (TMQ_STORCMD_NEWMSG == b.hdr.command_code)
-                    {
-                        NDRX_LOG(log_info, "%s: delete command...", fn);
-                        b.hdr.command_code = TMQ_STORCMD_DEL;
-                    }
-                    else
-                    {
-                        NDRX_LOG(log_info, "%s: unlock command...", fn);
-                        
-                        b.hdr.command_code = TMQ_STORCMD_UNLOCK;
-                    }
-
-                    /* if tmq server is not working at this moment
-                     * then we cannot complete the rollback
-                     */
-                    if (EXSUCCEED!=send_unlock_notif_hdr(&b.hdr, fname, 
-                            NULL, TMQ_FILECMD_UNLINK))
-                    {
-                        goto xa_fail;
-                    }
-                    
-                    num_proc++;
-                }
-                /* leave corrupted files as is... */
-            }
-            else
-            {
-                NDRX_LOG(log_debug, "%s: File [%s] does not exists", fn, fname);
-            }
-                
+            NDRX_LOG(log_error, "Q transaction [%s] locked", tmxid);
+            return XAER_RMFAIL;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Q transaction [%s] does not exists", tmxid);
+            return XAER_NOTA;
         }
     }
     
-    if (num_proc==0)
+    p_tl->txstage = XA_TX_STAGE_ABORTING;
+    p_tl->is_abort_only=EXTRUE;
+    
+    /* Process files according to the log... */
+    DL_FOREACH_SAFE(p_tl->cmds, el, elt)
     {
-        return XAER_NOTA;
-    }
-    else
-    {
-        return XA_OK;
+        char *fname = NULL;
+        
+        if (XA_RM_STATUS_ACTIVE==el->cmd_status)
+        {
+            /* run on active folder */
+            fname = get_filename_i(el->seqno, M_folder_active, 0);
+        }
+        else if (XA_RM_STATUS_PREP==el->cmd_status)
+        {
+            /* run on prepared folder */
+            fname = get_filename_i(el->seqno, M_folder_prepared, 0);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Invalid QCMD status %c", el->cmd_status);
+            userlog("Invalid QCMD status %c", el->cmd_status);
+            continue;
+        }
+        
+        /* Send the notification */
+        if (TMQ_STORCMD_NEWMSG == el->b.hdr.command_code)
+        {
+            NDRX_LOG(log_info, "%s: delete command...", fn);
+            b.hdr.command_code = TMQ_STORCMD_DEL;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "%s: unlock command...", fn);
+
+            b.hdr.command_code = TMQ_STORCMD_UNLOCK;
+        }
+
+        /* if tmq server is not working at this moment
+         * then we cannot complete the rollback
+         */
+        if (EXSUCCEED!=send_unlock_notif_hdr(&b.hdr, fname, 
+                NULL, TMQ_FILECMD_UNLINK))
+        {
+            NDRX_LOG(log_error, "Failed to unlink [%s]", fname);
+            continue;
+        }
+        
+        /* Finally remove command entry */
+        DL_DELETE(p_tl->cmds, el);
+        NDRX_FPFREE(el);
+        NDRX_LOG(log_debug, "Abort [%s] OK", fname);
+        
     }
     
-xa_err:
-    return XAER_RMERR;
-
-xa_fail:
-    return XAER_RMFAIL;
+    if (NULL!=p_tl->cmds)
+    {
+        NDRX_LOG(log_error, "Failed to abort Q transaction [%s] -> commands exists",
+                tmxid);
+        return XAER_RMERR;
+    }
+    
+    /* delete message from log */
+    tmq_remove_logfree(p_tl, EXTRUE);
+    
+    return XA_OK;
 }
 
 /**
- * XA prepare entry call
- * Basically we move all messages for active to prepared folder (still named by
- * xid_str)
- * 
- * @param sw
- * @param xid
- * @param rmid
- * @param flags
+ * Process local or remote call
  * @return 
  */
-expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    int i;
-    int names_max;
-    int did_move = EXFALSE;
+    char *tmxid;
     int ret = XA_OK;
     
     if (!G_atmi_tls->qdisk_is_open)
     {
-        NDRX_LOG(log_error, "ERROR! xa_prepare_entry() - XA not open!");
+        NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
+        ret = XAER_RMERR;
+        goto out;
+    }
+    
+    tmxid = set_filename_base(xid);
+    
+    if (M_is_tmqueue)
+    {
+        ret = xa_rollback_entry_tmq(tmxid, flags);
+    }
+    else
+    {
+        ret=ndrx_xa_qminicall(tmxid, TMQ_CMD_ABORTTRAN);
+    }
+    
+out:
+
+    return ret;
+}
+
+/**
+ * Prepare transactions (according to TL log)
+ * @return XA status
+ */
+exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
+{
+    int locke = EXFALSE;
+    qtran_log_t * p_tl = NULL;
+    int ret = XA_OK;
+    int did_move=EXFALSE;
+    qtran_log_cmd_t *el, *elt;
+    
+    if (!G_atmi_tls->qdisk_is_open)
+    {
+        NDRX_LOG(log_error, "ERROR! xa_prepare_entry_tmq() - XA not open!");
         ret=XAER_RMERR;
         goto out;
     }
-
-    set_filename_base(xid, rmid);
-    names_max = get_filenames_max();
-
-    for (i=names_max; i>=1; i--)
+    
+    set_filename_base_tmxid(tmxid);
+    
+    /* Firstly try to locate the tran */
+    p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke);
+    
+    if (NULL==p_tl)
     {
-        if (EXSUCCEED!=file_move(i, M_folder_active, M_folder_prepared))
+        if (locke)
         {
+            NDRX_LOG(log_error, "Q transaction [%s] locked", tmxid);
+            ret=XAER_RMFAIL;
+            goto out;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Q transaction [%s] does not exists", tmxid);
+            ret=XAER_NOTA;
+            goto out;
+        }
+    }
+    
+    if (p_tl->is_abort_only)
+    {
+        NDRX_LOG(log_error, "Q transaction [%s] is abort only!", tmxid);
+        ret = XAER_RMERR;
+        goto out;
+    }
+    
+    if (XA_TX_STAGE_ACTIVE!=p_tl->txstage)
+    {
+        NDRX_LOG(log_error, "Q transaction [%s] expected stage %hd (active) got %hd",
+                XA_TX_STAGE_ACTIVE, p_tl->txstage);
+        
+        ret = XAER_RMERR;
+        p_tl->is_abort_only=EXTRUE;
+        goto out;
+    }
+    
+    p_tl->txstage = XA_TX_STAGE_PREPARING;
+    
+    /* process command by command to stage to prepared ... */
+    DL_FOREACH_SAFE(p_tl->cmds, el, elt)
+    {
+        if (EXSUCCEED!=file_move(el->seqno, M_folder_active, M_folder_prepared))
+        {
+            NDRX_LOG(log_error, "Q tran tmxid [%s] seq %d failed to prepare (file move)",
+                    tmxid, el->seqno);
+            p_tl->is_abort_only=EXTRUE;
             ret=XAER_RMERR;
             goto out;
         }
         
-        did_move=EXTRUE;
+        el->cmd_status = XA_RM_STATUS_PREP;
+        NDRX_LOG(log_info, "tmxid [%s] seq %d prepared OK", tmxid, el->seqno);
     }
     
     if (did_move)
@@ -1005,13 +1276,60 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
         if (EXSUCCEED!=ndrx_fsync_dsync(M_folder_prepared, G_atmi_env.xa_fsync_flags))
         {
             NDRX_LOG(log_error, "Failed to dsync [%s]", M_folder_prepared);
+            
+            /* mark transaction for abort only! */
+            p_tl->is_abort_only=EXTRUE;
             ret=XAER_RMERR;
             goto out;
         }
     }
     
+    /* If all OK, switch transaction to prepared */
+    p_tl->txstage = XA_TX_STAGE_PREPARED;
+    
 out:
-    return ret; 
+            
+    if (NULL!=p_tl)
+    {
+        tmq_log_unlock(p_tl);
+    }
+
+    return ret;
+}
+
+/**
+ * XA prepare entry call
+ * Basically we move all messages for active to prepared folder (still named by
+ * xid_str)
+ * 
+ * @return 
+ */
+expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+{
+    char *tmxid;
+    int ret = XA_OK;
+    
+    if (!G_atmi_tls->qdisk_is_open)
+    {
+        NDRX_LOG(log_error, "ERROR! xa_prepare_entry() - XA not open!");
+        ret = XAER_RMERR;
+        goto out;
+    }
+    
+    tmxid = set_filename_base(xid);
+    
+    if (M_is_tmqueue)
+    {
+        ret = xa_prepare_entry_tmq(tmxid, flags);
+    }
+    else
+    {
+        ret=ndrx_xa_qminicall(tmxid, TMQ_CMD_PREPARETRAN);
+    }
+    
+out:
+
+    return ret;
 }
 
 /**
@@ -1024,6 +1342,8 @@ out:
  * 
  * For delete transactions:
  * - Remove file from disk + remove delete msg.
+ * 
+ * TODO: Process according the log.
  * 
  * @param sw
  * @param xid
@@ -1048,7 +1368,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
         return XAER_RMERR;
     }
 
-    set_filename_base(xid, rmid);
+    set_filename_base(xid);
     names_max = get_filenames_max();
     
     for (i=names_max; i>=1; i--)

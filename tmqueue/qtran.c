@@ -70,10 +70,8 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-exprivate qtran_log_t *M_tx_hash = NULL; 
-exprivate MUTEX_LOCKDECL(M_tx_hash_lock); /* Operations with hash list            */
-
-/* TODO: have some timeout setting...? */
+exprivate qtran_log_t *M_qtran_hash = NULL;    /**< Hash for transactions  */
+exprivate MUTEX_LOCKDECL(M_qtran_hash_lock);   /**< Transaction hash lock  */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -83,16 +81,16 @@ exprivate MUTEX_LOCKDECL(M_tx_hash_lock); /* Operations with hash list          
  * @param p_tl
  * @return SUCCEED/FAIL
  */
-expublic int tmq_unlock_entry(qtran_log_t *p_tl)
+expublic int tmq_log_unlock(qtran_log_t *p_tl)
 {
     CHK_THREAD_ACCESS;
     
     NDRX_LOG(log_info, "Transaction [%s] unlocked by thread %" PRIu64, p_tl->tmxid,
             p_tl->lockthreadid);
     
-    MUTEX_LOCK_V(M_tx_hash_lock);
+    MUTEX_LOCK_V(M_qtran_hash_lock);
     p_tl->lockthreadid = 0;
-    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    MUTEX_UNLOCK_V(M_qtran_hash_lock);
     
     return EXSUCCEED;
 }
@@ -126,8 +124,8 @@ expublic qtran_log_t * tmq_log_get_entry(char *tmxid, int dowait, int *locke)
     }
     
 restart:
-    MUTEX_LOCK_V(M_tx_hash_lock);
-    EXHASH_FIND_STR( M_tx_hash, tmxid, r);
+    MUTEX_LOCK_V(M_qtran_hash_lock);
+    EXHASH_FIND_STR( M_qtran_hash, tmxid, r);
     
     if (NULL!=r)
     {
@@ -135,7 +133,7 @@ restart:
         {
             if (dowait && ndrx_stopwatch_get_delta(&w) < dowait)
             {
-                MUTEX_UNLOCK_V(M_tx_hash_lock);
+                MUTEX_UNLOCK_V(M_qtran_hash_lock);
                 /* sleep 100 msec */
                 usleep(100000);
                 goto restart;
@@ -166,7 +164,7 @@ restart:
         }
     }
     
-    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    MUTEX_UNLOCK_V(M_qtran_hash_lock);
     
     return r;
 }
@@ -199,9 +197,9 @@ expublic int tmq_log_start(char *tmxid)
     /* lock for us, yet it is not shared*/
     tmp->lockthreadid = ndrx_gettid();
     
-    MUTEX_LOCK_V(M_tx_hash_lock);
-    EXHASH_ADD_STR( M_tx_hash, tmxid, tmp);
-    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    MUTEX_LOCK_V(M_qtran_hash_lock);
+    EXHASH_ADD_STR( M_qtran_hash, tmxid, tmp);
+    MUTEX_UNLOCK_V(M_qtran_hash_lock);
     
     hash_added = EXTRUE;
     
@@ -210,7 +208,7 @@ out:
     /* unlock */
     if (EXSUCCEED==ret && NULL!=tmp)
     {
-        tmq_unlock_entry(tmp);
+        tmq_log_unlock(tmp);
     }
 
     return ret;
@@ -220,20 +218,22 @@ out:
  * Add command to the log 
  * @param tmxid transaction id (serialized)
  * @param seqno command sequence number
- * @param command_code command code
- * @param status using XA_RM_STATUS* constants
+ * @param b command block
+ * @param p_msg ptr to actual message
+ * @param entry_status status according to XA_RM_STATUS* consts
  * @return EXSUCCEED/EXFAIL
  */
-expublic int tmq_log_addcmd(char *tmxid, int seqno, char command_code, char status,
-        tmq_msg_t * p_msg)
+expublic int tmq_log_addcmd(char *tmxid, int seqno, union tmq_upd_block *b, tmq_msg_t * p_msg,
+        char entry_status)
 {
     int ret = EXSUCCEED;
     qtran_log_t *p_tl= NULL;
     qtran_log_cmd_t *cmd=NULL;
+    tmq_msg_upd_t *p_upd;
     
     NDRX_LOG(log_info, "Adding Q tran cmd: [%s] seqno: %d, "
             "command_code: %c, status: %c, p_msg: %p",
-            tmxid, seqno, command_code, status, p_msg);
+            tmxid, seqno, b->hdr.command_code);
     
     if (NULL==(p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, NULL)))
     {
@@ -254,22 +254,22 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, char command_code, char stat
     }
     
     cmd->seqno=seqno;
-    cmd->command_code=command_code;
-    cmd->status=status;
-    cmd->p_msg=p_msg;
+    cmd->cmd_status = entry_status;
+    cmd->command_code = b->hdr.command_code;
+    /* store the update block */
+    memcpy(&cmd->b, b, sizeof(union tmq_upd_block));
     
     DL_APPEND(p_tl->cmds, cmd);
-
+    
    
 out:
     /* unlock transaction from thread */
-    tmq_unlock_entry(p_tl);
+    tmq_log_unlock(p_tl);
 
 out_nolock:
     
     return ret;
 }
-
 
 /**
  * Free up log file (just memory)
@@ -281,9 +281,9 @@ expublic void tmq_remove_logfree(qtran_log_t *p_tl, int hash_rm)
     
     if (hash_rm)
     {
-        MUTEX_LOCK_V(M_tx_hash_lock);
-        EXHASH_DEL(M_tx_hash, p_tl); 
-        MUTEX_UNLOCK_V(M_tx_hash_lock);
+        MUTEX_LOCK_V(M_qtran_hash_lock);
+        EXHASH_DEL(M_qtran_hash, p_tl); 
+        MUTEX_UNLOCK_V(M_qtran_hash_lock);
     }
     
     NDRX_FPFREE(p_tl);
@@ -306,12 +306,12 @@ expublic qtran_log_list_t* tmq_copy_hash2list(int copy_mode)
     
     if (copy_mode & COPY_MODE_ACQLOCK)
     {
-        MUTEX_LOCK_V(M_tx_hash_lock);
+        MUTEX_LOCK_V(M_qtran_hash_lock);
     }
     
     /* No changes to hash list during the lock. */    
     
-    EXHASH_ITER(hh, M_tx_hash, r, rt)
+    EXHASH_ITER(hh, M_qtran_hash, r, rt)
     {
         /* Only background items... */
         if (r->is_background && !(copy_mode & COPY_MODE_BACKGROUND))
@@ -340,7 +340,7 @@ expublic qtran_log_list_t* tmq_copy_hash2list(int copy_mode)
 out:
     if (copy_mode & COPY_MODE_ACQLOCK)
     {
-        MUTEX_UNLOCK_V(M_tx_hash_lock);
+        MUTEX_UNLOCK_V(M_qtran_hash_lock);
     }
 
     return ret;
@@ -351,7 +351,7 @@ out:
  */
 expublic void tmq_tx_hash_lock(void)
 {
-    MUTEX_LOCK_V(M_tx_hash_lock);
+    MUTEX_LOCK_V(M_qtran_hash_lock);
 }
 
 /**
@@ -359,7 +359,7 @@ expublic void tmq_tx_hash_lock(void)
  */
 expublic void tmq_tx_hash_unlock(void)
 {
-    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    MUTEX_UNLOCK_V(M_qtran_hash_lock);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

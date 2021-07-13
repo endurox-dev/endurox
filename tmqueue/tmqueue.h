@@ -236,6 +236,9 @@ extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
         short nodeid, short srvid);
 extern void tmq_housekeep(char *filename, int tmq_err);
 extern void tmq_configure_housekeep(int housekeep);
+
+/* transaction management: */
+extern int ndrx_xa_qminiservce(UBFH *p_ub, char cmd);
    
     
 #ifdef	__cplusplus

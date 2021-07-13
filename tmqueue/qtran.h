@@ -58,12 +58,14 @@ extern "C" {
 typedef struct qtran_log_cmd qtran_log_cmd_t;
 struct qtran_log_cmd
 {
-    int             seqno;      /**< Command sequence number               */
-    tmq_msg_t *     p_msg;      /**< message pointer                       */
-    char command_code;          /**< Have some shortcust for quick commits */
-    char status;                /**< Status code for particular command    */
+    char command_code;          /**< Command code                          */
+    int  seqno;                 /**< Command sequence number               */
+    tmq_msg_t *p_msg;           /**< message pointer                       */
     
+    char cmd_status;            /**< status according to XA_RM_STATUS*     */
     
+    union tmq_upd_block b;            /**< Update block (largest metadata store  */
+        
     qtran_log_cmd_t *prev, *next;   /**< DL list of locked / related msgs  */
 };
 
@@ -114,7 +116,17 @@ struct qtran_log_list
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
- 
+
+extern qtran_log_t * tmq_log_get_entry(char *tmxid, int dowait, int *locke);
+extern int tmq_log_start(char *tmxid);
+extern int tmq_log_addcmd(char *tmxid, int seqno, union tmq_upd_block *b, tmq_msg_t * p_msg,
+        char entry_status);
+extern void tmq_remove_logfree(qtran_log_t *p_tl, int hash_rm);
+extern qtran_log_list_t* tmq_copy_hash2list(int copy_mode);
+extern void tmq_tx_hash_lock(void);
+extern void tmq_tx_hash_unlock(void);
+extern int tmq_log_unlock(qtran_log_t *p_tl);
+
 #ifdef	__cplusplus
 }
 #endif
