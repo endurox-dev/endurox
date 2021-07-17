@@ -231,30 +231,10 @@ exprivate char *set_filename_base_tmxid(char *tmxid)
  */
 exprivate int set_filenames(void)
 {
-    
-#if 0
-    int i;
-    
-    for (i=1;;i++)
-    {
-        snprintf(G_atmi_tls->qdisk_tls->filename_active, sizeof(G_atmi_tls->qdisk_tls->filename_active), 
-                "%s/%s-%03d", M_folder_active, G_atmi_tls->qdisk_tls->filename_base, i);
-        snprintf(G_atmi_tls->qdisk_tls->filename_prepared, sizeof(G_atmi_tls->qdisk_tls->filename_prepared), 
-                "%s/%s-%03d", M_folder_prepared, G_atmi_tls->qdisk_tls->filename_base, i);
-        
-        if (!ndrx_file_exists(G_atmi_tls->qdisk_tls->filename_active) && 
-                !ndrx_file_exists(G_atmi_tls->qdisk_tls->filename_prepared))
-        {
-            break;
-        }
-    }
-#endif
-    
     /* get next sequence number of tran 
      * tmxid is encoded in G_atmi_tls->qdisk_tls->filename_base
      * thus lookup the transaction, and get the next number
      */
-    
     int ret = EXSUCCEED;
     int locke=EXFALSE;
     int seqno;
