@@ -1,5 +1,8 @@
 /**
  * @brief Memory based structures for Q.
+ *  Due to fact that qdisk_xa in tmqmode may use callbacks from qspace
+ *  Qspace is linked int qdisk_xa. Thought proper way would be to add callbacks
+ *  
  *
  * @file qspace.c
  */
@@ -120,6 +123,114 @@ exprivate MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation
 /*---------------------------Prototypes---------------------------------*/
 exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
 exprivate tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str);
+
+
+
+/**
+ * Process message blocks on disk read (after cold startup)
+ * @param tmxid serialized trnasaction id
+ * @param p_block
+ * @param state TMQ_TXSTATE_ according to 
+ * @param seqno command sequence number within the transaction
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, int seqno)
+{
+    int ret = EXSUCCEED;
+    
+    
+    /* in case if state is prepared or active -> add transaction with given
+     * sequence
+     */
+    if (TMQ_TXSTATE_ACTIVE==state || TMQ_TXSTATE_PREPARED==state)
+    {
+        char entry_status;
+        
+        if (TMQ_TXSTATE_PREPARED==state)
+        {
+            entry_status = XA_RM_STATUS_PREP;
+        }
+        else
+        {
+            entry_status = XA_RM_STATUS_ACTIVE;
+        }
+        
+        if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)*p_block, entry_status))
+        {
+            NDRX_LOG(log_error, "Failed to add tmxid [%s] seqno %d",
+                    tmxid, seqno);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    switch((*p_block)->hdr.command_code)
+    {
+        case TMQ_STORCMD_NEWMSG:
+            
+            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE, NULL))
+            {
+                NDRX_LOG(log_error, "Failed to enqueue!");
+                EXFAIL_OUT(ret);
+            }
+            
+            break;
+        case TMQ_STORCMD_DUM:
+            
+            break;
+        default:
+            
+            if (EXSUCCEED!=tmq_lock_msg((*p_block)->hdr.msgid))
+            {
+                if (TMQ_TXSTATE_PREPARED==state 
+                        && TMQ_STORCMD_DEL==(*p_block)->hdr.command_code)
+                {
+                    NDRX_LOG(log_info, "Delete command and message not found - assume deleted");
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Failed to lock message!");
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
+            break;
+    }
+    
+out:
+    /* free the mem if needed: */
+    if (NULL!=*p_block)
+    {
+        NDRX_FREE((char *)*p_block);
+        *p_block = NULL;
+    }
+    return ret;
+}
+
+
+/**
+ * Load the messages from QSPACE (after startup)...
+ * This does not need a lock, because it uses other globals
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tmq_load_msgs(void)
+{
+    int ret = EXSUCCEED;
+    
+    NDRX_LOG(log_info, "Reading messages from disk...");
+    /* populate all queues - from XA source */
+    if (EXSUCCEED!=tmq_storage_get_blocks(process_block,  (short)tpgetnodeid(), 
+            (short)tpgetsrvid()))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    /* sort all queues (by submission time) */
+    tmq_sort_queues();
+    
+out:
+    NDRX_LOG(log_info, "tmq_load_msgs return %d", ret);
+    return ret;
+}
 
 /**
  * Add dummy marker for given transaction.
@@ -1561,7 +1672,7 @@ out:
 
 
 /**
- * 
+ * Load the messages
  * @param msgid
  * @return 
  */
@@ -1593,85 +1704,6 @@ out:
     return ret;
 }
 
-/**
- * Process message blocks on disk read (after cold startup)
- * @param tmxid serialized trnasaction id
- * @param p_block
- * @param state TMQ_TXSTATE_ according to 
- * @param seqno command sequence number within the transaction
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, int seqno)
-{
-    int ret = EXSUCCEED;
-    
-    
-    /* in case if state is prepared or active -> add transaction with given
-     * sequence
-     */
-    if (TMQ_TXSTATE_ACTIVE==state || TMQ_TXSTATE_PREPARED==state)
-    {
-        char entry_status;
-        
-        if (TMQ_TXSTATE_PREPARED==state)
-        {
-            entry_status = XA_RM_STATUS_PREP;
-        }
-        else
-        {
-            entry_status = XA_RM_STATUS_ACTIVE;
-        }
-        
-        if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)*p_block, entry_status))
-        {
-            NDRX_LOG(log_error, "Failed to add tmxid [%s] seqno %d",
-                    tmxid, seqno);
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    switch((*p_block)->hdr.command_code)
-    {
-        case TMQ_STORCMD_NEWMSG:
-            
-            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE, NULL))
-            {
-                NDRX_LOG(log_error, "Failed to enqueue!");
-                EXFAIL_OUT(ret);
-            }
-            
-            break;
-        case TMQ_STORCMD_DUM:
-            
-            break;
-        default:
-            
-            if (EXSUCCEED!=tmq_lock_msg((*p_block)->hdr.msgid))
-            {
-                if (TMQ_TXSTATE_PREPARED==state 
-                        && TMQ_STORCMD_DEL==(*p_block)->hdr.command_code)
-                {
-                    NDRX_LOG(log_info, "Delete command and message not found - assume deleted");
-                }
-                else
-                {
-                    NDRX_LOG(log_error, "Failed to lock message!");
-                    EXFAIL_OUT(ret);
-                }
-            }
-            
-            break;
-    }
-    
-out:
-    /* free the mem if needed: */
-    if (NULL!=*p_block)
-    {
-        NDRX_FREE((char *)*p_block);
-        *p_block = NULL;
-    }
-    return ret;
-}
 
 /**
  * compare two Q entries, by time + counter
@@ -1845,31 +1877,6 @@ out:
             
     MUTEX_UNLOCK_V(M_q_lock);
 
-    return ret;
-}
-
-/**
- * Load the messages from QSPACE (after startup)...
- * This does not need a lock, because it uses other globals
- * @return EXSUCCEED/EXFAIL
- */
-expublic int tmq_load_msgs(void)
-{
-    int ret = EXSUCCEED;
-    
-    NDRX_LOG(log_info, "Reading messages from disk...");
-    /* populate all queues - from XA source */
-    if (EXSUCCEED!=tmq_storage_get_blocks(process_block,  (short)tpgetnodeid(), 
-            (short)tpgetsrvid()))
-    {
-        EXFAIL_OUT(ret);
-    }
-    
-    /* sort all queues (by submission time) */
-    tmq_sort_queues();
-    
-out:
-    NDRX_LOG(log_info, "tmq_load_msgs return %d", ret);
     return ret;
 }
 

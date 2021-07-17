@@ -58,7 +58,6 @@ add_library (ndrxxaqdisk SHARED
                 tmqutil.c
                 qdisk_xa.c
                 qtran.c
-                qspace.c
             )
 
 add_library (ndrxxaqdisks SHARED

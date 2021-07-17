@@ -239,7 +239,12 @@ extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 extern void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid);
 extern char * tmq_corid_serialize(char *corid_in, char *corid_str_out);
 extern int tmq_finalize_files(UBFH *p_ub);
-extern void tmq_set_tmqueue(int setting);
+extern void tmq_set_tmqueue(
+    int setting
+    , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
+        short nodeid, short srvid, char *qspace, long flags)
+    , int (*p_tmq_dum_add)(char *tmxid, int seqno)
+    , int (*p_tmq_unlock_msg)(union tmq_upd_block *b));
     
 /* From storage driver: */
 extern size_t tmq_get_block_len(char *data);
@@ -254,7 +259,9 @@ extern int ndrx_xa_qminiservce(UBFH *p_ub, char cmd);
 extern int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags);
    
-    
+extern int tmq_sort_queues(void);
+extern int tmq_lock_msg(char *msgid);
+
 #ifdef	__cplusplus
 }
 #endif
