@@ -51,9 +51,10 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 
 #define NDRX_LOCK_WAIT_TIME         5000    /**< lock wait time b4 give up */
-#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements  */
-#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements  */
-#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?     */
+#define TOUT_CHECK_TIME             1       /**< Check for transaction timeout, sec   */
+#define COPY_MODE_FOREGROUND        0x1     /**< Copy foreground elements  */
+#define COPY_MODE_BACKGROUND        0x2     /**< Copy background elements  */
+#define COPY_MODE_ACQLOCK           0x4     /**< Should we do locking?     */
     
 /* Internal XA commands */
 /* buffer usage: */

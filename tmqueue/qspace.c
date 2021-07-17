@@ -67,6 +67,7 @@
 #include "nstdutil.h"
 #include "tmqueue.h"
 #include "cconfig.h"
+#include "qtran.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_TOKEN_SIZE          64 /* max key=value buffer size of qdef element */
@@ -147,7 +148,6 @@ expublic int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
 out:
     return ret;
 }
-
 
 /**
  * Generate new transaction id, native form (byte array)
@@ -743,6 +743,42 @@ exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
 out:
     return ret;
 }
+
+/**
+ * Add dummy marker for given transaction.
+ * This is used 
+ * @param tmxid transaction id (must be in the transaction regsitry)
+ * @param seqno
+ * @return 
+ */
+expublic int tmq_dum_add(char *tmxid, int seqno)
+{
+    tmq_msg_dum_t dum;
+    int ret = EXSUCCEED;
+        
+    /* Build up the message. 
+     * Note that we might not be in transaction mode, in case if
+     * doing prepare and we find that there is nothing to prepare.
+     */
+    tmq_setup_cmdheader_newmsg(&dum.hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
+    dum.hdr.command_code = TMQ_STORCMD_DUM;
+    
+    /* For active files we do not read the contents
+     * as all messages will get aborted. And if abort does not succeed,
+     * process will reboot. Thus no messages will be locked.
+     * This will run recursive Lock OK
+     */
+    if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)&dum, XA_RM_STATUS_ACTIVE))
+    {
+        NDRX_LOG(log_error, "Failed to add dummy command for  tmxid [%s] seq %d", 
+                tmxid, seqno);
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
 
 /**
  * Add message to queue
@@ -1446,6 +1482,9 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
             NDRX_LOG(log_info, "Unlocking message...");
             mmsg->msg->lockthreadid = 0;
             break;
+        case TMQ_STORCMD_DUM:
+            /* nothing todo; */
+            break;
         default:
             NDRX_LOG(log_info, "Unknown command [%c]", b->hdr.command_code);
             EXFAIL_OUT(ret);
@@ -1525,11 +1564,13 @@ out:
 
 /**
  * Process message blocks on disk read (after cold startup)
+ * @param tmxid serialized trnasaction id
  * @param p_block
  * @param state TMQ_TXSTATE_ according to 
+ * @param seqno command sequence number within the transaction
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int process_block(union tmq_block **p_block, int state)
+exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, int seqno)
 {
     int ret = EXSUCCEED;
     
@@ -1542,6 +1583,9 @@ exprivate int process_block(union tmq_block **p_block, int state)
                 NDRX_LOG(log_error, "Failed to enqueue!");
                 EXFAIL_OUT(ret);
             }
+            
+            break;
+        case TMQ_STORCMD_DUM:
             
             break;
         default:
@@ -1561,6 +1605,31 @@ exprivate int process_block(union tmq_block **p_block, int state)
             }
             
             break;
+    }
+    
+    /* in case if state is prepared or active -> add transaction with given
+     * sequence
+     */
+    
+    if (TMQ_TXSTATE_ACTIVE==state || TMQ_TXSTATE_PREPARED==state)
+    {
+        char entry_status;
+        
+        if (TMQ_TXSTATE_PREPARED==state)
+        {
+            entry_status = XA_RM_STATUS_PREP;
+        }
+        else
+        {
+            entry_status = XA_RM_STATUS_ACTIVE;
+        }
+        
+        if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)*p_block, entry_status))
+        {
+            NDRX_LOG(log_error, "Failed to add tmxid [%s] seqno %d",
+                    tmxid, seqno);
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:

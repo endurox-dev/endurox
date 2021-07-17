@@ -53,7 +53,6 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
 /*---------------------------Macros-------------------------------------*/
 #define SCAN_TIME_DFLT          10  /**< Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /**< Try count for transaction completion */
-#define TOUT_CHECK_TIME         1   /**< Check for transaction timeout, sec   */
 #define THREADPOOL_DFLT         10  /**< Default number of threads spawned   */
 #define TXTOUT_DFLT             30  /**< Default XA transaction timeout      */
 
@@ -84,13 +83,11 @@ typedef struct
 {
     long dflt_timeout;  /**< how long monitored transaction can be open     */
     int scan_time;      /**< Number of seconds retries                      */
-#if 0
-    char qspace[XATMI_SERVICE_NAME_LENGTH+1];   /**< where the Q files live */
-    char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service name      */
-#endif
+    
+    int tout_check_time; /**< seconds used for detecting transaction timeout   */
+    
     char qconfig[PATH_MAX+1]; /**< Queue config file                        */
     int threadpoolsize;       /**< thread pool size                         */
-    int housekeeptime;        /**< Number of seconds active+corrupted cleanup*/
     threadpool thpool;        /**< threads for service                      */
     
     int notifpoolsize;        /**< Notify thread pool size                  */
@@ -209,10 +206,8 @@ extern int tmq_mqlm(UBFH *p_ub, int cd);
 extern int tmq_mqrc(UBFH *p_ub);
 extern int tmq_mqch(UBFH *p_ub);
 
-
 extern int tmq_enqueue(UBFH *p_ub);
 extern int tmq_dequeue(UBFH **pp_ub);
-extern int tex_mq_notify(UBFH *p_ub);
 
 /* Background API */
 extern int background_read_log(void);
@@ -225,6 +220,7 @@ extern void thread_shutdown(void *ptr, int *p_finish_off);
 /* Q space api: */
 extern int tmq_reload_conf(char *cf);
 extern int tmq_qconf_addupd(char *qconfstr, char *name);
+extern int tmq_dum_add(char *tmxid, int seqno);
 extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
 extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, char *diagmsg, size_t diagmsgsz);

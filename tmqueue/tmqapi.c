@@ -526,42 +526,6 @@ out:
     return ret;
 }
 
-/**
- * Unlock the message
- * @param p_ub
- * @return 
- */
-expublic int tex_mq_notify(UBFH *p_ub)
-{
-    int ret = EXSUCCEED;
-    union tmq_upd_block b;
-    BFLDLEN len = sizeof(b);
-     
-    if (EXSUCCEED!=Bget(p_ub, EX_DATA, 0, (char *)&b, &len))
-    {
-        NDRX_LOG(log_error, "Failed to get EX_DATA: %s", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=tmq_finalize_files(p_ub))
-    {
-        NDRX_LOG(log_error, "Failed to finalize disk files ...");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* run the file ops...
-     * if they are OK 
-     */
-    if (EXSUCCEED!=tmq_unlock_msg(&b))
-    {
-        NDRX_LOG(log_error, "Failed to unlock message...");
-        EXFAIL_OUT(ret);
-    }
-    
-out:
-    return ret;
-}
-
 /******************************************************************************/
 /*                         COMMAND LINE API                                   */
 /******************************************************************************/

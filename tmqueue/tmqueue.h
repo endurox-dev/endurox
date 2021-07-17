@@ -245,10 +245,8 @@ extern void tmq_set_tmqueue(int setting);
 extern size_t tmq_get_block_len(char *data);
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
 extern int tmq_storage_write_cmd_block(char *p_block, char *descr);
-extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block, int state), 
-        short nodeid, short srvid);
-extern void tmq_housekeep(char *filename, int tmq_err);
-extern void tmq_configure_housekeep(int housekeep);
+extern int tmq_storage_get_blocks(int (*process_block)(char *tmxid, 
+        union tmq_block **p_block, int state, int seqno), short nodeid, short srvid);
 
 /* transaction management: */
 extern int ndrx_xa_qminiservce(UBFH *p_ub, char cmd);
