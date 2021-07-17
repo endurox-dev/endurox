@@ -2451,7 +2451,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         *p = EXEOS;
         p++;
         
-        if (NULL==atmi_xa_deserialize_xid(fname, &xtmp))
+        if (NULL==atmi_xa_deserialize_xid((unsigned char *)fname, &xtmp))
         {
             NDRX_LOG(log_error, "Failed to deserialize xid: %s - skip", fname);
             RECOVER_CONTINUE;
