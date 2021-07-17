@@ -57,6 +57,7 @@
 #include <unistd.h>
 #include <Exfields.h>
 #include "qtran.h"
+#include "qcommon.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CHK_THREAD_ACCESS if (ndrx_gettid()!=p_tl->lockthreadid)\
@@ -106,6 +107,46 @@ expublic int tmq_log_unlock(qtran_log_t *p_tl)
     
     return EXSUCCEED;
 }
+
+
+/**
+ * Abort all active transactions
+ * this assumes that other threads is not doing anything with the hash list
+ * so basically this must be executed by single thread at the startup of
+ * the tmqueue.
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tmq_log_abortall(void)
+{
+    qtran_log_t *el, *elt;
+    int ret = EXSUCCEED;
+    XID xid;
+    
+    EXHASH_ITER(hh, M_qtran_hash, el, elt)
+    {
+        if (el->is_abort_only)
+        {
+            NDRX_LOG(log_error, "Aborting active transaction tmxid [%s]", el->tmxid);
+        }
+        
+        if (NULL==atmi_xa_deserialize_xid(el->tmxid, &xid))
+        {
+            NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", el->tmxid);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* try to rollback the stuff...! */
+        if (EXSUCCEED!=atmi_xa_rollback_entry(&xid, 0))
+        {
+            NDRX_LOG(log_error, "Failed to abort [%s]", el->tmxid);
+            EXFAIL_OUT(ret);
+        }
+    }
+out:
+    return ret;
+    
+}
+
 /**
  * Get the log entry of the transaction
  * Now we should lock it for thread.
@@ -246,27 +287,59 @@ out:
 }
 
 /**
+ * Get transaction existing or create new
+ * @param tmxid transaction id 
+ * @return transaction log entry or NULL on error
+ */
+expublic qtran_log_t * tmq_log_start_or_get(char *tmxid)
+{
+    int locke;
+    
+    qtran_log_t * ret = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke);
+    
+    if (NULL==ret)
+    {
+        if (locke)
+        {
+            ret=NULL;
+        }
+        else if (EXSUCCEED!=tmq_log_start(tmxid))
+        {
+            ret=NULL;
+        }
+        else
+        {
+            ret = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke);
+        }
+    }
+    
+    return ret;
+}
+
+/**
  * Add command to the log
  * @param tmxid transaction id (serialized)
  * @param seqno command sequence number
  * @param b command block, convert to char *block, so that we detect the
  *  type and length here internally. With having base block set to zeros.
- * @param p_msg ptr to actual message
+ * @param bsz block size
  * @param entry_status status according to XA_RM_STATUS* consts
  * @return EXSUCCEED/EXFAIL
  */
-expublic int tmq_log_addcmd(char *tmxid, int seqno, union tmq_upd_block *b, tmq_msg_t * p_msg,
-        char entry_status)
+expublic int tmq_log_addcmd(char *tmxid, int seqno, char *b, char entry_status)
 {
     int ret = EXSUCCEED;
     qtran_log_t *p_tl= NULL;
     qtran_log_cmd_t *cmd=NULL;
+    size_t len;
+    int locke;
+    tmq_cmdheader_t *p_hdr=(tmq_cmdheader_t *)b;
     
     NDRX_LOG(log_info, "Adding Q tran cmd: [%s] seqno: %d, "
             "command_code: %c, status: %c, p_msg: %p",
-            tmxid, seqno, b->hdr.command_code);
+            tmxid, seqno, p_hdr->command_code);
     
-    if (NULL==(p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, NULL)))
+    if (NULL==(p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
         NDRX_LOG(log_error, "No Q transaction/lock timeout under xid_str: [%s]", 
                 tmxid);
@@ -286,16 +359,32 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, union tmq_upd_block *b, tmq_
     
     cmd->seqno=seqno;
     cmd->cmd_status = entry_status;
-    cmd->command_code = b->hdr.command_code;
+    cmd->command_code = p_hdr->command_code;
+    
+    /* select the size of update block
+     * non init bytes after the struct in cases on non upd
+     * does not matter
+     */
+    if (TMQ_STORCMD_UPD==p_hdr->command_code)
+    {
+        len = sizeof(tmq_msg_upd_t);
+    }
+    else
+    {
+        len = sizeof(tmq_cmdheader_t);
+    }
+    
     /* store the update block */
-    memcpy(&cmd->b, b, sizeof(union tmq_upd_block));
+    memcpy(&cmd->b, b, len);
     
     DL_APPEND(p_tl->cmds, cmd);
-    
    
 out:
     /* unlock transaction from thread */
-    tmq_log_unlock(p_tl);
+    if (NULL!=p_tl && !locke)
+    {
+        tmq_log_unlock(p_tl);
+    }
 
 out_nolock:
     

@@ -59,6 +59,8 @@
 #include "qcommon.h"
 #include "cconfig.h"
 #include <ubfutil.h>
+#include <thlock.h>
+#include "qtran.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -67,7 +69,15 @@
 expublic tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
 exprivate int M_init_ok = EXFALSE;
+exprivate __thread int M_thread_first = EXTRUE;
 
+/* allow only one timeout check at the same time... */
+exprivate int volatile M_into_toutchk = EXFALSE;
+exprivate MUTEX_LOCKDECL(M_into_toutchk_lock);
+
+/** mark globally that timeout processing is in progress
+ * do not collide with any worker already running...
+ */
 /*---------------------------Prototypes---------------------------------*/
 exprivate int tx_tout_check(void);
 exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
@@ -116,7 +126,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
      * TPBEGIN...
      */
     int ret=EXSUCCEED;
-    static __thread int first = EXTRUE;
     thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
@@ -127,10 +136,10 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     UBFH *p_ub = (UBFH *)thread_data->buffer;
     
     /* Do the ATMI init */
-    if (first)
+    if (M_thread_first)
     {
-        first = EXFALSE;
         tmq_thread_init();
+        M_thread_first = EXFALSE;
     }
     
     /* restore context. */
@@ -177,13 +186,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
             
             /* start new tran... */
             if (EXSUCCEED!=tmq_dequeue(&p_ub))
-            {
-                EXFAIL_OUT(ret);
-            }
-            break;
-        case TMQ_CMD_NOTIFY:
-            
-            if (EXSUCCEED!=tex_mq_notify(p_ub))
             {
                 EXFAIL_OUT(ret);
             }
@@ -254,6 +256,144 @@ out:
                 0L);
 }
 
+
+/**
+ * Periodic main thread callback for 
+ * (will be done by threadpoll)
+ * @return 
+ */
+exprivate void tx_tout_check_th(void *ptr)
+{
+    long tspent;
+    qtran_log_list_t *tx_list;
+    qtran_log_list_t *el, *tmp;
+    qtran_log_t *p_tl;
+    int in_progress;
+    int locke;
+    XID xid;
+    /* Create a copy of hash, iterate and check each tx for timeout condition
+     * If so then initiate internal abort call
+     */
+    
+    MUTEX_LOCK_V(M_into_toutchk_lock);
+    
+    in_progress=M_into_toutchk;
+    
+    /* do lock if was free */
+    if (!in_progress)
+    {
+        M_into_toutchk=EXTRUE;
+    }
+            
+    MUTEX_UNLOCK_V(M_into_toutchk_lock);
+    
+    if (in_progress)
+    {
+        /* nothing todo... */
+        goto out;
+    }
+            
+    NDRX_LOG(log_dump, "Timeout check (processing...)");
+    
+    /* Do the ATMI init, if needed 
+     */
+    if (M_thread_first)
+    {
+        tmq_thread_init();
+        M_thread_first = EXFALSE;
+    }
+    
+    tx_list = tmq_copy_hash2list(COPY_MODE_FOREGROUND | COPY_MODE_ACQLOCK);
+        
+    LL_FOREACH_SAFE(tx_list,el,tmp)
+    {
+        NDRX_LOG(log_debug, "Checking [%s]...", el->p_tl.tmxid);
+        if ((tspent = ndrx_stopwatch_get_delta_sec(&el->p_tl.ttimer)) > 
+                G_tmqueue_cfg.dflt_timeout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
+        {
+            
+            /* get the finally the entry and process... */
+            if (NULL!=(p_tl = tmq_log_get_entry(el->p_tl.tmxid, 0, &locke)))
+            {
+                if (XA_TX_STAGE_ACTIVE==p_tl->txstage)
+                {
+                    
+                    NDRX_LOG(log_error, "TMXID Q [%s] timed out "
+                        "(spent %ld, limit: %ld sec) - aborting...!", 
+                        el->p_tl.tmxid, tspent, 
+                        G_tmqueue_cfg.dflt_timeout);
+            
+                    userlog("TMXID Q [%s] timed out "
+                            "(spent %ld, limit: %ld sec) - aborting...!", 
+                            el->p_tl.tmxid, tspent, 
+                            G_tmqueue_cfg.dflt_timeout);
+                    
+                    /* do abort...! */
+                    
+                    el->p_tl.is_abort_only=EXTRUE;
+                    
+                    if (NULL==atmi_xa_deserialize_xid(el->p_tl.tmxid, &xid))
+                    {
+                        NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", 
+                                el->p_tl.tmxid);
+                        goto next;
+                    }
+                    
+                    /* try to rollback the stuff...! */
+                    if (EXSUCCEED!=atmi_xa_rollback_entry(&xid, 0))
+                    {
+                        NDRX_LOG(log_error, "Failed to abort tmxid:[%s]", 
+                                el->p_tl.tmxid);
+                        goto next;
+                    }
+                    
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Q TMXID [%s] was-tout but found in progress "
+                        "(txstage %hd spent %ld, limit: %ld sec) - aborting...!", 
+                        el->p_tl.tmxid, el->p_tl.txstage, tspent, G_tmqueue_cfg.dflt_timeout);
+                }
+            }
+        }
+next:
+        LL_DELETE(tx_list,el);
+        NDRX_FREE(el);
+        
+    }
+    
+    
+out:    
+
+    /* if was not in progress then we locked  */
+    MUTEX_LOCK_V(M_into_toutchk_lock);
+
+    if (!in_progress)
+    {
+        M_into_toutchk=EXFALSE;
+    }   
+
+    MUTEX_UNLOCK_V(M_into_toutchk_lock);
+    
+    return;
+}
+
+/**
+ * Callback routine for scheduled timeout checks.
+ * TODO: if we add shutdown handlers, then check here is all completed
+ * before we inject back the shutdown msg...
+ * @return 
+ */
+exprivate int tm_tout_check(void)
+{
+    NDRX_LOG(log_dump, "Timeout check (submit job...)");
+    
+    ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
+    
+    return EXSUCCEED;
+}
+
+
 /**
  * Entry point for service (main thread)
  * @param p_svc
@@ -313,15 +453,19 @@ void TMQUEUE (TPSVCINFO *p_svc)
         goto out;
     }
     
-    
-    /* submit the job to thread pool: */
-    if (cmd==TMQ_CMD_NOTIFY)
+    /* submit the job to thread pool: 
+     * For transaction finalization use different thread pool
+     */
+    if (cmd==TMQ_CMD_STARTTRAN||
+            cmd==TMQ_CMD_PREPARETRAN||
+            cmd==TMQ_CMD_ABORTTRAN||
+            cmd==TMQ_CMD_COMMITRAN)
     {
-        ndrx_thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
+        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
     else
     {
-        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
+        ndrx_thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
     
 out:
@@ -353,10 +497,8 @@ int tpsvrinit(int argc, char **argv)
     
     memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
-    G_tmqueue_cfg.housekeeptime= TMQ_HOUSEKEEP_DEFAULT;
-    
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:h:u:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:")) != -1)
     {
         if (optarg)
         {
@@ -410,8 +552,9 @@ int tpsvrinit(int argc, char **argv)
             case 't': 
                 G_tmqueue_cfg.dflt_timeout = atol(optarg);
                 break;
-            case 'h':
-                G_tmqueue_cfg.housekeeptime = atoi(optarg);
+            case 'c': 
+                /* Time for time-out checking... */
+                G_tmqueue_cfg.tout_check_time = atoi(optarg);
                 break;
             default:
                 /*return FAIL;*/
@@ -454,8 +597,10 @@ int tpsvrinit(int argc, char **argv)
         G_tmqueue_cfg.dflt_timeout = TXTOUT_DFLT;
     }
     
-    /* set housekeeping time */
-    tmq_configure_housekeep(G_tmqueue_cfg.housekeeptime);
+    if (0>=G_tmqueue_cfg.tout_check_time)
+    {
+        G_tmqueue_cfg.tout_check_time = TOUT_CHECK_TIME;
+    }
     
     NDRX_LOG(log_info, "Recovery scan time set to [%d]",
                             G_tmqueue_cfg.scan_time);
@@ -472,6 +617,9 @@ int tpsvrinit(int argc, char **argv)
     NDRX_LOG(log_info, "Local transaction tout set to: [%ld]", 
             G_tmqueue_cfg.dflt_timeout );
     
+    NDRX_LOG(log_info, "Periodic timeout-check time: [%d]", 
+            G_tmqueue_cfg.tout_check_time);
+    
     /* we should open the XA  */
     NDRX_LOG(log_debug, "About to Open XA Entry!");
     
@@ -484,6 +632,12 @@ int tpsvrinit(int argc, char **argv)
     
     /* Recover the messages from disk */
     if (EXSUCCEED!=tmq_load_msgs())
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    /* abort all active transactions! */
+    if (EXSUCCEED!=tmq_log_abortall())
     {
         EXFAIL_OUT(ret);
     }
@@ -536,6 +690,15 @@ int tpsvrinit(int argc, char **argv)
     {
         NDRX_LOG(log_error, "Failed to initialize fwd thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.fwdpoolsize);
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    /* Register timer check (needed for time-out detection) */
+    if (EXSUCCEED!=tpext_addperiodcb(G_tmqueue_cfg.tout_check_time, tm_tout_check))
+    {
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     

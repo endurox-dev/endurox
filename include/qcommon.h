@@ -48,7 +48,6 @@ extern "C" {
 /* Commands loaded into EX_QCMD: */
 #define TMQ_CMD_ENQUEUE         'E'      /**< Enqueue                     */
 #define TMQ_CMD_DEQUEUE         'D'      /**< Dequeue                     */
-#define TMQ_CMD_NOTIFY          'N'      /**< Notify tmq for XA completion*/
 #define TMQ_CMD_MQLQ            'P'      /**< Print queue                 */
 #define TMQ_CMD_MQLC            'C'      /**< List configuration of q     */
 #define TMQ_CMD_MQLM            'M'      /**< List messages               */
