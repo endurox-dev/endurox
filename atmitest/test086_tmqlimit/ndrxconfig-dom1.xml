@@ -73,7 +73,7 @@
             <server name="tmqueue">
                 <max>1</max>
                 <srvid>100</srvid>
-                <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -m MYSPACE -q ./q.conf -s1 -h30 </sysopt>
+                <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1 -h30 </sysopt>
             </server>
 	</servers>
 </endurox>

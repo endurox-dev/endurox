@@ -243,13 +243,13 @@ extern void tmq_set_tmqueue(
     int setting
     , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags)
-    , int (*p_tmq_dum_add)(char *tmxid, int seqno)
+    , int (*p_tmq_dum_add)(char *tmxid)
     , int (*p_tmq_unlock_msg)(union tmq_upd_block *b));
     
 /* From storage driver: */
 extern size_t tmq_get_block_len(char *data);
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
-extern int tmq_storage_write_cmd_block(char *p_block, char *descr);
+extern int tmq_storage_write_cmd_block(char *p_block, char *descr, char *cust_tmxid);
 extern int tmq_storage_get_blocks(int (*process_block)(char *tmxid, 
         union tmq_block **p_block, int state, int seqno), short nodeid, short srvid);
 

@@ -109,7 +109,7 @@ exprivate int M_is_tmqueue = EXFALSE;   /**< is this process a tmqueue ?        
 
 exprivate  int (*M_p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags);
-exprivate int (*M_p_tmq_dum_add)(char *tmxid, int seqno);
+exprivate int (*M_p_tmq_dum_add)(char *tmxid);
 exprivate int (*M_p_tmq_unlock_msg)(union tmq_upd_block *b);
 /*---------------------------Prototypes---------------------------------*/
 
@@ -199,7 +199,7 @@ expublic void tmq_set_tmqueue(
     int setting
     , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags)
-    , int (*p_tmq_dum_add)(char *tmxid, int seqno)
+    , int (*p_tmq_dum_add)(char *tmxid)
     , int (*p_tmq_unlock_msg)(union tmq_upd_block *b)
 )
 {
@@ -762,7 +762,6 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                 UNLOCK_OUT;
             }
             
-            /* qspace='HELLO', datadir='YOPT' */
 #define ARGS_DELIM      ", \t"
 #define ARGS_QUOTE      "'\""
 #define ARG_DIR         "dir"
@@ -1345,20 +1344,15 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
     
     if (NULL==p_tl->cmds)
     {
-        /* add dummy command 
-         * transaction shall stay locked, as no other processes shall 
-         * concurrently request anything from this.
-         */
-        int seqno = tmq_log_next(p_tl);
-        
-        if (EXSUCCEED!=M_p_tmq_dum_add(p_tl->tmxid, seqno))
+        /* do not write the file, as we will use existing on disk */
+        if (EXSUCCEED!=M_p_tmq_dum_add(p_tl->tmxid))
         {
             ret = XAER_RMERR;
             p_tl->is_abort_only=EXTRUE;
             goto out;
         }
         
-        NDRX_LOG(log_debug, "Dummy marker at seqno %d added", seqno);
+        NDRX_LOG(log_debug, "Dummy marker added");
         
     }
     
@@ -1623,7 +1617,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
             
             /* Remove the message (it must be marked for delete)
              */
-            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname_msg, NULL, 
+            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname, NULL, 
                     TMQ_FILECMD_UNLINK))
             {
                 ret = XAER_RMFAIL;
@@ -1936,9 +1930,10 @@ out:
  * @param block
  * @param len
  * @param new_file the message file is new
+ * @param cust_tmxid custom tmxid, if not running in global tran
  * @return SUCCEED/FAIL
  */
-exprivate int write_to_tx_file(char *block, int len, int new_file)
+exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tmxid)
 {
     int ret = EXSUCCEED;
     XID xid;
@@ -1949,6 +1944,8 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
     tmq_cmdheader_t dum;
     int seqno;
     long xaflags=0;
+    char *tmxid;
+    
     if (new_file)
         
     {
@@ -2043,8 +2040,18 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
     /* 
      * If all OK, add command transaction log 
      */
-    if (EXSUCCEED!=tmq_log_addcmd(G_atmi_tls->qdisk_tls->filename_base, seqno, 
-            block, XA_RM_STATUS_ACTIVE))
+    
+    if (NULL!=cust_tmxid)
+    {
+        tmxid = cust_tmxid;
+    }
+    else
+    {
+        /* part of global trn */
+        tmxid = G_atmi_tls->qdisk_tls->filename_base;
+    }
+    
+    if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, block, XA_RM_STATUS_ACTIVE))
     {
         NDRX_LOG(log_error, "Failed to add [%s] seqno %d to transaction log",
                 G_atmi_tls->qdisk_tls->filename_base, seqno);
@@ -2104,7 +2111,7 @@ expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     NDRX_DUMP(log_debug, "Writing new message to disk", 
                 (char *)msg, len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, EXTRUE))
+    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, EXTRUE, NULL))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
@@ -2167,9 +2174,10 @@ expublic size_t tmq_get_block_len(char *data)
 /**
  * Delete/Update message block write
  * @param p_block ptr to union of commands
+ * @param cust_tmxid custom transaction id (not part of global tran)
  * @return SUCCEED/FAIL
  */
-expublic int tmq_storage_write_cmd_block(char *data, char *descr)
+expublic int tmq_storage_write_cmd_block(char *data, char *descr, char *cust_tmxid)
 {
     int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -2186,7 +2194,7 @@ expublic int tmq_storage_write_cmd_block(char *data, char *descr)
     NDRX_DUMP(log_debug, "Writing command block to disk", 
                 (char *)data, len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)data, len, EXTRUE))
+    if (EXSUCCEED!=write_to_tx_file((char *)data, len, EXTRUE, cust_tmxid))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
                 tmq_msgid_serialize(p_hdr->msgid, msgid_str));
@@ -2595,6 +2603,9 @@ exprivate void dirent_free(struct dirent **namelist, int n)
  * Lists currently prepared transactions
  * NOTE! Currently messages does not store RMID.
  * This means that one directory cannot shared between several 
+ * Might have race condition with in-progress prepare. But I think it is
+ * is not a big problem. As anyway we normally will run abort or commit.
+ * And commit will require that all is prepared.
  * @param sw XA switch
  * @param xid where to unload the xids
  * @param count positions avaialble
