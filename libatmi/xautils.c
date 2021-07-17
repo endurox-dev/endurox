@@ -199,7 +199,7 @@ expublic XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
     size_t tot_len = 0;
     long l;
     
-    NDRX_LOG(log_debug, "atmi_xa_deserialize_xid enter (xid_str): [%s]: ", xid_str);
+    NDRX_LOG(log_debug, "atmi_xa_deserialize_xid enter (xid_str): [%s]", xid_str);
     
     if (NULL==ndrx_xa_base64_decode(xid_str, strlen((char *)xid_str), &tot_len, (char *)tmp))
     {

@@ -186,7 +186,6 @@ struct xa_switch_t ndrxqdynsw =
     .xa_complete_entry = xa_complete_entry_dyn
 };
 
-
 /**
  * Mark the current instance as part or not as part of tmqueue
  * @param setting EXTRUE/EXFALSE
@@ -204,10 +203,7 @@ expublic void tmq_set_tmqueue(int setting)
  */
 exprivate char *set_filename_base(XID *xid)
 {
-    atmi_xa_serialize_xid(xid, G_atmi_tls->qdisk_tls->filename_base);
-    
-    NDRX_LOG(log_debug, "Base file name built [%s]", G_atmi_tls->qdisk_tls->filename_base);
-    
+    atmi_xa_serialize_xid(xid, G_atmi_tls->qdisk_tls->filename_base);    
     return G_atmi_tls->qdisk_tls->filename_base;
 }
 
@@ -219,9 +215,6 @@ exprivate char *set_filename_base(XID *xid)
 exprivate char *set_filename_base_tmxid(char *tmxid)
 {
     NDRX_STRCPY_SAFE(G_atmi_tls->qdisk_tls->filename_base, tmxid);
-    
-    NDRX_LOG(log_debug, "Base file name set [%s]", G_atmi_tls->qdisk_tls->filename_base);
-    
     return G_atmi_tls->qdisk_tls->filename_base;
 }
 
@@ -257,9 +250,10 @@ exprivate int set_filenames(int *p_seqno)
     snprintf(G_atmi_tls->qdisk_tls->filename_prepared, sizeof(G_atmi_tls->qdisk_tls->filename_prepared), 
             "%s/%s-%03d", M_folder_prepared, G_atmi_tls->qdisk_tls->filename_base, seqno);
         
-    NDRX_LOG(log_info, "Filenames set to: [%s] [%s]", 
+    NDRX_LOG(log_info, "Filenames set to: [%s] [%s] (base: [%s])", 
                 G_atmi_tls->qdisk_tls->filename_active, 
-                G_atmi_tls->qdisk_tls->filename_prepared);
+                G_atmi_tls->qdisk_tls->filename_prepared,
+                G_atmi_tls->qdisk_tls->filename_base);
     
     *p_seqno = seqno;
 out:
@@ -762,11 +756,15 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                     NULL!=p;
                     p = ndrx_strtokblk (NULL, ARGS_DELIM, ARGS_QUOTE), i++)
             {
+                NDRX_LOG(log_debug, "YOPT processing [%s]", p);
+                
                 if (NULL!=(val = strchr(p, '=')))
                 {
                     *val = EXEOS;
                     val++;
                 }
+                
+                NDRX_LOG(log_debug, "YOPT processing [%s] val=%s", p, val);
                 
                 /* set data dir. */
                 if (0==strcmp(ARG_DIR, p))
@@ -880,6 +878,14 @@ exprivate int xa_start_entry_tmq(char *tmxid, long flags)
         }
         else
         {
+            
+            if (EXSUCCEED!=tmq_log_start(tmxid))
+            {
+                NDRX_LOG(log_error, "Failed to start transaction for tmxid [%s]",
+                        tmxid);
+                ret = XAER_RMERR;
+                goto out;
+            }
             NDRX_LOG(log_info, "Queue transaction Xid [%s] started OK", tmxid);
         }
     }
@@ -938,8 +944,11 @@ exprivate int ndrx_xa_qminicall(char *tmxid, char cmd)
         &rsplen, TPNOTRAN))
     {
         NDRX_LOG(log_error, "%s failed: %s", ndrx_G_qspacesvc, tpstrerror(tperrno));
-        ret = XAER_RMERR;
-        /* continue to get the buffer: */
+        
+        /* best guess -> not available */
+        ret = XAER_RMFAIL;
+        
+        /* anyway if have detailed response, use bellow. */
     }
     
     ndrx_debug_dump_UBF(log_info, "Reply from RM", p_ub);
@@ -975,9 +984,11 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
     long ret = XA_OK;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     
-    if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
+    BFLDLEN len = sizeof(tmxid);
+    
+    if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, &len))
     {
-        NDRX_LOG(log_error, "Failed to setup TMXID!");
+        NDRX_LOG(log_error, "Failed to get TMXID!");
         ret = XAER_INVAL;
         goto out;
     }
@@ -1105,7 +1116,7 @@ out:
  */
 exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
 {
-    union tmq_block b;
+    union tmq_upd_block b;
     char *fn = "xa_rollback_entry_tmq";
     qtran_log_cmd_t *el, *elt;
     
@@ -1397,7 +1408,7 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
         goto out;
     }
     
-    set_filename_base_tmxid(tmxid);
+    tmxid = set_filename_base(xid);
     
     if (M_is_tmqueue)
     {
@@ -1918,13 +1929,10 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
     FILE *f = NULL;
     int ax_ret;
     char mode_str[16];
-    tmq_cmdheader_t dum;    
-    int locke=EXFALSE;
+    tmq_cmdheader_t dum;
     int seqno;
-
-    qtran_log_t * p_tl = NULL;
-
     if (new_file)
+        
     {
         NDRX_STRCPY_SAFE(mode_str, "wb");
     }
@@ -2209,7 +2217,6 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
     int read;
     int state;
     qtran_log_t *p_tl;
-    tmq_msg_dum_t dum;
     
     /* prepared & active messages are all locked
      * Also if delete command is found in active, this means that committed
@@ -2299,6 +2306,16 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
              * abort only transactions at startup.
              */
             NDRX_LOG(log_warn, "Loading [%s]", filename);
+            
+            /* Read header */            
+            if (NULL==(p_block = NDRX_MALLOC(sizeof(*p_block))))
+            {
+                NDRX_LOG(log_error, "Failed to alloc [%s]: %s", 
+                   filename, strerror(errno));
+                EXFAIL_OUT(ret);
+            }
+            
+            /* read only if it is committed or prepared */
             if (j>0)
             {
                 NDRX_STRCPY_SAFE(tmxid, namelist[n]->d_name);
@@ -2341,10 +2358,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                 }
                 
             }
-            
-            
-            /* read only if it is committed or prepared */
-            
+
             if (j<2)
             {
                 if (NULL==(f=NDRX_FOPEN(filename, "rb")))
@@ -2362,14 +2376,6 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                         DIRENT_CONTINUE;
                     }
 
-                    EXFAIL_OUT(ret);
-                }
-
-                /* Read header */            
-                if (NULL==(p_block = NDRX_MALLOC(sizeof(*p_block))))
-                {
-                    NDRX_LOG(log_error, "Failed to alloc [%s]: %s", 
-                       filename, strerror(errno));
                     EXFAIL_OUT(ret);
                 }
 
@@ -2488,11 +2494,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
             else
             {
                 /* just create dummy entry for active transactions */
-                tmq_setup_cmdheader_newmsg(&dum.hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
-                dum.hdr.command_code = TMQ_STORCMD_DUM;
-                
-                /* set custom block... */
-                p_block = (union tmq_block *)&dum;
+                tmq_setup_cmdheader_dum(&p_block->hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
+                p_block->hdr.command_code = TMQ_STORCMD_DUM;
             }
             
             /* Process message block 

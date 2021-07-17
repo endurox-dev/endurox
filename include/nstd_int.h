@@ -104,6 +104,9 @@ typedef struct
     MUTEX_LOCKDECLN(change_lock);        /**< If doing chagnes to the object   */
     pthread_cond_t   change_wait;  /**< wait on this if have writters          */
     
+    MUTEX_LOCKDECLN(line_lock);        /**< Line locking (for MT & single file */
+    
+    
     int refcount;  /**< Number of logger have references, protected by change_lock */
     long flags;     /**< is this process level? Use mutex?  */
     

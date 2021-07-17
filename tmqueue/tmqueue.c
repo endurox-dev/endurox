@@ -61,6 +61,7 @@
 #include <ubfutil.h>
 #include <thlock.h>
 #include "qtran.h"
+#include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -74,6 +75,12 @@ exprivate __thread int M_thread_first = EXTRUE;
 /* allow only one timeout check at the same time... */
 exprivate int volatile M_into_toutchk = EXFALSE;
 exprivate MUTEX_LOCKDECL(M_into_toutchk_lock);
+
+/** mark that thrad pool is done with shutdown seq */
+exprivate int M_shutdown_ok = EXFALSE;
+
+/** global shutdown indicator */
+exprivate int *M_shutdown_ind = NULL;
 
 /** mark globally that timeout processing is in progress
  * do not collide with any worker already running...
@@ -336,6 +343,7 @@ exprivate void tx_tout_check_th(void *ptr)
                     {
                         NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", 
                                 el->p_tl.tmxid);
+                        tmq_log_unlock(p_tl);
                         goto next;
                     }
                     
@@ -344,8 +352,11 @@ exprivate void tx_tout_check_th(void *ptr)
                     {
                         NDRX_LOG(log_error, "Failed to abort tmxid:[%s]", 
                                 el->p_tl.tmxid);
+                        tmq_log_unlock(p_tl);
                         goto next;
                     }
+                    
+                    /* Transaction must be removed at this point */
                     
                 }
                 else
@@ -358,7 +369,7 @@ exprivate void tx_tout_check_th(void *ptr)
         }
 next:
         LL_DELETE(tx_list,el);
-        NDRX_FREE(el);
+        NDRX_FPFREE(el);
         
     }
     
@@ -388,7 +399,17 @@ exprivate int tm_tout_check(void)
 {
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
     
-    ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
+    
+    if (NULL==M_shutdown_ind)
+    {
+        /* no shutdown requested... yet... */
+        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
+    }
+    else if (M_shutdown_ok)
+    {
+        ndrx_sv_do_shutdown("Application shutdown sequence", M_shutdown_ind);
+    }
+    
     
     return EXSUCCEED;
 }
@@ -483,6 +504,52 @@ out:
                 0L,
                 0L);
     }
+}
+
+
+/**
+ * Just justdown the forwarder and forward threads
+ * the main/notif threads will be terminated at the end.
+ * @param ptr data, not used
+ */
+exprivate void shutdowncb_th(void *ptr)
+{
+    int i;
+    
+    NDRX_LOG(log_info, "Shutdown sequence started...");
+    G_forward_req_shutdown = EXTRUE;
+    
+    if (M_init_ok)
+    {
+        forward_shutdown_wake();
+        
+        /* Wait to complete */
+        pthread_join(G_forward_thread, NULL);
+        
+        for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
+        {
+            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
+        }
+        
+        ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
+        ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
+    }
+    
+    M_shutdown_ok=EXTRUE;
+}
+
+/**
+ * Shutdown sequencer
+ * So that we terminate all processing string in the right order
+ * @param shutdown_req ptr to indicator
+ * @return SUCCEED
+ */
+exprivate int shutdowncb(int *shutdown_req)
+{
+    /* submit shutdown job */
+    M_shutdown_ind = shutdown_req;
+    ndrx_thpool_add_work(G_tmqueue_cfg.shutdownseq, (void*)shutdowncb_th, NULL);
+    return EXSUCCEED;
 }
 
 /*
@@ -693,12 +760,27 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+    if (NULL==(G_tmqueue_cfg.shutdownseq = ndrx_thpool_init(1,
+            NULL, NULL, NULL, 0, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize shutdown thread pool!");
+        EXFAIL_OUT(ret);
+    }
     
     /* Register timer check (needed for time-out detection) */
     if (EXSUCCEED!=tpext_addperiodcb(G_tmqueue_cfg.tout_check_time, tm_tout_check))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                         tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* set shutdown callback handler
+     * so that we can initiate shutdown sequence
+     */
+    if (EXSUCCEED!=ndrx_tpext_addbshutdowncb(shutdowncb))
+    {
+        NDRX_LOG(log_error, "Failed to add shutdown sequencer callback!");
         EXFAIL_OUT(ret);
     }
     
@@ -722,18 +804,13 @@ out:
 void tpsvrdone(void)
 {
     int i;
+    
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
             "background thread shutdown...");
     
-    G_forward_req_shutdown = EXTRUE;
-    
     if (M_init_ok)
     {
-        forward_shutdown_wake();
-
-        /* Wait to complete */
-        pthread_join(G_forward_thread, NULL);
-
+        
         /* Terminate the threads (request) */
         for (i=0; i<G_tmqueue_cfg.threadpoolsize; i++)
         {
@@ -746,24 +823,15 @@ void tpsvrdone(void)
             ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void *)tmq_thread_shutdown, NULL);
         }
         
-        /* forwarder */
-        for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
-        {
-            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
-        }
+        /* terminate the showdown thread... */
+        ndrx_thpool_add_work(G_tmqueue_cfg.shutdownseq, (void *)tmq_thread_shutdown, NULL);
         
         
-        /* Wait for threads to finish */
-        ndrx_thpool_wait(G_tmqueue_cfg.thpool);
-        ndrx_thpool_destroy(G_tmqueue_cfg.thpool);
+        ndrx_thpool_wait(G_tmqueue_cfg.shutdownseq);
+        ndrx_thpool_destroy(G_tmqueue_cfg.shutdownseq);
         
-        ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
-        ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
-
-        ndrx_thpool_wait(G_tmqueue_cfg.notifthpool);
-        ndrx_thpool_destroy(G_tmqueue_cfg.notifthpool);
-
     }
+    
     tpclose();
     
 }

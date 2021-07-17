@@ -122,6 +122,68 @@ exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
 exprivate tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str);
 
 /**
+ * Add dummy marker for given transaction.
+ * This is used 
+ * @param tmxid transaction id (must be in the transaction regsitry)
+ * @param seqno
+ * @return 
+ */
+expublic int tmq_dum_add(char *tmxid, int seqno)
+{
+    tmq_msg_dum_t dum;
+    int ret = EXSUCCEED;
+        
+    /* Build up the message. 
+     * Note that we might not be in transaction mode, in case if
+     * doing prepare and we find that there is nothing to prepare.
+     */
+    tmq_setup_cmdheader_dum(&dum.hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
+    dum.hdr.command_code = TMQ_STORCMD_DUM;
+    
+    /* For active files we do not read the contents
+     * as all messages will get aborted. And if abort does not succeed,
+     * process will reboot. Thus no messages will be locked.
+     * This will run recursive Lock OK
+     */
+    if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)&dum, XA_RM_STATUS_ACTIVE))
+    {
+        NDRX_LOG(log_error, "Failed to add dummy command for  tmxid [%s] seq %d", 
+                tmxid, seqno);
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Setup dummy header
+ * @param hdr header to setup
+ * @param qname queue name
+ */
+expublic int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname, 
+        short nodeid, short srvid, char *qspace, long flags)
+{
+    int ret = EXSUCCEED;
+    
+    NDRX_STRCPY_SAFE(hdr->qspace, qspace);
+   /* strcpy(hdr->qname, qname); same object, causes core dumps on osx */
+    hdr->command_code = TMQ_STORCMD_NEWMSG;
+    NDRX_STRNCPY(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
+    
+    /* trailing magic */
+    hdr->nodeid = nodeid;
+    hdr->srvid = srvid;
+    hdr->flags = flags;
+    memset(hdr->reserved, 0, sizeof(hdr->reserved));
+    memset(hdr->msgid, 0, sizeof(hdr->msgid));
+    NDRX_STRNCPY(hdr->magic2, TMQ_MAGIC2, TMQ_MAGIC_LEN);
+    
+out:
+    return ret;
+}
+
+/**
  * Setup queue header
  * @param hdr header to setup
  * @param qname queue name
@@ -148,6 +210,7 @@ expublic int tmq_setup_cmdheader_newmsg(tmq_cmdheader_t *hdr, char *qname,
 out:
     return ret;
 }
+
 
 /**
  * Generate new transaction id, native form (byte array)
@@ -743,42 +806,6 @@ exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
 out:
     return ret;
 }
-
-/**
- * Add dummy marker for given transaction.
- * This is used 
- * @param tmxid transaction id (must be in the transaction regsitry)
- * @param seqno
- * @return 
- */
-expublic int tmq_dum_add(char *tmxid, int seqno)
-{
-    tmq_msg_dum_t dum;
-    int ret = EXSUCCEED;
-        
-    /* Build up the message. 
-     * Note that we might not be in transaction mode, in case if
-     * doing prepare and we find that there is nothing to prepare.
-     */
-    tmq_setup_cmdheader_newmsg(&dum.hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
-    dum.hdr.command_code = TMQ_STORCMD_DUM;
-    
-    /* For active files we do not read the contents
-     * as all messages will get aborted. And if abort does not succeed,
-     * process will reboot. Thus no messages will be locked.
-     * This will run recursive Lock OK
-     */
-    if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)&dum, XA_RM_STATUS_ACTIVE))
-    {
-        NDRX_LOG(log_error, "Failed to add dummy command for  tmxid [%s] seq %d", 
-                tmxid, seqno);
-        EXFAIL_OUT(ret);
-    }
-
-out:
-    return ret;
-}
-
 
 /**
  * Add message to queue
@@ -1454,16 +1481,20 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
     
     MUTEX_LOCK_V(M_q_lock);
     
-    mmsg = tmq_get_msg_by_msgid_str(msgid_str);
-    
-    if (NULL==mmsg)
-    {   
-        NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
-        
-        /* might be a case when message file was deleted, but command block
-         * not. Thus for command block might be false re-attempt.
-         */
-        goto out;
+    /* no msg to process for dummy */
+    if (TMQ_STORCMD_DUM!=b->hdr.command_code)
+    {
+        mmsg = tmq_get_msg_by_msgid_str(msgid_str);
+
+        if (NULL==mmsg)
+        {   
+            NDRX_LOG(log_error, "Message not found: [%s] - no update", msgid_str);
+
+            /* might be a case when message file was deleted, but command block
+             * not. Thus for command block might be false re-attempt.
+             */
+            goto out;
+        }
     }
     
     switch (b->hdr.command_code)
@@ -1574,6 +1605,31 @@ exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, i
 {
     int ret = EXSUCCEED;
     
+    
+    /* in case if state is prepared or active -> add transaction with given
+     * sequence
+     */
+    if (TMQ_TXSTATE_ACTIVE==state || TMQ_TXSTATE_PREPARED==state)
+    {
+        char entry_status;
+        
+        if (TMQ_TXSTATE_PREPARED==state)
+        {
+            entry_status = XA_RM_STATUS_PREP;
+        }
+        else
+        {
+            entry_status = XA_RM_STATUS_ACTIVE;
+        }
+        
+        if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)*p_block, entry_status))
+        {
+            NDRX_LOG(log_error, "Failed to add tmxid [%s] seqno %d",
+                    tmxid, seqno);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     switch((*p_block)->hdr.command_code)
     {
         case TMQ_STORCMD_NEWMSG:
@@ -1605,31 +1661,6 @@ exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, i
             }
             
             break;
-    }
-    
-    /* in case if state is prepared or active -> add transaction with given
-     * sequence
-     */
-    
-    if (TMQ_TXSTATE_ACTIVE==state || TMQ_TXSTATE_PREPARED==state)
-    {
-        char entry_status;
-        
-        if (TMQ_TXSTATE_PREPARED==state)
-        {
-            entry_status = XA_RM_STATUS_PREP;
-        }
-        else
-        {
-            entry_status = XA_RM_STATUS_ACTIVE;
-        }
-        
-        if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)*p_block, entry_status))
-        {
-            NDRX_LOG(log_error, "Failed to add tmxid [%s] seqno %d",
-                    tmxid, seqno);
-            EXFAIL_OUT(ret);
-        }
     }
     
 out:

@@ -47,7 +47,9 @@ DEBUG CONFIGURATION FILE SYNTAX
     there will be open new log file. The log file names are assigned by following
     approach: Say 'LOG_FILE' = *TEST.LOG*, then new thread log will go to
     *TEST.X.LOG* (.e.g *TEST.1.LOG*). If 'LOG_FILE' = *TEST_LOG*, then new thread
-    will perform logging to "TEST_LOG.1".
+    will perform logging to "TEST_LOG.1". If value is set to "L" for process
+    level loggers, then any writing to log is serialized by Mutex lock. This
+    mode is by default on for SystemV poller.
 *MKDIR*::
     Value is can be set to "Y" or "N". The default is "N". In case of "Y", if
     Enduro/X logger attempts to open log file and the output directory is missing
