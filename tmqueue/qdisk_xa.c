@@ -232,7 +232,12 @@ exprivate char *set_filename_base(XID *xid)
  */
 exprivate char *set_filename_base_tmxid(char *tmxid)
 {
-    NDRX_STRCPY_SAFE(G_atmi_tls->qdisk_tls->filename_base, tmxid);
+    /* may overlap in dynamic reg mode */
+    if (tmxid!=(char *)G_atmi_tls->qdisk_tls->filename_base)
+    {
+        NDRX_STRCPY_SAFE(G_atmi_tls->qdisk_tls->filename_base, tmxid);
+    }
+
     return G_atmi_tls->qdisk_tls->filename_base;
 }
 
