@@ -505,7 +505,7 @@ out:
             {
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
-                NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: commit failed!");
                 qctl_out.diagnostic = QMESYSTEM;
                 ret=EXFAIL;
             }

@@ -233,13 +233,11 @@ out:
 }
 
 /**
- * Add dummy marker for given transaction.
- * This is used 
+ * Add dummy marker for given transaction, increment sequence number
  * @param tmxid transaction id (must be in the transaction regsitry)
- * @param seqno
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tmq_dum_add(char *tmxid, int seqno)
+expublic int tmq_dum_add(char *tmxid)
 {
     tmq_msg_dum_t dum;
     int ret = EXSUCCEED;
@@ -251,15 +249,11 @@ expublic int tmq_dum_add(char *tmxid, int seqno)
     tmq_setup_cmdheader_dum(&dum.hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
     dum.hdr.command_code = TMQ_STORCMD_DUM;
     
-    /* For active files we do not read the contents
-     * as all messages will get aborted. And if abort does not succeed,
-     * process will reboot. Thus no messages will be locked.
-     * This will run recursive Lock OK
-     */
-    if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, (char *)&dum, XA_RM_STATUS_ACTIVE))
+    /* this adds transaction to log: */
+    if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&dum, 
+                "Dummy transaction marker", tmxid))
     {
-        NDRX_LOG(log_error, "Failed to add dummy command for  tmxid [%s] seq %d", 
-                tmxid, seqno);
+        NDRX_LOG(log_error, "Failed to write dummy command block to disk [%s]", tmxid);
         EXFAIL_OUT(ret);
     }
 
@@ -1314,7 +1308,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         block.hdr.command_code = TMQ_STORCMD_DEL;
 
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&block, 
-                "Removing dequeued message"))
+                "Removing dequeued message", NULL))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
@@ -1387,13 +1381,10 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     
     del.hdr.command_code = TMQ_STORCMD_DEL;
     
-    
-    /* TODO: Unlock here?  */
-    
     if (!(flags & TPQPEEK))
     {
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&del, 
-                "Removing dequeued message"))
+                "Removing dequeued message", NULL))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
@@ -1469,7 +1460,7 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags, long *dia
         block.hdr.command_code = TMQ_STORCMD_DEL;
 
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&block, 
-                "Removing dequeued message"))
+                "Removing dequeued message", NULL))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */

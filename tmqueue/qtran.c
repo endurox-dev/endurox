@@ -368,6 +368,12 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, char *b, char entry_status)
     cmd->cmd_status = entry_status;
     cmd->command_code = p_hdr->command_code;
     
+    /* in case if doing recovery... */
+    if (p_tl->seqno<seqno)
+    {
+        p_tl->seqno=seqno;
+    }
+    
     /* select the size of update block
      * non init bytes after the struct in cases on non upd
      * does not matter
