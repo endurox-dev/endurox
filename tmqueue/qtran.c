@@ -248,15 +248,20 @@ expublic int tmq_log_start(char *tmxid)
     qtran_log_t *tmp = NULL;
     
     /* 1. Add stuff to hash list */
-    if (NULL==(tmp = NDRX_CALLOC(sizeof(qtran_log_t), 1)))
+    if (NULL==(tmp = NDRX_FPMALLOC(sizeof(qtran_log_t), 0)))
     {
         NDRX_LOG(log_error, "NDRX_CALLOC() failed: %s", strerror(errno));
         ret=EXFAIL;
         goto out;
     }
+    
+    /* reset the log */
+    memset(tmp, 0, sizeof(*tmp));
+    
     tmp->txstage = XA_TX_STAGE_ACTIVE;
     tmp->t_start = ndrx_utc_tstamp();
     tmp->t_update = ndrx_utc_tstamp();
+    NDRX_STRCPY_SAFE(tmp->tmxid, tmxid);
     ndrx_stopwatch_reset(&tmp->ttimer);
     
     /* TODO: write initial tran-info message...
@@ -336,8 +341,8 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, char *b, char entry_status)
     tmq_cmdheader_t *p_hdr=(tmq_cmdheader_t *)b;
     
     NDRX_LOG(log_info, "Adding Q tran cmd: [%s] seqno: %d, "
-            "command_code: %c, status: %c, p_msg: %p",
-            tmxid, seqno, p_hdr->command_code);
+            "command_code: %c, status: %c",
+            tmxid, seqno, p_hdr->command_code, entry_status);
     
     if (NULL==(p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke)))
     {
@@ -356,6 +361,8 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, char *b, char entry_status)
                 sizeof(qtran_log_cmd_t), strerror(errno));
         EXFAIL_OUT(ret);
     }
+    
+    memset(cmd, 0, sizeof(*cmd));
     
     cmd->seqno=seqno;
     cmd->cmd_status = entry_status;

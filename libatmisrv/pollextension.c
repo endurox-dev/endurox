@@ -301,4 +301,21 @@ out:
     return ret;
 }
 
+
+/**
+ * Custom shutdown handler (currently internal, not exposed to outer world)
+ * @param p_shutdowncb shutdown callback
+ * @return EXSUCCEED
+ */
+expublic int ndrx_tpext_addbshutdowncb(int (*p_shutdowncb)(int *shutdown_req))
+{
+    int ret=EXSUCCEED;
+    
+    G_server_conf.p_shutdowncb = p_shutdowncb;
+    NDRX_LOG(log_debug, "Registering shutdown func ptr %p",  G_server_conf.p_shutdowncb);
+    
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
