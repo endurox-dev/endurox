@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <xa.h>
 #include "tmqueue.h"
+#include "tmqd.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -66,7 +67,7 @@ int main( int argc, char** argv )
      * So what let to do for others is just to start the transaction
      * join for other is just ignored.
      */
-    tmq_set_tmqueue(EXTRUE);
+    tmq_set_tmqueue(EXTRUE, tmq_setup_cmdheader_dum, tmq_dum_add, tmq_unlock_msg);
     
     struct tmsvrargs_t tmsvrargs =
     {

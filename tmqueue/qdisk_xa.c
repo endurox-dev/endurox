@@ -104,8 +104,13 @@ exprivate char M_folder_committed[PATH_MAX+1] = {EXEOS}; /**< Committed transact
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
 exprivate MUTEX_LOCKDECL(M_init);   /**< init lock      */
+
 exprivate int M_is_tmqueue = EXFALSE;   /**< is this process a tmqueue ?        */
 
+exprivate  int (*M_p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
+        short nodeid, short srvid, char *qspace, long flags);
+exprivate int (*M_p_tmq_dum_add)(char *tmxid, int seqno);
+exprivate int (*M_p_tmq_unlock_msg)(union tmq_upd_block *b);
 /*---------------------------Prototypes---------------------------------*/
 
 expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -190,9 +195,22 @@ struct xa_switch_t ndrxqdynsw =
  * Mark the current instance as part or not as part of tmqueue
  * @param setting EXTRUE/EXFALSE
  */
-expublic void tmq_set_tmqueue(int setting)
+expublic void tmq_set_tmqueue(
+    int setting
+    , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
+        short nodeid, short srvid, char *qspace, long flags)
+    , int (*p_tmq_dum_add)(char *tmxid, int seqno)
+    , int (*p_tmq_unlock_msg)(union tmq_upd_block *b)
+)
 {
     M_is_tmqueue = setting;
+    M_p_tmq_setup_cmdheader_dum = p_tmq_setup_cmdheader_dum;
+    M_p_tmq_dum_add = p_tmq_dum_add;
+    M_p_tmq_unlock_msg = p_tmq_unlock_msg;
+    
+    NDRX_LOG(log_debug, "qdisk_xa config: M_is_tmqueue=%d "
+        "M_p_tmq_setup_cmdheader_dum=%p M_p_tmq_dum_add=%p M_p_tmq_unlock_msg=%p",
+        M_is_tmqueue, M_p_tmq_setup_cmdheader_dum, M_p_tmq_dum_add, M_p_tmq_unlock_msg);
 }
 
 /**
@@ -520,9 +538,8 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
         goto out;
     }
     
-    
     /* If all OK, lets unlock the message. */
-    if (EXSUCCEED!=tmq_unlock_msg(p_upd))
+    if (EXSUCCEED!=M_p_tmq_unlock_msg(p_upd))
     {
         ret=XAER_RMERR;
         goto out;
@@ -1334,7 +1351,7 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
          */
         int seqno = tmq_log_next(p_tl);
         
-        if (EXSUCCEED!=tmq_dum_add(p_tl->tmxid, seqno))
+        if (EXSUCCEED!=M_p_tmq_dum_add(p_tl->tmxid, seqno))
         {
             ret = XAER_RMERR;
             p_tl->is_abort_only=EXTRUE;
@@ -1931,6 +1948,7 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
     char mode_str[16];
     tmq_cmdheader_t dum;
     int seqno;
+    long xaflags=0;
     if (new_file)
         
     {
@@ -1951,7 +1969,13 @@ exprivate int write_to_tx_file(char *block, int len, int new_file)
             EXFAIL_OUT(ret);
         }
         
-        if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, G_atmi_tls->qdisk_rmid, 0))
+        if (TM_JOIN==ax_ret)
+        {
+            xaflags = TMJOIN;
+        }
+        
+        /* done by ax_reg! */
+        if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, G_atmi_tls->qdisk_rmid, xaflags))
         {
             NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
             EXFAIL_OUT(ret);
@@ -2494,7 +2518,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
             else
             {
                 /* just create dummy entry for active transactions */
-                tmq_setup_cmdheader_dum(&p_block->hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
+                M_p_tmq_setup_cmdheader_dum(&p_block->hdr, NULL, tpgetnodeid(), 
+                        0, ndrx_G_qspace, 0);
                 p_block->hdr.command_code = TMQ_STORCMD_DUM;
             }
             
