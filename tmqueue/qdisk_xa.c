@@ -764,7 +764,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
             
 #define ARGS_DELIM      ", \t"
 #define ARGS_QUOTE      "'\""
-#define ARG_DIR         "dir"
+#define ARG_DIR         "datadir"
 #define ARG_QSPACE      "qspace"
             
             /* preserve values in quotes... as atomic values */
@@ -772,15 +772,11 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                     NULL!=p;
                     p = ndrx_strtokblk (NULL, ARGS_DELIM, ARGS_QUOTE), i++)
             {
-                NDRX_LOG(log_debug, "YOPT processing [%s]", p);
-                
                 if (NULL!=(val = strchr(p, '=')))
                 {
                     *val = EXEOS;
                     val++;
                 }
-                
-                NDRX_LOG(log_debug, "YOPT processing [%s] val=%s", p, val);
                 
                 /* set data dir. */
                 if (0==strcmp(ARG_DIR, p))
