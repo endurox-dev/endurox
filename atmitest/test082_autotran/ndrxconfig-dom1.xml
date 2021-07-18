@@ -54,8 +54,8 @@
         
         <envs group="TMQ">
             <env name="NDRX_XA_RES_ID">1</env>
-            <env name="NDRX_XA_OPEN_STR">./QSPACE1</env>
-            <env name="NDRX_XA_CLOSE_STR">./QSPACE1</env>
+            <env name="NDRX_XA_OPEN_STR">datadir=./QSPACE1,qspace=MYSPACE</env>
+            <env name="NDRX_XA_CLOSE_STR">datadir=./QSPACE1,qspace=MYSPACE</env>
             <env name="NDRX_XA_DRIVERLIB">libndrxxaqdisks.${NDRX_LIBEXT}</env>
             <env name="NDRX_XA_RMLIB">libndrxxaqdisk.${NDRX_LIBEXT}</env>
             <env name="NDRX_XA_LAZY_INIT">0</env>
@@ -79,7 +79,7 @@
         <server name="tmqueue">
             <max>1</max>
             <srvid>100</srvid>
-            <sysopt>-e ${TESTDIR}/tmqueue1.log -r -- -m MYSPACE -q ./q.conf -s1</sysopt>
+            <sysopt>-e ${TESTDIR}/tmqueue1.log -r -- -q ./q.conf -s1</sysopt>
             
             <envs>
                 <usegroup>TMQ</usegroup>

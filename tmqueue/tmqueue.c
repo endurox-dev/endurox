@@ -580,16 +580,8 @@ int tpsvrinit(int argc, char **argv)
         {
             case 'm': 
                 
-#if 0
-                /* My qspace.. */ 
-                NDRX_STRCPY_SAFE(G_tmqueue_cfg.qspace, optarg);
-                snprintf(G_tmqueue_cfg.qspacesvc, sizeof(G_tmqueue_cfg.qspacesvc),
-                        NDRX_SVC_QSPACE, optarg);
-                NDRX_LOG(log_debug, "Qspace set to: [%s]", G_tmqueue_cfg.qspace);
-                NDRX_LOG(log_debug, "Qspace svc set to: [%s]", G_tmqueue_cfg.qspacesvc);          
-#endif
                 /* Ask to convert: */
-                NDRX_LOG(log_error, "ERROR ! Please convert queue settings to NDRX_XA_OPEN_STR (dir=,qspace=)");
+                NDRX_LOG(log_error, "ERROR ! Please convert queue settings to NDRX_XA_OPEN_STR (datadir=,qspace=)");
                 EXFAIL_OUT(ret);
                 
                 break;
