@@ -339,7 +339,7 @@ exprivate void tx_tout_check_th(void *ptr)
                     
                     el->p_tl.is_abort_only=EXTRUE;
                     
-                    if (NULL==atmi_xa_deserialize_xid(el->p_tl.tmxid, &xid))
+                    if (NULL==atmi_xa_deserialize_xid((unsigned char *)el->p_tl.tmxid, &xid))
                     {
                         NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", 
                                 el->p_tl.tmxid);

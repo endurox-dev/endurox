@@ -129,7 +129,7 @@ expublic int tmq_log_abortall(void)
             NDRX_LOG(log_error, "Aborting active transaction tmxid [%s]", el->tmxid);
         }
         
-        if (NULL==atmi_xa_deserialize_xid(el->tmxid, &xid))
+        if (NULL==atmi_xa_deserialize_xid((unsigned char *)el->tmxid, &xid))
         {
             NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", el->tmxid);
             EXFAIL_OUT(ret);
