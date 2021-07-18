@@ -124,7 +124,7 @@ expublic int clock_gettime(clockid_t clk_id, struct timespec *tp)
  */
 expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
 {
-    return ndrx_sys_cmdout_test("ps -p %d -wwwe", pid, p_re);
+    return ndrx_sys_cmdout_test("ps eww %d", pid, p_re);
 }
 
 /**
