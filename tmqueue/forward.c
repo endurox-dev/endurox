@@ -261,6 +261,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         /* might happen if we reconfigure on the fly. */
         NDRX_LOG(log_error, "Failed to get qconf for [%s]", msg->hdr.qname);
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
         EXFAIL_OUT(ret);
     }
     
@@ -288,6 +289,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                     0))
     {
         NDRX_LOG(log_always, "Failed to allocate buffer type %hd!", msg->buftyp);
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
         EXFAIL_OUT(ret);
     }
     
@@ -303,8 +305,6 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             
             /* nothing todo with the msg, unlock... */
             tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-            
-            M_force_sleep=EXTRUE;
             EXFAIL_OUT(ret);
         }
     }
@@ -374,6 +374,30 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         if (msg->qctl.flags & TPQREPLYQ)
         {
             TPQCTL ctl;
+            
+            /* firstly add our tran: */
+            tmq_update_q_stats(msg->hdr.qname, 1, 0);
+            cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
+
+            /* well this will generate this will add msg to transaction
+             * will be handled by timeout setting...
+             * No more unlock manual.
+             */
+            if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
+                    "Removing completed message...", NULL))
+            {
+                NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                        msgid_str);
+                userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                        msgid_str);
+
+                /* unlock the msg, as adding to log is last step, 
+                 * thus not in log and we are in control
+                 */
+                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+                EXFAIL_OUT(ret);
+            }
+        
             NDRX_LOG(log_warn, "TPQREPLYQ defined, sending answer buffer to "
                     "[%s] q in [%s] namespace", 
                     msg->qctl.replyqueue, msg->hdr.qspace);
@@ -405,33 +429,13 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                     userlog("Failed to enqueue to replyqueue [%s]: %s", 
                             msg->qctl.replyqueue, tpstrerror(tperrno));
                 }
+                /* no unlock & sleep as we do not know where the transaction
+                 * did stuck
+                 */
                 EXFAIL_OUT(ret);
             }
         }
         
-        tmq_update_q_stats(msg->hdr.qname, 1, 0);
-        
-        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
-        
-        /* well this will generate this will add msg to transaction
-         * will be handled by timeout setting...
-         * No more unlock manual.
-         */
-        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                "Removing completed message...", NULL))
-        {
-            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-            
-            /* unlock the msg, as adding to log is last step, 
-             * thus not in log and we are in control
-             */
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-            
-            EXFAIL_OUT(ret);
-        }
     }
     else
     {
@@ -475,6 +479,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                  * Keep the original flags... */
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
+                /* if local tran expires, the process will be unable to join
+                 * transaction 
+                 */
                 if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
                         rply_buf, rply_len, 0))
                 {
@@ -495,6 +502,11 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                                 msg->qctl.replyqueue, tpstrerror(tperrno));
                     }
                     
+                    /* let timeout/tmsrv to housekeep...
+                     * only here if global transaction timed-out
+                     * then will we force the sleep. Thought this would be
+                     * very rare case.
+                     */
                     EXFAIL_OUT(ret);
                 }
             }
@@ -518,6 +530,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                     userlog("Failed to enqueue to errorq [%s]: %s", 
                             qconf.errorq, tpstrerror(tperrno));
                     
+                    /* let timeout/tmsrv to housekeep... */
                     EXFAIL_OUT(ret);
                 }
             }

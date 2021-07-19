@@ -2377,6 +2377,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                 {
                     NDRX_LOG(log_error, "Failed to get transaction object for [%s] seqno %d",
                             tmxid, seqno);
+                    EXFAIL_OUT(ret);
                 }
                 
                 if (2==j)
@@ -2390,6 +2391,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                     p_tl->txstage=XA_TX_STAGE_PREPARED;
                 }
                 
+                /* unlock tran */
+                tmq_log_unlock(p_tl);
             }
 
             if (j<2)
