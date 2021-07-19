@@ -161,15 +161,6 @@ EXAMPLE
 -------
 See *atmitest/test028_tmq/atmiclt28.c* for sample code.
 
-LIMITATIONS
------------
-Under the same global transaction, it is forbidden to call *tpenqueue()* concurrently 
-on the same XA Resource Id (i.e. queue spaces configured with the 
-with the same *NDRX_XA_RES_ID*).  Calls are forbidden either from multiple threads, 
-or from multiple processes e.g. using *tpacall(3)* to active transaction in other processes which 
-are performing *tpenqueue()* while service caller also performs *tpenqueue()*.
-Possible consequences are undefined and may include message loss.
-
 BUGS
 ----
 Report bugs to support@mavimax.com
