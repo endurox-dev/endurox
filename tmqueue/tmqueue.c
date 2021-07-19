@@ -361,8 +361,8 @@ exprivate void tx_tout_check_th(void *ptr)
                 }
                 else
                 {
-                    NDRX_LOG(log_error, "Q TMXID [%s] was-tout but found in progress "
-                        "(txstage %hd spent %ld, limit: %ld sec) - aborting...!", 
+                    NDRX_LOG(log_error, "Q TMXID [%s] was-tout but found not active "
+                        "(txstage %hd spent %ld, limit: %ld sec) - skipping!", 
                         el->p_tl.tmxid, el->p_tl.txstage, tspent, G_tmqueue_cfg.dflt_timeout);
                 }
             }

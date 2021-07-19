@@ -127,19 +127,19 @@ expublic int tmq_log_abortall(void)
         if (el->is_abort_only)
         {
             NDRX_LOG(log_error, "Aborting active transaction tmxid [%s]", el->tmxid);
-        }
         
-        if (NULL==atmi_xa_deserialize_xid((unsigned char *)el->tmxid, &xid))
-        {
-            NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", el->tmxid);
-            EXFAIL_OUT(ret);
-        }
-        
-        /* try to rollback the stuff...! */
-        if (EXSUCCEED!=atmi_xa_rollback_entry(&xid, 0))
-        {
-            NDRX_LOG(log_error, "Failed to abort [%s]", el->tmxid);
-            EXFAIL_OUT(ret);
+            if (NULL==atmi_xa_deserialize_xid((unsigned char *)el->tmxid, &xid))
+            {
+                NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", el->tmxid);
+                EXFAIL_OUT(ret);
+            }
+
+            /* try to rollback the stuff...! */
+            if (EXSUCCEED!=atmi_xa_rollback_entry(&xid, 0))
+            {
+                NDRX_LOG(log_error, "Failed to abort [%s]", el->tmxid);
+                EXFAIL_OUT(ret);
+            }
         }
     }
 out:
