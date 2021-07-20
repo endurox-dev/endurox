@@ -181,13 +181,24 @@ echo "Move to prepared..."
 
 # get the transaction names (so that we do not have to generate ones...)
 # get the base names of the transactions, with out the number
+trans=0
 grep 'Writing command fil' *.log | cut -d '[' -f2 | cut -d ']' -f1 | cut -d '/' -f 4 | cut -d '-' -f 1 | while read -r line ; do
+
+    # seq 1
     MSG_FILE=`ls -1 QSPACE1/committed | tail -1`
     echo "Injecting transaction: [mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-001]"
+    mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-001 || go_out 4
 
-    # make file to appear twice... (append 1)
-    cp QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-001 || go_out 4
+    # seq 2
+    MSG_FILE=`ls -1 QSPACE1/committed | tail -1`
+    echo "Injecting transaction: [mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-002]"
     mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-002 || go_out 5
+
+    trans=$((trans+1))
+    # done with 550 * 2 transactions, transaction identifiers are half used, but no problem
+    if [[ $trans -ge 550 ]]; then
+        break;
+    fi
 
 done
 
@@ -202,18 +213,18 @@ xadmin recoverlocal 2>/dev/null
 CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 
 echo "Got txns: $CNT"
-if [[ "X$CNT" != "X1100" ]]; then
-    echo "Expecting X1100, got X$CNT"
+if [[ "X$CNT" != "X550" ]]; then
+    echo "Expecting X550, got X$CNT"
     go_out 6
 fi
 
 echo "Aborting..."
-# count number aborted...
+# count number aborted... (lines actually)
 CNT=`xadmin abortlocal -y | wc | awk '{print $1}'`
 
 echo "Got processed recs: $CNT"
-if [[ "X$CNT" != "X2200" ]]; then
-    echo "Expecting X2200, got X$CNT (abortlocal processing)"
+if [[ "X$CNT" != "X1100" ]]; then
+    echo "Expecting X110, got X$CNT (abortlocal processing)"
     go_out 6
 fi
 
@@ -238,13 +249,25 @@ echo "Move to prepared..."
 
 # get the transaction names (so that we do not have to generate ones...)
 # get the base names of the transactions, with out the number
+trans=0
 grep 'Writing command fil' *dom1*.log | cut -d '[' -f2 | cut -d ']' -f1 | cut -d '/' -f 4 | cut -d '-' -f 1 | while read -r line ; do
+
+    # seq 1
     MSG_FILE=`ls -1 QSPACE1/committed | tail -1`
     echo "Injecting transaction: [mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-001]"
+    mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-001 || go_out 4
 
-    # make file to appear twice... (append 1)
-    cp QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-001 || go_out 7
-    mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-002 || go_out 8
+    # seq 2
+    MSG_FILE=`ls -1 QSPACE1/committed | tail -1`
+    echo "Injecting transaction: [mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-002]"
+    mv QSPACE1/committed/$MSG_FILE QSPACE1/prepared/${line}-002 || go_out 5
+
+    trans=$((trans+1))
+
+    # done with 50 * 2 transactions, transaction identifiers are half used, but no problem
+    if [[ $trans -ge 50 ]]; then
+        break;
+    fi
 
 done
 
@@ -256,8 +279,8 @@ xadmin recoverlocal 2>/dev/null
 CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 
 echo "Got txns: $CNT"
-if [[ "X$CNT" != "X100" ]]; then
-    echo "Expecting X100, got X$CNT"
+if [[ "X$CNT" != "X50" ]]; then
+    echo "Expecting X50, got X$CNT"
     go_out 9
 fi
 
@@ -269,13 +292,25 @@ exbenchcl -n1 -P -t1000 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sTEST1 -E -R200 || 
 echo "Move to prepared..."
 # get the transaction names (so that we do not have to generate ones...)
 # get the base names of the transactions, with out the number
+trans=0
 grep 'Writing command fil' *dom2*.log | cut -d '[' -f2 | cut -d ']' -f1 | cut -d '/' -f 4 | cut -d '-' -f 1 | while read -r line ; do
+
+    # seq 1
     MSG_FILE=`ls -1 QSPACE2/committed | tail -1`
     echo "Injecting transaction: [mv QSPACE2/committed/$MSG_FILE QSPACE2/prepared/${line}-001]"
+    mv QSPACE2/committed/$MSG_FILE QSPACE2/prepared/${line}-001 || go_out 4
 
-    # make file to appear twice... (append 1)
-    cp QSPACE2/committed/$MSG_FILE QSPACE2/prepared/${line}-001 || go_out 11
-    mv QSPACE2/committed/$MSG_FILE QSPACE2/prepared/${line}-002 || go_out 12
+    # seq 2
+    MSG_FILE=`ls -1 QSPACE2/committed | tail -1`
+    echo "Injecting transaction: [mv QSPACE2/committed/$MSG_FILE QSPACE2/prepared/${line}-002]"
+    mv QSPACE2/committed/$MSG_FILE QSPACE2/prepared/${line}-002 || go_out 5
+
+    trans=$((trans+1))
+
+    # done with 200 * 2 transactions, transaction identifiers are half used, but no problem
+    if [[ $trans -ge 100 ]]; then
+        break;
+    fi
 
 done
 
@@ -287,8 +322,8 @@ xadmin recoverlocal 2>/dev/null
 CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 
 echo "Got txns: $CNT"
-if [[ "X$CNT" != "X300" ]]; then
-    echo "Expecting X300, got X$CNT"
+if [[ "X$CNT" != "X150" ]]; then
+    echo "Expecting X150, got X$CNT"
     go_out 13
 fi
 
@@ -298,7 +333,7 @@ set_dom1;
 xadmin start -i 8888 || go_out 14
 
 echo "Std queue test.... (shall complete OK)"
-exbenchcl -n2 -P -t60 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sTEST2 || go_out 15
+exbenchcl -n2 -P -t20 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sTEST2 || go_out 15
 
 # after the 60 sec, the tmrecoversv at 8888 must have completed all rollbacks...
 
