@@ -191,6 +191,9 @@ grep 'Writing command fil' *.log | cut -d '[' -f2 | cut -d ']' -f1 | cut -d '/' 
 
 done
 
+# re-read the messages
+xadmin sreload tmqueue
+
 # test remove recover...
 set_dom2;
 
@@ -245,6 +248,8 @@ grep 'Writing command fil' *dom1*.log | cut -d '[' -f2 | cut -d ']' -f1 | cut -d
 
 done
 
+# re-read the messages...
+xadmin sreload tmqueue
 
 echo "Checking..."
 xadmin recoverlocal 2>/dev/null
@@ -273,6 +278,9 @@ grep 'Writing command fil' *dom2*.log | cut -d '[' -f2 | cut -d ']' -f1 | cut -d
     mv QSPACE2/committed/$MSG_FILE QSPACE2/prepared/${line}-002 || go_out 12
 
 done
+
+# re-read the messages...
+xadmin sreload tmqueue
 
 echo "Checking..."
 xadmin recoverlocal 2>/dev/null
