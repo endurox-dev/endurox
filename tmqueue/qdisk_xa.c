@@ -2361,7 +2361,9 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                             filename);
                     userlog("Invalid file name [%s] missing dash!", 
                             filename);
-                    EXFAIL_OUT(ret);
+                    NDRX_FREE((char *)p_block);
+                    p_block=NULL;
+                    DIRENT_CONTINUE;
                 }
                 
                 *p=EXEOS;
@@ -2370,13 +2372,14 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                 seqno = atoi(p);
                 
                 /* get or create a transaction! */
-                
                 p_tl = tmq_log_start_or_get(tmxid);
                 
                 if (NULL==p_tl)
                 {
                     NDRX_LOG(log_error, "Failed to get transaction object for [%s] seqno %d",
                             tmxid, seqno);
+                    NDRX_FREE((char *)p_block);
+                    p_block=NULL;
                     EXFAIL_OUT(ret);
                 }
                 
@@ -2403,6 +2406,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                     NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
                        filename, strerror(err));
 
+                    NDRX_FREE((char *)p_block);
+                    p_block=NULL;
                     /* if we get the error, that file does not exist,
                      * then possibly file belongs to other tmq.
                      * so really no error
