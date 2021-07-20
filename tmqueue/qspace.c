@@ -967,25 +967,9 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
            
     if (NULL!=tmq_get_msg_by_msgid_str(msgid_str))
     {
-        if (is_recovery)
-        {
-            /* free up the msg as we terminate here with out error... */
-            if (mmsg!=NULL)
-            {
-                NDRX_FREE(mmsg);
-                mmsg=NULL;
-            }
-                   
-            NDRX_LOG(log_warn, "Message with msgid [%s] already "
-                    "exists (recovery recheck - ignore)", msgid_str);
-            goto out;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Message with msgid [%s] already exists!", msgid_str);
-            userlog("Message with msgid [%s] already exists!", msgid_str);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_LOG(log_error, "Message with msgid [%s] already exists!", msgid_str);
+        userlog("Message with msgid [%s] already exists!", msgid_str);
+        EXFAIL_OUT(ret);
     }
     
     /* TODO: shouldn't this follow after initial check? */
