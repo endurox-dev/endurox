@@ -30,6 +30,14 @@ This is Enduro/X *tmqueue(8)* XA driver loader and actual disk based message
 queue driver. The actual logic is implemented in *libndrxxaqdisk* library. All
 following text describes the work logic of *libndrxxaqdisk*.
 
+The Open string specifies the the data directory in *datadir* parameter,
+where the transaction and message data is kept. *WARNING:* the data directory
+cannot be shared between different queue spaces, as that can cause data corruption
+between queue spaces. The queue space name is specified in *qspace* parameter.
+
+The Open String *NDRX_XA_OPEN_STR* data is separated by either "," or space.
+the data for the keys may be put in single or double quotes.
+
 The XA switch provided *libndrxxaqdisk* is used by *tmqueue(8)* and *tmsrv(8)*
 processes. XA operations are processed in following way:
 

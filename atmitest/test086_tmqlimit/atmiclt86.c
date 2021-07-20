@@ -1,5 +1,8 @@
 /**
  * @brief TMQ test client /limits
+ *  TODO: add test case for: tmq session timeout 
+ *   1. no commit in time => TPEABORT.
+ *   2. forward tpenqueue() (ERRORQ not defined). Define after a while, msg shall be put in errorq
  *
  * @file atmiclt86.c
  */
@@ -217,7 +220,7 @@ exprivate int basic_tmqrestart(int maxmsg)
         EXFAIL_OUT(ret);
     }
     
-    /* also.. here all message shall be locked */
+    /* no messages available OK */
     for (i=0; i<1; i++)
     {
         long len=0;
@@ -225,7 +228,6 @@ exprivate int basic_tmqrestart(int maxmsg)
         buf = tpalloc("CARRAY", "", 100);
         memset(&qc, 0, sizeof(qc));
 
-        /* This shall be updated so that we do not need to use TPNOABORT  */
         if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
         {
             NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, even already in progress!");
@@ -235,14 +237,20 @@ exprivate int basic_tmqrestart(int maxmsg)
         tpfree(buf);
     }
     
-    if (EXSUCCEED!=tpcommit(0))
+    if (EXSUCCEED==tpcommit(0))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to commit");
+        NDRX_LOG(log_error, "TESTERROR: commit must fail, as tmq does not know the tran");
+        EXFAIL_OUT(ret);
+    }
+
+    if (TPEABORT!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: expected %d got %d", TPEABORT, tperrno);
         EXFAIL_OUT(ret);
     }
     
     /* check that number of messages are available... */
-    NDRX_LOG(log_error, "About to dequeue %d messages", maxmsg);
+    NDRX_LOG(log_error, "Try to dequeue messages after tran restart...");
     
     if (EXSUCCEED!=tpbegin(9999, 0))
     {
@@ -250,38 +258,7 @@ exprivate int basic_tmqrestart(int maxmsg)
         EXFAIL_OUT(ret);
     }
     
-    /* all messages must be available */
-    for (i=0; i<maxmsg; i++)
-    {
-        long len=0;
-        char *buf;
-        buf = tpalloc("CARRAY", "", 100);
-        memset(&qc, 0, sizeof(qc));
-
-        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
-        {
-            NDRX_LOG(log_error, "TESTERROR: TEST1 failed dequeue!");
-            EXFAIL_OUT(ret);
-        }
-        
-        tpfree(buf);
-    }
-    
-    /* restart tmqueue.... */
-    if (EXSUCCEED!=system("xadmin stop -s tmqueue"))
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to stop tmqueue");
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=system("xadmin start -s tmqueue"))
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to start tmqueue");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* dequeue must fail as we have already dequeued the messages */
-    /* try just 1 msg. */
+    /* all messages shall be removed even after tran restart */
     for (i=0; i<1; i++)
     {
         long len=0;
@@ -289,10 +266,9 @@ exprivate int basic_tmqrestart(int maxmsg)
         buf = tpalloc("CARRAY", "", 100);
         memset(&qc, 0, sizeof(qc));
 
-        /* This shall be updated so that we do not need to use TPNOABORT  */
-        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
         {
-            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, even already in progress!");
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, but all must be aborted!");
             EXFAIL_OUT(ret);
         }
         
@@ -546,21 +522,30 @@ exprivate int basic_commit_shut(int maxmsg)
         EXFAIL_OUT(ret);
     }
     
-    /* let tmsrv to complete stuff in the background... */
-    NDRX_LOG(log_debug, "Waiting for message completion...");
-    sleep(30);
-    
-    /* all messages must be available */
-    for (i=0; i<maxmsg; i++)
+    /* no messages shall be available, refactored after initial design. */
+    for (i=0; i<1; i++)
     {
         long len=0;
         char *buf;
         buf = tpalloc("CARRAY", "", 100);
         memset(&qc, 0, sizeof(qc));
 
-        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
         {
-            NDRX_LOG(log_error, "TESTERROR: TEST1 failed dequeue!");
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeue OK, must fail!");
+            EXFAIL_OUT(ret);
+        }
+
+        /* check error no msg */
+        if (tperrno!=TPEDIAGNOSTIC)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d err!", TPEDIAGNOSTIC, tperrno);
+            EXFAIL_OUT(ret);
+        }
+
+        if (qc.diagnostic!=QMENOMSG)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d err (diag)!", QMENOMSG, qc.diagnostic);
             EXFAIL_OUT(ret);
         }
         

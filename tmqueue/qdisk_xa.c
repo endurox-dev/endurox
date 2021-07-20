@@ -2405,17 +2405,10 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                     err = errno;
                     NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
                        filename, strerror(err));
-
+                    userlog("Failed to open for read [%s]: %s", 
+                       filename, strerror(err));
                     NDRX_FREE((char *)p_block);
                     p_block=NULL;
-                    /* if we get the error, that file does not exist,
-                     * then possibly file belongs to other tmq.
-                     * so really no error
-                     */
-                    if (ENOENT==err)
-                    {
-                        DIRENT_CONTINUE;
-                    }
 
                     EXFAIL_OUT(ret);
                 }
@@ -2426,9 +2419,9 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                 if (EXFAIL==(read=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
                         filename, "tmq_storage_get_blocks", &err, &tmq_err)))
                 {
-                    NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - not loading", 
+                    NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
                        filename, sizeof(*p_block), tmq_err, (err==0?"EOF":strerror(err)) );
-                    userlog("ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - not loading", 
+                    userlog("ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
                        filename, sizeof(*p_block), tmq_err, (err==0?"EOF":strerror(err)) );
 
                     /* skip & continue with next */
@@ -2438,10 +2431,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                     NDRX_FREE((char *)p_block);
                     p_block = NULL;
 
-                    DIRENT_CONTINUE;
+                    EXFAIL_OUT(ret);
                 }
-
-                /* TODO: Check for file age / validity -> consult with tmsrv? */
 
                 /* Late filter 
                  * Not sure what will happen if file will be processed/removed
@@ -2495,10 +2486,10 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                                 p_block->msg.msg+bytes_extra, 
                                 bytes_to_read, filename, "tmq_storage_get_blocks 2", &err, &tmq_err))
                         {
-                            NDRX_LOG(log_error, "ERROR! Failed to read [%s] %d bytes: %s - not loading", 
+                            NDRX_LOG(log_error, "ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
                                filename, bytes_to_read, strerror(err));
 
-                            userlog("ERROR! Failed to read [%s] %d bytes: %s - not loading", 
+                            userlog("ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
                                     filename, bytes_to_read, strerror(err));
                                             /* skip & continue with next */
                             NDRX_FCLOSE(f);
@@ -2506,7 +2497,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                             NDRX_FREE((char *)p_block);
                             p_block = NULL;
 
-                            DIRENT_CONTINUE;
+                            EXFAIL_OUT(ret);
                         }
                     }
                     else
