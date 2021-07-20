@@ -71,7 +71,7 @@ function set_dom1 {
 
 # XA config, mandatory for TMQ:
     export NDRX_XA_RES_ID=1
-    export NDRX_XA_OPEN_STR="./QSPACE1"
+    export NDRX_XA_OPEN_STR="datadir=./QSPACE1,qspace=MYSPACE"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 # Used from parent
     export NDRX_XA_DRIVERLIB=$NDRX_XA_DRIVERLIB_FILENAME
@@ -97,7 +97,7 @@ function set_dom2 {
 
 # XA config, mandatory for TMQ:
     export NDRX_XA_RES_ID=2
-    export NDRX_XA_OPEN_STR="./QSPACE2"
+    export NDRX_XA_OPEN_STR="datadir=./QSPACE2,qspace=MYSPACE"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 # Used from parent
     export NDRX_XA_DRIVERLIB=$NDRX_XA_DRIVERLIB_FILENAME
