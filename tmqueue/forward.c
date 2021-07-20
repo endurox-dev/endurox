@@ -612,6 +612,7 @@ out:
 expublic int forward_loop(void)
 {
     int ret = EXSUCCEED;
+    int normal_sleep;
     tmq_msg_t * msg;
     /*
      * We need to get the list of queues to monitor.
@@ -625,16 +626,26 @@ expublic int forward_loop(void)
         /* wait for one slot to become free.. */
         ndrx_thpool_wait_one(G_tmqueue_cfg.fwdthpool);
         
-        /* 2. get the message from Q */
-        msg = get_next_msg();
-        
-        /* 3. run off the thread */
-        if (NULL!=msg && !M_force_sleep)
+        normal_sleep=EXFALSE;
+        if (!M_force_sleep)
         {
-            /* Submit the job to thread */
-            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
+            /* 2. get the message from Q */
+            msg = get_next_msg();
+        
+            /* 3. run off the thread */
+            if (NULL!=msg)
+            {
+                /* Submit the job to thread */
+                ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
+            }
+            else
+            {
+                normal_sleep=EXTRUE;
+            }
         }
-        else
+
+        /* go sleep if no msgs, or forced */
+        if (normal_sleep || M_force_sleep)
         {
             /* sleep only when did not have a message 
              * So that if we have batch, we try to use all resources...
