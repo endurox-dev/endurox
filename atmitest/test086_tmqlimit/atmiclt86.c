@@ -65,6 +65,7 @@ exprivate int basic_badmsg(int maxmsg);
 exprivate int basic_commit_crash(int maxmsg);
 exprivate int basic_deqwriteerr(int maxmsg);
 exprivate int basic_enqdeq(int maxmsg);
+exprivate int basic_rmrollback(int maxmsg);
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
 extern int basic_crashloop(void);
@@ -85,7 +86,11 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    if (0==strcmp(argv[1], "tmqrestart"))
+    if (0==strcmp(argv[1], "rmrollback"))
+    {
+        return basic_rmrollback(1200);
+    }
+    else if (0==strcmp(argv[1], "tmqrestart"))
     {
         return basic_tmqrestart(1200);
     }
@@ -148,6 +153,119 @@ out:
     tpclose();
 
     return ret;   
+}
+
+
+/**
+ * TMQ resource manager performs rollback due to timeout
+ * @param maxmsg max messages to be ok
+ */
+exprivate int basic_rmrollback(int maxmsg)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    int i;
+    
+    NDRX_LOG(log_error, "case tmqrestart");
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Initial test... */
+    for (i=0; i<maxmsg; i++)
+    {
+        char *testbuf_ref = tpalloc("CARRAY", "", 10);
+        long len=10;
+
+        testbuf_ref[0]=0;
+        testbuf_ref[1]=1;
+        testbuf_ref[2]=2;
+        testbuf_ref[3]=3;
+        testbuf_ref[4]=4;
+        testbuf_ref[5]=5;
+        testbuf_ref[6]=6;
+        testbuf_ref[7]=7;
+        testbuf_ref[8]=8;
+        testbuf_ref[9]=9;
+
+        /* alloc output buffer */
+        if (NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+                len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(testbuf_ref);
+    }
+    
+    /* sleep 45, as tout is set to 30 see -T */
+    sleep(45);
+    
+    
+    if (EXSUCCEED==tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: commit must fail, as tmq does not know the tran");
+        EXFAIL_OUT(ret);
+    }
+
+    if (TPEABORT!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: expected %d got %d", TPEABORT, tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* no messages are available */
+    for (i=0; i<1; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, must be none (all aborted)!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (TPEDIAGNOSTIC!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d", TPEDIAGNOSTIC, tperrno);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (QMENOMSG!=qc.diagnostic)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %ld", QMENOMSG, qc.diagnostic);
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+    }
+    
+out:
+    
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
 }
 
 /**
