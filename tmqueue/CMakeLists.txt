@@ -72,7 +72,7 @@ add_library (ndrxxaqdiskd SHARED
                 qdisk_xa_common.c
             )
 ############################# Executables ######################################
-add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c qtran.c
+add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
                         tmqsrvmain.c)
 
 SET (TMQUEUE_ADD_DEP "")
