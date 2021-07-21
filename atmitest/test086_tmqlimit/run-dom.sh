@@ -161,11 +161,13 @@ rm ULOG*
 
 
 ################################################################################
-# Test resource manager rollback... / tout
+# Forward crash / commit fails, thus timeout rollback and when new tmsrv
+# is available, messages shall go normally to errorq and all msgs shall be
+# downloable
 ################################################################################
 
-echo "Testing rmrollback"
-(./atmiclt86 rmrollback 2>&1) >> ./atmiclt-dom1.log
+echo "Testing fwdcrash"
+(./atmiclt86 fwdcrash 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 if [[ "X$RET" != "X0" ]]; then
     xadmin psc
