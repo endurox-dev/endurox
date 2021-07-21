@@ -55,8 +55,8 @@
         <!-- Queueu configuration -->
         <envs group="QUEUE">
             <env name="NDRX_XA_RES_ID">2</env>
-            <env name="NDRX_XA_OPEN_STR">./QSPACE1</env>
-            <env name="NDRX_XA_CLOSE_STR">./QSPACE1</env>
+            <env name="NDRX_XA_OPEN_STR">datadir=./QSPACE1,qspace=MYSPACE</env>
+            <env name="NDRX_XA_CLOSE_STR">datadir=./QSPACE1,qspace=MYSPACE</env>
             <env name="NDRX_XA_DRIVERLIB">libndrxxaqdiskd.${NDRX_LIBEXT}</env>
             <env name="NDRX_XA_RMLIB">libndrxxaqdisk.${NDRX_LIBEXT}</env>
             <env name="NDRX_XA_LAZY_INIT">0</env>
@@ -93,7 +93,7 @@
             <envs><usegroup>QUEUE</usegroup></envs>
             <min>1</min>
             <max>1</max>
-            <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -m MYSPACE -q ./q.conf -s1</sysopt>
+            <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1</sysopt>
         </server>
         
     </servers>
