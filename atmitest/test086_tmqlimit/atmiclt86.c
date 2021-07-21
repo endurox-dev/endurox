@@ -66,6 +66,7 @@ exprivate int basic_commit_crash(int maxmsg);
 exprivate int basic_deqwriteerr(int maxmsg);
 exprivate int basic_enqdeq(int maxmsg);
 exprivate int basic_rmrollback(int maxmsg);
+exprivate int basic_fwdcrash(int maxmsg);
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
 extern int basic_crashloop(void);
@@ -93,6 +94,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "tmqrestart"))
     {
         return basic_tmqrestart(1200);
+    }
+    else if (0==strcmp(argv[1], "fwdcrash"))
+    {
+        return basic_fwdcrash(1200);
     }
     else if (0==strcmp(argv[1], "tmsrvrestart"))
     {
@@ -1565,5 +1570,182 @@ out:
     return ret;
 }
 
+
+/**
+ * Transaction forward crashes. Also ensure that tmsrv instance does not boot
+ * back. But we start normal tmsrv instances, to ensure that errorq op can
+ * be completed.
+ * @param maxmsg max messages to be ok
+ */
+exprivate int basic_fwdcrash(int maxmsg)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    int i;
+    
+    NDRX_LOG(log_error, "case basic_commit_crash");
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Initial test... */
+    for (i=0; i<maxmsg; i++)
+    {
+        char *testbuf_ref = tpalloc("CARRAY", "", 10);
+        long len=10;
+
+        testbuf_ref[0]=0;
+        testbuf_ref[1]=1;
+        testbuf_ref[2]=2;
+        testbuf_ref[3]=3;
+        testbuf_ref[4]=4;
+        testbuf_ref[5]=5;
+        testbuf_ref[6]=6;
+        testbuf_ref[7]=7;
+        testbuf_ref[8]=8;
+        testbuf_ref[9]=9;
+
+        /* alloc output buffer */
+        if (NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "CRASHQ", &qc, testbuf_ref, 
+                len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(testbuf_ref);
+    }
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: commit failed: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* prepare crash setup */
+    if (EXSUCCEED!=system("xadmin stop -i 50"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to stop 50 inst");
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=system("xadmin start -i 60"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to start 60 inst");
+        EXFAIL_OUT(ret);
+    }
+
+    /* prepare will crash the tmsrv. thus no msgs will stay prepard & 
+     * and tout dmn will rollback
+     */
+    if (EXSUCCEED!=system("xadmin lcf tcrash -A 40 -a"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to enable commit crash");
+        EXFAIL_OUT(ret);
+    }
+
+    /* enable forward */
+    if (EXSUCCEED!=system("xadmin mqch -n1 -i 100 -qCRASHQ,autoq=y"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed enable forward");
+        EXFAIL_OUT(ret);
+    }
+
+    /* Let some messages to stuck...*/ 
+    sleep(15);
+
+    if (EXSUCCEED!=system("xadmin lcf tcrash -A 0 -a"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to disable commit crash");
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=system("xadmin stop -i 60"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to stop 60 inst");
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=system("xadmin start -i 50"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to start 50 inst");
+        EXFAIL_OUT(ret);
+    }
+
+    /* let messages to unlock & forward to CRASHERR
+     * 90 - is tout.. thus have some more time for stucked msgs...
+     */
+    sleep(120);
+
+    /* all messages must be available */
+    for (i=0; i<maxmsg; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "CRASHERR", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: CRASHERR failed dequeue!");
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+    }
+
+    /* no messages shall be available */
+    for (i=0; i<1; i++)
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "CRASHERR", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: CRASHERR must not dequeue!");
+            EXFAIL_OUT(ret);
+        }
+
+        /* check error no msg */
+        if (tperrno!=TPEDIAGNOSTIC)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d err!", TPEDIAGNOSTIC, tperrno);
+            EXFAIL_OUT(ret);
+        }
+
+        if (qc.diagnostic!=QMENOMSG)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d err (diag)!", QMENOMSG, qc.diagnostic);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(buf);
+    }
+
+out:
+    
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
