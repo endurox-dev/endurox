@@ -316,7 +316,7 @@ exprivate void tx_tout_check_th(void *ptr)
     {
         NDRX_LOG(log_debug, "Checking [%s]...", el->p_tl.tmxid);
         if ((tspent = ndrx_stopwatch_get_delta_sec(&el->p_tl.ttimer)) > 
-                G_tmqueue_cfg.dflt_timeout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
+                G_tmqueue_cfg.ses_timeout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
         {
             
             /* get the finally the entry and process... */
@@ -399,15 +399,15 @@ exprivate int tm_tout_check(void)
 {
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
     
-    
-    if (NULL==M_shutdown_ind)
+    /* Check transaction timeouts only if session timeout is not disabled */
+    if (NULL==M_shutdown_ind && G_tmqueue_cfg.ses_timeout > 0)
     {
         /* no shutdown requested... yet... */
         ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
     }
     else if (M_shutdown_ok)
     {
-        ndrx_sv_do_shutdown("Application shutdown sequence", M_shutdown_ind);
+        ndrx_sv_do_shutdown("Async shutdown", M_shutdown_ind);
     }
     
     
@@ -442,21 +442,6 @@ void TMQUEUE (TPSVCINFO *p_svc)
         userlog("Zero buffer received!");
         EXFAIL_OUT(ret);
     }
-    
-    /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
-#if 0
-        - Why? mvitolin 25/01/2017
-    thread_data->buffer =  tpalloc(btype, NULL, size);
-    
-    if (NULL==thread_data->buffer)
-    {
-        NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
-        EXFAIL_OUT(ret);
-    }
-    
-    /* copy off the data */
-    memcpy(thread_data->buffer, p_svc->data, size);
-#endif
 
     thread_data->buffer = p_svc->data; /*the buffer is not made free by thread */
     thread_data->cd = p_svc->cd;
@@ -508,32 +493,25 @@ out:
 
 
 /**
- * Just justdown the forwarder and forward threads
- * the main/notif threads will be terminated at the end.
+ * Full shutdown, as forward does something...
  * @param ptr data, not used
  */
 exprivate void shutdowncb_th(void *ptr)
 {
     int i;
     
-    NDRX_LOG(log_info, "Shutdown sequence started...");
-    G_forward_req_shutdown = EXTRUE;
-    
-    if (M_init_ok)
+    NDRX_LOG(log_info, "Async shutdown started...");
+        
+    /* Wait to complete */
+    pthread_join(G_forward_thread, NULL);
+
+    for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
     {
-        forward_shutdown_wake();
-        
-        /* Wait to complete */
-        pthread_join(G_forward_thread, NULL);
-        
-        for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
-        {
-            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
-        }
-        
-        ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
-        ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
+        ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
     }
+
+    ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
+    ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
     
     M_shutdown_ok=EXTRUE;
 }
@@ -547,8 +525,50 @@ exprivate void shutdowncb_th(void *ptr)
 exprivate int shutdowncb(int *shutdown_req)
 {
     /* submit shutdown job */
+    int freethreads=EXFAIL, i;
     M_shutdown_ind = shutdown_req;
-    ndrx_thpool_add_work(G_tmqueue_cfg.shutdownseq, (void*)shutdowncb_th, NULL);
+    
+    if (M_init_ok)
+    {
+        /* request the shutdown */
+        G_forward_req_shutdown = EXTRUE;
+        forward_shutdown_wake();
+        
+        /* check the ack 
+         * Sleep 0.2 sec..., let forward to wake up... & finish with 10ms
+         * interval...
+         */
+        for (i=0; i<20 && !ndrx_G_forward_req_shutdown_ack; i++)
+        {
+            usleep(10000);
+        }
+        
+        if (ndrx_G_forward_req_shutdown_ack &&
+                (G_tmqueue_cfg.fwdpoolsize==(freethreads=ndrx_thpool_nr_not_working(G_tmqueue_cfg.fwdthpool)))
+                )
+        {   
+            pthread_join(G_forward_thread, NULL);
+            
+            for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
+            {
+                ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
+            }
+         
+            /* terminate now */
+            ndrx_sv_do_shutdown("Quick shutdown", shutdown_req);
+            
+        }
+        else
+        {
+            /* async shutdown procedure */
+            NDRX_LOG(log_warn, "Async shutdown path (ack=%d free_fwd_threads=%d)",
+                    ndrx_G_forward_req_shutdown_ack, freethreads);
+            
+            ndrx_thpool_add_work(G_tmqueue_cfg.shutdownseq, (void*)shutdowncb_th, NULL);
+            
+        }
+    }
+    
     return EXSUCCEED;
 }
 
@@ -564,8 +584,14 @@ int tpsvrinit(int argc, char **argv)
     
     memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
+    /* no setting applied.
+     * 0 means -> no session timeout.
+     * which in case of tmqueue forward enqueue failures will hang the transaction
+     */
+    G_tmqueue_cfg.ses_timeout=EXFAIL;
+    
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:")) != -1)
     {
         if (optarg)
         {
@@ -610,6 +636,9 @@ int tpsvrinit(int argc, char **argv)
                 break;
             case 't': 
                 G_tmqueue_cfg.dflt_timeout = atol(optarg);
+                break;
+            case 'T': 
+                G_tmqueue_cfg.ses_timeout  = atol(optarg);
                 break;
             case 'c': 
                 /* Time for time-out checking... */
@@ -656,6 +685,11 @@ int tpsvrinit(int argc, char **argv)
         G_tmqueue_cfg.dflt_timeout = TXTOUT_DFLT;
     }
     
+    if (0>G_tmqueue_cfg.ses_timeout)
+    {
+        G_tmqueue_cfg.ses_timeout = SES_TOUT_DFLT;
+    }
+    
     if (0>=G_tmqueue_cfg.tout_check_time)
     {
         G_tmqueue_cfg.tout_check_time = TOUT_CHECK_TIME;
@@ -675,6 +709,9 @@ int tpsvrinit(int argc, char **argv)
     
     NDRX_LOG(log_info, "Local transaction tout set to: [%ld]", 
             G_tmqueue_cfg.dflt_timeout );
+    
+    NDRX_LOG(log_info, "Session transaction tout set to: [%ld]", 
+            G_tmqueue_cfg.ses_timeout);
     
     NDRX_LOG(log_info, "Periodic timeout-check time: [%d]", 
             G_tmqueue_cfg.tout_check_time);

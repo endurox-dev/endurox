@@ -64,7 +64,7 @@
         <server name="tmqueue">
             <max>1</max>
             <srvid>100</srvid>
-            <sysopt>-e ${TESTDIR}/tmqueue-dom2.log -r -- -q ./q.conf -s1 </sysopt>
+            <sysopt>-e ${TESTDIR}/tmqueue-dom2.log -r -- -q ./q.conf -s1 -T30</sysopt>
         </server>
 
         <server name="tpbridge">

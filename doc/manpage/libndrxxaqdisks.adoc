@@ -71,6 +71,10 @@ updated header information to replace in message file.
 
 - Delete message (after dequeue).
 
+- Dummy message (used for marking prepared read only transactions, and are associated
+at startup with any active transaction, to perform rollbacks with out message file
+content read).
+
 Each command block file refers to one message only, thus sequence numbers are
 used for keeping them linked to one global. Thought this architecture partially 
 breaks the Atomicity property of ACID, as committed or rollbacked messages
