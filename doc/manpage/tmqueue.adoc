@@ -130,8 +130,10 @@ internally when global transactions are not used. Default is *30*.
 Session timeout for active transactions in seconds. If transaction is not completed in
 this given time frame, the transaction internally is rolled back. After expiry any
 any further enqueue/dequeue in global transaction will return  *TPETRAN* error.
-Commit of such global transaction would be terminated with *TPEABORT*. Default
-value is *180*.
+Commit of such global transaction would be terminated with *TPEABORT*. Value *0*
+disables transaction sessions checks. It is strongly discouraged to use *0*, as
+this in case of system error may lock resources until the tmqueue server 
+process is restarted. Default value is *180*.
 
 [*-h* 'HOUSEKEEP_TIMEOUT']::
 Number of seconds used to determine should the corrupted file existing in 'active'

@@ -69,7 +69,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic pthread_t G_forward_thread;
-expublic int G_forward_req_shutdown = EXFALSE;    /* Is shutdown request? */
+expublic int volatile G_forward_req_shutdown = EXFALSE;          /**< Is shutdown request? */
+expublic int volatile ndrx_G_forward_req_shutdown_ack = EXFALSE; /**< Is shutdown acked?   */
 
 
 exprivate MUTEX_LOCKDECL(M_wait_mutex);
@@ -120,7 +121,13 @@ exprivate void thread_sleep(int sleep_sec)
     wait_time.tv_nsec = now.tv_usec*1000;
 
     MUTEX_LOCK_V(M_wait_mutex);
-    rt = pthread_cond_timedwait(&M_wait_cond, &M_wait_mutex, &wait_time);
+    
+    /* No wait if request was made here... */
+    if (!G_forward_req_shutdown)
+    {
+        rt = pthread_cond_timedwait(&M_wait_cond, &M_wait_mutex, &wait_time);
+    }
+    
     MUTEX_UNLOCK_V(M_wait_mutex);
 }
 
@@ -653,13 +660,15 @@ expublic int forward_loop(void)
             NDRX_LOG(log_debug, "background - sleep %d forced=%d", 
                     G_tmqueue_cfg.scan_time, M_force_sleep);
             
-            if (!G_forward_req_shutdown)
-                thread_sleep(G_tmqueue_cfg.scan_time);
+            thread_sleep(G_tmqueue_cfg.scan_time);
             
             /* in case of error, forced sleep */
             M_force_sleep=EXFALSE;
         }
     }
+    
+    /* ask the shutodwn */
+    ndrx_G_forward_req_shutdown_ack = EXTRUE;
     
     /* remove any allocated memory... */
     fwd_q_list_rm();

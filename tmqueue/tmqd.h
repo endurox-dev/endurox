@@ -49,12 +49,15 @@ extern "C" {
     
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_forward_thread;
-extern int G_forward_req_shutdown;    /* Is shutdown request? */
+extern int volatile G_forward_req_shutdown;          /**< Is shutdown request? */
+extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   */
+
 /*---------------------------Macros-------------------------------------*/
 #define SCAN_TIME_DFLT          10  /**< Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /**< Try count for transaction completion */
 #define THREADPOOL_DFLT         10  /**< Default number of threads spawned   */
 #define TXTOUT_DFLT             30  /**< Default XA transaction timeout      */
+#define SES_TOUT_DFLT           180  /**< Default XA transaction timeout      */
 
 #define TMQ_MODE_FIFO           'F' /**< fifo q mode                        */
 #define TMQ_MODE_LIFO           'L' /**< lifo q mode                        */
@@ -81,10 +84,14 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
  */
 typedef struct
 {
-    long dflt_timeout;  /**< how long monitored transaction can be open     */
-    int scan_time;      /**< Number of seconds retries                      */
+    long dflt_timeout;  /**< service call transaction timeout (forwarder)    */
     
-    int tout_check_time; /**< seconds used for detecting transaction timeout   */
+    long ses_timeout;  /**< global session timeout, 
+                        * how long uncompleted transaction may hang          */
+    
+    int scan_time;      /**< Number of seconds retries                       */
+    
+    int tout_check_time; /**< seconds used for detecting transaction timeout */
     
     char qconfig[PATH_MAX+1]; /**< Queue config file                        */
     int threadpoolsize;       /**< thread pool size                         */
