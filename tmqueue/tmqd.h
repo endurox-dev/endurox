@@ -42,7 +42,6 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
 #include <atmi.h>
-#include <utlist.h>
 #include <exhash.h>
 #include <exthpool.h>
 #include "tmqueue.h"

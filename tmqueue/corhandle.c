@@ -36,12 +36,12 @@
 #include <string.h>
 #include <errno.h>
 #include <regex.h>
-#include <utlist.h>
 #include <stdarg.h>
 
 #include <ndebug.h>
 #include "qcommon.h"
 #include "tmqd.h"
+#include <utlist2.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -55,6 +55,70 @@
 - remove from queue corash/queue (incl free-up of hash)
 - dequeue from queue corhash  LIFO/FIFO
 */
+
+/**
+ * Find the correlator entry in the hash
+ * @param qhash queue entry
+ * @param corid_str correlator id 
+ * @return ptr or NULL (if not found)
+ */
+expublic tmq_cormsg_t * tmq_cor_find(tmq_qhash_t *qhash, char *corid_str)
+{
+    return NULL;
+}
+
+/**
+ * Add correlator
+ * @param qhash queue entry
+ * @param corid_str identifier to add
+ * @return ptr or NULL (if failed to add)
+ */
+expublic tmq_cormsg_t * tmq_cor_add(tmq_qhash_t *qhash, char *corid_str)
+{
+    return NULL;
+}
+
+/**
+ * Remove message from correlator hash / linked list
+ * @param qhash queue entry
+ * @param mmsg remove from CDL, remove from hash, if CDL is free, remove HASH
+ *  entry
+ */
+expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+{
+    return;
+}
+
+/**
+ * Add message to corelator hash / linked list
+ * @param qconf queue configuration
+ * @param qhash queue entry (holds the ptr to cor hash)
+ * @param mmsg message to add
+ * @return Qerror code 
+ */
+expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+{
+    int ret = EXSUCCEED;
+    
+    tmq_cormsg_t * cormsg =  tmq_cor_find(qhash, mmsg->corid_str);
+    
+    if (NULL==cormsg)
+    {
+        cormsg=tmq_cor_add(qhash, mmsg->corid_str);
+    }
+    
+    if (NULL==cormsg)
+    {
+        ret = QMEOS;
+        goto out;
+    }
+    
+    /* TODO: add to CDL */
+    
+out:
+    return ret;
+    
+}
 
 
 /* vim: set ts=4 sw=4 et smartindent: */
