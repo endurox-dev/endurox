@@ -121,6 +121,9 @@ struct thread_server
 /* note we must malloc this struct too. */
 typedef struct thread_server thread_server_t;
 
+/** correlator message queue hash */
+typedef struct tmq_cormsg tmq_cormsg_t;
+
 /**
  * Memory based message.
  */
@@ -128,16 +131,35 @@ typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
     char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
-    char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator            */
-    /** We should have hash handler of message hash */
-    EX_hash_handle hh; /**< makes this structure hashable (for msgid)        */
-    EX_hash_handle h2; /**< makes this structure hashable (for corid)        */
-    /** We should also have a linked list handler   */
+    char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    /** We should have hash handler of message hash                           */
+    EX_hash_handle hh; /**< makes this structure hashable (for msgid)         */
+    EX_hash_handle h2; /**< makes this structure hashable (for corid)         */
+
+    /** We should also have a linked list handler                             */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
     
+    /** Our position in corq, if any, next. Use utlist2.h in different object */
+    tmq_memmsg_t *next2;
+    /** Our position in corq, if any, prev. Use utlist2.h in different object */
+    tmq_memmsg_t *prev2;
+    /** backlink to correlator q, so that we know where to remove             */
+    tmq_cormsg_t *corq;
+
     tmq_msg_t *msg;
 };
+
+/**
+ * Messages correlated
+ */
+struct tmq_cormsg
+{
+    char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    /** queue by correlation */
+    tmq_memmsg_t *msg;
+};
+
 
 /**
  * List of queues (for queued messages)
@@ -146,14 +168,15 @@ typedef struct tmq_qhash tmq_qhash_t;
 struct tmq_qhash
 {
     char qname[TMQNAMELEN+1];
-    long succ;      /**< Succeeded auto messages                */
-    long fail;      /**< failed auto messages                   */
+    long succ;      /**< Succeeded auto messages                 */
+    long fail;      /**< failed auto messages                    */
     
-    long numenq;    /**< Enqueued messages (even locked)        */
+    long numenq;    /**< Enqueued messages (even locked)         */
     long numdeq;    /**< Dequeued messages (removed, including aborts)     */
     
     EX_hash_handle hh; /**< makes this structure hashable        */
-    tmq_memmsg_t *q;
+    tmq_memmsg_t *q;    /**< messages queued                     */
+    tmq_cormsg_t *corq; /**< queue by correlator                 */
 };
 
 /**
