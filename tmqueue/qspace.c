@@ -976,7 +976,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
         tmq_msgid_serialize((*msg)->qctl.corrid, corid_str);
-        NDRX_STRCPY_SAFE(mmsg->corid_str, msgid_str);
+        NDRX_STRCPY_SAFE(mmsg->corid_str, corid_str);
         NDRX_LOG(log_debug, "Adding to corid_hash [%s] of queue [%s]",
             corid_str, (*msg)->hdr.qname);
         if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
