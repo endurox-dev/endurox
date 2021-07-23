@@ -478,7 +478,7 @@ class Provision extends WizardBase {
 			if (usv1_appopt!="")
 			{
 				_appopt=@"
-			<appopt>"+usv1_cctag+@"</appopt>"
+			<appopt>"+usv1_appopt+@"</appopt>"
 			}
 			
 			ndrxconfigXmlVal=ndrxconfigXmlVal+
