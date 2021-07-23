@@ -191,7 +191,7 @@ exprivate tmq_msg_t * get_next_msg(void)
     {
         /* OK, so we peek for a message */
         if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
-                &qerr, msgbuf, sizeof(msgbuf))))
+                &qerr, msgbuf, sizeof(msgbuf), NULL)))
         {
             NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", qerr, msgbuf);
         }

@@ -1,5 +1,5 @@
 /**
- * @brief Correlation id queue handle
+ * @brief Correlation id queue handler
  *
  * @file corhandle.c
  */
@@ -50,32 +50,49 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/* TODO: 
-- add to queue corhash/queue
-- remove from queue corash/queue (incl free-up of hash)
-- dequeue from queue corhash  LIFO/FIFO
-*/
-
 /**
  * Find the correlator entry in the hash
  * @param qhash queue entry
  * @param corid_str correlator id 
  * @return ptr or NULL (if not found)
  */
-expublic tmq_cormsg_t * tmq_cor_find(tmq_qhash_t *qhash, char *corid_str)
+expublic tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corid_str)
 {
-    return NULL;
+    tmq_corhash_t *ret = NULL;
+
+    EXHASH_FIND_STR( (qhash->corhash), corid_str, ret);
+
+    return ret;
+
 }
 
 /**
- * Add correlator
+ * Add correlator to the hash
  * @param qhash queue entry
  * @param corid_str identifier to add
  * @return ptr or NULL (if failed to add)
  */
-expublic tmq_cormsg_t * tmq_cor_add(tmq_qhash_t *qhash, char *corid_str)
+expublic tmq_corhash_t * tmq_cor_add(tmq_qhash_t *qhash, char *corid_str)
 {
-    return NULL;
+    /* allocate the handle */
+    tmq_corhash_t *corhash = NDRX_FPMALLOC(sizeof(tmq_corhash_t), 0);
+
+    if (NULL==corhash)
+    {
+        NDRX_LOG(log_error, "Failed to malloc %d bytes: %s",
+            sizeof(tmq_corhash_t), strerror(errno));
+        goto out;
+    }
+
+    /* add stuff to hash: */
+    memset(corhash, 0, sizeof(tmq_corhash_t));
+    NDRX_STRCPY_SAFE(corhash->corid_str, corid_str);
+    EXHASH_ADD_STR( qhash->corhash, corid_str, corhash);
+    NDRX_LOG(log_debug, "Added corid_str [%s] %p",
+            corhash->corid_str, corhash);
+
+out:
+    return corhash;
 }
 
 /**
@@ -86,6 +103,24 @@ expublic tmq_cormsg_t * tmq_cor_add(tmq_qhash_t *qhash, char *corid_str)
  */
 expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 {
+    /* find the corhash entry, if have one remove from from hash
+     * remove msg from CDL
+     */
+    tmq_corhash_t * corhash = mmsg->corhash;
+   
+    /* remove from CDL. */
+    CDL_DELETE(corhash->corq, mmsg);
+    if (NULL==corhash->corq)
+    {
+        NDRX_LOG(log_debug, "Removing corid_str [%s] %p",
+            corhash->corid_str, corhash);
+        /* remove empty hash node */
+        EXHASH_DEL(qhash->corhash, corhash);
+        NDRX_FPFREE(corhash);
+    }
+
+    mmsg->corhash = NULL;
+
     return;
 }
 
@@ -100,20 +135,22 @@ expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memm
 {
     int ret = EXSUCCEED;
     
-    tmq_cormsg_t * cormsg =  tmq_cor_find(qhash, mmsg->corid_str);
+    tmq_corhash_t * corhash =  tmq_cor_find(qhash, mmsg->corid_str);
     
-    if (NULL==cormsg)
+    if (NULL==corhash)
     {
-        cormsg=tmq_cor_add(qhash, mmsg->corid_str);
+        corhash=tmq_cor_add(qhash, mmsg->corid_str);
     }
     
-    if (NULL==cormsg)
+    if (NULL==corhash)
     {
         ret = QMEOS;
         goto out;
     }
     
-    /* TODO: add to CDL */
+    CDL_APPEND(corhash->corq, mmsg);
+    /* add backref */
+    mmsg->corhash = corhash;
     
 out:
     return ret;
@@ -127,8 +164,26 @@ out:
  */
 expublic void tmq_cor_sort_queues(tmq_qhash_t *q)
 {
-    
+    tmq_corhash_t  *el, *elt;
+
+    EXHASH_ITER(hh, (q->corhash), el, elt)
+    {
+        /* sort the correlated message according to insert timestamp */
+        CDL_SORT(el->corq, q_msg_sort);
+    }
 }
 
+/**
+ * Get first available message from queue according to correlator
+ * in FIFO/LIFO order as by queue config
+ * @param qconf queue configuration
+ * @param qhash queue entry
+ * @param corid_str serialized correlator
+ * @return unlocked message or NULL if no msg found
+ */
+expublic tmq_memmsg_t * tmq_cor_dequeue(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, char *corid_str)
+{
+    return NULL;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
