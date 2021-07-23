@@ -120,5 +120,15 @@ out:
     
 }
 
+/**
+ * Sort the prev2/next2
+ * @param q where the corhash lives. Loop over corhash and sort
+ *  each sub-queue.
+ */
+expublic void tmq_cor_sort_queues(tmq_qhash_t *q)
+{
+    
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
