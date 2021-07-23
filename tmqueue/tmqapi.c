@@ -327,6 +327,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     int local_tx = EXFALSE;
     char qname[TMQNAMELEN+1];
     long buf_realoc_size;
+    char corid_str[TMCORRIDLEN_STR+1];
+    char *p_corid_str = NULL;
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_dequeue()");
@@ -404,40 +406,30 @@ expublic int tmq_dequeue(UBFH **pp_ub)
             EXFAIL_OUT(ret);
         }
     }
-    else if (qctl_in.flags & TPQGETBYCORRID)
+    else 
     {
-        if (NULL==(p_msg = tmq_msg_dequeue_by_corid(qctl_in.corrid, qctl_in.flags, 
-                &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
+        /* setcorid to not null*/
+        if (qctl_in.flags & TPQGETBYCORRID)
         {
-            char corid_str[TMCORRIDLEN_STR+1];
+            tmq_msgid_serialize(qctl_in.corrid, corid_str);
+            p_corid_str = corid_str;
+        }
+
+        if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE, 
+            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg), p_corid_str)))
+        {
             int lev = log_info;
             
             if (qctl_out.diagnostic!=QMENOMSG)
             {
                 lev=log_error;
             }
-            
-            tmq_corid_serialize(qctl_in.corrid, corid_str);
-            
-            NDRX_LOG(lev, "tmq_dequeue: no message found for given msgid [%s] %ld: %s", 
-                    corid_str,qctl_out.diagnostic, qctl_out.diagmsg);
+        
+            NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] corid_str [%s] %ld: %s", qname,
+                NULL!=p_corid_str?corid_str:"(null)", qctl_out.diagnostic, qctl_out.diagmsg);
+        
             EXFAIL_OUT(ret);
         }
-    }
-    else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE, 
-            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
-    {
-        int lev = log_info;
-            
-        if (qctl_out.diagnostic!=QMENOMSG)
-        {
-            lev=log_error;
-        }
-        
-        NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] %ld: %s", qname,
-                qctl_out.diagnostic, qctl_out.diagmsg);
-        
-        EXFAIL_OUT(ret);
     }
     
     /* Use the original metadata */

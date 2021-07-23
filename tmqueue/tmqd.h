@@ -121,7 +121,7 @@ struct thread_server
 typedef struct thread_server thread_server_t;
 
 /** correlator message queue hash */
-typedef struct tmq_cormsg tmq_cormsg_t;
+typedef struct tmq_cormsg tmq_corhash_t;
 
 /**
  * Memory based message.
@@ -144,7 +144,7 @@ struct tmq_memmsg
     /** Our position in corq, if any, prev. Use utlist2.h in different object */
     tmq_memmsg_t *prev2;
     /** backlink to correlator q, so that we know where to remove             */
-    tmq_cormsg_t *corq;
+    tmq_corhash_t *corhash;
 
     tmq_msg_t *msg;
 };
@@ -155,8 +155,9 @@ struct tmq_memmsg
 struct tmq_cormsg
 {
     char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
-    /** queue by correlation */
-    tmq_memmsg_t *msg;
+    /** queue by correlation, CDL, next2, prev2 */
+    tmq_memmsg_t *corq;
+    EX_hash_handle hh; /**< makes this structure hashable        */
 };
 
 
@@ -175,7 +176,7 @@ struct tmq_qhash
     
     EX_hash_handle hh; /**< makes this structure hashable        */
     tmq_memmsg_t *q;    /**< messages queued                     */
-    tmq_cormsg_t *corq; /**< queue by correlator                 */
+    tmq_corhash_t *corhash; /**< has of correlators                */
 };
 
 /**
@@ -192,7 +193,6 @@ struct tmq_qconfig
     int tries;       /**< Retry count for sending                       */
     int waitinit;    /**< How long to wait for initial sending (sec)    */
     int waitretry;   /**< How long to wait between retries (sec)        */
-    int waitretryinc;/**< Wait increment between retries (sec)          */
     int waitretrymax;/**< Max wait  (sec)                               */
     int memonly;    /**< is queue memory only                           */
     char mode;      /**< queue mode fifo/lifo                           */
@@ -255,9 +255,9 @@ extern int tmq_qconf_addupd(char *qconfstr, char *name);
 extern int tmq_dum_add(char *tmxid);
 extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
-extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, char *diagmsg, size_t diagmsgsz);
+extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
+            char *diagmsg, size_t diagmsgsz, char *corid_str);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
-extern tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
 extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
@@ -267,6 +267,11 @@ extern tmq_memmsg_t *tmq_get_msglist(char *qname);
     
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
 extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);
+extern int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2);
+extern void tmq_cor_sort_queues(tmq_qhash_t *q);
+extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corid_str);
     
 #ifdef	__cplusplus
 }

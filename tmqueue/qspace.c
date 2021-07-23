@@ -104,9 +104,6 @@
 /* Handler for MSG Hash. */
 expublic tmq_memmsg_t *G_msgid_hash = NULL;
 
-/* Handler for Correlator ID hash */
-expublic tmq_memmsg_t *G_corid_hash = NULL;
-
 /* Handler for Q hash */
 expublic tmq_qhash_t *G_qhash = NULL;
 
@@ -122,9 +119,6 @@ exprivate MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
-exprivate tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str);
-
-
 
 /**
  * Process message blocks on disk read (after cold startup)
@@ -428,15 +422,7 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     }
     else if (0==strcmp(key, TMQ_QC_WAITRETRYINC))
     {
-        int ival = atoi(value);
-        if (!ndrx_isint(value) || ival < 0)
-        {
-            NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
-                    value, key);
-            EXFAIL_OUT(ret);
-        }
-        
-        qconf->waitretryinc = ival;
+        NDRX_LOG(log_warn, "Ignoring [%s]", TMQ_QC_WAITRETRYINC);
     }
     else if (0==strcmp(key, TMQ_QC_WAITRETRYMAX))
     {
@@ -560,14 +546,13 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, si
     }
     
     snprintf(out_buf, out_bufsz, "%s,svcnm=%s,autoq=%c,tries=%d,waitinit=%d,waitretry=%d,"
-                        "waitretryinc=%d,waitretrymax=%d,mode=%s,txtout=%d",
+                        "waitretrymax=%d,mode=%s,txtout=%d",
             qdef->qname, 
             qdef->svcnm, 
             qdef->autoq,
             qdef->tries,
             qdef->waitinit,
             qdef->waitretry,
-            qdef->waitretryinc,
             qdef->waitretrymax,
             qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo",
             qdef->txtout);
@@ -731,7 +716,7 @@ out:
 /**
  * Add queue definition. Support also update
  * We shall support Q update too...
- * Syntax: -q VISA,svcnm=VISAIF,autoq=y|n,waitinit=30,waitretry=10,waitretryinc=5,waitretrymax=40,memonly=y|n
+ * Syntax: -q VISA,svcnm=VISAIF,autoq=y|n,waitinit=30,waitretry=10,waitretrymax=40,memonly=y|n
  * @param qdefstr queue definition
  * @param name optional name (already parsed)
  * @return  SUCCEED/FAIL
@@ -972,20 +957,6 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: shouldn't this follow after initial check? */
-    if ((*msg)->qctl.flags & TPQCORRID)
-    {
-        tmq_msgid_serialize((*msg)->qctl.corrid, corid_str);
-        NDRX_LOG(log_debug, "Correlator id: [%s]", corid_str);
-        
-        if (NULL!=tmq_get_msg_by_corid_str(corid_str))
-        {
-            NDRX_LOG(log_error, "Message with corid [%s] already exists!", corid_str);
-            userlog("Message with corid [%s] already exists!", corid_str);
-            EXFAIL_OUT(ret);
-        }
-    }
-    
     /* Get the entry for hash of queues: */
     if (NULL==qhash && NULL==(qhash=tmq_qhash_new((*msg)->hdr.qname)))
     {
@@ -1001,12 +972,18 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
     EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
     hashed=EXTRUE;
+
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
-        NDRX_LOG(log_debug, "Adding to G_corid_hash [%s]", corid_str);
-        
-        NDRX_STRCPY_SAFE(mmsg->corid_str, corid_str);
-        EXHASH_ADD_STR_H2( G_corid_hash, corid_str, mmsg);
+        tmq_msgid_serialize((*msg)->qctl.corrid, corid_str);
+        NDRX_STRCPY_SAFE(mmsg->corid_str, msgid_str);
+        NDRX_LOG(log_debug, "Adding to corid_hash [%s] of queue [%s]",
+            corid_str, (*msg)->hdr.qname);
+        if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
+        {
+            NDRX_LOG(log_error, "Failed to add msg to corhash!");
+            EXFAIL_OUT(ret);
+        }
         hashedcor=EXTRUE;
     }
     /* have to unlock here, because tmq_storage_write_cmd_newmsg() migth callback to
@@ -1087,7 +1064,7 @@ out:
         
         if (hashedcor)
         {
-            EXHASH_DEL_H2( G_corid_hash, mmsg);
+            tmq_cor_msg_del(qhash, mmsg);
         }
     
         if (cdl)
@@ -1169,12 +1146,14 @@ out:
  * Get the fifo message from Q
  * @param qname queue to lookup.
  * @param diagnostic specific queue error code
+ * @param corid_str dequeue by correlator (if not NULL)
  * @return NULL (no msg), or ptr to msg
  */
 expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
-        char *diagmsg, size_t diagmsgsz)
+        char *diagmsg, size_t diagmsgsz, char *corid_str)
 {
     tmq_qhash_t *qhash;
+    tmq_corhash_t *corhash;
     tmq_memmsg_t *node = NULL;
     tmq_memmsg_t *start = NULL;
     tmq_msg_t * ret = NULL;
@@ -1212,11 +1191,25 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     if (NULL==(qhash = tmq_qhash_get(qname)))
     {
         NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
+        *diagnostic=QMEINVAL;
+        snprintf(diagmsg, diagmsgsz, "Q [%s] is NULL/empty", qname);
         goto out;
     }
+
+    NDRX_LOG(log_debug, "mode corid_str[%s]: %s", corid_str?corid_str:"(null)",
+               TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
     
-    NDRX_LOG(log_debug, "mode: %s", TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
-    
+    /* if no hash available -> assume no msg*/
+    if (NULL!=corid_str && NULL==(corhash = tmq_cor_find(qhash, corid_str)))
+    {
+        NDRX_LOG(log_info, "Q [%s] corid_str [%s] not defined", 
+            qname, corid_str);
+        snprintf(diagmsg, diagmsgsz, "Q [%s] corid_str [%s] not defined", 
+            qname, corid_str);
+        *diagnostic=QMENOMSG;
+        goto out;
+    }
+
     /* Start from first one & loop over the list while 
      * - we get to the first non-locked message
      * - or we get to the end with no msg, then return FAIL.
@@ -1224,7 +1217,15 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     if (TMQ_MODE_LIFO == qconf->mode)
     {
         /* LIFO mode */
-        if (NULL!=qhash->q)
+        if (NULL!=corid_str)
+        {
+            /* we do not have empty hashes,
+             * thus msg must be in there.
+            */
+            node = corhash->corq->prev2;
+            start = corhash->corq->prev2;
+        }
+        else if (NULL!=qhash->q)
         {
             node = qhash->q->prev;
             start = qhash->q->prev;
@@ -1233,8 +1234,16 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     else
     {
         /* FIFO */
-        node = qhash->q;
-        start = qhash->q;
+        if (NULL!=corid_str)
+        {
+            node = corhash->corq;
+            start = corhash->corq;
+        }
+        else
+        {
+            node = qhash->q;
+            start = qhash->q;
+        }
     }
             
     do
@@ -1255,14 +1264,28 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
             if (TMQ_MODE_LIFO == qconf->mode)
             {
                 /* LIFO mode */
-                node = node->prev;
+                if (NULL!=corid_str)
+                {
+                    node = node->prev2;
+                }
+                else
+                {
+                    node = node->prev;
+                }
             }
             else
             {
                 /* default to FIFO */
-                node = node->next;
+                if (NULL!=corid_str)
+                {
+                    node = node->next2;
+                }
+                else
+                {
+                    node = node->next;
+                }
             }
-        }
+        } /* if (NULL!=node) */
     }
     while (NULL!=node && node!=start);
     
@@ -1394,82 +1417,6 @@ out:
 }
 
 /**
- * Dequeue message by corid
- * TODO: there may be many corid messages. Thus each queue must have hash
- *  of correlators. Where each hash entry would contains CDL list of related
- *  messages. Dequeue must check the validity of the messages (locked / not locked).
- *  Search shall be performed in fifo or lifo order.
- * @param msgid
- * @param diagnostic queue error code (if any)
- * @return 
- */
-expublic tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags, long *diagnostic, 
-        char *diagmsg, size_t diagmsgsz)
-{
-    tmq_msg_t * ret = NULL;
-    tmq_msg_del_t block;
-    char corid_str[TMCORRIDLEN_STR+1];
-    tmq_memmsg_t *mmsg;
-    
-    *diagnostic=EXSUCCEED;
-    
-    MUTEX_LOCK_V(M_q_lock);
-       
-    /* Write some stuff to log */
-    
-    tmq_msgid_serialize(corid, corid_str);
-    NDRX_LOG(log_info, "CORID: Dequeuing message by [%s]", corid_str);
-    
-    if (NULL==(mmsg = tmq_get_msg_by_corid_str(corid_str)))
-    {
-        NDRX_LOG(log_error, "Message not found by corid_str [%s]", corid_str);
-        goto out;
-    }
-    
-    /* Lock the message */
-    ret = mmsg->msg;
-    
-    NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
-    
-    ret->lockthreadid = ndrx_gettid();
-    
-    /* Issue command for msg remove */
-    memcpy(&block.hdr, &ret->hdr, sizeof(ret->hdr));
-    
-    
-    /* TODO: Unlock here?  */
-    
-    if (!(flags & TPQPEEK))   
-    {    
-        block.hdr.command_code = TMQ_STORCMD_DEL;
-
-        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&block, 
-                "Removing dequeued message", NULL))
-        {
-            NDRX_LOG(log_error, "Failed to remove msg...");
-            /* unlock msg... */
-            ret->lockthreadid = 0;
-            ret = NULL;
-            *diagnostic=QMEOS;
-            NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
-            goto out;
-        }
-    }
-    
-out:
-    MUTEX_UNLOCK_V(M_q_lock);
-
-    /* set default error code */
-    if (NULL==ret && EXSUCCEED==*diagnostic)
-    {
-        NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: no message in Q!", diagmsgsz);
-        *diagnostic=QMENOMSG;
-    }
-
-    return ret;
-}
-
-/**
  * Get message by msgid
  * @param msgid
  * @return 
@@ -1481,36 +1428,6 @@ exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str)
     EXHASH_FIND_STR( G_msgid_hash, msgid_str, ret);
     
     return ret;
-}
-
-
-/**
- * Get message by corid string version
- * @param corid_str
- * @return 
- */
-exprivate tmq_memmsg_t* tmq_get_msg_by_corid_str(char *corid_str)
-{
-    tmq_memmsg_t *ret;
-    
-    EXHASH_FIND_STR_H2( G_corid_hash, corid_str, ret);
-    
-    return ret;
-}
-
-/**
- * get message by correlator
- * @param corid correlator (binary)
- * @return ptr to memmsg if found or NULL
- */
-exprivate tmq_memmsg_t* tmq_get_msg_by_corid(char *corid)
-{
-    tmq_memmsg_t *ret;
-    char corid_str[TMCORRIDLEN_STR+1];
-    
-    tmq_corid_serialize(corid, corid_str);
-    
-    return tmq_get_msg_by_corid_str(corid_str);
 }
 
 /**
@@ -1540,7 +1457,7 @@ exprivate void tmq_remove_msg(tmq_memmsg_t *mmsg)
     
     if (TPQCORRID & mmsg->msg->qctl.flags)
     {
-        EXHASH_DEL_H2( G_corid_hash, mmsg);
+        tmq_cor_msg_del(qhash, mmsg);
     }
     
     NDRX_FREE(mmsg->msg);
@@ -1686,7 +1603,7 @@ out:
  * @param q2
  * @return 
  */
-exprivate int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
+expublic int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
 {
     
     return ndrx_compare3(q1->msg->msgtstamp, q1->msg->msgtstamp_usec, q1->msg->msgtstamp_cntr, 
@@ -1845,7 +1762,11 @@ expublic int tmq_sort_queues(void)
     /* iterate over Q hash & and sort them by Q time */
     EXHASH_ITER(hh, G_qhash, q, qtmp)
     {
+        /* standard q sorting ... */
         CDL_SORT(q->q, q_msg_sort);
+
+        /* correlator q sorting... */
+        tmq_cor_sort_queues(q);
     }   
     
 out:

@@ -855,8 +855,8 @@ exprivate int basic_q_corid_test(void)
             if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
                     &len, TPNOTRAN))
             {
-                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s i=%d j=%d", 
-                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg, i, j);
+                NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s i=%d j=%d", 
+                        tpstrerror(tperrno), qc2.diagnostic, qc2.diagmsg, i, j);
                 EXFAIL_OUT(ret);
             }
 
