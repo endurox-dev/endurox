@@ -408,6 +408,9 @@ exprivate char * file_move_final_names(char *from_filename, char *to_filename_on
 /**
  * Send notification to tmqueue server so that we have finished this
  * particular message & we can unlock that for further processing
+ * TODO: in case of rename if we get noent, then check the destination
+ *  if the destination name exists, then assume that rename was fine.
+ *  this is needed to avoid infinte loop when tlog have gone async with disk
  * @param p_hdr
  * @param fname1 filename 1 to unlink (priority 1 - after this message is unblocked)
  * @param fname2 filename 2 to unlink (priority 2)
