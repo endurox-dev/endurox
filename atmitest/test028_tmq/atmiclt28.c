@@ -774,6 +774,13 @@ out:
 
 /**
  * Test message get by corid
+ * - Add 2x queues: CORFIFO, CORLIFO
+ * - Load normal messages
+ * - Load correlated messages
+ * - read correlated messages, ensure getting QMENOMSG when done - fifo
+ * - read correlated + QMENOMSG - lifo
+ * -- Re-do above after load correlated msgs + tmq restart (load sort valiate)
+ * - read normal messages, all shall be in place.
  */
 exprivate int basic_q_corid_test(void)
 {
