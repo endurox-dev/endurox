@@ -2005,6 +2005,17 @@ exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tm
             EXFAIL_OUT(ret);
         }
     }
+
+    if (NULL!=cust_tmxid)
+    {
+        tmxid = cust_tmxid;
+    }
+    else
+    {
+        /* part of global trn */
+        tmxid = G_atmi_tls->qdisk_tls->filename_base;
+    }
+    
     
     /* Open file for write... */
     NDRX_LOG(log_info, "Writing command file: [%s] mode: [%s] (seqno: %d)", 
@@ -2054,17 +2065,6 @@ exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tm
     /* 
      * If all OK, add command transaction log 
      */
-    
-    if (NULL!=cust_tmxid)
-    {
-        tmxid = cust_tmxid;
-    }
-    else
-    {
-        /* part of global trn */
-        tmxid = G_atmi_tls->qdisk_tls->filename_base;
-    }
-    
     if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, block, XA_RM_STATUS_ACTIVE))
     {
         NDRX_LOG(log_error, "Failed to add [%s] seqno %d to transaction log",
@@ -2088,7 +2088,7 @@ out:
     }
 
     /* mark abort only, if hade issues with disk */
-    if (EXSUCCEED!=ret)
+    if (EXSUCCEED!=ret && NULL!=tmxid)
     {
         tmq_log_set_abort_only(tmxid);
     }
@@ -2201,7 +2201,6 @@ expublic int tmq_storage_write_cmd_block(char *data, char *descr, char *cust_tmx
     char msgid_str[TMMSGIDLEN_STR+1];
     size_t len;
     tmq_cmdheader_t *p_hdr = (tmq_cmdheader_t *)data;
-    
     
     /* detect the actual len... */
     len = tmq_get_block_len((char *)data);
