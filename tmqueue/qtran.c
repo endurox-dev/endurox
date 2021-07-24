@@ -336,7 +336,7 @@ expublic void tmq_log_set_abort_only(char *tmxid)
         p_tl->is_abort_only=EXTRUE;
     }
     
-    if (!locke)
+    if (NULL!=p_tl && !locke)
     {
         /* unlock */
         tmq_log_unlock(p_tl);
