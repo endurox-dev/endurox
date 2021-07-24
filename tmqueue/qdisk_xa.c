@@ -516,12 +516,22 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
         if (EXSUCCEED!=rename(name1, name2))
         {
             int err = errno;
-            NDRX_LOG(log_error, "Failed to rename file [%s] -> [%s] occ %d: %s", 
-                    name1, name2, occ, strerror(err));
-            userlog("Failed to rename file [%s] -> [%s] occ %d: %s", 
-                    name1, name2, occ, strerror(err));
-            ret=XAER_RMERR;
-            goto out;
+            
+            if (ENOENT==err && ndrx_file_exists(name2))
+            {
+                NDRX_LOG(log_error, "Failed to rename file [%s] -> [%s] occ %d: "
+                        "%s, but dest exists - assume retry", 
+                        name1, name2, occ, strerror(err));
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to rename file [%s] -> [%s] occ %d: %s", 
+                        name1, name2, occ, strerror(err));
+                userlog("Failed to rename file [%s] -> [%s] occ %d: %s", 
+                        name1, name2, occ, strerror(err));
+                ret=XAER_RMERR;
+                goto out;
+            }
         }
 
         /* get the folder form file name */
