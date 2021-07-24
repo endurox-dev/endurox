@@ -45,6 +45,7 @@
 #include <ubfutil.h>
 #include <nstopwatch.h>
 #include <nstdutil.h>
+#include <exassert.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -787,8 +788,117 @@ exprivate int basic_q_corid_test(void)
 
     int ret = EXSUCCEED;
     TPQCTL qc1, qc2;
-    int i, j;
+    int i, j, test;
+    char c,cor;
+    long len;
+    
+    
+    /* enqueue messages to fifo q / cor & non cor */
+    for (test=0; test<2; test++)
+    {
+        char *buf = tpalloc("CARRAY", "", 3);
+        
+        if (NULL==buf)
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* load correlated msgs... */
+        for (cor=2; cor<5; cor++)
+        {
+            /* load correlated msgs.. */
+            for (c=5; c<127; c++)
+            {
+                buf[0]=1;
+                buf[1]=c;
+                buf[2]=cor;
+                
+                memset(&qc1, 0, sizeof(qc1));
+                qc1.flags|=TPQCORRID;
+                qc1.corrid[0]=cor;
+                
+                if (EXSUCCEED!=tpenqueue("MYSPACE", "CORFIFO", &qc1, buf, 3, 0))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+                
+            }
+        }
 
+        /* load non correlated msgs.. */
+        for (c=0; c<127; c++)
+        {
+            buf[0]=0;
+            buf[1]=c;
+            buf[2]=0;
+
+            memset(&qc1, 0, sizeof(qc1));
+            qc1.flags|=TPQCORRID;
+            qc1.corrid[0]=cor;
+
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "CORFIFO", &qc1, buf, 3, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* restart tmqueue to get  */
+        if (1==test)
+        {
+            if (EXSUCCEED!=system("xadmin -r tmqueue"))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to restart tmqueue", 
+                        strerror(errno));
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* Now fetch first message, shall be corelated */
+        memset(&qc1, 0, sizeof(qc1));
+        len=3;
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "CORFIFO", &qc1, buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        /* it shall be msg with cor */
+        NDRX_ASSERT_VAL_OUT((buf[0]==1 && buf[1]==0 && buf[2]==5 && len==3), 
+                "Invalid buffer %d %d %d %ld", 
+                (int)buf[0], (int)buf[1], (int)buf[2], len);
+
+        /* correlator must be set */
+        NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==5, 
+                "Invalid cor %d", 
+                (int)qc1.corrid[0]);
+
+        /* Download all by cor... + last one is QMENOMSG */
+        
+        /* load correlated msgs... */
+        for (cor=2; cor<5; cor++)
+        {
+            /* load correlated msgs.. */
+            for (c=5; c<128; c++)
+            {
+                memset(&qc1, 0, sizeof(qc1));
+                len=3;
+                if (EXSUCCEED!=tpdequeue("MYSPACE", "CORFIFO", &qc1, buf, &len, 0))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+            }
+        }
+    }
+#if 0
     /* Initial test... */
     for (i=0; i<1000; i++)
     {
@@ -920,6 +1030,7 @@ exprivate int basic_q_corid_test(void)
         ret=EXFAIL;
         goto out;
     }
+#endif
     
 out:
     return ret;

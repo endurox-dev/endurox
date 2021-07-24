@@ -16,3 +16,23 @@ OKQ1,svcnm=SVCOK,autoq=y,tries=5,waitinit=1,waitretry=2,waitretryinc=2,waitretry
 BADQ1,svcnm=SVCFAIL,autoq=y,tries=3,waitinit=1,waitretry=2,waitretryinc=2,waitretrymax=3,memonly=n
 # Random Bad, transactional
 RFQ,svcnm=FAILRND,autoq=T,tries=10,waitinit=1,waitretry=1,waitretryinc=0,waitretrymax=1,memonly=n
+
+#
+# corrid tests with fifo
+#
+CORFIFO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n
+
+#
+# corrid tests with lifo
+#
+CORLIFO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=lifo
+
+#
+# corrid tests with autoq + errorq
+#
+CORAUTO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,errorq=CORERR
+
+#
+# correlator error q
+#
+CORERR,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n
