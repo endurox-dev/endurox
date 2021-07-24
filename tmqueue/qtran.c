@@ -322,6 +322,28 @@ expublic qtran_log_t * tmq_log_start_or_get(char *tmxid)
 }
 
 /**
+ * mark transaction as abort only
+ * @param tmxid
+ */
+expublic void tmq_log_set_abort_only(char *tmxid)
+{
+    int locke=EXFALSE;
+    qtran_log_t * p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke);
+    
+    if (NULL!=p_tl)
+    {
+        NDRX_LOG(log_error, "Marking [%s] Q tran as abort only", tmxid);
+        p_tl->is_abort_only=EXTRUE;
+    }
+    
+    if (!locke)
+    {
+        /* unlock */
+        tmq_log_unlock(p_tl);
+    }
+}
+
+/**
  * Add command to the log
  * @param tmxid transaction id (serialized)
  * @param seqno command sequence number
@@ -411,7 +433,6 @@ out_nolock:
  */
 expublic void tmq_remove_logfree(qtran_log_t *p_tl, int hash_rm)
 {
-    
     if (hash_rm)
     {
         MUTEX_LOCK_V(M_qtran_hash_lock);

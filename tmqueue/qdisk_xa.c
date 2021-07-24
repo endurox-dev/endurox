@@ -2087,7 +2087,11 @@ out:
         NDRX_FCLOSE(f);
     }
 
-    /* if message written OK, then add the command to the log */
+    /* mark abort only, if hade issues with disk */
+    if (EXSUCCEED!=ret)
+    {
+        tmq_log_set_abort_only(tmxid);
+    }
 
     return ret;
 }
