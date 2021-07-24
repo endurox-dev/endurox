@@ -30,7 +30,7 @@ CORLIFO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,mem
 #
 # corrid tests with autoq + errorq
 #
-CORAUTO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,errorq=CORERR
+CORAUTO,svcnm=-,autoq=y,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,errorq=CORERR
 
 #
 # correlator error q

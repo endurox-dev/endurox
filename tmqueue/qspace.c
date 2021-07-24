@@ -1188,10 +1188,11 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         goto out;
     }
     
+    /* if not such queue, the no msg */
     if (NULL==(qhash = tmq_qhash_get(qname)))
     {
         NDRX_LOG(log_warn, "Q [%s] is NULL/empty", qname);
-        *diagnostic=QMEINVAL;
+        *diagnostic=QMENOMSG;
         snprintf(diagmsg, diagmsgsz, "Q [%s] is NULL/empty", qname);
         goto out;
     }

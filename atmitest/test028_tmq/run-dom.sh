@@ -122,7 +122,7 @@ function test_empty_qspace {
 		go_out 2
 	fi
 
-    clean_logs;
+    #clean_logs;
 }
 
 #rm *dom*.log
@@ -183,6 +183,7 @@ xadmin stop -y
 sleep 2
 xadmin start -y || go_out 1
 clean_logs;
+
 
 ################################################################################
 #
@@ -396,8 +397,48 @@ fi
 
 test_empty_qspace;
 
-echo "Running: corid tests"
-(./atmiclt28 corid 2>&1) >> ./atmiclt-dom1.log
+echo "Running: cortran tests"
+(./atmiclt28 cortran 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
+echo "Running: corauto tests"
+(./atmiclt28 corauto 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
+echo "Running: deqdefault tests"
+(./atmiclt28 deqdefault 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
+echo "Running: corlifo tests"
+(./atmiclt28 corlifo 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
+echo "Running: corfifo tests"
+(./atmiclt28 corfifo 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then

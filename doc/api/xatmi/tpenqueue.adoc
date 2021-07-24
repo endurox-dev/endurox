@@ -92,7 +92,10 @@ Valid *'TPQCTL.flags'*
 *TPNOFLAGS* No flags set.
 
 *TPQCORRID* Use the correlator ID set in 'TPQCTL.corrid'. 
-Note that each byte in 'corrid' is significant.
+Note that each byte in 'corrid' is significant. When working with corrid, it
+establishes sub-queue for given 'qname'. The message ordering settings are kept
+the same as for queue definition. Several messages with the same corrid can be
+enqueued in the same or different queues.
 
 *TPQREPLYQ* Use the 'replyqueue' for submitting response messages of services 
 which were invoked for automatic queues. If this flag is set, with 
