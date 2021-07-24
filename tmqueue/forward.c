@@ -377,33 +377,33 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
      */
     if (sent_ok)
     {
+        /* start our internal ransactino */
+        tmq_update_q_stats(msg->hdr.qname, 1, 0);
+        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
+
+        /* well this will generate this will add msg to transaction
+         * will be handled by timeout setting...
+         * No more unlock manual.
+         */
+        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
+                "Removing completed message...", NULL))
+        {
+            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                    msgid_str);
+            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                    msgid_str);
+
+            /* unlock the msg, as adding to log is last step, 
+             * thus not in log and we are in control
+             */
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            EXFAIL_OUT(ret);
+        }
+        
        /* Remove the message */
         if (msg->qctl.flags & TPQREPLYQ)
         {
             TPQCTL ctl;
-            
-            /* firstly add our tran: */
-            tmq_update_q_stats(msg->hdr.qname, 1, 0);
-            cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
-
-            /* well this will generate this will add msg to transaction
-             * will be handled by timeout setting...
-             * No more unlock manual.
-             */
-            if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                    "Removing completed message...", NULL))
-            {
-                NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                        msgid_str);
-                userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                        msgid_str);
-
-                /* unlock the msg, as adding to log is last step, 
-                 * thus not in log and we are in control
-                 */
-                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-                EXFAIL_OUT(ret);
-            }
         
             NDRX_LOG(log_warn, "TPQREPLYQ defined, sending answer buffer to "
                     "[%s] q in [%s] namespace", 

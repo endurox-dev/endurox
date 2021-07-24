@@ -65,6 +65,8 @@ exprivate int basic_q_corauto_test(void);
 exprivate int basic_q_deqdefault_test(void);
 exprivate int basic_q_cortran_test(void);
 exprivate int basic_autoq_ok(void);
+exprivate int basic_autoqnr_ok(void);
+
 exprivate int basic_rndfail(void);
 exprivate int basic_enqcarray(void);
 exprivate int basic_autoq_deadq(void);
@@ -151,6 +153,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "autoqok"))
     {
         return basic_autoq_ok();
+    }
+    else if (0==strcmp(argv[1], "autoqnr"))
+    {
+        return basic_autoqnr_ok();
     }
     else if (0==strcmp(argv[1], "autodeadq"))
     {
@@ -1441,7 +1447,7 @@ exprivate int basic_autoq_ok(void)
     char *p;
     int i;
     char strbuf[128];
-    
+    char *buf3=NULL;
     
     for (i=0; i<100; i++)
     {
@@ -1477,7 +1483,8 @@ exprivate int basic_autoq_ok(void)
         }
         tpfree((char *)buf);
     }
-    sleep(90); /* should be enough */
+    
+    sleep(30); /* should be enough */
     
     for (i=0; i<100; i++)
     {
@@ -1524,6 +1531,102 @@ exprivate int basic_autoq_ok(void)
             EXFAIL_OUT(ret);
         }
         tpfree((char *)buf2);
+    }
+    
+    /* Check that OKQ1 is empty.... even after restart of tmqueue */
+    if (EXSUCCEED!=system("xadmin restart tmqueue"))
+    {
+        NDRX_LOG(log_error, "Failed to restart tmqueue: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* no messages available, even after restart... */
+    memset(&qc1, 0, sizeof(qc1));
+    len=0;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "OKQ1", &qc1, (char **)&buf3, 
+            &len, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but was OK!");
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Sending to OK q.
+ * So answers of the forward and put in the reply queue.
+ * we wait for it to be filled up.
+ * ---
+ * Do not use reply q.
+ */
+exprivate int basic_autoqnr_ok(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    long len = 0;
+    char *p;
+    int i;
+    char strbuf[128];
+    char *buf3=NULL;
+    
+    for (i=0; i<100; i++)
+    {
+        UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+        if (NULL==buf)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        sprintf(strbuf, "HELLO FROM SENDER");
+        
+        if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "OKQ1", &qc1, (char *)buf, 0, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+        tpfree((char *)buf);
+    }
+    
+    sleep(30); /* should be enough */
+    
+    /* Check that OKQ1 is empty.... even after restart of tmqueue */
+    if (EXSUCCEED!=system("xadmin restart tmqueue"))
+    {
+        NDRX_LOG(log_error, "Failed to restart tmqueue: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* no messages available, even after restart... */
+    memset(&qc1, 0, sizeof(qc1));
+    len=0;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "OKQ1", &qc1, (char **)&buf3, 
+            &len, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but was OK!");
+        EXFAIL_OUT(ret);
     }
 
     if (EXSUCCEED!=tpterm())
