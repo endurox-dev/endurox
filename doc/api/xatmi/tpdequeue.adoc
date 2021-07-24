@@ -93,7 +93,10 @@ Valid *'TPQCTL.flags'*
 *TPNOFLAGS* No flags set.
 
 *TPQGETBYCORRID* Use the correlator ID in 'TPQCTL.corrid' to get the 
-message by. Note that each byte in 'corrid' is significant.
+message by. Note that each byte in 'corrid' is significant. The corrid basically
+denotes the sub-queue for given 'qname'. If there are messages in queue, but
+not for given 'corrid', then standard *QMENOMSG* error code is returned. Message
+ordering is applies the same as for normal queue.
 
 *TPQGETBYMSGID* Use the message ID in 'TPQCTL.msgid' to get the message by. 
 Note that each byte in 'msgid' is significant.
