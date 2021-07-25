@@ -68,11 +68,16 @@ exprivate int recover_scan(void)
     /* recover transactions */
     ret = ndrx_tmrecover_do();
     
-    if (EXSUCCEED==ret && !M_periodic)
+    /* set success if have 0 or rolled back.*/
+    if (ret>=0)
     {
-        /* remove our selves from periodic scanning as we are done
-         */
-        tpext_delperiodcb();
+        if (!M_periodic)
+        {
+            /* remove our selves from periodic scanning as we are done
+             */
+            tpext_delperiodcb();
+       }
+       ret=EXSUCCEED;
     }
     
     return ret;
