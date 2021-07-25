@@ -169,6 +169,9 @@ expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname,
         NDRX_SPIN_INIT_V(ret->writters_lock);
         pthread_cond_init(&ret->change_wait, NULL);
         
+        /* Init the line lock */
+        MUTEX_VAR_INIT_RECURS(ret->line_lock);
+        
         NDRX_STRCPY_SAFE(ret->fname, fname);
         ret->writters=0;
         ret->chwait=0;
@@ -253,6 +256,7 @@ expublic int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, 
         MUTEX_DESTROY_V(mysink->change_lock);
         MUTEX_DESTROY_V(mysink->busy_lock);
         NDRX_SPIN_DESTROY_V(mysink->writters_lock);
+        MUTEX_DESTROY_V(mysink->line_lock);
         
         /* remove it from hash */
         EXHASH_DEL(M_sink_hash, mysink);
