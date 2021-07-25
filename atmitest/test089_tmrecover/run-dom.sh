@@ -333,8 +333,9 @@ set_dom1;
 xadmin start -i 8888 || go_out 14
 
 echo "Std queue test.... (shall complete OK)"
-exbenchcl -n2 -P -t20 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sTEST2 || go_out 15
+exbenchcl -n2 -P -t60 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sTEST2 || go_out 15
 
+sleep 40
 # after the 60 sec, the tmrecoversv at 8888 must have completed all rollbacks...
 
 if [ "$(ls -A QSPACE1/prepared)" ]; then
