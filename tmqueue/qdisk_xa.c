@@ -1958,7 +1958,7 @@ exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tm
     tmq_cmdheader_t dum;
     int seqno;
     long xaflags=0;
-    char *tmxid;
+    char *tmxid=NULL;
     
     if (new_file)
         
