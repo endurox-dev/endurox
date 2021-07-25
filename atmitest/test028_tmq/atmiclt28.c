@@ -1101,7 +1101,7 @@ exprivate int basic_q_corlifo_test(void)
     int ret = EXSUCCEED;
     TPQCTL qc1;
     int test;
-    char c,cor;
+    signed char c,cor;
     long len;
     char *buf = tpalloc("CARRAY", "", 3);
         
@@ -1242,8 +1242,8 @@ exprivate int basic_q_corlifo_test(void)
                 /* validate that we fetch all and terminate with EOS... */
                 if (!(0==c && TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic))
                 {
-                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
-                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed on %d - %s diag: %d:%s", 
+                            (int)c, tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
                     EXFAIL_OUT(ret);
                 }
                 else
