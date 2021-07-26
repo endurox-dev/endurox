@@ -512,8 +512,10 @@ exprivate tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defa
                 qname, TMQ_DEFAULT_Q);
         if (NULL==(ret = tmq_qconf_get(TMQ_DEFAULT_Q)))
         {
-            NDRX_LOG(log_error, "Default Q config [%s] not found!", TMQ_DEFAULT_Q);
-            userlog("Default Q config [%s] not found! Please add !", TMQ_DEFAULT_Q);
+            NDRX_LOG(log_error, "Q [%s] is not defined and default config [%s] not found!",
+                qname, TMQ_DEFAULT_Q);
+            userlog("Q [%s] is not defined and default config [%s] not found!",
+                qname, TMQ_DEFAULT_Q);
         }
         else if (NULL!=p_is_defaulted)
         {
@@ -591,8 +593,10 @@ expublic int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf
                 qname, TMQ_DEFAULT_Q);
         if (NULL==(tmp = tmq_qconf_get(TMQ_DEFAULT_Q)))
         {
-            NDRX_LOG(log_error, "Default Q config [%s] not found!", TMQ_DEFAULT_Q);
-            userlog("Default Q config [%s] not found! Please add !", TMQ_DEFAULT_Q);
+            NDRX_LOG(log_error, "Q [%s] is not defined and default config [%s] not found!",
+                qname, TMQ_DEFAULT_Q);
+            userlog("Q [%s] is not defined and default config [%s] not found!",
+                qname, TMQ_DEFAULT_Q);
             EXFAIL_OUT(ret);
         }
         
