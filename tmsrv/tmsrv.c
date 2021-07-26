@@ -50,7 +50,6 @@
 #include <regex.h>
 #include <utlist.h>
 #include <unistd.h>
-#include <getopt.h>
 
 #include <ndebug.h>
 #include <atmi.h>
