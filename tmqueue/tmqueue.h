@@ -236,7 +236,7 @@ extern void tmq_msgid_gen(char *msgid);
 extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
 extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 extern void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid);
-extern char * tmq_corid_serialize(char *corid_in, char *corid_str_out);
+extern char * tmq_corrid_serialize(char *corrid_in, char *corrid_str_out);
 extern int tmq_finalize_files(UBFH *p_ub);
 extern void tmq_set_tmqueue(
     int setting

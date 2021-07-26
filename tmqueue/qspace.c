@@ -914,7 +914,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
     tmq_memmsg_t *mmsg = NDRX_CALLOC(1, sizeof(tmq_memmsg_t));
     tmq_qconfig_t * qconf;
     char msgid_str[TMMSGIDLEN_STR+1];
-    char corid_str[TMCORRIDLEN_STR+1];
+    char corrid_str[TMCORRIDLEN_STR+1];
     int hashed=EXFALSE, hashedcor=EXFALSE, cdl=EXFALSE;
     
     MUTEX_LOCK_V(M_q_lock);
@@ -975,10 +975,10 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
 
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
-        tmq_msgid_serialize((*msg)->qctl.corrid, corid_str);
-        NDRX_STRCPY_SAFE(mmsg->corid_str, corid_str);
-        NDRX_LOG(log_debug, "Adding to corid_hash [%s] of queue [%s]",
-            corid_str, (*msg)->hdr.qname);
+        tmq_msgid_serialize((*msg)->qctl.corrid, corrid_str);
+        NDRX_STRCPY_SAFE(mmsg->corrid_str, corrid_str);
+        NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
+            corrid_str, (*msg)->hdr.qname);
         if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
         {
             NDRX_LOG(log_error, "Failed to add msg to corhash!");
@@ -1146,11 +1146,11 @@ out:
  * Get the fifo message from Q
  * @param qname queue to lookup.
  * @param diagnostic specific queue error code
- * @param corid_str dequeue by correlator (if not NULL)
+ * @param corrid_str dequeue by correlator (if not NULL)
  * @return NULL (no msg), or ptr to msg
  */
 expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
-        char *diagmsg, size_t diagmsgsz, char *corid_str)
+        char *diagmsg, size_t diagmsgsz, char *corrid_str)
 {
     tmq_qhash_t *qhash;
     tmq_corhash_t *corhash;
@@ -1197,16 +1197,16 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         goto out;
     }
 
-    NDRX_LOG(log_debug, "mode corid_str[%s]: %s", corid_str?corid_str:"(null)",
+    NDRX_LOG(log_debug, "mode corrid_str[%s]: %s", corrid_str?corrid_str:"(null)",
                TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
     
     /* if no hash available -> assume no msg*/
-    if (NULL!=corid_str && NULL==(corhash = tmq_cor_find(qhash, corid_str)))
+    if (NULL!=corrid_str && NULL==(corhash = tmq_cor_find(qhash, corrid_str)))
     {
-        NDRX_LOG(log_info, "Q [%s] corid_str [%s] not defined", 
-            qname, corid_str);
-        snprintf(diagmsg, diagmsgsz, "Q [%s] corid_str [%s] not defined", 
-            qname, corid_str);
+        NDRX_LOG(log_info, "Q [%s] corrid_str [%s] not defined", 
+            qname, corrid_str);
+        snprintf(diagmsg, diagmsgsz, "Q [%s] corrid_str [%s] not defined", 
+            qname, corrid_str);
         *diagnostic=QMENOMSG;
         goto out;
     }
@@ -1218,7 +1218,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     if (TMQ_MODE_LIFO == qconf->mode)
     {
         /* LIFO mode */
-        if (NULL!=corid_str)
+        if (NULL!=corrid_str)
         {
             /* we do not have empty hashes,
              * thus msg must be in there.
@@ -1235,7 +1235,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     else
     {
         /* FIFO */
-        if (NULL!=corid_str)
+        if (NULL!=corrid_str)
         {
             node = corhash->corq;
             start = corhash->corq;
@@ -1265,7 +1265,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
             if (TMQ_MODE_LIFO == qconf->mode)
             {
                 /* LIFO mode */
-                if (NULL!=corid_str)
+                if (NULL!=corrid_str)
                 {
                     node = node->prev2;
                 }
@@ -1277,7 +1277,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
             else
             {
                 /* default to FIFO */
-                if (NULL!=corid_str)
+                if (NULL!=corrid_str)
                 {
                     node = node->next2;
                 }
