@@ -53,14 +53,14 @@
 /**
  * Find the correlator entry in the hash
  * @param qhash queue entry
- * @param corid_str correlator id 
+ * @param corrid_str correlator id 
  * @return ptr or NULL (if not found)
  */
-expublic tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corid_str)
+expublic tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str)
 {
     tmq_corhash_t *ret = NULL;
 
-    EXHASH_FIND_STR( (qhash->corhash), corid_str, ret);
+    EXHASH_FIND_STR( (qhash->corhash), corrid_str, ret);
 
     return ret;
 
@@ -69,10 +69,10 @@ expublic tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corid_str)
 /**
  * Add correlator to the hash
  * @param qhash queue entry
- * @param corid_str identifier to add
+ * @param corrid_str identifier to add
  * @return ptr or NULL (if failed to add)
  */
-expublic tmq_corhash_t * tmq_cor_add(tmq_qhash_t *qhash, char *corid_str)
+expublic tmq_corhash_t * tmq_cor_add(tmq_qhash_t *qhash, char *corrid_str)
 {
     /* allocate the handle */
     tmq_corhash_t *corhash = NDRX_FPMALLOC(sizeof(tmq_corhash_t), 0);
@@ -86,10 +86,10 @@ expublic tmq_corhash_t * tmq_cor_add(tmq_qhash_t *qhash, char *corid_str)
 
     /* add stuff to hash: */
     memset(corhash, 0, sizeof(tmq_corhash_t));
-    NDRX_STRCPY_SAFE(corhash->corid_str, corid_str);
-    EXHASH_ADD_STR( qhash->corhash, corid_str, corhash);
-    NDRX_LOG(log_debug, "Added corid_str [%s] %p",
-            corhash->corid_str, corhash);
+    NDRX_STRCPY_SAFE(corhash->corrid_str, corrid_str);
+    EXHASH_ADD_STR( qhash->corhash, corrid_str, corhash);
+    NDRX_LOG(log_debug, "Added corrid_str [%s] %p",
+            corhash->corrid_str, corhash);
 
 out:
     return corhash;
@@ -112,8 +112,8 @@ expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
     CDL_DELETE(corhash->corq, mmsg);
     if (NULL==corhash->corq)
     {
-        NDRX_LOG(log_debug, "Removing corid_str [%s] %p",
-            corhash->corid_str, corhash);
+        NDRX_LOG(log_debug, "Removing corrid_str [%s] %p",
+            corhash->corrid_str, corhash);
         /* remove empty hash node */
         EXHASH_DEL(qhash->corhash, corhash);
         NDRX_FPFREE(corhash);
@@ -135,11 +135,11 @@ expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memm
 {
     int ret = EXSUCCEED;
     
-    tmq_corhash_t * corhash =  tmq_cor_find(qhash, mmsg->corid_str);
+    tmq_corhash_t * corhash =  tmq_cor_find(qhash, mmsg->corrid_str);
     
     if (NULL==corhash)
     {
-        corhash=tmq_cor_add(qhash, mmsg->corid_str);
+        corhash=tmq_cor_add(qhash, mmsg->corrid_str);
     }
     
     if (NULL==corhash)
@@ -178,10 +178,10 @@ expublic void tmq_cor_sort_queues(tmq_qhash_t *q)
  * in FIFO/LIFO order as by queue config
  * @param qconf queue configuration
  * @param qhash queue entry
- * @param corid_str serialized correlator
+ * @param corrid_str serialized correlator
  * @return unlocked message or NULL if no msg found
  */
-expublic tmq_memmsg_t * tmq_cor_dequeue(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, char *corid_str)
+expublic tmq_memmsg_t * tmq_cor_dequeue(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, char *corrid_str)
 {
     return NULL;
 }

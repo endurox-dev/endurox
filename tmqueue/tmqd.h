@@ -130,10 +130,10 @@ typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
     char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
-    char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
     /** We should have hash handler of message hash                           */
     EX_hash_handle hh; /**< makes this structure hashable (for msgid)         */
-    EX_hash_handle h2; /**< makes this structure hashable (for corid)         */
+    EX_hash_handle h2; /**< makes this structure hashable (for corrid)         */
 
     /** We should also have a linked list handler                             */
     tmq_memmsg_t *next;
@@ -154,7 +154,7 @@ struct tmq_memmsg
  */
 struct tmq_cormsg
 {
-    char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
     /** queue by correlation, CDL, next2, prev2 */
     tmq_memmsg_t *corq;
     EX_hash_handle hh; /**< makes this structure hashable        */
@@ -256,7 +256,7 @@ extern int tmq_dum_add(char *tmxid);
 extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
 extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
-            char *diagmsg, size_t diagmsgsz, char *corid_str);
+            char *diagmsg, size_t diagmsgsz, char *corrid_str);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
 extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
@@ -271,7 +271,7 @@ extern int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2);
 extern void tmq_cor_sort_queues(tmq_qhash_t *q);
 extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corid_str);
+extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
     
 #ifdef	__cplusplus
 }

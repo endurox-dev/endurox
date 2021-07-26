@@ -327,8 +327,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     int local_tx = EXFALSE;
     char qname[TMQNAMELEN+1];
     long buf_realoc_size;
-    char corid_str[TMCORRIDLEN_STR+1];
-    char *p_corid_str = NULL;
+    char corrid_str[TMCORRIDLEN_STR+1];
+    char *p_corrid_str = NULL;
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_dequeue()");
@@ -408,15 +408,15 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     }
     else 
     {
-        /* setcorid to not null*/
+        /* setcorrid to not null*/
         if (qctl_in.flags & TPQGETBYCORRID)
         {
-            tmq_msgid_serialize(qctl_in.corrid, corid_str);
-            p_corid_str = corid_str;
+            tmq_msgid_serialize(qctl_in.corrid, corrid_str);
+            p_corrid_str = corrid_str;
         }
 
         if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE, 
-            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg), p_corid_str)))
+            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg), p_corrid_str)))
         {
             int lev = log_info;
             
@@ -425,8 +425,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
                 lev=log_error;
             }
         
-            NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] corid_str [%s] %ld: %s", qname,
-                NULL!=p_corid_str?corid_str:"(null)", qctl_out.diagnostic, qctl_out.diagmsg);
+            NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] corrid_str [%s] %ld: %s", qname,
+                NULL!=p_corrid_str?corrid_str:"(null)", qctl_out.diagnostic, qctl_out.diagmsg);
         
             EXFAIL_OUT(ret);
         }
