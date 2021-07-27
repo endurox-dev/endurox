@@ -780,7 +780,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                 UNLOCK_OUT;
             }
             
-#define ARGS_DELIM      ", \t"
+#define ARGS_DELIM      ","
 #define ARGS_QUOTE      "'\""
 #define ARG_DIR         "datadir"
 #define ARG_QSPACE      "qspace"

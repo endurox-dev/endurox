@@ -75,6 +75,21 @@ out:
 }
 
 /**
+ * Standard service entry
+ */
+void OKSVC (TPSVCINFO *p_svc)
+{
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+out:
+    tpreturn(  TPSUCCESS,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
  * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
@@ -87,6 +102,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise FAILSVC!");
         EXFAIL_OUT(ret);
     }
+
+    if (EXSUCCEED!=tpadvertise("OKSVC", OKSVC))
+    {
+        NDRX_LOG(log_error, "Failed to initialise OKSVC!");
+        EXFAIL_OUT(ret);
+    }
+
 out:
     return ret;
 }

@@ -160,6 +160,16 @@ clean_logs;
 rm ULOG*
 
 ################################################################################
+echo "AutoQ performance test..."
+################################################################################
+(./atmiclt86 autoperf 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
+################################################################################
 echo "Testing rmrollback - rollback due to internal timeout / no activity"
 ################################################################################
 (./atmiclt86 rmrollback 2>&1) >> ./atmiclt-dom1.log

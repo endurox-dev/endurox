@@ -80,7 +80,8 @@ exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
 
 
 exprivate fwd_qlist_t *M_next_fwd_q_list = NULL;    /**< list of queues to check msgs to fwd */
-exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list... */
+exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list...  */
+exprivate int          M_had_msg = EXFALSE;         /**< Did we got the msg previously?      */
     
 exprivate MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 
@@ -170,46 +171,62 @@ exprivate tmq_msg_t * get_next_msg(void)
     tmq_msg_t * ret = NULL;
     long qerr = EXSUCCEED;
     char msgbuf[128];
+    int again;
 
-    if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
+    do
     {
-        fwd_q_list_rm();
-        
-        /* Generate new list */
-        M_next_fwd_q_list = tmq_get_qlist(EXTRUE, EXFALSE);
-        
-        if (NULL!=M_next_fwd_q_list)
-        {
-            M_next_fwd_q_cur = M_next_fwd_q_list;
-        }
-    }
-    
-    /*
-     * get the message
-     */
-    while (NULL!=M_next_fwd_q_cur)
-    {
-        /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
-                &qerr, msgbuf, sizeof(msgbuf), NULL)))
-        {
-            NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", qerr, msgbuf);
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "Dequeued message");
-        }
+        again=EXFALSE;
 
-        /* schedule next queue ... */
-        M_next_fwd_q_cur = M_next_fwd_q_cur->next;
-    
-        /* done with this loop if having msg.. */
-        if (NULL!=ret)
+        if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
         {
-            break;
+            fwd_q_list_rm();
+            
+            /* Generate new list */
+            M_next_fwd_q_list = tmq_get_qlist(EXTRUE, EXFALSE);
+            
+            if (NULL!=M_next_fwd_q_list)
+            {
+                M_next_fwd_q_cur = M_next_fwd_q_list;
+                M_had_msg=EXFALSE;
+            }
         }
+        
+        /*
+         * get the message
+         */
+        while (NULL!=M_next_fwd_q_cur)
+        {
+            /* OK, so we peek for a message */
+            if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
+                    &qerr, msgbuf, sizeof(msgbuf), NULL)))
+            {
+                NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", 
+                    qerr, msgbuf);
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Dequeued message");
+                M_had_msg=EXTRUE;
+            }
 
-    }
+            /* schedule next queue ... */
+            M_next_fwd_q_cur = M_next_fwd_q_cur->next;
+        
+            /* done with this loop if having msg.. */
+            if (NULL!=ret)
+            {
+                break;
+            }
+
+        }
+    
+        if (NULL==ret && M_had_msg)
+        {
+            NDRX_LOG(log_debug, "Had messages in prevous run, scan Qs again");
+            again = EXTRUE;
+        } 
+
+    } while (again);
     
 out:
     return ret;

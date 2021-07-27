@@ -68,6 +68,7 @@ exprivate int basic_enqdeq(int maxmsg);
 exprivate int basic_rmrollback(int maxmsg);
 exprivate int basic_rmnorollback(int maxmsg);
 exprivate int basic_fwdcrash(int maxmsg);
+exprivate int basic_autoperf(int maxmsg);
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
 extern int basic_crashloop(void);
@@ -95,6 +96,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "rmnorollback"))
     {
         return basic_rmnorollback(1200);
+    }
+    else if (0==strcmp(argv[1], "autoperf"))
+    {
+        return basic_autoperf(200);
     }
     else if (0==strcmp(argv[1], "tmqrestart"))
     {
@@ -363,6 +368,165 @@ exprivate int basic_rmnorollback(int maxmsg)
 
 
 out:
+    
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
+
+
+/**
+ * Check out message performance -> no sleep if have any task.
+ * @param maxmsg max messages to be ok
+ */
+exprivate int basic_autoperf(int maxmsg)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    int i;
+    char *buf = NULL;
+    char *testbuf_ref = tpalloc("CARRAY", "", 10);
+    long len=10;
+
+    /* alloc output buffer */
+    if (NULL==testbuf_ref)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    testbuf_ref[0]=0;
+    testbuf_ref[1]=1;
+    testbuf_ref[2]=2;
+    testbuf_ref[3]=3;
+    testbuf_ref[4]=4;
+    testbuf_ref[5]=5;
+    testbuf_ref[6]=6;
+    testbuf_ref[7]=7;
+    testbuf_ref[8]=8;
+    testbuf_ref[9]=9;
+
+    NDRX_LOG(log_error, "case autoperf");
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Initial test... */
+    for (i=0; i<200; i++)
+    {        
+        /* add 1 queues, to pull in the forward lists... */
+        if (i<1)
+        {
+            memset(&qc, 0, sizeof(qc));
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "PERF1", &qc, testbuf_ref, 
+                len, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        /* middle queues have more, had issues that trailing queues made sleep */
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "PERF2", &qc, testbuf_ref, 
+            len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "PERF3", &qc, testbuf_ref, 
+            len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        /* order of Q is important here as it spawns queues... and later uses
+         * scan in that order
+         */
+        if (i<1)
+        {
+            memset(&qc, 0, sizeof(qc));
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "PERF4", &qc, testbuf_ref, 
+                len, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+
+    }
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to commit: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    /* all queues must be empty! */
+    sleep(60);
+    
+    buf = tpalloc("CARRAY", "", 100);
+
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    len=100;
+    memset(&qc, 0, sizeof(qc));
+    if (EXSUCCEED==tpdequeue("MYSPACE", "PERF1", &qc, (char **)&buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: PERF1 must be empty!");
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&qc, 0, sizeof(qc));
+    if (EXSUCCEED==tpdequeue("MYSPACE", "PERF2", &qc, (char **)&buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: PERF2 must be empty!");
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&qc, 0, sizeof(qc));
+    if (EXSUCCEED==tpdequeue("MYSPACE", "PERF3", &qc, (char **)&buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: PERF3 must be empty!");
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&qc, 0, sizeof(qc));
+    if (EXSUCCEED==tpdequeue("MYSPACE", "PERF4", &qc, (char **)&buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: PERF4 must be empty!");
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    if (NULL!=testbuf_ref)
+    {
+        tpfree(testbuf_ref);
+    }
+
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
     
     if (EXSUCCEED!=tpterm())
     {
