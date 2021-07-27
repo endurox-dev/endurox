@@ -552,7 +552,7 @@ int main(int argc, char** argv)
     /**************************************************************************/
     NDRX_LOG(log_debug, "Test commit");
     /**************************************************************************/
-    if (EXSUCCEED!=tpbegin(60, 0))
+    if (EXSUCCEED!=tpbegin(90, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
@@ -602,7 +602,7 @@ int main(int argc, char** argv)
     
     sql_delete();
     
-    if (EXSUCCEED!=tpbegin(60, 0))
+    if (EXSUCCEED!=tpbegin(90, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
@@ -689,7 +689,7 @@ int main(int argc, char** argv)
     
     sql_delete();
     
-    if (EXSUCCEED!=tpbegin(60, 0))
+    if (EXSUCCEED!=tpbegin(90, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
@@ -779,7 +779,7 @@ int main(int argc, char** argv)
     
     sql_delete();
     
-    if (EXSUCCEED!=tpbegin(60, 0))
+    if (EXSUCCEED!=tpbegin(90, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
