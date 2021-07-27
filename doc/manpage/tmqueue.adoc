@@ -127,21 +127,17 @@ Maximum number of seconds to wait for XA transaction to be completed. This used
 internally when global transactions are not used. Default is *30*.
 
 [*-T* 'XA_SESSION_TIMEOUT']::
-Session timeout for active transactions in seconds. If transaction is not completed in
-this given time frame, the transaction internally is rolled back. After expiry any
-any further enqueue/dequeue in global transaction will return  *TPETRAN* error.
-Commit of such global transaction would be terminated with *TPEABORT*. Value *0*
-disables transaction sessions checks. It is strongly discouraged to use *0*, as
-this in case of system error may lock resources until the tmqueue server 
-process is restarted. Default value is *180*.
+Session timeout for in-active transactions in seconds - if transaction is not completed 
+( no *tpcommit(3)* or *tpabort(3)* performed), or new *tpenqueue(3)* or *tpdequeue(3)*
+is not performed in given time frame, the transaction internally is rolled back. 
+When new *tpenqueue(3)* or *tpdequeue(3)* is performed in the global transaction,
+the time-out counter is reset. After internal rollback any further enqueue/dequeue 
+operations in global transaction will return  *TPETRAN* error. Commit of such global 
+transaction would be terminated with *TPEABORT*. Value *0* disables transaction 
+sessions checks. It is strongly discouraged to use *0*, as this in case of system 
+error may lock resources until the tmqueue server process is restarted. 
+Default value is *180*.
 
-[*-h* 'HOUSEKEEP_TIMEOUT']::
-Number of seconds used to determine should the corrupted file existing in 'active'
-folder shall be unlinked. Flag is needed for purpose that concurrent processes
-might be witting the file and it is not yet completed. Thus longer the delay will
-ensure that no race condition would caused for concurrent processes. If file
-is older than given seconds, during the *tmqueue* startup, such damaged file
-will be unlinked. Default value is *5400* (1 hour 30 min).
 
 LIMITATIONS
 -----------

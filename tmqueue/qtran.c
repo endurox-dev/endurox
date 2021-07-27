@@ -383,6 +383,9 @@ expublic int tmq_log_addcmd(char *tmxid, int seqno, char *b, char entry_status)
                 sizeof(qtran_log_cmd_t), strerror(errno));
         EXFAIL_OUT(ret);
     }
+
+    /* Update session timeout... */
+    ndrx_stopwatch_reset(&p_tl->ttimer);
     
     memset(cmd, 0, sizeof(*cmd));
     
