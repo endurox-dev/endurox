@@ -426,7 +426,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
             }
         
             NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] corrid_str [%s] %ld: %s", qname,
-                NULL!=p_corrid_str?corrid_str:"(null)", qctl_out.diagnostic, qctl_out.diagmsg);
+                NULL!=p_corrid_str?corrid_str:"N/A", qctl_out.diagnostic, qctl_out.diagmsg);
         
             EXFAIL_OUT(ret);
         }

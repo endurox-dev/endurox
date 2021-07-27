@@ -224,7 +224,7 @@ restart:
         else
         {
             r->lockthreadid = ndrx_gettid();
-            NDRX_LOG(log_info, "Transaction [%s] locked for thread_id: %" PRIu64,
+            NDRX_LOG(log_debug, "Transaction [%s] locked for thread_id: %" PRIu64,
                     tmxid, r->lockthreadid);
         }
     }

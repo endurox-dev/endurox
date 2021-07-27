@@ -952,7 +952,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
     
     /* Add the hash of IDs / check that msg isn't duplicate */
     tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str); 
-    NDRX_LOG(log_debug, "Adding to G_msgid_hash [%s]", msgid_str);
+    NDRX_LOG(log_info, "Adding to G_msgid_hash [%s]", msgid_str);
            
     if (NULL!=tmq_get_msg_by_msgid_str(msgid_str))
     {
@@ -1033,7 +1033,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
     qhash->numenq++;
     MUTEX_UNLOCK_V(M_q_lock);
     
-    NDRX_LOG(log_debug, "Message with id [%s] successfully enqueued to [%s] "
+    NDRX_LOG(log_info, "Message with id [%s] successfully enqueued to [%s] "
             "queue (DEBUG: locked %ld)",
             tmq_msgid_serialize((*msg)->hdr.msgid, msgid_str), (*msg)->hdr.qname, 
             mmsg->msg->lockthreadid);
@@ -1201,7 +1201,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         goto out;
     }
 
-    NDRX_LOG(log_debug, "mode corrid_str[%s]: %s", corrid_str?corrid_str:"(null)",
+    NDRX_LOG(log_debug, "mode corrid_str[%s]: %s", corrid_str?corrid_str:"N/A",
                TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
     
     /* if no hash available -> assume no msg*/
@@ -1296,7 +1296,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     
     if (NULL==ret)
     {
-        NDRX_LOG(log_warn, "Q [%s] is empty or all msgs locked", qname);
+        NDRX_LOG(log_debug, "Q [%s] is empty or all msgs locked", qname);
         goto out;
     }
     
@@ -1645,7 +1645,8 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
                 ret = NULL;
                 goto out;
             }
-            NDRX_LOG(log_debug, "tmq_get_qlist: %s", q->qname);
+            /* have some stats */
+            NDRX_LOG(log_info, "tmq_get_qlist: %s %ld/%ld", q->qname,q->numenq,q->numdeq);
             NDRX_STRCPY_SAFE(tmp->qname, q->qname);
             tmp->succ = q->succ;
             tmp->fail = q->fail;
