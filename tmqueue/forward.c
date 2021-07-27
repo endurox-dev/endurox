@@ -179,15 +179,16 @@ exprivate tmq_msg_t * get_next_msg(void)
 
         if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
         {
+            /* reset marking, no messages processed yet. */
+            M_had_msg=EXFALSE;
             fwd_q_list_rm();
-            
+
             /* Generate new list */
             M_next_fwd_q_list = tmq_get_qlist(EXTRUE, EXFALSE);
             
             if (NULL!=M_next_fwd_q_list)
             {
                 M_next_fwd_q_cur = M_next_fwd_q_list;
-                M_had_msg=EXFALSE;
             }
         }
         
@@ -220,6 +221,7 @@ exprivate tmq_msg_t * get_next_msg(void)
 
         }
     
+        /* if any queue had msgs, then re-scan queue list and retry */
         if (NULL==ret && M_had_msg)
         {
             NDRX_LOG(log_debug, "Had messages in prevous run, scan Qs again");
