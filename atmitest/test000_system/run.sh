@@ -95,6 +95,15 @@ if [ $TMP != 0 ]; then
     RET=-4
 fi
 
+# run off the client
+./atmiclt0_alloc
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start atmiclt0_alloc"
+    RET=-5
+fi
+
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
