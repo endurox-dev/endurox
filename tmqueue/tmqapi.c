@@ -384,7 +384,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     }
     
     /* Get FB size (current) */
-    NDRX_LOG(log_warn, "qctl_req flags: %ld", qctl_in.flags);
+    NDRX_LOG(log_info, "qctl_req flags: %ld", qctl_in.flags);
     
     if (qctl_in.flags & TPQGETBYMSGID)
     {
