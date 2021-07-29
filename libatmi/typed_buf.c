@@ -343,6 +343,15 @@ expublic char * ndrx_tprealloc (char *buf, long len)
                          __func__, buf, node->autoalloc);
 
     buf_type = &G_buf_descr[node->type_id];
+    /* remove from hash, to avoid address reuse
+     * i.e. old address after realloc gets used
+     * by new thread which adds similar to block
+     * to hash. Possible colisions in the hash list
+     * but that would be needed to test seperatelly
+    */
+    MUTEX_LOCK_V(M_lock);
+    EXHASH_DEL(ndrx_G_buffers, node);
+    MUTEX_UNLOCK_V(M_lock);
 
     /*
      * Do the actual buffer re-allocation!
@@ -357,7 +366,6 @@ expublic char * ndrx_tprealloc (char *buf, long len)
     
     /* update the hash list */
     MUTEX_LOCK_V(M_lock);
-    EXHASH_DEL(ndrx_G_buffers, node);
     EXHASH_ADD_PTR(ndrx_G_buffers, buf, node);
     MUTEX_UNLOCK_V(M_lock);
     
@@ -410,14 +418,15 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
         }
              
         buf_type = &G_buf_descr[elt->type_id];
-        /* Remove it! */
-        buf_type->pf_free(buf_type, elt->buf);
         
         /* Remove that stuff from our linked list!! */
         /* DL_DELETE(G_buffers,elt); */
         MUTEX_LOCK_V(M_lock);
         EXHASH_DEL(ndrx_G_buffers, elt);
         MUTEX_UNLOCK_V(M_lock);
+
+        /* Remove it here, avoid address reuse and re-adding to hash! */
+        buf_type->pf_free(buf_type, elt->buf);
         
         /* delete elt by it self */
         NDRX_FPFREE(elt);
