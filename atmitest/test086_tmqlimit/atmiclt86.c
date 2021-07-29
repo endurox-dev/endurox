@@ -1690,6 +1690,8 @@ exprivate int basic_commit_crash(int maxmsg)
         EXFAIL_OUT(ret);
     }
     
+    /* let tmsrv to flush all stuff.... */
+    sleep(20);
     /* all messages must be available (rolled back after crash recovery) */
     for (i=0; i<maxmsg; i++)
     {
