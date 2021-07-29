@@ -156,6 +156,7 @@ exprivate void dirent_free(struct dirent **namelist, int n);
 exprivate int xa_rollback_entry_tmq(char *tmxid, long flags);
 exprivate int xa_prepare_entry_tmq(char *tmxid, long flags);
 exprivate int xa_commit_entry_tmq(char *tmxid, long flags);
+exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -1943,11 +1944,10 @@ out:
  * This works only with new files (new transactions)
  * @param block
  * @param len
- * @param new_file the message file is new
  * @param cust_tmxid custom tmxid, if not running in global tran
  * @return SUCCEED/FAIL
  */
-exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tmxid)
+exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid)
 {
     int ret = EXSUCCEED;
     XID xid;
@@ -1960,15 +1960,7 @@ exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tm
     long xaflags=0;
     char *tmxid=NULL;
     
-    if (new_file)
-        
-    {
-        NDRX_STRCPY_SAFE(mode_str, "wb");
-    }
-    else
-    {
-        NDRX_STRCPY_SAFE(mode_str, "a+b");
-    }
+    NDRX_STRCPY_SAFE(mode_str, "wb");
     
     if (ndrx_get_G_atmi_env()->xa_sw->flags & TMREGISTER && !G_atmi_tls->qdisk_tls->is_reg)
     {
@@ -1995,15 +1987,12 @@ exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tm
         G_atmi_tls->qdisk_tls->is_reg = EXTRUE;
     }
     
-    if (new_file)
+    /* get the current transaction? 
+     * If the same thread is locked, then no problem...
+     */
+    if (EXSUCCEED!=set_filenames(&seqno))
     {
-        /* get the current transaction? 
-         * If the same thread is locked, then no problem...
-         */
-        if (EXSUCCEED!=set_filenames(&seqno))
-        {
-            EXFAIL_OUT(ret);
-        }
+        EXFAIL_OUT(ret);
     }
 
     if (NULL!=cust_tmxid)
@@ -2032,34 +2021,20 @@ exprivate int write_to_tx_file(char *block, int len, int new_file, char *cust_tm
         EXFAIL_OUT(ret);
     }
     
-    if (new_file && len > sizeof(tmq_cmdheader_t))
-    {
-        memset(&dum, 0, sizeof(dum));
-        WRITE_TO_DISK((&dum), 0, sizeof(tmq_cmdheader_t));
-        WRITE_FLUSH;
-        WRITE_TO_DISK(block, sizeof(tmq_cmdheader_t), len - sizeof(tmq_cmdheader_t));
-        WRITE_REWIND;
-        /* Write now full header */
-        WRITE_TO_DISK(block, 0, sizeof(tmq_cmdheader_t));
-    }
-    else
-    {
-        /* single step write... */
-        WRITE_TO_DISK(block, 0, len);
-    }
+    /* single step write..., as temp files now we discard
+     * no problem with we get temprorary files incomplete...
+     */
+    WRITE_TO_DISK(block, 0, len);
     
     WRITE_FLUSH;
     
     /* sync the file, if required so... 
      * file updates are optional..
      */
-    if (new_file) 
+    if (EXSUCCEED!=ndrx_fsync_fsync(f, G_atmi_env.xa_fsync_flags))
     {
-        if (EXSUCCEED!=ndrx_fsync_fsync(f, G_atmi_env.xa_fsync_flags))
-        {
-            NDRX_LOG(log_error, "failed to fsync");
-            EXFAIL_OUT(ret);
-        }
+        NDRX_LOG(log_error, "failed to fsync");
+        EXFAIL_OUT(ret);
     }
     
     /* 
@@ -2079,7 +2054,7 @@ out:
     if (NULL!=f)
     {
         /* unlink if failed to write to the folder... */
-        if (new_file && EXSUCCEED!=ret)
+        if (EXSUCCEED!=ret)
         {
             unlink(G_atmi_tls->qdisk_tls->filename_active);
         }
@@ -2129,7 +2104,7 @@ expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     NDRX_DUMP(log_debug, "Writing new message to disk", 
                 (char *)msg, len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, EXTRUE, NULL))
+    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, NULL))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
@@ -2211,7 +2186,7 @@ expublic int tmq_storage_write_cmd_block(char *data, char *descr, char *cust_tmx
     NDRX_DUMP(log_debug, "Writing command block to disk", 
                 (char *)data, len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)data, len, EXTRUE, cust_tmxid))
+    if (EXSUCCEED!=write_to_tx_file((char *)data, len, cust_tmxid))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
                 tmq_msgid_serialize(p_hdr->msgid, msgid_str));
