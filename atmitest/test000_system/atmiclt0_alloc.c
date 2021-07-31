@@ -57,6 +57,7 @@
 
 /**
  * run allocation for 30 sec...
+ * mainly monitored by asan
  */
 void do_loop (void *ptr, int *p_finish_off)
 {
@@ -72,6 +73,7 @@ void do_loop (void *ptr, int *p_finish_off)
         tpfree(buf);
     }
 
+    tpterm();
 }
 /**
  * Run allocator in the loop
