@@ -283,7 +283,7 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
     /* If tls is enabled and we run threaded modes */
     if (NULL!=G_nstd_tls && !recursive)
     {
-        if (dbg_ptr->is_threaded &&
+        if ( (LOG_THREADED_TEMPL & dbg_ptr->is_threaded) &&
                 (( 
                   ((dbg_ptr->flags & LOG_FACILITY_NDRX)
                         /* assign target logger */
@@ -567,11 +567,15 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             } /* Feature #167 */
             else if (0==strncmp("threaded", tok, cmplen))
             {
-                int val = EXFALSE;
+                int val = 0;
                 
                 if (*(p+1) == 'Y' || *(p+1) == 'y')
                 {
-                    val = EXTRUE;
+                    val = LOG_THREADED_TEMPL;
+                }
+                else if (*(p+1) == 'L' || *(p+1) == 'l')
+                {
+                    val = LOG_THREADED_LINEL;
                 }
                 
                 if (NULL!=dbg_ptr)
@@ -641,7 +645,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
     /* Configure template for threads...
      * Feature #167
      */
-    if (tmp_ptr->is_threaded && EXEOS!=tmpfname[0])
+    if ((tmp_ptr->is_threaded & LOG_THREADED_TEMPL) && EXEOS!=tmpfname[0])
     {
         int len;
         int len2;
@@ -873,6 +877,17 @@ expublic void ndrx_init_debug(void)
     G_tp_debug.version = 0;
     G_stdout_debug.version = 0;
     
+    /* For system V please using line locking by default
+     * as admin/tout threads will render logs unreadable
+     * also tmqueue/tmsrv/tpbridge shall be configured set
+     * to use line logging too by default
+     */
+#ifdef EX_USE_SYSVQ
+    G_ndrx_debug.is_threaded = LOG_THREADED_LINEL;
+    G_ubf_debug.is_threaded = LOG_THREADED_LINEL;
+    G_tp_debug.is_threaded = LOG_THREADED_LINEL;
+    G_stdout_debug.is_threaded = LOG_THREADED_LINEL;
+#endif
     
     /* static coinf */
     G_stdout_debug.buf_lines = 1;

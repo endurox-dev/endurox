@@ -159,7 +159,7 @@ function verify_logfiles {
     cnt=`ls -1 ./$rmlog/TRN* 2>/dev/null | wc -l | awk '{print $1}'`
 
     if [[ "X$cnt" != "X$count" ]]; then
-        echo "$rmid expected $rmlog to have $count logs but got $cnt"
+        echo "Expected $rmlog to have $count logs but got $cnt"
         go_out -1
     fi
 }
@@ -2436,7 +2436,7 @@ cat log1/*
 xadmin lcf tcrash -A 0 -a -n
 
 # let process to finalize
-sleep 10
+sleep 20
 
 verify_ulog "RM1" "xa_prepare" "1";
 verify_ulog "RM1" "xa_commit" "1";

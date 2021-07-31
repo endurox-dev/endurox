@@ -59,6 +59,9 @@
 #include "qcommon.h"
 #include "cconfig.h"
 #include <ubfutil.h>
+#include <thlock.h>
+#include "qtran.h"
+#include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -67,7 +70,21 @@
 expublic tmqueue_cfg_t G_tmqueue_cfg;
 /*---------------------------Statics------------------------------------*/
 exprivate int M_init_ok = EXFALSE;
+exprivate __thread int M_thread_first = EXTRUE;
 
+/* allow only one timeout check at the same time... */
+exprivate int volatile M_into_toutchk = EXFALSE;
+exprivate MUTEX_LOCKDECL(M_into_toutchk_lock);
+
+/** mark that thrad pool is done with shutdown seq */
+exprivate int M_shutdown_ok = EXFALSE;
+
+/** global shutdown indicator */
+exprivate int *M_shutdown_ind = NULL;
+
+/** mark globally that timeout processing is in progress
+ * do not collide with any worker already running...
+ */
 /*---------------------------Prototypes---------------------------------*/
 exprivate int tx_tout_check(void);
 exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
@@ -116,7 +133,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
      * TPBEGIN...
      */
     int ret=EXSUCCEED;
-    static __thread int first = EXTRUE;
     thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
@@ -127,10 +143,10 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     UBFH *p_ub = (UBFH *)thread_data->buffer;
     
     /* Do the ATMI init */
-    if (first)
+    if (M_thread_first)
     {
-        first = EXFALSE;
         tmq_thread_init();
+        M_thread_first = EXFALSE;
     }
     
     /* restore context. */
@@ -181,13 +197,6 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
                 EXFAIL_OUT(ret);
             }
             break;
-        case TMQ_CMD_NOTIFY:
-            
-            if (EXSUCCEED!=tex_mq_notify(p_ub))
-            {
-                EXFAIL_OUT(ret);
-            }
-            break;
         case TMQ_CMD_MQLQ:
             
             if (EXSUCCEED!=tmq_mqlq(p_ub, cd))
@@ -224,6 +233,19 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
                 EXFAIL_OUT(ret);
             }
             break;
+        case TMQ_CMD_STARTTRAN:
+        case TMQ_CMD_ABORTTRAN:
+        case TMQ_CMD_PREPARETRAN:
+        case TMQ_CMD_COMMITRAN:
+            
+            /* start Q space transaction */
+            if (XA_OK!=ndrx_xa_qminiservce(p_ub, cmd))
+            {
+                EXFAIL_OUT(ret);
+            }
+            
+            break;
+            
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
             ret=EXFAIL;
@@ -240,6 +262,158 @@ out:
                 0L,
                 0L);
 }
+
+
+/**
+ * Periodic main thread callback for 
+ * (will be done by threadpoll)
+ * @return 
+ */
+exprivate void tx_tout_check_th(void *ptr)
+{
+    long tspent;
+    qtran_log_list_t *tx_list;
+    qtran_log_list_t *el, *tmp;
+    qtran_log_t *p_tl;
+    int in_progress;
+    int locke;
+    XID xid;
+    /* Create a copy of hash, iterate and check each tx for timeout condition
+     * If so then initiate internal abort call
+     */
+    
+    MUTEX_LOCK_V(M_into_toutchk_lock);
+    
+    in_progress=M_into_toutchk;
+    
+    /* do lock if was free */
+    if (!in_progress)
+    {
+        M_into_toutchk=EXTRUE;
+    }
+            
+    MUTEX_UNLOCK_V(M_into_toutchk_lock);
+    
+    if (in_progress)
+    {
+        /* nothing todo... */
+        goto out;
+    }
+            
+    NDRX_LOG(log_dump, "Timeout check (processing...)");
+    
+    /* Do the ATMI init, if needed 
+     */
+    if (M_thread_first)
+    {
+        tmq_thread_init();
+        M_thread_first = EXFALSE;
+    }
+    
+    tx_list = tmq_copy_hash2list(COPY_MODE_FOREGROUND | COPY_MODE_ACQLOCK);
+        
+    LL_FOREACH_SAFE(tx_list,el,tmp)
+    {
+        NDRX_LOG(log_debug, "Checking [%s]...", el->p_tl.tmxid);
+        if ((tspent = ndrx_stopwatch_get_delta_sec(&el->p_tl.ttimer)) > 
+                G_tmqueue_cfg.ses_timeout && XA_TX_STAGE_ACTIVE==el->p_tl.txstage)
+        {
+            
+            /* get the finally the entry and process... */
+            if (NULL!=(p_tl = tmq_log_get_entry(el->p_tl.tmxid, 0, &locke)))
+            {
+                if (XA_TX_STAGE_ACTIVE==p_tl->txstage)
+                {
+                    
+                    NDRX_LOG(log_error, "TMXID Q [%s] timed out "
+                        "(spent %ld, limit: %ld sec) - aborting...!", 
+                        el->p_tl.tmxid, tspent, 
+                        G_tmqueue_cfg.dflt_timeout);
+            
+                    userlog("TMXID Q [%s] timed out "
+                            "(spent %ld, limit: %ld sec) - aborting...!", 
+                            el->p_tl.tmxid, tspent, 
+                            G_tmqueue_cfg.dflt_timeout);
+                    
+                    /* do abort...! */
+                    
+                    el->p_tl.is_abort_only=EXTRUE;
+                    
+                    if (NULL==atmi_xa_deserialize_xid((unsigned char *)el->p_tl.tmxid, &xid))
+                    {
+                        NDRX_LOG(log_error, "Failed to deserialize tmxid [%s]", 
+                                el->p_tl.tmxid);
+                        tmq_log_unlock(p_tl);
+                        goto next;
+                    }
+                    
+                    /* try to rollback the stuff...! */
+                    if (EXSUCCEED!=atmi_xa_rollback_entry(&xid, 0))
+                    {
+                        NDRX_LOG(log_error, "Failed to abort tmxid:[%s]", 
+                                el->p_tl.tmxid);
+                        tmq_log_unlock(p_tl);
+                        goto next;
+                    }
+                    
+                    /* Transaction must be removed at this point */
+                    
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Q TMXID [%s] was-tout but found not active "
+                        "(txstage %hd spent %ld, limit: %ld sec) - skipping!", 
+                        el->p_tl.tmxid, el->p_tl.txstage, tspent, G_tmqueue_cfg.dflt_timeout);
+                }
+            }
+        }
+next:
+        LL_DELETE(tx_list,el);
+        NDRX_FPFREE(el);
+        
+    }
+    
+    
+out:    
+
+    /* if was not in progress then we locked  */
+    MUTEX_LOCK_V(M_into_toutchk_lock);
+
+    if (!in_progress)
+    {
+        M_into_toutchk=EXFALSE;
+    }   
+
+    MUTEX_UNLOCK_V(M_into_toutchk_lock);
+    
+    return;
+}
+
+/**
+ * Callback routine for scheduled timeout checks.
+ * TODO: if we add shutdown handlers, then check here is all completed
+ * before we inject back the shutdown msg...
+ * @return 
+ */
+exprivate int tm_tout_check(void)
+{
+    NDRX_LOG(log_dump, "Timeout check (submit job...)");
+    
+    /* Check transaction timeouts only if session timeout is not disabled */
+    if (NULL==M_shutdown_ind && G_tmqueue_cfg.ses_timeout > 0)
+    {
+        /* no shutdown requested... yet... */
+        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
+    }
+    else if (M_shutdown_ok)
+    {
+        ndrx_sv_do_shutdown("Async shutdown", M_shutdown_ind);
+    }
+    
+    
+    return EXSUCCEED;
+}
+
 
 /**
  * Entry point for service (main thread)
@@ -268,21 +442,6 @@ void TMQUEUE (TPSVCINFO *p_svc)
         userlog("Zero buffer received!");
         EXFAIL_OUT(ret);
     }
-    
-    /* not using sub-type - on tpreturn/forward for thread it will be auto-free */
-#if 0
-        - Why? mvitolin 25/01/2017
-    thread_data->buffer =  tpalloc(btype, NULL, size);
-    
-    if (NULL==thread_data->buffer)
-    {
-        NDRX_LOG(log_error, "tpalloc failed of type %s size %ld", btype, size);
-        EXFAIL_OUT(ret);
-    }
-    
-    /* copy off the data */
-    memcpy(thread_data->buffer, p_svc->data, size);
-#endif
 
     thread_data->buffer = p_svc->data; /*the buffer is not made free by thread */
     thread_data->cd = p_svc->cd;
@@ -300,15 +459,19 @@ void TMQUEUE (TPSVCINFO *p_svc)
         goto out;
     }
     
-    
-    /* submit the job to thread pool: */
-    if (cmd==TMQ_CMD_NOTIFY)
+    /* submit the job to thread pool: 
+     * For transaction finalization use different thread pool
+     */
+    if (cmd==TMQ_CMD_STARTTRAN||
+            cmd==TMQ_CMD_PREPARETRAN||
+            cmd==TMQ_CMD_ABORTTRAN||
+            cmd==TMQ_CMD_COMMITRAN)
     {
-        ndrx_thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
+        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
     else
     {
-        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
+        ndrx_thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
     
 out:
@@ -328,10 +491,91 @@ out:
     }
 }
 
+
+/**
+ * Full shutdown, as forward does something...
+ * @param ptr data, not used
+ */
+exprivate void shutdowncb_th(void *ptr)
+{
+    int i;
+    
+    NDRX_LOG(log_info, "Async shutdown started...");
+        
+    /* Wait to complete */
+    pthread_join(G_forward_thread, NULL);
+
+    for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
+    {
+        ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
+    }
+
+    ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
+    ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
+    
+    M_shutdown_ok=EXTRUE;
+}
+
+/**
+ * Shutdown sequencer
+ * So that we terminate all processing string in the right order
+ * @param shutdown_req ptr to indicator
+ * @return SUCCEED
+ */
+exprivate int shutdowncb(int *shutdown_req)
+{
+    /* submit shutdown job */
+    int freethreads=EXFAIL, i;
+    M_shutdown_ind = shutdown_req;
+    
+    if (M_init_ok)
+    {
+        /* request the shutdown */
+        G_forward_req_shutdown = EXTRUE;
+        forward_shutdown_wake();
+        
+        /* check the ack 
+         * Sleep 0.2 sec..., let forward to wake up... & finish with 10ms
+         * interval...
+         */
+        for (i=0; i<20 && !ndrx_G_forward_req_shutdown_ack; i++)
+        {
+            usleep(10000);
+        }
+        
+        if (ndrx_G_forward_req_shutdown_ack &&
+                (G_tmqueue_cfg.fwdpoolsize==(freethreads=ndrx_thpool_nr_not_working(G_tmqueue_cfg.fwdthpool)))
+                )
+        {   
+            pthread_join(G_forward_thread, NULL);
+            
+            for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
+            {
+                ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
+            }
+         
+            /* terminate now */
+            ndrx_sv_do_shutdown("Quick shutdown", shutdown_req);
+            
+        }
+        else
+        {
+            /* async shutdown procedure */
+            NDRX_LOG(log_warn, "Async shutdown path (ack=%d free_fwd_threads=%d)",
+                    ndrx_G_forward_req_shutdown_ack, freethreads);
+            
+            ndrx_thpool_add_work(G_tmqueue_cfg.shutdownseq, (void*)shutdowncb_th, NULL);
+            
+        }
+    }
+    
+    return EXSUCCEED;
+}
+
 /*
  * Do initialization
  */
-int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+int tpsvrinit(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     signed char c;
@@ -340,10 +584,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
-    G_tmqueue_cfg.housekeeptime= TMQ_HOUSEKEEP_DEFAULT;
+    /* no setting applied.
+     * 0 means -> no session timeout.
+     * which in case of tmqueue forward enqueue failures will hang the transaction
+     */
+    G_tmqueue_cfg.ses_timeout=EXFAIL;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:h:u:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:")) != -1)
     {
         if (optarg)
         {
@@ -356,12 +604,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
         switch(c)
         {
-            case 'm': /* My qspace.. */ 
-                NDRX_STRCPY_SAFE(G_tmqueue_cfg.qspace, optarg);
-                snprintf(G_tmqueue_cfg.qspacesvc, sizeof(G_tmqueue_cfg.qspacesvc),
-                        NDRX_SVC_QSPACE, optarg);
-                NDRX_LOG(log_debug, "Qspace set to: [%s]", G_tmqueue_cfg.qspace);
-                NDRX_LOG(log_debug, "Qspace svc set to: [%s]", G_tmqueue_cfg.qspacesvc);
+            case 'm': 
+                
+                /* Ask to convert: */
+                NDRX_LOG(log_error, "ERROR ! Please convert queue settings to NDRX_XA_OPEN_STR (datadir=,qspace=)");
+                EXFAIL_OUT(ret);
+                
                 break;
                 
             case 'q':
@@ -389,8 +637,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             case 't': 
                 G_tmqueue_cfg.dflt_timeout = atol(optarg);
                 break;
-            case 'h':
-                G_tmqueue_cfg.housekeeptime = atoi(optarg);
+            case 'T': 
+                G_tmqueue_cfg.ses_timeout  = atol(optarg);
+                break;
+            case 'c': 
+                /* Time for time-out checking... */
+                G_tmqueue_cfg.tout_check_time = atoi(optarg);
                 break;
             default:
                 /*return FAIL;*/
@@ -405,12 +657,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             NDRX_LOG(log_error, "Failed to read CCONFIG's @queue section!");
             EXFAIL_OUT(ret);
         }
-    }
-    
-    if (EXEOS==G_tmqueue_cfg.qspace[0])
-    {
-        NDRX_LOG(log_error, "qspace not set (-m <qspace name> flag)");
-        EXFAIL_OUT(ret);
     }
     
     /* Check the parameters & default them if needed */
@@ -439,8 +685,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_tmqueue_cfg.dflt_timeout = TXTOUT_DFLT;
     }
     
-    /* set housekeeping time */
-    tmq_configure_housekeep(G_tmqueue_cfg.housekeeptime);
+    if (0>G_tmqueue_cfg.ses_timeout)
+    {
+        G_tmqueue_cfg.ses_timeout = SES_TOUT_DFLT;
+    }
+    
+    if (0>=G_tmqueue_cfg.tout_check_time)
+    {
+        G_tmqueue_cfg.tout_check_time = TOUT_CHECK_TIME;
+    }
     
     NDRX_LOG(log_info, "Recovery scan time set to [%d]",
                             G_tmqueue_cfg.scan_time);
@@ -457,15 +710,30 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_info, "Local transaction tout set to: [%ld]", 
             G_tmqueue_cfg.dflt_timeout );
     
+    NDRX_LOG(log_info, "Session transaction tout set to: [%ld]", 
+            G_tmqueue_cfg.ses_timeout);
+    
+    NDRX_LOG(log_info, "Periodic timeout-check time: [%d]", 
+            G_tmqueue_cfg.tout_check_time);
+    
     /* we should open the XA  */
     NDRX_LOG(log_debug, "About to Open XA Entry!");
+    
     if (EXSUCCEED!=tpopen())
     {
         EXFAIL_OUT(ret);
     }
     
+    /* we shall read the Q space now... */
+    
     /* Recover the messages from disk */
     if (EXSUCCEED!=tmq_load_msgs())
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    /* abort all active transactions! */
+    if (EXSUCCEED!=tmq_log_abortall())
     {
         EXFAIL_OUT(ret);
     }
@@ -489,7 +757,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED!=tpadvertise(G_tmqueue_cfg.qspacesvc, TMQUEUE))
+    if (EXSUCCEED!=tpadvertise(ndrx_G_qspacesvc, TMQUEUE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", svcnm);
         EXFAIL_OUT(ret);
@@ -521,6 +789,30 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+    if (NULL==(G_tmqueue_cfg.shutdownseq = ndrx_thpool_init(1,
+            NULL, NULL, NULL, 0, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize shutdown thread pool!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Register timer check (needed for time-out detection) */
+    if (EXSUCCEED!=tpext_addperiodcb(G_tmqueue_cfg.tout_check_time, tm_tout_check))
+    {
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* set shutdown callback handler
+     * so that we can initiate shutdown sequence
+     */
+    if (EXSUCCEED!=ndrx_tpext_addbshutdowncb(shutdowncb))
+    {
+        NDRX_LOG(log_error, "Failed to add shutdown sequencer callback!");
+        EXFAIL_OUT(ret);
+    }
+    
     /* Start the background processing */
     if (EXSUCCEED!=forward_process_init())
     {
@@ -538,21 +830,16 @@ out:
 /**
  * Do de-initialization
  */
-void NDRX_INTEGRA(tpsvrdone)(void)
+void tpsvrdone(void)
 {
     int i;
+    
     NDRX_LOG(log_debug, "tpsvrdone called - requesting "
             "background thread shutdown...");
     
-    G_forward_req_shutdown = EXTRUE;
-    
     if (M_init_ok)
     {
-        forward_shutdown_wake();
-
-        /* Wait to complete */
-        pthread_join(G_forward_thread, NULL);
-
+        
         /* Terminate the threads (request) */
         for (i=0; i<G_tmqueue_cfg.threadpoolsize; i++)
         {
@@ -565,24 +852,15 @@ void NDRX_INTEGRA(tpsvrdone)(void)
             ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void *)tmq_thread_shutdown, NULL);
         }
         
-        /* forwarder */
-        for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
-        {
-            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
-        }
+        /* terminate the showdown thread... */
+        ndrx_thpool_add_work(G_tmqueue_cfg.shutdownseq, (void *)tmq_thread_shutdown, NULL);
         
         
-        /* Wait for threads to finish */
-        ndrx_thpool_wait(G_tmqueue_cfg.thpool);
-        ndrx_thpool_destroy(G_tmqueue_cfg.thpool);
+        ndrx_thpool_wait(G_tmqueue_cfg.shutdownseq);
+        ndrx_thpool_destroy(G_tmqueue_cfg.shutdownseq);
         
-        ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
-        ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
-
-        ndrx_thpool_wait(G_tmqueue_cfg.notifthpool);
-        ndrx_thpool_destroy(G_tmqueue_cfg.notifthpool);
-
     }
+    
     tpclose();
     
 }

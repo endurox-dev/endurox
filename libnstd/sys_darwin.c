@@ -77,6 +77,7 @@ expublic string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_st
     return ndrx_sys_folder_list(qpath, return_status);
 }
 
+#ifndef EX_OS_DARWIN_HAVE_CLOCK
 /* TODO be more careful in a multithreaded environement */
 expublic int clock_gettime(clockid_t clk_id, struct timespec *tp)
 {
@@ -113,6 +114,7 @@ expublic int clock_gettime(clockid_t clk_id, struct timespec *tp)
 
     return retval;
 }
+#endif
 
 /**
  * Test the pid to contain regexp 
@@ -122,7 +124,7 @@ expublic int clock_gettime(clockid_t clk_id, struct timespec *tp)
  */
 expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
 {
-    return ndrx_sys_cmdout_test("ps -p %d -wwwe", pid, p_re);
+    return ndrx_sys_cmdout_test("ps eww %d", pid, p_re);
 }
 
 /**

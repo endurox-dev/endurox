@@ -1201,6 +1201,48 @@ expublic int sv_server_request_th(void *ptr, int *p_finish_off)
 }
 
 /**
+ * Perform shutdown call, only from main thread
+ * @param requester debug string of who requested the shutdown
+ * @param shutdown_req ptr to global indicating the down...
+ */
+expublic void ndrx_sv_do_shutdown(char *requester, int *shutdown_req)
+{
+    int i;
+    NDRX_LOG(log_warn, "Shutdown processed by [%s]", requester);
+    tp_command_generic_t shut_msg; /* shutdown msg */
+    
+    *shutdown_req=EXTRUE;
+    
+#ifdef EX_USE_POLL
+    /* TODO: We shall send request to all open service queues
+     * to do the shutdown. This is only for poll() mode.
+     */
+    memset(&shut_msg, 0, sizeof(shut_msg));
+
+    shut_msg.command_id = ATMI_COMMAND_SELF_SD;
+
+    /* Send over all open service queues: */
+
+    for (i=ATMI_SRV_Q_ADJUST; i<G_server_conf.adv_service_count; i++)
+    {
+        if (EXSUCCEED!=ndrx_generic_qfd_send(G_server_conf.service_array[i]->q_descr, 
+                (char *)&shut_msg, sizeof(shut_msg), 0))
+        {
+            NDRX_LOG(log_debug, "Failed to send self notification to %s q",
+                    G_server_conf.service_array[i]->listen_q);
+        }
+        else
+        {
+            G_shutdown_nr_wait++;
+        }
+    }/* for */
+
+    NDRX_LOG(log_warn, "Send %d self notifications to "
+            "service queues for shutdown...", G_shutdown_nr_wait);
+#endif
+}
+
+/**
  * Process admin request
  * @param buf
  * @param len
@@ -1210,46 +1252,22 @@ expublic int sv_server_request_th(void *ptr, int *p_finish_off)
 expublic int process_admin_req(char **buf, long len, int *shutdown_req)
 {
     int ret=EXSUCCEED;
-    tp_command_generic_t shut_msg; /* shutdown msg */
-    int i;
-
+    
     command_call_t * call = (command_call_t *)*buf;
 
     /* So what, do shutdown, right? */
     if (NDRXD_COM_SRVSTOP_RQ==call->command)
     {
-        
         NDRX_LOG(log_warn, "Shutdown requested by [%s]", 
                                         call->reply_queue);
-        *shutdown_req=EXTRUE;
-#ifdef EX_USE_POLL
-        /* TODO: We shall send request to all open service queues
-         * to do the shutdown. This is only for poll() mode.
-         */
-        memset(&shut_msg, 0, sizeof(shut_msg));
-        
-        shut_msg.command_id = ATMI_COMMAND_SELF_SD;
-        
-        /* Send over all open service queues: */
-        
-        for (i=ATMI_SRV_Q_ADJUST; i<G_server_conf.adv_service_count; i++)
+        if (NULL!=G_server_conf.p_shutdowncb)
         {
-            if (EXSUCCEED!=ndrx_generic_qfd_send(G_server_conf.service_array[i]->q_descr, 
-                    (char *)&shut_msg, sizeof(shut_msg), 0))
-            {
-                NDRX_LOG(log_debug, "Failed to send self notification to %s q",
-                        G_server_conf.service_array[i]->listen_q);
-            }
-            else
-            {
-                G_shutdown_nr_wait++;
-            }
-        }/* for */
-        
-        NDRX_LOG(log_warn, "Send %d self notifications to "
-                "service queues for shutdown...", G_shutdown_nr_wait);
-#endif
-        
+            G_server_conf.p_shutdowncb(shutdown_req);
+        }
+        else
+        {
+            ndrx_sv_do_shutdown("direct call", shutdown_req);
+        }
     }
     else if (NDRXD_COM_SRVINFO_RQ==call->command)
     {

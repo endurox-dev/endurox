@@ -202,7 +202,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
     
     /* Build up the message. */
     tmq_setup_cmdheader_newmsg(&p_msg->hdr, p_msg->hdr.qname, 
-            tpgetnodeid(), G_server_conf.srv_id, G_tmqueue_cfg.qspace, p_msg->qctl.flags);
+            tpgetnodeid(), G_server_conf.srv_id, ndrx_G_qspace, p_msg->qctl.flags);
     
     /* Return the message id. */
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
@@ -317,6 +317,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     int local_tx = EXFALSE;
     char qname[TMQNAMELEN+1];
     long buf_realoc_size;
+    char corrid_str[TMCORRIDLEN_STR+1];
+    char *p_corrid_str = NULL;
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_dequeue()");
@@ -372,7 +374,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     }
     
     /* Get FB size (current) */
-    NDRX_LOG(log_warn, "qctl_req flags: %ld", qctl_in.flags);
+    NDRX_LOG(log_info, "qctl_req flags: %ld", qctl_in.flags);
     
     if (qctl_in.flags & TPQGETBYMSGID)
     {
@@ -394,40 +396,30 @@ expublic int tmq_dequeue(UBFH **pp_ub)
             EXFAIL_OUT(ret);
         }
     }
-    else if (qctl_in.flags & TPQGETBYCORRID)
+    else 
     {
-        if (NULL==(p_msg = tmq_msg_dequeue_by_corid(qctl_in.corrid, qctl_in.flags, 
-                &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
+        /* setcorrid to not null*/
+        if (qctl_in.flags & TPQGETBYCORRID)
         {
-            char corid_str[TMCORRIDLEN_STR+1];
+            tmq_msgid_serialize(qctl_in.corrid, corrid_str);
+            p_corrid_str = corrid_str;
+        }
+
+        if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE, 
+            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg), p_corrid_str)))
+        {
             int lev = log_info;
             
             if (qctl_out.diagnostic!=QMENOMSG)
             {
                 lev=log_error;
             }
-            
-            tmq_corid_serialize(qctl_in.corrid, corid_str);
-            
-            NDRX_LOG(lev, "tmq_dequeue: no message found for given msgid [%s] %ld: %s", 
-                    corid_str,qctl_out.diagnostic, qctl_out.diagmsg);
+        
+            NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] corrid_str [%s] %ld: %s", qname,
+                NULL!=p_corrid_str?corrid_str:"N/A", qctl_out.diagnostic, qctl_out.diagmsg);
+        
             EXFAIL_OUT(ret);
         }
-    }
-    else if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE, 
-            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
-    {
-        int lev = log_info;
-            
-        if (qctl_out.diagnostic!=QMENOMSG)
-        {
-            lev=log_error;
-        }
-        
-        NDRX_LOG(lev, "tmq_dequeue: no message in Q [%s] %ld: %s", qname,
-                qctl_out.diagnostic, qctl_out.diagmsg);
-        
-        EXFAIL_OUT(ret);
     }
     
     /* Use the original metadata */
@@ -483,7 +475,7 @@ out:
             {
                 NDRX_LOG(log_error, "Commit failed!");
                 userlog("Commit failed!");
-                NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: commit failed!");
+                NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: commit failed!");
                 qctl_out.diagnostic = QMESYSTEM;
                 ret=EXFAIL;
             }
@@ -501,42 +493,6 @@ out:
         ret=EXFAIL;
     }
 
-    return ret;
-}
-
-/**
- * Unlock the message
- * @param p_ub
- * @return 
- */
-expublic int tex_mq_notify(UBFH *p_ub)
-{
-    int ret = EXSUCCEED;
-    union tmq_upd_block b;
-    BFLDLEN len = sizeof(b);
-     
-    if (EXSUCCEED!=Bget(p_ub, EX_DATA, 0, (char *)&b, &len))
-    {
-        NDRX_LOG(log_error, "Failed to get EX_DATA: %s", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=tmq_finalize_files(p_ub))
-    {
-        NDRX_LOG(log_error, "Failed to finalize disk files ...");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* run the file ops...
-     * if they are OK 
-     */
-    if (EXSUCCEED!=tmq_unlock_msg(&b))
-    {
-        NDRX_LOG(log_error, "Failed to unlock message...");
-        EXFAIL_OUT(ret);
-    }
-    
-out:
     return ret;
 }
 
@@ -575,9 +531,9 @@ expublic int tmq_mqlq(UBFH *p_ub, int cd)
     
         tmq_get_q_stats(el->qname, &msgs, &locked);
                 
-        NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
+        NDRX_LOG(log_debug, "returning %s/%s", ndrx_G_qspace, el->qname);
         
-        if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
+        if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, ndrx_G_qspace, 0L) ||
             EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
             EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
             EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||
@@ -650,7 +606,7 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
 
         if (EXSUCCEED==tmq_build_q_def(el->qname, &is_default, qdef, sizeof(qdef)))
         {
-            NDRX_LOG(log_debug, "returning %s/%s", G_tmqueue_cfg.qspace, el->qname);
+            NDRX_LOG(log_debug, "returning %s/%s", ndrx_G_qspace, el->qname);
             
             flags[0] = EXEOS;
             
@@ -660,7 +616,7 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
             }
             
 
-            if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, G_tmqueue_cfg.qspace, 0L) ||
+            if (EXSUCCEED!=Bchg(p_ub, EX_QSPACE, 0, ndrx_G_qspace, 0L) ||
                 EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, el->qname, 0L) ||
                 EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L) ||
                 EXSUCCEED!=Bchg(p_ub, TMSRVID, 0, (char *)&srvid, 0L) ||

@@ -1,8 +1,8 @@
 /**
- * @brief Handler for linked-list of prev/next fields.
- *   to avoid conflicts with utlist2.h use access macros in separate object file
+ * @brief Handler for linked-list of prev2/next2 fields.
+ *   to avoid conflicts with utlist.h use access macros in separate object file
  *
- * @file utlist.h
+ * @file utlist2.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -33,11 +33,11 @@
  * -----------------------------------------------------------------------------
  */
 
-#ifndef UTLIST_H
-#define UTLIST_H
+#ifndef UTLIST2_H
+#define UTLIST2_H
 
-#define NDRX_PREV prev
-#define NDRX_NEXT next
+#define NDRX_PREV prev2
+#define NDRX_NEXT next2
 
 #include <utlist_int.h>
 

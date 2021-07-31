@@ -181,6 +181,9 @@ struct srv_conf
     int (*p_periodcb)(void);/**< Periodic callback */
     int periodcb_sec; /**< Number of seconds for each cb call */
     
+    int (*p_shutdowncb)(int *shutdown_req);/**< Redirect shutdown request to callback
+                               * for advanced shutdown sequences such as tmq */
+    
     /** Callback used before server goes in poll state */
     int (*p_b4pollcb)(void);
     xbufcvt_entry_t *xbufcvt_tab; /**< string hashlist for buffer convert funcs */
@@ -308,8 +311,8 @@ extern NDRX_API void ndrx_svchash_cleanup(ndrx_svchash_t **hash);
 extern NDRX_API int ndrx_svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b);
 extern NDRX_API void ndrx_sv_advertise_lock();
 extern NDRX_API void ndrx_sv_advertise_unlock();
-
-
+extern NDRX_API void ndrx_sv_do_shutdown(char *requester, int *shutdown_req);
+extern NDRX_API int ndrx_tpext_addbshutdowncb(int (*p_shutdowncb)(int *shutdown_req));
 #ifdef	__cplusplus
 }
 #endif

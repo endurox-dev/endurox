@@ -65,6 +65,8 @@
 #include <expluginbase.h>
 #include <sys_test.h>
 #include <lcfint.h>
+#include <ndebugcmn.h>
+#include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -167,6 +169,9 @@ expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname,
         NDRX_SPIN_INIT_V(ret->writters_lock);
         pthread_cond_init(&ret->change_wait, NULL);
         
+        /* Init the line lock */
+        MUTEX_VAR_INIT_RECURS(ret->line_lock);
+        
         NDRX_STRCPY_SAFE(ret->fname, fname);
         ret->writters=0;
         ret->chwait=0;
@@ -180,12 +185,21 @@ expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname,
     {
         /* Increment the users + add any flags */
         ret->refcount++;
+    }
+    
+    /* set process level if any */
+    if (dbg_ptr->flags & LOG_FACILITY_PROCESS)
+    {
+        ret->flags |=NDRX_LOG_FPROC;
         
-        /* set process level if any */
-        if (dbg_ptr->flags & LOG_FACILITY_PROCESS)
+        /* Also process the sync flags... 
+         * makes sense only at process level logger
+         */
+        if (LOG_THREADED_LINEL & dbg_ptr->is_threaded)
         {
-            ret->flags |=NDRX_LOG_FPROC;
+            ret->flags |=NDRX_LOG_FLOCK;
         }
+        
     }
     
 out:
@@ -242,6 +256,7 @@ expublic int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, 
         MUTEX_DESTROY_V(mysink->change_lock);
         MUTEX_DESTROY_V(mysink->busy_lock);
         NDRX_SPIN_DESTROY_V(mysink->writters_lock);
+        MUTEX_DESTROY_V(mysink->line_lock);
         
         /* remove it from hash */
         EXHASH_DEL(M_sink_hash, mysink);
@@ -333,6 +348,12 @@ expublic void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink)
         
     }
     
+    /* Do lines lock... */
+    if (mysink->flags & NDRX_LOG_FLOCK)
+    {
+        MUTEX_LOCK_V(mysink->line_lock);
+    }
+    
 }
 
 /**
@@ -342,6 +363,14 @@ expublic void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink)
 expublic void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink)
 {
     int do_signal = EXFALSE;
+    
+    /* terminate the lines lock 
+     * if setting is changed, then we shall be outside of writters region
+     */
+    if (mysink->flags & NDRX_LOG_FLOCK)
+    {
+        MUTEX_UNLOCK_V(mysink->line_lock);
+    }
     
     /* step 1 -> check if busy lock is set? */
     NDRX_SPIN_LOCK_V(mysink->writters_lock);

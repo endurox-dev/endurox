@@ -42,20 +42,21 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
 #include <atmi.h>
-#include <utlist.h>
 #include <exhash.h>
 #include <exthpool.h>
 #include "tmqueue.h"
     
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_forward_thread;
-extern int G_forward_req_shutdown;    /* Is shutdown request? */
+extern int volatile G_forward_req_shutdown;          /**< Is shutdown request? */
+extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   */
+
 /*---------------------------Macros-------------------------------------*/
 #define SCAN_TIME_DFLT          10  /**< Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /**< Try count for transaction completion */
-#define TOUT_CHECK_TIME         1   /**< Check for transaction timeout, sec   */
 #define THREADPOOL_DFLT         10  /**< Default number of threads spawned   */
 #define TXTOUT_DFLT             30  /**< Default XA transaction timeout      */
+#define SES_TOUT_DFLT           180  /**< Default XA transaction timeout      */
 
 #define TMQ_MODE_FIFO           'F' /**< fifo q mode                        */
 #define TMQ_MODE_LIFO           'L' /**< lifo q mode                        */
@@ -82,13 +83,17 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
  */
 typedef struct
 {
-    long dflt_timeout;  /**< how long monitored transaction can be open     */
-    int scan_time;      /**< Number of seconds retries                      */
-    char qspace[XATMI_SERVICE_NAME_LENGTH+1];   /**< where the Q files live */
-    char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service name      */
+    long dflt_timeout;  /**< service call transaction timeout (forwarder)    */
+    
+    long ses_timeout;  /**< global session timeout, 
+                        * how long uncompleted transaction may hang          */
+    
+    int scan_time;      /**< Number of seconds retries                       */
+    
+    int tout_check_time; /**< seconds used for detecting transaction timeout */
+    
     char qconfig[PATH_MAX+1]; /**< Queue config file                        */
     int threadpoolsize;       /**< thread pool size                         */
-    int housekeeptime;        /**< Number of seconds active+corrupted cleanup*/
     threadpool thpool;        /**< threads for service                      */
     
     int notifpoolsize;        /**< Notify thread pool size                  */
@@ -96,6 +101,9 @@ typedef struct
     
     int fwdpoolsize;          /**< forwarder thread pool size               */
     threadpool fwdthpool;     /**< threads for forwarder                    */
+    
+    threadpool shutdownseq;   /**< Shutdown sequencer, we have simpler just to use pool instead of threads  */
+    
     long fsync_flags;         /**< special flags for disk sync              */
     
 } tmqueue_cfg_t;
@@ -112,6 +120,9 @@ struct thread_server
 /* note we must malloc this struct too. */
 typedef struct thread_server thread_server_t;
 
+/** correlator message queue hash */
+typedef struct tmq_cormsg tmq_corhash_t;
+
 /**
  * Memory based message.
  */
@@ -119,16 +130,36 @@ typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
     char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
-    char corid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator            */
-    /** We should have hash handler of message hash */
-    EX_hash_handle hh; /**< makes this structure hashable (for msgid)        */
-    EX_hash_handle h2; /**< makes this structure hashable (for corid)        */
-    /** We should also have a linked list handler   */
+    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    /** We should have hash handler of message hash                           */
+    EX_hash_handle hh; /**< makes this structure hashable (for msgid)         */
+    EX_hash_handle h2; /**< makes this structure hashable (for corrid)         */
+
+    /** We should also have a linked list handler                             */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
     
+    /** Our position in corq, if any, next. Use utlist2.h in different object */
+    tmq_memmsg_t *next2;
+    /** Our position in corq, if any, prev. Use utlist2.h in different object */
+    tmq_memmsg_t *prev2;
+    /** backlink to correlator q, so that we know where to remove             */
+    tmq_corhash_t *corhash;
+
     tmq_msg_t *msg;
 };
+
+/**
+ * Messages correlated
+ */
+struct tmq_cormsg
+{
+    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    /** queue by correlation, CDL, next2, prev2 */
+    tmq_memmsg_t *corq;
+    EX_hash_handle hh; /**< makes this structure hashable        */
+};
+
 
 /**
  * List of queues (for queued messages)
@@ -137,14 +168,15 @@ typedef struct tmq_qhash tmq_qhash_t;
 struct tmq_qhash
 {
     char qname[TMQNAMELEN+1];
-    long succ;      /**< Succeeded auto messages                */
-    long fail;      /**< failed auto messages                   */
+    long succ;      /**< Succeeded auto messages                 */
+    long fail;      /**< failed auto messages                    */
     
-    long numenq;    /**< Enqueued messages (even locked)        */
+    long numenq;    /**< Enqueued messages (even locked)         */
     long numdeq;    /**< Dequeued messages (removed, including aborts)     */
     
     EX_hash_handle hh; /**< makes this structure hashable        */
-    tmq_memmsg_t *q;
+    tmq_memmsg_t *q;    /**< messages queued                     */
+    tmq_corhash_t *corhash; /**< has of correlators                */
 };
 
 /**
@@ -161,7 +193,6 @@ struct tmq_qconfig
     int tries;       /**< Retry count for sending                       */
     int waitinit;    /**< How long to wait for initial sending (sec)    */
     int waitretry;   /**< How long to wait between retries (sec)        */
-    int waitretryinc;/**< Wait increment between retries (sec)          */
     int waitretrymax;/**< Max wait  (sec)                               */
     int memonly;    /**< is queue memory only                           */
     char mode;      /**< queue mode fifo/lifo                           */
@@ -207,10 +238,8 @@ extern int tmq_mqlm(UBFH *p_ub, int cd);
 extern int tmq_mqrc(UBFH *p_ub);
 extern int tmq_mqch(UBFH *p_ub);
 
-
 extern int tmq_enqueue(UBFH *p_ub);
 extern int tmq_dequeue(UBFH **pp_ub);
-extern int tex_mq_notify(UBFH *p_ub);
 
 /* Background API */
 extern int background_read_log(void);
@@ -223,11 +252,12 @@ extern void thread_shutdown(void *ptr, int *p_finish_off);
 /* Q space api: */
 extern int tmq_reload_conf(char *cf);
 extern int tmq_qconf_addupd(char *qconfstr, char *name);
+extern int tmq_dum_add(char *tmxid);
 extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
-extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, char *diagmsg, size_t diagmsgsz);
+extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
+            char *diagmsg, size_t diagmsgsz, char *corrid_str);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
-extern tmq_msg_t * tmq_msg_dequeue_by_corid(char *corid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
 extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
@@ -237,6 +267,11 @@ extern tmq_memmsg_t *tmq_get_msglist(char *qname);
     
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
 extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);
+extern int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2);
+extern void tmq_cor_sort_queues(tmq_qhash_t *q);
+extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
     
 #ifdef	__cplusplus
 }

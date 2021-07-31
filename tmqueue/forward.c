@@ -69,7 +69,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic pthread_t G_forward_thread;
-expublic int G_forward_req_shutdown = EXFALSE;    /* Is shutdown request? */
+expublic int volatile G_forward_req_shutdown = EXFALSE;          /**< Is shutdown request? */
+expublic int volatile ndrx_G_forward_req_shutdown_ack = EXFALSE; /**< Is shutdown acked?   */
 
 
 exprivate MUTEX_LOCKDECL(M_wait_mutex);
@@ -79,10 +80,12 @@ exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
 
 
 exprivate fwd_qlist_t *M_next_fwd_q_list = NULL;    /**< list of queues to check msgs to fwd */
-exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list... */
+exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list...  */
+exprivate int          M_had_msg = EXFALSE;         /**< Did we got the msg previously?      */
     
-
 exprivate MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
+
+exprivate int M_force_sleep = EXFALSE;              /**< Shall the sleep be forced in case of error? */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -119,7 +122,13 @@ exprivate void thread_sleep(int sleep_sec)
     wait_time.tv_nsec = now.tv_usec*1000;
 
     MUTEX_LOCK_V(M_wait_mutex);
-    rt = pthread_cond_timedwait(&M_wait_cond, &M_wait_mutex, &wait_time);
+    
+    /* No wait if request was made here... */
+    if (!G_forward_req_shutdown)
+    {
+        rt = pthread_cond_timedwait(&M_wait_cond, &M_wait_mutex, &wait_time);
+    }
+    
     MUTEX_UNLOCK_V(M_wait_mutex);
 }
 
@@ -162,46 +171,64 @@ exprivate tmq_msg_t * get_next_msg(void)
     tmq_msg_t * ret = NULL;
     long qerr = EXSUCCEED;
     char msgbuf[128];
+    int again;
 
-    if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
+    do
     {
-        fwd_q_list_rm();
-        
-        /* Generate new list */
-        M_next_fwd_q_list = tmq_get_qlist(EXTRUE, EXFALSE);
-        
-        if (NULL!=M_next_fwd_q_list)
-        {
-            M_next_fwd_q_cur = M_next_fwd_q_list;
-        }
-    }
-    
-    /*
-     * get the message
-     */
-    while (NULL!=M_next_fwd_q_cur)
-    {
-        /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
-                &qerr, msgbuf, sizeof(msgbuf))))
-        {
-            NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", qerr, msgbuf);
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "Dequeued message");
-        }
+        again=EXFALSE;
 
-        /* schedule next queue ... */
-        M_next_fwd_q_cur = M_next_fwd_q_cur->next;
-    
-        /* done with this loop if having msg.. */
-        if (NULL!=ret)
+        if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
         {
-            break;
-        }
+            /* reset marking, no messages processed yet. */
+            M_had_msg=EXFALSE;
+            fwd_q_list_rm();
 
-    }
+            /* Generate new list */
+            M_next_fwd_q_list = tmq_get_qlist(EXTRUE, EXFALSE);
+            
+            if (NULL!=M_next_fwd_q_list)
+            {
+                M_next_fwd_q_cur = M_next_fwd_q_list;
+            }
+        }
+        
+        /*
+         * get the message
+         */
+        while (NULL!=M_next_fwd_q_cur)
+        {
+            /* OK, so we peek for a message */
+            if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
+                    &qerr, msgbuf, sizeof(msgbuf), NULL)))
+            {
+                NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", 
+                    qerr, msgbuf);
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Dequeued message");
+                M_had_msg=EXTRUE;
+            }
+
+            /* schedule next queue ... */
+            M_next_fwd_q_cur = M_next_fwd_q_cur->next;
+        
+            /* done with this loop if having msg.. */
+            if (NULL!=ret)
+            {
+                break;
+            }
+
+        }
+    
+        /* if any queue had msgs, then re-scan queue list and retry */
+        if (NULL==ret && M_had_msg)
+        {
+            NDRX_LOG(log_debug, "Had messages in prevous run, scan Qs again");
+            again = EXTRUE;
+        } 
+
+    } while (again);
     
 out:
     return ret;
@@ -229,8 +256,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     int tperr;
     union tmq_block cmd_block;
     int tout;
-    int disk_err=EXFALSE;
-    
+    int sent_ok=EXFALSE;
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     
     if (!M_is_xa_open)
@@ -240,8 +266,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             NDRX_LOG(log_error, "Failed to tpopen() by worker thread: %s", 
                     tpstrerror(tperrno));
             userlog("Failed to tpopen() by worker thread: %s", tpstrerror(tperrno));
-            disk_err=EXTRUE;
-            goto finalize;
+            
+            /* nothing todo! */
+            exit(1);
         }
         else
         {
@@ -260,6 +287,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         /* might happen if we reconfigure on the fly. */
         NDRX_LOG(log_error, "Failed to get qconf for [%s]", msg->hdr.qname);
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
         EXFAIL_OUT(ret);
     }
     
@@ -289,6 +317,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                     0, 0))
     {
         NDRX_LOG(log_always, "Failed to allocate buffer");
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
         EXFAIL_OUT(ret);
     }
     
@@ -301,10 +330,10 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
             NDRX_LOG(log_error, "Failed to start tran!");
-            /* keep the msg locked: */
             
-            disk_err=EXTRUE;
-            goto finalize;
+            /* nothing todo with the msg, unlock... */
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -335,50 +364,68 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             NDRX_LOG(log_error, "Abort current transaction for counter increment");
             tpabort(0L);
         }
-            
-        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        sent_ok=EXTRUE;
     }
     
-    NDRX_LOG(log_info, "Service answer ok for %s", msgid_str);
+    NDRX_LOG(log_info, "Service answer %s for %s", (sent_ok?"ok":"fail"), msgid_str);
     
-out:
-
     memset(&cmd_block, 0, sizeof(cmd_block));
-
     memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
     
    /* cmd_block.hdr.flags|=TPQASYNC; async complete to avoid deadlocks... 
     * No need for this: we have seperate thread pool for notify events.
     */
 
-    /* start the transaction */
+    /* start the transaction 
+     * Note! message is not yet added to transaction with
+     */
     if (!tpgetlev())
     {
         if (EXSUCCEED!=tpbegin(tout, 0))
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
             NDRX_LOG(log_error, "Failed to start tran!");
-            /* unlock the message -> for stablity tests... 
             tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-            goto out_free;*/
-            
-            /* keep the msg locked: */
-            
-            disk_err=EXTRUE;
-            goto finalize;
-            
+            EXFAIL_OUT(ret);
         }
     }
 
     /* 
      * just unlock the message. Increase the cou
      */
-    if (EXSUCCEED==ret)
+    if (sent_ok)
     {
+        /* start our internal ransactino */
+        tmq_update_q_stats(msg->hdr.qname, 1, 0);
+        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
+
+        /* well this will generate this will add msg to transaction
+         * will be handled by timeout setting...
+         * No more unlock manual.
+         */
+        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
+                "Removing completed message...", NULL))
+        {
+            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                    msgid_str);
+            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
+                    msgid_str);
+
+            /* unlock the msg, as adding to log is last step, 
+             * thus not in log and we are in control
+             */
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            EXFAIL_OUT(ret);
+        }
+        
        /* Remove the message */
         if (msg->qctl.flags & TPQREPLYQ)
         {
             TPQCTL ctl;
+        
             NDRX_LOG(log_warn, "TPQREPLYQ defined, sending answer buffer to "
                     "[%s] q in [%s] namespace", 
                     msg->qctl.replyqueue, msg->hdr.qspace);
@@ -386,32 +433,37 @@ out:
             /* Send response to reply Q (load the data in FB with call details) */
             memset(&ctl, 0, sizeof(ctl));
                     
+            /* this will add msg to our transaction, if all ok
+             * now futher we do not control
+             * the transaction here, just let let timeout handler to do the
+             * job
+             */
             if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
                     rply_buf, rply_len, 0))
             {
-                NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
-                        msg->qctl.replyqueue, tpstrerror(tperrno));
-                userlog("Failed to enqueue to replyqueue [%s]: %s", 
-                        msg->qctl.replyqueue, tpstrerror(tperrno));
-                disk_err=EXTRUE;
-                goto finalize;
+                if (TPEDIAGNOSTIC==tperrno)
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s diag: %d:%s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno),
+                            msg->qctl.diagnostic, msg->qctl.diagmsg);
+                    userlog("Failed to enqueue to replyqueue [%s]: %s diag: %d:%s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno),
+                            msg->qctl.diagnostic, msg->qctl.diagmsg);
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno));
+                    userlog("Failed to enqueue to replyqueue [%s]: %s", 
+                            msg->qctl.replyqueue, tpstrerror(tperrno));
+                }
+                /* no unlock & sleep as we do not know where the transaction
+                 * did stuck
+                 */
+                EXFAIL_OUT(ret);
             }
         }
         
-        tmq_update_q_stats(msg->hdr.qname, 1, 0);
-        
-        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
-        
-        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                "Removing completed message..."))
-        {
-            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-            disk_err=EXTRUE;
-            goto finalize;
-        }
     }
     else
     {
@@ -429,14 +481,18 @@ out:
             tmq_update_q_stats(msg->hdr.qname, 0, 1);
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                    "Removing expired message..."))
+                    "Removing expired message...", NULL))
             {
                 NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
                         msgid_str);
                 userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
                         msgid_str);
-                disk_err=EXTRUE;
-                goto finalize;
+                
+                /* unlock the msg, as adding to log is last step, 
+                 * thus not in log and we are in control
+                 */
+                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+                EXFAIL_OUT(ret);
             }
             
             if (msg->qctl.flags & TPQFAILUREQ && NULL!=rply_buf)
@@ -451,22 +507,42 @@ out:
                  * Keep the original flags... */
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
+                /* if local tran expires, the process will be unable to join
+                 * transaction 
+                 */
                 if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
                         rply_buf, rply_len, 0))
                 {
-                    NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
-                            msg->qctl.failurequeue, tpstrerror(tperrno));
-                    userlog("Failed to enqueue to failurequeue [%s]: %s", 
-                            msg->qctl.failurequeue, tpstrerror(tperrno));
-                    disk_err=EXTRUE;
-                    goto finalize;
+                    if (TPEDIAGNOSTIC==tperrno)
+                    {
+                        NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s diag: %d:%s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno),
+                                msg->qctl.diagnostic, msg->qctl.diagmsg);
+                        userlog("Failed to enqueue to failurequeue [%s]: %s diag: %d:%s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno),
+                                msg->qctl.diagnostic, msg->qctl.diagmsg);
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno));
+                        userlog("Failed to enqueue to failurequeue [%s]: %s", 
+                                msg->qctl.replyqueue, tpstrerror(tperrno));
+                    }
+                    
+                    /* let timeout/tmsrv to housekeep...
+                     * only here if global transaction timed-out
+                     * then will we force the sleep. Thought this would be
+                     * very rare case.
+                     */
+                    EXFAIL_OUT(ret);
                 }
             }
             
             if (EXEOS!=qconf.errorq[0])
             {
                 TPQCTL ctl;
-                NDRX_LOG(log_warn, "ERRORQ defined, enqueue answer buffer to "
+                NDRX_LOG(log_warn, "ERRORQ defined, enqueue request buffer to "
                     "[%s] q in [%s] namespace", qconf.errorq, msg->hdr.qspace);
                 
 
@@ -481,8 +557,9 @@ out:
                             qconf.errorq, tpstrerror(tperrno));
                     userlog("Failed to enqueue to errorq [%s]: %s", 
                             qconf.errorq, tpstrerror(tperrno));
-                    disk_err=EXTRUE;
-                    goto finalize;
+                    
+                    /* let timeout/tmsrv to housekeep... */
+                    EXFAIL_OUT(ret);
                 }
             }
         }
@@ -494,48 +571,49 @@ out:
             cmd_block.hdr.command_code = TMQ_STORCMD_UPD;
             
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                    "Update message command"))
+                    "Update message command", NULL))
             {
                 NDRX_LOG(log_error, "Failed to issue update command to xa for msgid_str [%s]", 
                         msgid_str);
                 userlog("Failed to issue update command to xa for msgid_str [%s]", 
                         msgid_str);
-                disk_err=EXTRUE;
-                goto finalize;
+                
+                /* unlock the msg, as adding to log is last step, 
+                 * thus not in log and we are in control
+                 */
+                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+                EXFAIL_OUT(ret);
             }
         }
     }
 
-finalize:
-    
-    /* commit the transaction */
-    if (disk_err)
+out:    
+    if (tpgetlev())
     {
-        userlog("tmq forward unrecoverable error (disk/tmsrv): msg [%s] aborting. "
-                "Please restart tmqueue for message retry", 
-                msgid_str);
-        NDRX_LOG(log_error, "tmq forward unrecoverable error  (disk/tmsrv): msg [%s] aborting. "
-                "Please restart tmqueue for message retry", 
-                msgid_str);
-        if (tpgetlev())
+        if (EXSUCCEED==ret)
         {
-            tpabort(0);
+            if (EXSUCCEED!=tpcommit(0L))
+            {
+                NDRX_LOG(log_error, "Failed to commit => aborting + force sleep");
+                userlog("Failed to commit => aborting + force sleep");
+                M_force_sleep=EXTRUE;
+                tpabort(0L);
+            }
         }
-        /* Unlock the message....? 
-         * needs to think about it.
-         * As if we get unrecoverable error, we might just keep looping
-         * and sending messages out...
-         * Thus now admin shall restart the tmqueue to proceed.
-         */
+        else
+        {
+            NDRX_LOG(log_error, "System failure during msg processing => aborting + force sleep");
+            userlog("System failure during msg processing => aborting + force sleep");
+            tpabort(0L);
+            M_force_sleep=EXTRUE;
+        }
     }
-    else if (EXSUCCEED!=tpcommit(0))
+    else if (EXSUCCEED!=ret)
     {
-        userlog("Failed to commit: %s", tpstrerror(tperrno));
-        NDRX_LOG(log_error, "Failed to commit!");
-        tpabort(0);
+        NDRX_LOG(log_error, "System failure => force sleep");
+        M_force_sleep=EXTRUE;
     }
-
-out_free:
+    
     if (NULL!=call_buf)
     {
         tpfree(call_buf);
@@ -562,6 +640,7 @@ out_free:
 expublic int forward_loop(void)
 {
     int ret = EXSUCCEED;
+    int normal_sleep;
     tmq_msg_t * msg;
     /*
      * We need to get the list of queues to monitor.
@@ -575,27 +654,42 @@ expublic int forward_loop(void)
         /* wait for one slot to become free.. */
         ndrx_thpool_wait_one(G_tmqueue_cfg.fwdthpool);
         
-        /* 2. get the message from Q */
-        msg = get_next_msg();
-        
-        /* 3. run off the thread */
-        if (NULL!=msg)
+        normal_sleep=EXFALSE;
+        if (!M_force_sleep)
         {
-            /* Submit the job to thread */
-            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
+            /* 2. get the message from Q */
+            msg = get_next_msg();
+        
+            /* 3. run off the thread */
+            if (NULL!=msg)
+            {
+                /* Submit the job to thread */
+                ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
+            }
+            else
+            {
+                normal_sleep=EXTRUE;
+            }
         }
-        else
+
+        /* go sleep if no msgs, or forced */
+        if (normal_sleep || M_force_sleep)
         {
             /* sleep only when did not have a message 
              * So that if we have batch, we try to use all resources...
              */
-            NDRX_LOG(log_debug, "background - sleep %d", 
-                    G_tmqueue_cfg.scan_time);
+            NDRX_LOG(log_debug, "background - sleep %d forced=%d", 
+                    G_tmqueue_cfg.scan_time, M_force_sleep);
             
-            if (!G_forward_req_shutdown)
-                thread_sleep(G_tmqueue_cfg.scan_time);
+            thread_sleep(G_tmqueue_cfg.scan_time);
+            
+            /* in case of error, forced sleep */
+            M_force_sleep=EXFALSE;
         }
     }
+    
+    /* ask the shutodwn */
+    ndrx_G_forward_req_shutdown_ack = EXTRUE;
     
     /* remove any allocated memory... */
     fwd_q_list_rm();

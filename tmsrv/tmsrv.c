@@ -50,7 +50,6 @@
 #include <regex.h>
 #include <utlist.h>
 #include <unistd.h>
-#include <getopt.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -86,6 +85,11 @@ exprivate int M_init_ok = EXFALSE;
 exprivate __thread ndrx_stopwatch_t M_ping_stopwatch;
 exprivate __thread int M_thread_first = EXTRUE;
 exprivate __thread XID M_ping_xid; /* run pings by this non existent xid */
+
+/* allow only one timeout check at the same time... */
+exprivate int volatile M_into_toutchk = EXFALSE;
+exprivate MUTEX_LOCKDECL(M_into_toutchk_lock);
+
 /*---------------------------Prototypes---------------------------------*/
 exprivate int tm_tout_check(void);
 
@@ -747,6 +751,25 @@ exprivate void tx_tout_check_th(void *ptr)
     atmi_xa_log_list_t *el, *tmp;
     atmi_xa_tx_info_t xai;
     atmi_xa_log_t *p_tl;
+    int in_progress;
+    
+    MUTEX_LOCK_V(M_into_toutchk_lock);
+    
+    in_progress=M_into_toutchk;
+    
+    /* do lock if was free */
+    if (!in_progress)
+    {
+        M_into_toutchk=EXTRUE;
+    }
+            
+    MUTEX_UNLOCK_V(M_into_toutchk_lock);
+    
+    if (in_progress)
+    {
+        /* nothing todo... */
+        goto out;
+    }
     
     /* Create a copy of hash, iterate and check each tx for timeout condition
      * If so then initiate internal abort call
@@ -811,6 +834,17 @@ exprivate void tx_tout_check_th(void *ptr)
         NDRX_FREE(el);
     }
 out:    
+                
+    /* if was not in progress then we locked  */
+    MUTEX_LOCK_V(M_into_toutchk_lock);
+
+    if (!in_progress)
+    {
+        M_into_toutchk=EXFALSE;
+    }   
+
+    MUTEX_UNLOCK_V(M_into_toutchk_lock);
+    
     return;
 }
 

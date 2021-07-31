@@ -1,7 +1,7 @@
 /**
- * @brief Keep the message store clean from damaged files where possible
+ * @brief ATMI allocation MT tests
  *
- * @file hausekeep.c
+ * @file atmiclt0_alloc.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,105 +31,87 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <regex.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <memory.h>
+#include <pthread.h>
 #include <unistd.h>
-
+#include <fcntl.h>
+#include <sys_mqueue.h>
+#include "test000.h"
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <sys_unix.h>
-
-#include "tmqd.h"
-#include "nstdutil.h"
-#include "userlog.h"
+#include <errno.h>
+#include <exthpool.h>
+#include <nstopwatch.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define POOL_SIZE   30
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-
-exprivate int M_housekeep=TMQ_HOUSEKEEP_DEFAULT;    /**< default time for houskeeping */
-
 /*---------------------------Prototypes---------------------------------*/
 
-
 /**
- * Configure housekeep time
- * @param housekeep time in seconds
+ * run allocation for 30 sec...
  */
-expublic void tmq_configure_housekeep(int housekeep)
+void do_loop (void *ptr, int *p_finish_off)
 {
-    M_housekeep=housekeep;
-    
-    NDRX_LOG(log_info, "Housekeep time set to [%d] seconds",
-            M_housekeep);    
+    ndrx_stopwatch_t w;
+
+    ndrx_stopwatch_reset(&w);
+    while (ndrx_stopwatch_get_delta_sec(&w) < 30)
+    {
+        char *buf = tpalloc("UBF", NULL, 1024);
+        buf = tprealloc(buf, 8192);
+        buf = tprealloc(buf, 18192);
+        buf = tprealloc(buf, 1024);
+        tpfree(buf);
+    }
+
 }
-
 /**
- * Remove active file 
- * @param filename which file to check
- * @param tmq_err error code when processing the file
+ * Run allocator in the loop
+ * @param argc
+ * @param argv
+ * @return 
  */
-expublic void tmq_housekeep(char *filename, int tmq_err)
+int main( int argc , char **argv )
 {
-    long diff=EXFAIL;
+    int ret = EXSUCCEED;
 
-    
-    NDRX_LOG(log_warn, "Housekeeping file [%s]", filename);
-    if (M_housekeep<=0)
-    {
-        NDRX_LOG(log_debug, "Housekeeping disabled");
-        goto out;
-    }
+    int i;
 
-    if (TMQ_ERR_EOF!=tmq_err &&
-            TMQ_ERR_CORRUPT!=tmq_err)
+    threadpool testpool;
+
+    /* service request handlers */
+    if (NULL==(testpool = ndrx_thpool_init(POOL_SIZE,
+            NULL, NULL, NULL, 0, NULL)))
     {
-        /* keep the file it is not subject to delete */
-        NDRX_LOG(log_debug, "Command file is not corrupted [%d]", tmq_err);
-        goto out;
-    }
-    
-    if (EXFAIL==(diff = ndrx_file_age(filename)))
-    {
-        EXFAIL_OUT(diff);
-    }
-    
-    NDRX_LOG(log_warn, "File age is [%ld] limit [%d]", diff, M_housekeep);
-    
-    if (diff > M_housekeep)
-    {
-        if (EXSUCCEED==unlink(filename))
-        {
-            NDRX_LOG(log_warn, "Unlinked expired corrupted file [%s]", filename);
-            userlog("Unlinked expired corrupted file [%s]", filename);
-        }
-        else
-        {
-            int err;
-            
-            err = errno;
-            NDRX_LOG(log_warn, "Failed to unlink expired corrupted file [%s]: %s", 
-                    filename, strerror(err));
-            userlog("Failed to unlink expired corrupted file [%s]: %s", 
-                    filename, strerror(err));
-        }
+        NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!",
+                POOL_SIZE);
+        EXFAIL_OUT(ret);
     }
 
-    /* TODO: if file is older than M_housekeep and TMSRV is not aware
-     * of it, remove the file -> do not load...
-     */
-    
+    for (i=0; i<POOL_SIZE; i++)
+    {
+        ndrx_thpool_add_work(testpool, (void *)do_loop, NULL);
+    }
+
+    while (POOL_SIZE!=ndrx_thpool_nr_not_working(testpool))
+    {
+        sleep(1);
+    }
+
+    /* wait for pool to complete... */
+    ndrx_thpool_destroy(testpool);
+
 out:
-    
-    return;
-
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
+

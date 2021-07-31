@@ -1,8 +1,7 @@
 /**
- * @brief Transaction recover server process. Used to clean up the transactions
- *  after the boot or periodically during the application runtime.
+ * @brief Queue server main entry. Needed for xa early driver setup.
  *
- * @file tprecoversv.c
+ * @file tmqsrvmain.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -35,18 +34,20 @@
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
-#include "tmrecover.h"
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <string.h>
+#include <unistd.h>
+#include <xa.h>
+#include "tmqueue.h"
+#include "tmqd.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-exprivate int M_periodic = EXFALSE;    /**< by default single scan */
 /*---------------------------Statics------------------------------------*/
 /* Auto generated system advertise table */
 expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
@@ -55,106 +56,19 @@ expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Transaction recover scan start
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int recover_scan(void)
-{
-    int ret = EXSUCCEED;
-    
-    NDRX_LOG(log_debug, "Recover scan started");
-    
-    /* recover transactions */
-    ret = ndrx_tmrecover_do();
-    
-    /* set success if have 0 or rolled back.*/
-    if (ret>=0)
-    {
-        if (!M_periodic)
-        {
-            /* remove our selves from periodic scanning as we are done
-             */
-            tpext_delperiodcb();
-       }
-       ret=EXSUCCEED;
-    }
-    
-    return ret;
-}
-
-/**
- * Standard server init
- * @param argc
- * @param argv
- * @return 
- */
-int tpsvrinit (int argc, char **argv)
-{
-    /* register periodic callback
-     * - used to wait for bridges to establish 
-     * - used for single & periodic recover scans.
-     */
-    int ret=EXSUCCEED;
-    /* scan after 30 sec */
-    int scan_time = 30;
-    int c;
-    
-    /* Parse command line  */
-    while ((c = getopt(argc, argv, "s:p")) != -1)
-    {
-
-	if (optarg)
-        {
-            NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "got %c", c);
-        }
-
-        switch(c)
-        {
-            case 's': 
-                scan_time = atoi(optarg);
-                NDRX_LOG(log_info, "Transaction scan time set to: %d", scan_time);
-                break;
-                /* status directory: */
-            case 'p':
-                M_periodic=EXTRUE;
-                NDRX_LOG(log_info, "Periodic scan enabled");
-                break;
-            default:
-                /*return FAIL;*/
-                break;
-        }
-    }
-    
-    /* Register timer check (needed for time-out detection) */
-    if (EXSUCCEED!=tpext_addperiodcb(scan_time, recover_scan))
-    {
-        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
-                        tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
-    }
-    
-    
-out:
-    return ret;
-}
-
-/**
- * Standard server done
- */
-void tpsvrdone(void)
-{
-    /* nothing todo */
-}
-/**
  * Main entry for tmsrv
  */
 int main( int argc, char** argv )
 {
     _tmbuilt_with_thread_option=0;
+        
+    /* mark the qdisk that we are tmqueue
+     * for direct log calls
+     * So what let to do for others is just to start the transaction
+     * join for other is just ignored.
+     */
+    tmq_set_tmqueue(EXTRUE, tmq_setup_cmdheader_dum, tmq_dum_add, tmq_unlock_msg);
+    
     struct tmsvrargs_t tmsvrargs =
     {
         &tmnull_switch,

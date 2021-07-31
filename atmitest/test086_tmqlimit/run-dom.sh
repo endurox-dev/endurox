@@ -71,7 +71,7 @@ function set_dom1 {
 
 # XA config, mandatory for TMQ:
     export NDRX_XA_RES_ID=1
-    export NDRX_XA_OPEN_STR="./QSPACE1"
+    export NDRX_XA_OPEN_STR="datadir=./QSPACE1,qspace=MYSPACE"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 # Used from parent
     export NDRX_XA_DRIVERLIB=$NDRX_XA_DRIVERLIB_FILENAME
@@ -159,6 +159,49 @@ xadmin ppm
 clean_logs;
 rm ULOG*
 
+################################################################################
+echo "AutoQ performance test..."
+################################################################################
+(./atmiclt86 autoperf 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
+################################################################################
+echo "Testing rmrollback - rollback due to internal timeout / no activity"
+################################################################################
+(./atmiclt86 rmrollback 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
+################################################################################
+echo "Testing rmnorollback - no rollback, due to having slow, but actvity"
+################################################################################
+(./atmiclt86 rmnorollback 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
+################################################################################
+# Forward crash / commit fails, thus timeout rollback and when new tmsrv
+# is available, messages shall go normally to errorq and all msgs shall be
+# downloable
+################################################################################
+
+echo "Testing fwdcrash"
+(./atmiclt86 fwdcrash 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
 
 ################################################################################
 # Test the fsync flags...
@@ -333,57 +376,45 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-echo "Testing corrupted file houskeeping"
-
-echo "Creating 1KB block... of zeros"
-dd if=/dev/zero of=./QSPACE1/active/zero_block count=1024 bs=1
-touch ./QSPACE1/active/empty_file
-touch ./QSPACE1/prepared/empty_file
+echo "Cannot start as damaged prepared files... (manual resolve)"
+dd if=/dev/zero of=./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-010 count=1024 bs=1
+touch ./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011
+touch ./QSPACE1/prepared/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-012
 
 xadmin stop -s tmqueue
 xadmin start -s tmqueue
+sleep 5
 
-# files must exist as 30 sec is not passed...
-if [[ ! -f ./QSPACE1/active/zero_block ]]; then
-    echo "./QSPACE1/active/zero_block must exist (as not yet expired)!"
+if [[ ! -f ./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-010 ]]; then
+    echo "./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-010 must not be removed!"
     go_out -1
 fi
 
-if [[ ! -f ./QSPACE1/active/empty_file ]]; then
-    echo "./QSPACE1/active/empty_file must exist (as not yet expired)!"
+if [[ ! -f ./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011 ]]; then
+    echo "./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011 must not be removed!"
     go_out -1
 fi
 
-if [[ ! -f ./QSPACE1/prepared/empty_file ]]; then
-    echo "./QSPACE1/prepared/empty_file must exist (no expiry)!"
+if [[ ! -f ./QSPACE1/prepared/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-012 ]]; then
+    echo "./QSPACE1/prepared/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-012 must not be removed!"
     go_out -1
 fi
 
-echo "Sleep 33.."
-sleep 33
-
+echo "Remove damaged prepare file, shall abort all ok"
+rm ./QSPACE1/prepared/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-012
 xadmin stop -s tmqueue
 xadmin start -s tmqueue
+sleep 5
 
-# files must be removed as 30 sec passed
-if [[ -f ./QSPACE1/active/zero_block ]]; then
-    echo "./QSPACE1/active/zero_block must be removed (expired)!"
+if [[ -f ./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-010 ]]; then
+    echo "./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-010 must be removed!"
     go_out -1
 fi
 
-if [[ -f ./QSPACE1/active/empty_file ]]; then
-    echo "./QSPACE1/active/empty_file must be removed (expired)!"
+if [[ -f ./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011 ]]; then
+    echo "./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011 must be removed!"
     go_out -1
 fi
-
-# only active folder is housekeeped
-if [[ ! -f ./QSPACE1/prepared/empty_file ]]; then
-    echo "./QSPACE1/prepared/empty_file must exist (no expiry)!"
-    go_out -1
-fi
-
-# cleanup...
-rm ./QSPACE1/prepared/empty_file
 
 go_out $RET
 

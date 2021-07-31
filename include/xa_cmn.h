@@ -50,6 +50,12 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
+#define NDRX_LOCK_WAIT_TIME         5000    /**< lock wait time b4 give up */
+#define TOUT_CHECK_TIME             1       /**< Check for transaction timeout, sec   */
+#define COPY_MODE_FOREGROUND        0x1     /**< Copy foreground elements  */
+#define COPY_MODE_BACKGROUND        0x2     /**< Copy background elements  */
+#define COPY_MODE_ACQLOCK           0x4     /**< Should we do locking?     */
+    
 /* Internal XA commands */
 /* buffer usage: */
 #define ATMI_XA_TPBEGIN             'b' /**< Begin global transaction           */
@@ -119,6 +125,7 @@ extern "C" {
 /* Entered in preparing stage, with possibility to fall back to Abort... */
 #define XA_TX_STAGE_PREPARING                40   /**< Doing prepare            */
 #define XA_TX_STAGE_PREPRO                   41   /**< No participants joined   */
+#define XA_TX_STAGE_PREPARED                 42   /**< For TMQ only             */
 
 /* 
  * Commit base 

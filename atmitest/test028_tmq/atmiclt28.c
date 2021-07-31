@@ -45,6 +45,7 @@
 #include <ubfutil.h>
 #include <nstopwatch.h>
 #include <nstdutil.h>
+#include <exassert.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -58,8 +59,14 @@ exprivate int enq_q_test(char *q1, char *q2, char *q3);
 exprivate int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3);
 exprivate int deqempty_q_test(void);
 exprivate int basic_q_msgid_test(void);
-exprivate int basic_q_corid_test(void);
+exprivate int basic_q_corfifo_test(void);
+exprivate int basic_q_corlifo_test(void);
+exprivate int basic_q_corauto_test(void);
+exprivate int basic_q_deqdefault_test(void);
+exprivate int basic_q_cortran_test(void);
 exprivate int basic_autoq_ok(void);
+exprivate int basic_autoqnr_ok(void);
+
 exprivate int basic_rndfail(void);
 exprivate int basic_enqcarray(void);
 exprivate int basic_autoq_deadq(void);
@@ -123,13 +130,33 @@ int main(int argc, char** argv)
     {
         return basic_q_msgid_test();
     }
-    else if (0==strcmp(argv[1], "corid"))
+    else if (0==strcmp(argv[1], "corfifo"))
     {
-        return basic_q_corid_test();
+        return basic_q_corfifo_test();
+    }
+    else if (0==strcmp(argv[1], "corlifo"))
+    {
+        return basic_q_corlifo_test();
+    }
+    else if (0==strcmp(argv[1], "corauto"))
+    {
+        return basic_q_corauto_test();
+    }
+    else if (0==strcmp(argv[1], "deqdefault"))
+    {
+        return basic_q_deqdefault_test();
+    }
+    else if (0==strcmp(argv[1], "cortran"))
+    {
+        return basic_q_cortran_test();
     }
     else if (0==strcmp(argv[1], "autoqok"))
     {
         return basic_autoq_ok();
+    }
+    else if (0==strcmp(argv[1], "autoqnr"))
+    {
+        return basic_autoqnr_ok();
     }
     else if (0==strcmp(argv[1], "autodeadq"))
     {
@@ -774,150 +801,638 @@ out:
 
 /**
  * Test message get by corid
+ * - Add 2x queues: CORFIFO, CORLIFO
+ * - Load normal messages
+ * - Load correlated messages
+ * - read correlated messages, ensure getting QMENOMSG when done - fifo
+ * - read correlated + QMENOMSG - lifo
+ * -- Re-do above after load correlated msgs + tmq restart (load sort valiate)
+ * - read normal messages, all shall be in place.
  */
-exprivate int basic_q_corid_test(void)
+exprivate int basic_q_corfifo_test(void)
 {
 
     int ret = EXSUCCEED;
-    TPQCTL qc1, qc2;
-    int i, j;
-
-    /* Initial test... */
-    for (i=0; i<1000; i++)
-    {
-        char *buf = tpalloc("CARRAY", "", 1);
-        char *testbuf_ref = tpalloc("CARRAY", "", 1);
-        long len=1;
+    TPQCTL qc1;
+    int test;
+    char c,cor;
+    long len;
+    char *buf = tpalloc("CARRAY", "", 3);
         
-        /* alloc output buffer */
-        if (NULL==buf || NULL==testbuf_ref)
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* enqueue messages to fifo q / cor & non cor */
+    for (test=0; test<2; test++)
+    {
+        /* load correlated msgs... */
+        for (cor=2; cor<5; cor++)
         {
-            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
-                    tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
+            /* load correlated msgs.. */
+            for (c=5; c<126; c++)
+            {
+                buf[0]=1;
+                buf[1]=c;
+                buf[2]=cor;
+                
+                memset(&qc1, 0, sizeof(qc1));
+                qc1.flags|=TPQCORRID;
+                qc1.corrid[0]=cor;
+                
+                if (EXSUCCEED!=tpenqueue("MYSPACE", "CORFIFO", &qc1, buf, 3, 0))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+                
+            }
         }
 
-        testbuf_ref[0]=101;
-        
-        /* enqueue the data buffer */
-        memset(&qc1, 0, sizeof(qc1));
-        qc1.corrid[0] = 1;
-        qc1.corrid[1] = 2;
-        qc1.flags|=TPQCORRID;
-        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc1, testbuf_ref, 
-                len, TPNOTRAN))
+        /* load non correlated msgs.. */
+        for (c=0; c<126; c++)
         {
-            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+            buf[0]=0;
+            buf[1]=c;
+            buf[2]=0;
+
+            memset(&qc1, 0, sizeof(qc1));
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "CORFIFO", &qc1, buf, 3, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* restart tmqueue to get  */
+        if (1==test)
+        {
+            if (EXSUCCEED!=system("xadmin restart tmqueue"))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to restart tmqueue", 
+                        strerror(errno));
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* Now fetch first message, shall be corelated */
+        memset(&qc1, 0, sizeof(qc1));
+        len=3;
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "CORFIFO", &qc1, &buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
             EXFAIL_OUT(ret);
         }
-        
-        testbuf_ref[0]=102;
-        
-        /* enqueue the data buffer */
-        memset(&qc2, 0, sizeof(qc2));
-        
-        qc2.corrid[0] = 3;
-        qc2.corrid[1] = 4;
-        qc2.flags|=TPQCORRID;
-        
-        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &qc2, testbuf_ref, 
-                len, TPNOTRAN))
+
+        /* it shall be msg with cor */
+        NDRX_ASSERT_VAL_OUT((buf[0]==1 && buf[1]==5 && buf[2]==2 && len==3 && (qc1.flags & TPQCORRID)), 
+                "Invalid buffer %d %d %d %ld %lx", 
+                (int)buf[0], (int)buf[1], (int)buf[2], len, qc1.flags);
+
+        /* correlator must be set */
+        NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==2, 
+                "Invalid cor %d", 
+                (int)qc1.corrid[0]);
+
+        /* Download all by cor... + last one is QMENOMSG */
+        for (cor=2; cor<5; cor++)
         {
-            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
-                    tpstrerror(tperrno), qc2.diagnostic, qc2.diagmsg);
-            EXFAIL_OUT(ret);
-        }
-
-        /* dequeue the data buffer + allocate the output buf. */
-        /* Have some test with peek... */
-        for (j=0; j<2; j++)
-        {
-            len = 1;
-            buf[0] = 0;
-            
-            memset(&qc2, 0, sizeof(qc2));
-        
-            qc2.corrid[0] = 3;
-            qc2.corrid[1] = 4;
-            
-            if (0 == j)
+            /* load correlated msgs.. 
+             * Also c=5/cor=2 is already fetched
+             */
+            for (c=5; c<127; c++)
             {
-                qc2.flags|=(TPQGETBYCORRID | TPQPEEK);
-            }
-            else
-            {
-                /* Already reset to 0 by first dequeue */
-                qc2.flags|=TPQGETBYCORRID;
-            }
-            
-            NDRX_LOG(log_info, "Calling with flags: %ld", qc2.flags);
-            if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc2, &buf, 
-                    &len, TPNOTRAN))
-            {
-                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s i=%d j=%d", 
-                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg, i, j);
-                EXFAIL_OUT(ret);
-            }
-
-            if (102!=buf[0])
-            {
-                NDRX_LOG(log_error, "TESTERROR: Got %d expected 102", buf[0]);
-                EXFAIL_OUT(ret);
-
+                if (5==c && 2==cor)
+                {
+                    continue;
+                }
+                
+                memset(&qc1, 0, sizeof(qc1));
+                len=3;
+                /* get by corid */
+                qc1.flags|=TPQGETBYCORRID;
+                qc1.corrid[0]=cor;
+                if (EXSUCCEED!=tpdequeue("MYSPACE", "CORFIFO", &qc1, &buf, &len, 0))
+                {
+                    if (!(c==126 && TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic))
+                    {
+                        NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                        EXFAIL_OUT(ret);
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                
+                /* validate the msg */
+                NDRX_ASSERT_VAL_OUT((buf[0]==1 && buf[1]==c && buf[2]==cor && len==3 && (qc1.flags & TPQCORRID)), 
+                        "Invalid buffer %d (exp %d) %d (exp %d) %d (exp %d) %ld %lx", 
+                        (int)buf[0], 1, (int)buf[1], (int)c, (int)buf[2], (int)cor, len, qc1.flags);
+                
+                /* correlator must be set */
+                NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==cor, 
+                        "Invalid cor %d (exp %d)", 
+                        (int)qc1.corrid[0], (int)cor);
             }
         }
         
-        for (j=0; j<2; j++)
+        /* Download normal msgs... */
+        for (c=0; c<127; c++)
         {
-            len = 1;
-            buf[0] = 0;
-            
             memset(&qc1, 0, sizeof(qc1));
-        
-            qc1.corrid[0] = 1;
-            qc1.corrid[1] = 2;
+            len=3;
             
-            if (0 == j)
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "CORFIFO", &qc1, &buf, &len, 0))
             {
-                qc1.flags|=(TPQGETBYCORRID | TPQPEEK);
-            }
-            else
-            {
-                /* Already reset to 0 by first dequeue */
-                qc1.flags |= TPQGETBYCORRID;
+                /* validate that we fetch all and terminate with EOS... */
+                if (!(c==126 && TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+                else
+                {
+                    continue;
+                }
             }
             
-            if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc1, &buf, 
-                    &len, TPNOTRAN))
-            {
-                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s i=%d j=%d", 
-                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg, i, j);
-                EXFAIL_OUT(ret);
-            }
+            /* validate the normal msg... */
+            NDRX_ASSERT_VAL_OUT((buf[0]==0 && buf[1]==c && buf[2]==0 && len==3), 
+                    "Invalid buffer %d (exp %d) %d (exp %d) %d (exp %d) %ld", 
+                    (int)buf[0], 0, (int)buf[1], (int)c, (int)buf[2], 0, len);
 
-            if (101!=buf[0])
-            {
-                NDRX_LOG(log_error, "TESTERROR: Got %d expected 101", buf[0]);
-                EXFAIL_OUT(ret);
-            }
+            /* correlator must be set */
+            NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==0 && !(qc1.flags & TPQCORRID), 
+                    "Invalid cor %d (exp %d) %lx", 
+                    (int)qc1.corrid[0], 0, qc1.flags);
         }
-        
-        tpfree(buf);
-        tpfree(testbuf_ref);
     }
+
     
+    
+out:
+
+    /* finish it off */
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
     if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
         ret=EXFAIL;
         goto out;
     }
-    
-out:
+
     return ret;
 }
 
+/**
+ * Test that transactino marking is working on dequeue
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int basic_q_cortran_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    long len;
+    char *buf = tpalloc("CARRAY", "", 3);
+    
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    buf[0]=1;
+    buf[1]=2;
+    buf[2]=3;
+
+    memset(&qc1, 0, sizeof(qc1));
+    qc1.flags|=TPQCORRID;
+    qc1.corrid[0]=3;
+
+    if (EXSUCCEED!=tpenqueue("MYSPACE", "CORFIFO", &qc1, buf, 3, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpbegin(60, 0), "Failed to start tran...");
+    
+    memset(&qc1, 0, sizeof(qc1));
+    len=3;
+    /* get by corid */
+    qc1.flags|=TPQGETBYCORRID;
+    qc1.corrid[0]=3;
+    if (EXSUCCEED!=tpdequeue("MYSPACE", "CORFIFO", &qc1, &buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+        EXFAIL_OUT(ret);
+    }
+    
+    memset(&qc1, 0, sizeof(qc1));
+    len=3;
+    /* get by corid */
+    qc1.flags|=TPQGETBYCORRID;
+    qc1.corrid[0]=3;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "CORFIFO", &qc1, &buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but succeed!");
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_ASSERT_VAL_OUT(TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic, 
+            "Expected QMENOMSG got %d %ld", tperrno, qc1.diagnostic);
+
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpcommit(0), "Failed to commit...");
+    
+    /* Expect no msg: */
+    memset(&qc1, 0, sizeof(qc1));
+    len=3;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "CORFIFO", &qc1, &buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but succeed!");
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_ASSERT_VAL_OUT(TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic, 
+            "Expected QMENOMSG got %d %ld", tperrno, qc1.diagnostic);
+    
+out:
+
+    /* finish it off */
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
+
+
+/**
+ * Process messages in lifo order
+ * @return 
+ */
+exprivate int basic_q_corlifo_test(void)
+{
+
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    int test;
+    signed char c,cor;
+    long len;
+    char *buf = tpalloc("CARRAY", "", 3);
+        
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* enqueue messages to fifo q / cor & non cor */
+    for (test=0; test<2; test++)
+    {
+        
+        /* load non correlated msgs.. */
+        for (c=1; c<126; c++)
+        {
+            buf[0]=0;
+            buf[1]=c;
+            buf[2]=0;
+
+            memset(&qc1, 0, sizeof(qc1));
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "CORLIFO", &qc1, buf, 3, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        /* load correlated msgs... */
+        for (cor=2; cor<5; cor++)
+        {
+            /* load correlated msgs.. */
+            for (c=5; c<126; c++)
+            {
+                buf[0]=1;
+                buf[1]=c;
+                buf[2]=cor;
+                
+                memset(&qc1, 0, sizeof(qc1));
+                qc1.flags|=TPQCORRID;
+                qc1.corrid[0]=cor;
+                
+                if (EXSUCCEED!=tpenqueue("MYSPACE", "CORLIFO", &qc1, buf, 3, 0))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+                
+            }
+        }
+
+        /* restart tmqueue to get  */
+        if (1==test)
+        {
+            if (EXSUCCEED!=system("xadmin restart tmqueue"))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to restart tmqueue", 
+                        strerror(errno));
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* Now fetch first message, shall be corelated */
+        memset(&qc1, 0, sizeof(qc1));
+        len=3;
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "CORLIFO", &qc1, &buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        /* it shall be msg with cor */
+        NDRX_ASSERT_VAL_OUT((buf[0]==1 && buf[1]==125 && buf[2]==4 && len==3 && (qc1.flags & TPQCORRID)), 
+                "Invalid buffer %d %d %d %ld %lx", 
+                (int)buf[0], (int)buf[1], (int)buf[2], len, qc1.flags);
+
+        /* correlator must be set */
+        NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==4, 
+                "Invalid cor %d", 
+                (int)qc1.corrid[0]);
+
+        /* Download all by cor... + last one is QMENOMSG */
+        for (cor=2; cor<5; cor++)
+        {
+            /* load correlated msgs.. 
+             * Also c=125/cor=4 is already fetched
+             */
+            for (c=125; c>=4; c--)
+            {
+                if (125==c && 4==cor)
+                {
+                    continue;
+                }
+                
+                memset(&qc1, 0, sizeof(qc1));
+                len=3;
+                /* get by corid */
+                qc1.flags|=TPQGETBYCORRID;
+                qc1.corrid[0]=cor;
+                if (EXSUCCEED!=tpdequeue("MYSPACE", "CORLIFO", &qc1, &buf, &len, 0))
+                {
+                    if (!(c==4 && TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic))
+                    {
+                        NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                        EXFAIL_OUT(ret);
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                
+                /* validate the msg */
+                NDRX_ASSERT_VAL_OUT((buf[0]==1 && buf[1]==c && buf[2]==cor && len==3 && (qc1.flags & TPQCORRID)), 
+                        "Invalid buffer %d (exp %d) %d (exp %d) %d (exp %d) %ld %lx", 
+                        (int)buf[0], 1, (int)buf[1], (int)c, (int)buf[2], (int)cor, len, qc1.flags);
+                
+                /* correlator must be set */
+                NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==cor, 
+                        "Invalid cor %d (exp %d)", 
+                        (int)qc1.corrid[0], (int)cor);
+            }
+        }
+        
+        /* Download normal msgs... */
+        for (c=125; c>=0; c--)
+        {
+            memset(&qc1, 0, sizeof(qc1));
+            len=3;
+            
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "CORLIFO", &qc1, &buf, &len, 0))
+            {
+                /* validate that we fetch all and terminate with EOS... */
+                if (!(0==c && TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed on %d - %s diag: %d:%s", 
+                            (int)c, tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            
+            /* validate the normal msg... */
+            NDRX_ASSERT_VAL_OUT((buf[0]==0 && buf[1]==c && buf[2]==0 && len==3), 
+                    "Invalid buffer %d (exp %d) %d (exp %d) %d (exp %d) %ld", 
+                    (int)buf[0], 0, (int)buf[1], (int)c, (int)buf[2], 0, len);
+
+            /* correlator must be set */
+            NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==0 && !(qc1.flags & TPQCORRID), 
+                    "Invalid cor %d (exp %d) %lx", 
+                    (int)qc1.corrid[0], 0, qc1.flags);
+        }
+    }
+
+    
+out:
+
+    /* finish it off */
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
+
+/**
+ * When dequeuing from default Q (if have defaults)
+ *  return QMENOMSG instead of QMEINVAL
+ * @return 
+ */
+exprivate int basic_q_deqdefault_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    
+    long len;
+    char *buf = tpalloc("CARRAY", "", 3);
+    
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    memset(&qc1, 0, sizeof(qc1));
+    len=3;
+    
+    ret=tpdequeue("MYSPACE", "NO_SUCH_Q", &qc1, &buf, &len, 0);
+    
+    if (!(EXFAIL==ret && TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = EXSUCCEED;
+    
+out:
+
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
+    tpterm();
+
+    return ret;
+}
+
+/**
+ * Keeps the corrid when forward enqueues to errorq
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int basic_q_corauto_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    char c,cor, i;
+    long len;
+    char *buf = tpalloc("CARRAY", "", 3);
+        
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* load correlated msgs... */
+    for (cor=2; cor<50; cor++)
+    {
+        for (i=0; i<2; i++)
+        {
+            buf[0]=1;
+            buf[1]=i;
+            buf[2]=cor;
+
+            memset(&qc1, 0, sizeof(qc1));
+            qc1.flags|=TPQCORRID;
+            qc1.corrid[0]=cor;
+
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "CORAUTO", &qc1, buf, 3, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+
+    }
+    
+    sleep(30);
+    
+    /* Download all by cor... + last one is QMENOMSG */
+    for (cor=2; cor<50; cor++)
+    {            
+        for (i=0; i<2; i++)
+        {
+            memset(&qc1, 0, sizeof(qc1));
+            len=3;
+            /* get by corid */
+            qc1.flags|=TPQGETBYCORRID;
+            qc1.corrid[0]=cor;
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "CORERR", &qc1, &buf, &len, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+
+            /* validate the msg */
+            NDRX_ASSERT_VAL_OUT((buf[0]==1 && (buf[1]==0||buf[1]==1) 
+                        && buf[2]==cor && len==3 && (qc1.flags & TPQCORRID)), 
+                    "Invalid buffer %d (exp %d) %d (exp 0|1) %d (exp %d) %ld %lx", 
+                    (int)buf[0], 1, (int)buf[1], (int)buf[2], (int)cor, len, qc1.flags);
+            
+            /* correlator must be set */
+            NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==cor, 
+                    "Invalid cor %d (exp %d)", 
+                    (int)qc1.corrid[0], (int)cor);
+        }
+    }
+    
+    /* Main q shall be empty..*/
+    
+    ret=tpdequeue("MYSPACE", "CORAUTO", &qc1, &buf, &len, 0);
+    
+    if (!(EXFAIL==ret && TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = EXSUCCEED;
+    
+out:
+
+    /* finish it off */
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
 
 /**
  * Sending to OK q.
@@ -932,7 +1447,7 @@ exprivate int basic_autoq_ok(void)
     char *p;
     int i;
     char strbuf[128];
-    
+    char *buf3=NULL;
     
     for (i=0; i<100; i++)
     {
@@ -968,7 +1483,8 @@ exprivate int basic_autoq_ok(void)
         }
         tpfree((char *)buf);
     }
-    sleep(90); /* should be enough */
+    
+    sleep(30); /* should be enough */
     
     for (i=0; i<100; i++)
     {
@@ -1015,6 +1531,102 @@ exprivate int basic_autoq_ok(void)
             EXFAIL_OUT(ret);
         }
         tpfree((char *)buf2);
+    }
+    
+    /* Check that OKQ1 is empty.... even after restart of tmqueue */
+    if (EXSUCCEED!=system("xadmin restart tmqueue"))
+    {
+        NDRX_LOG(log_error, "Failed to restart tmqueue: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* no messages available, even after restart... */
+    memset(&qc1, 0, sizeof(qc1));
+    len=0;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "OKQ1", &qc1, (char **)&buf3, 
+            &len, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but was OK!");
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+
+/**
+ * Sending to OK q.
+ * So answers of the forward and put in the reply queue.
+ * we wait for it to be filled up.
+ * ---
+ * Do not use reply q.
+ */
+exprivate int basic_autoqnr_ok(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    long len = 0;
+    char *p;
+    int i;
+    char strbuf[128];
+    char *buf3=NULL;
+    
+    for (i=0; i<100; i++)
+    {
+        UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+        if (NULL==buf)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        sprintf(strbuf, "HELLO FROM SENDER");
+        
+        if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_2_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "OKQ1", &qc1, (char *)buf, 0, TPNOTRAN))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+        tpfree((char *)buf);
+    }
+    
+    sleep(30); /* should be enough */
+    
+    /* Check that OKQ1 is empty.... even after restart of tmqueue */
+    if (EXSUCCEED!=system("xadmin restart tmqueue"))
+    {
+        NDRX_LOG(log_error, "Failed to restart tmqueue: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* no messages available, even after restart... */
+    memset(&qc1, 0, sizeof(qc1));
+    len=0;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "OKQ1", &qc1, (char **)&buf3, 
+            &len, TPNOTRAN))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but was OK!");
+        EXFAIL_OUT(ret);
     }
 
     if (EXSUCCEED!=tpterm())

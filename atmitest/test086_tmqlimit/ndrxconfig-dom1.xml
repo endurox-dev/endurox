@@ -69,11 +69,20 @@
                 <srvid>50</srvid>
                 <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
             </server>
+	    
+	    <!-- crash instance cannot commit..., no respawn (as preparing shall not be roll'd back) -->
+	    <server name="tmsrv">
+		<respawn>N</respawn>
+                <min>0</min>
+                <max>1</max>
+                <srvid>60</srvid>
+                <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
+            </server>
             
             <server name="tmqueue">
                 <max>1</max>
                 <srvid>100</srvid>
-                <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -m MYSPACE -q ./q.conf -s1 -h30 </sysopt>
+                <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1 -T30 </sysopt>
             </server>
 	</servers>
 </endurox>
