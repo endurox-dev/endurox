@@ -84,7 +84,8 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log
+rm *.log
+rm ULOG*
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
@@ -117,7 +118,7 @@ sleep 5
 (./atmiclt80 TESTSV2 2>&1) >> ./atmiclt-dom1.log
 
 echo "Wait for respawn...."
-sleep 2
+sleep 5
 
 echo "Checking for shutdowns..."
 
