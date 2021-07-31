@@ -57,7 +57,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_library (ndrxxaqdisk SHARED
                 tmqutil.c
                 qdisk_xa.c
-                housekeep.c
+                qtran.c
             )
 
 add_library (ndrxxaqdisks SHARED
@@ -73,7 +73,7 @@ add_library (ndrxxaqdiskd SHARED
             )
 ############################# Executables ######################################
 add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
-                        ../libatmisrv/rawmain_integra.c)
+                        tmqsrvmain.c corhandle.c)
 
 SET (TMQUEUE_ADD_DEP "")
 if(${CMAKE_OS_NAME} STREQUAL "AIX")

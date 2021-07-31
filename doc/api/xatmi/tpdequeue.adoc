@@ -93,7 +93,10 @@ Valid *'TPQCTL.flags'*
 *TPNOFLAGS* No flags set.
 
 *TPQGETBYCORRID* Use the correlator ID in 'TPQCTL.corrid' to get the 
-message by. Note that each byte in 'corrid' is significant.
+message by. Note that each byte in 'corrid' is significant. The corrid basically
+denotes the sub-queue for given 'qname'. If there are messages in queue, but
+not for given 'corrid', then standard *QMENOMSG* error code is returned. Message
+ordering is applies the same as for normal queue.
 
 *TPQGETBYMSGID* Use the message ID in 'TPQCTL.msgid' to get the message by. 
 Note that each byte in 'msgid' is significant.
@@ -161,15 +164,6 @@ Global transaction is not marked for abort only, if one was associated with curr
 EXAMPLE
 -------
 See *atmitest/test028_tmq/atmiclt28.c* for sample code.
-
-LIMITATIONS
------------
-Under the same global transaction, it is forbidden to call *tpdequeue()* concurrently 
-on the same XA Resource Id (i.e. queue spaces configured with the 
-with the same *NDRX_XA_RES_ID*).  Calls are forbidden either from multiple threads, 
-or from multiple processes e.g. using *tpacall(3)* to active transaction in other processes which 
-are performing *tpdequeue()* while service caller also performs *tpdequeue()*.
-Possible consequences are undefined and may include message loss.
 
 BUGS
 ----

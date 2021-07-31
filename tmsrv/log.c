@@ -1299,6 +1299,7 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         {
             NDRX_LOG(log_debug, "QA no write crash");
             ret=EXFAIL;
+            goto out;
         }
         /* </Crash testing> */
         else if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
@@ -1308,7 +1309,7 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         }
 
         /* in case if switching to committing, we must sync the log & directory */
-        if (XA_TX_STAGE_COMMITTING==stage &&
+        if ( ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage)) &&
             (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) || 
                 EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags)))
         {

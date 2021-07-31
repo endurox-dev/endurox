@@ -437,7 +437,7 @@ class Provision extends WizardBase {
 			<max>1</max>
 			<srvid>60</srvid>
 			<cctag>RM1TMQ</cctag>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmqueue-rm1.log -r -- -m "+qSpace+@" -s1</sysopt>
+			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmqueue-rm1.log -r -- -s1</sysopt>
 		</server>";
 		}
 		
@@ -478,7 +478,7 @@ class Provision extends WizardBase {
 			if (usv1_appopt!="")
 			{
 				_appopt=@"
-			<appopt>"+usv1_cctag+@"</appopt>"
+			<appopt>"+usv1_appopt+@"</appopt>"
 			}
 			
 			ndrxconfigXmlVal=ndrxconfigXmlVal+
@@ -597,8 +597,8 @@ VIEWFILES="+viewFiles:"")+
 ; Environment for Transactional Queue
 [@global/RM1TMQ]
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR=${NDRX_APPHOME}/"+qdata+@"
-NDRX_XA_CLOSE_STR=${NDRX_APPHOME}/"+qdata+@"
+NDRX_XA_OPEN_STR=datadir=""${NDRX_APPHOME}/"+qdata+@""",qspace="""+qSpace+@"""
+NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
 NDRX_XA_DRIVERLIB=libndrxxaqdisks."+shared_lib_pfx+@"
 ; dylib needed for osx
 NDRX_XA_RMLIB=libndrxxaqdisk."+shared_lib_pfx+@"

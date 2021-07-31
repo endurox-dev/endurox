@@ -50,8 +50,33 @@ extern "C" {
 /* *** PTHREAD MUTEX *** */
     
 #define MUTEX_VAR(X)        pthread_mutex_t X
+    
+/**
+ * Standard type mutex
+ */
 #define MUTEX_VAR_INIT(X)   do {\
                     if ( EXSUCCEED!=pthread_mutex_init ( &(X), NULL ) ) \
+                    {\
+                        userlog("Mutex init fail: %s", #X);\
+                        exit ( 1 );\
+                    }\
+                } while (0)
+    
+/* support for debugging if any */
+#if NDRX_MUTEX_DEBUG
+#define NDRX_PTHREAD_MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+#else
+#define NDRX_PTHREAD_MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+#endif
+
+/**
+ * Recursive mutex
+ */
+#define MUTEX_VAR_INIT_RECURS(X)   do {\
+                    pthread_mutexattr_t attr;\
+                    pthread_mutexattr_init(&attr);\
+                    pthread_mutexattr_settype(&attr, NDRX_PTHREAD_MUTEX_RECURSIVE);\
+                    if ( EXSUCCEED!=pthread_mutex_init ( &(X), &attr ) ) \
                     {\
                         userlog("Mutex init fail: %s", #X);\
                         exit ( 1 );\

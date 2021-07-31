@@ -20,20 +20,16 @@ This is special ATMI server which is used for transactional persistent queue ope
 works in pair with *tmsrv(8)* instance, where both *tmqueue* and *tmsrv* are configured in
 XA environment which uses 'NDRX_XA_RMLIB=libndrxxaqdisk.so' and 
 *NDRX_XA_DRIVERLIB=libndrxxaqdisks.so* (static registration driver) or 
-*NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so* (dynamic registration driver). 
-Each message basically is file in file-system which synchronously is kept in 
-queue server's memory. The files in file system are staged between *active*, 
-*prepared* and *committed* states. During the *active* and *prepared* stages 
-messages are made after the XA transaction ID (with sequence number after dash).
-when message is committed, it is moved to *committed* directory, where filename 
-contains the actual message id. This infrastructure also is used for issuing XA 
-commands which does the remove or update of the message i.e. at the commit moment 
-command files are used to update/remove committed message.
+*NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so* (dynamic registration driver). Related *tmsrv*
+instance shall be started first, before tmqueue process.
 
-The folder where to store the processing qspace files are *NDRX_XA_OPEN_STR* 
-and *NDRX_XA_CLOSE_STR* environment variables. Is is possible to combine 
-multiple instances of *tmqueue* for the same qspace, but it is recommended to 
-keep qspace folders different. However, it shall also work with same folder.
+*libndrxxaqdisks(8)* and uses libndrxxaqdiskd XA backend uses file system storage
+for persistence. For more detailed configuration and work modes, please read
+corresponding manpage.
+
+The *tpenqueue(3)* and *tpdequeue(3)* can be invoked either as part of the global
+ transaction or not. If global transaction is not used, then *tmqueue* will 
+open the transactions internally.
 
 The queue server internally uses thread pools for handling the work. Multiple 
 thread pools are used to avoid the deadlocking where internal processing might 
@@ -47,9 +43,7 @@ Three thread-pools are used:
 for automatic queues). 
 
 3) Third thread pool is used by notifications received from transaction manager 
-(TM). TM notifies the queue server for completion (commit) of the message. So 
-that *tmqueue* can unlock the message in memory. 
-
+(TM). TM notifies the queue server for XA operation progress (prepare, abort, commit).
 
 Every instance of *tmqueue* will advertise following list of services:
 
@@ -73,19 +67,26 @@ then on success, the response message from invoked service is submitted to
 reply queue. If message destination service fails for number of attempts,
 then message is forwarded to 'TPQFAILUREQ', in this case original 'TPQCTL' is preserved.
 
-During the startup, *tmqueue* will read messages from the disk. All messages are read.
-Messages from *active* and *prepared* directories are read and status for them
-is set to locked (no dequeue possible). Messages from *committed* folder are 
-read without the lock flag. However, other command files (delete, update) from 
-*active' and *prepared* directories are analyzed and they will lock the messages too, 
-as they are indicating that transaction are progress.
+During the startup, *tmqueue* will read messages from the XA backend driver. 
+All messages are read. All active messages found in persistent storage are rolled
+back at startup. Only prepared and committed commands/messages are read and stored in
+message lists. Any prepared commands automatically puts the lock marking on 
+corresponding messages.
 
-In case if *tmqueue* was shutdown with incomplete transactions, the *tmsrv(8)*
-will be responsible for finalizing the transactions when *tmqueue* will be started.
+In case if *tmqueue* was shutdown with incomplete transactions:
 
-The *tpenqueue(3)* and *tpdequeue(3)* can be invoked either as part of the global
- transaction or not. If global transaction is not used, then *tmqueue* will 
-open the transactions internally.
+- Active transactions are rolled back at startup. Any request from tmsrv regarding
+these transactions will return *XAER_NOTA* error.
+
+- Tmsrv may rollback any prepared transaction (if needed).
+
+- If for some reason tmsrv lost the track of any prepared transaction, 
+*tmrecovercl(8)*, *tmrecoversv(8)* may be used to rollback such prepared transactions.
+
+
+Tmqueue server for any transaction keeps internal accounting with active transaction
+expiry setting. If transaction is not completed in given time frame, the tmqueue
+will automatically rollback the transaction.
 
 For more usage of the persistent queues, configuration, command line and codding samples, 
 see *atmitests/test028_tmq* folder.
@@ -111,27 +112,32 @@ This time in seconds used by main forwarder thread to scan for any automatic
 messages to be submitted for processing.
 
 [*-p* 'SERVICE_THREAD_POOL_SIZE']::
-This is thread pool size of used for 'tpenqueue()', 'tpdequeue()' serving. 
-Also this thread pool is utilized by 'xadmin mqX' commands. Default is '10'.
+This is thread pool size of used for *tpenqueue()*, *tpdequeue()* serving. 
+Also this thread pool is utilized by *xadmin* 'mqX' commands. Default is *10*.
 
 [*-u* 'NOTIFY_THREAD_POOL_SIZE']::
 This is number of threads which are processing callbacks from XA driver 
-(for operation completion notifications). Default value is '10'.
+(for operation completion notifications). Default value is *10*.
 
 [*-f* 'FORWARD_THREAD_POOL_SIZE']::
-This is number of worker threads for forwarder. Default value is '10'.
+This is number of worker threads for forwarder. Default value is *10*.
 
 [*-t* 'XA_TRANSACTION_TIMEOUT']::
 Maximum number of seconds to wait for XA transaction to be completed. This used 
-internally when global transactions are not used. Default is '30'.
+internally when global transactions are not used. Default is *30*.
 
-[*-h* 'HOUSEKEEP_TIMEOUT']::
-Number of seconds used to determine should the corrupted file existing in 'active'
-folder shall be unlinked. Flag is needed for purpose that concurrent processes
-might be witting the file and it is not yet completed. Thus longer the delay will
-ensure that no race condition would caused for concurrent processes. If file
-is older than given seconds, during the *tmqueue* startup, such damaged file
-will be unlinked. Default value is *5400* (1 hour 30 min).
+[*-T* 'XA_SESSION_TIMEOUT']::
+Session timeout for in-active transactions in seconds - if transaction is not completed 
+( no *tpcommit(3)* or *tpabort(3)* performed), or new *tpenqueue(3)* or *tpdequeue(3)*
+is not performed in given time frame, the transaction internally is rolled back. 
+When new *tpenqueue(3)* or *tpdequeue(3)* is performed in the global transaction,
+the time-out counter is reset. After internal rollback any further enqueue/dequeue 
+operations in global transaction will return  *TPETRAN* error. Commit of such global 
+transaction would be terminated with *TPEABORT*. Value *0* disables transaction 
+sessions checks. It is strongly discouraged to use *0*, as this in case of system 
+error may lock resources until the tmqueue server process is restarted. 
+Default value is *180*.
+
 
 LIMITATIONS
 -----------
@@ -143,48 +149,9 @@ appear as committed.
 
 Flag *NOJOIN* is not supported for XA libndrxxaqdisks and libndrxxaqdiskd drivers.
 
-ASSUMPTIONS
------------
-To ensure transactionality of the message files, following assumptions are used:
-
-- File system file rename operation is atomic.
-
-- Disk sector writes are assumed to be atomic.
-
-DISK FAILURE HANDLING
----------------------
-In case if new message is being added and message file cannot be added  
-(disk full or other error) in *active* folder, *tperror* is set to 
-*TPEDIAGNOSTIC* and *QMEOS* error is set in *TPQCTL.diagnostic*. If empty file
-was created it is removed.
-
-In case if manual dequeue is performed, and *tmqueue* cannot create command file
-(used by tmsrv for completion of two phase commit), dequeue operation will fail
-with *TPEDIAGNOSTIC*/*QMEOS*. Any empty command files are removed.
-
-In case if queue is automatic, forward process takes the message from the memory 
-and sends to the process, when result is known the command file is issued for 
-two phase commit completion. In case of disk failure, command file is not written,
-empty file is removed. The transaction is aborted. In this particular case,
-messages in *tmqueue* messages are not unlocked. Thus if there was disk issues,
-the *tmqueue* shall be restarted, to proceed with enqueued message processing.
-The same rule applies to cases when *replyqueue* or *failurequeue* was configured.
-If there were problem with enqueue to these queue, transaction is aborted,
-and messages are not unlocked, till the *tmqueue* restart.
-
-In case if message/command files in the *active* folder are corrupted for some
-reason, the *tmqueue* process at the startup will detect such files and if 
-their age according to creation date/time in FS is older than *-h* setting,
-then files are removed. Such files in *committed* or *prepared* folders are not
-removed, error message is printed in the log and *tmqueue* will proceed with
-loading of the next message.
-
-To ensure that messages does not corrupt in case of power outage, disk synchronization
-flags shall be reviewed, and if necessary, shall be set. Please read *ex_env(5)*
-and *libndrxxaqdisks(8)* how to set *FSYNC*, *FDATASYNC* and *DSYNC* flags in
-*NDRX_XA_FLAGS* parameter. By default *tmsrv(8)* and persistent queue disk driver 
-uses only fflush() Unix call to send disk data changes to OS kernel, 
-which may not persist the data to disk immediately.
+Only *1* tmqueue server is allowed per queue space. Thus it is mandatory that
+'<min>' and '<max>' tags are set to *1*. Otherwise incorrect queue logic
+may be expected.
 
 
 EXIT STATUS

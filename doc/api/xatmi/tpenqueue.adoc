@@ -92,7 +92,10 @@ Valid *'TPQCTL.flags'*
 *TPNOFLAGS* No flags set.
 
 *TPQCORRID* Use the correlator ID set in 'TPQCTL.corrid'. 
-Note that each byte in 'corrid' is significant.
+Note that each byte in 'corrid' is significant. When working with corrid, it
+establishes sub-queue for given 'qname'. The message ordering settings are kept
+the same as for queue definition. Several messages with the same corrid can be
+enqueued in the same or different queues.
 
 *TPQREPLYQ* Use the 'replyqueue' for submitting response messages of services 
 which were invoked for automatic queues. If this flag is set, with 
@@ -160,15 +163,6 @@ Global transaction is not marked for abort only, if one was associated with curr
 EXAMPLE
 -------
 See *atmitest/test028_tmq/atmiclt28.c* for sample code.
-
-LIMITATIONS
------------
-Under the same global transaction, it is forbidden to call *tpenqueue()* concurrently 
-on the same XA Resource Id (i.e. queue spaces configured with the 
-with the same *NDRX_XA_RES_ID*).  Calls are forbidden either from multiple threads, 
-or from multiple processes e.g. using *tpacall(3)* to active transaction in other processes which 
-are performing *tpenqueue()* while service caller also performs *tpenqueue()*.
-Possible consequences are undefined and may include message loss.
 
 BUGS
 ----

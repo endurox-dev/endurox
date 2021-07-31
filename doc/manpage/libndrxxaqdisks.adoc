@@ -16,8 +16,8 @@ libndrxxaqdiskd.so
 
 --------------------------------------------------------------------------------
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR=/path/to/data/directory
-NDRX_XA_CLOSE_STR=/path/to/data/directory
+NDRX_XA_OPEN_STR=datadir="/path/to/data/directory",qspace="SAMPLESPACE"
+NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
 NDRX_XA_RMLIB=libndrxxaqdisk.so
 NDRX_XA_LAZY_INIT=1
@@ -27,7 +27,28 @@ NDRX_XA_LAZY_INIT=1
 DESCRIPTION
 -----------
 This is Enduro/X *tmqueue(8)* XA driver loader and actual disk based message
-queue driver. When library is started, it prepare the following directories,
+queue driver. The actual logic is implemented in *libndrxxaqdisk* library. All
+following text describes the work logic of *libndrxxaqdisk*.
+
+The Open String *NDRX_XA_OPEN_STR* contains comma separated parameters.
+The value for parameters may be put in single or double quotes.
+
+The Open string specifies the the data directory in *datadir* parameter,
+where the transaction and message data is kept. The queue space name is 
+specified in *qspace* parameter.
+
+*WARNING:* the data directory (*dataadir*) cannot be shared between different 
+queue spaces.
+
+The XA switch provided *libndrxxaqdisk* is used by *tmqueue(8)* and *tmsrv(8)*
+processes. XA operations are processed in following way:
+
+- If process which processes command is not *tmqueue*, the command is sent to
+queue space service.
+
+- If XA command is processed by *tmqueue* process, then actual logic is performed.
+
+When library is started, it prepare the following directories,
 under the *NDRX_XA_OPEN_STR:*
 
 - 'NDRX_XA_OPEN_STR'/*active* - used for active command block files. File names
@@ -52,12 +73,17 @@ updated header information to replace in message file.
 
 - Delete message (after dequeue).
 
+- Dummy message (used for marking prepared read only transactions, and are associated
+at startup with any active transaction, to perform rollbacks with out message file
+content read).
+
 Each command block file refers to one message only, thus sequence numbers are
 used for keeping them linked to one global. Thought this architecture partially 
 breaks the Atomicity property of ACID, as committed or rollbacked messages
 in queue appears one by one, instead of all by once.
 
-*NDRX_XA_FLAGS* configuration:
+To ensure that messages does not corrupt in case of power outage, disk synchronization 
+*NDRX_XA_FLAGS* configuration may be set (the default is not set):
 
 - Set flag *FSYNC* to ensure the enqueued message contents are flushed to disk.
 
@@ -108,6 +134,13 @@ used to synchronize directory to disk.
 directory. If *DSYNC* is set, *committed* directory is synchronized with disk. 
 Afterwards command block of delete message is removed from *prepared* directory.
 
+ASSUMPTIONS
+-----------
+To ensure transactionality of the message files, following assumptions are used:
+
+- File system file rename operation is atomic.
+
+- Disk sector writes are assumed to be atomic.
 
 BUGS
 ----

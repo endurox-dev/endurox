@@ -42,7 +42,6 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
 #include <atmi.h>
-#include <utlist.h>
 #include <exhash.h>
 #include <exthpool.h>
     
@@ -67,6 +66,8 @@ extern "C" {
 #define TMQ_STORCMD_UPD             'U'     /**< Command code - update msg  */
 #define TMQ_STORCMD_DEL             'D'     /**< Command code - delete msg  */
 #define TMQ_STORCMD_UNLOCK          'L'     /**< Command code - unlock msg  */
+#define TMQ_STORCMD_DUM             'M'     /**< Command code - dummy msg
+                                            for transaction identification  */
     
 
 /**
@@ -151,8 +152,16 @@ typedef struct
 typedef struct
 {
     tmq_cmdheader_t hdr;
-    
 } tmq_msg_del_t;
+
+/**
+ * Dummy command
+ * Transaction marker
+ */
+typedef struct
+{
+    tmq_cmdheader_t hdr;
+} tmq_msg_dum_t;
 
 
 /**
@@ -198,6 +207,7 @@ union tmq_block {
     tmq_msg_t msg;
     tmq_msg_del_t del;
     tmq_msg_upd_t upd;
+    tmq_msg_dum_t dum;
 };
 
 /**
@@ -205,10 +215,16 @@ union tmq_block {
  */
 union tmq_upd_block {
     tmq_cmdheader_t hdr;
+    tmq_msg_del_t del;
     tmq_msg_upd_t upd;
+    tmq_msg_dum_t dum;
 };
 
 /*---------------------------Globals------------------------------------*/
+
+extern char ndrx_G_qspace[];    /**< Name of the queue space            */
+extern char ndrx_G_qspacesvc[]; /**< real service name                  */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
  
@@ -219,19 +235,31 @@ extern void tmq_msgid_gen(char *msgid);
 extern char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
 extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 extern void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid);
-extern char * tmq_corid_serialize(char *corid_in, char *corid_str_out);
+extern char * tmq_corrid_serialize(char *corrid_in, char *corrid_str_out);
 extern int tmq_finalize_files(UBFH *p_ub);
+extern void tmq_set_tmqueue(
+    int setting
+    , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
+        short nodeid, short srvid, char *qspace, long flags)
+    , int (*p_tmq_dum_add)(char *tmxid)
+    , int (*p_tmq_unlock_msg)(union tmq_upd_block *b));
     
 /* From storage driver: */
 extern size_t tmq_get_block_len(char *data);
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
-extern int tmq_storage_write_cmd_block(char *p_block, char *descr);
-extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block, int state), 
-        short nodeid, short srvid);
-extern void tmq_housekeep(char *filename, int tmq_err);
-extern void tmq_configure_housekeep(int housekeep);
+extern int tmq_storage_write_cmd_block(char *p_block, char *descr, char *cust_tmxid);
+extern int tmq_storage_get_blocks(int (*process_block)(char *tmxid, 
+        union tmq_block **p_block, int state, int seqno), short nodeid, short srvid);
+
+/* transaction management: */
+extern int ndrx_xa_qminiservce(UBFH *p_ub, char cmd);
+
+extern int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname, 
+        short nodeid, short srvid, char *qspace, long flags);
    
-    
+extern int tmq_sort_queues(void);
+extern int tmq_lock_msg(char *msgid);
+
 #ifdef	__cplusplus
 }
 #endif

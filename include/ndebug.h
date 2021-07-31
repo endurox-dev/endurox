@@ -116,8 +116,9 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 /** Integration flags, detailed logging (incl. stack backtrace) */
 #define LOG_IFLAGS_DETAILED         "detailed"
+#define LOG_THREADED_TEMPL          0x0001      /**< threaded by templates    */
+#define LOG_THREADED_LINEL          0x0002      /**< threaded by line lock    */
 
-    
 #define LOG_CODE_NDRX               'N'
 #define LOG_CODE_UBF                'U'
 #define LOG_CODE_TP                 't'

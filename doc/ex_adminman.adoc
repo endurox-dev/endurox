@@ -406,7 +406,54 @@ kern.maxfilesperproc=262144
 EOF
 --------------------------------------------------------------------------------
 
-After this reboot is required.
+Starting from Macos version 10.15 (Catalina) or later */boot/loader.conf* does
+not work and plist file needs to be installed. Prior making this file, possibly
+SIP disable is required and root / file system needs to remounted as RW. But firstly
+may try directly setup this file from root user and only if that does not work, change
+the SIP mode and perfrom fs-remount.
+
+--------------------------------------------------------------------------------
+
+$ sudo -s
+
+# bash
+
+# cd /Library/LaunchDaemons
+
+# cat << EOF >> endurox.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+ <key>Label</key>
+ <string>shmemsetup</string>
+ <key>UserName</key>
+ <string>root</string>
+ <key>GroupName</key>
+ <string>wheel</string>
+ <key>ProgramArguments</key>
+ <array>
+ <string>/usr/sbin/sysctl</string>
+ <string>-w</string>
+ <string>kern.sysv.shmmax=419430400</string>
+ <string>kern.sysv.shmmin=1</string>
+ <string>kern.sysv.shmmni=32</string>
+ <string>kern.sysv.shmseg=8</string>
+ <string>kern.sysv.shmall=102400</string>
+ <string>kern.maxfiles=524288</string>
+ <string>kern.maxfilesperproc=262144</string>
+  </array>
+ <key>KeepAlive</key>
+ <false/>
+ <key>RunAtLoad</key>
+ <true/>
+</dict>
+</plist>
+EOF
+
+--------------------------------------------------------------------------------
+
+After above settings reboot is required.
 
 == Setup environment configuration
 

@@ -52,15 +52,6 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define THREADPOOL_DFLT         10  /* Default number of threads spawned   */
 
 #define XA_RETRIES_DFLT         3   /* number of foreground retries */
-
-#define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements  */
-#define COPY_MODE_BACKGROUND        0x2       /* Copy background elements  */
-#define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?     */
-
-
-#define NDRX_LOCK_WAIT_TIME         5000    /**< lock wait time b4 give up */
-
-
 #define TMSRV_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min  */
 
 /*---------------------------Enums--------------------------------------*/
