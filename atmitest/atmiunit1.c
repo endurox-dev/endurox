@@ -821,7 +821,10 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test072_qos);
     add_test(suite, test073_netact);
 
-#ifndef EX_OS_DARWIN
+/* really queues may lock-up or corrupt
+ * if crash testing is performed
+ */
+#ifndef EX_USE_EMQ
     add_test(suite, test074_sanitulog);
 #endif
     
@@ -836,7 +839,13 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test083_ddrsyntax);
     add_test(suite, test084_ddr);
     add_test(suite, test085_prio);
+
+/* really queues may lock-up or corrupt
+ * if crash testing is performed
+ */
+#ifndef EX_USE_EMQ
     add_test(suite, test086_tmqlimit);
+#endif
     add_test(suite, test087_tmsrv);
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
