@@ -34,6 +34,10 @@ service names, with having several servers advertising single service name.
 [*-s* 'SERVICE_NAME']::
 Service name to advertise. Default value is *EXBENCH*.
 
+[*-T*]::
+Enable transaction mode, performs *tpopen(3)* at init, and *tpclose(3)*
+and server done.
+
 
 EXIT STATUS
 -----------
