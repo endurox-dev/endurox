@@ -61,6 +61,7 @@ void CONVSV (TPSVCINFO *p_svc)
     int i;
     UBFH *p_ub = (UBFH *)p_svc->data;
     char tmp[128];
+    long len;
     NDRX_LOG(log_debug, "CONVSV got call");
 
     /* Just print the buffer */
@@ -102,7 +103,7 @@ void CONVSV (TPSVCINFO *p_svc)
     }
 
     /* now wait for messages to come in! */
-    while (EXSUCCEED==tprecv(p_svc->cd, (char **)&p_ub, 0L, 0L, &revent))
+    while (EXSUCCEED==tprecv(p_svc->cd, (char **)&p_ub, &len, 0L, &revent))
     {
         NDRX_LOG(log_debug, "Sent MSG OK!");
     }

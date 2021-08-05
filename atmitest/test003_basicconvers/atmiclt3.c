@@ -54,7 +54,7 @@
  */
 int main(int argc, char** argv) {
 
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 4048);
     long rsplen;
     int i;
     int ret=EXSUCCEED;
@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
     long revent;
     int received = 0;
     char tmp[126];
+    long len;
 
     /* add test case selector normal vs timeout vs invalid arg... */
     if (argc < 2)
@@ -89,7 +90,7 @@ int main(int argc, char** argv) {
         /* Recieve the stuff back */
         NDRX_LOG(log_debug, "About to tprecv!");
 
-        while (EXSUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
+        while (EXSUCCEED==tprecv(cd, (char **)&p_ub, &len, 0L, &revent))
         {
             received++;
             NDRX_LOG(log_debug, "MSG RECEIVED OK!");
@@ -102,6 +103,7 @@ int main(int argc, char** argv) {
             received++;
             snprintf(tmp, sizeof(tmp), "CLT: %d", received);
             
+            Bprint(p_ub);
             Badd(p_ub, T_STRING_FLD, tmp, 0L);
             if (TPEV_SENDONLY==revent)
             {
@@ -126,7 +128,7 @@ int main(int argc, char** argv) {
         Bfprint(p_ub, stderr);
 
         /* Wait for return from server */
-        ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
+        ret=tprecv(cd, (char **)&p_ub, &len, 0L, &revent);
         NDRX_LOG(log_error, "tprecv failed with revent=%ld tperrno=%d", revent, tperrno);
 
         if (EXFAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
@@ -136,7 +138,7 @@ int main(int argc, char** argv) {
         }
         
         /* check that we do not core dump when trying to fetch from closed connection */
-        ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
+        ret=tprecv(cd, (char **)&p_ub, &len, 0L, &revent);
         
         if (EXSUCCEED==ret)
         {
