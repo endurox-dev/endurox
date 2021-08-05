@@ -47,6 +47,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate int M_tran = EXFALSE; /**< use distr tran */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -77,7 +78,7 @@ int init(int argc, char** argv)
     int svcnum=0;
     
         /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "s:N:--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "s:N:T--")) != EXFAIL)
     {
         switch(c)
         {
@@ -86,6 +87,9 @@ int init(int argc, char** argv)
                 break;
             case 's':
                 NDRX_STRCPY_SAFE(svcnm_base, optarg);
+                break;
+            case 'T':
+                M_tran = EXTRUE;
                 break;
             
         }
@@ -104,14 +108,20 @@ int init(int argc, char** argv)
     /* Advertise our service */
     if (EXSUCCEED!=tpadvertise(svcnm, EXBENCHSV))
     {
-        NDRX_LOG(log_error, "Failed to initialise EXBENCH!");
+        NDRX_LOG(log_error, "Failed to initialise EXBENCH: %s!", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    if (M_tran && EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "Failed to initialise tpopen: %s!", tpstrerror(tperrno));
         ret=EXFAIL;
         goto out;
     }
 
 out:
 
-	
     return ret;
 }
 
@@ -121,6 +131,10 @@ out:
 void uninit(void)
 {
     TP_LOG(log_info, "Uninit");
+    if (M_tran)
+    {
+        tpclose();
+    }
 }
 
 /**
