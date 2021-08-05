@@ -652,13 +652,15 @@ expublic int tprecv (int cd, char **data,
         ret=EXFAIL;
         goto out;
     }
-
+/*
+    we provider internal len buffer if needed
     if (len==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "len cannot be null");
         ret=EXFAIL;
         goto out;
     }
+*/
 
     ret=ndrx_tprecv (cd, data, len, flags, revent, &command_id);
 

@@ -1037,11 +1037,17 @@ expublic int ndrx_tprecv (int cd, char **data,
     char *rply_buf = NULL; /* Allocate dynamically! */
     tp_command_call_t *rply;
     int answ_ok = EXFALSE;
+    long len_int = 0;
     tp_conversation_control_t *conv;
     ndrx_stopwatch_t t;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
+    /* Enduro/X allows len to be NULL */
+    if (NULL==len)
+    {
+        len = &len_int;
+    }
     *revent = 0;
     
     if (!(flags & TPNOTIME))
