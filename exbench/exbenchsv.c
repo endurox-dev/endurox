@@ -34,8 +34,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <memory.h>
-#include <math.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -48,6 +48,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 exprivate int M_tran = EXFALSE; /**< use distr tran */
+exprivate int M_usleep = 0; /**< Number of microseconds to sleep */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -56,6 +57,11 @@ exprivate int M_tran = EXFALSE; /**< use distr tran */
  */
 void EXBENCHSV (TPSVCINFO *p_svc)
 {
+    if (M_usleep > 0)
+    {
+        usleep(M_usleep);
+    }
+
     tpreturn(  TPSUCCESS,
 		0L,
 		(char *)p_svc->data,
@@ -77,8 +83,8 @@ int init(int argc, char** argv)
     int c;
     int svcnum=0;
     
-        /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "s:N:T--")) != EXFAIL)
+    /* Parse command line, will use simple getopt */
+    while ((c = getopt(argc, argv, "s:N:TU:--")) != EXFAIL)
     {
         switch(c)
         {
@@ -88,13 +94,15 @@ int init(int argc, char** argv)
             case 's':
                 NDRX_STRCPY_SAFE(svcnm_base, optarg);
                 break;
+            case 'U':
+                M_usleep = atoi(optarg);
+                break;
             case 'T':
                 M_tran = EXTRUE;
                 break;
             
         }
     }
-    
     
     if (svcnum > 0)
     {
