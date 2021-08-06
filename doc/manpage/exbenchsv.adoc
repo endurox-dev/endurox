@@ -38,6 +38,9 @@ Service name to advertise. Default value is *EXBENCH*.
 Enable transaction mode, performs *tpopen(3)* at init, and *tpclose(3)*
 and server done.
 
+[*-U* 'SLEEP_MICROSEC']::
+Number of microseconds to sleep in the service functions. Default is *0*.
+
 
 EXIT STATUS
 -----------
