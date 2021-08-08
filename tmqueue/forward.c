@@ -84,7 +84,7 @@ exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
 exprivate fwd_qlist_t *M_next_fwd_q_list = NULL;    /**< list of queues to check msgs to fwd */
 exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list...  */
 exprivate int          M_had_msg = EXFALSE;         /**< Did we got the msg previously?      */
-exprivate int          M_all_busy = EXTRUE;         /**< Is all queues busy?                 */
+exprivate int          M_any_busy = EXFALSE;         /**< Is all queues busy?                 */
 exprivate int          M_num_busy = 0;         /**< Number of busy jobs                 */
     
 exprivate MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
@@ -186,7 +186,7 @@ exprivate tmq_msg_t * get_next_msg(void)
         {
             /* reset marking, no messages processed yet. */
             M_had_msg=EXFALSE;
-            M_all_busy=EXTRUE;
+            M_any_busy=EXFALSE;
             M_num_busy = 0;
             fwd_q_list_rm();
 
@@ -211,14 +211,11 @@ exprivate tmq_msg_t * get_next_msg(void)
             
             /* not all busy... */
             M_num_busy+=busy;
-            if (busy < M_next_fwd_q_cur->workers)
-            {
-                M_all_busy=EXFALSE;
-            }
             
             if (busy >= M_next_fwd_q_cur->workers)
             {
                 /* Queue is busy... nothing todo... */
+                M_any_busy=EXTRUE;
             }
             /* OK, so we peek for a message */
             else if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
@@ -248,7 +245,7 @@ exprivate tmq_msg_t * get_next_msg(void)
         if (NULL==ret)
         {
             /* read again if had message... */
-            if (M_all_busy && M_num_busy > 0)
+            if (M_any_busy)
             {
                 int wait_ret;
                 NDRX_LOG(log_debug, "All Qs/threads busy to the limit wait for slot...");
@@ -260,7 +257,7 @@ exprivate tmq_msg_t * get_next_msg(void)
                     wait_ret = ndrx_thpool_timedwait_less(G_tmqueue_cfg.fwdthpool, 
                             M_num_busy, 1000);
                 } 
-                while (!G_forward_req_shutdown && !(EXTRUE==wait_ret));
+                while (!G_forward_req_shutdown && EXTRUE!=wait_ret);
                 
                 again = EXTRUE;
             }

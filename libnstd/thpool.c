@@ -364,7 +364,7 @@ int ndrx_thpool_timedwait_less(thpool_* thpool_p, int less_than, long timeout)
         }
         
         ndrx_timespec_plus(&wait_time, sleep_time);
-        pthread_cond_wait(&thpool_p->threads_all_idle, &thpool_p->thcount_lock);        
+        pthread_cond_timedwait(&thpool_p->threads_one_idle, &thpool_p->thcount_lock, &wait_time); 
     }
     
     /* OK, check the condition */
