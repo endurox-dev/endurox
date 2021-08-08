@@ -63,6 +63,8 @@
 #include <xa_cmn.h>
 #include <atmi_int.h>
 #include <ndrxdiag.h>
+#include "qtran.h"
+#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -82,6 +84,8 @@ exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
 exprivate fwd_qlist_t *M_next_fwd_q_list = NULL;    /**< list of queues to check msgs to fwd */
 exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list...  */
 exprivate int          M_had_msg = EXFALSE;         /**< Did we got the msg previously?      */
+exprivate int          M_all_busy = EXTRUE;         /**< Is all queues busy?                 */
+exprivate int          M_num_busy = 0;         /**< Number of busy jobs                 */
     
 exprivate MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 
@@ -172,6 +176,7 @@ exprivate tmq_msg_t * get_next_msg(void)
     long qerr = EXSUCCEED;
     char msgbuf[128];
     int again;
+    long tot_cnt;
 
     do
     {
@@ -181,6 +186,8 @@ exprivate tmq_msg_t * get_next_msg(void)
         {
             /* reset marking, no messages processed yet. */
             M_had_msg=EXFALSE;
+            M_all_busy=EXTRUE;
+            M_num_busy = 0;
             fwd_q_list_rm();
 
             /* Generate new list */
@@ -197,8 +204,24 @@ exprivate tmq_msg_t * get_next_msg(void)
          */
         while (NULL!=M_next_fwd_q_cur)
         {
+            int busy = tmq_fwd_busy_cnt(M_next_fwd_q_cur->qname);
+            
+            /* no msg... */
+            ret=NULL;
+            
+            /* not all busy... */
+            M_num_busy+=busy;
+            if (busy < M_next_fwd_q_cur->workers)
+            {
+                M_all_busy=EXFALSE;
+            }
+            
+            if (busy >= M_next_fwd_q_cur->workers)
+            {
+                /* Queue is busy... nothing todo... */
+            }
             /* OK, so we peek for a message */
-            if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
+            else if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
                     &qerr, msgbuf, sizeof(msgbuf), NULL)))
             {
                 NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", 
@@ -222,18 +245,77 @@ exprivate tmq_msg_t * get_next_msg(void)
         }
     
         /* if any queue had msgs, then re-scan queue list and retry */
-        if (NULL==ret && M_had_msg)
+        if (NULL==ret)
         {
-            NDRX_LOG(log_debug, "Had messages in prevous run, scan Qs again");
-            again = EXTRUE;
-        } 
+            /* read again if had message... */
+            if (M_all_busy)
+            {
+                int wait_ret;
+                NDRX_LOG(log_debug, "All threads busy to the limit wait for slot...");
+                
+                /* wait on pool */
+                do
+                {
+                    /* wait 1 sec... */
+                    wait_ret = ndrx_thpool_timedwait_less(G_tmqueue_cfg.fwdthpool, 
+                            M_num_busy, 1000);
+                } 
+                while (!G_forward_req_shutdown && !(EXTRUE==wait_ret));
+                
+                again = EXTRUE;
+            }
+            else if (M_had_msg)
+            {
+                NDRX_LOG(log_debug, "Had messages in prevous run, scan Qs again");
+                again = EXTRUE;
+            }
+        }
 
-    } while (again);
+    } while (again && !G_forward_req_shutdown);
     
 out:
     return ret;
 }
 
+/** get lock again to be sure that we are not rolled back */
+#define RELOCK do {\
+                    p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, NULL);\
+                    /* Try to lock-up */\
+                    if (NULL==p_tl)\
+                    {\
+                        NDRX_LOG(log_error, "Fatal error ! Expected to have transaction for [%s]",\
+                                tmxid);\
+                        userlog("Fatal error ! Expected to have transaction for [%s]",\
+                                tmxid);\
+                        EXFAIL_OUT(ret);\
+                    }\
+                } while (0)
+
+/** Unlock the queue */
+#define UNLOCK do {\
+        tmq_log_unlock(p_tl);\
+        p_tl=NULL;\
+    } while (0)
+
+/* well...! shouldn't we lock the transaction here?
+ * Or... periodically lock / unlock as timeout may kill the transaction
+ * in the middle thus msg ptr would become invalid
+ */
+#define GET_TL do {\
+        /* & lock the entry */\
+        tmxid = G_atmi_tls->qdisk_tls->filename_base;\
+        p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, NULL);\
+        /* Try to lock-up */\
+        if (NULL==p_tl)\
+        {\
+            NDRX_LOG(log_error, "Fatal error ! Expected to have transaction for [%s]",\
+                    tmxid);\
+            userlog("Fatal error ! Expected to have transaction for [%s]",\
+                    tmxid);\
+            EXFAIL_OUT(ret);\
+        }\
+    } while (0)
+                
 /**
  * Process of the message
  * @param ptr
@@ -258,6 +340,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     int tout;
     int sent_ok=EXFALSE;
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
+    char qname[TMQNAMELEN+1];
+    char *tmxid=NULL;
+    qtran_log_t *p_tl=NULL;
     
     if (!M_is_xa_open)
     {
@@ -276,6 +361,8 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         }
     }
     
+    /* for later statistics release */
+    NDRX_STRCPY_SAFE(qname, msg->hdr.qname);
     tmq_msgid_serialize(msg->hdr.msgid, msgid_str); 
 
     NDRX_LOG(log_info, "%s enter for msgid_str: [%s]", fn, msgid_str);
@@ -390,19 +477,20 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             EXFAIL_OUT(ret);
         }
     }
-
+        
     /* 
-     * just unlock the message. Increase the cou
+     * just unlock the message. Increase the counter
      */
     if (sent_ok)
     {
-        /* start our internal ransactino */
+        /* start our internal transaction */
         tmq_update_q_stats(msg->hdr.qname, 1, 0);
         cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
 
         /* well this will generate this will add msg to transaction
          * will be handled by timeout setting...
          * No more unlock manual.
+         * This will sub-lock
          */
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
                 "Removing completed message...", NULL))
@@ -418,6 +506,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             tmq_unlock_msg_by_msgid(msg->hdr.msgid);
             EXFAIL_OUT(ret);
         }
+        
+        /* dynamic mode will promote the tmxid */
+        GET_TL;
         
        /* Remove the message */
         if (msg->qctl.flags & TPQREPLYQ)
@@ -436,9 +527,15 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
              * the transaction here, just let let timeout handler to do the
              * job
              */
+            
+            /* we must release the lock here... */
+            UNLOCK;
             if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
                     rply_buf, rply_len, 0))
             {
+                
+                RELOCK;
+                
                 if (TPEDIAGNOSTIC==tperrno)
                 {
                     NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s diag: %d:%s", 
@@ -493,6 +590,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 EXFAIL_OUT(ret);
             }
             
+            /* dynamic mode will promote the tmxid */
+            GET_TL;
+            
             if (msg->qctl.flags & TPQFAILUREQ && NULL!=rply_buf)
             {
                 TPQCTL ctl;
@@ -508,9 +608,12 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 /* if local tran expires, the process will be unable to join
                  * transaction 
                  */
+                UNLOCK;
                 if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
                         rply_buf, rply_len, 0))
                 {
+                    RELOCK;
+
                     if (TPEDIAGNOSTIC==tperrno)
                     {
                         NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s diag: %d:%s", 
@@ -548,9 +651,13 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                  * Keep the original flags... */
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
+                UNLOCK;
                 if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, qconf.errorq, &ctl, 
                         call_buf, call_len, 0))
                 {
+                    
+                    RELOCK;
+                    
                     NDRX_LOG(log_error, "Failed to enqueue to errorq [%s]: %s", 
                             qconf.errorq, tpstrerror(tperrno));
                     userlog("Failed to enqueue to errorq [%s]: %s", 
@@ -582,10 +689,24 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 tmq_unlock_msg_by_msgid(msg->hdr.msgid);
                 EXFAIL_OUT(ret);
             }
+            
+            /* dynamic mode will promote the tmxid */
+            GET_TL;
+            
         }
     }
 
 out:    
+        
+    /* release the lock so that commit can complete... */        
+    if (NULL!=p_tl)
+    {
+        tmq_log_unlock(p_tl);
+    }
+
+    /* NOTE! Cannot touch msg here anymore !?
+     * what happens to msg object, if timeout rolls-back?
+     */
     if (tpgetlev())
     {
         if (EXSUCCEED==ret)
@@ -622,10 +743,8 @@ out:
         tpfree(rply_buf);
     }
     
-    /* if disk failed, maybe that's fine that messages stay locked
-     * after the restart there will be retry, but at-least we does not make
-     * infinite loop of attempts
-     */
+    /* release stats counter... */
+    tmq_fwd_busy_dec(qname);
     
     return;
 }
@@ -662,6 +781,11 @@ expublic int forward_loop(void)
             if (NULL!=msg)
             {
                 /* Submit the job to thread */
+                if (EXSUCCEED!=tmq_fwd_busy_inc(msg->hdr.qname))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                
                 ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
             }
             else
