@@ -187,7 +187,8 @@ fi
 # OK?
 
 # all shall complete within 10 sec, not?
-sleep 10
+echo "Wait 30..."
+sleep 30
 xadmin mqlq
 
 
@@ -228,7 +229,8 @@ fi
 
 
 # give some 30 sec total for other to complete... 
-sleep 20
+echo "Wait 65..."
+sleep 65
 xadmin mqlq
 
 STATS=`xadmin mqlq | grep "QOS000        0     0   100   100   100     0"`
