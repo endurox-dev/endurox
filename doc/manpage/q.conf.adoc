@@ -68,7 +68,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     Number of max busy worker threads for given queue, if queue is automatic.
     Absolute limit of total forwarders is set *tmqueue(8)* *-f* flag, this denotes
     the portion which given queue can occupy from shared forwarder thread pool. 
-    The default value is *2*.
+    The default value is *2*. Minimum value is *1*.
 
 EXAMPLE
 -------

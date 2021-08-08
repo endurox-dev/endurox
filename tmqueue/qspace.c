@@ -438,13 +438,12 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         
         qconf->waitretrymax = ival;
     }
-    //
     else if (0==strcmp(key, TMQ_QC_WORKERS))
     {
         int ival = atoi(value);
-        if (!ndrx_isint(value) || ival < 0)
+        if (!ndrx_isint(value) || ival < 1)
         {
-            NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
+            NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=1)", 
                     value, key);
             EXFAIL_OUT(ret);
         }
