@@ -206,7 +206,7 @@ exprivate tmq_msg_t * get_next_msg(void)
         {
             int busy = tmq_fwd_busy_cnt(M_next_fwd_q_cur->qname);
             
-            NDRX_LOG(log_info, "M_next_fwd_q_cur: %s %ld/%ld/%d(%d)", 
+            NDRX_LOG(log_info, "mon: %s %ld/%ld/%d/%d", 
                     M_next_fwd_q_cur->qname
                     ,M_next_fwd_q_cur->numenq
                     ,M_next_fwd_q_cur->numdeq
