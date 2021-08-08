@@ -554,6 +554,8 @@ Feature #715
 
 - Version 7.5.30 released on 24/07/2021 (stable) Feature #717, Bug #719
 
+- Version 7.5.32 released on 08/07/2021 (stable) Support #721
+
 # Build configurations
 
 ## Configure make with: 
