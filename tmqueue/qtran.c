@@ -219,7 +219,10 @@ restart:
             /* give hint that no unlocking shall be done
              * as already locked.
              */
-            *locke=EXTRUE;
+            if (NULL!=locke)
+            {
+                *locke=EXTRUE;
+            }
         }
         else
         {

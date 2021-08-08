@@ -198,6 +198,7 @@ struct tmq_qconfig
     char mode;      /**< queue mode fifo/lifo                           */
     int txtout;     /**< transaction timeout (override if > -1)         */
     char errorq[TMQNAMELEN];     /**< Error queue name, optional        */
+    int workers;   /**< Max number of busy forward workers              */
     
     EX_hash_handle hh; /**< makes this structure hashable               */
 };
@@ -214,6 +215,7 @@ struct fwd_qlist
     
     long numenq; /**< Succeeded auto messages */
     long numdeq; /**< failed auto messages */
+    int workers;    /**< number of configured workers */
     
     fwd_qlist_t *next;
     fwd_qlist_t *prev;
@@ -272,6 +274,10 @@ extern void tmq_cor_sort_queues(tmq_qhash_t *q);
 extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
+
+extern int tmq_fwd_busy_cnt(char *qname);
+extern int tmq_fwd_busy_inc(char *qname);
+extern void tmq_fwd_busy_dec(char *qname);
     
 #ifdef	__cplusplus
 }

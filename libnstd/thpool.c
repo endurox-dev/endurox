@@ -27,6 +27,7 @@
 
 #include <nstdutil.h>
 #include <ndrxdiag.h>
+#include <nstopwatch.h>
 
 #ifdef THPOOL_DEBUG
 #define THPOOL_DEBUG 1
@@ -325,6 +326,60 @@ void ndrx_thpool_wait(thpool_* thpool_p)
 }
 
 /**
+ * Wait for jobs to be less than given number
+ * @param thpool_p thread pool which to work
+ * @param less_than jobs/working threads to be less than this number
+ * @param timeout number of milliseconds to wait
+ * @return EXFAIL (something bad has happended), EXSUCCEED (timedout), EXTRUE (got
+ *  condition)
+ */
+int ndrx_thpool_timedwait_less(thpool_* thpool_p, int less_than, long timeout)
+{
+    int ret = EXSUCCEED;
+    struct timespec wait_time;
+    struct timeval now;
+    long delta, sleep_time;
+    
+    ndrx_stopwatch_t w;
+    
+    ndrx_stopwatch_reset(&w);
+    MUTEX_LOCK_V(thpool_p->thcount_lock);
+    
+    while (thpool_p->jobqueue.len + thpool_p->num_threads_working>=less_than &&
+            (delta=ndrx_stopwatch_get_delta(&w)) < timeout)
+    {
+
+        gettimeofday(&now, NULL);
+
+        wait_time.tv_sec = now.tv_sec;
+        /* convert to ms: */
+        wait_time.tv_nsec = now.tv_usec*1000;
+
+        sleep_time = timeout - delta;
+        
+        if (sleep_time<=0)
+        {
+            /* timed-out */
+            break;
+        }
+        
+        ndrx_timespec_plus(&wait_time, sleep_time);
+        pthread_cond_wait(&thpool_p->threads_all_idle, &thpool_p->thcount_lock);        
+    }
+    
+    /* OK, check the condition */
+    if (thpool_p->jobqueue.len + thpool_p->num_threads_working < less_than)
+    {
+        ret = EXTRUE;
+    }
+    
+    MUTEX_UNLOCK_V(thpool_p->thcount_lock);
+    
+    
+    return ret;
+}
+
+/**
  * Wait until one thread is free.
  * Called by dispatch thread.
  * @param thpool_p 
@@ -361,30 +416,6 @@ int ndrx_thpool_nr_not_working(thpool_* thpool_p)
     
     return nr;
 }
-
-/**
- * Is one thread available?
- * @param thpool_p 
- * @return EXTRUE/EXFALSE
- */
-int ndrx_thpool_is_one_avail(thpool_* thpool_p)
-{
-    int ret = EXFALSE;
-    
-    MUTEX_LOCK_V(thpool_p->thcount_lock);
-
-    /* Wait for at-leat one free thread (i.e.) no job found... */
-    if ( (thpool_p->jobqueue.len - 
-            (thpool_p->num_threads-thpool_p->num_threads_working) < 0 ))
-    {
-        ret=EXTRUE;
-    }
-
-    MUTEX_UNLOCK_V(thpool_p->thcount_lock);
-out:
-    return ret;
-}
-
 
 /* Destroy the threadpool */
 void ndrx_thpool_destroy(thpool_* thpool_p)

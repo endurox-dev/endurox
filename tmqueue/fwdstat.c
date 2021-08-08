@@ -35,14 +35,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <ndebug.h>
+#include <exhash.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Forward statistics
+ */
+typedef struct {
+    
+    char qname[TMQNAMELEN+1];
+    int busy;
+    EX_hash_handle hh; /**< makes this structure hashable        */
+} fwd_stats_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/** Lock for statistics hash */
+exprivate MUTEX_LOCKDECL(M_statsh_lock);
+
+/** statistics hash by it self */
+exprivate fwd_stats_t *M_statsh = NULL;
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -50,9 +71,27 @@
  * @param[in] qname queue name
  * @return Number of messages in forward threads
  */
-expublic long tmq_fwd_busy_cnt(char *qname)
+expublic int tmq_fwd_busy_cnt(char *qname)
 {
-
+    int ret;
+    fwd_stats_t *el = NULL;
+    
+    MUTEX_LOCK_V(M_statsh_lock);
+    
+    EXHASH_FIND_STR( M_statsh, qname, el);
+    
+    if (NULL==el)
+    {
+        ret=0;
+    }
+    else
+    {
+        ret=el->busy;
+    }
+    
+    MUTEX_UNLOCK_V(M_statsh_lock);
+    
+    return ret;
 }
 
 /**
@@ -62,7 +101,39 @@ expublic long tmq_fwd_busy_cnt(char *qname)
  */
 expublic int tmq_fwd_busy_inc(char *qname)
 {
-
+    int ret = EXSUCCEED;
+    fwd_stats_t *el = NULL;
+    
+    MUTEX_LOCK_V(M_statsh_lock);
+    
+    /* if found, increment, if not found add new with 1 */
+    
+    EXHASH_FIND_STR( M_statsh, qname, el);
+    
+    if (NULL!=el)
+    {
+        el->busy++;
+    }
+    else
+    {
+        /* Alloc + add with 1. */
+        el = NDRX_FPMALLOC(sizeof(fwd_stats_t), 0);
+        
+        if (NULL==el)
+        {
+            NDRX_LOG(log_error, "Failed to malloc %d bytes", sizeof(fwd_stats_t));
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_STRCPY_SAFE(el->qname, qname);
+        el->busy=1;
+        EXHASH_ADD_STR(M_statsh, qname, el);
+    }
+    
+out:
+    MUTEX_UNLOCK_V(M_statsh_lock);
+    
+    return ret;
 }
 
 /**
@@ -72,7 +143,25 @@ expublic int tmq_fwd_busy_inc(char *qname)
  */
 expublic void tmq_fwd_busy_dec(char *qname)
 {
-
+    fwd_stats_t *el = NULL;
+    
+    MUTEX_LOCK_V(M_statsh_lock);
+    
+    EXHASH_FIND_STR( M_statsh, qname, el);
+    
+    if (NULL==el)
+    {
+        userlog("Fatal error: No queue defined [%s] in fwd stats hash", qname);
+        NDRX_LOG(log_always, "Fatal error: No queue defined [%s] in fwd stats hash", qname);
+        abort();
+    }
+    else
+    {
+        el->busy--;
+        assert(el->busy>=0);
+    }
+    
+    MUTEX_UNLOCK_V(M_statsh_lock);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

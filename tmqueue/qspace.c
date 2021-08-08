@@ -73,7 +73,8 @@
 #include "qtran.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define MAX_TOKEN_SIZE          64 /* max key=value buffer size of qdef element */
+#define MAX_TOKEN_SIZE          64 /**< max key=value buffer size of qdef element */
+#define WORKERS_DEFAULT         2   /**< by default we have 2 workers for autoqs */
 
 #define TMQ_QC_NAME             "name"
 #define TMQ_QC_SVCNM            "svcnm"
@@ -87,6 +88,7 @@
 #define TMQ_QC_MODE             "mode"
 #define TMQ_QC_TXTOUT           "txtout"    /**< transaction timeout override */
 #define TMQ_QC_ERRORQ           "errorq"    /**< Name of the error queue, opt */
+#define TMQ_QC_WORKERS          "workers"   /**< max number of workders       */
 
 #define EXHASH_FIND_STR_H2(head,findstr,out)                                     \
     EXHASH_FIND(h2,head,findstr,strlen(findstr),out)
@@ -436,6 +438,19 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         
         qconf->waitretrymax = ival;
     }
+    //
+    else if (0==strcmp(key, TMQ_QC_WORKERS))
+    {
+        int ival = atoi(value);
+        if (!ndrx_isint(value) || ival < 0)
+        {
+            NDRX_LOG(log_error, "Invalid value [%s] for key [%s] (must be int>=0)", 
+                    value, key);
+            EXFAIL_OUT(ret);
+        }
+        
+        qconf->workers = ival;
+    }
     else if (0==strcmp(key, TMQ_QC_MEMONLY))
     {
         /* CURRENTLY NOT SUPPORTED.
@@ -548,7 +563,7 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, si
     }
     
     snprintf(out_buf, out_bufsz, "%s,svcnm=%s,autoq=%c,tries=%d,waitinit=%d,waitretry=%d,"
-                        "waitretrymax=%d,mode=%s,txtout=%d",
+                        "waitretrymax=%d,mode=%s,txtout=%d,workers=%d",
             qdef->qname, 
             qdef->svcnm, 
             qdef->autoq,
@@ -557,7 +572,8 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, si
             qdef->waitretry,
             qdef->waitretrymax,
             qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo",
-            qdef->txtout);
+            qdef->txtout,
+            qdef->workers);
 
     if (EXEOS!=qdef->errorq[0])
     {
@@ -764,6 +780,7 @@ expublic int tmq_qconf_addupd(char *qconfstr, char *name)
             /* Try to load initial config from @ (TMQ_DEFAULT_Q) Q */
             qconf->mode = TMQ_MODE_FIFO; /* default to FIFO... */
             qconf->txtout = EXFAIL;     /* use default */
+            qconf->workers = WORKERS_DEFAULT;   /* set default workers to 2 */
             if (NULL!=(dflt=tmq_qconf_get(TMQ_DEFAULT_Q)))
             {
                 memcpy(qconf, dflt, sizeof(*dflt));
@@ -1653,6 +1670,7 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
             
             tmp->numenq = q->numenq;
             tmp->numdeq = q->numdeq;
+            tmp->workers = qconf->workers;
             
             DL_APPEND(ret, tmp);
         }
