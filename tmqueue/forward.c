@@ -527,12 +527,11 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             
             /* we must release the lock here... */
             UNLOCK;
-            if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, 
-                    rply_buf, rply_len, 0))
-            {
-                
-                RELOCK;
-                
+            ret = tpenqueue (msg->hdr.qspace, msg->qctl.replyqueue, &ctl, rply_buf, rply_len, 0);
+            RELOCK;
+            
+            if (EXSUCCEED!=ret)
+            {    
                 if (TPEDIAGNOSTIC==tperrno)
                 {
                     NDRX_LOG(log_error, "Failed to enqueue to replyqueue [%s]: %s diag: %d:%s", 
@@ -606,11 +605,11 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                  * transaction 
                  */
                 UNLOCK;
-                if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, 
-                        rply_buf, rply_len, 0))
+                ret = tpenqueue (msg->hdr.qspace, msg->qctl.failurequeue, &ctl, rply_buf, rply_len, 0);
+                RELOCK;
+                
+                if (EXSUCCEED!=ret)
                 {
-                    RELOCK;
-
                     if (TPEDIAGNOSTIC==tperrno)
                     {
                         NDRX_LOG(log_error, "Failed to enqueue to failurequeue [%s]: %s diag: %d:%s", 
@@ -649,12 +648,11 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
 
                 UNLOCK;
-                if (EXSUCCEED!=tpenqueue (msg->hdr.qspace, qconf.errorq, &ctl, 
-                        call_buf, call_len, 0))
+                ret = tpenqueue (msg->hdr.qspace, qconf.errorq, &ctl, call_buf, call_len, 0);
+                RELOCK;
+                
+                if (EXSUCCEED!=ret)
                 {
-                    
-                    RELOCK;
-                    
                     NDRX_LOG(log_error, "Failed to enqueue to errorq [%s]: %s", 
                             qconf.errorq, tpstrerror(tperrno));
                     userlog("Failed to enqueue to errorq [%s]: %s", 
