@@ -248,10 +248,10 @@ exprivate tmq_msg_t * get_next_msg(void)
         if (NULL==ret)
         {
             /* read again if had message... */
-            if (M_all_busy)
+            if (M_all_busy && M_num_busy > 0)
             {
                 int wait_ret;
-                NDRX_LOG(log_debug, "All threads busy to the limit wait for slot...");
+                NDRX_LOG(log_debug, "All Qs/threads busy to the limit wait for slot...");
                 
                 /* wait on pool */
                 do
