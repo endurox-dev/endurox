@@ -1382,11 +1382,13 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     tmq_msg_del_t del;
     char msgid_str[TMMSGIDLEN_STR+1];
     tmq_memmsg_t *mmsg;
+    int is_locked=EXFALSE;
     
     *diagnostic=EXSUCCEED;
     
     MUTEX_LOCK_V(M_q_lock);
-       
+    is_locked=EXTRUE;
+    
     /* Write some stuff to log */
     
     tmq_msgid_serialize(msgid, msgid_str);
@@ -1405,6 +1407,10 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
     
+    /* release the lock.. */
+    MUTEX_UNLOCK_V(M_q_lock);
+    is_locked=EXFALSE;
+    
     /* Issue command for msg remove */
     memcpy(&del.hdr, &ret->hdr, sizeof(ret->hdr));
     
@@ -1417,7 +1423,9 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
+            MUTEX_LOCK_V(M_q_lock);
             ret->lockthreadid = 0;
+            MUTEX_UNLOCK_V(M_q_lock);
             ret = NULL;
             *diagnostic=QMEOS;
             NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
@@ -1426,7 +1434,10 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     }
     
 out:
-    MUTEX_UNLOCK_V(M_q_lock);
+    if (is_locked)
+    {
+        MUTEX_UNLOCK_V(M_q_lock);
+    }
 
     /* set default error code */
     if (NULL==ret && EXSUCCEED==*diagnostic)
@@ -1663,7 +1674,6 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
                 goto out;
             }
             /* have some stats */
-            NDRX_LOG(log_info, "tmq_get_qlist: %s %ld/%ld", q->qname,q->numenq,q->numdeq);
             NDRX_STRCPY_SAFE(tmp->qname, q->qname);
             tmp->succ = q->succ;
             tmp->fail = q->fail;
