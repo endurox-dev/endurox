@@ -549,7 +549,7 @@ xadmin start -s tmsrv
 ################################################################################
 echo "*** Checking commit fails transation timeout..."
 
-OUTERR=`./atmiclt82 SLEEP`
+OUTERR=`NDRX_TOUT=45 ./atmiclt82 SLEEP`
 
 RET=$?
 
@@ -844,7 +844,7 @@ echo "QUEUES, END"
 ################################################################################
 echo "*** CONV fails to commit.. (timeout)"
 
-OUTERR=`./atmiclt82 SLEEP C`
+OUTERR=`NDRX_TOUT=45 ./atmiclt82 SLEEP C`
 
 RET=$?
 
@@ -882,7 +882,7 @@ fi
 ################################################################################
 echo "*** CONV fails to commit.. (timeout) using tpsend() as event generator"
 
-OUTERR=`./atmiclt82 SLEEP S`
+OUTERR=`NDRX_TOUT=45 ./atmiclt82 SLEEP S`
 
 RET=$?
 
