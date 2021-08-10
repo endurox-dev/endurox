@@ -140,13 +140,15 @@ void ndrx_thpool_wait_one(threadpool);
  */
 int ndrx_thpool_nr_not_working(threadpool);
 
-
 /**
- * Wait for at least one thread to become free
- * @param thpool_p
- * @return EXTRUE(has free), EXFALSE(no free)
+ * Wait for jobs to be less than given number
+ * @param thpool_p thread pool which to work
+ * @param less_than jobs/working threads to be less than this number
+ * @param timeout number of milliseconds to wait
+ * @return EXFAIL (something bad has happended), EXSUCCEED (timedout), EXTRUE (got
+ *  condition)
  */
-int ndrx_thpool_is_one_avail(threadpool);
+int ndrx_thpool_timedwait_less(threadpool, int less_than, long timeout);
 
 /**
  * @brief Destroy the threadpool

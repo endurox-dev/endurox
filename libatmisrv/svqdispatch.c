@@ -1208,7 +1208,7 @@ expublic int sv_server_request_th(void *ptr, int *p_finish_off)
 expublic void ndrx_sv_do_shutdown(char *requester, int *shutdown_req)
 {
     int i;
-    NDRX_LOG(log_warn, "Shutdown processed by [%s]", requester);
+    NDRX_LOG(log_info, "Shutdown processed by [%s]", requester);
     tp_command_generic_t shut_msg; /* shutdown msg */
     
     *shutdown_req=EXTRUE;
@@ -1258,7 +1258,7 @@ expublic int process_admin_req(char **buf, long len, int *shutdown_req)
     /* So what, do shutdown, right? */
     if (NDRXD_COM_SRVSTOP_RQ==call->command)
     {
-        NDRX_LOG(log_warn, "Shutdown requested by [%s]", 
+        NDRX_LOG(log_info, "Shutdown requested by [%s]", 
                                         call->reply_queue);
         if (NULL!=G_server_conf.p_shutdowncb)
         {

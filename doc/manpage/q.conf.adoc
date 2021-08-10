@@ -10,7 +10,7 @@ q.conf - Persistent, Transactional Message Queue (TMQ) configuration file
 
 SYNOPSIS
 --------
-<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>][,errorq=<ERRORQ>]
+<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>][,errorq=<ERRORQ>][,workers=<NR_WORKERS>]
 
 
 DESCRIPTION
@@ -35,7 +35,7 @@ deleting it from forward queue.
 DEBUG CONFIGURATION FILE SYNTAX
 -------------------------------
 
-*QUEUE_NAME>*::
+*QUEUE_NAME*::
     Queue name. For default queue use *@* symbol. Max name length is 15 symbols.
 *SERVICE_NAME*::
     Service name to forward the message to. This is used for automatic queues. For manual queues
@@ -57,12 +57,17 @@ DEBUG CONFIGURATION FILE SYNTAX
 *WAIT_MAX*::
     Maximum number of seconds to wait after taking in account 'RETRY_WAIT_INC'.
 *MODE*::
-	   Queue mode, can be *fifo* or *lifo*. This setting affects 'tpdequeue()'.
+    Queue mode, can be *fifo* or *lifo*. This setting affects 'tpdequeue()'.
 *TXTOUT*::
     Transaction timeout, either global (target service call is made in within global
     transaction) if using *T* for 'autoq' or local timeout for transaction.
 *ERRORQ*::
-	   Name of the queue where to put failed/expired automatic forward request messages.
+    Name of the queue where to put failed/expired automatic forward request messages.
+*NR_WORKERS*::
+    Number of max busy worker threads for given queue, if queue is automatic.
+    Absolute limit of total forwarders is set *tmqueue(8)* *-f* flag, this denotes
+    the portion which given queue can occupy from shared forwarder thread pool. 
+    The default value is *2*. Minimum value is *1*.
 
 EXAMPLE
 -------
@@ -84,7 +89,7 @@ When using common-configuration then above sample is moved to ini files. The sam
 (e.g. '/app/dir/conf/endurox.ini')
 ---------------------------------------------------------------------
 #
-# @(#) EnduroX Persistent Queue Configuration
+# @(#) Enduro/X Persistent Queue Configuration
 #
 [@queue]
 @=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,mode=fifo
