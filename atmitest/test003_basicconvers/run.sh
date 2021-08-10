@@ -62,12 +62,13 @@ function go_out {
 . ../testenv.sh
 
 (./atmisv3 -i 123 2>&1) > ./atmisv3.log &
-sleep 3
+# let server to boot...
+sleep 10
 (./atmiclt3 normal 2>&1) > ./atmiclt3.log
 RET=$?
 
 if [ "X$RET" !=  "X0" ]; then
-    echo "Timeout case failed"
+    echo "Normal case failed"
     go_out -2
 fi
 
