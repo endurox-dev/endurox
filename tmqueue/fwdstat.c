@@ -1,7 +1,7 @@
 /**
- * @brief Benchmark tool server (echo responder)
+ * @brief Forward statistics used for QoS
  *
- * @file exbenchsv.c
+ * @file fwdstat.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,130 +31,137 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <memory.h>
+#include <string.h>
+#include <errno.h>
+#include <assert.h>
 
 #include <ndebug.h>
+#include <exhash.h>
 #include <atmi.h>
-
-
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Forward statistics
+ */
+typedef struct {
+    
+    char qname[TMQNAMELEN+1];
+    int busy;
+    EX_hash_handle hh; /**< makes this structure hashable        */
+} fwd_stats_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate int M_tran = EXFALSE; /**< use distr tran */
-exprivate int M_usleep = 0; /**< Number of microseconds to sleep */
+
+/** Lock for statistics hash */
+exprivate MUTEX_LOCKDECL(M_statsh_lock);
+
+/** statistics hash by it self */
+exprivate fwd_stats_t *M_statsh = NULL;
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Service entry
- * @return SUCCEED/FAIL
+ * Get forward busy count per queue
+ * @param[in] qname queue name
+ * @return Number of messages in forward threads
  */
-void EXBENCHSV (TPSVCINFO *p_svc)
+expublic int tmq_fwd_busy_cnt(char *qname)
 {
-    if (M_usleep > 0)
-    {
-        usleep(M_usleep);
-    }
-
-    tpreturn(  TPSUCCESS,
-		0L,
-		(char *)p_svc->data,
-		0L,
-		0L);
-}
-
-/**
- * Initialize the application
- * @param argc	argument count
- * @param argv	argument values
- * @return SUCCEED/FAIL
- */
-int init(int argc, char** argv)
-{
-    int ret = EXSUCCEED;
-    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
-    char svcnm_base[XATMI_SERVICE_NAME_LENGTH+1]="EXBENCH";
-    int c;
-    int svcnum=0;
+    int ret;
+    fwd_stats_t *el = NULL;
     
-    /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "s:N:TU:--")) != EXFAIL)
-    {
-        switch(c)
-        {
-            case 'N':
-                svcnum = atoi(optarg);
-                break;
-            case 's':
-                NDRX_STRCPY_SAFE(svcnm_base, optarg);
-                break;
-            case 'U':
-                M_usleep = atoi(optarg);
-                break;
-            case 'T':
-                M_tran = EXTRUE;
-                break;
-            
-        }
-    }
+    MUTEX_LOCK_V(M_statsh_lock);
     
-    if (svcnum > 0)
+    EXHASH_FIND_STR( M_statsh, qname, el);
+    
+    if (NULL==el)
     {
-        snprintf(svcnm, sizeof(svcnm), "%s%03d", svcnm_base, (tpgetsrvid() % 1000) % svcnum );
+        ret=0;
     }
     else
     {
-        NDRX_STRCPY_SAFE(svcnm, svcnm_base);
+        ret=el->busy;
     }
-
-    /* Advertise our service */
-    if (EXSUCCEED!=tpadvertise(svcnm, EXBENCHSV))
-    {
-        NDRX_LOG(log_error, "Failed to initialise EXBENCH: %s!", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (M_tran && EXSUCCEED!=tpopen())
-    {
-        NDRX_LOG(log_error, "Failed to initialise tpopen: %s!", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
-
-out:
-
+    
+    MUTEX_UNLOCK_V(M_statsh_lock);
+    
     return ret;
 }
 
 /**
- * Terminate the application
+ * Increment the count by queue name
+ * @param qname queue name for which to increment the counter
+ * @return EXSUCCEED/EXFAIL
  */
-void uninit(void)
+expublic int tmq_fwd_busy_inc(char *qname)
 {
-    TP_LOG(log_info, "Uninit");
-    if (M_tran)
+    int ret = EXSUCCEED;
+    fwd_stats_t *el = NULL;
+    
+    MUTEX_LOCK_V(M_statsh_lock);
+    
+    /* if found, increment, if not found add new with 1 */
+    
+    EXHASH_FIND_STR( M_statsh, qname, el);
+    
+    if (NULL!=el)
     {
-        tpclose();
+        el->busy++;
     }
+    else
+    {
+        /* Alloc + add with 1. */
+        el = NDRX_FPMALLOC(sizeof(fwd_stats_t), 0);
+        
+        if (NULL==el)
+        {
+            NDRX_LOG(log_error, "Failed to malloc %d bytes", sizeof(fwd_stats_t));
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_STRCPY_SAFE(el->qname, qname);
+        el->busy=1;
+        EXHASH_ADD_STR(M_statsh, qname, el);
+    }
+    
+out:
+    MUTEX_UNLOCK_V(M_statsh_lock);
+    
+    return ret;
 }
 
 /**
- * Server program main entry
- * @param argc	argument count
- * @param argv	argument values
- * @return SUCCEED/FAIL
+ * Decrement the queue counter. In case if 0, just remove the queue from the
+ * hash.
+ * @param qname queue name
  */
-int main(int argc, char** argv)
+expublic void tmq_fwd_busy_dec(char *qname)
 {
-    /* Launch the Enduro/x thread */
-    return ndrx_main_integra(argc, argv, init, uninit, 0);
+    fwd_stats_t *el = NULL;
+    
+    MUTEX_LOCK_V(M_statsh_lock);
+    
+    EXHASH_FIND_STR( M_statsh, qname, el);
+    
+    if (NULL==el)
+    {
+        userlog("Fatal error: No queue defined [%s] in fwd stats hash", qname);
+        NDRX_LOG(log_always, "Fatal error: No queue defined [%s] in fwd stats hash", qname);
+        abort();
+    }
+    else
+    {
+        el->busy--;
+        assert(el->busy>=0);
+    }
+    
+    MUTEX_UNLOCK_V(M_statsh_lock);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

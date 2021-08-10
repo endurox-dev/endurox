@@ -159,6 +159,87 @@ xadmin ppm
 clean_logs;
 rm ULOG*
 
+
+################################################################################
+echo "QoS test... (slow queue does not slow down all other Qs)"
+################################################################################
+
+exbenchcl -n5 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sQOS -R100 -E -N5
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+# load some more to single q, so that not all Qs finish in the same time
+# which might introduce some issues with busy all/any flag
+exbenchcl -n1 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sQOS003 -R100 -E
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+# Check the queue stats... QOS000 is slow queue, shall be ready 200ms*100
+# all other queues shall be flushed immediatlly, say 10 sec should be sufficient
+# OK?
+
+# all shall complete within 10 sec, not?
+echo "Wait 30..."
+sleep 30
+xadmin mqlq
+
+
+STATS=`xadmin mqlq | grep "QOS000        0     0   100   100   100     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" != "X" ]; then
+    echo "Expecting QOS000 to be in-completed!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "QOS001        0     0   100   100   100     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting QOS001 to be completed!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "QOS002        0     0   100   100   100     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting QOS002 to be completed!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "QOS003        0     0   200   200   200     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting QOS003 to be completed!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "QOS004        0     0   100   100   100     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting QOS004 to be completed!"
+    go_out -1
+fi
+
+
+# give some 30 sec total for other to complete... 
+echo "Wait 65..."
+sleep 65
+xadmin mqlq
+
+STATS=`xadmin mqlq | grep "QOS000        0     0   100   100   100     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting QOS000 to be completed!"
+    go_out -1
+fi
+
 ################################################################################
 echo "AutoQ performance test..."
 ################################################################################
