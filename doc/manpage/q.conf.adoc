@@ -10,8 +10,7 @@ q.conf - Persistent, Transactional Message Queue (TMQ) configuration file
 
 SYNOPSIS
 --------
-<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>][,errorq=<ERRORQ>]
-[,workers=<NR_WORKERS>]
+<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>][,errorq=<ERRORQ>][,workers=<NR_WORKERS>]
 
 
 DESCRIPTION
