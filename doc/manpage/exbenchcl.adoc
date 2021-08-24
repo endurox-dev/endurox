@@ -131,6 +131,12 @@ of messages processed by worker thread. Benchmark will terminate in either
 time is reached or number of requests reached, which ever comes first. Total
 number of requests is made by test is multiplied by worker thread/process count.
 
+[*-T* 'TRANSACTION_TIMEOUT']::
+If flag is set and value 'TRANSACTION_TIMEOUT' is greater than 0, worker threads
+will perform calls in global transaction. This means that *exbenchcl* must
+have proper transaction environment. If this flag is not set, the XATMI calls
+are not run in transaction mode.
+
 [*-h*]::
 Print usage.
 
