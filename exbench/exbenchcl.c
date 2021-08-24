@@ -88,12 +88,12 @@ exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
 exprivate int M_autoq = EXFALSE;   /**< Use autoq testing                   */
 exprivate int M_enqonly = EXFALSE;   /**< Persisten q, enqueue only         */
 exprivate long M_numreq = EXFALSE;   /**< Number of requests                */
-/* Lock  */
+
+exprivate int M_tran = EXFALSE; /**< use distr tran */
 /*---------------------------Prototypes---------------------------------*/
 
 
 /* need to synchronize function for starting the sending... */
-
 
 expublic void thread_process(void *ptr, int *p_finish_off)
 {
@@ -107,6 +107,13 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     TPQCTL qc;
     ndrx_stopwatch_t w;
     
+    if (M_tran && EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "Failed to tpopen(): %s", 
+                tpstrerror(tperrno));
+        exit(-1);
+    }
+
     if (NULL==buf)
     {
         NDRX_LOG(log_error, "Failed to alloc send buf: %s", 
@@ -142,6 +149,14 @@ expublic void thread_process(void *ptr, int *p_finish_off)
             tpsprio(M_prio, TPABSOLUTE);
         }
                 
+        /* start tran, if M_tran */
+        if (M_tran && EXSUCCEED!=tpbegin(M_tran, 0))
+        {
+            NDRX_LOG(log_error, "tpbegin() failed: %s",
+                tpstrerror(tperrno));
+            exit(-1);
+        }
+
         if (M_qspace[0])
         {
             /* Run enq to SVCNM */
@@ -155,6 +170,22 @@ expublic void thread_process(void *ptr, int *p_finish_off)
 
             if (!M_autoq && !M_enqonly)
             {
+
+                /* restart the tran if doing deq */
+                if (M_tran && EXSUCCEED!=tpcommit(0))
+                {
+                    NDRX_LOG(log_error, "tpcommit() failed: %s",
+                        tpstrerror(tperrno));
+                    exit(-1);
+                }
+
+                if (M_tran && EXSUCCEED!=tpbegin(M_tran, 0))
+                {
+                    NDRX_LOG(log_error, "tpbegin() failed: %s",
+                        tpstrerror(tperrno));
+                    exit(-1);
+                }
+
                 /* Run deq from SVCNM */
                 memset(&qc, 0, sizeof(qc));
                 rcv_buf=NULL;
@@ -176,6 +207,13 @@ expublic void thread_process(void *ptr, int *p_finish_off)
                         svcnm, tpstrerror(tperrno));
                 exit(-1);
             }
+        }
+
+        if (M_tran && EXSUCCEED!=tpcommit(0))
+        {
+            NDRX_LOG(log_error, "tpcommit() 2 failed: %s",
+                tpstrerror(tperrno));
+            exit(-1);
         }
         
         if (NULL!=rcv_buf)
@@ -244,6 +282,11 @@ out:
     {
         tpfree(buf);
     }
+    
+    if (M_tran)
+    {
+        tpclose();
+    }    
 
     /* release resources */
     tpterm();
@@ -274,6 +317,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -A               Auto queue testing (forwarding)\n");
     fprintf(stderr, "  -E               Persist only\n");
     fprintf(stderr, "  -R <msgnum>      Number of requests (time or nr first to stop)\n");
+    fprintf(stderr, "  -T <tout_sec>    Initiate global transaction for XATMI calls\n");
    
 }
 
@@ -309,7 +353,7 @@ expublic int main( int argc, char** argv )
      */
     M_buftype = ndrx_get_buffer_descr("UBF", NULL);
 
-    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:T:")) != -1)
     {
         switch (c)
         {
@@ -373,7 +417,9 @@ expublic int main( int argc, char** argv )
             case 'S':
                 M_rndsize = atoi(optarg);
                 break;
-                
+            case 'T':
+                M_tran = atoi(optarg);
+                break;
             default:
                 NDRX_LOG(log_error, "Unknown option %c", c);
                 usage(argv[0]);
@@ -400,6 +446,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_autoq=[%d]", M_autoq);
     NDRX_LOG(log_info, "M_enqonly=[%d]", M_autoq);
     NDRX_LOG(log_info, "M_numreq=[%ld]", M_numreq);
+    NDRX_LOG(log_info, "M_tran=[%d]", M_tran);
     
     /* allocate the buffer & fill with random data */
     
