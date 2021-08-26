@@ -74,8 +74,8 @@ Mandatory Env. Variables
 *NDRX_IPCKEY*='SYS_V_SEMAPHORE_KEY'::
     System V Semaphores key number. Used for shared memory locking.
     POSIX semaphores are not used here, because they are not unlocked if process
-    dies during acquired semaphore. For System V shared memory IPCKEY+*0..5*
-    different keys may be used for shared memory. For System V semaphores IPCKEY+*0..2*
+    dies during acquired semaphore. For System V shared memory IPCKEY+*0..20*
+    different keys may be used for shared memory. For System V semaphores IPCKEY+*0..20*
     range is used.
 
 *NDRX_MSGMAX*='MAX_MSGS_PER_QUEUE'::
