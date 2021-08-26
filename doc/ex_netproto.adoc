@@ -268,6 +268,7 @@ generic details about message is kept.
 
 This block is used for non XATMI messages, i.e. *0x100F* of <<block-netcall> is *X*.
 
+.Command call header
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Description
 |0x1055 |stdhdr         |STDHDR1..PMSGMAX |Mand| N/A| Standard call header
@@ -703,12 +704,36 @@ as call for *tpcall(3)*, *tpacall(3)*,
 
 Message starts with *NETCALL*. NETCALL tag '0x1019' ('command_id') is set to value
 in range from *1* - *7*. Tag '0x100F' ('msg_type') is set to *A*.
-Under the tag '0x102D' (buf) follows the service table refresh message:
+
+.XATMI call
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Applicable command_id | Description
+|0x1055 |stdhdr         |STDHDR1..PMSGMAX |Mand| N/A| Contains *command_id*:
+
+*1* - tpcall/tpacall message.
+
+*2* - tpreturn message.
+
+*3* - tpforward message.
+
+*4* - tpconnect message.
+
+*5* - conversational data.
+
+*6* - tpconnect accept reply message from server.
+
+*7* - tpdiscon message.
+
+|0x116D |name          |STRING0..30    |Mand |N/A| 1,3,4 |Service name to be called.
+
+|=========================================================
+
+Fields for non applicable message fields value shall be empty string or 0 integer.
 
 .XATMI call
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Description
-|0x1159,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
+
 |0x116D,  "name",      OFSZ(tp_command_call_t,name),     EXF_STRING, XFLD, 0, XATMI_SERVICE_NAME_LENGTH},
 |0x1177,  "reply_to",  OFSZ(tp_command_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
 |0x1181,  "callstack", OFSZ(tp_command_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
