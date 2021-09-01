@@ -226,7 +226,7 @@ exprivate tmq_msg_t * get_next_msg(void)
             }
             /* OK, so we peek for a message */
             else if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
-                    &qerr, msgbuf, sizeof(msgbuf), NULL)))
+                    &qerr, msgbuf, sizeof(msgbuf), NULL, NULL)))
             {
                 NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", 
                     qerr, msgbuf);
@@ -497,7 +497,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
          * This will sub-lock
          */
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                "Removing completed message...", NULL))
+                "Removing completed message...", NULL, NULL))
         {
             NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
                     msgid_str);
@@ -579,7 +579,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             tmq_update_q_stats(msg->hdr.qname, 0, 1);
             cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                    "Removing expired message...", NULL))
+                    "Removing expired message...", NULL, NULL))
             {
                 NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
                         msgid_str);
@@ -678,7 +678,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             cmd_block.hdr.command_code = TMQ_STORCMD_UPD;
             
             if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                    "Update message command", NULL))
+                    "Update message command", NULL, NULL))
             {
                 NDRX_LOG(log_error, "Failed to issue update command to xa for msgid_str [%s]", 
                         msgid_str);
