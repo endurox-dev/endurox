@@ -266,6 +266,9 @@ extern NDRX_API void _tpforward (char *svc, char *data,
                 long len, long flags);
 extern NDRX_API void _tpcontinue (void);
 
+extern NDRX_API int ndrx_sv_set_autojoin(int new_flag);
+extern NDRX_API int ndrx_sv_latejoin(void);
+
 /* ndrd api */
 extern NDRX_API int advertse_to_ndrxd(svc_entry_fn_t *entry);
 extern NDRX_API int advertse_to_ndrxd(svc_entry_fn_t *entry);

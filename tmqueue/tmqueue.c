@@ -136,6 +136,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
+    int join_err = EXFALSE;
     
     /**************************************************************************/
     /*                        THREAD CONTEXT RESTORE                          */
@@ -161,6 +162,15 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     /* free up the transport data.*/
     NDRX_FREE(thread_data->context_data);
     NDRX_FREE(thread_data);
+
+    /* try to join */
+    if (EXSUCCEED!=ndrx_sv_latejoin())
+    {
+        NDRX_LOG(log_error, "Failed to manual-join!");
+        join_err=EXTRUE;
+        goto out;        
+    }
+
     /**************************************************************************/
     
     /* get some more stuff! */
@@ -254,13 +264,25 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     
 out:
 
-    ndrx_debug_dump_UBF(log_info, "TMQUEUE return buffer:", p_ub);
+    /* generate join error! */
+    if (join_err)
+    {
+        tpreturn(  TPFAIL,
+                    TPETRAN,
+                    NULL,
+                    0L,
+                    TPSOFTERR);
+    }
+    else
+    {
+        ndrx_debug_dump_UBF(log_info, "TMQUEUE return buffer:", p_ub);
 
-    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
-                0L,
-                (char *)p_ub,
-                0L,
-                0L);
+        tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                    0L,
+                    (char *)p_ub,
+                    0L,
+                    0L);
+    }
 }
 
 
