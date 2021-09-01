@@ -96,6 +96,7 @@ extern "C" {
     
 #define TMQ_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min     */
 
+#define TMQ_INT_DIAG_EJOIN      0x00000001  /**< Got join transaction join error */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -247,8 +248,9 @@ extern void tmq_set_tmqueue(
     
 /* From storage driver: */
 extern size_t tmq_get_block_len(char *data);
-extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg);
-extern int tmq_storage_write_cmd_block(char *p_block, char *descr, char *cust_tmxid);
+extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg, int *int_diag);
+extern int tmq_storage_write_cmd_block(char *p_block, char *descr, char *cust_tmxid, 
+        int *int_diag);
 extern int tmq_storage_get_blocks(int (*process_block)(char *tmxid, 
         union tmq_block **p_block, int state, int seqno), short nodeid, short srvid);
 

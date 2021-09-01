@@ -136,7 +136,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
-    int join_err = EXFALSE;
+    int int_diag = 0;
     
     /**************************************************************************/
     /*                        THREAD CONTEXT RESTORE                          */
@@ -167,7 +167,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     if (EXSUCCEED!=ndrx_sv_latejoin())
     {
         NDRX_LOG(log_error, "Failed to manual-join!");
-        join_err=EXTRUE;
+        int_diag|=TMQ_INT_DIAG_EJOIN;
         goto out;        
     }
 
@@ -194,7 +194,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
         case TMQ_CMD_ENQUEUE:
             
             /* start new tran... */
-            if (EXSUCCEED!=tmq_enqueue(p_ub))
+            if (EXSUCCEED!=tmq_enqueue(p_ub, &int_diag))
             {
                 EXFAIL_OUT(ret);
             }
@@ -202,7 +202,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
         case TMQ_CMD_DEQUEUE:
             
             /* start new tran... */
-            if (EXSUCCEED!=tmq_dequeue(&p_ub))
+            if (EXSUCCEED!=tmq_dequeue(&p_ub, &int_diag))
             {
                 EXFAIL_OUT(ret);
             }
@@ -264,8 +264,10 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
     
 out:
 
-    /* generate join error! */
-    if (join_err)
+    /* 
+     * Generate TPETRAN in case if failed to join
+     */
+    if (int_diag & TMQ_INT_DIAG_EJOIN)
     {
         tpreturn(  TPFAIL,
                     TPETRAN,
