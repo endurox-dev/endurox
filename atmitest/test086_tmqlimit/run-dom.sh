@@ -161,6 +161,38 @@ rm ULOG*
 
 
 ################################################################################
+echo "TPETRAN join on timed out transaction ..."
+################################################################################
+(NDRX_CCONFIG=${TESTDIR}/nulltm.ini NDRX_CCTAG=NULL ./atmiclt86 txtout 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    xadmin psc
+    go_out $RET
+fi
+
+################################################################################
+echo "Massive global transaction load ..."
+################################################################################
+
+#export NDRX_XA_FLAGS="FSYNC;DSYNC"
+# Do we need to fsync?
+#xadmin stop -y
+#xadmin start -y
+
+# Run the load...
+NDRX_CCONFIG=${TESTDIR}/nulltm.ini NDRX_CCTAG=NULL exbenchcl -n99 -P -t160 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sEXB -N5 -T60
+
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    echo "Global transaction load test..."
+    go_out $RET
+fi
+
+#unset NDRX_XA_FLAGS
+#xadmin stop -y
+#xadmin start -y
+
+################################################################################
 echo "QoS test... (slow queue does not slow down all other Qs)"
 ################################################################################
 
