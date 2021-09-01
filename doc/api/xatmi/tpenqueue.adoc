@@ -146,6 +146,8 @@ debugs for more info.
 flag was specified. Global transaction is not marked for abort only, 
 if one was associated with current thread.
 
+*TPETRAN* Failed to join global transaction.
+
 *Values for 'TPQCTL.diagnostic'*
 
 *QMEINVAL* Invalid request buffer / *TPQCTL*. Global transaction is 

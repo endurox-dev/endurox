@@ -156,7 +156,7 @@ exprivate void dirent_free(struct dirent **namelist, int n);
 exprivate int xa_rollback_entry_tmq(char *tmxid, long flags);
 exprivate int xa_prepare_entry_tmq(char *tmxid, long flags);
 exprivate int xa_commit_entry_tmq(char *tmxid, long flags);
-exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid);
+exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_diag);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -1945,9 +1945,10 @@ out:
  * @param block
  * @param len
  * @param cust_tmxid custom tmxid, if not running in global tran
+ * @param int_diag internal diagnostics, flags
  * @return SUCCEED/FAIL
  */
-exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid)
+exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_diag)
 {
     int ret = EXSUCCEED;
     XID xid;
@@ -1968,6 +1969,11 @@ exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid)
                 
         if (TM_JOIN!=ax_ret && TM_OK!=ax_ret)
         {
+            if (NULL!=int_diag)
+            {
+                *int_diag|=TMQ_INT_DIAG_EJOIN;
+            }
+            
             NDRX_LOG(log_error, "ERROR! xa_reg() failed!");
             EXFAIL_OUT(ret);
         }
@@ -1980,6 +1986,12 @@ exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid)
         /* done by ax_reg! */
         if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, G_atmi_tls->qdisk_rmid, xaflags))
         {
+            
+            if (NULL!=int_diag)
+            {
+                *int_diag|=TMQ_INT_DIAG_EJOIN;
+            }
+            
             NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
             EXFAIL_OUT(ret);
         }
@@ -2083,9 +2095,10 @@ out:
 /**
  * Write the message data to TX file
  * @param msg message (the structure is projected on larger memory block to fit in the whole msg
+ * @param int_diag internal diagnostics, flags
  * @return SUCCEED/FAIL
  */
-expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
+expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg, int *int_diag)
 {
     int ret = EXSUCCEED;
     char tmp[TMMSGIDLEN_STR+1];
@@ -2104,7 +2117,7 @@ expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg)
     NDRX_DUMP(log_debug, "Writing new message to disk", 
                 (char *)msg, len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, NULL))
+    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, NULL, int_diag))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
                 tmq_msgid_serialize(msg->hdr.msgid, tmp));
@@ -2168,9 +2181,10 @@ expublic size_t tmq_get_block_len(char *data)
  * Delete/Update message block write
  * @param p_block ptr to union of commands
  * @param cust_tmxid custom transaction id (not part of global tran)
+ * @param int_diag internal diagnostics, flags
  * @return SUCCEED/FAIL
  */
-expublic int tmq_storage_write_cmd_block(char *data, char *descr, char *cust_tmxid)
+expublic int tmq_storage_write_cmd_block(char *data, char *descr, char *cust_tmxid, int *int_diag)
 {
     int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -2186,7 +2200,7 @@ expublic int tmq_storage_write_cmd_block(char *data, char *descr, char *cust_tmx
     NDRX_DUMP(log_debug, "Writing command block to disk", 
                 (char *)data, len);
     
-    if (EXSUCCEED!=write_to_tx_file((char *)data, len, cust_tmxid))
+    if (EXSUCCEED!=write_to_tx_file((char *)data, len, cust_tmxid, int_diag))
     {
         NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
                 tmq_msgid_serialize(p_hdr->msgid, msgid_str));

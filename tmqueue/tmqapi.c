@@ -89,9 +89,10 @@ exprivate MUTEX_LOCKDECL(M_tstamp_lock);
 /**
  * Do the internal commit of transaction (request sent from other TM)
  * @param p_ub
+ * @param int_diag internal diagnostics, flags
  * @return 
  */
-expublic int tmq_enqueue(UBFH *p_ub)
+expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
 {
     int ret = EXSUCCEED;
     tmq_msg_t *p_msg = NULL;
@@ -233,7 +234,7 @@ expublic int tmq_enqueue(UBFH *p_ub)
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",
             p_msg->hdr.qname);
     
-    if (EXSUCCEED!=tmq_msg_add(&p_msg, EXFALSE, &qctl_out))
+    if (EXSUCCEED!=tmq_msg_add(&p_msg, EXFALSE, &qctl_out, int_diag))
     {
         NDRX_LOG(log_error, "tmq_enqueue: failed to enqueue!");
         userlog("tmq_enqueue: failed to enqueue!");
@@ -304,9 +305,10 @@ out:
 /**
  * Dequeue message
  * @param p_ub
+ * @param int_diag internal diagnostics, flags
  * @return EXSUCCEED/EXFAIL
  */
-expublic int tmq_dequeue(UBFH **pp_ub)
+expublic int tmq_dequeue(UBFH **pp_ub, int *int_diag)
 {
     /* Search for not locked message, lock it, issue command to disk for
      * delete & return the message to buffer (also needs to resize the buffer correctly)
@@ -379,7 +381,7 @@ expublic int tmq_dequeue(UBFH **pp_ub)
     if (qctl_in.flags & TPQGETBYMSGID)
     {
         if (NULL==(p_msg = tmq_msg_dequeue_by_msgid(qctl_in.msgid, qctl_in.flags, 
-                &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg))))
+                &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg), int_diag)))
         {
             char msgid_str[TMMSGIDLEN_STR+1];
             int lev = log_info;
@@ -406,7 +408,8 @@ expublic int tmq_dequeue(UBFH **pp_ub)
         }
 
         if (NULL==(p_msg = tmq_msg_dequeue(qname, qctl_in.flags, EXFALSE, 
-            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg), p_corrid_str)))
+            &qctl_out.diagnostic, qctl_out.diagmsg, sizeof(qctl_out.diagmsg), 
+                p_corrid_str, int_diag)))
         {
             int lev = log_info;
             

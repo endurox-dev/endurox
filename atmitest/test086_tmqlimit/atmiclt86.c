@@ -69,6 +69,8 @@ exprivate int basic_rmrollback(int maxmsg);
 exprivate int basic_rmnorollback(int maxmsg);
 exprivate int basic_fwdcrash(int maxmsg);
 exprivate int basic_autoperf(int maxmsg);
+exprivate int basic_txtout(int maxmsg);
+
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
 extern int basic_crashloop(void);
@@ -157,6 +159,11 @@ int main(int argc, char** argv)
     {
         return basic_enqdeq(200);
     }
+    else if (0==strcmp(argv[1], "txtout"))
+    {
+        return basic_txtout(1);
+    }
+    
     else
     {
         NDRX_LOG(log_error, "Invalid test case!");
@@ -283,6 +290,287 @@ out:
     return ret;
 }
 
+/**
+ * Transaction timeout - TPETRAN test (cannot join as rolled back)
+ * @param maxmsg max messages to be ok
+ */
+exprivate int basic_txtout(int maxmsg)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc, o_qc;
+    int i;
+    
+    NDRX_LOG(log_error, "case txtout");
+    
+    /* add 1 msg.. with COR & MSGID */
+    
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    for (i=0; i<maxmsg; i++)
+    {
+        char *testbuf_ref = tpalloc("CARRAY", "", 10);
+        long len=10;
+
+        testbuf_ref[0]=0;
+        testbuf_ref[1]=1;
+        testbuf_ref[2]=2;
+        testbuf_ref[3]=3;
+        testbuf_ref[4]=4;
+        testbuf_ref[5]=5;
+        testbuf_ref[6]=6;
+        testbuf_ref[7]=7;
+        testbuf_ref[8]=8;
+        testbuf_ref[9]=9;
+
+        /* alloc output buffer */
+        if (NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&o_qc, 0, sizeof(o_qc));
+        /* set corid & msgid.. */
+        o_qc.flags|=(TPQCORRID);
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "TEST1", &o_qc, testbuf_ref, 
+                len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), o_qc.diagnostic, o_qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(testbuf_ref);
+    }
+    
+    /* OK ... */
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to commit");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* try to late deq join... */
+    
+    if (EXSUCCEED!=tpbegin(1, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    sleep(5);
+    
+    do
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, must be none (all aborted)!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (TPETRAN!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d", TPETRAN, tperrno);
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+    } while (0);
+    
+    tpabort(0);
+    
+    
+    /* try to late deq join... corid */
+    
+    if (EXSUCCEED!=tpbegin(1, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    sleep(5);
+    
+    do
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+        
+        qc.flags|=TPQGETBYCORRID;
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, must be none (all aborted)!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (TPETRAN!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d", TPETRAN, tperrno);
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+    } while (0);
+    
+    
+    tpabort(0);
+    
+    /* try to late deq join... msgid */
+    
+    if (EXSUCCEED!=tpbegin(1, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    sleep(5);
+    
+    do
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+        
+        qc.flags|=TPQGETBYMSGID;
+        
+        memcpy(qc.msgid, o_qc.msgid, sizeof(qc.msgid));
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, TPNOABORT))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TEST1 dequeued, must be none (all aborted)!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (TPETRAN!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR: expected %d got %d", TPETRAN, tperrno);
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+        
+    } while (0);
+    
+    
+    tpabort(0);
+    
+    /* try enq to expired tran... */
+    
+    if (EXSUCCEED!=tpbegin(1, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    sleep(5);
+    
+    /* Initial test... */
+    for (i=0; i<maxmsg; i++)
+    {
+        char *testbuf_ref = tpalloc("CARRAY", "", 10);
+        long len=10;
+
+        testbuf_ref[0]=0;
+        testbuf_ref[1]=1;
+        testbuf_ref[2]=2;
+        testbuf_ref[3]=3;
+        testbuf_ref[4]=4;
+        testbuf_ref[5]=5;
+        testbuf_ref[6]=6;
+        testbuf_ref[7]=7;
+        testbuf_ref[8]=8;
+        testbuf_ref[9]=9;
+
+        /* alloc output buffer */
+        if (NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED==tpenqueue("MYSPACE", "TEST1", &qc, testbuf_ref, 
+                len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() must fail but was OK!");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Must be TPETRAN (but only for static mode...) 
+         * For dynamic mode it is TPESVCFAIL (probably shall fix in future to TPETRAN)
+         */
+        if (TPETRAN!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() Expected TPETRAN, got %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree(testbuf_ref);
+    }
+    
+    
+    tpabort(0);
+    
+    /* clean up the q finally... */
+    
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    do
+    {
+        long len=0;
+        char *buf;
+        buf = tpalloc("CARRAY", "", 100);
+        memset(&qc, 0, sizeof(qc));
+        
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+        
+        tpfree(buf);
+        
+    } while (0);
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
 
 /**
  * We slowly add new msgs... over the 30 sec session -> no rollback as

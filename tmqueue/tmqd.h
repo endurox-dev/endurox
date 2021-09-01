@@ -240,8 +240,8 @@ extern int tmq_mqlm(UBFH *p_ub, int cd);
 extern int tmq_mqrc(UBFH *p_ub);
 extern int tmq_mqch(UBFH *p_ub);
 
-extern int tmq_enqueue(UBFH *p_ub);
-extern int tmq_dequeue(UBFH **pp_ub);
+extern int tmq_enqueue(UBFH *p_ub, int *int_diag);
+extern int tmq_dequeue(UBFH **pp_ub, int *int_diag);
 
 /* Background API */
 extern int background_read_log(void);
@@ -255,11 +255,12 @@ extern void thread_shutdown(void *ptr, int *p_finish_off);
 extern int tmq_reload_conf(char *cf);
 extern int tmq_qconf_addupd(char *qconfstr, char *name);
 extern int tmq_dum_add(char *tmxid);
-extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag);
+extern int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *int_diag);
 extern int tmq_unlock_msg(union tmq_upd_block *b);
 extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
-            char *diagmsg, size_t diagmsgsz, char *corrid_str);
-extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, char *diagmsg, size_t diagmsgsz);
+            char *diagmsg, size_t diagmsgsz, char *corrid_str, int *int_diag);
+extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, 
+        char *diagmsg, size_t diagmsgsz, int *int_diag);
 extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);

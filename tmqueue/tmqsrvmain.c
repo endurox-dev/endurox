@@ -43,6 +43,7 @@
 #include <xa.h>
 #include "tmqueue.h"
 #include "tmqd.h"
+#include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -68,6 +69,10 @@ int main( int argc, char** argv )
      * join for other is just ignored.
      */
     tmq_set_tmqueue(EXTRUE, tmq_setup_cmdheader_dum, tmq_dum_add, tmq_unlock_msg);
+    /* do late join, to avoid deadlock betweem tmsrv registration and same tmsrv
+     * tran compleation via notifications channel
+     */
+    ndrx_sv_set_autojoin(EXFALSE);
     
     struct tmsvrargs_t tmsvrargs =
     {

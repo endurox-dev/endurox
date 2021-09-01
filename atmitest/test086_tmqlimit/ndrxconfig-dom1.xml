@@ -54,46 +54,62 @@
             <killtime>20</killtime>
             
 	</defaults>
-	<servers>
-             <!-- Responder -->
-             <server name="atmi.sv86">
-                 <min>1</min>
-                 <max>1</max>
-                 <srvid>10</srvid>
-                 <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+        <servers>
+            <!-- Responder -->
+            <server name="atmi.sv86">
+                <min>1</min>
+                <max>1</max>
+                <srvid>10</srvid>
+                <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+            </server>
+            <server name="exbenchsv">
+                <min>1</min>
+                <max>1</max>
+                <srvid>20</srvid>
+                <!-- Slow service -->
+                <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -- -sQOS000 -U500000 </sysopt>
+            </server>
+            <server name="exbenchsv">
+                <min>5</min>
+                <max>5</max>
+                <srvid>30</srvid>
+                <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -sQOS001,QOS002,QOS003,QOS004:EXBENCH -- </sysopt>
+            </server>
+            <server name="tmsrv">
+                <max>1</max>
+                <srvid>50</srvid>
+                <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
+            </server>
+
+            <!-- crash instance cannot commit..., no respawn (as preparing shall not be roll'd back) -->
+            <server name="tmsrv">
+                <respawn>N</respawn>
+                <min>0</min>
+                <max>1</max>
+                <srvid>60</srvid>
+                <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
              </server>
-             <server name="exbenchsv">
-                 <min>1</min>
-                 <max>1</max>
-                 <srvid>20</srvid>
-                 <!-- Slow service -->
-                 <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -- -sQOS000 -U500000 </sysopt>
-             </server>
-             <server name="exbenchsv">
-                 <min>5</min>
-                 <max>5</max>
-                 <srvid>30</srvid>
-                 <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -sQOS001,QOS002,QOS003,QOS004:EXBENCH -- </sysopt>
-             </server>
-             <server name="tmsrv">
-                 <max>1</max>
-                 <srvid>50</srvid>
-                 <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
-             </server>
-	     
-	     <!-- crash instance cannot commit..., no respawn (as preparing shall not be roll'd back) -->
-	     <server name="tmsrv">
-                 <respawn>N</respawn>
-                 <min>0</min>
-                 <max>1</max>
-                 <srvid>60</srvid>
-                 <sysopt>-e ${TESTDIR}/tmsrv-dom1.log -r -- -t1 -l${TESTDIR}/RM1</sysopt>
-              </server>
+
+
+            <server name="tmsrv">
+                <min>3</min>
+                <max>3</max>
+                <srvid>260</srvid>
+                
+                <!-- Load NULL driver from ini -->
+                
+                <cctag>NULL</cctag>
+                <envs>
+                    <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
+                </envs>
              
-              <server name="tmqueue">
-                 <max>1</max>
-                 <srvid>100</srvid>
-                 <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1 -T30 </sysopt>
-              </server>
-	</servers>
+                <sysopt>-e ${TESTDIR}/tmsrv-dom1-NULL.log -r -- -t1 -l${TESTDIR}/RM2</sysopt>
+            </server>
+            
+            <server name="tmqueue">
+               <max>1</max>
+               <srvid>100</srvid>
+               <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1 -T30 </sysopt>
+            </server>
+        </servers>
 </endurox>

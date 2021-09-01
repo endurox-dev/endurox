@@ -163,7 +163,7 @@ exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, i
     {
         case TMQ_STORCMD_NEWMSG:
             
-            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE, NULL))
+            if (EXSUCCEED!=tmq_msg_add((tmq_msg_t **)p_block, EXTRUE, NULL, NULL))
             {
                 NDRX_LOG(log_error, "Failed to enqueue!");
                 EXFAIL_OUT(ret);
@@ -247,7 +247,7 @@ expublic int tmq_dum_add(char *tmxid)
     
     /* this adds transaction to log: */
     if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&dum, 
-                "Dummy transaction marker", tmxid))
+                "Dummy transaction marker", tmxid, NULL))
     {
         NDRX_LOG(log_error, "Failed to write dummy command block to disk [%s]", tmxid);
         EXFAIL_OUT(ret);
@@ -924,9 +924,10 @@ out:
  * 
  * @param msg double ptr to message
  * @param diag qctl for diag purposes.
+ * @param int_diag internal diagnostics, flags
  * @return 
  */
-expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
+expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *int_diag)
 {
     int ret = EXSUCCEED;
     int is_locked = EXFALSE;
@@ -1022,7 +1023,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag)
         /* for recovery no need to put command as we read from command file */
         if (!is_recovery)
         {
-            if (EXSUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg))
+            if (EXSUCCEED!=tmq_storage_write_cmd_newmsg(mmsg->msg, int_diag))
             {
                 NDRX_LOG(log_error, "Failed to add message to persistent store!");
                 
@@ -1167,10 +1168,11 @@ out:
  * @param qname queue to lookup.
  * @param diagnostic specific queue error code
  * @param corrid_str dequeue by correlator (if not NULL)
+ * @param int_diag internal diagnostics, flags
  * @return NULL (no msg), or ptr to msg
  */
 expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *diagnostic, 
-        char *diagmsg, size_t diagmsgsz, char *corrid_str)
+        char *diagmsg, size_t diagmsgsz, char *corrid_str, int *int_diag)
 {
     tmq_qhash_t *qhash;
     tmq_corhash_t *corhash;
@@ -1336,7 +1338,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         block.hdr.command_code = TMQ_STORCMD_DEL;
 
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&block, 
-                "Removing dequeued message", NULL))
+                "Removing dequeued message", NULL, int_diag))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
@@ -1372,10 +1374,11 @@ out:
  * Dequeue message by msgid
  * @param msgid
  * @param diagnostic queue error code, if any
+ * @param int_diag internal diagnostics, flags
  * @return 
  */
 expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, 
-        char *diagmsg, size_t diagmsgsz)
+        char *diagmsg, size_t diagmsgsz, int *int_diag)
 {
     tmq_msg_t * ret = NULL;
     tmq_msg_del_t del;
@@ -1418,7 +1421,7 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     if (!(flags & TPQPEEK))
     {
         if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&del, 
-                "Removing dequeued message", NULL))
+                "Removing dequeued message", NULL, int_diag))
         {
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */

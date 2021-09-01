@@ -90,7 +90,40 @@ expublic int G_shutdown_nr_got = 0;    /* Number of self shutdown messages got  
  */
 expublic int G_atmisrv_reply_type = 0; 
 /*---------------------------Statics------------------------------------*/
+exprivate int M_autojoin = EXTRUE;      /**< perform autmatic tx join */
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Configure autojoin flag
+ * @param[in] new_flag new setting EXFALSE - do not do autojoin on call
+ * @return new_flag original value
+ */
+expublic int ndrx_sv_set_autojoin(int new_flag)
+{
+    int autojoin = M_autojoin;
+    M_autojoin=new_flag;
+    return autojoin;
+}
+
+/**
+ * Perform late transaction join
+ * return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_sv_latejoin(void)
+{
+    int ret = EXSUCCEED;
+    tp_command_call_t * call = ndrx_get_G_last_call();
+
+    if (EXEOS!=call->tmxid[0] && EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
+    {
+        NDRX_LOG(log_error, "Failed to start/join global tx [%s]!", call->tmxid);
+        userlog("Failed to start/join global tx [%s]!", call->tmxid);
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
+}
+
 
 /**
  * Open queues for listening.
@@ -380,7 +413,7 @@ expublic int sv_serve_call(int *service, int *status,
         /* Register global tx */
         if (EXEOS!=call->tmxid[0])
         {
-            if (EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
+            if (M_autojoin && EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
             {
                 NDRX_LOG(log_error, "Failed to start/join global tx [%s]!", call->tmxid);
                 userlog("Failed to start/join global tx [%s]!", call->tmxid);
@@ -706,7 +739,7 @@ expublic int sv_serve_connect(int *service, int *status,
         /* Register global tx */
         if (EXEOS!=call->tmxid[0])
         {
-            if (EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
+            if (M_autojoin && EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
             {
                 NDRX_LOG(log_error, "Failed to start/join global tx [%s]!", call->tmxid);
                 userlog("Failed to start/join global tx [%s]!", call->tmxid);
