@@ -1479,8 +1479,10 @@ expublic int tpchkunsol(void)
         EXFAIL_OUT(ret);
     }   
     
-    /* Bug #269 - return the number of messages processed... */
-    ret=ndrx_tpchkunsol();
+    /* Bug #269 - return the number of messages processed... 
+     * The default mode is not blocked.
+     */
+    ret=ndrx_tpchkunsol(TPNOBLOCK);
     
     if (ret<0)
     {

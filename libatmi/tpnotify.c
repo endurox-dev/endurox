@@ -395,9 +395,10 @@ out:
  * So we get the messages, just check first, as it must be with higher
  * priority than zero, it should arrive first. If we get any other type messages
  * Just push them to in memory queue which will be later processed by _tpgetrply()
+ * @param flags additional flags for Q checking
  * @return SUCCEED/FAIL
  */
-expublic int ndrx_tpchkunsol(void) 
+expublic int ndrx_tpchkunsol(long flags) 
 {
     int ret = EXSUCCEED;
     char *pbuf = NULL;
@@ -420,7 +421,7 @@ expublic int ndrx_tpchkunsol(void)
         rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                 G_atmi_tls->G_atmi_conf.reply_q_str,
                 &(G_atmi_tls->G_atmi_conf.reply_q_attr),
-                pbuf, pbuf_len, &prio, TPNOBLOCK);
+                pbuf, pbuf_len, &prio, flags);
         
         NDRX_LOG(log_debug, "%s: %zd", __func__, (long)rply_len);
         
@@ -457,7 +458,15 @@ expublic int ndrx_tpchkunsol(void)
             }
             
         }
-        /* Note loop will be terminated if not message in Q */
+        
+        /* Note loop will be terminated if not message in Q 
+         * if blocking -> terminate after 1x loop
+         */
+        if (num_applied && ! (flags & TPEBLOCK) )
+        {
+            break;
+        }
+        
     } while (1);
 out:
 

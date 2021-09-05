@@ -869,7 +869,7 @@ extern NDRX_API int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         char *data, long len, long flags, 
         int dest_node, char *nodeid, char *usrname,  char *cltname,
         int ex_flags);
-extern NDRX_API int ndrx_tpchkunsol(void);
+extern NDRX_API int ndrx_tpchkunsol(long flags);
 extern NDRX_API int ndrx_add_to_memq(char **pbuf, size_t pbuf_len, ssize_t rply_len);
 extern NDRX_API int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         char *data,  long len, long flags, int dispatch_local);
