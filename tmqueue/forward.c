@@ -257,7 +257,19 @@ exprivate tmq_msg_t * get_next_msg(void)
                 int wait_ret;
                 NDRX_LOG(log_debug, "All Qs/threads busy to the limit wait for slot...");
                 
-                /* wait on pool */
+                /* wait on pool 
+                 * What if new msg is added to queue which is not being processed
+                 * and all the currently processed queues run very slowly?
+                 * the minimum would be do to again after the wait time.
+                 * Also probably wait time shall be set to the same amount
+                 * as the main sleep, not?
+                 * 
+                 * Secondly additional speedup would give if unlocked messages
+                 * valid for dequeue would trigger that wakups...
+                 * 
+                 * Also if having force sleep set, then probably we shall go
+                 * out of all this to main sleeping routine, not?
+                 */
                 do
                 {
                     /* wait 1 sec... */
@@ -270,11 +282,12 @@ exprivate tmq_msg_t * get_next_msg(void)
             }
             else if (M_had_msg)
             {
-                NDRX_LOG(log_debug, "Had messages in prevous run, scan Qs again");
+                NDRX_LOG(log_debug, "Had messages in previous run, scan Qs again");
                 again = EXTRUE;
             }
         }
 
+        /* &&! Force_sleep */
     } while (again && !G_forward_req_shutdown);
     
 out:
