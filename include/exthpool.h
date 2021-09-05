@@ -145,10 +145,17 @@ int ndrx_thpool_nr_not_working(threadpool);
  * @param thpool_p thread pool which to work
  * @param less_than jobs/working threads to be less than this number
  * @param timeout number of milliseconds to wait
+ * @param cond ptr to variable, if becomes true, terminate the wait 
  * @return EXFAIL (something bad has happended), EXSUCCEED (timedout), EXTRUE (got
  *  condition)
  */
-int ndrx_thpool_timedwait_less(threadpool, int less_than, long timeout);
+int ndrx_thpool_timedwait_less(threadpool, int less_than, long timeout, int *cond);
+
+/**
+ * Signal on pool / waiting on one
+ * @param thpool_p thread pool which to work
+ */
+void ndrx_thpool_signal_one(threadpool);
 
 /**
  * @brief Destroy the threadpool

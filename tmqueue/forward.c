@@ -91,8 +91,66 @@ exprivate MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 
 exprivate int M_force_sleep = EXFALSE;              /**< Shall the sleep be forced in case of error? */
 
+
+/** we are into main sleep */
+expublic int ndrx_G_fwd_into_sleep=EXFALSE;
+
+/** we are into pool sleep */
+expublic int ndrx_G_fwd_into_poolsleep=EXFALSE;
+
+/** we want to wake up the forwarder as new job as arrived */
+expublic int ndrx_G_fwd_force_wake = EXFALSE;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * We assume we are locked.
+ * @param mmsg which was enqueued
+ */
+expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
+{
+    tmq_qconfig_t *conf ;
+    
+    /* nothing todo */
+    if (ndrx_G_fwd_force_wake)
+    {
+        return;
+    }
+    
+    /* nothing todo */
+    if (!ndrx_G_fwd_into_sleep && !ndrx_G_fwd_into_poolsleep)
+    {
+        return;
+    }
+    
+    if (G_forward_req_shutdown)
+    {
+        return;
+    }
+    
+    conf =  tmq_qconf_get_with_default(mmsg->msg->hdr.qname, NULL);
+    if (NULL!=conf)
+    {
+        if (tmq_is_auto_valid_for_deq(mmsg, conf) && 
+                conf->workers > tmq_fwd_busy_cnt(mmsg->msg->hdr.qname))
+        {
+            
+            ndrx_G_fwd_force_wake=EXTRUE;
+            
+            if (ndrx_G_fwd_into_sleep)
+            {
+                /* wakup from main sleep */
+                pthread_cond_signal(&M_wait_cond);
+            }
+            else if (ndrx_G_fwd_into_poolsleep)
+            {
+                /* wakup from pool sleep */
+                ndrx_thpool_signal_one(G_tmqueue_cfg.fwdthpool);
+            }
+        }
+    }
+}
 
 /**
  * Lock background operations
@@ -176,7 +234,6 @@ exprivate tmq_msg_t * get_next_msg(void)
     long qerr = EXSUCCEED;
     char msgbuf[128];
     int again;
-    long tot_cnt;
 
     do
     {
@@ -254,7 +311,6 @@ exprivate tmq_msg_t * get_next_msg(void)
             /* read again if had message... */
             if (M_any_busy)
             {
-                int wait_ret;
                 NDRX_LOG(log_debug, "All Qs/threads busy to the limit wait for slot...");
                 
                 /* wait on pool 
@@ -270,13 +326,16 @@ exprivate tmq_msg_t * get_next_msg(void)
                  * Also if having force sleep set, then probably we shall go
                  * out of all this to main sleeping routine, not?
                  */
-                do
-                {
-                    /* wait 1 sec... */
-                    wait_ret = ndrx_thpool_timedwait_less(G_tmqueue_cfg.fwdthpool, 
-                            M_num_busy, 1000);
-                } 
-                while (!G_forward_req_shutdown && EXTRUE!=wait_ret);
+                
+                 /* reset this one */
+                ndrx_G_fwd_into_poolsleep=EXTRUE;
+                
+                ndrx_thpool_timedwait_less(G_tmqueue_cfg.fwdthpool, 
+                            M_num_busy, G_tmqueue_cfg.scan_time*100, &ndrx_G_fwd_force_wake);
+                
+                /* OK... we are back on the track... */
+                ndrx_G_fwd_into_poolsleep=EXFALSE;
+                ndrx_G_fwd_force_wake=EXFALSE;
                 
                 again = EXTRUE;
             }
@@ -288,7 +347,7 @@ exprivate tmq_msg_t * get_next_msg(void)
         }
 
         /* &&! Force_sleep */
-    } while (again && !G_forward_req_shutdown);
+    } while (again && !G_forward_req_shutdown && !M_force_sleep);
     
 out:
     return ret;
@@ -818,10 +877,18 @@ expublic int forward_loop(void)
             NDRX_LOG(log_debug, "background - sleep %d forced=%d", 
                     G_tmqueue_cfg.scan_time, M_force_sleep);
             
+            if (!M_force_sleep)
+            {
+                ndrx_G_fwd_into_sleep=EXTRUE;
+            }
+            
             thread_sleep(G_tmqueue_cfg.scan_time);
             
             /* in case of error, forced sleep */
             M_force_sleep=EXFALSE;
+            ndrx_G_fwd_into_sleep=EXFALSE;
+            /* reset this one */
+            ndrx_G_fwd_force_wake=EXFALSE;
         }
     }
     

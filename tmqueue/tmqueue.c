@@ -535,7 +535,6 @@ exprivate void shutdowncb_th(void *ptr)
     }
 
     ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
-    ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
     
     M_shutdown_ok=EXTRUE;
 }
@@ -882,6 +881,12 @@ void tpsvrdone(void)
         
         ndrx_thpool_wait(G_tmqueue_cfg.shutdownseq);
         ndrx_thpool_destroy(G_tmqueue_cfg.shutdownseq);
+        
+        
+        /* all thread shall be terminated (so that notification is not sent to NULL)
+         * in case of enqueue...
+         */
+        ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
         
     }
     
