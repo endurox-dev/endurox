@@ -515,7 +515,7 @@ exprivate tmq_qconfig_t * tmq_qconf_get(char *qname)
  * @param p_is_defaulted returns 1 if queue uses defaults Q
  * @return  NULL or ptr to config
  */
-exprivate tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted)
+expublic tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted)
 {
     
     tmq_qconfig_t * ret = tmq_qconf_get(qname);
@@ -1115,7 +1115,7 @@ out:
  * @param node
  * @return 
  */
-exprivate int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
+expublic int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
 {
     int ret = EXFALSE;
     int retry_inc;
@@ -1544,12 +1544,15 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
             break;
         case TMQ_STORCMD_UPD:
             UPD_MSG((mmsg->msg), (&b->upd));
-            mmsg->msg->lockthreadid = 0;
         /* And still we want unblock: */
         case TMQ_STORCMD_NEWMSG:
         case TMQ_STORCMD_UNLOCK:
             NDRX_LOG(log_info, "Unlocking message...");
             mmsg->msg->lockthreadid = 0;
+            
+            /* wakeup the Q... runner */
+            ndrx_forward_chkrun(mmsg);
+            
             break;
         case TMQ_STORCMD_DUM:
             /* nothing todo; */

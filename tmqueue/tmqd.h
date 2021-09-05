@@ -265,6 +265,7 @@ extern int tmq_unlock_msg_by_msgid(char *msgid);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
+extern tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted);
 extern int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, size_t out_bufsz);
 extern tmq_memmsg_t *tmq_get_msglist(char *qname);
     
@@ -275,6 +276,8 @@ extern void tmq_cor_sort_queues(tmq_qhash_t *q);
 extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
+extern int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf);
+extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);
 
 extern int tmq_fwd_busy_cnt(char *qname);
 extern int tmq_fwd_busy_inc(char *qname);
