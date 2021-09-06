@@ -1,5 +1,11 @@
 /**
  * @brief Multi-thread forward sync on tpacall
+ *  For each Q linked list shall be stored where the head indicates the actual / ordered
+ *  message which shall be delivered. When threads get the tpacall(), they must check
+ *  the had of LL, if matches, continue, if not matches, wait for broadcast.
+ *  when msg is sync (after tpacall(), we shall remove the head and perform broadcast
+ *  to all threads (within the lock). The list by it self can be protected by spin lock
+ *  so that forward thread is not delayed match, when messages are read and queued.
  *
  * @file fwdsync.c
  */
