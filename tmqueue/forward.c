@@ -113,7 +113,7 @@ expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
     tmq_qconfig_t *conf;
     fwd_stats_t *p_stats;
     
-    /* nothing todo */
+    /* nothing todo, already triggered by other thread */
     if (ndrx_G_fwd_force_wake)
     {
         return;

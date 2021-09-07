@@ -1616,6 +1616,7 @@ out:
 
 /**
  * Unlock memory message by msgid (used for PEEK)
+ * TODO: add chkrun in case if doing unlock for PEEK.
  * @param msgid
  * @return 
  */
