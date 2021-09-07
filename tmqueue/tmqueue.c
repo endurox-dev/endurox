@@ -786,6 +786,12 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+    if (EXSUCCEED!=tmq_fwd_stat_init())
+    {
+        NDRX_LOG(log_error, "Failed to init forward statistics");
+        EXFAIL_OUT(ret);
+    }
+    
     /* service request handlers */
     if (NULL==(G_tmqueue_cfg.thpool = ndrx_thpool_init(G_tmqueue_cfg.threadpoolsize,
             NULL, NULL, NULL, 0, NULL)))

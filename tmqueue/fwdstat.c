@@ -40,20 +40,13 @@
 #include <ndebug.h>
 #include <exhash.h>
 #include <atmi.h>
+
+#include "tmqd.h"
+#include <utlist.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/**
- * Forward statistics
- */
-typedef struct {
-    
-    char qname[TMQNAMELEN+1];
-    int busy;
-    EX_hash_handle hh; /**< makes this structure hashable        */
-} fwd_stats_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
@@ -67,101 +60,130 @@ exprivate fwd_stats_t *M_statsh = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Init the statistics engine
+ */
+expublic int tmq_fwd_stat_init(void)
+{   
+    return EXSUCCEED;
+}
+
+/**
  * Get forward busy count per queue
+ * Allocate the handle here, if missing..
  * @param[in] qname queue name
+ * @param[out] p_stats stats pointer out
  * @return Number of messages in forward threads
  */
-expublic int tmq_fwd_busy_cnt(char *qname)
+expublic int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats)
 {
     int ret;
     fwd_stats_t *el = NULL;
     
+    /* Have mutex sync, as wakeup-notify threads will lookup the queues
+     * here
+     */
     MUTEX_LOCK_V(M_statsh_lock);
     
     EXHASH_FIND_STR( M_statsh, qname, el);
     
     if (NULL==el)
     {
-        ret=0;
-    }
-    else
-    {
-        ret=el->busy;
-    }
-    
-    MUTEX_UNLOCK_V(M_statsh_lock);
-    
-    return ret;
-}
-
-/**
- * Increment the count by queue name
- * @param qname queue name for which to increment the counter
- * @return EXSUCCEED/EXFAIL
- */
-expublic int tmq_fwd_busy_inc(char *qname)
-{
-    int ret = EXSUCCEED;
-    fwd_stats_t *el = NULL;
-    
-    MUTEX_LOCK_V(M_statsh_lock);
-    
-    /* if found, increment, if not found add new with 1 */
-    
-    EXHASH_FIND_STR( M_statsh, qname, el);
-    
-    if (NULL!=el)
-    {
-        el->busy++;
-    }
-    else
-    {
-        /* Alloc + add with 1. */
         el = NDRX_FPMALLOC(sizeof(fwd_stats_t), 0);
-        
+
         if (NULL==el)
         {
             NDRX_LOG(log_error, "Failed to malloc %d bytes", sizeof(fwd_stats_t));
             EXFAIL_OUT(ret);
         }
-        
+
         NDRX_STRCPY_SAFE(el->qname, qname);
-        el->busy=1;
+        el->busy=0;
+        
+        NDRX_SPIN_INIT_V(el->busy_spin);
+        NDRX_SPIN_INIT_V(el->sync_spin);
+        MUTEX_VAR_INIT(el->sync_mut);
+        
         EXHASH_ADD_STR(M_statsh, qname, el);
     }
     
-out:
-    MUTEX_UNLOCK_V(M_statsh_lock);
+    ret=el->busy;
     
+out:
+    
+    /* clean off... */
+    MUTEX_UNLOCK_V(M_statsh_lock);
+
     return ret;
+}
+
+/**
+ * Increment the count by queue name
+ * @param p_stats queue name for which to increment the counter
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic void tmq_fwd_busy_inc(fwd_stats_t *p_stats)
+{
+    NDRX_SPIN_LOCK_V(p_stats->busy_spin);
+    p_stats->busy++;
+    NDRX_SPIN_UNLOCK_V(p_stats->busy_spin);
 }
 
 /**
  * Decrement the queue counter. In case if 0, just remove the queue from the
  * hash.
- * @param qname queue name
+ * @param p_stats stats entry to decrement
  */
-expublic void tmq_fwd_busy_dec(char *qname)
+expublic void tmq_fwd_busy_dec(fwd_stats_t *p_stats)
 {
-    fwd_stats_t *el = NULL;
+    NDRX_SPIN_LOCK_V(p_stats->busy_spin);
+    p_stats->busy--;
+    NDRX_SPIN_UNLOCK_V(p_stats->busy_spin);
     
-    MUTEX_LOCK_V(M_statsh_lock);
+}
+
+/**
+ * Add message to forward stat Q
+ * @param p_stats statistics entry
+ * @param msg message to add to statst list
+ */
+expublic void tmq_fwd_sync_add(fwd_stats_t *p_stats, fwd_msg_t *msg)
+{
+    NDRX_SPIN_LOCK_V(p_stats->sync_spin);
+    DL_APPEND(p_stats->sync_head, msg);
+    NDRX_SPIN_UNLOCK_V(p_stats->sync_spin);
+}
+
+/**
+ * Delete message from sync list
+ * @param p_stats stats with sync details
+ * @param msg message to remove from list
+ */
+expublic void tmq_fwd_sync_del(fwd_stats_t *p_stats, fwd_msg_t *msg)
+{
+    NDRX_SPIN_LOCK_V(p_stats->sync_spin);
+    DL_APPEND(p_stats->sync_head, msg);
+    NDRX_SPIN_UNLOCK_V(p_stats->sync_spin);
+}
+
+/**
+ * Check is current our order for msg to process
+ * @param p_stats queue statistics
+ * @param msg message to verify
+ * @return EXTRUE (mine), EXFALSE (not mine turn)
+ */
+expublic int tmq_fwd_sync_mine(fwd_stats_t *p_stats, fwd_msg_t *msg)
+{
+    int ret = EXFALSE;
+    NDRX_SPIN_LOCK_V(p_stats->sync_spin);
     
-    EXHASH_FIND_STR( M_statsh, qname, el);
-    
-    if (NULL==el)
+    if (p_stats->sync_head == msg)
     {
-        userlog("Fatal error: No queue defined [%s] in fwd stats hash", qname);
-        NDRX_LOG(log_always, "Fatal error: No queue defined [%s] in fwd stats hash", qname);
-        abort();
-    }
-    else
-    {
-        el->busy--;
-        assert(el->busy>=0);
+        ret = EXTRUE;
     }
     
-    MUTEX_UNLOCK_V(M_statsh_lock);
+    NDRX_SPIN_UNLOCK_V(p_stats->sync_spin);
+    
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

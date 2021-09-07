@@ -199,6 +199,7 @@ struct tmq_qconfig
     int txtout;     /**< transaction timeout (override if > -1)         */
     char errorq[TMQNAMELEN];     /**< Error queue name, optional        */
     int workers;   /**< Max number of busy forward workers              */
+    int sync;      /**< Sync forward sending                            */
     
     EX_hash_handle hh; /**< makes this structure hashable               */
 };
@@ -210,15 +211,55 @@ typedef struct fwd_qlist fwd_qlist_t;
 struct fwd_qlist
 {
     char qname[TMQNAMELEN+1];
-    long succ; /**< Succeeded auto messages */
-    long fail; /**< failed auto messages */
+    long succ; /**< Succeeded auto messages                 */
+    long fail; /**< failed auto messages                    */
     
-    long numenq; /**< Succeeded auto messages */
-    long numdeq; /**< failed auto messages */
-    int workers;    /**< number of configured workers */
-    
+    long numenq; /**< Succeeded auto messages               */
+    long numdeq; /**< failed auto messages                  */
+    int workers;    /**< number of configured workers       */
+    int sync;       /**< is queue synchronized?             */
     fwd_qlist_t *next;
     fwd_qlist_t *prev;
+};
+
+
+typedef struct fwd_msg fwd_msg_t;
+
+/**
+ * Forward statistics
+ */
+typedef struct {
+    
+    char qname[TMQNAMELEN+1];
+    int busy;
+    NDRX_SPIN_LOCKDECL(busy_spin); /**< add/cmp/del ops         */
+    
+    /*
+     * - have have spinlock for adding/checking/removing msg from list.
+     * - have a mutex for workers to sleep & wait for signal/broadcast
+     * - have a cond variable for sleeping on
+     */
+    NDRX_SPIN_LOCKDECL(sync_spin); /**< add/cmp/del ops         */
+    MUTEX_LOCKDECLN(sync_mut);  /**< wait mut                   */
+    pthread_cond_t   sync_cond; /**< wait cond                  */
+            
+    fwd_msg_t *sync_head;       /**< head msg if used for sync  */
+    
+    EX_hash_handle hh; /**< makes this structure hashable       */
+    
+} fwd_stats_t;
+
+/**
+ * Forward message entry
+ */
+struct fwd_msg {
+    fwd_stats_t *stats; /**< ptr to stats block of the queue    */
+    tmq_msg_t   *msg;   /**< message entry to forward           */
+    int     sync;       /**< do we run in sync mode?            */
+    
+    fwd_msg_t *prev;
+    fwd_msg_t *next;
+    
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -279,9 +320,10 @@ extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
 extern int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf);
 extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);
 
-extern int tmq_fwd_busy_cnt(char *qname);
-extern int tmq_fwd_busy_inc(char *qname);
-extern void tmq_fwd_busy_dec(char *qname);
+extern int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats);
+extern void tmq_fwd_busy_inc(fwd_stats_t *p_stats);
+extern void tmq_fwd_busy_dec(fwd_stats_t *p_stats);
+extern int tmq_fwd_stat_init(void);
     
 #ifdef	__cplusplus
 }

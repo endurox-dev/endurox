@@ -89,6 +89,7 @@
 #define TMQ_QC_TXTOUT           "txtout"    /**< transaction timeout override */
 #define TMQ_QC_ERRORQ           "errorq"    /**< Name of the error queue, opt */
 #define TMQ_QC_WORKERS          "workers"   /**< max number of workders       */
+#define TMQ_QC_SYNC             "sync"      /**< sync forward q               */
 
 #define EXHASH_FIND_STR_H2(head,findstr,out)                                     \
     EXHASH_FIND(h2,head,findstr,strlen(findstr),out)
@@ -449,6 +450,17 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         }
         
         qconf->workers = ival;
+    }
+    else if (0==strcmp(key, TMQ_QC_SYNC))
+    {
+        int ival = ndrx_args_confirm(value);
+        
+        if (EXFAIL==ival)
+        {
+            NDRX_LOG(log_error, "Invalid value [%s] for %s", value, TMQ_QC_SYNC);
+            EXFAIL_OUT(ret);
+        }
+        qconf->sync = ival;
     }
     else if (0==strcmp(key, TMQ_QC_MEMONLY))
     {
