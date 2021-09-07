@@ -43,6 +43,7 @@
 
 #include "tmqd.h"
 #include <utlist.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -107,6 +108,7 @@ expublic int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats)
     }
     
     ret=el->busy;
+    *p_stats = el;
     
 out:
     
@@ -143,47 +145,77 @@ expublic void tmq_fwd_busy_dec(fwd_stats_t *p_stats)
 
 /**
  * Add message to forward stat Q
- * @param p_stats statistics entry
- * @param msg message to add to statst list
+ * @param fwd forward msg
  */
-expublic void tmq_fwd_sync_add(fwd_stats_t *p_stats, fwd_msg_t *msg)
+expublic void tmq_fwd_sync_add(fwd_msg_t *fwd)
 {
-    NDRX_SPIN_LOCK_V(p_stats->sync_spin);
-    DL_APPEND(p_stats->sync_head, msg);
-    NDRX_SPIN_UNLOCK_V(p_stats->sync_spin);
+    NDRX_SPIN_LOCK_V(fwd->stats->sync_spin);
+    DL_APPEND(fwd->stats->sync_head, fwd);
+    NDRX_SPIN_UNLOCK_V(fwd->stats->sync_spin);
 }
 
 /**
  * Delete message from sync list
- * @param p_stats stats with sync details
- * @param msg message to remove from list
+ * @param fwd forward message
  */
-expublic void tmq_fwd_sync_del(fwd_stats_t *p_stats, fwd_msg_t *msg)
+expublic void tmq_fwd_sync_del(fwd_msg_t *fwd)
 {
-    NDRX_SPIN_LOCK_V(p_stats->sync_spin);
-    DL_APPEND(p_stats->sync_head, msg);
-    NDRX_SPIN_UNLOCK_V(p_stats->sync_spin);
+    NDRX_SPIN_LOCK_V(fwd->stats->sync_spin);
+    DL_APPEND(fwd->stats->sync_head, fwd);
+    NDRX_SPIN_UNLOCK_V(fwd->stats->sync_spin);
 }
 
 /**
  * Check is current our order for msg to process
- * @param p_stats queue statistics
- * @param msg message to verify
+ * @param fwd message to verify
  * @return EXTRUE (mine), EXFALSE (not mine turn)
  */
-expublic int tmq_fwd_sync_mine(fwd_stats_t *p_stats, fwd_msg_t *msg)
+expublic int tmq_fwd_sync_cmp(fwd_msg_t *fwd)
 {
     int ret = EXFALSE;
-    NDRX_SPIN_LOCK_V(p_stats->sync_spin);
+    NDRX_SPIN_LOCK_V(fwd->stats->sync_spin);
     
-    if (p_stats->sync_head == msg)
+    if (fwd->stats->sync_head == fwd)
     {
         ret = EXTRUE;
     }
     
-    NDRX_SPIN_UNLOCK_V(p_stats->sync_spin);
+    NDRX_SPIN_UNLOCK_V(fwd->stats->sync_spin);
     
     return ret;
+}
+
+/**
+ * Wait on mine message
+ * @param fwd forward message
+ */
+expublic void tmq_fwd_sync_wait(fwd_msg_t *fwd)
+{
+    MUTEX_LOCK_V(fwd->stats->sync_mut);
+    
+    while (!tmq_fwd_sync_cmp(fwd))
+    {
+        pthread_cond_wait(&fwd->stats->sync_cond, &fwd->stats->sync_mut);
+    }
+    
+    MUTEX_UNLOCK_V(fwd->stats->sync_mut);
+}
+
+/**
+ * Remove msg, notify for wakup (once our msg is done...)
+ * @param fwd fwd msg
+ */
+expublic void tmq_fwd_sync_notify(fwd_msg_t *fwd)
+{
+    
+    MUTEX_LOCK_V(fwd->stats->sync_mut);
+    
+    tmq_fwd_sync_del(fwd);
+     
+    /* notify all... */
+    pthread_cond_broadcast(&fwd->stats->sync_cond);
+    
+    MUTEX_UNLOCK_V(fwd->stats->sync_mut);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

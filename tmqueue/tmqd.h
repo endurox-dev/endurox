@@ -75,6 +75,12 @@ extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   *
 
 #define TMQ_QUEUE_SERVICE       "@" /**< Special name when service matches queue name */
 
+#define TMQ_ARGS_COMMIT         "Cc"    /**< Sync after commit              */
+
+#define TMQ_SYNC_NONE           0       /**< NO sync needed                 */
+#define TMQ_SYNC_TPACALL        1       /**< Sync on tpacall                */       
+#define TMQ_SYNC_TPCOMMIT       2       /**< Sync on tpcommit () if auto=T  */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -324,6 +330,15 @@ extern int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats);
 extern void tmq_fwd_busy_inc(fwd_stats_t *p_stats);
 extern void tmq_fwd_busy_dec(fwd_stats_t *p_stats);
 extern int tmq_fwd_stat_init(void);
+
+
+extern void tmq_fwd_sync_add(fwd_msg_t *fwd);
+extern void tmq_fwd_sync_del(fwd_msg_t *fwd);
+extern int tmq_fwd_sync_cmp(fwd_msg_t *fwd);
+
+extern void tmq_fwd_sync_wait(fwd_msg_t *fwd);
+extern void tmq_fwd_sync_notify(fwd_msg_t *fwd);
+
     
 #ifdef	__cplusplus
 }
