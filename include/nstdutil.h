@@ -362,6 +362,7 @@ extern NDRX_API int ndrx_args_loader_set(ndrx_args_loader_t *args, void *obj,
         char *fldnm, char *value,
         char *errbuf, size_t errbufsz);
 
+extern NDRX_API int ndrx_args_confirm(char *arg);
 
 extern NDRX_API int ndrx_file_gen_embed(char *in_fname, char *out_fname, 
         char *out_suffix);
