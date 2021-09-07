@@ -237,6 +237,7 @@ exprivate fwd_msg_t * get_next_msg(void)
     long qerr = EXSUCCEED;
     char msgbuf[128];
     int again;
+    static unsigned long seq = 0;
 
     do
     {
@@ -329,10 +330,12 @@ exprivate fwd_msg_t * get_next_msg(void)
                             sizeof(fwd_msg_t), strerror(err));
                     exit(-1);
                 }
-                
                 ret->msg=ret_msg;
                 ret->stats=p_stats;
                 ret->sync=q_cur->sync;
+                seq++;
+                
+                ret->seq = seq;
                 
                 /* add to internal order.. */
                 if (ret->sync)
@@ -371,7 +374,7 @@ exprivate fwd_msg_t * get_next_msg(void)
                 ndrx_G_fwd_into_poolsleep=EXTRUE;
                 
                 ndrx_thpool_timedwait_less(G_tmqueue_cfg.fwdthpool, 
-                            M_num_busy, G_tmqueue_cfg.scan_time*100, (int *)&ndrx_G_fwd_force_wake);
+                            M_num_busy, G_tmqueue_cfg.scan_time*1000, (int *)&ndrx_G_fwd_force_wake);
                 
                 /* OK... we are back on the track... */
                 ndrx_G_fwd_into_poolsleep=EXFALSE;
@@ -553,14 +556,6 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         NDRX_STRCPY_SAFE(svcnm, qconf.svcnm);
     }
     
-    NDRX_LOG(log_info, "Sending request to service: [%s]", svcnm);
-    
-    
-    /* TODO: Split into tpacall() / tpforward()
-     * - if our turn, do not wait
-     * - if not our turn / go into wait loop...
-     */
-    
     /* after acall remove our entry
      * if after remove all is empty.... do we need to signal? I guess no
      * if there is something, then lock & signal.
@@ -570,12 +565,15 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         tmq_fwd_sync_wait(fwd);
     }
     
+    NDRX_LOG(log_info, "Sending request to service: [%s] sync_seq=%lu", svcnm, fwd->seq);
+    
     cd = tpacall (svcnm, call_buf, call_len, 0);
     
     /* release the msg... if acall sync */
     if (TMQ_SYNC_TPACALL==fwd->sync)
     {
         tmq_fwd_sync_notify(fwd);
+        NDRX_LOG(log_debug, "Sync notified (tpacall) sync_seq=%lu", fwd->seq);
         msg_released = EXTRUE;
     }
     
@@ -598,27 +596,6 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         sent_ok=EXTRUE;
     }
-    
-#if 0
-    if (EXFAIL == tpcall(svcnm, call_buf, call_len, (char **)&rply_buf, &rply_len,0))
-    {
-        tperr = tperrno;
-        NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperr));
-        
-        /* Bug #421 if called in transaction, then abort current one
-         * because need to increment the counters in new transaction
-         */
-        if (tpgetlev())
-        {
-            NDRX_LOG(log_error, "Abort current transaction for counter increment");
-            tpabort(0L);
-        }
-    }
-    else
-    {
-        sent_ok=EXTRUE;
-    }
-#endif
     
     NDRX_LOG(log_info, "Service answer %s for %s", (sent_ok?"ok":"fail"), msgid_str);
     
@@ -896,7 +873,7 @@ out:
     if (fwd->sync && !msg_released)
     {
         tmq_fwd_sync_notify(fwd);
-        msg_released = EXTRUE;
+        NDRX_LOG(log_debug, "Sync notified (tpcommit) sync_seq=%lu", fwd->seq);
     }
     
     if (NULL!=call_buf)

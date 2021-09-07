@@ -99,7 +99,9 @@ expublic int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats)
 
         NDRX_STRCPY_SAFE(el->qname, qname);
         el->busy=0;
+        el->sync_head = NULL;
         
+        pthread_cond_init(&el->sync_cond, NULL);
         NDRX_SPIN_INIT_V(el->busy_spin);
         NDRX_SPIN_INIT_V(el->sync_spin);
         MUTEX_VAR_INIT(el->sync_mut);
@@ -161,7 +163,7 @@ expublic void tmq_fwd_sync_add(fwd_msg_t *fwd)
 expublic void tmq_fwd_sync_del(fwd_msg_t *fwd)
 {
     NDRX_SPIN_LOCK_V(fwd->stats->sync_spin);
-    DL_APPEND(fwd->stats->sync_head, fwd);
+    DL_DELETE(fwd->stats->sync_head, fwd);
     NDRX_SPIN_UNLOCK_V(fwd->stats->sync_spin);
 }
 
