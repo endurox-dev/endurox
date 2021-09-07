@@ -457,10 +457,27 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         
         if (EXFAIL==ival)
         {
-            NDRX_LOG(log_error, "Invalid value [%s] for %s", value, TMQ_QC_SYNC);
-            EXFAIL_OUT(ret);
+            if (1==strlen(value) && NULL!=strstr(TMQ_ARGS_COMMIT, value))
+            {
+                ival = TMQ_SYNC_TPCOMMIT;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Invalid value [%s] for %s", value, TMQ_QC_SYNC);
+                EXFAIL_OUT(ret);   
+            }
         }
+        else if (ival)
+        {
+            ival = TMQ_SYNC_TPACALL;
+        }
+        else
+        {
+            ival=TMQ_SYNC_NONE;
+        }
+        
         qconf->sync = ival;
+        
     }
     else if (0==strcmp(key, TMQ_QC_MEMONLY))
     {

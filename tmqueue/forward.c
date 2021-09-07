@@ -337,7 +337,7 @@ exprivate fwd_msg_t * get_next_msg(void)
                 /* add to internal order.. */
                 if (ret->sync)
                 {
-                    tmq_fwd_sync_add(p_stats, ret);
+                    tmq_fwd_sync_add(ret);
                 }
                 
                 break;
@@ -459,6 +459,8 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     char qname[TMQNAMELEN+1];
     char *tmxid=NULL;
+    int cd;
+    int msg_released = EXFALSE;
     qtran_log_t *p_tl=NULL;
     
     if (!M_is_xa_open)
@@ -563,8 +565,22 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
      * if after remove all is empty.... do we need to signal? I guess no
      * if there is something, then lock & signal.
      */
+    if (fwd->sync)
+    {
+        tmq_fwd_sync_wait(fwd);
+    }
     
-    if (EXFAIL == tpcall(svcnm, call_buf, call_len, (char **)&rply_buf, &rply_len,0))
+    cd = tpacall (svcnm, call_buf, call_len, 0);
+    
+    /* release the msg... if acall sync */
+    if (TMQ_SYNC_TPACALL==fwd->sync)
+    {
+        tmq_fwd_sync_notify(fwd);
+        msg_released = EXTRUE;
+    }
+    
+    /* get the reply.. */
+    if (EXFAIL==cd || EXFAIL==tpgetrply (&cd, (char **)&rply_buf, &rply_len, 0))
     {
         tperr = tperrno;
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperr));
@@ -583,15 +599,32 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         sent_ok=EXTRUE;
     }
     
+#if 0
+    if (EXFAIL == tpcall(svcnm, call_buf, call_len, (char **)&rply_buf, &rply_len,0))
+    {
+        tperr = tperrno;
+        NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperr));
+        
+        /* Bug #421 if called in transaction, then abort current one
+         * because need to increment the counters in new transaction
+         */
+        if (tpgetlev())
+        {
+            NDRX_LOG(log_error, "Abort current transaction for counter increment");
+            tpabort(0L);
+        }
+    }
+    else
+    {
+        sent_ok=EXTRUE;
+    }
+#endif
+    
     NDRX_LOG(log_info, "Service answer %s for %s", (sent_ok?"ok":"fail"), msgid_str);
     
     memset(&cmd_block, 0, sizeof(cmd_block));
     memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
     
-   /* cmd_block.hdr.flags|=TPQASYNC; async complete to avoid deadlocks... 
-    * No need for this: we have seperate thread pool for notify events.
-    */
-
     /* start the transaction 
      * Note! message is not yet added to transaction with
      */
@@ -858,6 +891,13 @@ out:
         NDRX_LOG(log_error, "System failure => force sleep");
         M_force_sleep=EXTRUE;
     }
+
+    /* let next msg to process... */
+    if (fwd->sync && !msg_released)
+    {
+        tmq_fwd_sync_notify(fwd);
+        msg_released = EXTRUE;
+    }
     
     if (NULL!=call_buf)
     {
@@ -871,6 +911,7 @@ out:
     
     /* release stats counter... */
     tmq_fwd_busy_dec(fwd->stats);
+    
     NDRX_FPFREE(fwd);
     
     return;

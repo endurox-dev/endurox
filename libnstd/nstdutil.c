@@ -1801,7 +1801,11 @@ expublic int ndrx_args_confirm(char *arg)
 {
     int ret = EXFAIL;
     
-    if (NULL!=strstr(NDRX_ARGS_YES, arg))
+    if (strlen(arg) !=1 )
+    {
+        ret = EXFAIL;
+    }
+    else if (NULL!=strstr(NDRX_ARGS_YES, arg))
     {
         ret=EXTRUE;
     }
