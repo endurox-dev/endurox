@@ -608,6 +608,23 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, si
         int len = strlen(out_buf);
         snprintf(out_buf+len, out_bufsz-len, ",errorq=%s", qdef->errorq);
     }
+    
+    if (qdef->sync)
+    {
+        int len = strlen(out_buf);
+        char setting;
+        
+        if (TMQ_SYNC_TPACALL==qdef->sync)
+        {
+            setting='y';
+        }
+        else
+        {
+            setting='c';
+        }
+        
+        snprintf(out_buf+len, out_bufsz-len, ",%s=%c", TMQ_QC_SYNC, setting);
+    }
 
 out:
     MUTEX_UNLOCK_V(M_q_lock);
@@ -1715,6 +1732,7 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
             tmp->numenq = q->numenq;
             tmp->numdeq = q->numdeq;
             tmp->workers = qconf->workers;
+            tmp->sync = qconf->sync;
             
             DL_APPEND(ret, tmp);
         }

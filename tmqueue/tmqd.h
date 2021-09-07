@@ -262,7 +262,7 @@ struct fwd_msg {
     fwd_stats_t *stats; /**< ptr to stats block of the queue    */
     tmq_msg_t   *msg;   /**< message entry to forward           */
     int     sync;       /**< do we run in sync mode?            */
-    
+    unsigned long seq;  /**< sequence number                    */
     fwd_msg_t *prev;
     fwd_msg_t *next;
     
