@@ -26,27 +26,6 @@ load balance some service which runs on local machine and on some other machine.
 unaware on which machine the call actually is served.
 
 
-How EnduroX Differ from Oracle(R) Tuxedo(R)
--------------------------------------------
-Basically EnduroX is consider as clone of Tuxedo. EnduroX have source level compatibility with Tuxedo.
-However there are set of functionality which is missing in EnduroX.
-This is the list what EnduroX does NOT support:
-
-. No support for FML views;
-. No FML indexing;
-. Some FML functionality is not implemented (but mostly all is supported);
-
-Improvements over Tuxedo:
-
-. ATMI servers can register custom poll file descriptors with own callback function;
-. ATMI servers can register periodic callback functions while ATMI server is idling;
-. Cluster is peer based, there is no master node;
-. Much simpler configuration reload during running app. Just edit 'ndrxconf.xml' and run 'xadmin reload' command.
-Tuxedo UBB configuration file is much harder to update in running up.
-. System can run with out the main Enduro/X daemon (ndrxd). It is much like running the Tuxedo with out Bulletin Board, which is not possible for Tuxedo. Even if 'ndrxd' daemon dies for some reason, it is possible to start in back in running application server instance with out service interruption.
-. Simple TMQUEUE setup. Allows run-time configuration updates and defaulted queue setups.
-
-
 What EnduroX deliverable contains?
 ----------------------------------
 The distribution package contains following list of resources:
