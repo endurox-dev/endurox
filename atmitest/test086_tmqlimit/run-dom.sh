@@ -174,13 +174,16 @@ fi
 echo "Massive global transaction load ..."
 ################################################################################
 
+# test cases checks for any possiblity of deadlock due to TM sending
+# completions to QSP, but QSP requests join to TM.
+
 #export NDRX_XA_FLAGS="FSYNC;DSYNC"
 # Do we need to fsync?
 #xadmin stop -y
 #xadmin start -y
 
 # Run the load...
-NDRX_CCONFIG=${TESTDIR}/nulltm.ini NDRX_CCTAG=NULL exbenchcl -n99 -P -t160 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sEXB -N5 -T60
+NDRX_CCONFIG=${TESTDIR}/nulltm.ini NDRX_CCTAG=NULL exbenchcl -n60 -P -t160 -b "{}" -f EX_DATA -S1024 -QMYSPACE -sEXB -N5 -T60
 
 RET=$?
 if [ "X$RET" != "X0" ]; then
