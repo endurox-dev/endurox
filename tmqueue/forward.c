@@ -113,6 +113,12 @@ expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
     tmq_qconfig_t *conf;
     fwd_stats_t *p_stats;
     
+    /* nothing todo */
+    if (G_tmqueue_cfg.no_chkrun)
+    {
+        return;
+    }
+    
     /* nothing todo, already triggered by other thread */
     if (ndrx_G_fwd_force_wake)
     {
@@ -351,7 +357,10 @@ exprivate fwd_msg_t * get_next_msg(void)
         /* if any queue had msgs, then re-scan queue list and retry */
         if (NULL==ret)
         {
-            /* read again if had message... */
+            /* read again if had message... 
+             * WARNING !!!! Please take care about ordering, if had message try
+             * again only when nothing todo and all was busy, then wait on threads.
+             */
             if (M_had_msg)
             {
                 NDRX_LOG(log_debug, "Had messages in previous run, scan Qs again");
@@ -456,7 +465,7 @@ out:
             /* unlock the msg, as adding to log is last step, \
              * thus not in log and we are in control\
              */\
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);\
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);\
             EXFAIL_OUT(ret);\
         }\
     } while (0)
@@ -521,7 +530,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         /* might happen if we reconfigure on the fly. */
         NDRX_LOG(log_error, "Failed to get qconf for [%s]", msg->hdr.qname);
-        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
         EXFAIL_OUT(ret);
     }
     
@@ -549,7 +558,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                     0))
     {
         NDRX_LOG(log_always, "Failed to allocate buffer type %hd!", msg->buftyp);
-        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
         EXFAIL_OUT(ret);
     }
     
@@ -567,7 +576,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             NDRX_LOG(log_error, "Failed to start tran!");
             
             /* nothing todo with the msg, unlock... */
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
             EXFAIL_OUT(ret);
         }
         
@@ -624,6 +633,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         
         /* Bug #421 if called in transaction, then abort current one
          * because need to increment the counters in new transaction
+	 * NOTE! Message is not released / unlocked due to marking.
          */
         if (tpgetlev())
         {
@@ -647,7 +657,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
             NDRX_LOG(log_error, "Failed to start tran!");
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
             EXFAIL_OUT(ret);
         }
     }
@@ -748,7 +758,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 /* unlock the msg, as adding to log is last step, 
                  * thus not in log and we are in control
                  */
-                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+                tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
                 EXFAIL_OUT(ret);
             }
             
@@ -847,7 +857,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 /* unlock the msg, as adding to log is last step, 
                  * thus not in log and we are in control
                  */
-                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+                tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
                 EXFAIL_OUT(ret);
             }
             

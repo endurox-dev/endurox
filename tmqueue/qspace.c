@@ -1620,7 +1620,7 @@ out:
  * @param msgid
  * @return 
  */
-expublic int tmq_unlock_msg_by_msgid(char *msgid)
+expublic int tmq_unlock_msg_by_msgid(char *msgid, int chkrun)
 {
     int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -1641,6 +1641,11 @@ expublic int tmq_unlock_msg_by_msgid(char *msgid)
     }
     
     mmsg->msg->lockthreadid = 0;
+    
+    if (chkrun)
+    {
+        ndrx_forward_chkrun(mmsg);
+    }
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);

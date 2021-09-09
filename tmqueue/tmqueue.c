@@ -614,7 +614,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmqueue_cfg.ses_timeout=EXFAIL;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:N")) != -1)
     {
         if (optarg)
         {
@@ -627,6 +627,10 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'N':
+                G_tmqueue_cfg.no_chkrun = EXTRUE;
+                NDRX_LOG(log_info, "Will not forward trigger queue run.");
+                break;
             case 'm': 
                 
                 /* Ask to convert: */
