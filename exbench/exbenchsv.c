@@ -40,6 +40,8 @@
 #include <ndebug.h>
 #include <atmi.h>
 
+#include "Exfields.h"
+
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -57,12 +59,34 @@ exprivate int M_usleep = 0; /**< Number of microseconds to sleep */
  */
 void EXBENCHSV (TPSVCINFO *p_svc)
 {
+    char btype[16]={EXEOS};
+    char stype[16]={EXEOS};
+    CLIENTID cltid;
+    long size;
+    BFLDLEN len;
+    int ret = TPSUCCESS;
+    
     if (M_usleep > 0)
     {
         usleep(M_usleep);
     }
+    
+    size = tptypes (p_svc->data, btype, stype);
+    
+    len = sizeof(cltid.clientdata);
+    
+    if (0==strcmp("UBF", btype) && EXSUCCEED==Bget((UBFH*)p_svc->data, 
+            EX_CLTID, 0, cltid.clientdata, &len))
+    {
+        /* send the notification... */
+        if (EXFAIL==tpnotify(&cltid, p_svc->data, p_svc->len, 0))
+        {
+            ret = TPFAIL;
+        }
+    }
 
-    tpreturn(  TPSUCCESS,
+    /* Run the notification this is ubf buffer.. */
+    tpreturn(  ret,
 		0L,
 		(char *)p_svc->data,
 		0L,

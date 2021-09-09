@@ -1420,7 +1420,7 @@ expublic int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
 
 out:
 
-    NDRX_LOG(log_error, "%s returns %d", __func__, ret);
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
 
     return ret;
 }
@@ -1479,8 +1479,10 @@ expublic int tpchkunsol(void)
         EXFAIL_OUT(ret);
     }   
     
-    /* Bug #269 - return the number of messages processed... */
-    ret=ndrx_tpchkunsol();
+    /* Bug #269 - return the number of messages processed... 
+     * The default mode is not blocked.
+     */
+    ret=ndrx_tpchkunsol(TPNOBLOCK);
     
     if (ret<0)
     {

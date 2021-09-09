@@ -70,10 +70,11 @@ exprivate int basic_rmnorollback(int maxmsg);
 exprivate int basic_fwdcrash(int maxmsg);
 exprivate int basic_autoperf(int maxmsg);
 exprivate int basic_txtout(int maxmsg);
+exprivate int basic_seqvalid(int maxmsg);
 
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
-extern int basic_crashloop(void);
+extern int basic_crashloop(char *qname);
 
 int main(int argc, char** argv)
 {
@@ -153,7 +154,11 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "crashloop"))
     {
-        return basic_crashloop();
+        return basic_crashloop("ERROR");
+    }
+    else if (0==strcmp(argv[1], "crashloop_t"))
+    {
+        return basic_crashloop("ERROR_T");
     }
     else if (0==strcmp(argv[1], "enqdeq"))
     {
@@ -163,7 +168,10 @@ int main(int argc, char** argv)
     {
         return basic_txtout(1);
     }
-    
+    else if (0==strcmp(argv[1], "seqvalid"))
+    {
+        return basic_seqvalid(1000);
+    }
     else
     {
         NDRX_LOG(log_error, "Invalid test case!");
@@ -289,6 +297,76 @@ out:
 
     return ret;
 }
+
+
+/**
+ * Validate the sequence of the message (transaction sync)
+ * Just load the messages. Activation / Validation is done from shell script
+ * @param maxmsg max messages to be ok
+ */
+exprivate int basic_seqvalid(int maxmsg)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    long i;
+    
+    NDRX_LOG(log_error, "case seqvalid");
+    if (EXSUCCEED!=tpbegin(9999, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to begin");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Initial test... */
+    for (i=1; i<maxmsg+1; i++)
+    {
+        UBFH *testbuf_ref = (UBFH *)tpalloc("UBF", "", 1024);
+        
+        /* alloc output buffer */
+        if (NULL==testbuf_ref)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=Bchg(testbuf_ref, T_LONG_FLD, 0, (char *)&i, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Bchg failed %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc, 0, sizeof(qc));
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "SEQVALID", &qc, (char *)testbuf_ref, 0, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)testbuf_ref);
+    }
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to commit: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
+
 
 /**
  * Transaction timeout - TPETRAN test (cannot join as rolled back)

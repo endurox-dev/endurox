@@ -458,7 +458,7 @@ expublic int tmq_dequeue(UBFH **pp_ub, int *int_diag)
         /* Unlock msg if it was peek */
         if (TPQPEEK & qctl_in.flags)
         {
-            tmq_unlock_msg_by_msgid(p_msg->qctl.msgid);
+            tmq_unlock_msg_by_msgid(p_msg->qctl.msgid, 0);
         }
         
         EXFAIL_OUT(ret);
@@ -466,7 +466,7 @@ expublic int tmq_dequeue(UBFH **pp_ub, int *int_diag)
     
     /* Unlock msg if it was peek */
     if (TPQPEEK & qctl_in.flags && 
-            EXSUCCEED!=tmq_unlock_msg_by_msgid(p_msg->qctl.msgid))
+            EXSUCCEED!=tmq_unlock_msg_by_msgid(p_msg->qctl.msgid, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to unlock msg!");
         EXFAIL_OUT(ret);

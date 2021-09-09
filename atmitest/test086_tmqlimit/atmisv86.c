@@ -47,7 +47,45 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+exprivate long M_seq = 0;
+
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Sequence validator
+ */
+void SEQVALID (TPSVCINFO *p_svc)
+{
+    int ret = EXSUCCEED;
+    long l;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    /* read the sequence field T_LONG_FLD must start from 1 */
+    if (EXSUCCEED!=Bget(p_ub, T_LONG_FLD, 0, (char *)&l, NULL))
+    {
+        NDRX_LOG(log_always, "TESTERROR: T_LONG_FLD is missing!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Validate the sequence of the call: */
+    if (M_seq+1!=l)
+    {
+        NDRX_LOG(log_always, "TESTERROR: Invalid service call sequence: got %ld expected %ld", 
+                l, M_seq+1);
+        userlog("TESTERROR: Invalid service call sequence: got %ld expected %ld", 
+                l, M_seq+1);
+        EXFAIL_OUT(ret);
+    }
+    M_seq = l;
+
+out:
+    tpreturn(  (EXSUCCEED==ret?TPSUCCESS:TPFAIL),
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
 
 /**
  * Standard service entry
@@ -108,7 +146,19 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise OKSVC!");
         EXFAIL_OUT(ret);
     }
-
+    
+    if (EXSUCCEED!=tpadvertise("SEQVALID", SEQVALID))
+    {
+        NDRX_LOG(log_error, "Failed to initialise SEQVALID!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "tpopen() failed: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
 out:
     return ret;
 }
@@ -119,6 +169,7 @@ out:
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
     NDRX_LOG(log_debug, "tpsvrdone called");
+    tpclose();
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

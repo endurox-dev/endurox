@@ -83,7 +83,7 @@ exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
 
 exprivate fwd_qlist_t *M_next_fwd_q_list = NULL;    /**< list of queues to check msgs to fwd */
 exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list...  */
-exprivate int          M_had_msg = EXFALSE;         /**< Did we got the msg previously?      */
+exprivate int           M_had_msg = EXFALSE;         /**< Did we got the msg previously?      */
 exprivate int          M_any_busy = EXFALSE;         /**< Is all queues busy?                 */
 exprivate int          M_num_busy = 0;         /**< Number of busy jobs                 */
     
@@ -91,8 +91,74 @@ exprivate MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 
 exprivate int M_force_sleep = EXFALSE;              /**< Shall the sleep be forced in case of error? */
 
+
+/** we are into main sleep */
+expublic int volatile ndrx_G_fwd_into_sleep=EXFALSE;
+
+/** we are into pool sleep */
+expublic int volatile ndrx_G_fwd_into_poolsleep=EXFALSE;
+
+/** we want to wake up the forwarder as new job as arrived */
+expublic int volatile ndrx_G_fwd_force_wake = EXFALSE;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * We assume we are locked.
+ * @param mmsg which was enqueued
+ */
+expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
+{
+    tmq_qconfig_t *conf;
+    fwd_stats_t *p_stats;
+    
+    /* nothing todo */
+    if (G_tmqueue_cfg.no_chkrun)
+    {
+        return;
+    }
+    
+    /* nothing todo, already triggered by other thread */
+    if (ndrx_G_fwd_force_wake)
+    {
+        return;
+    }
+    
+    /* nothing todo */
+    if (!ndrx_G_fwd_into_sleep && !ndrx_G_fwd_into_poolsleep)
+    {
+        return;
+    }
+    
+    if (G_forward_req_shutdown)
+    {
+        return;
+    }
+    
+    conf =  tmq_qconf_get_with_default(mmsg->msg->hdr.qname, NULL);
+    if (NULL!=conf)
+    {
+        if (tmq_is_auto_valid_for_deq(mmsg, conf) && 
+                /* Ignore error of cnt... */
+                conf->workers > tmq_fwd_busy_cnt(mmsg->msg->hdr.qname, &p_stats))
+        {
+            
+            ndrx_G_fwd_force_wake=EXTRUE;
+            
+            if (ndrx_G_fwd_into_sleep)
+            {
+                /* wakup from main sleep */
+                pthread_cond_signal(&M_wait_cond);
+            }
+            else if (ndrx_G_fwd_into_poolsleep)
+            {
+                /* wakup from pool sleep */
+                ndrx_thpool_signal_one(G_tmqueue_cfg.fwdthpool);
+            }
+        }
+    }
+}
 
 /**
  * Lock background operations
@@ -170,13 +236,14 @@ exprivate void fwd_q_list_rm(void)
  * 
  * @return 
  */
-exprivate tmq_msg_t * get_next_msg(void)
+exprivate fwd_msg_t * get_next_msg(void)
 {
-    tmq_msg_t * ret = NULL;
+    fwd_msg_t * ret = NULL;
+    tmq_msg_t * ret_msg = NULL;
     long qerr = EXSUCCEED;
     char msgbuf[128];
     int again;
-    long tot_cnt;
+    static unsigned long seq = 0;
 
     do
     {
@@ -204,7 +271,20 @@ exprivate tmq_msg_t * get_next_msg(void)
          */
         while (NULL!=M_next_fwd_q_cur)
         {
-            int busy = tmq_fwd_busy_cnt(M_next_fwd_q_cur->qname);
+            fwd_stats_t *p_stats;
+            fwd_qlist_t *q_cur = M_next_fwd_q_cur;
+            
+            int busy = tmq_fwd_busy_cnt(M_next_fwd_q_cur->qname, &p_stats);
+            
+            if (EXFAIL==busy)
+            {
+                NDRX_LOG(log_error, "Failed to get stats for [%s] - memory error",
+                        M_next_fwd_q_cur->qname);
+                userlog("Failed to get stats for [%s] - memory error",
+                        M_next_fwd_q_cur->qname);
+                /* memory error! */
+                exit(-1);
+            }
             
             NDRX_LOG(log_info, "mon: %s %ld/%ld/%d/%d", 
                     M_next_fwd_q_cur->qname
@@ -215,6 +295,7 @@ exprivate tmq_msg_t * get_next_msg(void)
             
             /* no msg... */
             ret=NULL;
+            ret_msg=NULL;
             
             /* not all busy... */
             M_num_busy+=busy;
@@ -225,7 +306,7 @@ exprivate tmq_msg_t * get_next_msg(void)
                 M_any_busy=EXTRUE;
             }
             /* OK, so we peek for a message */
-            else if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
+            else if (NULL==(ret_msg=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE, 
                     &qerr, msgbuf, sizeof(msgbuf), NULL, NULL)))
             {
                 NDRX_LOG(log_debug, "Not messages for dequeue qerr=%ld: %s", 
@@ -236,13 +317,38 @@ exprivate tmq_msg_t * get_next_msg(void)
                 NDRX_LOG(log_debug, "Dequeued message");
                 M_had_msg=EXTRUE;
             }
-
             /* schedule next queue ... */
             M_next_fwd_q_cur = M_next_fwd_q_cur->next;
         
-            /* done with this loop if having msg.. */
-            if (NULL!=ret)
+            /* done with this loop if having msg.. 
+             * Prepare return object
+             */
+            if (NULL!=ret_msg)
             {
+                ret = NDRX_FPMALLOC(sizeof(fwd_msg_t), 0);
+                
+                if (NULL==ret)
+                {
+                    int err = errno;
+                    NDRX_LOG(log_error, "Failed to malloc %d bytes: %s - termiante", 
+                            sizeof(fwd_msg_t), strerror(err));
+                    userlog("Failed to malloc %d bytes: %s - terminate", 
+                            sizeof(fwd_msg_t), strerror(err));
+                    exit(-1);
+                }
+                ret->msg=ret_msg;
+                ret->stats=p_stats;
+                ret->sync=q_cur->sync;
+                seq++;
+                
+                ret->seq = seq;
+                
+                /* add to internal order.. */
+                if (ret->sync)
+                {
+                    tmq_fwd_sync_add(ret);
+                }
+                
                 break;
             }
 
@@ -251,31 +357,49 @@ exprivate tmq_msg_t * get_next_msg(void)
         /* if any queue had msgs, then re-scan queue list and retry */
         if (NULL==ret)
         {
-            /* read again if had message... */
-            if (M_any_busy)
+            /* read again if had message... 
+             * WARNING !!!! Please take care about ordering, if had message try
+             * again only when nothing todo and all was busy, then wait on threads.
+             */
+            if (M_had_msg)
             {
-                int wait_ret;
-                NDRX_LOG(log_debug, "All Qs/threads busy to the limit wait for slot...");
-                
-                /* wait on pool */
-                do
-                {
-                    /* wait 1 sec... */
-                    wait_ret = ndrx_thpool_timedwait_less(G_tmqueue_cfg.fwdthpool, 
-                            M_num_busy, 1000);
-                } 
-                while (!G_forward_req_shutdown && EXTRUE!=wait_ret);
-                
+                NDRX_LOG(log_debug, "Had messages in previous run, scan Qs again");
                 again = EXTRUE;
             }
-            else if (M_had_msg)
+            else if (M_any_busy)
             {
-                NDRX_LOG(log_debug, "Had messages in prevous run, scan Qs again");
+                NDRX_LOG(log_debug, "All Qs/threads busy to the limit wait for slot...");
+                
+                /* wait on pool 
+                 * What if new msg is added to queue which is not being processed
+                 * and all the currently processed queues run very slowly?
+                 * the minimum would be do to again after the wait time.
+                 * Also probably wait time shall be set to the same amount
+                 * as the main sleep, not?
+                 * 
+                 * Secondly additional speedup would give if unlocked messages
+                 * valid for dequeue would trigger that wakups...
+                 * 
+                 * Also if having force sleep set, then probably we shall go
+                 * out of all this to main sleeping routine, not?
+                 */
+                
+                 /* reset this one */
+                ndrx_G_fwd_into_poolsleep=EXTRUE;
+                
+                ndrx_thpool_timedwait_less(G_tmqueue_cfg.fwdthpool, 
+                            M_num_busy, G_tmqueue_cfg.scan_time*1000, (int *)&ndrx_G_fwd_force_wake);
+                
+                /* OK... we are back on the track... */
+                ndrx_G_fwd_into_poolsleep=EXFALSE;
+                ndrx_G_fwd_force_wake=EXFALSE;
+                
                 again = EXTRUE;
             }
         }
 
-    } while (again && !G_forward_req_shutdown);
+        /* &&! Force_sleep */
+    } while (again && !G_forward_req_shutdown && !M_force_sleep);
     
 out:
     return ret;
@@ -319,7 +443,32 @@ out:
             EXFAIL_OUT(ret);\
         }\
     } while (0)
-                
+
+/**
+ * Write delete block
+ */    
+#define WRITE_DEL do {\
+	/* start our internal transaction */\
+        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;\
+        /* well this will generate this will add msg to transaction\
+         * will be handled by timeout setting...\
+         * No more unlock manual.\
+         * This will sub-lock\
+         */\
+        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, \
+                "Removing completed message...", NULL, NULL))\
+        {\
+            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", \
+                    msgid_str);\
+            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", \
+                    msgid_str);\
+            /* unlock the msg, as adding to log is last step, \
+             * thus not in log and we are in control\
+             */\
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);\
+            EXFAIL_OUT(ret);\
+        }\
+    } while (0)
 /**
  * Process of the message
  * @param ptr
@@ -328,7 +477,8 @@ out:
 expublic void thread_process_forward (void *ptr, int *p_finish_off)
 {
     int ret = EXSUCCEED;
-    tmq_msg_t * msg = (tmq_msg_t *)ptr;
+    fwd_msg_t * fwd = (fwd_msg_t *)ptr;
+    tmq_msg_t * msg = fwd->msg;
     tmq_qconfig_t qconf;
     char *call_buf = NULL;
     long call_len = 0;
@@ -346,6 +496,8 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     char qname[TMQNAMELEN+1];
     char *tmxid=NULL;
+    int cd;
+    int msg_released = EXFALSE;
     qtran_log_t *p_tl=NULL;
     
     if (!M_is_xa_open)
@@ -378,7 +530,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         /* might happen if we reconfigure on the fly. */
         NDRX_LOG(log_error, "Failed to get qconf for [%s]", msg->hdr.qname);
-        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
         EXFAIL_OUT(ret);
     }
     
@@ -406,9 +558,12 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                     0))
     {
         NDRX_LOG(log_always, "Failed to allocate buffer type %hd!", msg->buftyp);
-        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+        tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
         EXFAIL_OUT(ret);
     }
+    
+    memset(&cmd_block, 0, sizeof(cmd_block));
+    memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
     
     if (TMQ_AUTOQ_AUTOTX==qconf.autoq)
     {
@@ -421,9 +576,19 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             NDRX_LOG(log_error, "Failed to start tran!");
             
             /* nothing todo with the msg, unlock... */
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
             EXFAIL_OUT(ret);
         }
+        
+        /* Normally we expect service to complete OK
+         * but lock the particular transaction (first one) 
+         * as msg non-unlockable
+         */
+        WRITE_DEL;
+        GET_TL;
+        /* mark transaction as not unlockable. */
+        p_tl->cmds->no_unlock=EXTRUE;
+        UNLOCK;
     }
     
     /* call the service */
@@ -437,16 +602,38 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         NDRX_STRCPY_SAFE(svcnm, qconf.svcnm);
     }
+
     
-    NDRX_LOG(log_info, "Sending request to service: [%s]", svcnm);
+    /* after acall remove our entry
+     * if after remove all is empty.... do we need to signal? I guess no
+     * if there is something, then lock & signal.
+     */
+    if (fwd->sync)
+    {
+        tmq_fwd_sync_wait(fwd);
+    }
     
-    if (EXFAIL == tpcall(svcnm, call_buf, call_len, (char **)&rply_buf, &rply_len,0))
+    NDRX_LOG(log_info, "Sending request to service: [%s] sync_seq=%lu", svcnm, fwd->seq);
+    
+    cd = tpacall (svcnm, call_buf, call_len, 0);
+    
+    /* release the msg... if acall sync */
+    if (TMQ_SYNC_TPACALL==fwd->sync)
+    {
+        tmq_fwd_sync_notify(fwd);
+        NDRX_LOG(log_debug, "Sync notified (tpacall) sync_seq=%lu", fwd->seq);
+        msg_released = EXTRUE;
+    }
+    
+    /* get the reply.. */
+    if (EXFAIL==cd || EXFAIL==tpgetrply (&cd, (char **)&rply_buf, &rply_len, 0))
     {
         tperr = tperrno;
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperr));
         
         /* Bug #421 if called in transaction, then abort current one
          * because need to increment the counters in new transaction
+	 * NOTE! Message is not released / unlocked due to marking.
          */
         if (tpgetlev())
         {
@@ -460,14 +647,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     }
     
     NDRX_LOG(log_info, "Service answer %s for %s", (sent_ok?"ok":"fail"), msgid_str);
-    
-    memset(&cmd_block, 0, sizeof(cmd_block));
-    memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
-    
-   /* cmd_block.hdr.flags|=TPQASYNC; async complete to avoid deadlocks... 
-    * No need for this: we have seperate thread pool for notify events.
-    */
-
+        
     /* start the transaction 
      * Note! message is not yet added to transaction with
      */
@@ -477,7 +657,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         {
             userlog("Failed to start tran: %s", tpstrerror(tperrno));
             NDRX_LOG(log_error, "Failed to start tran!");
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
             EXFAIL_OUT(ret);
         }
     }
@@ -487,32 +667,21 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
      */
     if (sent_ok)
     {
-        /* start our internal transaction */
-        tmq_update_q_stats(msg->hdr.qname, 1, 0);
-        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
+        /* new tran was started as not autoq */
 
-        /* well this will generate this will add msg to transaction
-         * will be handled by timeout setting...
-         * No more unlock manual.
-         * This will sub-lock
-         */
-        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                "Removing completed message...", NULL, NULL))
+        if (TMQ_AUTOQ_AUTOTX==qconf.autoq)
         {
-            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-
-            /* unlock the msg, as adding to log is last step, 
-             * thus not in log and we are in control
-             */
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-            EXFAIL_OUT(ret);
+            /* now we can unlock by transaction  */
+            GET_TL;
+            p_tl->cmds->no_unlock=EXFALSE;
         }
-        
-        /* dynamic mode will promote the tmxid */
-        GET_TL;
+        else
+        {
+            WRITE_DEL;
+            GET_TL;
+        }
+	
+        tmq_update_q_stats(msg->hdr.qname, 1, 0);
         
        /* Remove the message */
         if (msg->qctl.flags & TPQREPLYQ)
@@ -589,7 +758,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 /* unlock the msg, as adding to log is last step, 
                  * thus not in log and we are in control
                  */
-                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+                tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
                 EXFAIL_OUT(ret);
             }
             
@@ -688,7 +857,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 /* unlock the msg, as adding to log is last step, 
                  * thus not in log and we are in control
                  */
-                tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+                tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
                 EXFAIL_OUT(ret);
             }
             
@@ -734,6 +903,13 @@ out:
         NDRX_LOG(log_error, "System failure => force sleep");
         M_force_sleep=EXTRUE;
     }
+
+    /* let next msg to process... */
+    if (fwd->sync && !msg_released)
+    {
+        tmq_fwd_sync_notify(fwd);
+        NDRX_LOG(log_debug, "Sync notified (tpcommit) sync_seq=%lu", fwd->seq);
+    }
     
     if (NULL!=call_buf)
     {
@@ -746,7 +922,9 @@ out:
     }
     
     /* release stats counter... */
-    tmq_fwd_busy_dec(qname);
+    tmq_fwd_busy_dec(fwd->stats);
+    
+    NDRX_FPFREE(fwd);
     
     return;
 }
@@ -760,7 +938,7 @@ expublic int forward_loop(void)
 {
     int ret = EXSUCCEED;
     int normal_sleep;
-    tmq_msg_t * msg;
+    fwd_msg_t * fwd_msg;
     /*
      * We need to get the list of queues to monitor.
      * Note that list can be dynamic. So at some periods we need to refresh
@@ -768,7 +946,7 @@ expublic int forward_loop(void)
      */
     while(!G_forward_req_shutdown)
     {
-        msg = NULL;
+        fwd_msg = NULL;
         
         /* wait for one slot to become free.. */
         ndrx_thpool_wait_one(G_tmqueue_cfg.fwdthpool);
@@ -777,18 +955,14 @@ expublic int forward_loop(void)
         if (!M_force_sleep)
         {
             /* 2. get the message from Q */
-            msg = get_next_msg();
+            fwd_msg = get_next_msg();
         
             /* 3. run off the thread */
-            if (NULL!=msg)
+            if (NULL!=fwd_msg)
             {
                 /* Submit the job to thread */
-                if (EXSUCCEED!=tmq_fwd_busy_inc(msg->hdr.qname))
-                {
-                    EXFAIL_OUT(ret);
-                }
-                
-                ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
+                tmq_fwd_busy_inc(fwd_msg->stats);
+                ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)fwd_msg);            
             }
             else
             {
@@ -805,10 +979,18 @@ expublic int forward_loop(void)
             NDRX_LOG(log_debug, "background - sleep %d forced=%d", 
                     G_tmqueue_cfg.scan_time, M_force_sleep);
             
+            if (!M_force_sleep)
+            {
+                ndrx_G_fwd_into_sleep=EXTRUE;
+            }
+            
             thread_sleep(G_tmqueue_cfg.scan_time);
             
             /* in case of error, forced sleep */
             M_force_sleep=EXFALSE;
+            ndrx_G_fwd_into_sleep=EXFALSE;
+            /* reset this one */
+            ndrx_G_fwd_force_wake=EXFALSE;
         }
     }
     
