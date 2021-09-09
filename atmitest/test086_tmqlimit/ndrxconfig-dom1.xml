@@ -60,6 +60,10 @@
                 <min>1</min>
                 <max>1</max>
                 <srvid>10</srvid>
+                <cctag>NULL</cctag>
+                <envs>
+                    <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
+                </envs>
                 <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
             </server>
             <server name="exbenchsv">
@@ -69,11 +73,20 @@
                 <!-- Slow service -->
                 <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -- -sQOS000 -U500000 </sysopt>
             </server>
+            
+            <server name="exbenchsv">
+                <min>1</min>
+                <max>1</max>
+                <srvid>21</srvid>
+                <!-- Slow service, 1 sec. -->
+                <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -- -sLASTSLOW -U1000000 </sysopt>
+            </server>
+            
             <server name="exbenchsv">
                 <min>5</min>
                 <max>5</max>
                 <srvid>30</srvid>
-                <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -sQOS001,QOS002,QOS003,QOS004:EXBENCH -- </sysopt>
+                <sysopt>-e ${TESTDIR}/exbenchsv-dom1.log -r -sQOS001,QOS002,QOS003,QOS004,LASTOK:EXBENCH -- </sysopt>
             </server>
             <server name="tmsrv">
                 <max>1</max>
@@ -109,7 +122,7 @@
             <server name="tmqueue">
                <max>1</max>
                <srvid>100</srvid>
-               <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1 -T30 </sysopt>
+               <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1 -T30 -f40 </sysopt>
             </server>
         </servers>
 </endurox>

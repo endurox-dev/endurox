@@ -161,6 +161,106 @@ rm ULOG*
 
 
 ################################################################################
+echo "Validate transactional sequence..."
+################################################################################
+
+(./atmiclt86 seqvalid 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "seqvalid failed"
+    go_out $RET
+fi
+
+xadmin mqch -n1 -i 100 -qSEQVALID,autoq=T
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "mqch failed"
+    go_out $RET
+fi
+
+i=0
+# wait to complete...
+while [[ $i -lt 25 ]]
+do
+    echo "Wait completion ($i)"
+    sleep 1
+
+    ((i++))
+
+    STATS=`xadmin mqlq | grep "SEQVALID      0     0    1K    1K    1K     0"`
+    if [ "X$STATS" != "X" ]; then
+        break;
+    fi
+done
+
+# validate the result finally.
+xadmin mqlq | grep SEQVALID
+STATS=`xadmin mqlq | grep "SEQVALID      0     0    1K    1K    1K     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting SEQVALID to be completed!"
+    go_out -1
+fi
+
+################################################################################
+echo "QoS test... last Q slow"
+################################################################################
+
+# Load first fast.. (just to get forward order)
+exbenchcl -n1 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sLASTOK -R5 -E
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+# Load second slow...
+exbenchcl -n1 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sLASTSLOW -R60 -E
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+echo "Current situation:"
+xadmin mqlq
+
+# Load fast queue, fast load
+exbenchcl -n40 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sLASTOK -R5 -E
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+echo "Wait 20..."
+sleep 20
+
+echo "Current situation:"
+xadmin mqlq
+
+# Fast queue shall be done with 200 msgs...
+STATS=`xadmin mqlq | grep "LASTOK        0     0   205   205   205     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting LASTOK to be completed!"
+    go_out -1
+fi
+
+echo "Wait 60 for slow to complete..."
+sleep 60
+xadmin mqlq
+STATS=`xadmin mqlq | grep "LASTSLOW      0     0    60    60    60     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting LASTSLOW to be completed!"
+    go_out -1
+fi
+
+################################################################################
 echo "TPETRAN join on timed out transaction ..."
 ################################################################################
 (NDRX_CCONFIG=${TESTDIR}/nulltm.ini NDRX_CCTAG=NULL ./atmiclt86 txtout 2>&1) >> ./atmiclt-dom1.log

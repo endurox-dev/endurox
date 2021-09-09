@@ -112,6 +112,8 @@ typedef struct
     
     long fsync_flags;         /**< special flags for disk sync              */
     
+    int no_chkrun;           /**< If set to true, do not trigger queue run  */
+    
 } tmqueue_cfg_t;
 
 /**
@@ -308,7 +310,7 @@ extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *d
             char *diagmsg, size_t diagmsgsz, char *corrid_str, int *int_diag);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, 
         char *diagmsg, size_t diagmsgsz, int *int_diag);
-extern int tmq_unlock_msg_by_msgid(char *msgid);
+extern int tmq_unlock_msg_by_msgid(char *msgid, int chkrun);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
