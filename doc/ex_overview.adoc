@@ -27,6 +27,7 @@ unaware on which machine the call actually is served.
 
 What Enduro/X deliverable contains?
 -----------------------------------
+
 The distribution package contains following list of resources:
 
 .Distribution package description - "bin" directory

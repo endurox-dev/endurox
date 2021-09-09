@@ -62,6 +62,7 @@ struct qtran_log_cmd
     char command_code;          /**< Command code                           */
     int  seqno;                 /**< Command sequence number                */    
     char cmd_status;            /**< status according to XA_RM_STATUS*      */
+    int no_unlock;              /**< do not unlock the msg                  */
     union tmq_upd_block b;      /**< Update block (largest metadata store   */
     qtran_log_cmd_t *prev, *next;/**< DL list of locked / related msgs      */
 };

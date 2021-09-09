@@ -161,6 +161,169 @@ rm ULOG*
 
 
 ################################################################################
+echo "Forward thread wakup test"
+################################################################################
+rm wakeup.out 2>/dev/null
+export NDRX_BENCH_FILE="wakeup.out"
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sWAKEUP -E -I
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "exbenchcl failed"
+    go_out $RET
+fi
+
+# validate that there is more messages than say 70
+cat wakeup.out
+
+NR_CALLS=`tail -1 wakeup.out  | cut -d ' '  -f3`
+
+if [ "$NR_CALLS" -lt "80" ]; then
+    echo "Expected more calls than 80 got $NR_CALLS"
+    go_out -1
+fi
+
+################################################################################
+# Crash loop of autoq=T
+################################################################################
+
+if [ `xadmin poller` != "emq" ]; then
+    echo "Testing crashloop_t"
+    # use custom timeout
+    export NDRX_TOUT=30
+    xadmin stop -y
+    xadmin start -y
+    (./atmiclt86 crashloop_t 2>&1) >> ./atmiclt-dom1.log
+    RET=$?
+    if [[ "X$RET" != "X0" ]]; then
+        xadmin psc
+        go_out $RET
+    fi
+
+    # print what's left in q...
+    xadmin mqlq
+    xadmin pt
+
+    STATS=`xadmin mqlq | grep "ERROR         0     0"`
+
+    echo "Stats: [$STATS]"
+
+    if [[ "X$STATS" == "X" ]]; then
+        echo "Expecting ERROR queue to be fully empty!"
+        go_out -1
+    fi
+
+    # restore tout:
+    export NDRX_TOUT=90
+    xadmin stop -y
+    xadmin start -y
+
+    clean_logs;
+    rm ULOG*
+fi
+
+
+################################################################################
+echo "Validate transactional sequence..."
+################################################################################
+
+(./atmiclt86 seqvalid 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "seqvalid failed"
+    go_out $RET
+fi
+
+xadmin mqch -n1 -i 100 -qSEQVALID,autoq=T
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "mqch failed"
+    go_out $RET
+fi
+
+i=0
+# wait to complete...
+while [[ $i -lt 25 ]]
+do
+    echo "Wait completion ($i)"
+    sleep 1
+
+    ((i++))
+
+    STATS=`xadmin mqlq | grep "SEQVALID      0     0    1K    1K    1K     0"`
+    if [ "X$STATS" != "X" ]; then
+        break;
+    fi
+done
+
+# validate the result finally.
+xadmin mqlq | grep SEQVALID
+STATS=`xadmin mqlq | grep "SEQVALID      0     0    1K    1K    1K     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting SEQVALID to be completed!"
+    go_out -1
+fi
+
+################################################################################
+echo "QoS test... last Q slow"
+################################################################################
+
+# Load first fast.. (just to get forward order)
+exbenchcl -n1 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sLASTOK -R5 -E
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+# Load second slow...
+exbenchcl -n1 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sLASTSLOW -R60 -E
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+echo "Current situation:"
+xadmin mqlq
+
+# Load fast queue, fast load
+exbenchcl -n40 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sLASTOK -R5 -E
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to load QoS messages..."
+    go_out $RET
+fi
+
+echo "Wait 20..."
+sleep 20
+
+echo "Current situation:"
+xadmin mqlq
+
+# Fast queue shall be done with 200 msgs...
+STATS=`xadmin mqlq | grep "LASTOK        0     0   205   205   205     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting LASTOK to be completed!"
+    go_out -1
+fi
+
+echo "Wait 60 for slow to complete..."
+sleep 60
+xadmin mqlq
+STATS=`xadmin mqlq | grep "LASTSLOW      0     0    60    60    60     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Expecting LASTSLOW to be completed!"
+    go_out -1
+fi
+
+################################################################################
 echo "TPETRAN join on timed out transaction ..."
 ################################################################################
 (NDRX_CCONFIG=${TESTDIR}/nulltm.ini NDRX_CCTAG=NULL ./atmiclt86 txtout 2>&1) >> ./atmiclt-dom1.log

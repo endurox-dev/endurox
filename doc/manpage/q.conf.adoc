@@ -10,7 +10,7 @@ q.conf - Persistent, Transactional Message Queue (TMQ) configuration file
 
 SYNOPSIS
 --------
-<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>][,errorq=<ERRORQ>][,workers=<NR_WORKERS>]
+<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>][,errorq=<ERRORQ>][,workers=<NR_WORKERS>][,sync=<SYNC_MODE>]
 
 
 DESCRIPTION
@@ -22,6 +22,7 @@ operations if specific queue is not found, then settings are taken from
 default queue. The queue definitions also might not be complete. If so, then
 defaults are used for other parameters. It is recommended to define default 
 queue first. So that it can be using for other queue missing parameter defaulting.
+If using sub-sections in ini-config, the default shall be defined for each subsction.
 
 Whitespace/empty lines are ignored. File may contains comments which are 
 started at the beginning of the
@@ -68,6 +69,15 @@ DEBUG CONFIGURATION FILE SYNTAX
     Absolute limit of total forwarders is set *tmqueue(8)* *-f* flag, this denotes
     the portion which given queue can occupy from shared forwarder thread pool. 
     The default value is *2*. Minimum value is *1*.
+*SYNC_MODE*::
+    If more than one *workers* is used for automatic forwarding queues, 
+    this flag indicates how the the worker threads for single queue synchronize. 
+    If set to *y* or *Y*, then second worker thread only proceeds
+    when first worker thread have performed *tpacall(3)* to destination service.
+    If set to *c* or *C*, the second worker thread only proceeds
+    when first worker have committed the result. If set to *n* or *N*, worker
+    threads are not synchronized, and this is *default* for this flag.
+
 
 EXAMPLE
 -------
