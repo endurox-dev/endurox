@@ -161,6 +161,69 @@ rm ULOG*
 
 
 ################################################################################
+echo "Forward thread wakup test"
+################################################################################
+rm wakeup.out 2>/dev/null
+export NDRX_BENCH_FILE="wakeup.out"
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sWAKEUP -E -I
+
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "exbenchcl failed"
+    go_out $RET
+fi
+
+# validate that there is more messages than say 70
+cat wakeup.out
+
+NR_CALLS=`tail -1 wakeup.out  | cut -d ' '  -f3`
+
+if [ "$NR_CALLS" -lt "80" ]; then
+    echo "Expected more calls than 80 got $NR_CALLS"
+    go_out -1
+fi
+
+################################################################################
+# Crash loop of autoq=T
+################################################################################
+
+if [ `xadmin poller` != "emq" ]; then
+    echo "Testing crashloop_t"
+    # use custom timeout
+    export NDRX_TOUT=30
+    xadmin stop -y
+    xadmin start -y
+    (./atmiclt86 crashloop_t 2>&1) >> ./atmiclt-dom1.log
+    RET=$?
+    if [[ "X$RET" != "X0" ]]; then
+        xadmin psc
+        go_out $RET
+    fi
+
+    # print what's left in q...
+    xadmin mqlq
+    xadmin pt
+
+    STATS=`xadmin mqlq | grep "ERROR         0     0"`
+
+    echo "Stats: [$STATS]"
+
+    if [[ "X$STATS" == "X" ]]; then
+        echo "Expecting ERROR queue to be fully empty!"
+        go_out -1
+    fi
+
+    # restore tout:
+    export NDRX_TOUT=90
+    xadmin stop -y
+    xadmin start -y
+
+    clean_logs;
+    rm ULOG*
+fi
+
+
+################################################################################
 echo "Validate transactional sequence..."
 ################################################################################
 
