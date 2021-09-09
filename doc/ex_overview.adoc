@@ -25,8 +25,8 @@ monitors. It is possible to load balance some service which runs on local
 machine and on some other machine. The caller/client might be
 unaware on which machine the call actually is served.
 
-What EnduroX deliverable contains?
-----------------------------------
+What Enduro/X deliverable contains?
+-----------------------------------
 The distribution package contains following list of resources:
 
 .Distribution package description - "bin" directory
