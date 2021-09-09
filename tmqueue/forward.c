@@ -352,7 +352,12 @@ exprivate fwd_msg_t * get_next_msg(void)
         if (NULL==ret)
         {
             /* read again if had message... */
-            if (M_any_busy)
+            if (M_had_msg)
+            {
+                NDRX_LOG(log_debug, "Had messages in previous run, scan Qs again");
+                again = EXTRUE;
+            }
+            else if (M_any_busy)
             {
                 NDRX_LOG(log_debug, "All Qs/threads busy to the limit wait for slot...");
                 
@@ -380,11 +385,6 @@ exprivate fwd_msg_t * get_next_msg(void)
                 ndrx_G_fwd_into_poolsleep=EXFALSE;
                 ndrx_G_fwd_force_wake=EXFALSE;
                 
-                again = EXTRUE;
-            }
-            else if (M_had_msg)
-            {
-                NDRX_LOG(log_debug, "Had messages in previous run, scan Qs again");
                 again = EXTRUE;
             }
         }
@@ -434,7 +434,32 @@ out:
             EXFAIL_OUT(ret);\
         }\
     } while (0)
-                
+
+/**
+ * Write delete block
+ */    
+#define WRITE_DEL do {\
+	/* start our internal transaction */\
+        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;\
+        /* well this will generate this will add msg to transaction\
+         * will be handled by timeout setting...\
+         * No more unlock manual.\
+         * This will sub-lock\
+         */\
+        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, \
+                "Removing completed message...", NULL, NULL))\
+        {\
+            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", \
+                    msgid_str);\
+            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", \
+                    msgid_str);\
+            /* unlock the msg, as adding to log is last step, \
+             * thus not in log and we are in control\
+             */\
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid);\
+            EXFAIL_OUT(ret);\
+        }\
+    } while (0)
 /**
  * Process of the message
  * @param ptr
@@ -528,6 +553,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         EXFAIL_OUT(ret);
     }
     
+    memset(&cmd_block, 0, sizeof(cmd_block));
+    memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
+    
     if (TMQ_AUTOQ_AUTOTX==qconf.autoq)
     {
         NDRX_LOG(log_debug, "Service invocation shall be performed in "
@@ -542,6 +570,16 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             tmq_unlock_msg_by_msgid(msg->hdr.msgid);
             EXFAIL_OUT(ret);
         }
+        
+        /* Normally we expect service to complete OK
+         * but lock the particular transaction (first one) 
+         * as msg non-unlockable
+         */
+        WRITE_DEL;
+        GET_TL;
+        /* mark transaction as not unlockable. */
+        p_tl->cmds->no_unlock=EXTRUE;
+        UNLOCK;
     }
     
     /* call the service */
@@ -555,6 +593,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         NDRX_STRCPY_SAFE(svcnm, qconf.svcnm);
     }
+
     
     /* after acall remove our entry
      * if after remove all is empty.... do we need to signal? I guess no
@@ -598,10 +637,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     }
     
     NDRX_LOG(log_info, "Service answer %s for %s", (sent_ok?"ok":"fail"), msgid_str);
-    
-    memset(&cmd_block, 0, sizeof(cmd_block));
-    memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
-    
+        
     /* start the transaction 
      * Note! message is not yet added to transaction with
      */
@@ -621,32 +657,21 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
      */
     if (sent_ok)
     {
-        /* start our internal transaction */
-        tmq_update_q_stats(msg->hdr.qname, 1, 0);
-        cmd_block.hdr.command_code = TMQ_STORCMD_DEL;
+        /* new tran was started as not autoq */
 
-        /* well this will generate this will add msg to transaction
-         * will be handled by timeout setting...
-         * No more unlock manual.
-         * This will sub-lock
-         */
-        if (EXSUCCEED!=tmq_storage_write_cmd_block((char *)&cmd_block, 
-                "Removing completed message...", NULL, NULL))
+        if (TMQ_AUTOQ_AUTOTX==qconf.autoq)
         {
-            NDRX_LOG(log_error, "Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-            userlog("Failed to issue complete/remove command to xa for msgid_str [%s]", 
-                    msgid_str);
-
-            /* unlock the msg, as adding to log is last step, 
-             * thus not in log and we are in control
-             */
-            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-            EXFAIL_OUT(ret);
+            /* now we can unlock by transaction  */
+            GET_TL;
+            p_tl->cmds->no_unlock=EXFALSE;
         }
-        
-        /* dynamic mode will promote the tmxid */
-        GET_TL;
+        else
+        {
+            WRITE_DEL;
+            GET_TL;
+        }
+	
+        tmq_update_q_stats(msg->hdr.qname, 1, 0);
         
        /* Remove the message */
         if (msg->qctl.flags & TPQREPLYQ)

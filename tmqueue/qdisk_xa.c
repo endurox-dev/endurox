@@ -416,10 +416,11 @@ exprivate char * file_move_final_names(char *from_filename, char *to_filename_on
  * @param fname1 filename 1 to unlink (priority 1 - after this message is unblocked)
  * @param fname2 filename 2 to unlink (priority 2)
  * @param fcmd file cmd, if U, then fname1 & 2 is both unlinks, if R, then f1 src name, f2 dest name
+ * @param tcmd transaction command
  * @return EXSUCCEED/EXFAIL
  */
 exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1, 
-        char *fname2, char fcmd)
+        char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
 {
     
     int ret = EXSUCCEED;
@@ -558,7 +559,7 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
     }
     
     /* If all OK, lets unlock the message. */
-    if (EXSUCCEED!=M_p_tmq_unlock_msg(p_upd))
+    if (!tcmd->no_unlock && EXSUCCEED!=M_p_tmq_unlock_msg(p_upd))
     {
         ret=XAER_RMERR;
         goto out;
@@ -574,10 +575,11 @@ out:
  * @param fname1 filename1 to unlink
  * @param fname2 filename2 to unlink
  * @param fcmd file cmd
+ * @param tcmd transaction command
  * @return EXSUCCEED/EXFAIL
  */
 exprivate int tmq_finalize_files_upd(tmq_msg_upd_t *p_upd, char *fname1, 
-        char *fname2, char fcmd)
+        char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
 {
     union tmq_upd_block block;
     
@@ -585,7 +587,7 @@ exprivate int tmq_finalize_files_upd(tmq_msg_upd_t *p_upd, char *fname1,
     
     memcpy(&block.upd, p_upd, sizeof(*p_upd));
     
-    return tmq_finalize_file(&block, fname1, fname2, fcmd);
+    return tmq_finalize_file(&block, fname1, fname2, fcmd, tcmd);
 }
 
 /**
@@ -594,17 +596,18 @@ exprivate int tmq_finalize_files_upd(tmq_msg_upd_t *p_upd, char *fname1,
  * @param fname1 filename1 to unlink
  * @param fname2 filename2 to unlink
  * @param fcmd file commmand code
+ * @param tcmd tran command
  * @return EXSUCCEED/EXFAIL
  */
 exprivate int tmq_finalize_files_hdr(tmq_cmdheader_t *p_hdr, char *fname1, 
-        char *fname2, char fcmd)
+        char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
 {
     union tmq_upd_block block;
     
     memset(&block, 0, sizeof(block));
     memcpy(&block.hdr, p_hdr, sizeof(*p_hdr));
     
-    return tmq_finalize_file(&block, fname1, fname2, fcmd);
+    return tmq_finalize_file(&block, fname1, fname2, fcmd, tcmd);
 }
 
 /**
@@ -1227,7 +1230,7 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
          * then we cannot complete the rollback
          */
         if (EXSUCCEED!=tmq_finalize_files_hdr(&b.hdr, fname, 
-                NULL, TMQ_FILECMD_UNLINK))
+                NULL, TMQ_FILECMD_UNLINK, el))
         {
             NDRX_LOG(log_error, "Failed to unlink [%s]", fname);
             continue;
@@ -1534,7 +1537,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
                     tmq_msgid_serialize(el->b.hdr.msgid, msgid_str));
             
             if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname,
-                    to_filename, TMQ_FILECMD_RENAME))
+                    to_filename, TMQ_FILECMD_RENAME, el))
             {
                 ret = XAER_RMFAIL;
                 goto out;
@@ -1602,7 +1605,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
             NDRX_LOG(log_info, "Removing update command file: [%s]", fname);
             
             if (EXSUCCEED!=tmq_finalize_files_upd(&el->b.upd, fname, NULL,
-                    TMQ_FILECMD_UNLINK))
+                    TMQ_FILECMD_UNLINK, el))
             {
                 ret = XAER_RMFAIL;
                 goto out;
@@ -1620,7 +1623,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
             /* Remove the message (it must be marked for delete)
              */
             if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname_msg, fname, 
-                    TMQ_FILECMD_UNLINK))
+                    TMQ_FILECMD_UNLINK, el))
             {
                 ret = XAER_RMFAIL;
                 goto out;
@@ -1633,7 +1636,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
             /* Remove the message (it must be marked for delete)
              */
             if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname, NULL, 
-                    TMQ_FILECMD_UNLINK))
+                    TMQ_FILECMD_UNLINK, el))
             {
                 ret = XAER_RMFAIL;
                 goto out;
