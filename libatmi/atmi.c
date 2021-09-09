@@ -1420,7 +1420,7 @@ expublic int tpnotify(CLIENTID *clientid, char *data, long len, long flags)
 
 out:
 
-    NDRX_LOG(log_error, "%s returns %d", __func__, ret);
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
 
     return ret;
 }

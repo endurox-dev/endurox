@@ -74,7 +74,7 @@ exprivate int basic_seqvalid(int maxmsg);
 
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
-extern int basic_crashloop(void);
+extern int basic_crashloop(char *qname);
 
 int main(int argc, char** argv)
 {
@@ -154,7 +154,11 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "crashloop"))
     {
-        return basic_crashloop();
+        return basic_crashloop("ERROR");
+    }
+    else if (0==strcmp(argv[1], "crashloop_t"))
+    {
+        return basic_crashloop("ERROR_T");
     }
     else if (0==strcmp(argv[1], "enqdeq"))
     {
