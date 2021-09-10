@@ -137,7 +137,7 @@ expublic int ndrx_nul_xa_open_entry(struct xa_switch_t *sw, char *xa_info, int r
  */
 expublic int ndrx_nul_xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
-    NDRX_LOG(log_error, "xa_close_entry() called");
+    NDRX_LOG(log_info, "xa_close_entry() called");
     
     G_atmi_tls->tmnull_is_open = EXFALSE;
     return XA_OK;
