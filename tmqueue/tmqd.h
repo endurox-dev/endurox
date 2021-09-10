@@ -40,6 +40,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <sys_unix.h>
 #include <xa_cmn.h>
 #include <atmi.h>
 #include <exhash.h>
