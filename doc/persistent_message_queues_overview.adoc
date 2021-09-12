@@ -504,8 +504,6 @@ This section lists additional related documents.
 
 [bibliography]
 .Internet resources
-- [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
-- [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
 - [[[XADMIN-MANPAGE]]] man xadmin
 - [[[Q.CONF-MANPAGE]]] man q.conf
 - [[[TMQUEUE-MANPAGE]]] man tmqueue
