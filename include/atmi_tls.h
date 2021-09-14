@@ -222,6 +222,8 @@ typedef struct
     long prio_flags;
     int prio_last;
     
+    int tout;                   /**< thread specific timeout setting, all */
+    int tout_next;              /**< thread specific timeout setting, only next */
     
     int tmnull_is_open; /**< Null swith is open ? */
     int tmnull_rmid; /**< Null switch RMID */

@@ -481,6 +481,9 @@ struct tmsvrargs_t
   void (*p_tpsvrthrdone)(void);        /**< thread done func                  */
 };
 
+#define TPBLK_NEXT	0x0002   /**< Set timout value for next call          */
+#define TPBLK_ALL	0x0004   /**< Set timeout value for all calls for thread*/
+#define TPBLK__MASK     0x0006  /**< valid flags                              */
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API int (*G_tpsvrinit__)(int, char **);
 extern NDRX_API void (*G_tpsvrdone__)(void);
@@ -636,6 +639,10 @@ extern NDRX_API int tpdecrypt(char *input, long ilen, char *output, long *olen, 
 
 extern NDRX_API int tpsprio(int prio, long flags);
 extern NDRX_API int tpgprio(void);
+
+extern NDRX_API int tpsblktime(int blktime,long flags);
+extern NDRX_API int tpgblktime(long flags);
+
 
 
 #if defined(__cplusplus)

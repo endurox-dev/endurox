@@ -2062,4 +2062,114 @@ expublic int tpgprio(void)
     return G_atmi_tls->prio_last;
 }
 
+/**
+ * Set block time.
+ * @param blktime time in seconds. Value 0 disables such setting.
+ * @param flags flags TPBLK_NEXT or TPBLK_ALL
+ * @return 0 on succeed, -1 on error
+ */
+expublic int tpsblktime(int blktime,long flags)
+{
+    int ret = EXSUCCEED;
+    
+    ndrx_TPunset_error();
+    
+    /* validate flags */
+    if ( flags & (~ ((long) TPBLK__MASK)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid flags 0x%x",
+                flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (blktime < 0)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid blktime %d", blktime);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPBLK_NEXT & flags)
+    {
+        /* set value for next */
+        
+        if (0==blktime)
+        {
+            G_atmi_tls->tout_next = EXFAIL;
+            NDRX_LOG(log_debug, "Thread next tout disabled");
+        }
+        else
+        {
+            G_atmi_tls->tout_next = blktime;
+            NDRX_LOG(log_debug, "Thread next tout call set to %d", G_atmi_tls->tout_next);
+        }
+    }
+    
+    if (TPBLK_ALL & flags)
+    {
+        if (0==blktime)
+        {
+            G_atmi_tls->tout = EXFAIL;
+            NDRX_LOG(log_debug, "Thread specific tout disabled");
+        }
+        else
+        {
+            G_atmi_tls->tout = blktime;
+            NDRX_LOG(log_debug, "Thread specific tout set to %d", G_atmi_tls->tout_next);
+        }
+    }
+out:
+    return ret;
+}
+
+/**
+ * Get timeout value. If particular setting is not set, 0 return next blocking
+ *  call timeout value, either next,all or system wide.
+ * @param flags
+ * @return 
+ */
+expublic int tpgblktime(long flags)
+{
+    int ret = EXSUCCEED;
+    
+    ndrx_TPunset_error();
+    
+    /* validate flags */
+    if ( flags & (~ ((long) TPBLK__MASK)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid flags 0x%x",
+                flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if ((flags & TPBLK_NEXT) &&  (flags & TPBLK_ALL))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Flags 0x%x shall TPBLK_NEXT or TPBLK_ALL",
+                flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (flags & TPBLK_NEXT)
+    {
+        if (EXFAIL!=G_atmi_tls->tout_next)
+        {
+            ret = G_atmi_tls->tout_next;
+        }
+    }
+    else if (flags & TPBLK_ALL)
+    {
+        if (EXFAIL!=G_atmi_tls->tout_next)
+        {
+            ret = G_atmi_tls->tout;
+        }
+    }
+    else
+    {
+        ret = G_atmi_env.time_out;
+    }
+    
+out:
+    NDRX_LOG(log_debug, "flags 0x%x ret %d", flags, ret);
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
