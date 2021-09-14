@@ -69,12 +69,30 @@
         struct timeval  timeval;\
         use_tout=1;\
         gettimeofday (&timeval, NULL);\
-        abs_timeout.tv_sec = timeval.tv_sec+G_atmi_env.time_out;\
+	if (tout_restart>0)\
+	{\
+            tout_act=tout_restart;\
+	}\
+	else if (G_atmi_tls->tout_next>0)\
+	{\
+            tout_act=G_atmi_tls->tout_next;\
+            tout_restart=G_atmi_tls->tout_next;\
+            G_atmi_tls->tout_next=EXFAIL;\
+	}\
+	else if (G_atmi_tls->tout>0)\
+	{\
+            tout_act=G_atmi_tls->tout;\
+	}\
+	else\
+	{\
+            tout_act=G_atmi_env.time_out;\
+	}\
+        abs_timeout.tv_sec = timeval.tv_sec+tout_act;\
         abs_timeout.tv_nsec = timeval.tv_usec*1000;\
     }
 
 /* Configure function to use TOUT */
-#define SET_TOUT_CONF     if (G_atmi_env.time_out==0 || flags & TPNOTIME)\
+#define SET_TOUT_CONF     if (G_atmi_env.time_out==0 || flags & TPNOTIME || flags & TPNOBLOCK)\
     {\
         use_tout=0;\
     }\
@@ -284,7 +302,7 @@ expublic mqd_t ndrx_mq_open_at_wrp(char *name, int oflag)
 expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    int use_tout;
+    int use_tout, tout_act=0, tout_restart=EXFAIL;
     struct timespec abs_timeout;
     int snd_prio;
     SET_TOUT_CONF;
@@ -348,7 +366,7 @@ expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags
 {
     int ret=EXSUCCEED;
     mqd_t q_descr=(mqd_t)EXFAIL;
-    int use_tout;
+    int use_tout, tout_restart=EXFAIL, tout_act=0;
     struct timespec abs_timeout;
     long add_flags = 0;
     int snd_prio;
@@ -391,10 +409,29 @@ restart_send:
         
         /* Allow to use custom time-out handler. */
         if (tout>0)
-            abs_timeout.tv_sec = timeval.tv_sec+tout;
+	{
+            tout_act=tout;
+	}
+	else if (tout_restart >0)
+	{
+            tout_act=tout_restart;
+	}
+	else if (G_atmi_tls->tout_next >0)
+	{
+            tout_act=G_atmi_tls->tout_next;
+	    tout_restart = G_atmi_tls->tout_next;
+	    G_atmi_tls->tout_next=EXFAIL;
+	}
+	else if (G_atmi_tls->tout >0)
+	{
+            tout_act=G_atmi_tls->tout;
+	}
         else
-            abs_timeout.tv_sec = timeval.tv_sec+G_atmi_env.time_out;
+	{
+            tout_act=G_atmi_env.time_out;
+	}
         
+        abs_timeout.tv_sec = timeval.tv_sec+tout_act;
         abs_timeout.tv_nsec = timeval.tv_usec*1000;
     }
 
@@ -494,7 +531,7 @@ expublic ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str,
         unsigned *prio, long flags)
 {
     ssize_t ret=EXSUCCEED;
-    int use_tout;
+    int use_tout, tout_restart=EXFAIL, tout_act=0;
     struct timespec abs_timeout;   
     
     SET_TOUT_CONF;
@@ -511,7 +548,7 @@ expublic ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str,
 restart:
     SET_TOUT_VALUE;
     NDRX_LOG(6, "use timeout: %d config: %d qdescr: %lx", use_tout,
-		G_atmi_env.time_out, (long int)q_descr);
+		tout_act, (long int)q_descr);
     if ((!use_tout && EXFAIL==(ret=ndrx_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
          (use_tout && EXFAIL==(ret=ndrx_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
     {

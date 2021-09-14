@@ -351,6 +351,9 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->tmnull_is_open=EXFALSE;
     tls->tmnull_rmid=EXFAIL;
     
+    tls->tout = EXFAIL;
+    tls->tout_next = EXFALSE;
+    
     tls->qdisk_is_open=EXFALSE;
     tls->qdisk_rmid=EXFAIL;
     tls->qdisk_tls=NULL;
