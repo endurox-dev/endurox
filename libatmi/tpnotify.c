@@ -407,6 +407,7 @@ expublic int ndrx_tpchkunsol(long flags)
     int num_applied = 0;
     unsigned prio;
     tp_notif_call_t *notif;
+    int tout_next_org = G_atmi_tls->tout_next;
     
     /* Allocate the buffer... to put data into */
 
@@ -418,6 +419,9 @@ expublic int ndrx_tpchkunsol(long flags)
             NDRX_SYSBUF_MALLOC_OUT(pbuf, pbuf_len, ret);
         }
 
+        /* keep the original settings at re-attempts */
+        G_atmi_tls->tout_next=tout_next_org;
+        
         rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                 G_atmi_tls->G_atmi_conf.reply_q_str,
                 &(G_atmi_tls->G_atmi_conf.reply_q_attr),
@@ -459,8 +463,8 @@ expublic int ndrx_tpchkunsol(long flags)
             
         }
         
-        /* Note loop will be terminated if not message in Q 
-         * if blocking -> terminate after 1x loop
+        /* If not blocking, then on first applied msg we stop.
+         * In the middle we can get memq messages for which we-reloop to next.
          */
         if (num_applied && ! (flags & TPEBLOCK) )
         {
@@ -573,7 +577,7 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
     long local_nodeid = tpgetnodeid();
     
     char connected_nodes[CONF_NDRX_NODEID_COUNT+1] = {EXEOS};
-    
+    int tout_next_org = G_atmi_tls->tout_next;
     
     /* if the username is  */
     if (flags & TPREGEXMATCH)
@@ -738,6 +742,8 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_info, "Build client id string: [%s]",
                             cltid.clientdata);
 
+                    /* keep the api tout values */
+                    G_atmi_tls->tout_next = tout_next_org;
                     if (EXSUCCEED!=ndrx_tpnotify(&cltid, &myid, elt->qname,
                         data, len, flags,  0, nodeid, usrname, cltname, 0))
                     {
@@ -775,6 +781,7 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_debug, "Node id %d accepted for broadcast", 
                             (int)connected_nodes[i]);
 
+                    G_atmi_tls->tout_next = tout_next_org;
                     if (EXSUCCEED!=ndrx_tpnotify(NULL, NULL, NULL,
                             data, len, flags, 
                             (long)connected_nodes[i], nodeid, usrname, cltname, 

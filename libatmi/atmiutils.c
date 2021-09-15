@@ -63,43 +63,61 @@
 /*---------------------------Macros-------------------------------------*/
 #define SLEEP_ON_FULL_Q             170000   /* Sleep 150 ms every batch..... */
 
+
+/* set the timeout source */
+#define TOUT_SOURCE         do\
+        {\
+            if (tout>0)\
+            {\
+                tout_act=tout;\
+            }\
+            else if (tout_restart >0)\
+            {\
+                tout_act=tout_restart;\
+            }\
+            else if (G_atmi_tls && G_atmi_tls->tout_next > 0)\
+            {\
+                tout_act=G_atmi_tls->tout_next;\
+                tout_restart = G_atmi_tls->tout_next;\
+                G_atmi_tls->tout_next=EXFAIL;\
+            }\
+            else if (G_atmi_tls && G_atmi_tls->tout > 0)\
+            {\
+                tout_act=G_atmi_tls->tout;\
+            }\
+            else\
+            {\
+                tout_act=G_atmi_env.time_out;\
+            }\
+        } while (0)
+
 /* Calculate timeout time */
-#define SET_TOUT_VALUE     if (use_tout)\
-    {\
-        struct timeval  timeval;\
-        use_tout=1;\
-        gettimeofday (&timeval, NULL);\
-	if (tout_restart>0)\
-	{\
-            tout_act=tout_restart;\
-	}\
-	else if (G_atmi_tls->tout_next>0)\
-	{\
-            tout_act=G_atmi_tls->tout_next;\
-            tout_restart=G_atmi_tls->tout_next;\
-            G_atmi_tls->tout_next=EXFAIL;\
-	}\
-	else if (G_atmi_tls->tout>0)\
-	{\
-            tout_act=G_atmi_tls->tout;\
-	}\
-	else\
-	{\
-            tout_act=G_atmi_env.time_out;\
-	}\
-        abs_timeout.tv_sec = timeval.tv_sec+tout_act;\
-        abs_timeout.tv_nsec = timeval.tv_usec*1000;\
-    }
+#define SET_TOUT_VALUE     do\
+        {\
+            if (use_tout)\
+            {\
+                struct timeval  timeval;\
+                use_tout=1;\
+                gettimeofday (&timeval, NULL);\
+                TOUT_SOURCE;\
+                abs_timeout.tv_sec = timeval.tv_sec+tout_act;\
+                abs_timeout.tv_nsec = timeval.tv_usec*1000;\
+            }\
+        } while (0)
 
 /* Configure function to use TOUT */
-#define SET_TOUT_CONF     if (G_atmi_env.time_out==0 || flags & TPNOTIME || flags & TPNOBLOCK)\
-    {\
-        use_tout=0;\
-    }\
-    else \
-    {\
-        use_tout=1;\
-    }
+#define SET_TOUT_CONF     do\
+        {\
+            if (G_atmi_env.time_out==0 || flags & TPNOTIME || flags & TPNOBLOCK)\
+            {\
+                use_tout=0;\
+            }\
+            else \
+            {\
+                use_tout=1;\
+            }\
+        } while (0)
+
 /* This prints info about q descriptor X */
 #define PRINT_Q_INFO(X)             { struct mq_attr __attr;\
             memset((char *)&__attr, 0, sizeof(__attr));\
@@ -302,7 +320,7 @@ expublic mqd_t ndrx_mq_open_at_wrp(char *name, int oflag)
 expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    int use_tout, tout_act=0, tout_restart=EXFAIL;
+    int use_tout, tout_act=0, tout_restart=EXFAIL, tout=0;
     struct timespec abs_timeout;
     int snd_prio;
     SET_TOUT_CONF;
@@ -401,39 +419,7 @@ restart_open:
     /* now try to send */
 restart_send:
 
-    if (use_tout)
-    {
-        struct timeval  timeval;
-        use_tout=1;
-        gettimeofday (&timeval, NULL);
-        
-        /* Allow to use custom time-out handler. */
-        if (tout>0)
-	{
-            tout_act=tout;
-	}
-	else if (tout_restart >0)
-	{
-            tout_act=tout_restart;
-	}
-	else if (G_atmi_tls->tout_next >0)
-	{
-            tout_act=G_atmi_tls->tout_next;
-	    tout_restart = G_atmi_tls->tout_next;
-	    G_atmi_tls->tout_next=EXFAIL;
-	}
-	else if (G_atmi_tls->tout >0)
-	{
-            tout_act=G_atmi_tls->tout;
-	}
-        else
-	{
-            tout_act=G_atmi_env.time_out;
-	}
-        
-        abs_timeout.tv_sec = timeval.tv_sec+tout_act;
-        abs_timeout.tv_nsec = timeval.tv_usec*1000;
-    }
+    SET_TOUT_VALUE;
 
     if (0==msg_prio)
     {
@@ -531,7 +517,7 @@ expublic ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str,
         unsigned *prio, long flags)
 {
     ssize_t ret=EXSUCCEED;
-    int use_tout, tout_restart=EXFAIL, tout_act=0;
+    int use_tout, tout_restart=EXFAIL, tout_act=0, tout=0;
     struct timespec abs_timeout;   
     
     SET_TOUT_CONF;
