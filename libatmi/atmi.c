@@ -2157,7 +2157,7 @@ expublic int tpgblktime(long flags)
     }
     else if (flags & TPBLK_ALL)
     {
-        if (EXFAIL!=G_atmi_tls->tout_next)
+        if (EXFAIL!=G_atmi_tls->tout)
         {
             ret = G_atmi_tls->tout;
         }
