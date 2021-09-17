@@ -92,6 +92,25 @@ out:
                 0L);
 }
 
+/**
+ * This will hang all the processing
+ */
+void SLEEPSV (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    
+    sleep(9999);
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+
 /*
  * Do initialization
  */
@@ -102,6 +121,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
     {
         NDRX_LOG(log_error, "Failed to initialize TESTSV!");
+    }
+    
+    if (EXSUCCEED!=tpadvertise("SLEEPSV", SLEEPSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize SLEEPSV!");
     }
     
     return EXSUCCEED;

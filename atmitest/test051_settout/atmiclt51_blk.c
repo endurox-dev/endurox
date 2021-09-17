@@ -57,68 +57,83 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Do the test call to the server
+ * Validate timeout response for dead server
+ * @param tout expected value
+ * @return EXSUCCEED/EXFAIL
  */
-int main(int argc, char** argv)
+int chk_tpcall(int tout)
+{
+    /* validate the tout response */
+    ndrx_stopwatch_t w;
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    long rsplen, delta;
+    int ret = EXSUCCEED;
+    
+    ndrx_stopwatch_reset(&w);
+    
+    if (EXSUCCEED == tpcall("SLEEPSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTERROR!  Call succeed but must fail!");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    /* the time shall be more or less as in boundries */
+    delta = ndrx_stopwatch_get_delta_sec(&w);
+    
+    if (delta <tout-2 || delta > tout+2)
+    {
+        NDRX_LOG(log_error, "TESTERROR! Expected +-2 of %d got %ld",
+                tout, delta);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+                
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+    return ret;
+}
+
+/**
+ * Fill up the queue.
+ * Active the block service
+ * @param msgs number of messages to load
+ * @return EXSUCCEED/EXFAIL
+ */
+int full_load(int msgs)
+{
+    int i;
+    int ret = EXSUCCEED;
+    
+    for (i=0; i<msgs; i++)
+    {
+        if (EXSUCCEED!=tpacall("SLEEPSV", NULL, 0, TPNOREPLY))
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+    return ret;    
+}
+
+/**
+ * Basic call tests
+ * @return 
+ */
+int call_tests(void)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     int cd;
     int ret=EXSUCCEED;
     int err;
-    int tret;
-    TPCONTEXT_T context, ctxt2;
-
-    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpinit(NULL), "failed to init ctxt 1");
-    NDRX_ASSERT_TP_OUT(EXSUCCEED==tptoutset(11), "Failed to set global timeout");
     
-    /* read default values*/
-    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
-    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
-    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
-
-    /* set next call thread specific tout ... */
-    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(3,TPBLK_ALL), "Failed to set TPBLK_ALL");
-    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(4,TPBLK_NEXT), "Failed to set TPBLK_NEXT)");
-
-    NDRX_ASSERT_TP_OUT(3==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
-    NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
-    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
-
-    /* save ctx 1 */
-    NDRX_ASSERT_TP_OUT(EXFAIL!=tpgetctxt(&context, 0), "Failed to get context");
-
-    /* check new context 2 */
-    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpinit(NULL), "failed to init ctxt 2");
-    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d / ctxt2", tret);
-    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d / ctxt2", tret);
-    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d / ctxt2", tret);
-    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpterm(), "failed to term ctxt 2");
-
-    /* free ctxt 2*/
-    NDRX_ASSERT_TP_OUT(EXFAIL!=tpgetctxt(&ctxt2, 0), "Failed to get context 2");
-    tpfreectxt(ctxt2);
-
-    /* restore org context */
-    NDRX_ASSERT_TP_OUT(EXFAIL!=tpsetctxt(context, 0), "Failed to set context");
-    NDRX_ASSERT_TP_OUT(3==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
-    NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
-    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
-
-
-    /* TODO: Restore context, we shall receive back the custom values */
-
-    /* perform tpcall tests only.. */
-
-    /* perform tpacall tests (advanced / queue full...), send block? for epoll only
-     * as on aix queue sizes might be extra large.
-     * Also probably testing shall be peformed, just to measuring some TPETIME response boundries.?
-     */
-
-#if 0
-    NDRX_LOG(log_debug, "running of the case");
-    
-    if (EXSUCCEED!=tptoutset(1))
+    if (EXSUCCEED!=tpsblktime(1, TPBLK_NEXT))
     {
         NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 1: %s", 
                 tpstrerror(tperrno));
@@ -149,12 +164,10 @@ int main(int argc, char** argv)
         goto out;
     }
 
-    /* TODO: Shouldn't the cd canceled? */
-    
     /* invoke now with full wait first 2 sec + 3 sec, we get 6-7 sec 
      * thus receive normal response...
      */
-    if (EXSUCCEED!=tptoutset(6))
+    if (EXSUCCEED!=tpsblktime(6, TPBLK_NEXT))
     {
         NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 6: %s", 
                 tpstrerror(tperrno));
@@ -175,7 +188,7 @@ int main(int argc, char** argv)
      * this applies on waiting on reply queue and not actual msg age.
      * call age is checked by dest server.
      */ 
-    if (EXSUCCEED!=tptoutset(2))
+    if (EXSUCCEED!=tpsblktime(2, TPBLK_ALL))
     {
         NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 2: %s", 
                 tpstrerror(tperrno));
@@ -213,7 +226,7 @@ int main(int argc, char** argv)
     }
 
     /* wait 5 sec for each... */
-    if (EXSUCCEED!=tptoutset(5))
+    if (EXSUCCEED!=tpsblktime(5, TPBLK_ALL))
     {
         NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 5: %s", 
                 tpstrerror(tperrno));
@@ -273,8 +286,126 @@ int main(int argc, char** argv)
         ret=EXFAIL;
         goto out;
     }
+  
+out:
+    
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    return ret;
+    
+}
+/**
+ * Do the test call to the server
+ */
+int main(int argc, char** argv)
+{
+    int ret=EXSUCCEED;
+    int tret;
+    TPCONTEXT_T context, ctxt2;
+
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpinit(NULL), "failed to init ctxt 1");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tptoutset(11), "Failed to set global timeout");
+    
+    /* read default values*/
+    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
+    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
+    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
+
+    /* set + reset */
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(3,TPBLK_ALL), "Failed to set TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(4,TPBLK_NEXT), "Failed to set TPBLK_NEXT)");
+
+    NDRX_ASSERT_TP_OUT(3==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
+    NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
+   
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(0,TPBLK_ALL), "Failed to set TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(0,TPBLK_NEXT), "Failed to set TPBLK_NEXT)");
+
+    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
+    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
+ 
+    
+    /* set next call thread specific tout ... */
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(3,TPBLK_ALL), "Failed to set TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(4,TPBLK_NEXT), "Failed to set TPBLK_NEXT)");
+
+    NDRX_ASSERT_TP_OUT(3==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
+    NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
+    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
+
+    /* save ctx 1 */
+    NDRX_ASSERT_TP_OUT(EXFAIL!=tpgetctxt(&context, 0), "Failed to get context");
+
+    /* check new context 2 */
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpinit(NULL), "failed to init ctxt 2");
+    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d / ctxt2", tret);
+    NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d / ctxt2", tret);
+    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d / ctxt2", tret);
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpterm(), "failed to term ctxt 2");
+
+    /* free ctxt 2*/
+    NDRX_ASSERT_TP_OUT(EXFAIL!=tpgetctxt(&ctxt2, 0), "Failed to get context 2");
+    tpfreectxt(ctxt2);
+
+    /* restore org context */
+    NDRX_ASSERT_TP_OUT(EXFAIL!=tpsetctxt(context, 0), "Failed to set context");
+    NDRX_ASSERT_TP_OUT(3==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
+    NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
+    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
+
+    /* validate errors: */
+    NDRX_ASSERT_TP_OUT(EXFAIL==tpsblktime(-1,TPBLK_ALL) && TPEINVAL==tperrno, "Expected TPEINVAL");
+    NDRX_ASSERT_TP_OUT(EXFAIL==tpsblktime(-1,9999) && TPEINVAL==tperrno, "Expected TPEINVAL");
+    NDRX_ASSERT_TP_OUT(EXFAIL==tpgblktime(9999) && TPEINVAL==tperrno, "Expected TPEINVAL");
+
+    
+
+    NDRX_LOG(log_debug, "running of the case");
+    
+    
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(99,TPBLK_ALL), "Failed to set TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(99,TPBLK_NEXT), "Failed to set TPBLK_NEXT)");
+    
+            
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==call_tests(), "Call tests failed");
+    
+
+    /* block the service */
+    
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==full_load(1), "Failed to active blocked service");
+    
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(5,TPBLK_ALL), "Failed to set TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(2,TPBLK_NEXT), "Failed to set TPBLK_NEXT");
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==chk_tpcall(2), "tout failed");
+    /* next is reset */
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==chk_tpcall(5), "tout failed");
+   
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(0,TPBLK_ALL), "Failed to reset TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tptoutset(9), "Failed to default tout");
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==chk_tpcall(9), "tout failed (default)");
+   
+    
+#ifdef EX_USE_EPOLL
+    
+    /* block the dest service / we get full Q */
+    while (EXSUCCEED==full_load(1)){};
+    
+    /* now lets test caller send timtouts */
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(5,TPBLK_ALL), "Failed to set TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(2,TPBLK_NEXT), "Failed to set TPBLK_NEXT");
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==chk_tpcall(2), "tout failed");
+    /* next is reset */
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==chk_tpcall(5), "tout failed");
+   
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(0,TPBLK_ALL), "Failed to reset TPBLK_ALL");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED==tptoutset(9), "Failed to default tout");
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==chk_tpcall(9), "tout failed (default)");
     
 #endif
+    
 out:
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);

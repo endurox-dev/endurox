@@ -131,6 +131,9 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "Reset sv"
+xadmin killall atmi.sv51
+sleep 5
 
 echo "Running off client (tptoutset/get)"
 set_dom1;
