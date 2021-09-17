@@ -136,19 +136,19 @@ exprivate int call_check_tout(int cd)
     
     if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[cd].status &&
             !(G_atmi_tls->G_call_state[cd].flags & TPNOTIME) &&
-              (t_diff = ((t = time(NULL)) - G_atmi_tls->G_call_state[cd].timestamp)) > G_atmi_env.time_out
+              (t_diff = ((t = time(NULL)) - G_atmi_tls->G_call_state[cd].timestamp)) > G_atmi_tls->G_call_state[cd].tout_eff
             )
     {
         /* added some more debug info, because we have strange timeouts... */
         NDRX_LOG(log_warn, "cd %d (callseq %u) timeout condition - generating error "
                 "(locked at: %ld current tstamp: %ld, diff: %d, timeout_value: %d)", 
                 cd, G_atmi_tls->G_call_state[cd].callseq, 
-                G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
+                G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_tls->G_call_state[cd].tout_eff);
         
         ndrx_TPset_error_fmt(TPETIME, "cd %d (callseq %u) timeout condition - generating error "
                 "(locked at: %ld current tstamp: %ld, diff: %d, timeout_value: %d)", 
                 cd, G_atmi_tls->G_call_state[cd].callseq, 
-                G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_env.time_out);
+                G_atmi_tls->G_call_state[cd].timestamp, t, t_diff, G_atmi_tls->G_call_state[cd].tout_eff);
         
         /* mark cd as free (will mark as cancelled) */
         unlock_call_descriptor(cd, CALL_CANCELED);
@@ -172,18 +172,19 @@ exprivate void call_dump_descriptors(void)
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "***List of call descriptors waiting for answer***");
-    NDRX_LOG(log_debug, "timeout(system wide): %d curr_tstamp: %ld", 
+    NDRX_LOG(log_debug, "timeout(system wide): %d curr_tstamp (sys-wide): %ld", 
                             G_atmi_env.time_out, t);
-    NDRX_LOG(log_debug, "cd\tcallseq\tlocked_at\tdiff");
+    NDRX_LOG(log_debug, "cd\tcallseq\tlocked_at\tdiff\tout_eff");
         
     for (i=1; i<MAX_ASYNC_CALLS; i++)
     {
         if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[i].status)
         {
             t_diff = t - G_atmi_tls->G_call_state[i].timestamp;
-            NDRX_LOG(log_debug, "%d\t%u\t%ld\t%d", 
+            NDRX_LOG(log_debug, "%d\t%u\t%ld\t%d\t%d", 
                     i, G_atmi_tls->G_call_state[i].callseq, 
-                    G_atmi_tls->G_call_state[i].timestamp, t_diff);
+                    G_atmi_tls->G_call_state[i].timestamp, t_diff, 
+                    G_atmi_tls->G_call_state[i].tout_eff);
             cnt++;
         }
     }
@@ -275,11 +276,12 @@ expublic unsigned short ndrx_get_next_callseq_shared(void)
 }
 
 /**
- * Returns free call descriptro
+ * Returns free call descriptor
+ * @param tout_eff effective timeout
  * @return >0 (ok), -1 = FAIL
  */
 exprivate int get_call_descriptor_and_lock(unsigned short *p_callseq,
-        time_t timestamp, long flags)
+        time_t timestamp, long flags, int tout_eff)
 {
     int start_cd = G_atmi_tls->tpcall_get_cd; /* mark where we began */
     int ret = EXFAIL;
@@ -321,12 +323,13 @@ exprivate int get_call_descriptor_and_lock(unsigned short *p_callseq,
         NDRX_LOG(log_debug, "Got free call descriptor %d, callseq: %u",
                                             ret, callseq);
 
-        NDRX_LOG(log_debug, "cd %d locked to %d timestamp (id: %d%d) callseq: %u",
-                                        ret, timestamp, ret,timestamp, callseq);
+        NDRX_LOG(log_debug, "cd %d locked to %d timestamp (id: %d%d) callseq: %u tout_eff: %d",
+                                        ret, timestamp, ret,timestamp, callseq, tout_eff);
         G_atmi_tls->G_call_state[ret].status = CALL_WAITING_FOR_ANS;
         G_atmi_tls->G_call_state[ret].timestamp = timestamp;
         G_atmi_tls->G_call_state[ret].callseq = callseq;
         G_atmi_tls->G_call_state[ret].flags = flags;
+        G_atmi_tls->G_call_state[ret].tout_eff = tout_eff;
 
         /* MUTEX_UNLOCK_V(M_cd_lock); */
             
@@ -428,9 +431,12 @@ expublic int ndrx_tpacall (char *svc, char *data,
     int noenterr = EXFALSE;
     char svcddr[XATMI_SERVICE_NAME_LENGTH+1]; /**< routed service name */
     int prio = NDRX_MSGPRIO_DEFAULT;
+    int tout_eff;
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s enter", __func__);
+    
+    tout_eff = ndrx_tptoutget_eff();
     
     /* if we have SHM then check the DDR options we have 
      * TODO: Think maybe duplicate shm attached check can be
@@ -595,7 +601,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     else
         call->buffer_type_id = buffer_info->type_id;
     
-    call->clttout = G_atmi_env.time_out;
+    call->clttout = tout_eff;
 
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
     
@@ -632,7 +638,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     {
         /* get the call descriptor */
         if (EXFAIL==(tpcall_cd = get_call_descriptor_and_lock(&call->callseq, 
-                timestamp, flags)))
+                timestamp, flags, tout_eff)))
         {
             NDRX_LOG(log_error, "Do not have resources for "
                                 "track this call!");

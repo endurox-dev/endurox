@@ -178,6 +178,19 @@ expublic int ndrx_tptoutget(void)
 }
 
 /**
+ * Get current timeout setting, based on TLS data
+ * @return actual timeout setting currently effective
+ */
+expublic int ndrx_tptoutget_eff(void)
+{
+    int use_tout=1, tout_act=0, tout_restart=EXFAIL, tout=0;
+    
+    TOUT_SOURCE;
+    
+    return tout_act;
+}
+ 
+/**
  * When tons of messages are sent to xadmin, then we might gets some sleep,
  * so that console is ready to display complete stuff..!
  * 

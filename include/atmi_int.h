@@ -393,7 +393,8 @@ struct call_descriptor_state
     short status;
     time_t timestamp;
     unsigned callseq;
-    long flags; /* call flags associated.. */
+    long flags;         /**< call flags associated..                    */
+    int tout_eff; /**< effective timeout, used for call           */
 };
 typedef struct call_descriptor_state call_descriptor_state_t;
 
@@ -834,6 +835,7 @@ extern NDRX_API mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode, struct
 extern NDRX_API mqd_t ndrx_mq_open_at_wrp(char *name, int oflag);
 extern NDRX_API void ndrx_tptoutset(int tout);
 extern NDRX_API int ndrx_tptoutget();
+extern NDRX_API int ndrx_tptoutget_eff(void);
 extern NDRX_API void ndrx_mq_fix_mass_send(int *cntr);
 extern NDRX_API int ndrx_q_setblock(mqd_t q_descr, int blocked);
 
