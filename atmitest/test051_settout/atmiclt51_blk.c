@@ -47,6 +47,7 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include "test51.h"
+#include "atmi_int.h"
 #include <exassert.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -246,15 +247,6 @@ int call_tests(void)
         goto out;
     }
     
-    /*
-    if (EXSUCCEED!=tptoutset(1))
-    {
-        NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 1 (for tpgetrply): %s", 
-                tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
-    }
-    */
-    
     /* these shall be zapped by dest server due to expired */
     /* the other shall fail as total 4+4 > 4 tout setting */
     if (EXSUCCEED==tpgetrply(&cd, (char **)&p_ub, &rsplen, TPGETANY))
@@ -312,7 +304,7 @@ int main(int argc, char** argv)
     /* read default values*/
     NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
     NDRX_ASSERT_TP_OUT(0==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
-    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
+    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d %d", tret, G_atmi_env.time_out);
 
     /* set + reset */
     NDRX_ASSERT_TP_OUT(EXSUCCEED==tpsblktime(3,TPBLK_ALL), "Failed to set TPBLK_ALL");
@@ -334,7 +326,7 @@ int main(int argc, char** argv)
 
     NDRX_ASSERT_TP_OUT(3==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
     NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
-    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
+    NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
 
     /* save ctx 1 */
     NDRX_ASSERT_TP_OUT(EXFAIL!=tpgetctxt(&context, 0), "Failed to get context");
@@ -354,7 +346,7 @@ int main(int argc, char** argv)
     NDRX_ASSERT_TP_OUT(EXFAIL!=tpsetctxt(context, 0), "Failed to set context");
     NDRX_ASSERT_TP_OUT(3==(tret=tpgblktime(TPBLK_ALL)), "Failed to get TPBLK_ALL %d", tret);
     NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(TPBLK_NEXT)), "Failed to get TPBLK_NEXT %d", tret);
-    NDRX_ASSERT_TP_OUT(11==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
+    NDRX_ASSERT_TP_OUT(4==(tret=tpgblktime(0)), "Failed to get 0 blktime %d", tret);
 
     /* validate errors: */
     NDRX_ASSERT_TP_OUT(EXFAIL==tpsblktime(-1,TPBLK_ALL) && TPEINVAL==tperrno, "Expected TPEINVAL");

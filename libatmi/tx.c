@@ -216,7 +216,7 @@ expublic int tx_commit(void)
  * @param txinfo
  * @return TX_OK/
  */
-expublic int tx_info(TXINFO * txinfo)
+expublic int ndrx_tx_info(TXINFO * txinfo)
 {
     int ret = TX_OK; /* not in tran mode */
     UBFH *p_ub = NULL;

@@ -28,7 +28,8 @@ already done automatically - at stage tpsrvinit().
 RETURN VALUE
 ------------
 Returns number of currently configure seconds for ATMI library to use for timed
-send and receive operations (like tpcall(), tpgetrply(), etc.).
+send and receive operations (like tpcall(), tpgetrply(), etc.). In case if
+tpinit() was not called, value *-1* is returned.
 
 EXAMPLE
 -------
@@ -40,7 +41,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tptoutset(3)* *tpinit(3)* *ex_env(5)*
+*tptoutset(3)* *tpsblktime(3)* *tpgblktime(3)* *tpinit(3)* *ex_env(5)*
 
 COPYING
 -------

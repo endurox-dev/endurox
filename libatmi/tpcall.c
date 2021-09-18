@@ -829,12 +829,9 @@ expublic int ndrx_tpgetrply (int *cd,
     typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
     int is_abort_only = EXFALSE; /* Should we abort global tx (if open) */
-    int tout_next_org=EXFAIL;   /**< use first setting when entered here */
     ATMI_TLS_ENTRY;
     
     /* Allocate the buffer, dynamically... */
-    tout_next_org = G_atmi_tls->tout_next;
-
     NDRX_LOG(log_debug, "%s enter, flags %ld cd_exp %d", __func__, 
             flags, cd_exp);
         
@@ -878,7 +875,6 @@ expublic int ndrx_tpgetrply (int *cd,
 			G_atmi_tls->G_atmi_conf.reply_q);
             
             /* receive the reply back, use original next tout setting (if any) */
-            G_atmi_tls->tout_next = tout_next_org;
             rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                     G_atmi_tls->G_atmi_conf.reply_q_str,
                     &(G_atmi_tls->G_atmi_conf.reply_q_attr),
@@ -1138,7 +1134,6 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     int cd_rply = 0;
     ndrx_tpcall_cache_ctl_t cachectl;
     int cache_used = EXFALSE;
-    int tout_next_org;
     TPTRANID tranid, *p_tranid;
     
     NDRX_LOG(log_debug, "%s: enter flags=%ld tx=%p xa_flags_sys=%ld", __func__, 
@@ -1181,8 +1176,6 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     }
     
     /* use same setting for reply processing */
-    tout_next_org = G_atmi_tls->tout_next;
-    
     if (EXFAIL==(cd_req=ndrx_tpacall (svc, idata, ilen, flags, extradata, 
             dest_node, ex_flags, p_tranid, user1, user2, user3, user4,
             (cache_used?&cachectl:NULL) )))
@@ -1218,7 +1211,6 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     /* event posting might be done with out reply... */
     if (!(flags & TPNOREPLY))
     {
-        G_atmi_tls->tout_next=tout_next_org;
         if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
                 p_tranid)))
         {

@@ -36,6 +36,8 @@ It must be greater than *0*.
 The function configures the value on process bases, and is not thread safe
 (shall be called only by one concurrent thread only).
 
+For thread specific timeout setting use *tpsblktime(3)* *tpgblktime(3)*.
+
 RETURN VALUE
 ------------
 On success, *tptoutset()* return zero; on error, -1 is returned, with 
@@ -58,7 +60,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tptoutget(3)* *tpinit(3)* *ex_env(5)*
+*tptoutget(3)* *tpsblktime(3)* *tpgblktime(3)* *tpinit(3)* *ex_env(5)*
 
 COPYING
 -------
