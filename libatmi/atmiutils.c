@@ -471,7 +471,7 @@ restart_send:
     NDRX_PRIO_DOWNSCALE(snd_prio);
             
     NDRX_LOG(log_debug, "len: %d use timeout: %d config: %d prio: %d snd_prio: %d", 
-                len, use_tout, G_atmi_env.time_out, msg_prio, snd_prio);
+                len, use_tout, tout_act, msg_prio, snd_prio);
     if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, snd_prio)) ||
          (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, snd_prio, &abs_timeout)))
     {

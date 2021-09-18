@@ -2121,6 +2121,7 @@ expublic int tpsblktime(int tout,long flags)
     /* validate flags */
     if ( flags & (~ ((long) TPBLK__MASK)))
     {
+        NDRX_LOG(log_error, "Invalid flags 0x%x", flags);
         ndrx_TPset_error_fmt(TPEINVAL, "Invalid flags 0x%x",
                 flags);
         EXFAIL_OUT(ret);
@@ -2128,6 +2129,7 @@ expublic int tpsblktime(int tout,long flags)
     
     if (tout < 0)
     {
+        NDRX_LOG(log_error, "Invalid blktime %d", tout);
         ndrx_TPset_error_fmt(TPEINVAL, "Invalid blktime %d", tout);
         EXFAIL_OUT(ret);
     }
@@ -2158,7 +2160,7 @@ expublic int tpsblktime(int tout,long flags)
         else
         {
             G_atmi_tls->tout = tout;
-            NDRX_LOG(log_debug, "Thread specific tout set to %d", G_atmi_tls->tout_next);
+            NDRX_LOG(log_debug, "Thread specific tout set to %d", G_atmi_tls->tout);
         }
     }
 out:
