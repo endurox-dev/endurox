@@ -173,12 +173,12 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-# validate that there is more messages than say 70
+# validate that there is more messages than say 65
 cat wakeup.out
 
 NR_CALLS=`tail -1 wakeup.out  | cut -d ' '  -f3`
 
-if [ "$NR_CALLS" -lt "80" ]; then
+if [ "$NR_CALLS" -lt "65" ]; then
     echo "Expected more calls than 80 got $NR_CALLS"
     go_out -1
 fi
