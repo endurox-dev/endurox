@@ -50,7 +50,7 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-
+export NDRX_SILENT=Y
 export NDRX_TOUT=10
 
 #
@@ -121,12 +121,23 @@ RET=0
 
 xadmin psc
 xadmin ppm
-echo "Running off client"
 
+echo "Running off client (tpgblktime/tpsblktime)"
+set_dom1;
+(./atmiclt51_blk 2>&1) > ./atmiclt_blk-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Reset sv"
+xadmin killall atmi.sv51
+sleep 5
+
+echo "Running off client (tptoutset/get)"
 set_dom1;
 (./atmiclt51 2>&1) > ./atmiclt-dom1.log
-#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt51 2>&1) > ./atmiclt-dom1.log
-
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then

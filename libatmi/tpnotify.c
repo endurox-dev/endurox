@@ -409,7 +409,6 @@ expublic int ndrx_tpchkunsol(long flags)
     tp_notif_call_t *notif;
     
     /* Allocate the buffer... to put data into */
-
     NDRX_LOG(log_debug, "Into %s", __func__);
     do
     {
@@ -418,6 +417,8 @@ expublic int ndrx_tpchkunsol(long flags)
             NDRX_SYSBUF_MALLOC_OUT(pbuf, pbuf_len, ret);
         }
 
+        /* keep the original settings at re-attempts */
+        
         rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                 G_atmi_tls->G_atmi_conf.reply_q_str,
                 &(G_atmi_tls->G_atmi_conf.reply_q_attr),
@@ -459,8 +460,8 @@ expublic int ndrx_tpchkunsol(long flags)
             
         }
         
-        /* Note loop will be terminated if not message in Q 
-         * if blocking -> terminate after 1x loop
+        /* If not blocking, then on first applied msg we stop.
+         * In the middle we can get memq messages for which we-reloop to next.
          */
         if (num_applied && ! (flags & TPEBLOCK) )
         {
@@ -573,7 +574,6 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
     long local_nodeid = tpgetnodeid();
     
     char connected_nodes[CONF_NDRX_NODEID_COUNT+1] = {EXEOS};
-    
     
     /* if the username is  */
     if (flags & TPREGEXMATCH)
@@ -738,6 +738,7 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
                     NDRX_LOG(log_info, "Build client id string: [%s]",
                             cltid.clientdata);
 
+                    /* keep the api tout values */
                     if (EXSUCCEED!=ndrx_tpnotify(&cltid, &myid, elt->qname,
                         data, len, flags,  0, nodeid, usrname, cltname, 0))
                     {

@@ -57,6 +57,12 @@
         entry_status=tpinit(NULL);\
     }\
 }\
+
+/** Apply effective next timeout, if any set. TLS is must have  */
+#define TIMEOUT_ENTRY   do { G_atmi_tls->tout_next_eff=G_atmi_tls->tout_next;} while (0)
+
+/** Reset the next timeout. TLS is must have */
+#define TIMEOUT_EXIT    do { G_atmi_tls->tout_next=0; G_atmi_tls->tout_next_eff=0;} while (0)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -77,7 +83,8 @@ expublic int tpacall (char *svc, char *data, long len, long flags)
     int entry_status=EXSUCCEED;
     
     API_ENTRY;
-
+    TIMEOUT_ENTRY;
+    
     if (EXSUCCEED!=entry_status)
     {
         ret=EXFAIL;
@@ -92,6 +99,8 @@ expublic int tpacall (char *svc, char *data, long len, long flags)
             NULL);
     
 out:
+            
+    TIMEOUT_EXIT;
     return ret;
 }
 
@@ -116,6 +125,7 @@ expublic int tpacallex (char *svc, char *data,
     int entry_status=EXSUCCEED;
     
     API_ENTRY;
+    TIMEOUT_ENTRY;
 
     if (EXSUCCEED!=entry_status)
     {
@@ -131,6 +141,8 @@ expublic int tpacallex (char *svc, char *data,
             NULL, user1, user2, user3, user4, NULL);
     
 out:
+            
+    TIMEOUT_EXIT;
     return ret;
 }
 
@@ -204,6 +216,8 @@ expublic int tpcall (char *svc, char *idata, long ilen,
     int entry_status=EXSUCCEED;
     API_ENTRY;
 
+    TIMEOUT_ENTRY;
+    
     if (EXSUCCEED!=entry_status)
     {
         ret=EXFAIL;
@@ -236,6 +250,7 @@ expublic int tpcall (char *svc, char *idata, long ilen,
     ret=ndrx_tpcall (svc, idata, ilen, odata, olen, flags, NULL, 0, 0, 0, 0, 0, 0);
     
 out:
+    TIMEOUT_EXIT;
     return ret;
 }
 
@@ -253,6 +268,8 @@ expublic int tpgetrply (int *cd, char **data, long *len, long flags)
     int entry_status=EXSUCCEED;
     API_ENTRY;
 
+    TIMEOUT_ENTRY;
+    
     if (EXSUCCEED!=entry_status)
     {
         ret=EXFAIL;
@@ -300,6 +317,8 @@ expublic int tpgetrply (int *cd, char **data, long *len, long flags)
     }
         
 out:
+    
+    TIMEOUT_EXIT;
     return ret;
 }
 
@@ -322,7 +341,8 @@ expublic int tpcallex (char *svc, char *idata, long ilen,
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
     API_ENTRY;
-
+    
+    TIMEOUT_ENTRY;
     if (EXSUCCEED!=entry_status)
     {
         ret=EXFAIL;
@@ -356,6 +376,8 @@ expublic int tpcallex (char *svc, char *idata, long ilen,
             dest_node, ex_flags, user1, user2, user3, user4);
 
 out:
+            
+    TIMEOUT_EXIT;
     return ret;
 }
 
@@ -404,7 +426,29 @@ out:
     return ret;
 }
 
-
+/**
+ * Fill in transaction info block
+ * @param txinfo
+ * @return TX_OK/
+ */
+expublic int tx_info(TXINFO * txinfo)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    ret=ndrx_tx_info(txinfo);
+    
+out:
+    return ret;
+}
+    
 /**
  * Distributed transaction begin
  * @return SUCCEED/FAIL
@@ -2060,6 +2104,133 @@ expublic int tpgprio(void)
 {
     ndrx_TPunset_error();
     return G_atmi_tls->prio_last;
+}
+
+/**
+ * Set block time.
+ * @param blktime time in seconds. Value 0 disables such setting.
+ * @param flags flags TPBLK_NEXT or TPBLK_ALL
+ * @return 0 on succeed, -1 on error
+ */
+expublic int tpsblktime(int tout,long flags)
+{
+    int ret = EXSUCCEED;
+    
+    ndrx_TPunset_error();
+    
+    /* validate flags */
+    if ( flags & (~ ((long) TPBLK__MASK)))
+    {
+        NDRX_LOG(log_error, "Invalid flags 0x%x", flags);
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid flags 0x%x",
+                flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (tout < 0)
+    {
+        NDRX_LOG(log_error, "Invalid blktime %d", tout);
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid blktime %d", tout);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPBLK_NEXT & flags)
+    {
+        /* set value for next */
+        
+        if (0==tout)
+        {
+            G_atmi_tls->tout_next = EXFAIL;
+            NDRX_LOG(log_debug, "Thread next tout disabled");
+        }
+        else
+        {
+            G_atmi_tls->tout_next = tout;
+            NDRX_LOG(log_debug, "Thread next tout call set to %d", G_atmi_tls->tout_next);
+        }
+    }
+    
+    if (TPBLK_ALL & flags)
+    {
+        if (0==tout)
+        {
+            G_atmi_tls->tout = EXFAIL;
+            NDRX_LOG(log_debug, "Thread specific tout disabled");
+        }
+        else
+        {
+            G_atmi_tls->tout = tout;
+            NDRX_LOG(log_debug, "Thread specific tout set to %d", G_atmi_tls->tout);
+        }
+    }
+out:
+    return ret;
+}
+
+/**
+ * Get timeout value. If particular setting is not set, 0 return next blocking
+ *  call timeout value, either next,all or system wide.
+ * @param flags
+ * @return 
+ */
+expublic int tpgblktime(long flags)
+{
+    int ret = EXSUCCEED;
+    
+    ndrx_TPunset_error();
+    
+    /* validate flags */
+    if ( flags & (~ ((long) TPBLK__MASK)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid flags 0x%x",
+                flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if ((flags & TPBLK_NEXT) &&  (flags & TPBLK_ALL))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Flags 0x%x shall TPBLK_NEXT or TPBLK_ALL",
+                flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (flags & TPBLK_NEXT)
+    {
+        if (EXFAIL!=G_atmi_tls->tout_next)
+        {
+            ret = G_atmi_tls->tout_next;
+        }
+    }
+    else if (flags & TPBLK_ALL)
+    {
+        if (EXFAIL!=G_atmi_tls->tout)
+        {
+            ret = G_atmi_tls->tout;
+        }
+    }
+    else
+    {
+        /* Next effective timeout */
+        if (EXFAIL!=G_atmi_tls->tout_next)
+        {
+            /* as yet to be applied to effective */
+            ret = G_atmi_tls->tout_next;
+        }
+        else
+        {
+            ret = ndrx_tptoutget_eff();
+        }
+        
+        if (EXFAIL==ret)
+        {
+            /* set the error */
+            ndrx_TPset_error_fmt(TPESYSTEM, "Init was not called");
+        }
+    }
+    
+out:
+    NDRX_LOG(log_debug, "flags 0x%x ret %d", flags, ret);
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

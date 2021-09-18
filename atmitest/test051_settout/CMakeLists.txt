@@ -54,14 +54,17 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 ############################# Test - executables ###############################
 add_executable (atmi.sv51 atmisv51.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt51 atmiclt51.c)
+add_executable (atmiclt51_blk atmiclt51_blk.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
 target_link_libraries (atmi.sv51 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt51 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt51_blk atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv51 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt51 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt51_blk PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 
