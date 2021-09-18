@@ -75,11 +75,9 @@
             {\
                 tout_act=tout_restart;\
             }\
-            else if (G_atmi_tls && G_atmi_tls->tout_next > 0)\
+            else if (G_atmi_tls && G_atmi_tls->tout_next_eff > 0)\
             {\
-                tout_act=G_atmi_tls->tout_next;\
-                tout_restart = G_atmi_tls->tout_next;\
-                G_atmi_tls->tout_next=EXFAIL;\
+                tout_act=G_atmi_tls->tout_next_eff;\
             }\
             else if (G_atmi_tls && G_atmi_tls->tout > 0)\
             {\
@@ -89,6 +87,7 @@
             {\
                 tout_act=G_atmi_env.time_out;\
             }\
+            tout_restart = tout_act;\
         } while (0)
 
 /* Calculate timeout time */

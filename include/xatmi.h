@@ -640,7 +640,7 @@ extern NDRX_API int tpdecrypt(char *input, long ilen, char *output, long *olen, 
 extern NDRX_API int tpsprio(int prio, long flags);
 extern NDRX_API int tpgprio(void);
 
-extern NDRX_API int tpsblktime(int blktime,long flags);
+extern NDRX_API int tpsblktime(int tout,long flags);
 extern NDRX_API int tpgblktime(long flags);
 
 
