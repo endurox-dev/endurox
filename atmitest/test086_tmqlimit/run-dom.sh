@@ -161,6 +161,97 @@ rm ULOG*
 
 
 ################################################################################
+echo "Transaction timeouts"
+################################################################################
+# use custom timeout
+export NDRX_TOUT=10
+xadmin stop -y
+xadmin start -y
+
+# Load message in each Q to finish up
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sT_OK -E -R1
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "exbenchcl failed T_OK load fail"
+    go_out $RET
+fi
+
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sT_NOK -E -R1
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "exbenchcl failed T_NOK load fail"
+    go_out $RET
+fi
+
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sNS_OK -E -R1
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "exbenchcl failed NS_OK load fail"
+    go_out $RET
+fi
+
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sND_OK -E -R1
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "exbenchcl failed ND_OK load fail"
+    go_out $RET
+fi
+
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sND_NOK -E -R1
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    echo "exbenchcl failed ND_NOK load fail"
+    go_out $RET
+fi
+
+echo "Wait 60, all tout Qs shall complete..."
+sleep 60
+xadmin mqlq
+xadmin psc
+
+STATS=`xadmin mqlq | grep "MYSPACE   T_OK          0     0     1     1     1     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Invalid T_OK stats!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "MYSPACE   T_NOK         0     0     1     1     0     1"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Invalid T_NOK stats!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "MYSPACE   NS_OK         0     0     1     1     1     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Invalid NS_OK stats!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "MYSPACE   ND_OK         0     0     1     1     1     0"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Invalid ND_OK stats!"
+    go_out -1
+fi
+
+STATS=`xadmin mqlq | grep "MYSPACE   ND_NOK        0     0     1     1     0     1"`
+echo "Stats: [$STATS]"
+if [ "X$STATS" == "X" ]; then
+    echo "Invalid ND_NOK stats!"
+    go_out -1
+fi
+
+clean_logs;
+rm ULOG*
+# restore tout:
+export NDRX_TOUT=90
+xadmin stop -y
+xadmin start -y
+
+################################################################################
 echo "Forward thread wakup test"
 ################################################################################
 rm wakeup.out 2>/dev/null

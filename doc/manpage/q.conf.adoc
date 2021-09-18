@@ -79,6 +79,26 @@ DEBUG CONFIGURATION FILE SYNTAX
     threads are not synchronized, and this is *default* for this flag.
 
 
+FORWARD TRANSACTION TIMEOUT
+---------------------------
+
+When messages are forwarded by *autoq=y* or *autoq=T* setting, the transaction timeout
+and related XATMI time-outs are by following principles:
+
+1. If service is invoked by transaction created by forward thread (*autoq=T* mode), timeout for
+transaction is set from *txtout* setting. If setting is not defined, transaction time-out is
+read from *tmqueue(8)* -t flag. With this time-out value the whole global transaction is completed,
+and the same time-out setting is applied to every XATMI IPC performed with forward thread in when
+global transaction is processed. The same setting is used if destination service call failed and
+error response, or counters needs to be updated.
+
+2. In case if calling *autoq=y* mode service, and service has <services ... trantime="TOUT" autotran="Y"> set
+in *ndrxconfig.xml(5)*, then service invocation is performed with XATMI *tpcall(3)* timeout set to
+particular 'TOUT' value defined for service. For local transaction completions and XATMI IPCs
+(e.g. enqueue error response, counter updates, etc.), timeout value is checked from as in step *1.* i.e.
+either from *txtout* or from *-t* setting of *tmqueue*.
+
+
 EXAMPLE
 -------
 

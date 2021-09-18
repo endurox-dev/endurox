@@ -128,6 +128,23 @@ out:
 }
 
 /**
+ * Standard service entry
+ */
+void TOUT_SLEEP (TPSVCINFO *p_svc)
+{
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    sleep(35);
+
+out:
+    tpreturn(  TPSUCCESS,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
  * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
@@ -152,6 +169,38 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise SEQVALID!");
         EXFAIL_OUT(ret);
     }
+    
+    
+    if (EXSUCCEED!=tpadvertise("T_OK", TOUT_SLEEP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise T_OK!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("T_NOK", TOUT_SLEEP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise T_NOK!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("NS_OK", TOUT_SLEEP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise NS_OK!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("ND_OK", TOUT_SLEEP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise ND_OK!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("ND_NOK", TOUT_SLEEP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise ND_NOK!");
+        EXFAIL_OUT(ret);
+    }
+    
     
     if (EXSUCCEED!=tpopen())
     {
