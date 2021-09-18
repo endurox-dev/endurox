@@ -65,6 +65,8 @@
 #include <ndrxdiag.h>
 #include "qtran.h"
 #include <atmi_tls.h>
+#include <ndrx_ddr.h>
+#include <assert.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -491,7 +493,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     char *fn = "thread_process_forward";
     int tperr;
     union tmq_block cmd_block;
-    int tout;
+    int tout, tout_autotran;
     int sent_ok=EXFALSE;
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
     char qname[TMQNAMELEN+1];
@@ -499,6 +501,8 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     int cd;
     int msg_released = EXFALSE;
     qtran_log_t *p_tl=NULL;
+    int autotran=EXFALSE;
+    unsigned long trantime=0;
     
     if (!M_is_xa_open)
     {
@@ -536,13 +540,46 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     
     if (qconf.txtout > EXFAIL)
     {
-        tout = qconf.txtout;
+        tout_autotran = tout = qconf.txtout;
         NDRX_LOG(log_info, "txtout set to %d sec", tout);
     }
     else
     {
-        tout = G_tmqueue_cfg.dflt_timeout;
+        tout_autotran = tout = G_tmqueue_cfg.dflt_timeout;
         NDRX_LOG(log_info, "txtout defaulted to %d sec", tout);
+    }
+    
+    
+    /* substitute the special service name  */
+    if (0==strcmp(qconf.svcnm, TMQ_QUEUE_SERVICE))
+    {
+        NDRX_STRCPY_SAFE(svcnm, qconf.qname);
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(svcnm, qconf.svcnm);
+    }
+    
+    /* in case if dest service have auto-tran enabled and we do not start the
+     * transaction, then for service call use that particular setting
+     */
+    if (TMQ_AUTOQ_AUTOTX!=qconf.autoq)
+    {
+        int ddr_ret = ndrx_ddr_service_get(svcnm, &autotran, &trantime);
+        
+        if (EXFAIL==ddr_ret)
+        {
+            NDRX_LOG(log_always, "Service info failed [%s]", svcnm);
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid, 0);
+            EXFAIL_OUT(ret);
+        }
+        else if (autotran && trantime > 0)
+        {    
+            /* so this will apply to doing pure IPC calls. */
+            tout_autotran = trantime;
+            NDRX_LOG(log_debug, "autoq=y, svc [%s] uses auto-tran tout: %d", 
+                    svcnm, tout_autotran);
+        }
     }
     
     /* Alloc the buffer of the message type according to size (use prepare incoming?)
@@ -566,9 +603,12 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     memcpy(&cmd_block.hdr, &msg->hdr, sizeof(cmd_block.hdr));
     
     if (TMQ_AUTOQ_AUTOTX==qconf.autoq)
-    {
+    {   
         NDRX_LOG(log_debug, "Service invocation shall be performed in "
                 "transactional mode...");
+        
+        /* XATMI Timeout setting: is generic tout */
+        assert(EXSUCCEED==tpsblktime(tout, TPBLK_ALL));
         
         if (EXSUCCEED!=tpbegin(tout, 0))
         {
@@ -590,19 +630,13 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         p_tl->cmds->no_unlock=EXTRUE;
         UNLOCK;
     }
-    
-    /* call the service */
-    
-    /* substitute the special service name  */
-    if (0==strcmp(qconf.svcnm, TMQ_QUEUE_SERVICE))
-    {
-        NDRX_STRCPY_SAFE(svcnm, qconf.qname);
-    }
     else
     {
-        NDRX_STRCPY_SAFE(svcnm, qconf.svcnm);
+        /* XATMI timeout setting: tout_autotran */
+        assert(EXSUCCEED==tpsblktime(tout_autotran, TPBLK_ALL));
     }
-
+    
+    /* call the service */
     
     /* after acall remove our entry
      * if after remove all is empty.... do we need to signal? I guess no
@@ -648,6 +682,14 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     
     NDRX_LOG(log_info, "Service answer %s for %s", (sent_ok?"ok":"fail"), msgid_str);
         
+    /* XATMI Timeout setting: is generic tout 
+     * as previously was used target service timings.
+     */
+    if (tout!=tout_autotran)
+    {
+        assert(EXSUCCEED==tpsblktime(tout, TPBLK_ALL));
+    }
+    
     /* start the transaction 
      * Note! message is not yet added to transaction with
      */
@@ -925,6 +967,9 @@ out:
     tmq_fwd_busy_dec(fwd->stats);
     
     NDRX_FPFREE(fwd);
+    
+    /* disable timeouts */
+    assert(EXSUCCEED==tpsblktime(0, TPBLK_ALL));
     
     return;
 }

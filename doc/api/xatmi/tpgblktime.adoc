@@ -1,0 +1,70 @@
+TPGBLKTIME(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tpgblktime - Get timeout configuration for ATMI library
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpgblktime(long 'flags');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+
+Get current configured XATMI IPC call timeout setting in seconds. If particular setting is not configured,
+value *0* is returned.
+
+*Valid flags*
+
+*TPBLK_ALL* Get thread specific timeout setting.
+
+*TPBLK_NEXT* Get thread specific next call timeout setting.
+
+*0* Get effective timeout setting used that will be used for next XATMI IPC
+call (send/receive). This will return value including the *TPBLK_NEXT* value.
+Thought *TPBLK_NEXT* is only processed for certain XATMI calls. See the list
+in *tpsblktime(3)* manpage.
+
+
+RETURN VALUE
+------------
+On success, *tpgblktime()* return timeout configured; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* 'flags' is not *TPBLK_ALL*, *TPBLK_NEXT* or *0*.
+
+*TPESYSTEM* *tpinit(3)* for client was not called and not other timeout was configured
+for given context.
+
+
+EXAMPLE
+-------
+See *atmitest/test051_settout/atmiclt51_blk.c* for sample code.
+    
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tsgblktime(3)* *tptoutget(3)* *tptoutset(3)* *ex_env(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -75,7 +75,8 @@ expublic atmi_lib_env_t G_atmi_env={
     /* must follow first otherwise we override lcf commands at startup */
     .test_qdisk_write_fail=EXFALSE, 
     .test_tmsrv_write_fail=EXFALSE,
-    .test_tmsrv_commit_crash=EXFALSE}; /* ATMI library environmental configuration */
+    .test_tmsrv_commit_crash=EXFALSE,
+    .time_out=EXFAIL}; /* ATMI library environmental configuration */
 expublic int _tmbuilt_with_thread_option = EXFALSE; /**< by default not MT */
 /*---------------------------Statics------------------------------------*/
 /* List of context slots... */

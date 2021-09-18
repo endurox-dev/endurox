@@ -241,9 +241,8 @@ exprivate int basic_rmrollback(int maxmsg)
         tpfree(testbuf_ref);
     }
     
-    /* sleep 45, as tout is set to 30 see -T */
-    sleep(45);
-    
+    /* sleep 55, as tout is set to 45 see -T */
+    sleep(55);
     
     if (EXSUCCEED==tpcommit(0))
     {
