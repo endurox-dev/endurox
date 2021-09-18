@@ -95,8 +95,12 @@ error response, or counters needs to be updated.
 2. In case if calling *autoq=y* mode service, and service has <services ... trantime="TOUT" autotran="Y"> set
 in *ndrxconfig.xml(5)*, then service invocation is performed with XATMI *tpcall(3)* timeout set to
 particular 'TOUT' value defined for service. For local transaction completions and XATMI IPCs
-(e.g. enqueue error response, counter updates, etc.), timeout value is checked from as in step *1.* i.e.
+(e.g. enqueue error/response, counter updates, etc.), timeout value is checked from as in step *1.* i.e.
 either from *txtout* or from *-t* setting of *tmqueue*.
+
+3. In case if calling *autoq=y* and service is not defined in "<services>" or it is not transactiontional,
+time-out value for service call is set from *txtout*, if not available then from *-t* setting of *tmqueue*.
+For local transactions (e.g. counter updates, error/response enqueues, etc.) the same time-out value is used.
 
 
 EXAMPLE
