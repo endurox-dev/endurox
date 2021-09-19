@@ -64,7 +64,17 @@
             <envs>
                 <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
             </envs>
-            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sT_NOK,NS_OK,ND_OK,ND_NOK</sysopt>
+        </server>
+        <server name="atmi.sv86">
+            <min>1</min>
+            <max>1</max>
+            <srvid>16</srvid>
+            <cctag>NULL</cctag>
+            <envs>
+                <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
+            </envs>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sFAILSVC,OKSVC,SEQVALID</sysopt>
         </server>
         <server name="exbenchsv">
             <min>1</min>
