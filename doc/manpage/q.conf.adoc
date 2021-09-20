@@ -83,7 +83,7 @@ FORWARD TRANSACTION TIMEOUT
 ---------------------------
 
 When messages are forwarded by *autoq=y* or *autoq=T* setting, the transaction timeout
-and related XATMI time-outs are by following principles:
+and related XATMI time-outs are set by following principles:
 
 1. If service is invoked by transaction created by forward thread (*autoq=T* mode), timeout for
 transaction is set from *txtout* setting. If setting is not defined, transaction time-out is
