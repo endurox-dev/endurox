@@ -45,7 +45,7 @@ Per process timeout configuration may be applied with *tptoutset(3)* Enduro/X ca
 with the current thread.
 
 *TPBLK_NEXT* apply timeout setting for certain XATMI API calls (see list bellow). After the API
-call value is canceled. Note that these APIs cancels the setting, even if API call did fail (i.e.
+call value is canceled. Note that these APIs cancels the setting, even if API call did fail (e.g.
 invalid arguments).
 
 TPBLK_NEXT supported APIs
