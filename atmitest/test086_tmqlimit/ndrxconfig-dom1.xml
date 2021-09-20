@@ -55,16 +55,58 @@
 
     </defaults>
     <servers>
-        <!-- Responder -->
+        <!-- Responder 
+        Needs several copies due to round-robin stored in each service.
+        -->
         <server name="atmi.sv86">
-            <min>5</min>
-            <max>5</max>
+            <min>1</min>
+            <max>1</max>
             <srvid>10</srvid>
             <cctag>NULL</cctag>
             <envs>
                 <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
             </envs>
-            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sT_OK,T_NOK,NS_OK,ND_OK,ND_NOK</sysopt>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sT_OK</sysopt>
+        </server>
+        <server name="atmi.sv86">
+            <min>1</min>
+            <max>1</max>
+            <srvid>11</srvid>
+            <cctag>NULL</cctag>
+            <envs>
+                <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
+            </envs>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sT_NOK</sysopt>
+        </server>
+        <server name="atmi.sv86">
+            <min>1</min>
+            <max>1</max>
+            <srvid>12</srvid>
+            <cctag>NULL</cctag>
+            <envs>
+                <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
+            </envs>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sNS_OK</sysopt>
+        </server>
+        <server name="atmi.sv86">
+            <min>1</min>
+            <max>1</max>
+            <srvid>13</srvid>
+            <cctag>NULL</cctag>
+            <envs>
+                <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
+            </envs>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sND_OK</sysopt>
+        </server>
+        <server name="atmi.sv86">
+            <min>1</min>
+            <max>1</max>
+            <srvid>14</srvid>
+            <cctag>NULL</cctag>
+            <envs>
+                <env name="NDRX_CCONFIG">${TESTDIR}/nulltm.ini</env>
+            </envs>
+            <sysopt>-N -e ${TESTDIR}/atmisv-dom1.log -r -sND_NOK</sysopt>
         </server>
         <server name="atmi.sv86">
             <min>1</min>
