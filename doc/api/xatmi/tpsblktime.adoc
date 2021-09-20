@@ -27,7 +27,7 @@ configured with *NDRX_SCANUNIT* setting. For all other pollers (e.g. *epoll*, *s
 is as provided by operating system for timed system calls (normally expected in milliseconds).
 
 'tout' value must be non negative number. Value *0* cancels particular setting. When XATMI IPC is
-performed, the timeout value used is resolved following order:
+performed, the timeout value used is resolved in the following order:
 
 1. Use tpsblktime() + *TPBLK_NEXT*, if applies for the given API and is set.
 
