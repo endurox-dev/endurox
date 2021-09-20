@@ -31,7 +31,7 @@ performed, the timeout value used is resolved in the following order:
 
 1. Use tpsblktime() + *TPBLK_NEXT*, if applies for the given API and is set.
 
-2. Use tpsblktime() + *TPBLK_ALL*, if applies for the given API and is set.
+2. Use tpsblktime() + *TPBLK_ALL*, if set.
 
 3. Use *tptoutset(3)* setting (process wide), if set.
 
