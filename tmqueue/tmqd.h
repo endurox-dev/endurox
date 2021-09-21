@@ -40,6 +40,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <sys_unix.h>
 #include <xa_cmn.h>
 #include <atmi.h>
 #include <exhash.h>
@@ -75,6 +76,12 @@ extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   *
 
 #define TMQ_QUEUE_SERVICE       "@" /**< Special name when service matches queue name */
 
+#define TMQ_ARGS_COMMIT         "Cc"    /**< Sync after commit              */
+
+#define TMQ_SYNC_NONE           0       /**< NO sync needed                 */
+#define TMQ_SYNC_TPACALL        1       /**< Sync on tpacall                */       
+#define TMQ_SYNC_TPCOMMIT       2       /**< Sync on tpcommit () if auto=T  */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -105,6 +112,8 @@ typedef struct
     threadpool shutdownseq;   /**< Shutdown sequencer, we have simpler just to use pool instead of threads  */
     
     long fsync_flags;         /**< special flags for disk sync              */
+    
+    int no_chkrun;           /**< If set to true, do not trigger queue run  */
     
 } tmqueue_cfg_t;
 
@@ -199,6 +208,7 @@ struct tmq_qconfig
     int txtout;     /**< transaction timeout (override if > -1)         */
     char errorq[TMQNAMELEN];     /**< Error queue name, optional        */
     int workers;   /**< Max number of busy forward workers              */
+    int sync;      /**< Sync forward sending                            */
     
     EX_hash_handle hh; /**< makes this structure hashable               */
 };
@@ -210,15 +220,55 @@ typedef struct fwd_qlist fwd_qlist_t;
 struct fwd_qlist
 {
     char qname[TMQNAMELEN+1];
-    long succ; /**< Succeeded auto messages */
-    long fail; /**< failed auto messages */
+    long succ; /**< Succeeded auto messages                 */
+    long fail; /**< failed auto messages                    */
     
-    long numenq; /**< Succeeded auto messages */
-    long numdeq; /**< failed auto messages */
-    int workers;    /**< number of configured workers */
-    
+    long numenq; /**< Succeeded auto messages               */
+    long numdeq; /**< failed auto messages                  */
+    int workers;    /**< number of configured workers       */
+    int sync;       /**< is queue synchronized?             */
     fwd_qlist_t *next;
     fwd_qlist_t *prev;
+};
+
+
+typedef struct fwd_msg fwd_msg_t;
+
+/**
+ * Forward statistics
+ */
+typedef struct {
+    
+    char qname[TMQNAMELEN+1];
+    int busy;
+    NDRX_SPIN_LOCKDECL(busy_spin); /**< add/cmp/del ops         */
+    
+    /*
+     * - have have spinlock for adding/checking/removing msg from list.
+     * - have a mutex for workers to sleep & wait for signal/broadcast
+     * - have a cond variable for sleeping on
+     */
+    NDRX_SPIN_LOCKDECL(sync_spin); /**< add/cmp/del ops         */
+    MUTEX_LOCKDECLN(sync_mut);  /**< wait mut                   */
+    pthread_cond_t   sync_cond; /**< wait cond                  */
+            
+    fwd_msg_t *sync_head;       /**< head msg if used for sync  */
+    
+    EX_hash_handle hh; /**< makes this structure hashable       */
+    
+} fwd_stats_t;
+
+/**
+ * Forward message entry
+ */
+struct fwd_msg {
+    fwd_stats_t *stats; /**< ptr to stats block of the queue    */
+    tmq_msg_t   *msg;   /**< message entry to forward           */
+    int     sync;       /**< do we run in sync mode?            */
+    unsigned long seq;  /**< sequence number                    */
+    fwd_msg_t *prev;
+    fwd_msg_t *next;
+    
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -261,10 +311,11 @@ extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *d
             char *diagmsg, size_t diagmsgsz, char *corrid_str, int *int_diag);
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, 
         char *diagmsg, size_t diagmsgsz, int *int_diag);
-extern int tmq_unlock_msg_by_msgid(char *msgid);
+extern int tmq_unlock_msg_by_msgid(char *msgid, int chkrun);
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
+extern tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted);
 extern int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, size_t out_bufsz);
 extern tmq_memmsg_t *tmq_get_msglist(char *qname);
     
@@ -275,10 +326,22 @@ extern void tmq_cor_sort_queues(tmq_qhash_t *q);
 extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
+extern int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf);
+extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);
 
-extern int tmq_fwd_busy_cnt(char *qname);
-extern int tmq_fwd_busy_inc(char *qname);
-extern void tmq_fwd_busy_dec(char *qname);
+extern int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats);
+extern void tmq_fwd_busy_inc(fwd_stats_t *p_stats);
+extern void tmq_fwd_busy_dec(fwd_stats_t *p_stats);
+extern int tmq_fwd_stat_init(void);
+
+
+extern void tmq_fwd_sync_add(fwd_msg_t *fwd);
+extern void tmq_fwd_sync_del(fwd_msg_t *fwd);
+extern int tmq_fwd_sync_cmp(fwd_msg_t *fwd);
+
+extern void tmq_fwd_sync_wait(fwd_msg_t *fwd);
+extern void tmq_fwd_sync_notify(fwd_msg_t *fwd);
+
     
 #ifdef	__cplusplus
 }

@@ -18,14 +18,16 @@ DESCRIPTION
 This is special ATMI server which is used for transactional persistent queue operations.
 *tmqueue* is backend server used by *tpenqueue* and *tpdequeue()* calls. Queue server
 works in pair with *tmsrv(8)* instance, where both *tmqueue* and *tmsrv* are configured in
-XA environment which uses 'NDRX_XA_RMLIB=libndrxxaqdisk.so' and 
-*NDRX_XA_DRIVERLIB=libndrxxaqdisks.so* (static registration driver) or 
-*NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so* (dynamic registration driver). Related *tmsrv*
-instance shall be started first, before tmqueue process.
+XA environment with 'NDRX_XA_RMLIB=libndrxxaqdisk.so' (actual disk driver) and 
+*NDRX_XA_DRIVERLIB=libndrxxaqdisks.so* (static registration) or 
+*NDRX_XA_DRIVERLIB=libndrxxaqdiskd.so* (dynamic registration) driver loaders. 
+Related *tmsrv* instance shall be started first, before tmqueue process.
 
-*libndrxxaqdisks(8)* and uses libndrxxaqdiskd XA backend uses file system storage
-for persistence. For more detailed configuration and work modes, please read
-corresponding manpage.
+Actual queue configuration is described either in configuration file *q.conf(5)*
+which may be present as separate file or as par of common-configuration ini section.
+
+Current storage backends uses file system for persistence. For more details on
+back-end configuration see *libndrxxaqdisks(8)*.
 
 The *tpenqueue(3)* and *tpdequeue(3)* can be invoked either as part of the global
  transaction or not. If global transaction is not used, then *tmqueue* will 
@@ -66,6 +68,13 @@ counter or remove the message if succeed. If message is submitted with 'TPQREPLY
 then on success, the response message from invoked service is submitted to 
 reply queue. If message destination service fails for number of attempts,
 then message is forwarded to 'TPQFAILUREQ', in this case original 'TPQCTL' is preserved.
+
+Tmqueue server is optimized for waking up the forwarder dispatch thread if new processable
+message is enqueued in automatic queue. If thread which enqueued new message detects
+that forwarder thread sleeps, then immediate forwarder thread wakeup is performed.
+This approach does not synchronize fully with dispatcher thread (for performance
+reason), thus it might be still possible that scan time sleep is done, even processable
+message was enqueued.
 
 During the startup, *tmqueue* will read messages from the XA backend driver. 
 All messages are read. All active messages found in persistent storage are rolled
@@ -138,6 +147,9 @@ sessions checks. It is strongly discouraged to use *0*, as this in case of syste
 error may lock resources until the tmqueue server process is restarted. 
 Default value is *180*.
 
+[*-N*]::
+If flag is set, the enqueue operations will not trigger immediate forwarder
+thread wakeup.
 
 LIMITATIONS
 -----------

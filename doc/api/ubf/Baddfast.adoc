@@ -29,14 +29,13 @@ the pointer to last position of the buffer, just right after data inserted. Thus
 Next Baddfast() is performing from that place. The benefit is avoided position search
 in buffer, which at large number of occurrences might grow exponentially. Then
 'p_ub' buffer must not be modified between the calls. 'next_fld' is valid only
-for adding the same field occurrences or adding (when programmer knows for sure), 
-incremented field id. In that case search can be avoided too. That can be beneficial
-in case if adding carrays or strings, as on the UBF does not do binary search.
+for adding the same field occurrences or adding (when programmer knows for sure) 
+incremented field id. Function is beneficial for carray or string fields, 
+as on these types UBF does not perform binary search to get the position.
 
 The UBF buffer pointer is passed by 'p_ub', field id in 'bfldid'. 
-The user value is passed in 'buf'. The 'len' is used only if filed type is 
-*BFLD_CARRAY*, for which length cannot be detected from passed data. 
-The data type for 'buf' must batch with 'bfldid' type.
+The user value is passed in 'buf'. The 'len' is used only if field type is 
+*BFLD_CARRAY*. The data type for 'buf' must match with 'bfldid' type.
 
 RETURN VALUE
 ------------

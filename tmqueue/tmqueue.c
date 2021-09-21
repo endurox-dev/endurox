@@ -535,7 +535,6 @@ exprivate void shutdowncb_th(void *ptr)
     }
 
     ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
-    ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
     
     M_shutdown_ok=EXTRUE;
 }
@@ -615,7 +614,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmqueue_cfg.ses_timeout=EXFAIL;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:N")) != -1)
     {
         if (optarg)
         {
@@ -628,6 +627,10 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'N':
+                G_tmqueue_cfg.no_chkrun = EXTRUE;
+                NDRX_LOG(log_info, "Will not forward trigger queue run.");
+                break;
             case 'm': 
                 
                 /* Ask to convert: */
@@ -787,6 +790,12 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+    if (EXSUCCEED!=tmq_fwd_stat_init())
+    {
+        NDRX_LOG(log_error, "Failed to init forward statistics");
+        EXFAIL_OUT(ret);
+    }
+    
     /* service request handlers */
     if (NULL==(G_tmqueue_cfg.thpool = ndrx_thpool_init(G_tmqueue_cfg.threadpoolsize,
             NULL, NULL, NULL, 0, NULL)))
@@ -882,6 +891,12 @@ void tpsvrdone(void)
         
         ndrx_thpool_wait(G_tmqueue_cfg.shutdownseq);
         ndrx_thpool_destroy(G_tmqueue_cfg.shutdownseq);
+        
+        
+        /* all thread shall be terminated (so that notification is not sent to NULL)
+         * in case of enqueue...
+         */
+        ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
         
     }
     

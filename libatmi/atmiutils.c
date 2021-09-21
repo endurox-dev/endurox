@@ -63,25 +63,60 @@
 /*---------------------------Macros-------------------------------------*/
 #define SLEEP_ON_FULL_Q             170000   /* Sleep 150 ms every batch..... */
 
+
+/* set the timeout source */
+#define TOUT_SOURCE         do\
+        {\
+            if (tout>0)\
+            {\
+                tout_act=tout;\
+            }\
+            else if (tout_restart >0)\
+            {\
+                tout_act=tout_restart;\
+            }\
+            else if (G_atmi_tls && G_atmi_tls->tout_next_eff > 0)\
+            {\
+                tout_act=G_atmi_tls->tout_next_eff;\
+            }\
+            else if (G_atmi_tls && G_atmi_tls->tout > 0)\
+            {\
+                tout_act=G_atmi_tls->tout;\
+            }\
+            else\
+            {\
+                tout_act=G_atmi_env.time_out;\
+            }\
+            tout_restart = tout_act;\
+        } while (0)
+
 /* Calculate timeout time */
-#define SET_TOUT_VALUE     if (use_tout)\
-    {\
-        struct timeval  timeval;\
-        use_tout=1;\
-        gettimeofday (&timeval, NULL);\
-        abs_timeout.tv_sec = timeval.tv_sec+G_atmi_env.time_out;\
-        abs_timeout.tv_nsec = timeval.tv_usec*1000;\
-    }
+#define SET_TOUT_VALUE     do\
+        {\
+            if (use_tout)\
+            {\
+                struct timeval  timeval;\
+                use_tout=1;\
+                gettimeofday (&timeval, NULL);\
+                TOUT_SOURCE;\
+                abs_timeout.tv_sec = timeval.tv_sec+tout_act;\
+                abs_timeout.tv_nsec = timeval.tv_usec*1000;\
+            }\
+        } while (0)
 
 /* Configure function to use TOUT */
-#define SET_TOUT_CONF     if (G_atmi_env.time_out==0 || flags & TPNOTIME)\
-    {\
-        use_tout=0;\
-    }\
-    else \
-    {\
-        use_tout=1;\
-    }
+#define SET_TOUT_CONF     do\
+        {\
+            if (G_atmi_env.time_out==0 || flags & TPNOTIME || flags & TPNOBLOCK)\
+            {\
+                use_tout=0;\
+            }\
+            else \
+            {\
+                use_tout=1;\
+            }\
+        } while (0)
+
 /* This prints info about q descriptor X */
 #define PRINT_Q_INFO(X)             { struct mq_attr __attr;\
             memset((char *)&__attr, 0, sizeof(__attr));\
@@ -141,6 +176,19 @@ expublic int ndrx_tptoutget(void)
     return G_atmi_env.time_out;
 }
 
+/**
+ * Get current timeout setting, based on TLS data
+ * @return actual timeout setting currently effective
+ */
+expublic int ndrx_tptoutget_eff(void)
+{
+    int use_tout=1, tout_act=0, tout_restart=EXFAIL, tout=0;
+    
+    TOUT_SOURCE;
+    
+    return tout_act;
+}
+ 
 /**
  * When tons of messages are sent to xadmin, then we might gets some sleep,
  * so that console is ready to display complete stuff..!
@@ -284,7 +332,7 @@ expublic mqd_t ndrx_mq_open_at_wrp(char *name, int oflag)
 expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    int use_tout;
+    int use_tout, tout_act=0, tout_restart=EXFAIL, tout=0;
     struct timespec abs_timeout;
     int snd_prio;
     SET_TOUT_CONF;
@@ -348,7 +396,7 @@ expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags
 {
     int ret=EXSUCCEED;
     mqd_t q_descr=(mqd_t)EXFAIL;
-    int use_tout;
+    int use_tout, tout_restart=EXFAIL, tout_act=0;
     struct timespec abs_timeout;
     long add_flags = 0;
     int snd_prio;
@@ -383,20 +431,7 @@ restart_open:
     /* now try to send */
 restart_send:
 
-    if (use_tout)
-    {
-        struct timeval  timeval;
-        use_tout=1;
-        gettimeofday (&timeval, NULL);
-        
-        /* Allow to use custom time-out handler. */
-        if (tout>0)
-            abs_timeout.tv_sec = timeval.tv_sec+tout;
-        else
-            abs_timeout.tv_sec = timeval.tv_sec+G_atmi_env.time_out;
-        
-        abs_timeout.tv_nsec = timeval.tv_usec*1000;
-    }
+    SET_TOUT_VALUE;
 
     if (0==msg_prio)
     {
@@ -436,7 +471,7 @@ restart_send:
     NDRX_PRIO_DOWNSCALE(snd_prio);
             
     NDRX_LOG(log_debug, "len: %d use timeout: %d config: %d prio: %d snd_prio: %d", 
-                len, use_tout, G_atmi_env.time_out, msg_prio, snd_prio);
+                len, use_tout, tout_act, msg_prio, snd_prio);
     if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, snd_prio)) ||
          (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, snd_prio, &abs_timeout)))
     {
@@ -494,7 +529,7 @@ expublic ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str,
         unsigned *prio, long flags)
 {
     ssize_t ret=EXSUCCEED;
-    int use_tout;
+    int use_tout, tout_restart=EXFAIL, tout_act=0, tout=0;
     struct timespec abs_timeout;   
     
     SET_TOUT_CONF;
@@ -511,7 +546,7 @@ expublic ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str,
 restart:
     SET_TOUT_VALUE;
     NDRX_LOG(6, "use timeout: %d config: %d qdescr: %lx", use_tout,
-		G_atmi_env.time_out, (long int)q_descr);
+		tout_act, (long int)q_descr);
     if ((!use_tout && EXFAIL==(ret=ndrx_mq_receive (q_descr, (char *)buf, buf_max, prio))) ||
          (use_tout && EXFAIL==(ret=ndrx_mq_timedreceive (q_descr, (char *)buf, buf_max, prio, &abs_timeout))))
     {

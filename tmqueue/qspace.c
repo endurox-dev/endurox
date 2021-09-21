@@ -89,6 +89,7 @@
 #define TMQ_QC_TXTOUT           "txtout"    /**< transaction timeout override */
 #define TMQ_QC_ERRORQ           "errorq"    /**< Name of the error queue, opt */
 #define TMQ_QC_WORKERS          "workers"   /**< max number of workders       */
+#define TMQ_QC_SYNC             "sync"      /**< sync forward q               */
 
 #define EXHASH_FIND_STR_H2(head,findstr,out)                                     \
     EXHASH_FIND(h2,head,findstr,strlen(findstr),out)
@@ -450,6 +451,34 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
         
         qconf->workers = ival;
     }
+    else if (0==strcmp(key, TMQ_QC_SYNC))
+    {
+        int ival = ndrx_args_confirm(value);
+        
+        if (EXFAIL==ival)
+        {
+            if (1==strlen(value) && NULL!=strstr(TMQ_ARGS_COMMIT, value))
+            {
+                ival = TMQ_SYNC_TPCOMMIT;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Invalid value [%s] for %s", value, TMQ_QC_SYNC);
+                EXFAIL_OUT(ret);   
+            }
+        }
+        else if (ival)
+        {
+            ival = TMQ_SYNC_TPACALL;
+        }
+        else
+        {
+            ival=TMQ_SYNC_NONE;
+        }
+        
+        qconf->sync = ival;
+        
+    }
     else if (0==strcmp(key, TMQ_QC_MEMONLY))
     {
         /* CURRENTLY NOT SUPPORTED.
@@ -515,7 +544,7 @@ exprivate tmq_qconfig_t * tmq_qconf_get(char *qname)
  * @param p_is_defaulted returns 1 if queue uses defaults Q
  * @return  NULL or ptr to config
  */
-exprivate tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted)
+expublic tmq_qconfig_t * tmq_qconf_get_with_default(char *qname, int *p_is_defaulted)
 {
     
     tmq_qconfig_t * ret = tmq_qconf_get(qname);
@@ -578,6 +607,23 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf, si
     {
         int len = strlen(out_buf);
         snprintf(out_buf+len, out_bufsz-len, ",errorq=%s", qdef->errorq);
+    }
+    
+    if (qdef->sync)
+    {
+        int len = strlen(out_buf);
+        char setting;
+        
+        if (TMQ_SYNC_TPACALL==qdef->sync)
+        {
+            setting='y';
+        }
+        else
+        {
+            setting='c';
+        }
+        
+        snprintf(out_buf+len, out_bufsz-len, ",%s=%c", TMQ_QC_SYNC, setting);
     }
 
 out:
@@ -1115,7 +1161,7 @@ out:
  * @param node
  * @return 
  */
-exprivate int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
+expublic int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
 {
     int ret = EXFALSE;
     int retry_inc;
@@ -1544,12 +1590,15 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
             break;
         case TMQ_STORCMD_UPD:
             UPD_MSG((mmsg->msg), (&b->upd));
-            mmsg->msg->lockthreadid = 0;
         /* And still we want unblock: */
         case TMQ_STORCMD_NEWMSG:
         case TMQ_STORCMD_UNLOCK:
             NDRX_LOG(log_info, "Unlocking message...");
             mmsg->msg->lockthreadid = 0;
+            
+            /* wakeup the Q... runner */
+            ndrx_forward_chkrun(mmsg);
+            
             break;
         case TMQ_STORCMD_DUM:
             /* nothing todo; */
@@ -1567,10 +1616,11 @@ out:
 
 /**
  * Unlock memory message by msgid (used for PEEK)
+ * TODO: add chkrun in case if doing unlock for PEEK.
  * @param msgid
  * @return 
  */
-expublic int tmq_unlock_msg_by_msgid(char *msgid)
+expublic int tmq_unlock_msg_by_msgid(char *msgid, int chkrun)
 {
     int ret = EXSUCCEED;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -1591,6 +1641,11 @@ expublic int tmq_unlock_msg_by_msgid(char *msgid)
     }
     
     mmsg->msg->lockthreadid = 0;
+    
+    if (chkrun)
+    {
+        ndrx_forward_chkrun(mmsg);
+    }
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);
@@ -1683,6 +1738,7 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
             tmp->numenq = q->numenq;
             tmp->numdeq = q->numdeq;
             tmp->workers = qconf->workers;
+            tmp->sync = qconf->sync;
             
             DL_APPEND(ret, tmp);
         }

@@ -1792,6 +1792,32 @@ out:
 }
 
 /**
+ * Return confirmation or rejection.
+ * Or error in case if arg not valid value
+ * @param arg YyNn
+ * @return TRUE (yY), FALSE (nN), FAIL (invalid value)
+ */
+expublic int ndrx_args_confirm(char *arg)
+{
+    int ret = EXFAIL;
+    
+    if (strlen(arg) !=1 )
+    {
+        ret = EXFAIL;
+    }
+    else if (NULL!=strstr(NDRX_ARGS_YES, arg))
+    {
+        ret=EXTRUE;
+    }
+    else if (NULL!=strstr(NDRX_ARGS_NO, arg))
+    {
+        ret=EXFALSE;
+    }
+    
+    return ret;
+}
+
+/**
  * Decode numbers like:
  * Kk -> *1024
  * Mm -> *1024*1024
