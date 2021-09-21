@@ -326,14 +326,25 @@ void ndrx_thpool_wait(thpool_* thpool_p)
 }
 
 /**
+ * External signal as free
+ * @param thpool_p
+ */
+void ndrx_thpool_signal_one(thpool_* thpool_p)
+{
+    pthread_cond_signal(&thpool_p->threads_one_idle);
+}
+
+/**
  * Wait for jobs to be less than given number
  * @param thpool_p thread pool which to work
  * @param less_than jobs/working threads to be less than this number
  * @param timeout number of milliseconds to wait
+ * @param cond pointer to condition when becomes, true terminate the loop
  * @return EXFAIL (something bad has happended), EXSUCCEED (timedout), EXTRUE (got
  *  condition)
  */
-int ndrx_thpool_timedwait_less(thpool_* thpool_p, int less_than, long timeout)
+int ndrx_thpool_timedwait_less(thpool_* thpool_p, int less_than, long timeout,
+            int *cond)
 {
     int ret = EXSUCCEED;
     struct timespec wait_time;
@@ -346,7 +357,7 @@ int ndrx_thpool_timedwait_less(thpool_* thpool_p, int less_than, long timeout)
     MUTEX_LOCK_V(thpool_p->thcount_lock);
     
     while (thpool_p->jobqueue.len + thpool_p->num_threads_working>=less_than &&
-            (delta=ndrx_stopwatch_get_delta(&w)) < timeout)
+            (delta=ndrx_stopwatch_get_delta(&w)) < timeout && !*cond)
     {
 
         gettimeofday(&now, NULL);

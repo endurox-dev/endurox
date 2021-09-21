@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpsvrthrdone (void);
+void tpsvrthrdone (void);
 
 For XATMI server link with '-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 

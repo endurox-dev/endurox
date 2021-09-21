@@ -442,6 +442,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_CMDLINE_SEP        " \t\n" /**< command line seperators          */
 #define NDRX_CMDLINE_QUOTES     "'\""   /**< Block quotes for non splitting   */
 
+#define NDRX_ARGS_YES           "yY"    /**< Confirm                          */
+#define NDRX_ARGS_NO            "nN"    /**< Reject                           */
 
 /**
  * Posix Queue processing path prefixes

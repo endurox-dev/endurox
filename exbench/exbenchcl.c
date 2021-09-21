@@ -44,7 +44,9 @@
 #include "atmi_int.h"
 #include "expr.h"
 #include <typed_buf.h>
-
+#include <atmi_int.h>   /*  ndrx_tpchkunsol() */
+#include <atmi_tls.h>   /* my_id */
+#include <Exfields.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -90,11 +92,20 @@ exprivate int M_enqonly = EXFALSE;   /**< Persisten q, enqueue only         */
 exprivate long M_numreq = EXFALSE;   /**< Number of requests                */
 
 exprivate int M_tran = EXFALSE; /**< use distr tran */
+exprivate int M_notify_mode = EXFALSE;  /**< shall notification be expected */
+exprivate __thread long M_sent=0;               /** Current position of thread */
+exprivate __thread long M_notif_sent_acq = EXFAIL;  /**< ACQ position          */
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Process the notification callback
+ */
+exprivate void notification_callback (char *data, long len, long flags)
+{
+    M_notif_sent_acq = M_sent;
+}
 
 /* need to synchronize function for starting the sending... */
-
 expublic void thread_process(void *ptr, int *p_finish_off)
 {
     /*  thread number */
@@ -103,9 +114,17 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     char *buf = tpalloc(M_buftype->type, NULL, M_rndsize*2);
     char *rcv_buf;
     long rcvlen;
-    long sent=0;
+    
     TPQCTL qc;
     ndrx_stopwatch_t w;
+    
+    if (EXSUCCEED!=tpinit(NULL))
+    {
+        NDRX_LOG(log_error, "Failed to init: %s", tpstrerror(tperrno));
+        userlog("Failed to init: %s", tpstrerror(tperrno));
+        exit(-1);
+    }
+    
     
     if (M_tran && EXSUCCEED!=tpopen())
     {
@@ -121,8 +140,22 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         exit(-1);
     }
     
-    /* prep */
+    /* In case if notify Q -> append the buffer with myid */
     memcpy(buf, M_master_buf, M_rndsize*2);
+    
+    if (M_notify_mode)
+    {
+        /* load client id so that server may provide notification */
+        if (EXSUCCEED!=Bchg((UBFH *)buf, EX_CLTID, 0, G_atmi_tls->G_atmi_conf.my_id, 0))
+        {
+            NDRX_LOG(log_error, "Failed to set EX_CLTID: %s", Bstrerror(Berror));
+            exit(-1);
+        }
+        
+        /* set callback... */
+        tpsetunsol (notification_callback);
+        
+    }
     
     /* Service by thread */
     
@@ -221,9 +254,31 @@ expublic void thread_process(void *ptr, int *p_finish_off)
             tpfree(rcv_buf);
         }
         
-        sent++;
+        /* if set, wait for notification back! 
+         * either we got the callback already during the call...
+         * Or we wait for callback here
+         * We need some sequencing.
+         * Will use sent as seq...
+         */
+        if (M_notify_mode)
+        {
+            while (M_notif_sent_acq<M_sent)
+            {
+                if (EXFAIL==ndrx_tpchkunsol(0))
+                {
+                    if (tperrno!=TPETIME)
+                    {
+                        NDRX_LOG(log_error, "Failed to wait for notif: %s", 
+                                tpstrerror(tperrno));
+                        exit(-1);
+                    }
+                }
+            }
+        }
+        
+        M_sent++;
         /* enqueue number of messages only... */
-        if (M_numreq && sent >= M_numreq)
+        if (M_numreq && M_sent >= M_numreq)
         {
             break;
         }
@@ -231,7 +286,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     
     /* publish results... */
     MUTEX_LOCK_V(M_wait_mutex);
-    M_msg_sent+=sent;
+    M_msg_sent+=M_sent;
     MUTEX_UNLOCK_V(M_wait_mutex);
 
     /* Wait on queue to finish ... 
@@ -318,7 +373,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -E               Persist only\n");
     fprintf(stderr, "  -R <msgnum>      Number of requests (time or nr first to stop)\n");
     fprintf(stderr, "  -T <tout_sec>    Initiate global transaction for XATMI calls\n");
-   
+    fprintf(stderr, "  -I               Wait for client notification\n");
 }
 
 /**
@@ -353,7 +408,7 @@ expublic int main( int argc, char** argv )
      */
     M_buftype = ndrx_get_buffer_descr("UBF", NULL);
 
-    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:T:")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:T:I")) != -1)
     {
         switch (c)
         {
@@ -420,6 +475,9 @@ expublic int main( int argc, char** argv )
             case 'T':
                 M_tran = atoi(optarg);
                 break;
+            case 'I':
+                M_notify_mode = EXTRUE;
+                break;
             default:
                 NDRX_LOG(log_error, "Unknown option %c", c);
                 usage(argv[0]);
@@ -447,6 +505,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_enqonly=[%d]", M_autoq);
     NDRX_LOG(log_info, "M_numreq=[%ld]", M_numreq);
     NDRX_LOG(log_info, "M_tran=[%d]", M_tran);
+    NDRX_LOG(log_info, "M_notify_mode=[%d]", M_notify_mode);
     
     /* allocate the buffer & fill with random data */
     
@@ -503,6 +562,11 @@ expublic int main( int argc, char** argv )
         
         M_msgsize=Bused((UBFH *)M_master_buf);
     }
+    else if (M_notify_mode)
+    {
+        NDRX_LOG(log_error, "Notify (-I) mode only supported on UBF buffers!");
+        EXFAIL_OUT(ret);
+    }
     
     if (!getenv("NDRX_BENCH_FILE"))
     {
@@ -527,6 +591,9 @@ expublic int main( int argc, char** argv )
             EXFAIL_OUT(ret);
         }
         
+        /* just in anty case... */
+        tpterm();
+        
         for (i=0; i<M_nr_threads; i++)
         {
             if ( fork () == 0 ) /* Child Writer */
@@ -534,14 +601,6 @@ expublic int main( int argc, char** argv )
                 int finish=EXFALSE;
                 parent=EXFALSE;
                 
-                /* let parent to complete... forking */
-                tpterm();
-                if (EXSUCCEED!=tpinit(NULL))
-                {
-                    NDRX_LOG(log_error, "Failed to init: %s", tpstrerror(tperrno));
-                    userlog("Failed to init: %s", tpstrerror(tperrno));
-                    EXFAIL_OUT(ret);
-                }
                 sleep(1);
                 
                 ndrx_stopwatch_reset(&w);

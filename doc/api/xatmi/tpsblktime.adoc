@@ -1,0 +1,94 @@
+TPSBLKTIME(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tpsblktime - Set timeout configuration for ATMI library
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpsblktime(int 'tout', long 'flags');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Configure timeout for any XATMI IPC calls. This affect the sending and receiving parts of the IPC.
+This functions allows to control timeout settings on per thread context basis. 
+The 'tout' is specified in seconds. Note that for *SystemV* poller, precision is 
+configured with *NDRX_SCANUNIT* setting. For all other pollers (e.g. *epoll*, *svapoll*), precision
+is as provided by operating system for timed system calls (normally expected in milliseconds).
+
+'tout' value must be non negative number. Value *0* cancels particular setting. When XATMI IPC is
+performed, the timeout value used is resolved in the following order:
+
+1. Use tpsblktime() + *TPBLK_NEXT*, if applies for the given API and is set.
+
+2. Use tpsblktime() + *TPBLK_ALL*, if set.
+
+3. Use *tptoutset(3)* setting (process wide), if set.
+
+4. Use *NDRX_OUT* setting (process wide), from environment configuration.
+
+Per process timeout configuration may be applied with *tptoutset(3)* Enduro/X call.
+
+*Valid flags*
+
+*TPBLK_ALL* apply timeout setting for any XATMI call, applied for current XATMI context associated
+with the current thread.
+
+*TPBLK_NEXT* apply timeout setting for certain XATMI API calls (see list bellow). After the API
+call value is canceled. Note that these APIs cancels the setting, even if API call did fail (e.g.
+invalid arguments).
+
+TPBLK_NEXT supported APIs
+-------------------------
+
+Following APIs processes the *TPBLK_NEXT*: 
+
+. *tpcall(3)* - setting applies to sending and receiving part.
+
+. *tpacall(3)* - applies to sending part.
+
+. *tpgetrply(3)* - applies to receiving part.
+
+
+*Note:* APIs not listed above, does not process *TPBLK_NEXT* and does not cancel it.
+
+
+RETURN VALUE
+------------
+On success, *tpsblktime()* return zero; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* 'tout' parameter is negative number. 'flags' is not *TPBLK_ALL* or *TPBLK_NEXT*.
+
+
+EXAMPLE
+-------
+See *atmitest/test051_settout/atmiclt51_blk.c* for sample code.
+    
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpgblktime(3)* *tptoutget(3)* *ex_env(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

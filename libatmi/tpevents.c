@@ -150,7 +150,8 @@ expublic long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long
     
     snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVSUBS, nodeid);
     
-    if (EXFAIL!=(ret=tpcall(tmpsvc, (char *)p_ub, 0L, &ret_buf, &ret_len, flags)))
+    if (EXFAIL!=(ret=ndrx_tpcall(tmpsvc, (char *)p_ub, 0L, &ret_buf, &ret_len, flags,
+            NULL, 0, 0, 0, 0, 0, 0)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }
@@ -212,8 +213,8 @@ expublic long ndrx_tpunsubscribe(long subscription, long flags)
     }
 
     snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, nodeid);
-    if (EXFAIL!=(ret=tpcall(tmpsvc, (char *)p_ub, 0L, 
-            &ret_buf, &ret_len, flags)))
+    if (EXFAIL!=(ret=ndrx_tpcall(tmpsvc, (char *)p_ub, 0L, 
+            &ret_buf, &ret_len, flags, NULL, 0, 0, 0, 0, 0, 0)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }

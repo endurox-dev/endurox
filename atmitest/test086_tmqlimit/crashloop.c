@@ -66,10 +66,10 @@ typedef struct
 
 /**
  * Crashloop test
- * @param maxmsg
+ * @param qname queue name for crash loop
  * @return EXSUCCEED/EXFAIL
  */
-expublic int basic_crashloop(void)
+expublic int basic_crashloop(char *qname)
 {
     int ret = EXSUCCEED;
     TPQCTL qc;
@@ -79,6 +79,7 @@ expublic int basic_crashloop(void)
     long num;
     UBFH *p_ub = NULL;
     test_result_t rsp[MAX_TEST];
+    char cmd[PATH_MAX+1];
     /* run test for 10 min... */
     ndrx_stopwatch_t w;
     
@@ -99,7 +100,7 @@ expublic int basic_crashloop(void)
         /* enq */
         memset(&qc, 0, sizeof(qc));
         
-        NDRX_ASSERT_TP_OUT((EXSUCCEED==tpenqueue("MYSPACE", "ERROR", &qc, 
+        NDRX_ASSERT_TP_OUT((EXSUCCEED==tpenqueue("MYSPACE", qname, &qc, 
                 (char *)p_ub, 0, 0L)), "Failed to enq");
     }
     
@@ -131,8 +132,9 @@ expublic int basic_crashloop(void)
 
     /* let tmqueue to boot back: */
     sleep(10);
-    NDRX_LOG(log_error, "xadmin mqch -n1 -i 100 -qERROR,autoq=n"); 
-    NDRX_ASSERT_VAL_OUT(EXSUCCEED==system("xadmin mqch -n1 -i 100 -qERROR,autoq=n"), "system() failed");
+    snprintf(cmd, sizeof(cmd), "xadmin mqch -n1 -i 100 -q%s,autoq=n", qname);
+    NDRX_LOG(log_error, "%s", cmd);
+    NDRX_ASSERT_VAL_OUT(EXSUCCEED==system(cmd), "system() failed");
     
     NDRX_LOG(log_error, "xadmin mqlc");
     NDRX_ASSERT_VAL_OUT(EXSUCCEED==system("xadmin mqlc"), "system() failed");
@@ -156,7 +158,7 @@ expublic int basic_crashloop(void)
         p_ub = NULL;
         
         /* verify req */
-        NDRX_ASSERT_TP_OUT((EXSUCCEED==tpdequeue("MYSPACE", "ERROR", &qc, (char **)&p_ub, &olen, 0)), 
+        NDRX_ASSERT_TP_OUT((EXSUCCEED==tpdequeue("MYSPACE", qname, &qc, (char **)&p_ub, &olen, 0)), 
                 "Must be OK at loop %ld", i);
         
         NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bget(p_ub, T_STRING_FLD, 0, tmpbuf, NULL)), 
@@ -170,7 +172,7 @@ expublic int basic_crashloop(void)
     
     /* no any extra msgs... */
     memset(&qc, 0, sizeof(qc));
-    NDRX_ASSERT_TP_OUT((EXFAIL==tpdequeue("MYSPACE", "ERROR", &qc, (char **)&p_ub, &olen, 0)), 
+    NDRX_ASSERT_TP_OUT((EXFAIL==tpdequeue("MYSPACE", qname, &qc, (char **)&p_ub, &olen, 0)), 
                 "Must fail!");
     NDRX_ASSERT_VAL_OUT((QMENOMSG==qc.diagnostic), "Invalid diagnostics code: %ld", qc.diagnostic);
     
