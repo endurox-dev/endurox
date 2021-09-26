@@ -51,8 +51,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate int M_maxmsgsize_loaded = EXFALSE; /* Is config loaded? */
-exprivate long M_maxmsgsize = EXFAIL; /* Max message size */
+exprivate int volatile M_maxmsgsize_loaded = EXFALSE; /**< Is config loaded? */
+exprivate long volatile M_maxmsgsize = EXFAIL; /**< Max message size */
 exprivate MUTEX_LOCKDECL(M_maxmsgsize_loaded_lock);
 /*---------------------------Prototypes---------------------------------*/
 
