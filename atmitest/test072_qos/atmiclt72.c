@@ -99,7 +99,7 @@ int main(int argc, char** argv)
         }    
 
         /* do the sync call... */
-        if (EXFAIL == tpacall(argv[1], (char *)p_ub, 0L, TPNOREPLY))
+        if (EXFAIL == tpacall(argv[1], (char *)p_ub, 0L, TPNOREPLY|TPNOTIME))
         {
             NDRX_LOG(log_error, "%s failed: %s", argv[1], tpstrerror(tperrno));
             EXFAIL_OUT(ret);
@@ -112,8 +112,8 @@ int main(int argc, char** argv)
     /* wait for leftover from queue, if service was unable to cope with the traffic */
     ndrx_stopwatch_reset(&w);
     
-    /* wait 300 sec... , tout is 310...*/
-    while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 300)
+    /* wait 500 sec... , tout is 340...*/
+    while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 500)
     {
         NDRX_LOG(log_warn, "Waiting sent=%ld got=%ld for queues to flush at bridges... (spent: %lds)",
                 sentread, sent, t);
