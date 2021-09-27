@@ -563,7 +563,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     memset(call, 0, sizeof(tp_command_call_t));
      
         
-    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (data, 0, call->data, 
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (data, len, call->data, 
             &data_len, flags, 0))
     {
         /* not good - error should be already set */
