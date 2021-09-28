@@ -36,6 +36,14 @@ It is safe to run the tools at the any time, as during the normal transaction
 operations logs exist in corresponding tmsrv instances, and thus no rollback
 is performed.
 
+If recovery run is done during the transaction processing, it might be possible,
+that *tmrecovercl*/*tmrecoversv* debug logs might contain false messages
+that orphan rollbacks has happened. This is due to race condition between
+recovery tool and any in progress transaction which is normally committed or
+aborted i.e. at the momment when recover tool asked resources for transaction
+listings transaction did exist, but at momment when it asked for status to *tmsrv*
+for transaction status, the transaction was already completed, thus logs was
+removed.
 
 SERVER OPTIONS
 --------------
