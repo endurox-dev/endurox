@@ -61,14 +61,6 @@ xadmin killall atmiclt0_ 2>/dev/null
 
 RET=0
 
-# ATMI unit
-./atmiunit0
-TMP=$?
-if [ $TMP != 0 ]; then
-    echo "Failed to start ./atmiunit0"
-    RET=-1
-fi
-
 # check locking..
 ./atmiclt0_locks
 TMP=$?

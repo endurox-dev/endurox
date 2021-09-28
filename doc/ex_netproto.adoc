@@ -726,9 +726,12 @@ in range from *1* - *7*. Tag '0x100F' ('msg_type') is set to *A*.
 
 |0x116D |name          |STRING0..30    |Mand |N/A| 1,3,4 |Service name to be called.
 
+|0x1177 |reply_to          |STRING0..30    |Mand |N/A| 1,3,4 |Service name to be called.
+
+
 |=========================================================
 
-Fields for non applicable message fields value shall be empty string or 0 integer.
+Fields for non applicable commands/messages shall be empty string or 0 integer.
 
 .XATMI call
 |=========================================================
