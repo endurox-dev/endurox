@@ -708,7 +708,7 @@ in range from *1* - *7*. Tag '0x100F' ('msg_type') is set to *A*.
 .XATMI call
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Applicable command_id | Description
-|0x1055 |stdhdr         |STDHDR1..PMSGMAX |Mand| N/A| Contains *command_id*:
+|0x1055 |stdhdr        |STDHDR1..PMSGMAX |Mand| N/A| Contains *command_id*:
 
 *1* - tpcall/tpacall message.
 
@@ -726,9 +726,17 @@ in range from *1* - *7*. Tag '0x100F' ('msg_type') is set to *A*.
 
 |0x116D |name          |STRING0..30    |Mand |N/A| 1,3,4 |Service name to be called.
 
-|0x1177 |reply_to          |STRING0..30    |Mand |N/A| 1,3,4 |Service name to be called.
+|0x1177 |reply_to      |STRING0..30    |Mand |N/A| 1,2,3,4,6,7 | Caller queue identifier.
 
+For *command_id* *1*, *2*, *3*, *4* - call originator queue id.
+ 
+For *command_id* *3*,*5*,*6* - other peer queue id.
 
+|0x1181 |callstack     |STRING1..32    |Mand |N/A|Any|From left to right. Each byte
+indicates the Enduro/X cluster node ide from which message was forwarded to next node.
+When tpcall()/tpforward() or tpconnect() is made from one node to another, the source node
+number (NDRX_NODEID) is appended to callstack. When reply message is processed (e.g. tpreturn),
+the closest to the left connected node of the current node is used to deliver reply back.
 |=========================================================
 
 Fields for non applicable commands/messages shall be empty string or 0 integer.
