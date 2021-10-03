@@ -708,13 +708,13 @@ in range from *1* - *7*. Tag '0x100F' ('msg_type') is set to *A*.
 .XATMI call
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Applicable command_id | Description
-|0x1055 |stdhdr        |STDHDR1..PMSGMAX |Mand| N/A| Contains *command_id*:
+|0x1055 |stdhdr        |STDHDR1..PMSGMAX |Mand| N/A| Any|Contains *command_id*:
 
 *1* - tpcall/tpacall message.
 
 *2* - tpreturn message.
 
-*3* - tpforward message.
+*3* - tpforward message (RFU, forwards are received as *command_id* *1*).
 
 *4* - tpconnect message.
 
@@ -735,7 +735,7 @@ For *command_id* *3*,*5*,*6* - other peer queue id.
 |0x1181 |callstack     |STRING1..32    |Mand |N/A|Any|From left to right. Each byte
 indicates the Enduro/X cluster node ide from which message was forwarded to next node.
 When tpcall()/tpforward() or tpconnect() is made from one node to another, the source node
-number (NDRX_NODEID) is appended to callstack. When reply message is processed (e.g. tpreturn),
+number (*NDRX_NODEID*) is appended to callstack. When reply message is processed (e.g. tpreturn),
 the closest to the left connected node of the current node is used to deliver reply back.
 
 |0x118B|my_id|STRING1..96|Cond|N/A|Any|Process identifier in message originating node.
@@ -743,7 +743,7 @@ See bellow myid field format.
 
 Mandatory for *command_id*: *1*,*4*. For other commands, it is optional/empty field.
 
-|0x1195|sysflags|LONG1..20|Mand|Any| Bitwise ORed flags of:
+|0x1195|sysflags|LONG1..20|Mand|0|Any|Bitwise ORed flags of:
 
 *0x00000001* - internal system error. Used in *command_id* value *2* (tpreturn). If flag
 is set tag *0x11B3* is loaded with XATMI error code that shall be returned to the caller,
@@ -753,40 +753,12 @@ server for *tpconnect(3)* did not accept the connection.
 *0x00000002* - used by *command_id* *2*, to indicate that server has performed return from
 the conversation.
 
+*0x00000100* - marking that auto-transaction is started, and call receiver (*command_id* *1*)
+becomes auto-transaction owner.
+
 |=========================================================
 
 Fields for non applicable commands/messages shall be empty string or 0 integer.
-
-.XATMI call
-|=========================================================
-|TLV TAG | Name | Format | Cond | Default value | Description
-
-|0x116D,  "name",      OFSZ(tp_command_call_t,name),     EXF_STRING, XFLD, 0, XATMI_SERVICE_NAME_LENGTH},
-|0x1177,  "reply_to",  OFSZ(tp_command_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
-|0x1181,  "callstack", OFSZ(tp_command_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
-|0x118B,  "my_id",     OFSZ(tp_command_call_t,my_id),    EXF_STRING, XFLD, 0, NDRX_MAX_ID_SIZE},
-
-|0x1195,  "sysflags",  OFSZ(tp_command_call_t,sysflags), EXF_LONG,   XFLD, 1, 20},
-|0x119F,  "cd",        OFSZ(tp_command_call_t,cd),       EXF_INT,    XFLD, 1, 10},
-|0x11A9,  "rval/usr1", OFSZ(tp_command_call_t,rval),     EXF_INT,    XFLD, 1, 10},
-|0x11B3,  "rcode/usr2",OFSZ(tp_command_call_t,rcode),    EXF_LONG,   XFLD, 1, 20},
-|0x11B4,  "user3",     OFSZ(tp_command_call_t,user3),    EXF_INT,    XFLD, 1, 10},
-|0x11B5,  "user4",     OFSZ(tp_command_call_t,user4),    EXF_LONG,   XFLD, 1, 20},
-|0x11B6,  "clttout",   OFSZ(tp_command_call_t,clttout),  EXF_INT,   XFLD, 1, 10},
-|0x11BD,  "extradata", OFSZ(tp_command_call_t,extradata),EXF_STRING, XFLD, 0, 31},
-|0x11C7,  "flags",     OFSZ(tp_command_call_t,flags),    EXF_LONG,   XFLD, 1, 20},
-|0x11D1,  "timestamp", OFSZ(tp_command_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
-|0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
-|0x11DC,  "msgseq",    OFSZ(tp_command_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
-|0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 40, 40},
-|0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
-|0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 0, (NDRX_XID_SERIAL_BUFSIZE+1)},
-|0x120D,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 0, 6},
-|0x1217,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 0, 6},
-|0x1221,  "tmsrvid", OFSZ(tp_command_call_t, tmsrvid), EXF_SHORT,   XFLD, 0, 6},
-|0x122B,  "tmknownrms",OFSZ(tp_command_call_t,tmknownrms),    EXF_STRING, XFLD, 0, (NDRX_MAX_RMS+1)},
-|0x1235,  "tmtxflags", OFSZ(tp_command_call_t, tmtxflags), EXF_SHORT,   XFLD, 1, 1},
-|=========================================================
 
 
 === TP Notify / TP Broadcast message block
@@ -797,6 +769,8 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 ...
 
 ==== MYID field format
+...
+
 
 ==== Example message
 
