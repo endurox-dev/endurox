@@ -737,6 +737,22 @@ indicates the Enduro/X cluster node ide from which message was forwarded to next
 When tpcall()/tpforward() or tpconnect() is made from one node to another, the source node
 number (NDRX_NODEID) is appended to callstack. When reply message is processed (e.g. tpreturn),
 the closest to the left connected node of the current node is used to deliver reply back.
+
+|0x118B|my_id|STRING1..96|Cond|N/A|Any|Process identifier in message originating node.
+See bellow myid field format.
+
+Mandatory for *command_id*: *1*,*4*. For other commands, it is optional/empty field.
+
+|0x1195|sysflags|LONG1..20|Mand|Any| Bitwise ORed flags of:
+
+*0x00000001* - internal system error. Used in *command_id* value *2* (tpreturn). If flag
+is set tag *0x11B3* is loaded with XATMI error code that shall be returned to the caller,
+i.e. value becomes a *tperrno* result. This value maybe sent also in *command_id* *5*, when
+server for *tpconnect(3)* did not accept the connection.
+
+*0x00000002* - used by *command_id* *2*, to indicate that server has performed return from
+the conversation.
+
 |=========================================================
 
 Fields for non applicable commands/messages shall be empty string or 0 integer.
@@ -749,6 +765,7 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 |0x1177,  "reply_to",  OFSZ(tp_command_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
 |0x1181,  "callstack", OFSZ(tp_command_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
 |0x118B,  "my_id",     OFSZ(tp_command_call_t,my_id),    EXF_STRING, XFLD, 0, NDRX_MAX_ID_SIZE},
+
 |0x1195,  "sysflags",  OFSZ(tp_command_call_t,sysflags), EXF_LONG,   XFLD, 1, 20},
 |0x119F,  "cd",        OFSZ(tp_command_call_t,cd),       EXF_INT,    XFLD, 1, 10},
 |0x11A9,  "rval/usr1", OFSZ(tp_command_call_t,rval),     EXF_INT,    XFLD, 1, 10},
@@ -778,6 +795,8 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 *Type code: TPNOTIF*
 
 ...
+
+==== MYID field format
 
 ==== Example message
 
