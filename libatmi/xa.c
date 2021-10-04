@@ -797,7 +797,7 @@ out:
  */
 expublic int atmi_xa_prepare_entry(XID *xid, long flags)
 {
-int ret = EXSUCCEED;
+    int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_prepare_entry");
@@ -805,7 +805,15 @@ int ret = EXSUCCEED;
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
-        NDRX_LOG(log_error, "xa_prepare_entry - fail: %d [%s]", 
+        int lev=log_error;
+        
+        /* no special log needed! */
+        if (XA_RDONLY==ret)
+        {
+            lev = log_debug;
+        }
+        
+        NDRX_LOG(lev, "xa_prepare_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_prepare_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
