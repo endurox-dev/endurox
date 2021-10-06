@@ -594,6 +594,20 @@ Under the tag '0x102D' (buf) follows the time sync message:
 - CMDCALL tag 0x1073 (msg_type) is set to *13*
 
 |0x10AF |time |NTIMER |Mand |N/A |Local monotonic time.
+|0x10B0|mode|INT1|Mand| Following values possible:
+
+*1* - Async clock data, used at connection establishment.
+
+*2* - Synchronous clock data request.
+
+*3* - Synchronous Reply on clock data request for incoming mode *2* message.
+
+|0x10B1|seq|LONG1..20|Mand|Call sequence number. In case if *mode* tag is *2*,
+the value must be echo in message of *mode* *3*.
+|0x10B2|orig_nodeid|INT1..3|Mand|Message originating node id. In case of *mode* *3*
+message, it must be echo from mode *2* message.
+|0x10B3|orig_timestamp|LONG1..20|Mand|Message originating unix epoch timestamp
+in seconds. In case of *mode* *3* message, it must be echo from mode *2* message.
 |=========================================================
 
 
@@ -767,12 +781,21 @@ only if tag *0x12DF* does not contain *0x00000004* (*TPNOREPLY*) flag.
 |0x11A9|rval/usr1|INT1..10|Mand|0|Any|For tpreturn command used to transport
 *rval* (values of *TPSUCCESS* (*0x00000002*), *TPFAIL* (*0x00000001*)), 
 for other commands used as optional *user data 1*. Currently is used
-by Enduro/X cache eventing (e.g. microseconds for cache data).
+by Enduro/X cache events (e.g. microseconds for cache data).
 
 |0x11B3|rcode/usr2|LONG1..20|Mand|0|Any|For tpreturn command used to transport
 *rcode*. For other messages functions as custom *user data 2*. Currently is used
-by Enduro/X cache eventing (e.g. epoch seconds for cache data).
-
+by Enduro/X smart cache events (e.g. epoch seconds for cache data).
+|0x11B4|user3|INT1..10|Mand|0|Any|Custom data associated with the message.
+For smart cache reset events indicates *tperrno* to be saved.
+|0x11B5|user4|LONG1..20|Mand|0|Any|For smart cache events indicates the
+*tpurcode* to be cached.
+|0x11B6|clttout|INT1..10|Mand|N/A|1,4|Indicates number of seconds in which 
+XATMI client (caller) will generate *TPETIME* error. This flag is used only in
+case if flag *0x00000020* (*TPNOTIME*) is not set in tag *0x11C7*.
+|0x11BD|extradata|STRING0..41|Empty|Any|Extra call data. Currently Enduro/X uses
+this for:
+- Event delivery (?)
 |=========================================================
 
 Fields for non applicable commands/messages shall be empty string or 0 integer.
@@ -793,6 +816,10 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 ...
 
 ===== Conversational session
+
+...
+
+===== Events
 
 ...
 

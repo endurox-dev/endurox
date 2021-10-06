@@ -63,7 +63,7 @@
 MUTEX_LOCKDECL(M_timediff_lock);
 exprivate ndrx_stopwatch_t M_timediff_sent; /**< for roundtrip calc                     */
 exprivate time_t M_timediff_tstamp;      /**< UTC tstamp when msg was sent  for matching*/
-exprivate unsigned long M_seq;         /**< Last sequence sent                          */
+exprivate unsigned long M_seq=0;         /**< Last sequence sent                        */
 
 /**
  * Connection infos
