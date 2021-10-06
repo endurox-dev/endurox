@@ -756,9 +756,49 @@ the conversation.
 *0x00000100* - marking that auto-transaction is started, and call receiver (*command_id* *1*)
 becomes auto-transaction owner.
 
+|0x119F|cd|INT1..5|Mand|0|1,2,4,5,7|This is connection id. Used as correlator to link
+request with reply or identify conversational session. For tpcall commands used
+only if tag *0x12DF* does not contain *0x00000004* (*TPNOREPLY*) flag. 
+
+- For *command_id* *1* (tpcall) and *2* (tpreturn) minimum is *1* and maximum is *16384*.
+
+- For conversational data minimum is *0* and maximums is *9*.
+
+|0x11A9|rval/usr1|INT1..10|Mand|0|Any|For tpreturn command used to transport
+*rval* (values of *TPSUCCESS* (*0x00000002*), *TPFAIL* (*0x00000001*)), 
+for other commands used as optional *user data 1*. Currently is used
+by Enduro/X cache eventing (e.g. microseconds for cache data).
+
+|0x11B3|rcode/usr2|LONG1..20|Mand|0|Any|For tpreturn command used to transport
+*rcode*. For other messages functions as custom *user data 2*. Currently is used
+by Enduro/X cache eventing (e.g. epoch seconds for cache data).
+
 |=========================================================
 
 Fields for non applicable commands/messages shall be empty string or 0 integer.
+
+
+==== MYID field format
+...
+
+==== Workflows
+...
+
+===== Syncrhouns tpcall
+
+...
+
+===== Asyncrhous call
+
+...
+
+===== Conversational session
+
+...
+
+==== Example message
+
+...
 
 
 === TP Notify / TP Broadcast message block
@@ -768,9 +808,16 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 
 ...
 
-==== MYID field format
+==== Workflows
 ...
 
+===== Notify
+
+...
+
+===== Broadcast
+
+...
 
 ==== Example message
 
