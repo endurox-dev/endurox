@@ -152,7 +152,7 @@ static cproto_t M_cmd_br_time_sync_x[] =
     {TST, 0x10B0,  "mode",       OFSZ(cmd_br_time_sync_t,mode),             EXF_INT, XFLD, 1, 1},
     {TST, 0x10B1,  "seq",        OFSZ(cmd_br_time_sync_t,orig_seq),         EXF_LONG,XFLD, 1, 20},
     {TST, 0x10B2,  "orig_nodeid",OFSZ(cmd_br_time_sync_t,orig_nodeid),      EXF_INT, XFLD, 1, 3},
-    {TST, 0x11B3,  "orig_timestamp", OFSZ(cmd_br_time_sync_t,orig_timestamp),EXF_LONG,XFLD, 1, 20},
+    {TST, 0x10B3,  "orig_timestamp", OFSZ(cmd_br_time_sync_t,orig_timestamp),EXF_LONG,XFLD, 1, 20},
     {TST, EXFAIL}
 };
 
@@ -263,7 +263,7 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, 0x11B4,  "user3",     OFSZ(tp_command_call_t,user3),    EXF_INT,    XFLD, 1, 10},
     {TTC, 0x11B5,  "user4",     OFSZ(tp_command_call_t,user4),    EXF_LONG,   XFLD, 1, 20},
     {TTC, 0x11B6,  "clttout",   OFSZ(tp_command_call_t,clttout),  EXF_INT,   XFLD, 1, 10},
-    {TTC, 0x11BD,  "extradata", OFSZ(tp_command_call_t,extradata),EXF_STRING, XFLD, 0, 31},
+    {TTC, 0x11BD,  "extradata", OFSZ(tp_command_call_t,extradata),EXF_STRING, XFLD, 0, 41},
     {TTC, 0x11C7,  "flags",     OFSZ(tp_command_call_t,flags),    EXF_LONG,   XFLD, 1, 20},
     {TTC, 0x11D1,  "timestamp", OFSZ(tp_command_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
     {TTC, 0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
