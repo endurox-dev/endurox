@@ -711,12 +711,9 @@ image:ex_netproto_refresh.png[caption="Figure 5: ", title="REFRESH sequence diag
 *Type code: TPCALL*
 
 Tpcall message block is used for lot of XATMI messaging purposes. It services
-as call for *tpcall(3)*, *tpacall(3)*, 
-
-==== Example message
-
-Message starts with *NETCALL*. NETCALL tag '0x1019' ('command_id') is set to value
-in range from *1* - *7*. Tag '0x100F' ('msg_type') is set to *A*.
+as call for *tpcall(3)*, *tpacall(3)*, Message starts with *NETCALL*. 
+NETCALL tag '0x1019' ('command_id') is set to value in range from *1* - *7*. 
+Tag '0x100F' ('msg_type') is set to *A*.
 
 .XATMI call
 |=========================================================
@@ -849,11 +846,11 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 ==== Workflows
 ...
 
-===== Syncrhouns tpcall
+===== Synchronous tpcall()
 
 ...
 
-===== Asyncrhous call
+===== Asynchronous call
 
 ...
 
@@ -867,7 +864,11 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 
 ==== Example message
 
-...
+tpcall() request:
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
 
 
 === TP Notify / TP Broadcast message block
@@ -875,7 +876,26 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 [[message-tpnotif]]
 *Type code: TPNOTIF*
 
-...
+Call is used to distribute broadcast and notification messages over the bridge
+connection. This message is utilized for *tpnotify(3)* and *tpbroadcast(3)* XATMI
+calls.
+
+Message starts with *NETCALL*.  NETCALL tag '0x1019' ('command_id') is set to
+value in range from *13* - *14*. Tag '0x100F' ('msg_type') is set to *N*.
+
+.TPNOTIF call
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Applicable command_id | Description
+|0x123F |stdhdr        |STDHDR1..PMSGMAX |Mand| N/A| Any|Contains *command_id*:
+
+*13* - *tpnotify(3)* message.
+
+*14* - *tpbroadcast(3)* message.
+
+|0x1249 |destclient         |STRING1..96    |Mand |N/A| 13 |Client myid to which deliver
+the notification. 
+
+|=========================================================
 
 ==== Workflows
 ...
