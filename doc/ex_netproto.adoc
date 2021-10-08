@@ -742,7 +742,7 @@ For *command_id* *1*, *2*, *3*, *4* - call originator queue id.
  
 For *command_id* *3*,*5*,*6* - other peer queue id.
 
-|0x1181 |callstack     |STRING1..32    |Mand |N/A|Any|From left to right. Each byte
+|0x1181 |callstack     |STRING0..32    |Mand |N/A|Any|From left to right. Each byte
 indicates the Enduro/X cluster node ide from which message was forwarded to next node.
 When tpcall()/tpforward() or tpconnect() is made from one node to another, the source node
 number (*NDRX_NODEID*) is appended to callstack. When reply message is processed (e.g. tpreturn),
@@ -892,10 +892,44 @@ value in range from *13* - *14*. Tag '0x100F' ('msg_type') is set to *N*.
 
 *14* - *tpbroadcast(3)* message.
 
-|0x1249 |destclient         |STRING1..96    |Mand |N/A| 13 |Client myid to which deliver
+|0x1249 |destclient         |STRING0..96    |Mand |N/A| 13 |Client myid to which deliver
 the notification. 
-
+|0x1253|nodeid|STRING0..60|Mand|Empty|14|Cluster node id ('lmid' argument of *tpbroadcast(3)*).
+|0x125D|nodeid_isnull|INT1|Mand|0|If set to *1*, indicates that nodeid is 
+part of brodcast matching. If no matching is used, value *0* must be used.
+|0x1267|usrname|STRING0..60|Mand|Empty|14| Target username used for broadcast.
+Currently not used, and shall be empty.
+|0x1271|usrname_isnull|INT1|Mand|0|14|If set to *1*, Indicates that *usrname* is 
+part of broadcast destination matching. If no matching is used, value *0* must be used.
+This is reserved for future use and shall be set to *0*.
+|0x127B|cltname|STRING0..60|Client binary naem used for broadcast matching.
+|0x1285|cltname_isnull|INT1|If set to *1* indicates that recipients shall
+be matched by process name. If set to *0* *cltname* matching is not used.
+|0x1299|reply_to|STRING0..128|
+|0x12A3|callstack|STRING0..32    |Mand |N/A|Any|From left to right. Each byte
+indicates the Enduro/X cluster node ide from which message was forwarded to next node.
+When tpcall()/tpforward() or tpconnect() is made from one node to another, the source node
+number (*NDRX_NODEID*) is appended to callstack. When reply message is processed (e.g. tpreturn),
+the closest to the left connected node of the current node is used to deliver reply back.
+|0x12AD|my_id|STRING0..96|Mand|N/A|Any|Call originator MYID
+|0x12B7|sysflags|LONG1..20|Mand|0|Any|RFU, System bitwise flags.
+Shall be set to *0*.
+|0x12C1|cd|INT1..5|Mand|0|Any|RFU, Call Descriptor. Shall be set to *0*.
+|0x12CB|rval|INT1..10|Mand|0|Any|RFU, return value. Shall be set to *0*.
+|0x12D5|rcode|LONG1..20|Mand|0|Any|RFU, return code. Shall be set to *0*.
+|0x12DF|flags|LONG1..20|Mand|0|Any|API bitwise flags used by 
+*tpnotify(3)* and *tpbroadcast(3)*, such as *TPNOBLOCK*, *TPNOTIME*,
+*TPSIGRSTRT*, *TPACK*, *TPREGEXMATCH*. See API descritpions and
+xatmi.h for constants.
+|0x12E9|timestamp|LONG1..20|
+|0x12F3|callseq|USHORT1..5|
+|0x12FD|msgseq|USHORT1..5|
+|0x1307|timer|NTIMER|
+|0x131B|data|MUBF|
+|0x1325|destnodeid|LONG1..20|
 |=========================================================
+
+Fields for non applicable commands/messages shall be empty string or 0 integer.
 
 ==== Workflows
 ...
