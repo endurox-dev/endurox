@@ -13,7 +13,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This is sepcial XATMI server shipped with Enduro/X in order to provide 
+This is special XATMI server shipped with Enduro/X in order to provide 
 common-configuration (ini file) parsing facilities to all programming languages 
 which are provided by Enduro/X. The idea behind the configuration server is that 
 it uses XATMI API (exposed as service) in order to get configuration section or 
@@ -27,11 +27,12 @@ XATMI service calls.
 	
 VARIABLE SUBSTITUTION
 ---------------------
-Several parameters in the ndrxconfig.xml file are processed via substitution 
-engine. Engine processes puts the environment variables or special functions
+cconfsrv engine processes environment variables or special functions
 in the placeholders. Placeholder is defined as ${ENV_VARIABLE} for environment
 variables and ${FUNC=[PARAMETER]} for functions. The value can be escaped with 
 \${some_value}. For list of functions please refer to *ndrxconfig.xml(5)* manpage.
+
+Substitution functions in values for the ini parameters (keys).
 
 API - get section
 -----------------
