@@ -888,13 +888,11 @@ Sequence of steps for typical conversational session:
 1. Node 1. sends *command_id* *4* (tpconnect()) to Node 2. The *0x1177* (*reply_to*)
 tag is filled with the client's conversation queue name.
 
-2.1. Node 2. sends *command_id* *6* accept message to Node 1. The MBUF reply buffer
+2. Node 2. sends *command_id* *6* accept message to Node 1. The MBUF reply buffer
 contains *STRING* buffer which contains local queue name which server has
-created for this particular conversation.
-
-2.2. If the Node 2. decides to reject the conversation for some reason, the
-*command_id* *6* must be sent back with tag *0x1195* (*sysflags*) containging
-the flag *0x00000001* (system error.)
+created for this particular conversation.  If the Node 2. decides to reject the conversation 
+for some reason, the *command_id* *6* must be sent back with 
+tag *0x1195* (*sysflags*) containging the flag *0x00000001* (system error).
 
 3. Node 1. (or Node 2.) depending on *flags* *TPRECVONLY* flag sends the data to other node
 with  *command_id* *5*. Tag *0x1177* (*reply_to*) contains the destination conversation queue
@@ -908,7 +906,7 @@ the *rval* either set to *TPSUCCESS* or *TPFAIL*, to indicate the status.
 
 Example client connects, sends a data to server, then server sends a data back to client and server returns:
 
-image:ex_netproto_conv.png[caption="Figure 6: ", title="Conversation session example",height=320]
+image:ex_netproto_conv.png[caption="Figure 6: ", title="Conversation session example"]
 
 ===== Events
 
@@ -1009,7 +1007,7 @@ Currently not used, and shall be empty.
 |0x1271|usrname_isnull|INT1|Mand|0|14|If set to *1*, Indicates that *usrname* is 
 part of broadcast destination matching. If no matching is used, value *0* must be used.
 This is reserved for future use and shall be set to *0*.
-|0x127B|cltname|STRING0..60|Mand|Empty|14|Client binary naem used for broadcast matching.
+|0x127B|cltname|STRING0..60|Mand|Empty|14|Client binary name used for broadcast matching.
 |0x1285|cltname_isnull|INT1|Mand|9|14|If set to *1* indicates that recipients shall
 be matched by process name. If set to *0* *cltname* matching is not used.
 |0x1299|reply_to|STRING0..128|Mand|N/A|Any|Caller queue identifier.
