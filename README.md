@@ -558,6 +558,8 @@ Feature #715
 
 - Version 7.5.34 released on 10/09/2021 (stable) Feature #726, eature #447, Bug #730
 
+- Version 8.0.1 released on 09/10/2021 (development) Support #63
+
 # Build configurations
 
 ## Configure make with: 
