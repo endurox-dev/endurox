@@ -54,6 +54,19 @@ may be configured to emit the zero length messages. If configured so, bridge wil
 wait corresponding idle messages too. If not received in configured time, the
 connection is restarted.
 
+== General message flow
+
+1. TCP/IP Connection is being established
+
+2. Each node sends it's local monotonic clock to other node with *TIMESYNC* message 
+(see <<message-timesync>>) and periodically continues to resynchronize.
+
+3. Each at start and later periodically sends service table updates to other node 
+with *REFRESH* messages (see <<message-refresh>>).
+
+4. Nodes start to send XATMI IPC data with *TPCALL* messages (see <<message-tpcall>>)
+or *TPNOTIF* messages (see <<message-tpnotif>>).
+
 == Message TLV Encoding rules
 
 Messages are encoded with:
@@ -478,7 +491,7 @@ must follow first and only once.
 |TLV TAG | Name | Format | Cond | Default value | Description
 |0x13B1 |vname |STRING0..33 |Mand |N/A | View name. Might be empty string
 For "emtpy" occurrences when embedded in UBF sub-field
-|0x13BB |vflags |UINT1 |Opt |0 |View flags. Not used and must be sent as *0*
+|0x13BB |vflags |UINT1 |Mand |0 |View flags. Not used and must be sent as *0*
 |=========================================================
 
 Following block repeats with each of the view field occurrence:
@@ -593,7 +606,7 @@ Under the tag '0x102D' (buf) follows the time sync message:
 - CMDCALL tag 0x1073 (msg_type) is set to *13*
 
 |0x10AF |time |NTIMER |Mand |N/A |Local monotonic time.
-|0x10B0|mode|INT1|Mand| Following values possible:
+|0x10B0|mode|INT1|Mand|N/A|Following values possible:
 
 *1* - Async clock data, used at connection establishment.
 
@@ -601,11 +614,11 @@ Under the tag '0x102D' (buf) follows the time sync message:
 
 *3* - Synchronous Reply on clock data request for incoming mode *2* message.
 
-|0x10B1|seq|LONG1..20|Mand|Call sequence number. In case if *mode* tag is *2*,
+|0x10B1|seq|LONG1..20|Mand|N/A|Call sequence number. In case if *mode* tag is *2*,
 the value must be echo in message of *mode* *3*.
-|0x10B2|orig_nodeid|INT1..3|Mand|Message originating node id. In case of *mode* *3*
+|0x10B2|orig_nodeid|INT1..3|Mand|N/A|Message originating node id. In case of *mode* *3*
 message, it must be echo from mode *2* message.
-|0x10B3|orig_timestamp|LONG1..20|Mand|Message originating unix epoch timestamp
+|0x10B3|orig_timestamp|LONG1..20|Mand|N/A|Message originating unix epoch timestamp
 in seconds. In case of *mode* *3* message, it must be echo from mode *2* message.
 |=========================================================
 
