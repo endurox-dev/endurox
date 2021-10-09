@@ -730,7 +730,7 @@ Tag '0x100F' ('msg_type') is set to *A*.
 
 *5* - conversational data.
 
-*6* - tpconnect accept reply message from server.
+*6* - tpconnect reply message from server (accept/reject).
 
 *7* - tpdiscon message.
 
@@ -738,9 +738,10 @@ Tag '0x100F' ('msg_type') is set to *A*.
 
 |0x1177 |reply_to      |STRING0..30    |Mand |N/A| 1,2,3,4,6,7 | Caller queue identifier.
 
-For *command_id* *1*, *2*, *3*, *4* - call originator queue id.
+For *command_id* *1*, *2*, *3*, *4*, *7* - call originator queue name.
  
-For *command_id* *3*,*5*,*6* - other peer queue id.
+For *command_id* *5*, *7* - for conversational data, this field indicates the queue
+to which data shall be sent (local recipient on destination node).
 
 |0x1181 |callstack     |STRING0..32    |Mand |N/A|Any|From left to right. Each byte
 indicates the Enduro/X cluster node ide from which message was forwarded to next node.
@@ -838,29 +839,87 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 
 
 ==== MYID field format
-...
+
+.Identifier formats
+|=========================================================
+|Type|Format|Example
+|Client|clt,<binary name>,<pid>,<context id>,<node id>|clt,atmiclt3,109966,1,1
+|Server|srv,<binary name>,<server id>,<pid>,<contextid>,<nodeid>|srv,atmisv3,10,109930,1,2
+|=========================================================
 
 ==== Global Transaction XID format
-...
+
+The XID transported over the bridge protocol is encoded base64 data:
+
+.Serialized XID format
+|=========================================================
+|Bytes|Data
+|0-3|Format ID, constant: *0x6194f7a1* or *0xa1f79461* depending
+on the source platform endianess.
+|4|global transaction identifier length, const *64*
+|5|branch qualifier length, const *64*
+|6-21|GUID of transaction
+|22|Resource manager ID (RMID)
+|23-24|Enduro/X cluster node id, network order
+|24-25|Enduro/X TMSRV server id on cluster node which manages the
+transaction.
+|=========================================================
 
 ==== Workflows
-...
+
+This section describes typical XATMI workflows.
 
 ===== Synchronous tpcall()
 
-...
+1. Bridge sends *command_id* *1* to Node 2.
+
+2. Node 2. sends reply back with *command_id* *2*. 
+
 
 ===== Asynchronous call
 
-...
+1. Node 1. sends *command_id* *1* to Node 2. Tag 0x11C7 (flags) contains flag *0x00000004*
+so that that reply is not required back.
 
 ===== Conversational session
 
-...
+Sequence of steps for typical conversational session:
+
+1. Node 1. sends *command_id* *4* (tpconnect()) to Node 2. The *0x1177* (*reply_to*)
+tag is filled with the client's conversation queue name.
+
+2.1. Node 2. sends *command_id* *6* accept message to Node 1. The MBUF reply buffer
+contains *STRING* buffer which contains local queue name which server has
+created for this particular conversation.
+
+2.2. If the Node 2. decides to reject the conversation for some reason, the
+*command_id* *6* must be sent back with tag *0x1195* (*sysflags*) containging
+the flag *0x00000001* (system error.)
+
+3. Node 1. (or Node 2.) depending on *flags* *TPRECVONLY* flag sends the data to other node
+with  *command_id* *5*. Tag *0x1177* (*reply_to*) contains the destination conversation queue
+name with the XATMI data loaded into *0x11F9*.
+
+4. If client has control it may terminate the conversation by sending 
+*command_id* *7* to the server.
+
+5. The server may terminate the conversation with *command_id* *2*, with
+the *rval* either set to *TPSUCCESS* or *TPFAIL*, to indicate the status.
+
+Example client connects, sends a data to server, then server sends a data back to client and server returns:
+
+image:ex_netproto_conv.png[caption="Figure 6: ", title="Conversation session example",height=320]
 
 ===== Events
 
-...
+Events are distributed to nodes, as single call. The *command_id* is set to *1*
+and reply of *command_id* *2* is required and tag *0x11B3* (*rcode*) shall be loaded with
+number of dispatched messages to the subscribed servers.
+
+The service which shall be called on the destination node is *TPEVDOPOST<%03hd - nodeid>*
+which is responsible for dispatching events locally on the node.
+
+Event name is loaded into tag *0x11BD* (extradata).
 
 ==== Example message
 
@@ -983,19 +1042,49 @@ data is not used, NULL typed buffer must be sent
 Fields for non applicable commands/messages shall be empty string or 0 integer.
 
 ==== Workflows
-...
+
+This secion descirbes core message flow using for notifications.
 
 ===== Notify
 
-...
+The notifications are delivered in asyncrhous way, no reply is required. The
+*command_id* shall be set to *13*.
 
 ===== Broadcast
 
-...
+The notifications are delivered in asyncrhous way, no reply is required. The
+*command_id* shall be set to *14*.
 
 ==== Example message
 
->>>TODO<<<
+*tpbroadcast(3)*  message example
+
+--------------------------------------------------------------------------------
+
+  0000  10 05 00 00 00 06 01 77 96 16 84 90 10 0f 00 00  .......w........
+  0010  00 01 4e 10 19 00 00 00 02 01 40 10 2d 00 00 01  ..N.......@.-...
+  0020  35 12 3f 00 00 00 19 10 37 00 00 00 02 01 40 10  5.?.....7.....@.
+  0030  41 00 00 00 04 00 00 00 00 10 4b 00 00 00 01 00  A.........K.....
+  0040  12 49 00 00 00 00 12 53 00 00 00 00 12 5d 00 00  .I.....S.....]..
+  0050  00 01 10 12 67 00 00 00 00 12 71 00 00 00 01 10  ....g.....q.....
+  0060  12 7b 00 00 00 0a 61 74 6d 69 63 6c 74 41 33 39  .{....atmicltA39
+  0070  12 85 00 00 00 01 00 12 99 00 00 00 23 2f 64 6f  ............#/do
+  0080  6d 31 2c 63 6c 74 2c 72 65 70 6c 79 2c 61 74 6d  m1,clt,reply,atm
+  0090  69 63 6c 74 41 33 39 2c 31 33 30 31 33 37 2c 31  icltA39,130137,1
+  00a0  12 a3 00 00 00 00 12 ad 00 00 00 19 63 6c 74 2c  ............clt,
+  00b0  61 74 6d 69 63 6c 74 41 33 39 2c 31 33 30 31 33  atmicltA39,13013
+  00c0  37 2c 31 2c 31 12 b7 00 00 00 01 00 12 c1 00 00  7,1,1...........
+  00d0  00 01 00 12 cb 00 00 00 01 00 12 d5 00 00 00 01  ................
+  00e0  00 12 df 00 00 00 04 83 88 60 80 12 e9 00 00 00  .........`......
+  00f0  06 01 63 35 62 07 80 12 f3 00 00 00 01 00 12 fd  ..c5b...........
+  0100  00 00 00 01 00 13 07 00 00 00 14 00 00 00 00 00  ................
+  0110  00 00 02 50 88 00 00 00 00 00 02 97 15 27 08 13  ...P.........'..
+  0120  1b 00 00 00 2a 13 2f 00 00 00 01 00 13 43 00 00  ....*./......C..
+  0130  00 1d 10 ff 00 00 00 05 01 67 77 32 21 11 45 00  .........gw2!.E.
+  0140  00 00 0c 41 41 30 31 30 30 30 30 30 30 30 31 13  ...AA0100000001.
+  0150  25 00 00 00 01 20                                %.... 
+
+--------------------------------------------------------------------------------
 
 ////////////////////////////////////////////////////////////////
 The index is normally left completely empty, it's contents being
