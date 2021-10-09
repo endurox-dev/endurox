@@ -815,7 +815,7 @@ Value must be in range of 0..65536.
 process is is multi-threaded, message reordering might happen. In each conversational
 data direction this keeps counter keeps to increment (by overlapping to 0).
 Value must be in range of 0..65536.
-|0x11E5|timer|NTIMER|Mand|N/A|Any|Local monotinic time when the call was prepared/sent from
+|0x11E5|timer|NTIMER|Mand|N/A|Any|Local monotonic time when the call was prepared/sent from
 the node to other node.
 |0x11F9|data|MUBF|Mand|N/A|Any|Associated XATMI data buffer with the call. In case if
 data is not used, NULL typed buffer must be sent
@@ -864,9 +864,57 @@ Fields for non applicable commands/messages shall be empty string or 0 integer.
 
 ==== Example message
 
-tpcall() request:
+tpcall() request, "EXBENCH" service request
 
 --------------------------------------------------------------------------------
+  0000  10 05 00 00 00 06 01 77 96 16 84 90 10 0f 00 00  .......w........
+  0010  00 01 41 10 19 00 00 00 01 10 10 2d 00 00 01 29  ..A........-...)
+  0020  11 59 00 00 00 18 10 37 00 00 00 01 10 10 41 00  .Y.....7......A.
+  0030  00 00 04 00 00 00 00 10 4b 00 00 00 01 00 11 6d  ........K......m
+  0040  00 00 00 07 45 58 42 45 4e 43 48 11 77 00 00 00  ....EXBENCH.w...
+  0050  23 2f 74 65 73 74 31 2c 63 6c 74 2c 72 65 70 6c  #/test1,clt,repl
+  0060  79 2c 65 78 62 65 6e 63 68 63 6c 2c 31 30 33 39  y,exbenchcl,1039
+  0070  34 38 2c 32 11 81 00 00 00 00 11 8b 00 00 00 18  48,2............
+  0080  63 6c 74 2c 65 78 62 65 6e 63 68 63 6c 2c 31 30  clt,exbenchcl,10
+  0090  33 39 34 38 2c 32 2c 31 11 95 00 00 00 01 00 11  3948,2,1........
+  00a0  9f 00 00 00 03 16 38 20 11 a9 00 00 00 01 00 11  ......8 ........
+  00b0  b3 00 00 00 01 00 11 b4 00 00 00 01 00 11 b5 00  ................
+  00c0  00 00 01 00 11 b6 00 00 00 03 09 99 90 11 bd 00  ................
+  00d0  00 00 00 11 c7 00 00 00 01 00 11 d1 00 00 00 06  ................
+  00e0  01 63 37 74 46 90 11 db 00 00 00 01 01 11 dc 00  .c7tF...........
+  00f0  00 00 01 00 11 e5 00 00 00 14 00 00 00 00 00 00  ................
+  0100  00 07 99 57 00 00 00 00 00 00 94 81 31 74 11 f9  ...W........1t..
+  0110  00 00 00 0d 13 2f 00 00 00 01 00 13 43 00 00 00  ...../......C...
+  0120  00 12 03 00 00 00 00 12 0d 00 00 00 01 00 12 17  ................
+  0130  00 00 00 01 00 12 21 00 00 00 01 00 12 2b 00 00  ......!......+..
+  0140  00 00 12 35 00 00 00 01 00                       ...5.....
+
+--------------------------------------------------------------------------------
+
+
+tpcall() request, "EXBENCH" service return (echo the same data back in UBF)
+
+
+--------------------------------------------------------------------------------
+  0000  10 05 00 00 00 06 01 77 96 16 84 90 10 0f 00 00  .......w........
+  0010  00 01 41 10 19 00 00 00 01 20 10 2d 00 00 01 0a  ..A...... .-....
+  0020  11 59 00 00 00 18 10 37 00 00 00 01 20 10 41 00  .Y.....7.... .A.
+  0030  00 00 04 00 00 00 00 10 4b 00 00 00 01 00 11 6d  ........K......m
+  0040  00 00 00 00 11 77 00 00 00 23 2f 74 65 73 74 31  .....w...#/test1
+  0050  2c 63 6c 74 2c 72 65 70 6c 79 2c 65 78 62 65 6e  ,clt,reply,exben
+  0060  63 68 63 6c 2c 31 30 33 39 34 38 2c 32 11 81 00  chcl,103948,2...
+  0070  00 00 00 11 8b 00 00 00 00 11 95 00 00 00 01 00  ................
+  0080  11 9f 00 00 00 03 16 38 20 11 a9 00 00 00 01 20  .......8 ...... 
+  0090  11 b3 00 00 00 01 00 11 b4 00 00 00 01 00 11 b5  ................
+  00a0  00 00 00 01 00 11 b6 00 00 00 03 09 99 90 11 bd  ................
+  00b0  00 00 00 00 11 c7 00 00 00 01 00 11 d1 00 00 00  ................
+  00c0  06 01 63 37 74 46 90 11 db 00 00 00 01 01 11 dc  ..c7tF..........
+  00d0  00 00 00 01 00 11 e5 00 00 00 14 00 00 00 00 00  ................
+  00e0  00 00 07 99 57 00 00 00 00 00 00 94 81 31 74 11  ....W........1t.
+  00f0  f9 00 00 00 0d 13 2f 00 00 00 01 00 13 43 00 00  ....../......C..
+  0100  00 00 12 03 00 00 00 00 12 0d 00 00 00 01 00 12  ................
+  0110  17 00 00 00 01 00 12 21 00 00 00 01 00 12 2b 00  .......!......+.
+  0120  00 00 00 12 35 00 00 00 01 00                    ....5.....
 
 --------------------------------------------------------------------------------
 
@@ -895,17 +943,17 @@ value in range from *13* - *14*. Tag '0x100F' ('msg_type') is set to *N*.
 |0x1249 |destclient         |STRING0..96    |Mand |N/A| 13 |Client myid to which deliver
 the notification. 
 |0x1253|nodeid|STRING0..60|Mand|Empty|14|Cluster node id ('lmid' argument of *tpbroadcast(3)*).
-|0x125D|nodeid_isnull|INT1|Mand|0|If set to *1*, indicates that nodeid is 
+|0x125D|nodeid_isnull|INT1|Mand|0|14|If set to *1*, indicates that nodeid is 
 part of brodcast matching. If no matching is used, value *0* must be used.
 |0x1267|usrname|STRING0..60|Mand|Empty|14| Target username used for broadcast.
 Currently not used, and shall be empty.
 |0x1271|usrname_isnull|INT1|Mand|0|14|If set to *1*, Indicates that *usrname* is 
 part of broadcast destination matching. If no matching is used, value *0* must be used.
 This is reserved for future use and shall be set to *0*.
-|0x127B|cltname|STRING0..60|Client binary naem used for broadcast matching.
-|0x1285|cltname_isnull|INT1|If set to *1* indicates that recipients shall
+|0x127B|cltname|STRING0..60|Mand|Empty|14|Client binary naem used for broadcast matching.
+|0x1285|cltname_isnull|INT1|Mand|9|14|If set to *1* indicates that recipients shall
 be matched by process name. If set to *0* *cltname* matching is not used.
-|0x1299|reply_to|STRING0..128|
+|0x1299|reply_to|STRING0..128|Mand|N/A|Any|Caller queue identifier.
 |0x12A3|callstack|STRING0..32    |Mand |N/A|Any|From left to right. Each byte
 indicates the Enduro/X cluster node ide from which message was forwarded to next node.
 When tpcall()/tpforward() or tpconnect() is made from one node to another, the source node
@@ -921,12 +969,15 @@ Shall be set to *0*.
 *tpnotify(3)* and *tpbroadcast(3)*, such as *TPNOBLOCK*, *TPNOTIME*,
 *TPSIGRSTRT*, *TPACK*, *TPREGEXMATCH*. See API descritpions and
 xatmi.h for constants.
-|0x12E9|timestamp|LONG1..20|
-|0x12F3|callseq|USHORT1..5|
-|0x12FD|msgseq|USHORT1..5|
-|0x1307|timer|NTIMER|
-|0x131B|data|MUBF|
-|0x1325|destnodeid|LONG1..20|
+|0x12E9|timestamp|LONG1..20|Mand|N/A|Any|Unix epoch time stamp
+indicating when message was prepared.
+|0x12F3|callseq|USHORT1..5|Mand|0|Any|RFU. *0* shall be used.
+|0x12FD|msgseq|USHORT1..5|Mand|0|Any|RFU. *0* shall be used.
+|0x1307|timer|NTIMER|Mand|0|Any|Local monotonic time when the call was prepared/sent from
+the node to other node.
+|0x131B|data|MUBF|Mand|N/A|Any|Associated XATMI data buffer with the call. In case if
+data is not used, NULL typed buffer must be sent
+|0x1325|destnodeid|LONG1..20|Mand|N/A|Any|Destination cluster node id.
 |=========================================================
 
 Fields for non applicable commands/messages shall be empty string or 0 integer.
