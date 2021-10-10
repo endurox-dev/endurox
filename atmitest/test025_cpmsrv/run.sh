@@ -362,6 +362,9 @@ echo ">>> AFTER STOP"
 # We should have 0 now
 CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
 echo "$PSCMD procs: $CNT"
+echo ">>> whileproc.sh listing start"
+$PSCMD | grep whileproc.sh | grep -v grep
+echo ">>> whileproc.sh listing end"
 if [[ "$CNT" -ne "0" ]]; then 
         echo "TESTERROR! not all whileproc.sh stopped!"
         go_out 8
