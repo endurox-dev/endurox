@@ -24,6 +24,11 @@ field id in 'bfldid'. The user value is passed in 'buf'. The 'len' is used
 only if filed type is *BFLD_CARRAY*, for which length cannot be detected from 
 passed data. The data type for 'buf' must batch with 'bfldid' type.
 
+Badd() requires double pointer in 'buf' if setting the *BFLD_PTR* field, i.e.
+pointer to pointer of XATMI buffer needs to be passed to the function. 
+In case if using Fadd() or Fadd32() wrappers, 'buf' accepts direct pointer to XATMI
+buffer.
+
 RETURN VALUE
 ------------
 On success, *Badd()* return zero; on error, -1 is returned, with *Berror* 

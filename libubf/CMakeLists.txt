@@ -95,6 +95,7 @@ add_library (objubf OBJECT
                 fld_ubf.c
                 fld_view.c
                 recursive.c
+		fml.c
 	)
 
 set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)

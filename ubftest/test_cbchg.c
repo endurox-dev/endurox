@@ -35,6 +35,8 @@
 #include <stdlib.h>
 #include <cgreen/cgreen.h>
 #include <ubf.h>
+#include <fml.h>
+#include <fml32.h>
 #include <ndrstandard.h>
 #include <string.h>
 #include "test.fd.h"
@@ -892,6 +894,71 @@ Ensure(test_Bchg_view_org)
     do_dummy_data_test(p_ub);
 }
 
+/**
+ * Test FML wrapper
+ * i.e. FLD_PTR logic is different for FML.
+ */
+Ensure(test_Fchg)
+{
+    char buf1[56000];
+    char buf_ptr1[100];
+    char buf_ptr2[100];
+    char *ptr_get = NULL;
+    long l;
+    BFLDLEN len;
+    UBFH *p_ub1 = (UBFH *)buf1;
+    
+    memset(buf1, 0, sizeof(buf1));
+    assert_equal(Binit(p_ub1, sizeof(buf1)), EXSUCCEED);
+    
+    /* Load ptr */
+    assert_equal(Fchg(p_ub1, T_PTR_FLD, 0, buf_ptr1, 0), EXSUCCEED);
+    assert_equal(Fchg(p_ub1, T_PTR_FLD, 1, buf_ptr1, 0), EXSUCCEED);
+    
+    /* test the occ field */
+    assert_equal(Fchg32(p_ub1, T_PTR_FLD, 1, buf_ptr2, 0), EXSUCCEED);
+
+    l=999;
+    assert_equal(Fchg(p_ub1, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    l=888;
+    assert_equal(Fchg(p_ub1, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    
+    assert_equal(Fchg(p_ub1, T_STRING_FLD, 0, "HELLO 1", 0), EXSUCCEED);
+    assert_equal(Fchg32(p_ub1, T_STRING_FLD, 1, "HELLO 2", 0), EXSUCCEED);
+    
+    assert_equal(Fchg(p_ub1, T_CARRAY_FLD, 0, "ABCD", 1), EXSUCCEED);
+    assert_equal(Fchg32(p_ub1, T_CARRAY_FLD, 1, "CDE", 1), EXSUCCEED);
+    
+    /* Validate the data.., ptr */
+    assert_equal(Bget(p_ub1, T_PTR_FLD, 0, (char *)&ptr_get, 0), EXSUCCEED);
+    assert_equal(ptr_get, buf_ptr1);
+    
+    assert_equal(Bget(p_ub1, T_PTR_FLD, 1, (char *)&ptr_get, 0), EXSUCCEED);
+    assert_equal(ptr_get, buf_ptr2);
+    
+    /* validate string */
+    assert_equal(Bget(p_ub1, T_STRING_FLD, 0, buf_ptr1, 0), EXSUCCEED);
+    assert_string_equal(buf_ptr1, "HELLO 1");
+    
+    assert_equal(Bget(p_ub1, T_STRING_FLD, 1, buf_ptr1, 0), EXSUCCEED);
+    assert_string_equal(buf_ptr1, "HELLO 2");
+    
+    assert_equal(CBget(p_ub1, T_CARRAY_FLD, 0, buf_ptr1, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf_ptr1, "A");
+    
+    assert_equal(CBget(p_ub1, T_CARRAY_FLD, 1, buf_ptr1, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf_ptr1, "C");
+    
+    /* validate long */
+    
+    assert_equal(Bget(p_ub1, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(l, 999);
+    
+    assert_equal(Bget(p_ub1, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    assert_equal(l, 888);
+    
+}
+
 TestSuite *ubf_cfchg_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -910,7 +977,8 @@ TestSuite *ubf_cfchg_tests(void)
     add_test(suite, test_Bchg_ptr_org);
     add_test(suite, test_Bchg_ubf_org);
     add_test(suite, test_Bchg_view_org);
-    
+    add_test(suite, test_Fchg);
+            
     return suite;
 }
 

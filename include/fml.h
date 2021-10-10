@@ -153,7 +153,7 @@ extern "C" {
 #define Fldid Bfldid
 #define Fname Bfname
 #define Fcpy Bcpy
-#define Fchg Bchg
+#define Fchg ndrx_Fchg
 #define Finit Binit
 #define Fnext Bnext
 #define Fget Bget
@@ -161,7 +161,7 @@ extern "C" {
 #define Ffind Bfind
 #define Fboolev Bboolev
 #define Ffloatev Bfloatev
-#define Fadd Badd
+#define Fadd ndrx_Fadd
 #define F_error B_error
 #define Fstrerror Bstrerror
 #define Fmkfldid Bmkfldid

@@ -20,7 +20,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 DESCRIPTION
 -----------
 Change (add or update) field in UBF buffer. The UBF buffer pointer is passed by 
-'p_ub', field id in 'bfldid'. 'occ' is occurrance to change. The field value is 
+'p_ub', field id in 'bfldid'. 'occ' is occurrence to change. The field value is 
 passed in 'buf'. The 'len' is used only if 'bfldid' type is *BFLD_CARRAY*, for 
 which length cannot be detected from passed data. The 'buf' field type must 
 match the 'bfldid' field type.
@@ -32,6 +32,11 @@ it is empty string, for *BFLD_CARRAY* it is empty byte array (with length 0).
 
 For performance reasons, it is recommended to use Bchg over CBchg,
 to skip the conversion step.
+
+Bchg() requires double pointer in 'buf' if setting the *BFLD_PTR* field, i.e.
+pointer to pointer of XATMI buffer needs to be passed to the function. 
+In case if using Fchg() or Fchg32() wrappers, 'buf' accepts direct pointer to XATMI
+buffer.
 
 RETURN VALUE
 ------------
