@@ -927,8 +927,8 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
         
         /* Ensure that in buffer we have enough space */
         
-        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming((char *)p_ub, 
-                Bused(p_ub), odata, olen, flags, 0))
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_ub, 
+                Bused(p_ub), odata, olen, flags))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
