@@ -352,14 +352,17 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
             EXFAIL_OUT(ret);
         }
         
-        /* prepare incoming of output buffer from the input buffer... */
-        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(idata, 
-                Bused((UBFH *)idata), (char **)odata, olen, flags, 0))
+        /* prepare incoming of output buffer from the input buffer... (this is UBF copy
+         * basically) 
+         */
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, idata, 
+                Bused((UBFH *)idata), (char **)odata, olen, flags))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare incoming buffer ibuf");
             EXFAIL_OUT(ret);
         }
+        
         /* reallocate place in output buffer */
         
         *olen = Bsizeof(p_ub) + exdata->atmi_buf_len + 1024;

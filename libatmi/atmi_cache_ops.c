@@ -190,14 +190,11 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         goto out;
     }
     
-    if (NULL!=idata)
+    if (NULL==(buffer_info = ndrx_find_buffer(idata)))
     {
-        if (NULL==(buffer_info = ndrx_find_buffer(idata)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
-                    __func__, idata);
-            EXFAIL_OUT(ret);
-        }
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
+                __func__, idata);
+        EXFAIL_OUT(ret);
     }
     
     buf_type = &G_buf_descr[buffer_info->type_id];
@@ -513,14 +510,11 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         goto out;
     }
     
-    if (NULL!=idata)
+    if (NULL==(buffer_info = ndrx_find_buffer(idata)))
     {
-        if (NULL==(buffer_info = ndrx_find_buffer(idata)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
-                    __func__, idata);
-            EXFAIL_OUT(ret);
-        }
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!", 
+                __func__, idata);
+        EXFAIL_OUT(ret);
     }
     
     
