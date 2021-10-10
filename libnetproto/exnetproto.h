@@ -274,6 +274,8 @@ extern long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
         char *p_typedbuf, proto_ufb_fld_t *p_ub_data, long ex_bufsz);
 
 
+extern ndrx_typedview_t * ndrx_view_get_init(char *vname);
+
 extern int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
         char *ex_buf, long ex_len, char *proto_buf, long *proto_buf_offset,
         long proto_bufsz);

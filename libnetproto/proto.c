@@ -1671,10 +1671,10 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 {
                     NDRX_LOG(log_debug, "Converting view out");
                     
-                    if (EXSUCCEED!=exproto_build_ex2proto_view(p, 0, 0,
-                        data, 0, proto_buf, proto_buf_offset, proto_bufsz))
+                    if (EXSUCCEED!=(ret=exproto_build_ex2proto_view(p, 0, 0,
+                        data, 0, proto_buf, proto_buf_offset, proto_bufsz)))
                     {
-                        NDRX_LOG(log_error, "Failed to serialize VIEW");
+                        NDRX_LOG(log_error, "Failed to serialize VIEW %d", ret);
                         EXFAIL_OUT(ret);
                     }
                     
@@ -2388,7 +2388,8 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         /* resolve view */
                         if (EXEOS!=vheader.vname[0])
                         {
-                            f->v = ndrx_view_get_view(vheader.vname);
+
+                            f->v = ndrx_view_get_init(vheader.vname);
 
                             if (NULL==f->v)
                             {

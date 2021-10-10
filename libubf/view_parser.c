@@ -1345,9 +1345,10 @@ expublic int ndrx_view_load_directories(void)
     
     
 out:
-                        
+
     if (EXSUCCEED==ret)
     {
+        __sync_synchronize();
         M_views_loaded = EXTRUE;
         UBF_LOG(log_info, "Views loaded OK");
     }
