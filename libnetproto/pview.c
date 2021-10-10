@@ -74,6 +74,27 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Resolve view by name, version with init
+ * @param vname view name
+ * @return  NULL or ptr to view object
+ */
+expublic ndrx_typedview_t * ndrx_view_get_init(char *vname)
+{
+    ndrx_typedview_t *ret=NULL;
+    
+    /* check that we have init in place */
+    if (EXSUCCEED!=ndrx_view_init())
+    {
+        NDRX_LOG(log_error, "Failed to init view sub-system");
+        goto out;
+    }
+    
+    EXHASH_FIND_STR(ndrx_G_view_hash, vname, ret);
+out:
+    return ret;
+}
+
+/**
  * Convert view XATMI buffer to protocol
  * Loop over the view, read the non null fields
  * NOTE: In case if this MBUF, then view data is encapsulated 
@@ -112,7 +133,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     BVIEWFLD vheader;
     long dim_size;
                     
-    UBF_LOG(log_debug, "%s enter at level %d", __func__, level);
+    NDRX_LOG(log_debug, "%s enter at level %d", __func__, level);
     
     if (XATMIBUFPTR==XTYPE(fld->type))
     {
@@ -152,9 +173,9 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
         goto out;
     }
 
-    if (NULL==(v = ndrx_view_get_view(vheader.vname)))
+    if (NULL==(v = ndrx_view_get_init(vheader.vname)))
     {
-        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", vheader.vname);
+        NDRX_LOG(log_error, "View [%s] not found!", vheader.vname);
         EXFAIL_OUT(ret);
     }
     
