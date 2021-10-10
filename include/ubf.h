@@ -391,6 +391,10 @@ extern NDRX_API char* CBvgetallocrv(UBFH *p_ub, char *cname, BFLDOCC occ,
             int usrtype, long flags, BFLDLEN *extralen, ...);
 
 
+/* FML Specifics: */
+extern NDRX_API int ndrx_Fchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len);
+extern NDRX_API int ndrx_Fadd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
+
 #if defined(__cplusplus)
 }
 #endif

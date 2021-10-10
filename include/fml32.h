@@ -151,7 +151,7 @@ extern "C" {
 #define Fldid32 Bfldid
 #define Fname32 Bfname
 #define Fcpy32 Bcpy
-#define Fchg32 Bchg
+#define Fchg32 ndrx_Fchg
 #define Finit32 Binit
 #define Fnext32 Bnext
 #define Fget32 Bget
@@ -159,7 +159,7 @@ extern "C" {
 #define Ffind32 Bfind
 #define Fboolev32 Bboolev
 #define Ffloatev32 Bfloatev
-#define Fadd32 Badd
+#define Fadd32 ndrx_Fadd
 #define F_error32 B_error
 #define Fstrerror32 Bstrerror
 #define Fmkfldid32 Bmkfldid
