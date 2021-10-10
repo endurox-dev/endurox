@@ -72,12 +72,19 @@
 expublic int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid)
 {
     int ret = EXSUCCEED;
+    int lev = log_error;
     
     /* we should start new transaction... */
     if (EXSUCCEED!=(ret = atmi_xa_prepare_entry(atmi_xa_get_branch_xid(p_xai, btid),
             0)))
     {
-        NDRX_LOG(log_error, "Failed to prepare local transaction btid=%ld!", btid);
+        /* get the reason, if XA_RDONLY, then just debug only... */
+        if (XA_RDONLY==atmi_xa_get_reason())
+        {
+            lev=log_debug;
+        }
+        
+        NDRX_LOG(lev, "Failed to prepare local transaction btid=%ld!", btid);
         if (NULL!=p_ub)
         {
             atmi_xa_set_error_fmt(p_ub, tperrno, atmi_xa_get_reason(), 

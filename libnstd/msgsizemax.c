@@ -98,8 +98,9 @@ expublic long ndrx_msgsizemax (void)
             /* round the max msg size to modulus of 16, to be aligned. */
             
             M_maxmsgsize = M_maxmsgsize + 16 - M_maxmsgsize % 16;
-
-            M_maxmsgsize_loaded = EXTRUE;
+            /* avoid write re-ordering ! */
+            __sync_synchronize();
+            M_maxmsgsize_loaded=EXTRUE;
         }
         MUTEX_UNLOCK_V(M_maxmsgsize_loaded_lock);
     }

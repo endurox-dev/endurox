@@ -380,6 +380,7 @@ expublic void ndrx_TPset_error_fmt_rsn(int error_code, short reason, const char 
 {
     char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
     va_list ap;
+    int lev = log_warn;
     ATMI_TLS_ENTRY;
 
     if (!G_atmi_tls->M_atmi_error)
@@ -387,12 +388,18 @@ expublic void ndrx_TPset_error_fmt_rsn(int error_code, short reason, const char 
         va_start(ap, fmt);
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
+        
+        /* Support #729 */
+        if (XA_RDONLY==reason)
+        {
+            lev = log_debug;
+        }
 
         NDRX_STRCPY_SAFE(G_atmi_tls->M_atmi_error_msg_buf, msg);
         G_atmi_tls->M_atmi_error = error_code;
         G_atmi_tls->M_atmi_reason = reason;
 
-        NDRX_LOG(log_warn, "%s: %d (%s) reason: %d [%s]", __func__, 
+        NDRX_LOG(lev, "%s: %d (%s) reason: %d [%s]", __func__, 
                         error_code, ATMI_ERROR_DESCRIPTION(error_code), reason,
                         G_atmi_tls->M_atmi_error_msg_buf);
     }

@@ -165,6 +165,21 @@ function verify_logfiles {
 }
 
 #
+# Verify that debug log contains 
+#
+function have_output {
+
+    cmd=$1
+    cmd="$cmd | wc -l | awk '{print \$1}'"
+    cnt=`eval $cmd`
+    
+    if [ "X$cnt" == "X0" ]; then
+        echo "Expected >0 lines of output from [$cmd] got [$cnt]"
+        go_out -1
+    fi
+}
+
+#
 # Build programs
 #
 function buildprograms {
@@ -426,6 +441,13 @@ verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
 
 
+# support #729
+echo "Checking XA_RDONLY log levels..."
+have_output 'grep "NDRX:5:" tmsrv_lib2.log | grep "Failed to prepare local transaction"'
+have_output 'grep "NDRX:5:" tmsrv_lib2.log | grep "xa_prepare_entry - fail: 3" | grep "xa.c"'
+have_output 'grep "NDRX:5:" tmsrv_lib2.log | grep "ndrx_TPset_error_fmt_rsn: 16 (TPERMERR) reason: 3"'
+
+
 echo ""
 echo "************************************************************************"
 echo "Commit OK read only ... (both)"
@@ -625,6 +647,13 @@ verify_ulog "RM2" "xa_commit" "0";
 verify_ulog "RM2" "xa_rollback" "1";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
+
+
+# support #729
+echo "Checking non XA_RDONLY levels at prepare error..."
+have_output 'grep "NDRX:2:" tmsrv_lib1.log | grep "Failed to prepare local transaction"'
+have_output 'grep "NDRX:2:" tmsrv_lib1.log | grep "xa_prepare_entry - fail: -4" | grep "xa.c"'
+have_output 'grep "NDRX:3:" tmsrv_lib1.log | grep "ndrx_TPset_error_fmt_rsn: 16 (TPERMERR) reason: -4"'
 
 
 echo ""
