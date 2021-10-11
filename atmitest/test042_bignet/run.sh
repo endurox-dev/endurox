@@ -140,12 +140,15 @@ fi
 echo "Running off client - protocol mode"
 ################################################################################
 
+# stop 101 at dom1 & 2
 xadmin stop -i 101
-xadmin start -i 200
 set_dom2;
 xadmin stop -i 101
+
+# start 200 at dom2 & 1
 xadmin start -i 200
 set_dom1;
+xadmin start -i 200
 
 echo "Wait 30 for connect..."
 sleep 30
