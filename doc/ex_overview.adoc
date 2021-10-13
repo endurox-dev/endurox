@@ -10,7 +10,8 @@ Transaction Monitor Interface (ATMI). Also Enduro/X provides UBF
 inter-process communication purposes.
 
 System principles have similarities with Oracle (R) Tuxedo (R) system. Enduro/X
-implements portions of Tuxedo FML and ATMI APIs.
+implements portions of Tuxedo FML and ATMI APIs and provides similar
+functionality.
 
 Enduro/X consists release consists of various components. Like libraries for C/C++ programs,
 transaction monitor it self, and command line administration utility.
