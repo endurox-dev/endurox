@@ -233,7 +233,7 @@ ORACLE RAC SETTINGS
 If planing to use Oracle RAC, the to successfully process distributed transaction
 across binaries which are connected to different RAC nodes, Oracle RAC DTP Service
 must be configured with Singleton option, so that only one node actively serves
-the transactions.
+the transactions. Enduro/X does not support RAC XA Affinity processing.
 
 If this above is not configured and say two binaries are working with same XA
 transaction, one binary is connected to first RAC node and other binary with second RAC node,
