@@ -296,7 +296,8 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 if ((descr->txs_stage_min > rm_vote_next_txstage ||
                         descr->txs_max_complete < rm_vote_next_txstage) 
                         && descr->allow_jump 
-                        && rm_vote_next_txstage < new_txstage)
+                        /* allow to downgrade */
+                        && rm_vote_next_txstage < XA_TX_STAGE_PREPARING)
                 {
                     /* 
                      * jump to lowest level we got.
