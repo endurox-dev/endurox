@@ -197,6 +197,7 @@ extern "C" {
 #define NDRX_XA_FLAG_FSYNC          "FSYNC"       /**< Perform Fsync                   */
 #define NDRX_XA_FLAG_FDATASYNC      "FDATASYNC"   /**< Perform Fdatasync               */
 #define NDRX_XA_FLAG_DSYNC          "DSYNC"       /**< Perform directory sync          */
+#define NDRX_XA_FLAG_BTIGHT         "BTIGHT"      /**< Tight branches                  */
     
 /**
  * Internal system flags
@@ -207,6 +208,7 @@ extern "C" {
 #define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported            */
 #define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No XID given in start        */
 #define NDRX_XA_FLAG_SYS_NOSUSPEND      0x00000008  /**< Do not suspend automatically */
+#define NDRX_XA_FLAG_SYS_BTIGHT         0x00000010  /**< Tight branching              */
 
 /** @} */ /* xa_flags_sys */
     

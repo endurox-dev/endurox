@@ -109,6 +109,14 @@ int main(int argc, char** argv)
     char tmp[51];
     long bal;
     int ret=EXSUCCEED;
+    int upper1=100, upper2=300;
+    char *p;
+
+    if (NULL!=(p=getenv(CONF_NDRX_XA_FLAGS)) && NULL!=strstr(p, "BTIGHT"))
+    {
+        upper1=5;
+        upper2=205;
+    }
     
     if (EXSUCCEED!=tpinit(NULL))
     {
@@ -147,7 +155,7 @@ int main(int argc, char** argv)
         goto out;
     }
 
-    for (l=0; l<100; l++)
+    for (l=0; l<upper1; l++)
     {
         snprintf(tmp, sizeof(tmp), "ACC%03ld", l);
         
@@ -213,6 +221,14 @@ int main(int argc, char** argv)
             goto out;
         }
         
+        /* balance shall be checked ok here too, as we use joins. */
+        if (EXSUCCEED!=check_balance(tmp, &bal))
+        {
+            NDRX_LOG(log_error, "Account [%s] NOT found!", tmp);
+            ret=EXFAIL;
+            goto out;
+        }
+        
         if (EXSUCCEED != tpcommit(0))
         {
             NDRX_LOG(log_error, "tpcommit failed: %s", tpstrerror(tperrno));
@@ -245,7 +261,7 @@ int main(int argc, char** argv)
     }
         
     /* Check multi commit... */
-    for (l=200; l<300; l++)
+    for (l=200; l<upper2; l++)
     {
         snprintf(tmp, sizeof(tmp), "ACC%03ld", l);
         
@@ -282,7 +298,7 @@ int main(int argc, char** argv)
     }
     
     /* Check balance... */
-    for (l=200; l<300; l++)
+    for (l=200; l<upper2; l++)
     {
         snprintf(tmp, sizeof(tmp), "ACC%03ld", l);
         

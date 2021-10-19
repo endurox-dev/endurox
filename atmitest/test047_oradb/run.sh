@@ -50,8 +50,8 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-
 export NDRX_TOUT=20
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -68,13 +68,14 @@ set_dom1() {
 
     # XA SECTION
     export NDRX_XA_RES_ID=1
-    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+nolocal=f+Threads=true"
+    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+nolocal=f+Threads=true+Loose_Coupling=false"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
     export NDRX_XA_DRIVERLIB=libndrxxaoras.so
     export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1
     # TODO: Add both test modes... 
-    #export NDRX_XA_FLAGS="NOJOIN"
+#    export NDRX_XA_FLAGS="NOJOIN;BTIGHT"
+#    export NDRX_XA_FLAGS="NOJOIN"
     # XA SECTION, END
 }
 
@@ -97,41 +98,51 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log
-# Any bridges that are live must be killed!
-xadmin killall tpbridge
+rm *.log 2>/dev/null
+j=0
+while [ $j -lt 2 ]; do
 
-set_dom1;
-xadmin down -y
-xadmin start -y || go_out 1
+    # Any bridges that are live must be killed!
+    xadmin killall tpbridge
+    set_dom1;
 
-RET=0
+    if [ $j -eq 1 ]; then
+        echo ">>> No Join, tight branching test"
+        export NDRX_XA_FLAGS="NOJOIN;BTIGHT"
+    else
+        echo ">>> With JOIN"
+    fi
 
-xadmin psc
-xadmin ppm
-echo "Running off client"
+    xadmin down -y
+    xadmin start -y || go_out 1
 
-xadmin forgetlocal -y
-xadmin abortlocal -y
-#xadmin abortlocal -y -s "@TM-1-1-50" -x "ofeUYQAAAABAAAAAAAAAAEAAAAAAAAAAabeXTKBVRgyQ+BS8gtZygwEAAQAyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAwWm3l0ygVUYMkPgUvILWcoMBAAEAMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAME="
-xadmin recoverlocal
+    RET=0
 
-set_dom1;
-(./atmiclt47 2>&1) > ./atmiclt-dom1.log
-#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt47 2>&1) > ./atmiclt-dom1.log
+    xadmin psc
+    xadmin ppm
+    echo "Running off client"
 
-RET=$?
+    xadmin forgetlocal -y
+    xadmin abortlocal -y
+    xadmin recoverlocal
 
-if [[ "X$RET" != "X0" ]]; then
-    go_out $RET
-fi
+    set_dom1;
+    (./atmiclt47 2>&1) >> ./atmiclt-dom1.log
 
-# Catch is there is test error!!!
-if [ "X`grep TESTERROR *.log`" != "X" ]; then
+    RET=$?
+
+    if [[ "X$RET" != "X0" ]]; then
+        go_out $RET
+    fi
+
+    # Catch is there is test error!!!
+    if [ "X`grep TESTERROR *.log`" != "X" ]; then
         echo "Test error detected!"
         RET=-2
-fi
+    fi
 
+    j=$(( j + 1 ))
+done
 
 go_out $RET
 

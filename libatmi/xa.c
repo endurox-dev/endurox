@@ -354,17 +354,14 @@ expublic int atmi_xa_init(void)
             } /* If tag is NOJOIN */
             else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOJOIN))
             {
-                NDRX_LOG(log_warn, "NOJOIN flag found");
                 ndrx_xa_nojoin(EXTRUE);
             }
             else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSTARTXID))
             {
-                NDRX_LOG(log_warn, "NOSTARTXID flag found");
                 ndrx_xa_nostartxid(EXTRUE);
             }
             else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSUSPEND))
             {
-                NDRX_LOG(log_warn, "NOSUSPEND flag found");
                 ndrx_xa_nosuspend(EXTRUE);
             }
             else if (0==strcmp(tag_token, NDRX_XA_FLAG_FSYNC))
@@ -381,6 +378,10 @@ expublic int atmi_xa_init(void)
             {
                 NDRX_LOG(log_warn, "XA DSYNC flag found");
                 G_atmi_env.xa_fsync_flags|=NDRX_FSYNC_DSYNC;
+            }
+            else if (0==strcmp(tag_token, NDRX_XA_FLAG_BTIGHT))
+            {
+                ndrx_xa_btight(EXTRUE);
             }
 
         } /* for tag.. */
@@ -2072,5 +2073,23 @@ expublic void ndrx_xa_setgetconnn(void *(*pf_xa_getconn)(void))
     G_atmi_env.pf_getconn= pf_xa_getconn;
     NDRX_LOG(log_debug, "pf_getconn set to %p", G_atmi_env.pf_getconn);
 }
+
+/**
+ * Set tight branching flag
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_btight(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "XA BTIGHT");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_BTIGHT;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_BTIGHT;
+    }
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
