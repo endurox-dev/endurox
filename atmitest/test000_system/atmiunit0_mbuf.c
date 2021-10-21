@@ -69,7 +69,7 @@ Ensure(test_mbuf)
 {
     int i;
     
-    for (i=0; i<40; i++)
+    for (i=0; i<20; i++)
     {
         ndrx_growlist_t list;
         UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 2048);
