@@ -487,9 +487,9 @@ Ensure(test_Bdelall)
  */
 Ensure(test_Bdelete)
 {
-    char fb[1024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
-    char fb2[1024];
+    char fb2[2048];
     UBFH *p_ub2 = (UBFH *)fb2;
 
     BFLDID delete_fld2[] = {
