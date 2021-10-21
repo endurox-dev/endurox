@@ -441,7 +441,7 @@ Ensure(test_Bchg_double_org)
  */
 Ensure(test_Bchg_string_org)
 {
-    char buf[2048];
+    char buf[3072];
     UBFH *p_ub = (UBFH *)buf;
     char test_val[641];
     short short_val = 22321;
@@ -553,7 +553,7 @@ Ensure(test_Bchg_string_org)
  */
 Ensure(test_Bchg_carray_org)
 {
-    char buf[2048];
+    char buf[3072];
     UBFH *p_ub = (UBFH *)buf;
     char test_val[514];
     short short_val = 22321;

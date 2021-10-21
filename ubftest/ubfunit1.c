@@ -573,7 +573,7 @@ Ensure(test_Btype)
  */
 Ensure(test_Bisubf)
 {
-    char tmpbuf[64];
+    char tmpbuf[72];
     UBFH * p_ub =  (UBFH *) tmpbuf;
     /* Check basic Binit */
     assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);
@@ -589,7 +589,7 @@ Ensure(test_Bisubf)
  */
 Ensure(test_Bsizeof)
 {
-    char tmpbuf[64];
+    char tmpbuf[72];
     UBFH * p_ub =  (UBFH *) tmpbuf;
 
     assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);

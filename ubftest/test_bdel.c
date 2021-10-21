@@ -89,7 +89,7 @@ void load_fdel_test_data_1(UBFH *p_ub)
 
 Ensure(test_fdel_simple)
 {
-    char fb[2048];
+    char fb[3072];
     UBFH *p_ub = (UBFH *)fb;
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     /* Load test data for fdel test */
