@@ -177,12 +177,11 @@ struct ndrx_typedview
  */
 typedef struct
 { 
-    unsigned int vflags;                /**< RFU flags                  */
-    char vname[NDRX_VIEW_NAME_LEN+1];   /**< View field name            */ 
-    uint32_t cksum;                     /**< Checksum of view version   */
-    char data[0];                       /**< pointer to view structure  */ 
+    char vname[NDRX_VIEW_NAME_LEN+1];   /**< View field name             */ 
+    uint32_t cksum;                     /**< Checksum of view version    */
+    long vflags;                        /**< RFU flags, ensure alignment */
+    char data[0];                       /**< pointer to view structure   */ 
 } ndrx_view_header;
-
 
 /**
  * View occurrence counter
