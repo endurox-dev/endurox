@@ -161,7 +161,12 @@ Mandatory Env. Variables
     to give transaction id for work which has been done to database. *NOSUSPEND*
     flag can be used to configure particular resource that transaction is not
     suspended when *tpcall(3)* is issued from process which uses given resource
-    manager. Flag *FSYNC* ensures that *tmsrv(8)* log contents at commit decision are
+    manager. *BTIGHT* flag together with *NOJOIN* flag ensures that tight branching
+    is used. By default Enduro/X writes branch id in *gtrid* and *bqual* parts
+    equally. With *BTIGHT* flag set, *gtrid* is not changed for particular
+    RMID, but only branch qualifier *bqual* will be updated to contain the actual
+    branch identifer.
+    Flag *FSYNC* ensures that *tmsrv(8)* log contents at commit decision are
     written to disk with *fsync()*. *FDATASYNC* ensures that *tmsrv(8)* commit decision
     is written to disk with *fdatasync()*. *DSYNC* ensures that *tmsrv*
     commit decision log file is synchronized with file-system directory structure

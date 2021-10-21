@@ -105,7 +105,14 @@ expublic void atmi_xa_xid_get_info(XID *xid, short *p_nodeid,
     memcpy(p_rmid_cur, xid->data + xid->gtrid_length - 
             sizeof(long) - sizeof(char), sizeof(unsigned char));
         
+/*
     memcpy(p_btid, xid->data + xid->gtrid_length - 
+            sizeof(long), sizeof(long));
+*/
+    /* use btid from branch anyway... */
+    memcpy(p_btid, xid->data + 
+            xid->gtrid_length +
+            G_atmi_tls->xid.gtrid_length - 
             sizeof(long), sizeof(long));
     
     *p_nodeid = (short) ntohs(*p_nodeid);
@@ -902,11 +909,18 @@ expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid)
             sizeof(unsigned char));
     
     /* Add Branch TID: */
-    memcpy(G_atmi_tls->xid.data + 
+    /* Do not add BTID to gtrid if using tight branching.
+     * but remember, Oracle DB allows only 32 branches
+     * in the same gtrid!!
+     */
+    if (!(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_BTIGHT))
+    {
+        memcpy(G_atmi_tls->xid.data + 
             G_atmi_tls->xid.gtrid_length - 
             sizeof(long),
             &btidh, 
             sizeof(btidh));
+    }
     
     memcpy(G_atmi_tls->xid.data + 
             G_atmi_tls->xid.gtrid_length + 
