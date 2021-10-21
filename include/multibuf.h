@@ -77,7 +77,7 @@ typedef struct
      * last 4 bit are buffer type    
      */
     unsigned int tag;
-    unsigned int len; /**< this is data length                           */
+    long len; /**< this is data length, use long for 8 byte alignment */
     
     /** Memory data of the buffer padded up 
      * till the modulus of EX_ALIGNMENT_BYTES is 0 
