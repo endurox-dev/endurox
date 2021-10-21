@@ -61,6 +61,11 @@ bool PSClass::NewSlot(PSSharedState *ss,const PSObjectPtr &key,const PSObjectPtr
         _defaultvalues[_member_idx(temp)].val = val;
         return true;
     }
+    /* Fixes CVE-2021-41556 */
+    if (_members->CountUsed() >= MEMBER_MAX_COUNT) {
+        return false;
+    }
+
     if(belongs_to_static_table) {
         PSInteger mmidx;
         if((type(val) == OT_CLOSURE || type(val) == OT_NATIVECLOSURE) &&

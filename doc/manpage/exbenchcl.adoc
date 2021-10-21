@@ -41,10 +41,7 @@ The benchmark result is appended to benchmark output file, in following format:
 --------------------------------------------------------------------------------
 
 When performing benchmark to persistent queue, the default mode is to enqueue
-and dequeue message. To ensure that all messages can be dequeued, *tmqueue(8)*
-process must be started with 1 copy (*<min />* tag set to 1). If performing 
-automatic forward tests *-A* or enqueue only (*-E* flag), then several
-*tmqueue* processes can be started.
+and dequeue message.
 
 *WARNING*: Binary is experimental and may be changed in future releases (including
 but not limited with replaced CLI flags, etc).
@@ -136,6 +133,13 @@ If flag is set and value 'TRANSACTION_TIMEOUT' is greater than 0, worker threads
 will perform calls in global transaction. This means that *exbenchcl* must
 have proper transaction environment. If this flag is not set, the XATMI calls
 are not run in transaction mode.
+
+[*-I*]::
+Used for process to wait for *tpnotify(3)* call from server back to benchmark
+client. In this mode, benchmark tool sets the XATMI client id in *EX_CLTID* UBF
+field. When *exbenchsv* receives the request and if it sees that *EX_CLTID* is set,
+it performs the tpnotify() call with the request buffer and only after
+that performs tpreturn().
 
 [*-h*]::
 Print usage.
