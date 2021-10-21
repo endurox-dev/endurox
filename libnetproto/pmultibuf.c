@@ -144,7 +144,7 @@ expublic int exproto_build_ex2proto_mbuf(cproto_t *fld, int level, long offset,
         btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
         is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
         
-        NDRX_LOG(log_debug, "Buffer tag: %u type: %d callinfo: %d len: %u aligned: %d",
+        NDRX_LOG(log_debug, "Buffer tag: %u type: %d callinfo: %d len: %ld aligned: %d",
                 tag, btype, is_callinfo, tlv_hdr->len, ALIGNED_GEN(tlv_hdr->len));
         
         if (tag!=tag_exp)

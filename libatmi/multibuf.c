@@ -244,7 +244,7 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
         btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
         is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
         
-        NDRX_LOG(log_debug, "Received buffer tag: %u type: %d callinfo: %d len: %u",
+        NDRX_LOG(log_debug, "Received buffer tag: %u type: %d callinfo: %d len: %ld",
                 tag, btype, is_callinfo, tlv_hdr->len);
         
         if (tag!=tag_exp)
@@ -668,7 +668,7 @@ expublic void ndrx_mbuf_tlv_debug (char *rcv_data, long rcv_len)
         btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
         is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
         
-        NDRX_LOG(log_debug, "Buffer raw tag: %u tag: %u type: %d callinfo: %d len: %u aligned: %d",
+        NDRX_LOG(log_debug, "Buffer raw tag: %u tag: %u type: %d callinfo: %d len: %ld aligned: %d",
                 tlv_hdr->tag, tag, btype, is_callinfo, tlv_hdr->len, ALIGNED_GEN(tlv_hdr->len));
         
         if (tag!=tag_exp)
