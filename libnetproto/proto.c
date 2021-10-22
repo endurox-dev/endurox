@@ -1547,7 +1547,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             case XATMIBUF:
             {
                 /* This is special driver for ATMI buffer */
-                unsigned *buf_len = (unsigned *)(ex_buf+offset+p->counter_offset);
+                long *buf_len = (long *)(ex_buf+offset+p->counter_offset);
                 char *data;
                 int f_type;
                 long len_offset;
@@ -2173,7 +2173,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 case XATMIBUFPTR:
                 case XATMIBUF:
                 {
-                    unsigned *buf_len = (unsigned *)(ex_buf+ex_offset+fld->counter_offset);
+                    long *buf_len = (long *)(ex_buf+ex_offset+fld->counter_offset);
                     char *data = (char *)(ex_buf+ex_offset+fld->offset);
                     unsigned buffer_type;
                     
