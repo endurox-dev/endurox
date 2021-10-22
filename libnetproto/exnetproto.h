@@ -229,7 +229,7 @@ struct proto_ufb_fld
     int bfldid;     /**< used also as offset indicator in exbuf for mbuf     */
     int bfldlen;    /**< used also as indicator for total buffer len in mbuf */
     unsigned typetag;/**< type in mbuf bits                                  */
-    unsigned typelen;/**< used for sub-buffers                               */
+    long typelen;    /**< used for sub-buffers                               */
     char cname [NDRX_VIEW_CNAME_LEN+1]; /**< used by views                   */
     Bfld_loc_info_t next_fld;          /**< fast add pointers                */
     ndrx_typedview_t *v;               /**< keep the ptr to current view     */
