@@ -39,7 +39,12 @@ extern "C" {
 #endif
     
 #include <ndrx_config.h>
+
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif
 #include <stdint.h>
+
 #include <limits.h>
 #include <string.h>
     
