@@ -58,6 +58,11 @@ export NDRX_LIBEXT="so"
 export NDRX_ULOG=$TESTDIR
 export NDRX_SILENT=Y
 
+# minimum performance enq/deq to proceed with test
+# where the absolute values are used
+TEST_PERF_MIN=70
+
+
 #
 # Domain 1 - here client will live
 #
@@ -256,22 +261,42 @@ echo "Forward thread wakup test"
 ################################################################################
 rm wakeup.out 2>/dev/null
 export NDRX_BENCH_FILE="wakeup.out"
-exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sWAKEUP -E -I
-
-RET=$?
-if [[ "X$RET" != "X0" ]]; then
-    echo "exbenchcl failed"
-    go_out $RET
-fi
-
-# validate that there is more messages than say 65
-cat wakeup.out
+#
+# Check the system performance, if we can do 40 enq/deq sec, then continue with the
+# given test
+#
+exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sTEST1
 
 NR_CALLS=`tail -1 wakeup.out  | cut -d ' '  -f3`
+# remember the performance indication
+# as on slow systems, say slower than 70 tps we will not be able to complete
+# test in time
 
-if [ "$NR_CALLS" -lt "65" ]; then
-    echo "Expected more calls than 80 got $NR_CALLS"
-    go_out -1
+TEST_PERF=$NR_CALLS
+
+if [ "$TEST_PERF" -gt "$TEST_PERF_MIN" ]; then
+
+    rm wakeup.out 2>/dev/null
+    exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sWAKEUP -E -I
+
+    RET=$?
+    if [[ "X$RET" != "X0" ]]; then
+        echo "exbenchcl failed"
+        go_out $RET
+    fi
+
+    # validate that there is more messages than say 65
+    cat wakeup.out
+
+    NR_CALLS=`tail -1 wakeup.out  | cut -d ' '  -f3`
+
+    if [ "$NR_CALLS" -lt "65" ]; then
+        echo "Expected more calls than 80 got $NR_CALLS"
+        go_out -1
+    fi
+
+else
+    echo "Skipping thread wakup test as disk performance $NR_CALLS < 40"
 fi
 
 ################################################################################
@@ -335,13 +360,14 @@ fi
 
 i=0
 # wait to complete...
-while [[ $i -lt 25 ]]
+while [[ $i -lt 90 ]]
 do
     echo "Wait completion ($i)"
     sleep 1
 
     ((i++))
 
+    xadmin mqlq | grep "SEQVALID      0     0    1K    1K    1K     0"
     STATS=`xadmin mqlq | grep "SEQVALID      0     0    1K    1K    1K     0"`
     if [ "X$STATS" != "X" ]; then
         break;
@@ -453,6 +479,9 @@ fi
 echo "QoS test... (slow queue does not slow down all other Qs)"
 ################################################################################
 
+if [ "$TEST_PERF" -ge "$TEST_PERF_MIN" ]; then
+
+
 exbenchcl -n5 -P -t9999 -b "{}" -f EX_DATA -S1 -QMYSPACE -sQOS -R100 -E -N5
 
 RET=$?
@@ -527,6 +556,10 @@ echo "Stats: [$STATS]"
 if [ "X$STATS" == "X" ]; then
     echo "Expecting QOS000 to be completed!"
     go_out -1
+fi
+
+else
+    echo "System too slow... skipping the test"
 fi
 
 ################################################################################
