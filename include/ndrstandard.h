@@ -39,19 +39,14 @@ extern "C" {
 #endif
     
 #include <ndrx_config.h>
-
-#ifndef __STDC_LIMIT_MACROS
-#define __STDC_LIMIT_MACROS
-#endif
 #include <stdint.h>
-
 #include <limits.h>
 #include <string.h>
     
-#if UINTPTR_MAX == 0xffffffff
+#if EX_SIZEOF_VOIDPTR == 4
 /* 32-bit */
 #define SYS32BIT
-#elif UINTPTR_MAX == 0xffffffffffffffff
+#elif EX_SIZEOF_VOIDPTR == 8
 #define SYS64BIT
 #else
 #error Cannot detect word size

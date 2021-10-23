@@ -128,6 +128,9 @@
 /* The size of `long', as computed by sizeof. */
 #define EX_SIZEOF_LONG @EX_SIZEOF_LONG@
 
+/** Detect platform type 32bit/64bit */
+#define EX_SIZEOF_VOIDPTR @EX_SIZEOF_VOIDPTR@
+
 #define NDRX_VERSION   "@NDRX_VERSION_STR@"
 #define NDRX_BUILD_OS_NAME "@CMAKE_OS_NAME@"
 #define EX_POLLER_STR "@EX_POLLER_STR@"
