@@ -308,4 +308,27 @@ expublic void ndrx_report_regexp_error(char *fun_nm, int err, regex_t *rp)
     NDRX_FREE(errmsg);
 }
 
+/**
+ * Save current error
+ * @param p_err
+ */
+expublic void ndrx_Bsave_error(ndrx_ubf_error_t *p_err)
+{
+    UBF_TLS_ENTRY;
+    
+    p_err->ubf_error = G_ubf_tls->M_ubf_error;
+    NDRX_STRCPY_SAFE(p_err->ubf_error_msg_buf, G_ubf_tls->M_ubf_error_msg_buf);
+}
+
+/**
+ * Restore current error
+ * @param p_err
+ */
+expublic void ndrx_Brestore_error(ndrx_ubf_error_t *p_err)
+{
+    UBF_TLS_ENTRY;
+    G_ubf_tls->M_ubf_error = p_err->ubf_error;
+    NDRX_STRCPY_SAFE(G_ubf_tls->M_ubf_error_msg_buf, p_err->ubf_error_msg_buf);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -46,6 +46,16 @@ extern "C" {
 #define MAX_ERROR_LEN   1024
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+    
+/**
+ * UBF error handler save/restore
+ */
+typedef struct
+{
+    char ubf_error_msg_buf[MAX_ERROR_LEN+1];
+    int ubf_error;
+} ndrx_ubf_error_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -62,6 +72,10 @@ extern NDRX_API void ndrx_Bunset_error(void);
  * because file is part of error handling
  */
 extern NDRX_API void ndrx_report_regexp_error(char *fun_nm, int err, regex_t *rp);
+
+extern NDRX_API void ndrx_Bsave_error(ndrx_ubf_error_t *p_err);
+extern NDRX_API void ndrx_Brestore_error(ndrx_ubf_error_t *p_err);
+
 #ifdef	__cplusplus
 }
 #endif
