@@ -58,10 +58,56 @@
 exprivate MUTEX_LOCKDECL(M_view_change_lock);
 exprivate MUTEX_LOCKDECL(M_views_init_lock);
 exprivate int M_no_ubf_proc = EXFALSE; /* Do not process UBF during loading... */
-
 exprivate  volatile int M_views_loaded = EXFALSE; /* Is views loaded? */
-
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Load the directories by CONF_VIEWDIR
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_view_load_directories(void)
+{
+    int ret = EXSUCCEED;
+
+    char *tok;
+    char *saveptr1;
+    char *env;
+    char dirs[PATH_MAX+1];
+    env = getenv(CONF_VIEWDIR);
+    if (NULL==env)
+    {
+        UBF_LOG(log_error, "Missing env [%s]", CONF_VIEWDIR);
+        ndrx_Bset_error_fmt(BEUNIX, "Missing env [%s]", CONF_VIEWDIR);
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_STRCPY_SAFE(dirs, env);
+
+    UBF_LOG(log_debug, "Splitting: [%s]", dirs);
+    tok=strtok_r (dirs,":", &saveptr1);
+    while( tok != NULL )
+    {
+        UBF_LOG(log_debug, "Loading directory [%s]...", tok);
+        if (EXSUCCEED!=ndrx_view_load_directory(tok))
+        {
+            EXFAIL_OUT(ret);
+        }
+
+        tok=strtok_r (NULL,":", &saveptr1);
+    }
+
+
+out:
+
+    if (EXSUCCEED==ret)
+    {
+        __sync_synchronize();
+        M_views_loaded = EXTRUE;
+        UBF_LOG(log_info, "Views loaded OK");
+    }
+
+    return ret;
+}
 
 /**
  * Configure view loader
@@ -70,9 +116,7 @@ exprivate  volatile int M_views_loaded = EXFALSE; /* Is views loaded? */
 expublic void ndrx_view_loader_configure(int no_ubf_proc)
 {
     M_no_ubf_proc = no_ubf_proc;
-    
     UBF_LOG(log_warn, "Do not process UBF: %s", M_no_ubf_proc?"Yes":"No");
-    
 }
 
 /**
@@ -791,6 +835,11 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
                 p2++;
             }
             
+            /* looks like this function is too big (after this place) for xlC and getting:
+             * 506-754 (S) The parameter type is not valid for a function of this linkage type
+             * when using __sync_synchronize() after this place.
+             * Thus any use of __sync_synchronize() shall be done before this big func, strange.
+             */
             UBF_LOG(log_dump, "At %p value [%c]", p2, *p2);
             
             if (p2==pend)
@@ -1306,54 +1355,6 @@ out:
 
     return ret;
     
-}
-
-/**
- * Load the directories by CONF_VIEWDIR
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_view_load_directories(void)
-{
-    int ret = EXSUCCEED;
-    
-    char *tok;
-    char *saveptr1;
-    char *env;
-    char dirs[PATH_MAX+1];
-    env = getenv(CONF_VIEWDIR);
-    if (NULL==env)
-    {
-        UBF_LOG(log_error, "Missing env [%s]", CONF_VIEWDIR);
-        ndrx_Bset_error_fmt(BEUNIX, "Missing env [%s]", CONF_VIEWDIR);
-        EXFAIL_OUT(ret);
-    }
-    
-    NDRX_STRCPY_SAFE(dirs, env);
-    
-    UBF_LOG(log_debug, "Splitting: [%s]", dirs);
-    tok=strtok_r (dirs,":", &saveptr1);
-    while( tok != NULL ) 
-    {
-        UBF_LOG(log_debug, "Loading directory [%s]...", tok);
-        if (EXSUCCEED!=ndrx_view_load_directory(tok))
-        {
-            EXFAIL_OUT(ret);
-        }
-        
-        tok=strtok_r (NULL,":", &saveptr1);
-    }
-    
-    
-out:
-
-    if (EXSUCCEED==ret)
-    {
-        __sync_synchronize();
-        M_views_loaded = EXTRUE;
-        UBF_LOG(log_info, "Views loaded OK");
-    }
-
-    return ret;
 }
 
 /**
