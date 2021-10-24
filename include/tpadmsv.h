@@ -31,8 +31,8 @@
  * -----------------------------------------------------------------------------
  */
 
-#ifndef BRDCSTSV_H
-#define	BRDCSTSV_H
+#ifndef TPADMSV_H
+#define	TPADMSV_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -163,6 +163,6 @@ extern NDRX_API ndrx_adm_class_map_t *ndrx_adm_class_map_get(char *clazz);
 }
 #endif
 
-#endif	/* BRDCSTSV_H */
+#endif	/* TPADMSV_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
