@@ -194,7 +194,7 @@ exprivate int netcallconv(char *req_buf, long req_len, char **obuf, long *olen,
     NDRX_ASSERT_VAL_OUT((0==strcmp(callpars->name, "HELLOSVC")), "%s vs %s", callpars->name, "HELLOSVC");
     
     NDRX_ASSERT_VAL_OUT((callpars->command_id==ATMI_COMMAND_TPCALL), "%hd vs %hd", 
-            callpars->command_id, ATMI_COMMAND_TPCALL);
+            callpars->command_id, (short)ATMI_COMMAND_TPCALL);
     
     NDRX_ASSERT_VAL_OUT((callpars->timer.t.tv_nsec==call->timer.t.tv_nsec), "%ld vs %ld", 
             (long)callpars->timer.t.tv_nsec, (long)call->timer.t.tv_nsec);
