@@ -33,7 +33,7 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -67,9 +67,9 @@ add_library (extest STATIC
 add_dependencies (extest ubftestvhdrs)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(exnet atmisrvinteg atmi nstd)
+    target_link_libraries(extest atmisrvinteg atmi nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(exnet atmisrvinteg atmi nstd)
+    target_link_libraries(extest atmisrvinteg atmi nstd)
 endif()
 
 # vim: set ts=4 sw=4 et smartindent:

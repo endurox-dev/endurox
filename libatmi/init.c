@@ -613,7 +613,7 @@ expublic int ndrx_load_common_env(void)
         }
         
         /* tokenize & check... */
-        while (token = strtok_r(str_first, "\t ", &ptr))
+        while (NULL!=(token = strtok_r(str_first, "\t ", &ptr)))
         {
             if (NULL!=str_first)
             {
