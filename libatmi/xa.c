@@ -3,6 +3,12 @@
  *   Responsible for:
  *   - Loading the drivers in app.
  *   Think about automatic open...
+ *   RECON: We expect that on first network failure, XA APIs should return XAER_RMFAIL
+ *   on such error, if RECON is configured we shall re-establish connection.
+ *   In case if last call (if counter is exceeded) still we are getting XAER_RMFAIL
+ *   keep the internal status that connection is broken and on next API call we firstly
+ *   try to connect to resource, and only the proceed. If proceed fails, attempt
+ *   counter continues to count from first attempts (if there was any).
  *
  * @file xa.c
  */
