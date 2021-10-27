@@ -73,7 +73,7 @@ export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-startfail.$SUFFIX
 #
 # Recon on every xa_start error, 3xretries, sleep 10ms between retries.
 #
-export NDRX_XA_FLAGS="RECON:*:3:10"
+export NDRX_XA_FLAGS="RECON:*:2:10"
 export TEST160_FLAG=""
 
 ./run-dom.sh || exit $?
@@ -95,7 +95,7 @@ export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-startfail.$SUFFIX
 #
 # Recon on every xa_start error, 3xretries, sleep 10ms between retries.
 #
-export NDRX_XA_FLAGS="RECON:*:2:10"
+export NDRX_XA_FLAGS="RECON:*:1:10"
 export TEST160_FLAG="fail"
 
 ./run-dom.sh || exit $?
@@ -146,7 +146,7 @@ export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_s-105.$SUFFIX
 # Normal tests
 ################################################################################
 
-export NDRX_XA_FLAGS=RECON:*:3:100
+export NDRX_XA_FLAGS=RECON:*:2:100
 # tests with xa_recover type pings
 export TESTPING_DOM1="-P1 -R";
 
