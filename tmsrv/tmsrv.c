@@ -735,7 +735,7 @@ void tpsvrdone(void)
         ndrx_thpool_wait(G_tmsrv_cfg.thpool);
         ndrx_thpool_destroy(G_tmsrv_cfg.thpool);
     }
-    atmi_xa_close_entry();
+    atmi_xa_close_entry(EXFALSE);
     
 }
 

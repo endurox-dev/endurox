@@ -224,8 +224,9 @@ typedef struct atmi_xa_tx_info atmi_xa_tx_info_t;
 /* Current thread transaction info block */
 struct atmi_xa_curtx
 {
-    int is_xa_open;      /* Is xa_open for current thread           */
-    atmi_xa_tx_info_t *tx_tab; /* transaction descriptors, table   */
+    int is_xa_open;      /**< Is xa_open for current thread                 */
+    int is_xa_conn_error; /**< Is connection failed?                        */
+    atmi_xa_tx_info_t *tx_tab; /**< transaction descriptors, table          */
     
     /* TODO: We should have hash list here with open transactions
      * And we should have a pointer to current transaction.
@@ -234,7 +235,7 @@ struct atmi_xa_curtx
      * and continue with other.
      * is_in_tx, is_tx_suspended, is_tx_initiator should be moved to txinfo!!!
      */
-    atmi_xa_tx_info_t *txinfo; /* we need a ptr to current transaction */
+    atmi_xa_tx_info_t *txinfo; /**< we need a ptr to current transaction    */
     
 };
 typedef struct atmi_xa_curtx atmi_xa_curtx_t;
@@ -394,7 +395,7 @@ typedef struct txstate2tperrno txstate2tperrno_t;
 extern NDRX_API int atmi_xa_init(void);
 extern NDRX_API void atmi_xa_uninit(void);
 extern NDRX_API int atmi_xa_open_entry(void);
-extern NDRX_API int atmi_xa_close_entry(void);
+extern NDRX_API int atmi_xa_close_entry(int for_retry);
 extern NDRX_API int atmi_xa_start_entry(XID *xid, long flags, int ping_try);
 extern NDRX_API int atmi_xa_end_entry(XID *xid, long flags, int aborting);
 extern NDRX_API int atmi_xa_prepare_entry(XID *xid, long flags);

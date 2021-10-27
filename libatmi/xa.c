@@ -92,14 +92,13 @@
  * @param (call) expression to call on retry
  * @param (retry_condition) error condition on which to retry
  * @param (bad_status) expression indicating that if true, we are still failing
+ * @param do_primary shall we call the primary expression?
  */
-#define GENERIC_RETRY_CORE(call, retry_condition, bad_status) do {\
-        int tries=0;\
-        \
+#define GENERIC_RETRY_CORE(call, retry_condition, bad_status, do_primary) do {\
         /* Check that return code is specified or loop second attempt is it in global retry list */\
-        if (G_atmi_env.xa_recon_times > 1 && (retry_condition))\
+        if (G_atmi_env.xa_recon_times && (retry_condition))\
         {\
-            for (tries=1; tries<G_atmi_env.xa_recon_times; tries++)\
+            for (; tries<G_atmi_env.xa_recon_times; tries++)\
             {\
                 NDRX_LOG(log_warn, "RECON: Attempt %d. Sleeping %ld micro-sec", \
                         tries, G_atmi_env.xa_recon_usleep);\
@@ -107,31 +106,33 @@
                 NDRX_LOG(log_warn, "RECON: Retrying...");\
                 /* xa_close */\
                 NDRX_LOG(log_warn, "RECON: atmi_xa_close_entry()");\
-                atmi_xa_close_entry();\
-                G_atmi_tls->G_atmi_xa_curtx.is_xa_open=EXFALSE;\
+                atmi_xa_close_entry(EXTRUE);\
                 NDRX_LOG(log_warn, "RECON: atmi_xa_open_entry()");\
                 if (EXSUCCEED==atmi_xa_open_entry())\
                 {\
                     /* restart... */\
                     NDRX_LOG(log_warn, "RECON: %s() atmi_xa_open_entry() OK", __func__);\
-                    ret = (call);\
-                    if (!(bad_status))\
+                    if (do_primary)\
                     {\
-                        NDRX_LOG(log_warn, "RECON: Succeed");\
-                        break;\
-                    }\
-                    else\
-                    {\
-                        if ((retry_condition))\
+                        ret = (call);\
+                        if (!(bad_status))\
                         {\
-                            NDRX_LOG(log_warn, "RECON: Attempt %d. %s() failed %d", \
-                                tries, __func__, ret);\
+                            NDRX_LOG(log_warn, "RECON: Succeed");\
+                            break;\
                         }\
                         else\
-                        { /* this is different error, so not attempting... */\
-                            NDRX_LOG(log_warn, "RECON: Attempt %d. %s() failed %d, no continue", \
-                                tries, __func__, ret);\
-                            break;\
+                        {\
+                            if ((retry_condition))\
+                            {\
+                                NDRX_LOG(log_warn, "RECON: Attempt %d. %s() failed %d", \
+                                    tries, __func__, ret);\
+                            }\
+                            else\
+                            { /* this is different error, so not attempting... */\
+                                NDRX_LOG(log_warn, "RECON: Attempt %d. %s() failed %d, no continue", \
+                                    tries, __func__, ret);\
+                                break;\
+                            }\
                         }\
                     }\
                 }\
@@ -142,15 +143,21 @@
                     __func__, tries, ret, atmi_xa_geterrstr(ret));\
                 }\
             } /* for tries */\
+            /* still failed, let next calls to survive */\
+            if (XAER_RMFAIL==ret)\
+            {\
+                atmi_xa_close_entry(EXTRUE);\
+            }\
         } /* if retry supported. */\
     } while (0)
+
 
 /**
  * Generic retry engine for all others except start
  * see args of GENERIC_RETRY_CORE()
  */
 #define GENERIC_RETRY(call, retry_condition, bad_status) do {\
-        GENERIC_RETRY_CORE((call), (retry_condition), (bad_status));\
+        GENERIC_RETRY_CORE((call), (retry_condition), (bad_status), EXTRUE);\
         if (bad_status)\
         {\
             NDRX_LOG(log_error, "finally %s - fail: %d [%s]", \
@@ -161,6 +168,33 @@
             goto out;\
         }\
     } while (0)
+
+/**
+ * Keep the common attempts counter as for entry connect and later reconnects
+ * after bad primary method.
+ */
+#define GENERIC_RETRY_ENTRY \
+        /* perform retry with common counter */\
+        GENERIC_RETRY_CORE(0, G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error, 0, EXFALSE);\
+        do\
+        {\
+            if (XA_OK!=ret)\
+            {\
+                NDRX_LOG(log_error, "finally %s - fail: %d [%s]", \
+                        __func__, ret, atmi_xa_geterrstr(ret));\
+                ndrx_TPset_error_fmt_rsn(TPERMERR,  \
+                        ret, "finally %s - fail: %d [%s]", \
+                        __func__, ret, atmi_xa_geterrstr(ret));\
+                goto out;\
+            }\
+        } while (0)
+
+/**
+ * Generic define for retry engine
+ * keeps the common re-connect attempts counter!
+ */
+#define GENERIC_RETRY_DEF \
+    int tries = 0
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -218,7 +252,7 @@ expublic void atmi_xa_uninit(void)
     {
         if (G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
         {
-            atmi_xa_close_entry();
+            atmi_xa_close_entry(EXFALSE);
             G_atmi_tls->G_atmi_xa_curtx.is_xa_open = EXFALSE;
         }
         G_atmi_tls->M_is_curtx_init = EXFALSE;
@@ -512,7 +546,8 @@ expublic int atmi_xa_open_entry(void)
     
     NDRX_LOG(log_debug, "atmi_xa_open_entry RMID=%hd", G_atmi_env.xa_rmid);
     
-    if (G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
+    if (G_atmi_tls->G_atmi_xa_curtx.is_xa_open 
+            && !G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error)
     {
         NDRX_LOG(log_warn, "xa_open_entry already called for context!");
         goto out;
@@ -533,6 +568,12 @@ expublic int atmi_xa_open_entry(void)
     
     G_atmi_tls->G_atmi_xa_curtx.is_xa_open = EXTRUE;
     
+    if (G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error)
+    {
+        NDRX_LOG(log_warn, "Marking connection state as OK");
+        G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error = EXFALSE;
+    }
+    
     NDRX_LOG(log_info, "XA interface open");
     
 out:
@@ -542,9 +583,10 @@ out:
 /**
  * Wrapper for `close_entry'
  * TODO: Maybe we do not need XA_API_ENTRY here...
- * @return 
+ * @param for_retry doing close for retry / error attempt
+ * @return XA error
  */
-expublic int atmi_xa_close_entry(void)
+expublic int atmi_xa_close_entry(int for_retry)
 {
     int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY */
@@ -553,12 +595,20 @@ expublic int atmi_xa_close_entry(void)
     
     if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
-        NDRX_LOG(log_warn, "xa_close_entry already called for context!");
+        NDRX_LOG(log_warn, "Marking connection state as ERROR");
         goto out;
     }
     
     /* lets assume it is closed... */
-    G_atmi_tls->G_atmi_xa_curtx.is_xa_open = EXFALSE;
+    if (for_retry)
+    {
+        NDRX_LOG(log_warn, "Marking resource connection as ERROR");
+        G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error = EXTRUE;
+    }
+    else
+    {
+        G_atmi_tls->G_atmi_xa_curtx.is_xa_open = EXFALSE;
+    }
     
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_close_entry(G_atmi_env.xa_close_str, 
                                     G_atmi_env.xa_rmid, 0)))
@@ -620,9 +670,13 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int silent_err)
 {
     int ret = EXSUCCEED;
     int need_retry;
+    GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "%s", __func__);
+    
+    /* Generic Retry entry */
+    GENERIC_RETRY_ENTRY;
     
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_start_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
@@ -648,8 +702,8 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int silent_err)
             (G_atmi_env.xa_sw->xa_start_entry(xid, G_atmi_env.xa_rmid, flags))
             , (need_retry && is_error_in_recon_list(ret))
             , (XA_OK!=ret)
-            );
-        NDRX_LOG(log_error, "YOPT %d", ret);
+            , EXTRUE);
+
         if (XA_OK!=ret)
         {
             if (silent_err && (XAER_NOTA==ret || XAER_DUPID==ret))
@@ -692,27 +746,30 @@ expublic int atmi_xa_end_entry(XID *xid, long flags, int aborting)
     char stat;
     UBFH *p_ub = NULL;
     int local_rb = EXFALSE;
-        
+    GENERIC_RETRY_DEF;
+    
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_end_entry flags %ld", flags);
+    
+    GENERIC_RETRY_ENTRY;
     
     /* we do always success (as TX intiator decides commit or abort...! */
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_end_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
-        NDRX_LOG(log_error, "xa_end_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_end_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        goto out;
+        /* generic retry to keep the connection status with us */
+        GENERIC_RETRY(
+            (G_atmi_env.xa_sw->xa_end_entry(xid, G_atmi_env.xa_rmid, flags))
+            , (XAER_RMFAIL==ret)
+            , (XA_OK!=ret)
+            );
     }
     
     /* If having no start xid, then we must call prepare! (for postgresql) */
 
     if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
     {
-        
         NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
         if (aborting && G_atmi_env.pf_xa_loctxabort)
         {
@@ -726,23 +783,15 @@ expublic int atmi_xa_end_entry(XID *xid, long flags, int aborting)
                 userlog("Failed to disconnect from transaction: %d", ret);
             }
         }
+        /*
         else if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                         G_atmi_env.xa_rmid, TMNOFLAGS)))
+         * moved to common prepare engine.
+         */
+        else if (XA_OK!=(ret=atmi_xa_prepare_entry(xid, TMNOFLAGS)) && XA_RDONLY!=ret)
         {
-            if (XA_RDONLY!=ret)
-            {
-                NDRX_LOG(log_error, "xa_prepare_entry - fail: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
-                
-                ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, 
-                        "xa_prepare_entry - fail: %d [%s]", 
-                        ret, atmi_xa_geterrstr(ret));
-                goto out;
-            }
-            else
-            {
-                ret = XA_OK;
-            }
+            NDRX_LOG(log_error, "Failed to prepare transaction at NOSTARTXID end");
+            goto out;
         }
         
         /* test of transaction automatic rollback */
@@ -814,26 +863,22 @@ out:
 expublic int atmi_xa_rollback_entry(XID *xid, long flags)
 {
     int ret = EXSUCCEED;
+    GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_rollback_entry");
     
+    GENERIC_RETRY_ENTRY;
+    
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_rollback_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
-/*
-        NDRX_LOG(log_error, "xa_rollback_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_rollback_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        goto out;
-*/
         /* in case of protocol error, we need to re-open, as connection
          * might be is closed.
          */
         GENERIC_RETRY(
             (G_atmi_env.xa_sw->xa_rollback_entry(xid, G_atmi_env.xa_rmid, flags))
-            , (XAER_PROTO==ret || XAER_RMFAIL==ret)
+            , (XAER_RMFAIL==ret)
             , (XA_OK!=ret)
             );
     }
@@ -851,9 +896,12 @@ out:
 expublic int atmi_xa_prepare_entry(XID *xid, long flags)
 {
     int ret = EXSUCCEED;
+    GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_prepare_entry");
+    
+    GENERIC_RETRY_ENTRY;
      
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
@@ -875,7 +923,7 @@ expublic int atmi_xa_prepare_entry(XID *xid, long flags)
         {
             GENERIC_RETRY(
                 (G_atmi_env.xa_sw->xa_prepare_entry(xid, G_atmi_env.xa_rmid, flags))
-                , (XAER_PROTO==ret || XAER_RMFAIL==ret)
+                , (XAER_RMFAIL==ret)
                 , (XA_OK!=ret)
                 );
         }
@@ -894,26 +942,22 @@ out:
 expublic int atmi_xa_forget_entry(XID *xid, long flags)
 {
     int ret = EXSUCCEED;
+    GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_forget_entry");
      
+    GENERIC_RETRY_ENTRY;
+    
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_forget_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
-/*
-        NDRX_LOG(log_error, "xa_forget_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_forget_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        goto out;
-*/
         /* in case of protocol error, we need to re-open, as connection
          * might be is closed.
          */
         GENERIC_RETRY(
                (G_atmi_env.xa_sw->xa_forget_entry(xid, G_atmi_env.xa_rmid, flags))
-               , (XAER_PROTO==ret || XAER_RMFAIL==ret)
+               , (XAER_RMFAIL==ret)
                , (XA_OK!=ret)
                 );
     }
@@ -932,25 +976,18 @@ out:
 expublic int atmi_xa_commit_entry(XID *xid, long flags)
 {
     int ret = EXSUCCEED;
+    GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE);
     
+    GENERIC_RETRY_ENTRY;
     NDRX_LOG(log_debug, "atmi_xa_commit_entry");
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_commit_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
-/*
-        NDRX_LOG(log_error, "xa_commit_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_commit_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        goto out;
-*/
-
         GENERIC_RETRY(
                 (G_atmi_env.xa_sw->xa_commit_entry(xid,G_atmi_env.xa_rmid, flags))
-                , (XAER_PROTO==ret || XAER_RMFAIL==ret)
+                , (XAER_RMFAIL==ret)
                 , (XA_OK!=ret));
-
     }
     
 out:
@@ -968,16 +1005,19 @@ out:
 expublic int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags)
 {
     int ret = EXSUCCEED;
+    GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "%s", __func__);
+    
+    GENERIC_RETRY_ENTRY;
     
     if (0 > (ret = G_atmi_env.xa_sw->xa_recover_entry(xids, count,
                                     G_atmi_env.xa_rmid, flags)))
     {
         GENERIC_RETRY(
             (G_atmi_env.xa_sw->xa_recover_entry(xids, count, G_atmi_env.xa_rmid, flags))
-            , (XAER_PROTO==ret || XAER_RMFAIL==ret)
+            , (XAER_RMFAIL==ret)
             , (0 > ret)
             );
     }
@@ -1463,7 +1503,7 @@ expublic int ndrx_tpclose(void)
         EXFAIL_OUT(ret);
     }
    
-    ret = atmi_xa_close_entry();
+    ret = atmi_xa_close_entry(EXFALSE);
     
 out:
     return ret;
