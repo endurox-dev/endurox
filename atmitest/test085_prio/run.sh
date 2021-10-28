@@ -118,7 +118,33 @@ if [[ "$POLLER" == "epoll" || "$POLLER" == "kqueue" ]]; then
 
     xadmin psc
 
-    echo "*** Default is lower"
+    echo ">>> Benchmark the system, to check is test applicable"
+    echo ">>>> Single process performance..."
+    export NDRX_BENCH_FILE="perf1.log"
+    export NDRX_BENCH_CONFIGNAME="results"
+    exbenchcl -n1 -P  -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024
+
+    echo ">>>> MT process performance..."
+    export NDRX_BENCH_FILE="perf2.log"
+    export NDRX_BENCH_CONFIGNAME="results"
+    exbenchcl -n2 -P  -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024
+
+    PERF1=`cat perf1.log | grep results | awk '{print $3}'`
+    PERF2=`cat perf2.log | grep results | awk '{print $3}'`
+
+    echo "Results: 1 x thread [$PERF1] 2 x thread [$PERF2]"
+
+    # if MT is not faster than 20% of the single thread, then test cannot be run
+    # i.e. we have 1x cpu, and due to scheduler, threads may be fully processed.
+    # without any priority.
+    let "PERF1 = PERF1 + (PERF1 / 4)"
+
+    if [ $PERF2 -lt $PERF1 ]; then
+        echo "Cannot continue - system too slow ($PERF2 < $PERF1) (increase vcpu count?)"
+        go_out 0
+    fi
+
+    echo ">>> Default is lower"
     export NDRX_BENCH_FILE="bench.def.log"
     export NDRX_BENCH_CONFIGNAME="results"
     exbenchcl -n5 -P  -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
@@ -152,7 +178,7 @@ if [[ "$POLLER" == "epoll" || "$POLLER" == "kqueue" ]]; then
     rm bench.def.log
     rm bench.70.log
 
-    echo "*** Default is higher"
+    echo ">>> Default is higher"
     xadmin stop -y
     export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1_svcprio.xml
     xadmin start -y
