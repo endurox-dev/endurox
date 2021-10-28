@@ -614,6 +614,13 @@ expublic int atmi_xa_close_entry(int for_retry)
     else
     {
         G_atmi_tls->G_atmi_xa_curtx.is_xa_open = EXFALSE;
+	
+	if (G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error)
+	{
+        	NDRX_LOG(log_warn, "Resource connection was marked as ERROR. "
+					"Normal close, clearing flag");
+        	G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error = EXFALSE;
+	}
     }
     
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_close_entry(G_atmi_env.xa_close_str, 
