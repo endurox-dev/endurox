@@ -45,7 +45,7 @@
         Max number of sanity units in which server must respond.
         The granularity is sanity time.
         -->
-        <ping_max>40</ping_max>
+        <ping_max>40000</ping_max>
         <!--
         Max time to wait until process should exit on shutdown
         -->
