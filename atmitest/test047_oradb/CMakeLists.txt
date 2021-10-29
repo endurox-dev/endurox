@@ -66,14 +66,17 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c
 
 add_executable (atmi.sv47 atmisv47.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt47 atmiclt47.c)
+add_executable (atmiclt47_loop atmiclt47_loop.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
 target_link_libraries (atmi.sv47 clntsh atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt47 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt47_loop atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv47 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt47 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt47_loop PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 
