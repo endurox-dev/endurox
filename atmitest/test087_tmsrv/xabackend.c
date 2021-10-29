@@ -41,6 +41,8 @@
 #include <userlog.h>
 #include <tmenv.h>
 #include <thlock.h>
+
+#include "ndebug.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #ifdef TEST_RM1
@@ -176,7 +178,7 @@ static int get_return_code(const char *func, int *cntr)
     if (*cntr < atoi(all_settings[SETTING_CNT]))
     {
         *cntr = *cntr + 1;
-        
+        NDRX_LOG(log_error, "%s counter: %d", func, *cntr);
         ret=atoi(all_settings[SETTING_RET1]);
     }
     else
@@ -188,6 +190,31 @@ static int get_return_code(const char *func, int *cntr)
     
     return ret;
 }
+
+
+#define ATTEMPT(closed_OK) do {\
+        static int attempt = 0;\
+        if (!closed_OK && !M_is_open) \
+        {\
+            return XAER_RMERR;\
+        }\
+        userlog(TRM ": %s attempt=%d rmid=%d flags=%ld (TMASYNC=%d TMONEPHASE=%d "\
+        "TMFAIL=%d TMNOWAIT=%d TMRESUME=%d TMSUCCESS=%d TMSUSPEND=%d TMSTARTRSCAN=%d TMENDRSCAN=%d TMMULTIPLE=%d TMJOIN=%d TMMIGRATE=%d)",\
+            __func__, attempt, rmid, flags,\
+            !!(flags & TMASYNC),\
+            !!(flags & TMONEPHASE),\
+            !!(flags & TMFAIL),\
+            !!(flags & TMNOWAIT),\
+            !!(flags & TMRESUME),\
+            !!(flags & TMSUCCESS),\
+            !!(flags & TMSUSPEND),\
+            !!(flags & TMSTARTRSCAN),\
+            !!(flags & TMENDRSCAN),\
+            !!(flags & TMMULTIPLE),\
+            !!(flags & TMJOIN),\
+            !!(flags & TMMIGRATE));\
+        return get_return_code(__func__, &attempt);\
+    } while (0)
 
 static int xa_open_entry(char *xa_info, int rmid, long flags)
 {
@@ -215,7 +242,9 @@ static int xa_open_entry(char *xa_info, int rmid, long flags)
     M_is_open = 1;
     M_rmid = rmid;
              
-    return XA_OK;
+    /* return XA_OK; */
+    
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_close_entry(char *xa_info, int rmid, long flags)
@@ -226,70 +255,49 @@ static int xa_close_entry(char *xa_info, int rmid, long flags)
     }
     
     M_is_open = 0;
-    return XA_OK;
+    /* return XA_OK; */
+    
+    ATTEMPT(EXTRUE);
 }
-
-#define ATTEMPT \
-    static int attempt = 0;\
-    if (!M_is_open) \
-    {\
-        return XAER_RMERR;\
-    }\
-    userlog(TRM ": %s attempt=%d rmid=%d flags=%ld (TMASYNC=%d TMONEPHASE=%d "\
-    "TMFAIL=%d TMNOWAIT=%d TMRESUME=%d TMSUCCESS=%d TMSUSPEND=%d TMSTARTRSCAN=%d TMENDRSCAN=%d TMMULTIPLE=%d TMJOIN=%d TMMIGRATE=%d)",\
-        __func__, attempt, rmid, flags,\
-	!!(flags & TMASYNC),\
-	!!(flags & TMONEPHASE),\
-	!!(flags & TMFAIL),\
-	!!(flags & TMNOWAIT),\
-	!!(flags & TMRESUME),\
-	!!(flags & TMSUCCESS),\
-	!!(flags & TMSUSPEND),\
-	!!(flags & TMSTARTRSCAN),\
-	!!(flags & TMENDRSCAN),\
-	!!(flags & TMMULTIPLE),\
-	!!(flags & TMJOIN),\
-	!!(flags & TMMIGRATE));\
-    return get_return_code(__func__, &attempt);
 
 static int xa_start_entry(XID *xid, int rmid, long flags)
 {    
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_end_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_rollback_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_prepare_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_commit_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_recover_entry(XID *xid, long count, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_forget_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_complete_entry(int *handle, int *retval, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

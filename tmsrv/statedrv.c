@@ -301,13 +301,12 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                 {
                     /* 
                      * jump to lowest level we got.
-                     * So aborting will win over the committing
                      */
                     new_txstage = rm_vote_next_txstage;
                     NDRX_LOG(log_info, "Voting to leave group for %hd!", new_txstage);
                     /* switch the stage */
                     again = EXTRUE;
-                    break;
+                    goto break_all_groups;
                 }
 
                 /* Maybe we need some kind of arrays to put return stages in? 
@@ -317,6 +316,8 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                  */
             }
         }
+        
+break_all_groups:
         
         if (XA_TX_STAGE_MAX_NEVER==new_txstage)
         {
