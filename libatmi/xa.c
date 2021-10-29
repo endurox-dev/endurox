@@ -104,10 +104,15 @@
         /* Check that return code is specified or loop second attempt is it in global retry list */\
         if (G_atmi_env.xa_recon_times && (retry_condition))\
         {\
-            for (; tries<G_atmi_env.xa_recon_times; tries++)\
+            if (do_primary)\
             {\
-                NDRX_LOG(log_warn, "RECON: Attempt %d. Sleeping %ld micro-sec", \
-                        tries, G_atmi_env.xa_recon_usleep);\
+                NDRX_LOG(log_warn, "RECON: Entry of %s() failed with %d", __func__, ret);\
+            }\
+            while (tries<G_atmi_env.xa_recon_times)\
+            {\
+                tries++;\
+                NDRX_LOG(log_warn, "RECON: >>> Attempt %d type=%s. Sleeping %ld micro-sec", \
+                        tries, (do_primary?__func__:"conn-only"), G_atmi_env.xa_recon_usleep);\
                 usleep(G_atmi_env.xa_recon_usleep);\
                 NDRX_LOG(log_warn, "RECON: Retrying...");\
                 /* xa_close */\
@@ -117,34 +122,40 @@
                 if (EXSUCCEED==atmi_xa_open_entry())\
                 {\
                     /* restart... */\
-                    NDRX_LOG(log_warn, "RECON: %s() atmi_xa_open_entry() OK", __func__);\
+                    NDRX_LOG(log_warn, "RECON: %s() call of atmi_xa_open_entry() OK", __func__);\
                     if (do_primary)\
                     {\
+                        NDRX_LOG(log_warn, "RECON: Retry of %s()", __func__);\
                         ret = (call);\
                         if (!(bad_status))\
                         {\
-                            NDRX_LOG(log_warn, "RECON: Succeed");\
+                            NDRX_LOG(log_warn, "RECON: <<< Succeed (%s)", __func__);\
                             break;\
                         }\
                         else\
                         {\
                             if ((retry_condition))\
                             {\
-                                NDRX_LOG(log_warn, "RECON: Attempt %d. %s() failed %d", \
+                                NDRX_LOG(log_warn, "RECON: <<< Attempt %d. %s() failed %d", \
                                     tries, __func__, ret);\
                             }\
                             else\
                             { /* this is different error, so not attempting... */\
-                                NDRX_LOG(log_warn, "RECON: Attempt %d. %s() failed %d, no continue", \
+                                NDRX_LOG(log_warn, "RECON: <<< Attempt %d. %s() failed %d, no continue", \
                                     tries, __func__, ret);\
                                 break;\
                             }\
                         }\
                     }\
+                    else\
+                    {\
+                        NDRX_LOG(log_warn, "RECON: <<< Succeed (connection)");\
+                        break;\
+                    }\
                 }\
                 else\
                 {\
-                    NDRX_LOG(log_error, "RECON: Attempt %d. atmi_xa_open_entry() - "\
+                    NDRX_LOG(log_error, "RECON: <<< Attempt %d. atmi_xa_open_entry() - "\
                             "fail: %d [%s]", \
                     __func__, tries, ret, atmi_xa_geterrstr(ret));\
                 }\
@@ -629,9 +640,12 @@ expublic int atmi_xa_close_entry(int for_retry)
         NDRX_LOG(log_error, "atmi_xa_close_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         
-      /* we should  generate atmi error */
-        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "atmi_xa_close_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
+        if (!for_retry)
+        {
+            /* we should  generate atmi error */
+            ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "atmi_xa_close_entry - fail: %d [%s]", 
+                    ret, atmi_xa_geterrstr(ret));
+        }
         goto out;
     }
     
