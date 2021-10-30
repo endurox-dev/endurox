@@ -63,7 +63,6 @@ buildprograms "";
 
 xadmin start -y || go_out 1
 
-
 echo ""
 echo "************************************************************************"
 echo "Start RECON"
@@ -74,11 +73,11 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:-7:2:0
 xa_end_entry:-7:2:0
-xa_rollback_entry:-7:3:8
+xa_rollback_entry:-7:2:8
 xa_prepare_entry:-7:4:0
 xa_commit_entry:0:1:0
 xa_recover_entry:0:1:0
-xa_forget_entry:-7:3:0
+xa_forget_entry:-7:2:0
 xa_complete_entry:0:1:0
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -117,27 +116,60 @@ if [[ $ERR != *"TPEABORT"* ]]; then
     go_out 1
 fi
 
-#verify restults ops...
-# TODO count/trace down number of open + closes
-verify_ulog "RM1" "xa_open" "23";
-verify_ulog "RM1" "xa_close" "19";
-verify_ulog "RM1" "xa_start" "7";
-verify_ulog "RM1" "xa_end" "7";
-verify_ulog "RM1" "xa_prepare" "4";
-verify_ulog "RM1" "xa_rollback" "4";
-verify_ulog "RM1" "xa_forget" "4";
-verify_ulog "RM1" "xa_commit" "0";
-verify_logfiles "log1" "0"
 
+#
+# Get the final readings...
+# 
+xadmin stop -y
+
+# clt: 1 - at boot
+# clt: 2 - restart of xa_start
+# clt: 2 - restart of xa_end
+# srv: 1 - at boot
+# srv: 2 - restart of xa_start
+# srv: 2 - restart of end
+# tms: 2 - at boot (2x threads)
+# tms: 1 - pre ( exits with -7, connection closed)
+# tms: 3 - rollback (reconn + 2x attempts)
+# tms: 2 - forget
+verify_ulog "RM1" "xa_open" "18";
+verify_ulog "RM1" "xa_close" "18";
+
+# clt 3x start + join after call
+# srv 3x start
+#
+verify_ulog "RM1" "xa_start" "7";
+
+#
+# End must match the start count
+#
+verify_ulog "RM1" "xa_end" "7";
+verify_ulog "RM1" "xa_prepare" "1";
+#
+# (1x reconnect (for counter))
+# 1 org attempt
+# 2 re-conn, second attempt OK, gives 8
+# 
+verify_ulog "RM1" "xa_rollback" "3";
+verify_ulog "RM1" "xa_forget" "3";
+verify_ulog "RM1" "xa_commit" "0";
+verify_logfiles "log1" "0";
+
+#
+# clt - 1x
+# srv - 1x
+# tms - 2x (main + thread)
+# the same for close.
+#
+verify_ulog "RM2" "xa_open" "4";
+verify_ulog "RM2" "xa_close" "4";
 verify_ulog "RM2" "xa_prepare" "0";
 verify_ulog "RM2" "xa_commit" "0";
 verify_ulog "RM2" "xa_rollback" "1";
 verify_ulog "RM2" "xa_forget" "0";
-verify_logfiles "log2" "0"
+verify_logfiles "log2" "0";
 
-echo ""
 
 go_out 0
 
 # vim: set ts=4 sw=4 et smartindent:
-
