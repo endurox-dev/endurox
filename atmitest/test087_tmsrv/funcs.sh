@@ -130,7 +130,7 @@ function verify_ulog {
 
     cnt=`grep "$rmid: $operation" ULOG* | wc -l|  awk '{print $1}'`
 
-    if [[ "X$cnt" != "X$count" ]]; then
+    if [ "X$cnt" != "X$count" ]; then
         echo "$rmid expected $operation $count times, got $cnt"
         go_out -1
     fi
