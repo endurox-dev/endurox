@@ -681,6 +681,13 @@ Ensure(test087_tmsrv)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test087_tmsrv_recon)
+{
+    int ret;
+    ret=system_dbg("test087_tmsrv/run-recon.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 Ensure(test088_addlog)
 {
     int ret;
@@ -847,6 +854,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test086_tmqlimit);
 #endif
     add_test(suite, test087_tmsrv);
+    add_test(suite, test087_tmsrv_recon);
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
     

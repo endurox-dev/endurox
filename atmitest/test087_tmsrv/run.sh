@@ -56,12 +56,9 @@ source ./funcs.sh
 #
 buildprograms "";
 
-xadmin start -y || go_out 1
-
 #
 # Run OK case...
 #
-
 echo ""
 echo "************************************************************************"
 echo "Commit OK case ..."
@@ -99,6 +96,8 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+# start here, we want fresh tables loaded...
+xadmin start -y || go_out 1
 
 NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
@@ -108,7 +107,7 @@ if [ "X$RET" != "X0" ]; then
     go_out 1
 fi
 
-#verify restults ops...
+#verify results ops...
 verify_ulog "RM1" "xa_prepare" "1";
 verify_ulog "RM1" "xa_commit" "1";
 verify_ulog "RM1" "xa_rollback" "0";

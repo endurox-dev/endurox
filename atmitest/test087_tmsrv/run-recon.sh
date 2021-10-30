@@ -2,7 +2,7 @@
 ##
 ## @brief TMSRV / XA drive re-connect checks
 ##
-## @file run.sh
+## @file run-recon.sh
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -61,8 +61,6 @@ export NDRX_XA_FLAGS="RECON:*:3:100"
 #
 buildprograms "";
 
-xadmin start -y || go_out 1
-
 echo ""
 echo "************************************************************************"
 echo "Start RECON"
@@ -100,6 +98,8 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+# start only here, as we want fresh tables...
+xadmin start -y || go_out 1
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -128,8 +128,8 @@ xadmin stop -y
 # srv: 1 - at boot
 # srv: 2 - restart of xa_start
 # srv: 2 - restart of end
-# tms: 2 - at boot (2x threads)
-# tms: 1 - pre ( exits with -7, connection closed)
+# tms: 3 - at boot (3x threads, incl background?)
+# tms: 0 - at prep ( connection closed)
 # tms: 3 - rollback (reconn + 2x attempts)
 # tms: 2 - forget
 verify_ulog "RM1" "xa_open" "18";
@@ -169,6 +169,221 @@ verify_ulog "RM2" "xa_rollback" "1";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0";
 
+
+echo ""
+echo "************************************************************************"
+echo "COMMIT Retry"
+echo "************************************************************************"
+
+clean_ulog;
+xadmin start -y || go_out 1
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:-7:2:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+
+NDRX_CCTAG="RM1" ./atmiclt87
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Build atmiclt87 failed"
+    go_out 1
+fi
+
+#
+# Get the final readings...
+# 
+xadmin stop -y
+
+#verify results ops...
+
+# clt: 1
+# sv: 1
+# tms: 3 (normal)
+# tms: 2 (retry)
+verify_ulog "RM1" "xa_open" "7";
+verify_ulog "RM1" "xa_close" "7";
+verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_commit" "3";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+# check number of suspends (1 - call suspend, 1 - sever end, 1 - client end)
+verify_ulog "RM1" "xa_end" "3";
+
+verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_commit" "1";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
+echo ""
+echo "************************************************************************"
+echo "RECOVER Retry"
+echo "************************************************************************"
+
+clean_ulog;
+xadmin start -y || go_out 1
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:-7:2:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:-7:2:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+
+NDRX_CCTAG="RM1" tmrecovercl
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Build atmiclt87 failed"
+    go_out 1
+fi
+
+#
+# Get the final readings...
+# 
+xadmin stop -y
+
+#
+# tms: 3x std opens (main, bgthr, worker)
+# tms: 2x recons on recover
+# tms: 1x atmisv con
+#
+verify_ulog "RM1" "xa_open" "6";
+verify_ulog "RM1" "xa_close" "6";
+verify_ulog "RM1" "xa_prepare" "0";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM1" "xa_forget" "0";
+# 
+# 1x Org attempt
+# 2x retries
+#
+verify_ulog "RM1" "xa_recover" "3";
+verify_logfiles "log1" "0"
+verify_ulog "RM1" "xa_end" "0";
+
+verify_ulog "RM2" "xa_open" "6";
+verify_ulog "RM2" "xa_close" "6";
+verify_ulog "RM2" "xa_prepare" "0";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_forget" "0";
+verify_ulog "RM2" "xa_recover" "3";
+verify_logfiles "log2" "0"
+
+echo ""
+echo "************************************************************************"
+echo "OPEN/CLOSE Retry (system does not start...)"
+echo "************************************************************************"
+
+clean_ulog;
+xadmin start -y || go_out 1
+
+cat << EOF > lib1.rets
+xa_open_entry:-5:2:0
+xa_close_entry:-7:2:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:-5:1:0
+xa_close_entry:-7:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPERMERR"* ]]; then
+    echo "Expected TPERMERR"
+    go_out 1
+fi
+
+xadmin stop -y
 
 go_out 0
 
