@@ -144,7 +144,9 @@ static int get_return_code(const char *func, int *cntr)
          * ret1 is returned while cntr < attempts
          * ret2 if returned if cntr>= attempts
          */
-        for (i=0, setting=strtok_r(buffer, ":", &saveptr1); NULL!=setting && i<NR_SETTINGS; i++, setting=strtok_r(NULL, ":", &saveptr1))
+        for (i=0, setting=strtok_r(buffer, ":", &saveptr1); 
+                NULL!=setting && i<NR_SETTINGS; 
+                i++, setting=strtok_r(NULL, ":", &saveptr1))
         {
             all_settings[i] = setting;
         }
