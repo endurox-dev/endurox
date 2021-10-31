@@ -160,8 +160,7 @@
                 else\
                 {\
                     NDRX_LOG(log_error, "RECON: <<< Attempt %d. atmi_xa_open_entry() - "\
-                            "fail: %d [%s]", \
-                    __func__, tries, ret, atmi_xa_geterrstr(ret));\
+                       "fail: %d [%s]", tries, ret, atmi_xa_geterrstr(ret));\
                 }\
             } /* for tries */\
             /* still failed, let next calls to survive */\

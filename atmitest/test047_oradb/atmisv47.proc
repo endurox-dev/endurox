@@ -42,6 +42,7 @@
 #include <atmi.h>
 #include <ndrstandard.h>
 #include <ubf.h>
+#include <ubfutil.h>
 #include <test.fd.h>
 #include <string.h>
 #include "test47.h"
@@ -55,6 +56,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate char M_errmark[16] = "TESTERROR";
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -82,7 +84,7 @@ void BALANCE (TPSVCINFO *p_svc)
     }
 
     /* Just print the buffer */
-    Bprint(p_ub);
+    ndrx_debug_dump_UBF(log_debug, "BALANCE got call", p_ub);
 
     if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, h_accnum, 0))
     {
@@ -152,31 +154,31 @@ void ACCOPEN (TPSVCINFO *p_svc)
     }
     
     /* Just print the buffer */
-    Bprint(p_ub);
+    ndrx_debug_dump_UBF(log_debug, "ACCOPEN got call", p_ub);
     
 
     if (EXSUCCEED!=tpsuspend (&trn, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to suspend: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to suspend: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
     if (EXSUCCEED!=tpresume (&trn, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to resume: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to resume: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
     /* suspend again, now resume with no optimization */
     if (EXSUCCEED!=tpsuspend (&trn, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to suspend: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to suspend: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
     if (EXSUCCEED!=tpresume (&trn, TPTXNOOPTIM))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to resume TPTXNOOPTIM: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to resume TPTXNOOPTIM: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
@@ -392,6 +394,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
+    if (NULL!=getenv(KILL_TEST_ENV))
+    {
+        NDRX_STRCPY_SAFE(M_errmark, "LOOPERR");
+    }
     if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "Failed to open DB!");

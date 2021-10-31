@@ -40,6 +40,7 @@ extern "C" {
 
 
 #define VALUE_EXPECTED "Hello EnduroX"
+#define KILL_TEST_ENV "NDRX_TEST047_KILL"
 
 #ifdef  __cplusplus
 }

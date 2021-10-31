@@ -49,6 +49,7 @@
 #include "test47.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define MAX_RSP 120
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -111,6 +112,9 @@ int main(int argc, char** argv)
     int ret=EXSUCCEED;
     int upper1=100, upper2=300;
     char *p;
+    ndrx_stopwatch_t w_loop;
+    ndrx_stopwatch_t w_rsp;
+    long max_rsp=-1;
 
     if (NULL!=(p=getenv(CONF_NDRX_XA_FLAGS)) && NULL!=strstr(p, "BTIGHT"))
     {
@@ -131,9 +135,25 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    ndrx_stopwatch_reset(&w_loop);
+    ndrx_stopwatch_reset(&w_rsp);
+    
+    /* run for 10 min */
     while (1)
     {
 again:
+        /* terminate our loop... */
+        if (ndrx_stopwatch_get_delta_sec(&w_loop) >= 600)
+        {
+            break;
+        }
+        /* if response is longer than than... go bad..*/
+        if (ndrx_stopwatch_get_delta_sec(&w_rsp) > MAX_RSP)
+        {
+            NDRX_LOG(log_debug, "TESTERROR: Expected OK response in %d sec", MAX_RSP);
+            EXFAIL_OUT(ret);
+        }
+        
         /* delete accounts no global transactional */
         while (EXFAIL == tpcall("ACCCLEAN", NULL, 0L, &rsp, &rsplen,0))
         {
@@ -180,19 +200,27 @@ again:
                 /* restart the test.. */
                 goto again;
             }
+            /* we shall have some positive response! */
+            ndrx_stopwatch_reset(&w_rsp);
         }
     
         /* at this point transaction must be marked for rollback */
         if (EXSUCCEED != tpcommit(0))
         {
             NDRX_LOG(log_error, "tpcommit failed: %s", tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
+            tpabort(0);
         }
     }
 
     
 out:
+
+    /* if response is longer than than... go bad..*/
+    if (ndrx_stopwatch_get_delta_sec(&w_rsp) > MAX_RSP)
+    {
+        NDRX_LOG(log_debug, "TESTERROR: Expected OK response in %d sec", MAX_RSP);
+        ret=EXFAIL;
+    }
 
     if (EXSUCCEED!=ret)
     {
@@ -207,6 +235,13 @@ out:
 
     tpclose();
     tpterm();
+    
+    /* return an error marking */
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Exit with %d", ret);
+    }
+    
     fprintf(stderr, "Exit with %d\n", ret);
 
     return ret;
