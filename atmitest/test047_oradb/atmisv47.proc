@@ -68,6 +68,7 @@ void BALANCE (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
+    int tran_started=EXFALSE;
 
     EXEC SQL BEGIN DECLARE SECTION;
     long h_balance;
@@ -76,6 +77,18 @@ void BALANCE (TPSVCINFO *p_svc)
     
     NDRX_LOG(log_debug, "%s got call", __func__);
     
+    if (!tpgetlev())
+    {
+        /* start a transaction */
+        if (EXSUCCEED!=tpbegin(M_tout, 0))
+        {
+            NDRX_LOG(log_error, "Failed to start transaction: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        tran_started=EXTRUE;
+    }
+
     /* reallocate the buffer... */
     p_ub = (UBFH *)tprealloc((char *)p_ub, Bsizeof(p_ub) + 1024);
     
@@ -119,6 +132,27 @@ void BALANCE (TPSVCINFO *p_svc)
     }
     
 out:
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=tpcommit(0))
+            {
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+                ret=EXFAIL;
+            }
+        }
+        
+        if (EXFAIL==ret)
+        {
+            if (EXSUCCEED!=tpabort(0))
+            {
+                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno));
+            }
+        }
+    }
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
