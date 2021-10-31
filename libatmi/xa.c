@@ -1817,6 +1817,47 @@ expublic int _tp_srv_join_or_new_from_call(tp_command_call_t *call,
 }
 
 /**
+ * In case of for any process join have failed we shall report this
+ * to TMSRV so that it can rollback the transaction as soon as possible.
+ * Otherwise the caller might have lost the control of the transaction
+ * and thus it would not be able to rollback it, and thus it will wait
+ * timeout at tmsrv (which could be long) so better notify tmsrv to
+ * perform abort. This assume that current transaction is set.
+ * @return EXSUCCED/EXFAIL
+ */
+exprivate int ndrx_xa_join_fail(void)
+{
+    UBFH *p_ub = NULL;
+    int ret = EXSUCCEED;
+    
+    NDRX_LOG(log_error, "Join/start failed, aborting to TMSRV");
+    
+    if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPABORT, EXFALSE, EXFAIL, 
+            G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L, EXFAIL)))
+    {
+        NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
+                    ATMI_XA_TPABORT);
+        
+        /* _TPoverride_code(TPETRAN); */
+        
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    if (NULL!=p_ub)
+    {
+        /* save errors */
+        atmi_error_t err;
+        
+        /* Save the original error/needed later! */
+        ndrx_TPsave_error(&err);
+        tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
+        ndrx_TPrestore_error(&err);
+    }
+    
+}
+
+/**
  * Process should try to join the XA, if fails, then create new transaction
  * @param call
  * @param join_flag override the default join setting (for TMRESUME)
@@ -1884,6 +1925,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 join_flag, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to join transaction!");
+	    ndrx_xa_join_fail();
             EXFAIL_OUT(ret);
         }
         else
@@ -1954,6 +1996,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                     join_flag, EXFALSE))
             {
                 NDRX_LOG(log_error, "Failed to join transaction!");
+		ndrx_xa_join_fail();
                 EXFAIL_OUT(ret);
             }
             else
@@ -1977,6 +2020,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                         join_flag, EXFALSE))
                 {
                     NDRX_LOG(log_error, "Failed to join transaction!");
+		    ndrx_xa_join_fail();
                     EXFAIL_OUT(ret);
                 }
                 else
@@ -1986,6 +2030,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             }
             else
             {
+                NDRX_LOG(log_error, "Failed to start transaction!");
+                ndrx_xa_join_fail();
                 EXFAIL_OUT(ret);
             }
         }
