@@ -70,7 +70,8 @@ add_executable (atmiclt47_loop atmiclt47_loop.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv47 clntsh atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+# libatmi shall come first, as it exposes ax_reg() if doing dynamic-reg tests
+target_link_libraries (atmi.sv47 atmisrvinteg atmi clntsh ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt47 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt47_loop atmiclt atmi ubf nstd m pthread ${RT_LIB})
 

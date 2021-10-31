@@ -247,6 +247,10 @@ For more details consult with Oracle instructions, as basically Enduro/X uses
 plain X/Open XA API for managing the transactions, and it is expected that
 Oracle DB provides support for XA API.
 
+LIMITATIONS
+-----------
+XA Dynamic registration is not supported by Enduro/X.
+
 EXIT STATUS
 -----------
 *0*::
