@@ -153,8 +153,10 @@ Mandatory Env. Variables
     closed the connection. The format for the tag is:
     *RECON*:<comma separated list of error codes e.g. 4,-8,* - any err>:<number 
     of attempts>:<sleep between attempts milli-sec>'
-    example: *RECON*':*:3:100', meaning reconnect on any xa_start error, do the
-    3x attempts, sleep 100 milliseconds between attempts.
+    example: *RECON*':*:3:100', meaning reconnect (do xa_close()/xa_open()) 
+    on any xa_start error, do the 3x attempts, sleep 100 milliseconds between attempts.
+    Flag *RECON* for other XA calls that xa_start() would also perform reconnects, 
+    but that would be applied to *XAER_RMFAIL* errors only.
     With *NOJOIN* indicates that XA Switch does not support *TMJOIN* mode.
     With *NOSTARTXID* indicates that transaction session does not start with
     identifier, but only when process disconnects from transaction, it is possible
