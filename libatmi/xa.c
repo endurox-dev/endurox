@@ -121,7 +121,7 @@
                 NDRX_LOG(log_warn, "RECON: atmi_xa_open_entry()");\
                 /* keep the last error */\
                 ndrx_TPunset_error();\
-                if (EXSUCCEED==atmi_xa_open_entry())\
+                if (XA_OK==(ret=atmi_xa_open_entry()))\
                 {\
                     /* restart... */\
                     NDRX_LOG(log_warn, "RECON: %s() call of atmi_xa_open_entry() OK", __func__);\
