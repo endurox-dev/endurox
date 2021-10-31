@@ -162,8 +162,8 @@ done
 # ----------------------
 # # cat << EOF >> /etc/sysctl.conf
 #
-# net.ipv4.tcp_keepalive_time=30
-# net.ipv4.tcp_keepalive_intvl=30
+# net.ipv4.tcp_keepalive_time=15
+# net.ipv4.tcp_keepalive_intvl=15
 # net.ipv4.tcp_keepalive_probes=3
 # 
 # EOF
