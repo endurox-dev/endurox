@@ -1831,7 +1831,12 @@ exprivate int ndrx_xa_join_fail(void)
 {
     UBFH *p_ub = NULL;
     int ret = EXSUCCEED;
-    
+    /* save errors */
+    atmi_error_t err;
+        
+    /* Save the original error/needed later! */
+    ndrx_TPsave_error(&err);
+        
     NDRX_LOG(log_error, "Join/start failed, aborting to TMSRV");
     
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPABORT, EXFALSE, EXFAIL, 
@@ -1848,15 +1853,12 @@ exprivate int ndrx_xa_join_fail(void)
 out:
     if (NULL!=p_ub)
     {
-        /* save errors */
-        atmi_error_t err;
-        
-        /* Save the original error/needed later! */
-        ndrx_TPsave_error(&err);
         tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
-        ndrx_TPrestore_error(&err);
+        
     }
+    ndrx_TPrestore_error(&err);
     
+    return ret;
 }
 
 /**
