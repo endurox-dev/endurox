@@ -57,6 +57,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 exprivate char M_errmark[16] = "TESTERROR";
+exprivate long M_tout = 60;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -144,7 +145,7 @@ void ACCOPEN (TPSVCINFO *p_svc)
     if (!tpgetlev())
     {
         /* start a transaction */
-        if (EXSUCCEED!=tpbegin(60, 0))
+        if (EXSUCCEED!=tpbegin(M_tout, 0))
         {
             NDRX_LOG(log_error, "Failed to start transaction: %s", 
                     tpstrerror(tperrno));
@@ -263,7 +264,7 @@ void ACCCLEAN (TPSVCINFO *p_svc)
     if (!tpgetlev())
     {
         /* start a transaction */
-        if (EXSUCCEED!=tpbegin(60, 0))
+        if (EXSUCCEED!=tpbegin(M_tout, 0))
         {
             NDRX_LOG(log_error, "Failed to start transaction: %s", 
                     tpstrerror(tperrno));
@@ -397,6 +398,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (NULL!=getenv(KILL_TEST_ENV))
     {
         NDRX_STRCPY_SAFE(M_errmark, "LOOPERR");
+        M_tout = 120;
     }
     if (EXSUCCEED!=tpopen())
     {

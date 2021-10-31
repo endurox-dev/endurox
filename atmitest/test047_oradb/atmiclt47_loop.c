@@ -161,7 +161,7 @@ again:
             sleep(1);
         }
 
-        while (EXSUCCEED != tpbegin(60, 0))
+        while (EXSUCCEED != tpbegin(120, 0))
         {
             NDRX_LOG(log_error, "tpbegin failed: %s", tpstrerror(tperrno));
             sleep(1);
