@@ -349,13 +349,15 @@ export NDRX_MSGSIZEMAX=1049600
 #export EX_ORA_USER=exdbtest
 #export EX_ORA_PASS=exdbtest1
 #export EX_ORA_PORT=1521
-#export EX_ORA_SID=xe
+#export EX_ORA_SID=XASVC
 #export EX_ORA_OCILIB=/opt/oracle/product/18c/dbhomeXE/lib/libclntsh.so
 #export ORACLE_HOME=/opt/oracle/product/18c/dbhomeXE
 #export PATH=\$PATH:\$ORACLE_HOME/bin
 #export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/oracle/product/18c/dbhomeXE/lib
 #export TNS_ADMIN=\$ORACLE_HOME/network/admin
-
+#Used for TCP Recon testing if tcpkill is installed (optional for Ora):
+#export EX_ORA_IF=enp0s3
+#export EX_ORA_PORT=1521
 ################################################################################
 # In case if building with Postgresql DB database testing support
 # or building endurox-java with Oracle DB tests (03_xapostgres), then
@@ -431,7 +433,7 @@ Running "main"...
 Completed "main": 21 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
 
-=== Testing Oracle DB
+=== Testing Oracle DB (Optional)
 
 If EX_ORA_ settings are loaded int the ndrx_home environment file and project
 is started with *-DENABLE_TEST47=ON* setting, then before running the tests,
@@ -490,8 +492,125 @@ SQL> quit
 
 Once this is done, the test shall execute without the problems.
 
+==== Testing RECON functionality with Oracle DB (Optional)
 
-=== Testing PostgreSQL
+This is advanced test to check the reconnect functionality of Enduro/X
+XA sub-system (i.e. test of flag *RECON* flag in *NDRX_XA_FLAGS*).
+
+Test basically periodically kills the connections while in the background
+distributed transactions are executed. The positive outcome from the
+test is that system is not hanged and periodically is able to continue
+the transaction testing.
+
+To enable this test, special configuration must be enabled. Which consists
+of following steps:
+
+- *tcpkill* binary is installed.
+
+- *tcpkill* and *xadmin* are enabled for *user1* to perform sudo.
+
+- OS Kernel TCP *keepalive* must be configured for fast broken connection
+detection.
+
+- *tnsname.ora* service shall be configured with enabled broken connection
+detection.
+
+The test is activated if *-DENABLE_TEST47=ON* build flag is set and
+*tcpkill* binary exists in the system.
+
+Currently instructions are prepared for Oracle Linux 7.x. Test is
+executed as part of *test047_oradb* execution.
+
+===== Installing tcpkill (on Oracle Linux 7.x)
+
+---------------------------------------------------------------------
+
+$ su - root
+# yum install oraclelinux-developer-release-el7
+# yum install oracle-epel-release-el7
+# yum install dsniff
+
+---------------------------------------------------------------------
+
+After install update the *~/ndrx_home* so that following parameters
+are set to correspond the Oracle DB server and Oracle DB port number:
+
+For example:
+
+---------------------------------------------------------------------
+
+export EX_ORA_IF=enp0s3
+export EX_ORA_PORT=1521
+
+---------------------------------------------------------------------
+
+
+===== Enable sudo
+
+---------------------------------------------------------------------
+
+$ su - root
+# sudoedit /etc/sudoers
+
+-- At the end of the file add
+
+#
+# For Enduro/X RECON testing
+#
+user1   ALL=(ALL)       NOPASSWD: /sbin/tcpkill,/bin/xadmin,/home/user1/endurox/dist/bin/xadmin
+
+
+---------------------------------------------------------------------
+
+===== Apply TCP keepalive settings
+
+---------------------------------------------------------------------
+
+$ su - root
+
+# cat << EOF >> /etc/sysctl.conf
+
+net.ipv4.tcp_keepalive_time = 15
+net.ipv4.tcp_keepalive_intvl = 15
+net.ipv4.tcp_keepalive_probes = 1
+
+
+EOF
+
+
+# sysctl -f /etc/sysctl.conf
+
+---------------------------------------------------------------------
+
+===== Ensure tnsnames.ora configuration
+
+Ensure that *tnsnames.ora* test service have *(ENABLE=broken)* flag
+set.
+
+For example:
+
+---------------------------------------------------------------------
+
+XASVC =
+ (DESCRIPTION=
+ (FAILOVER=on)
+ (ENABLE=broken)
+ (ADDRESS=(PROTOCOL=tcp)(HOST=rac1-vip)(PORT=1521))
+ (ADDRESS=(PROTOCOL=tcp)(HOST=rac2-vip)(PORT=1521))
+ (CONNECT_DATA=
+ (SERVICE_NAME=XASVC)
+ (FAILOVER_MODE=
+ (TYPE=SESSION)
+ (METHOD=BASIC)
+ (RETRIES=10)
+ (DELAY=15)
+ )
+ )
+
+---------------------------------------------------------------------
+
+
+=== Testing PostgreSQL (Optional)
 
 Enduro/X supports PosgreSQL Two Phase commit mode. In general PosgreSQL have
 'light' version of two phase commit. I.e. only that session which did work
