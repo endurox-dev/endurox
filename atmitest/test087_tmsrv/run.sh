@@ -122,6 +122,88 @@ verify_ulog "RM2" "xa_rollback" "0";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
 
+
+#
+# rollback at join failure
+#
+echo ""
+echo "************************************************************************"
+echo "Rollback at join failure"
+echo "************************************************************************"
+
+
+xadmin sreload -y
+clean_ulog;
+
+#
+# so client starts OK
+# client join fails
+#
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:-4
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+#
+# Must be aborted.
+#
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPESYSTEM"* ]]; then
+    echo "Expected TPESYSTEM"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "0";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "1";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+# check number of suspends (1 - call suspend, 1 - sever end, 1 - client end)
+verify_ulog "RM1" "xa_end" "2";
+
+verify_ulog "RM2" "xa_prepare" "0";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "1";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
 echo ""
 echo "************************************************************************"
 echo "Commit OK read only ..."

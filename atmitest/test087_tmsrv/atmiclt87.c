@@ -69,9 +69,11 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    if (0!=tpcall("TESTSV1", NULL, 0, &odata, &olen, 0))
+    if (0!=(ret=tpcall("TESTSV1", NULL, 0, &odata, &olen, 0)))
     {
-        fprintf(stderr, "Failed to tpcall: %s\n", tpstrerror(tperrno));
+        fprintf(stdout, "Failed to tpcall: %s (ret=%d)\n", tpstrerror(tperrno), ret);
+        ret=-1;
+        goto out;
     }
     
     if (argc>1 && argv[1][0]=='A')
@@ -87,11 +89,11 @@ int main(int argc, char** argv)
             fprintf(stdout, "TPABORT OK\n");
         }
     }
-    else
+    else if (tpgetlev())
     {
         if (0!=tpcommit(0))
         {
-            fprintf(stderr, "TPCOMMIT: %s\n", tpstrerror(tperrno));
+            fprintf(stdout, "TPCOMMIT: %s\n", tpstrerror(tperrno));
             ret=-1;
             goto out;
         }
