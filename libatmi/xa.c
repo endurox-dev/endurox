@@ -588,9 +588,10 @@ expublic int atmi_xa_open_entry(void)
     
     G_atmi_tls->G_atmi_xa_curtx.is_xa_open = EXTRUE;
     
+    /* flag is set only if processing recon */
     if (G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error)
     {
-        NDRX_LOG(log_warn, "Marking connection state as OK");
+        NDRX_LOG(log_warn, "RECON: Marking resource connection as OK");
         G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error = EXFALSE;
     }
     
@@ -615,14 +616,14 @@ expublic int atmi_xa_close_entry(int for_retry)
     
     if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
     {
-        NDRX_LOG(log_warn, "Marking connection state as ERROR");
+        NDRX_LOG(log_warn, "xa_close_entry already called for context!");
         goto out;
     }
     
     /* lets assume it is closed... */
     if (for_retry)
     {
-        NDRX_LOG(log_warn, "Marking resource connection as ERROR");
+        NDRX_LOG(log_warn, "RECON: Marking resource connection as ERROR");
         G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error = EXTRUE;
     }
     else
@@ -631,7 +632,7 @@ expublic int atmi_xa_close_entry(int for_retry)
 	
 	if (G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error)
 	{
-        	NDRX_LOG(log_warn, "Resource connection was marked as ERROR. "
+        	NDRX_LOG(log_warn, "RECON: Resource connection was marked as ERROR. "
 					"Normal close, clearing flag");
         	G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error = EXFALSE;
 	}
