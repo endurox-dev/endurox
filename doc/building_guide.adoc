@@ -557,10 +557,10 @@ $ su - root
 #
 # For Enduro/X RECON testing
 #
-user1   ALL=(ALL)       NOPASSWD: /sbin/tcpkill,/bin/xadmin,/home/user1/endurox/dist/bin/xadmin
-
+user1   ALL=(ALL)       NOPASSWD:SETENV: /sbin/tcpkill,/bin/xadmin,/home/user1/endurox/dist/bin/xadmin
 
 ---------------------------------------------------------------------
+
 
 ===== Apply TCP keepalive settings
 
@@ -576,7 +576,6 @@ net.ipv4.tcp_keepalive_probes = 1
 
 
 EOF
-
 
 # sysctl -f /etc/sysctl.conf
 
