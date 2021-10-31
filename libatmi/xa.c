@@ -229,6 +229,7 @@ exprivate MUTEX_LOCKDECL(M_is_xa_init_lock);
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate int atmi_xa_init_thread(int do_open);
+exprivate int ndrx_xa_join_fail(void);
 
 
 /******************************************************************************/
@@ -1179,9 +1180,10 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
         if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(&xai, xai.btid), 
                 TMNOFLAGS, EXFALSE))
         {
-            /* TODO: Unset current transaction */
-            atmi_xa_reset_curtx();
+            /* got to rollback the curren transaction*/
             NDRX_LOG(log_error, "Failed to join transaction!");
+            ndrx_xa_join_fail();
+            atmi_xa_reset_curtx();
             EXFAIL_OUT(ret);
         }
         

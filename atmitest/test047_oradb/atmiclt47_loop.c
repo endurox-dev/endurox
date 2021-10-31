@@ -148,9 +148,9 @@ again:
             break;
         }
         /* if response is longer than than... go bad..*/
-        if (ndrx_stopwatch_get_delta_sec(&w_rsp) > MAX_RSP)
+        if ((l=ndrx_stopwatch_get_delta_sec(&w_rsp)) > MAX_RSP)
         {
-            NDRX_LOG(log_debug, "TESTERROR: Expected OK response in %d sec", MAX_RSP);
+            NDRX_LOG(log_error, "TESTERROR: Expected OK response in %d sec got %ld", MAX_RSP, l);
             EXFAIL_OUT(ret);
         }
         
@@ -216,9 +216,9 @@ again:
 out:
 
     /* if response is longer than than... go bad..*/
-    if (ndrx_stopwatch_get_delta_sec(&w_rsp) > MAX_RSP)
+    if ((l=ndrx_stopwatch_get_delta_sec(&w_rsp)) > MAX_RSP)
     {
-        NDRX_LOG(log_debug, "TESTERROR: Expected OK response in %d sec", MAX_RSP);
+        NDRX_LOG(log_error, "TESTERROR: Expected OK response in %d sec got %ld", MAX_RSP, l);
         ret=EXFAIL;
     }
 

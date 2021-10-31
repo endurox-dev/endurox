@@ -104,7 +104,7 @@ xadmin down -y
 # assuming sudos are configured
 #
 if type "tcpkill" > /dev/null; then
-    sudo xadmin killall tcpkill
+    sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill
 fi
 
 rm *.log 2>/dev/null
@@ -149,6 +149,8 @@ while [ $j -lt 2 ]; do
     j=$(( j + 1 ))
 done
 
+#
+# Currently this is linux only test!
 #
 # only if have tcpkill 
 # test recon engine, when connections randomly breaks up
@@ -196,7 +198,7 @@ if type "tcpkill" > /dev/null; then
     export NDRX_TOUT=800
     export NDRX_DEBUG_CONF=$TESTDIR/debug_loop-dom1.conf
     export NDRX_TEST047_KILL=1
-    sudo xadmin killall tcpkill >/dev/null 2>&1
+    sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill >/dev/null 2>&1
     xadmin stop -y
     xadmin start -y
     (./atmiclt47_loop 2>&1) > ./atmiclt_loop-dom1.log &
@@ -213,7 +215,7 @@ if type "tcpkill" > /dev/null; then
         TCPKILL_PID=$!
         echo "Wait 5 (tcpkill work)"
         sleep 5
-        sudo xadmin killall tcpkill >/dev/null 2>&1 
+        sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill >/dev/null 2>&1 
 
         # let binary 
         echo "Wait 120 (OK work)"
@@ -221,7 +223,7 @@ if type "tcpkill" > /dev/null; then
 
     done
 
-    sudo xadmin killall tcpkill >/dev/null 2>&1 
+    sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill >/dev/null 2>&1 
 fi
 
 # Catch is there is test error!!!
