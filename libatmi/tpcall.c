@@ -1064,6 +1064,11 @@ out:
         {
             ndrx_TPrestore_error(&err);
         }
+        else if (EXFAIL==ret)
+        {
+            /* override the error to TPESYSTEM, as cannot start the transaction */
+             ndrx_TPoverride_code(TPESYSTEM);
+        }
         
     }
 
