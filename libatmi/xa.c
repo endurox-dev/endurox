@@ -1901,11 +1901,13 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             /* OK, but how BTID is filled?,
              * BTID is set on second pass by bellow common source
              */
-            
             if (EXSUCCEED!=atmi_xa_set_curtx_from_xai(p_xai))
             {
                 EXFAIL_OUT(ret);
             }
+            /* keep the origin flag. */
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = is_initiator;
+
             /* Do not do anything more... */
             goto out;
         }
