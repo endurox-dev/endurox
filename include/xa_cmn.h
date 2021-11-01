@@ -456,7 +456,7 @@ extern NDRX_API int ndrx_tx_info(TXINFO * txinfo);
 
 extern NDRX_API int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_callback);
 extern NDRX_API int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai, int is_ax_reg_callback,
-                    int *p_is_known, long join_flag);
+                    int *p_is_known, long join_flag, int is_initiator);
 extern NDRX_API int _tp_srv_disassoc_tx(void);
 extern NDRX_API int _tp_srv_tell_tx_fail(void);
 

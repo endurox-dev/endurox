@@ -1174,6 +1174,9 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
         EXFAIL_OUT(ret);
     }
     
+    /*G_atmi_xa_curtx.is_in_tx = TRUE;*/
+    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = EXTRUE;
+    
     /* OK... now join the transaction (if we are static...) (only if static) */
     if (!XA_IS_DYNAMIC_REG)
     {
@@ -1195,9 +1198,6 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     {
         NDRX_LOG(log_debug, "Working in dynamic mode...");
     }
-    
-    /*G_atmi_xa_curtx.is_in_tx = TRUE;*/
-    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = EXTRUE;
 
     NDRX_LOG(log_debug, "Process joined to transaction [%s] OK",
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
@@ -1724,13 +1724,12 @@ expublic int  ndrx_tpresume (TPTRANID *tranid, long flags)
         xai.tmknownrms[0]=EXEOS;
     }
     
-    if (EXSUCCEED!=_tp_srv_join_or_new(&xai, EXFALSE, &was_join, join_flag))
+    if (EXSUCCEED!=_tp_srv_join_or_new(&xai, EXFALSE, &was_join, join_flag,
+            tranid->is_tx_initiator))
     {
         ndrx_TPset_error_msg(TPESYSTEM,  "_tpresume: Failed to enter in global TX!");
         EXFAIL_OUT(ret);
     }
-    
-    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = tranid->is_tx_initiator;
     
     NDRX_LOG(log_debug, "Resume ok xid: [%s] is_tx_initiator: %d abort_only: %d", 
             tranid->tmxid, tranid->is_tx_initiator, 
@@ -1758,14 +1757,14 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
     {
         NDRX_LOG(log_error, "ERROR: No global transaction registered "
                 "with process/thread!");
-        userlog("ERROR: No global transaction reigstered with process/thread!");
+        userlog("ERROR: No global transaction registered with process/thread!");
         memset(xid, 0, sizeof(XID));
         ret = TMER_TMERR;
         goto out;
     }
     
     if (EXSUCCEED!=_tp_srv_join_or_new(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
-            EXTRUE, &was_join, TMJOIN))
+            EXTRUE, &was_join, TMJOIN, G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator))
     {
         ret = TMER_TMERR;
         goto out;
@@ -1815,7 +1814,8 @@ expublic int _tp_srv_join_or_new_from_call(tp_command_call_t *call,
      */
     XA_TX_COPY((&xai), call)
     
-    return _tp_srv_join_or_new(&xai, is_ax_reg_callback, &is_known, TMJOIN);
+    return _tp_srv_join_or_new(&xai, is_ax_reg_callback, &is_known, TMJOIN, 
+            EXFALSE);
 }
 
 /**
@@ -1833,6 +1833,14 @@ exprivate int ndrx_xa_join_fail(void)
     int ret = EXSUCCEED;
     /* save errors */
     atmi_error_t err;
+    
+    /* no action, as we did not start the transaction
+     * so that client can finalize
+     */
+    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    {
+        return EXSUCCEED;
+    }
         
     /* Save the original error/needed later! */
     ndrx_TPsave_error(&err);
@@ -1866,10 +1874,11 @@ out:
  * @param call
  * @param join_flag override the default join setting (for TMRESUME)
  *  default for callers shall be TMJOIN
+ * @param is_initiator is caller a transaction initiator
  * @return SUCCEED/FAIL
  */
 expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
-        int is_ax_reg_callback, int *p_is_known, long join_flag)
+        int is_ax_reg_callback, int *p_is_known, long join_flag, int is_initiator)
 {
     int ret = EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -1910,6 +1919,9 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
     {
         EXFAIL_OUT(ret);
     }
+    
+    /* keep the origin flag. */
+    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = is_initiator;
     
     if (!(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN) &&
             atmi_xa_is_current_rm_known(p_xai->tmknownrms))
