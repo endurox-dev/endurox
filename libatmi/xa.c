@@ -1775,7 +1775,9 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
     memcpy(xid, atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
             G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), sizeof(*xid));
     
+    /* why? already handled by _tp_srv_join_or_new()
     G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags |= XA_TXINFO_AXREG_CLD;
+    */
   
 out:
     NDRX_LOG(log_info, "ax_reg returns: %d", ret);
@@ -1933,6 +1935,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
              * mark current thread as involved (needs xa_end()!) 
              * actual join to the transaction
              */
+            NDRX_LOG(log_debug, "Dynamic reg work started");
             p_xai->tranid_flags|=XA_TXINFO_AXREG_CLD;
         }
     }
