@@ -180,12 +180,19 @@ extern "C" {
 #define XA_OP_CLOSE                     9
     
 /**
- * Flags passed to atmi_xa_read_tx_info
+ * Flags passed to atmi_xa_read_tx_info and associated flags
+ * with with TPTRANID
  * @defgroup atmi_xa_read_tx_info_flags
  * @{
  */
-#define XA_TXINFO_NOBTID                0x00000001  /**< no BTID extract */
+#define XA_TXINFO_NOFLAGS               0x00000000  /**< No special mode             */
+#define XA_TXINFO_NOBTID                0x00000001  /**< no BTID extract             */
+#define XA_TXINFO_INITIATOR             0x00000002  /**< Process is iniator of tx    */
+#define XA_TXINFO_AXREG_CLD             0x00000004  /**< ax_reg called of dynamic sw */
 /** @} */ /* end of atmi_xa_read_tx_info_flags */
+    
+    
+#define XA
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -209,10 +216,10 @@ struct atmi_xa_tx_info
     ATMI_XA_TX_INFO_FIELDS;
     
     long btid;           /**< Branch TID, used locally only atmi procs      */
-    int is_tx_suspended; /* Is current transaction suspended?               */
-    int is_tx_initiator; /* Are current process transaction intiator?       */
-    int is_ax_reg_called; /* Have work done, needs xa_end()!                */
-    
+    int tranid_flags;    /**< Local/tranid flags, matches is_tx_initiator
+                          * of TPTRANID (wich is not renamed for compatiblity*/
+    /*int is_ax_reg_called;  Have work done, needs xa_end()!                */
+
     atmi_xa_tx_cd_t *call_cds;  /* hash list of call descriptors involved in tx 
                                  * (checked for commit/abort/tpreturn)      */
     atmi_xa_tx_cd_t *conv_cds;  /* hash list of conversation open           */
@@ -456,7 +463,7 @@ extern NDRX_API int ndrx_tx_info(TXINFO * txinfo);
 
 extern NDRX_API int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_callback);
 extern NDRX_API int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai, int is_ax_reg_callback,
-                    int *p_is_known, long join_flag, int is_initiator);
+                    int *p_is_known, long join_flag, int tranid_flags);
 extern NDRX_API int _tp_srv_disassoc_tx(void);
 extern NDRX_API int _tp_srv_tell_tx_fail(void);
 

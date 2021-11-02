@@ -1172,7 +1172,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     }
     
     /*G_atmi_xa_curtx.is_in_tx = TRUE;*/
-    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = EXTRUE;
+    G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags |= XA_TXINFO_INITIATOR;
     
     /* OK... now join the transaction (if we are static...) (only if static) */
     if (!XA_IS_DYNAMIC_REG)
@@ -1310,7 +1310,7 @@ expublic int ndrx_tpcommit(long flags)
     /* allow commit even, if we are not the initiators,
      * but for auto-tran this is OK
      */
-    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags)
     {
         NDRX_LOG(log_error, "tpcommit: Not not initiator");
         ndrx_TPset_error_msg(TPEPROTO,  "tpcommit: Not not initiator");
@@ -1361,7 +1361,7 @@ expublic int ndrx_tpcommit(long flags)
      * it should be work_done, or static reg!!!
      */
     if (!XA_IS_DYNAMIC_REG || 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
@@ -1446,7 +1446,7 @@ expublic int ndrx_tpabort(long flags)
         
     }
             
-    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    if (!(XA_TXINFO_INITIATOR & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
         NDRX_LOG(log_error, "tpabort: Not not initiator");
         ndrx_TPset_error_msg(TPEPROTO,  "tpabort: Not not initiator");
@@ -1455,7 +1455,7 @@ expublic int ndrx_tpabort(long flags)
     
     /* Disassoc from transaction! */
     if (!XA_IS_DYNAMIC_REG || 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
@@ -1621,7 +1621,7 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     /* Now transfer current transaction data from one struct to another... */
     
     XA_TX_COPY(tranid, G_atmi_tls->G_atmi_xa_curtx.txinfo);
-    tranid->is_tx_initiator = G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator;
+    tranid->is_tx_initiator = G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags;
     
     /* TODO: if join is not supported, then we terminate current transaction/BTID
      * and that shall be removed from list.
@@ -1631,7 +1631,7 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     
     /* Disassoc from transaction! */
     if (!XA_IS_DYNAMIC_REG || 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
         /*
 	 * causes ORA-24775 error
@@ -1761,7 +1761,7 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
     }
     
     if (EXSUCCEED!=_tp_srv_join_or_new(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
-            EXTRUE, &was_join, TMJOIN, G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator))
+            EXTRUE, &was_join, TMJOIN, G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
         ret = TMER_TMERR;
         goto out;
@@ -1775,7 +1775,7 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
     memcpy(xid, atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
             G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), sizeof(*xid));
     
-    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called = EXTRUE;
+    G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags |= XA_TXINFO_AXREG_CLD;
   
 out:
     NDRX_LOG(log_info, "ax_reg returns: %d", ret);
@@ -1812,7 +1812,7 @@ expublic int _tp_srv_join_or_new_from_call(tp_command_call_t *call,
     XA_TX_COPY((&xai), call)
     
     return _tp_srv_join_or_new(&xai, is_ax_reg_callback, &is_known, TMJOIN, 
-            EXFALSE);
+            XA_TXINFO_NOFLAGS);
 }
 
 /**
@@ -1834,7 +1834,7 @@ exprivate int ndrx_xa_join_fail(void)
     /* no action, as we did not start the transaction
      * so that client can finalize
      */
-    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    if (!(G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags & XA_TXINFO_INITIATOR))
     {
         return EXSUCCEED;
     }
@@ -1871,11 +1871,11 @@ out:
  * @param call
  * @param join_flag override the default join setting (for TMRESUME)
  *  default for callers shall be TMJOIN
- * @param is_initiator is caller a transaction initiator
+ * @param tranid_flags local / tranid flags of the transaction
  * @return SUCCEED/FAIL
  */
 expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
-        int is_ax_reg_callback, int *p_is_known, long join_flag, int is_initiator)
+        int is_ax_reg_callback, int *p_is_known, long join_flag, int tranid_flags)
 {
     int ret = EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -1885,11 +1885,28 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
     long tmflags = 0;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY; */
     
-    /* If we are static, then register together... 
-     * Dynamic code must be done this already
+    /* Do the same static flow if ax_reg was already called in dynamic mode
+     * this might be true if coming back from tpsuspend()
+     * thus we shall perform xa_start.
      */
-    if (XA_IS_DYNAMIC_REG)
+    if (!(XA_IS_DYNAMIC_REG) || (tranid_flags & XA_TXINFO_AXREG_CLD))
     {
+        
+        if (EXSUCCEED!=atmi_xa_set_curtx_from_xai(p_xai))
+        {
+            EXFAIL_OUT(ret);
+        }
+        
+        /* keep the origin flag. */
+        G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags = tranid_flags;
+    }
+    else
+    {
+        /* 
+         * this is Dynamic registration.
+         * 
+         * This is first time server joins, no work yet done.
+         */
         if (!is_ax_reg_callback)
         {
             NDRX_LOG(log_debug, "Dynamic reg + process start "
@@ -1903,24 +1920,22 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 EXFAIL_OUT(ret);
             }
             /* keep the origin flag. */
-            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = is_initiator;
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags = tranid_flags;
 
             /* Do not do anything more... */
             goto out;
         }
         else
         {
-            /* mark current thread as involved (needs xa_end()!) */
-            p_xai->is_ax_reg_called=EXTRUE;
+            /*
+             * At this point resource is modified. Note that if we perform
+             * resume on such transaction, we shall do the xa_start()
+             * mark current thread as involved (needs xa_end()!) 
+             * actual join to the transaction
+             */
+            p_xai->tranid_flags|=XA_TXINFO_AXREG_CLD;
         }
-    }   /* continue with static... */
-    else if (EXSUCCEED!=atmi_xa_set_curtx_from_xai(p_xai))
-    {
-        EXFAIL_OUT(ret);
     }
-    
-    /* keep the origin flag. */
-    G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator = is_initiator;
     
     if (!(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN) &&
             atmi_xa_is_current_rm_known(p_xai->tmknownrms))
@@ -1930,7 +1945,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         /* use default btid as in join mode */
         G_atmi_tls->G_atmi_xa_curtx.txinfo->btid = 0;
         
-        if (XA_IS_DYNAMIC_REG)
+        /* in case if doing resume, then allow the xa_start entry */
+        if (XA_IS_DYNAMIC_REG && !(join_flag & TMRESUME))
         {
             NDRX_LOG(log_debug, "Dynamic reg - no start/join!");
         }
@@ -2101,7 +2117,7 @@ expublic int _tp_srv_disassoc_tx(void)
     
     /* Only for static...  or if work done */
     if ( !XA_IS_DYNAMIC_REG || 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
+            (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
