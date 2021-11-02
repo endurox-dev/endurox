@@ -1455,7 +1455,7 @@ expublic int ndrx_tpabort(long flags)
     
     /* Disassoc from transaction! */
     if (!XA_IS_DYNAMIC_REG || 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags)
+            (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
