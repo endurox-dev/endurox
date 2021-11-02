@@ -218,8 +218,8 @@ if type "tcpkill" > /dev/null; then
         sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill >/dev/null 2>&1 
 
         # let binary 
-        echo "Wait 120 (OK work)"
-        sleep 120
+        echo "Wait 220 (OK work)"
+        sleep 220
 
     done
 

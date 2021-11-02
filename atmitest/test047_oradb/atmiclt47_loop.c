@@ -49,7 +49,6 @@
 #include "test47.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define MAX_RSP 120
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -138,12 +137,12 @@ int main(int argc, char** argv)
     ndrx_stopwatch_reset(&w_loop);
     ndrx_stopwatch_reset(&w_rsp);
     
-    /* run for 10 min */
+    /* run for 13 min */
     while (1)
     {
 again:
         /* terminate our loop... */
-        if (ndrx_stopwatch_get_delta_sec(&w_loop) >= 600)
+        if (ndrx_stopwatch_get_delta_sec(&w_loop) >= 800)
         {
             break;
         }
@@ -161,7 +160,7 @@ again:
             sleep(1);
         }
 
-        while (EXSUCCEED != tpbegin(120, 0))
+        while (EXSUCCEED != tpbegin(MAX_RSP, 0))
         {
             NDRX_LOG(log_error, "tpbegin failed: %s", tpstrerror(tperrno));
             sleep(1);

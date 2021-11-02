@@ -432,7 +432,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (NULL!=getenv(KILL_TEST_ENV))
     {
         NDRX_STRCPY_SAFE(M_errmark, "LOOPERR");
-        M_tout = 120;
+        M_tout = MAX_RSP;
     }
     if (EXSUCCEED!=tpopen())
     {
