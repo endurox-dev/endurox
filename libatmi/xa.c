@@ -938,27 +938,24 @@ expublic int atmi_xa_prepare_entry(XID *xid, long flags)
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
-        int lev=log_error;
-        
         /* no special log needed! */
         if (XA_RDONLY==ret)
         {
-            lev = log_debug;
+            NDRX_LOG(log_debug, "xa_prepare_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
+            ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_prepare_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
         }
-        
-        NDRX_LOG(lev, "xa_prepare_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_prepare_entry - fail: %d [%s]", 
-                ret, atmi_xa_geterrstr(ret));
-        
-        /* close the connection due to prep fail, as we must rollback immediately. 
-         * + mark as connection error
-         */
-        if (G_atmi_env.xa_recon_times && XAER_RMFAIL==ret)
+        else
         {
-            NDRX_LOG(log_warn, "RECON: atmi_xa_close_entry()");
-            atmi_xa_close_entry(EXTRUE);
+            GENERIC_RETRY(
+                (G_atmi_env.xa_sw->xa_prepare_entry(xid, G_atmi_env.xa_rmid, flags))
+                , (XAER_RMFAIL==ret)
+                , (XA_OK!=ret)
+                 );
+
         }
+        
         
         goto out;
     }
