@@ -232,7 +232,7 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
     RET=-3
 fi
 
-if [ "X`grep -i "timed out" *.log`" != "X" ]; then
+if [ "X`grep -i "timed out" *.log | grep aborting`" != "X" ]; then
     echo "There must be no timed-out transactions!"
     RET=-4
 fi
