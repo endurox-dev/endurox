@@ -28,6 +28,11 @@ or by *tpconnect(3)*). Suspending can be done by any involved process in transac
 But the role of participant does not change. The *TPTRANID* type 
 records the information about caller, is it transaction originator or not.
 
+If transaction was suspended, it must be resumed afterwards with *tpresume(3)*,
+otherwise XA resources may rejected the underlying xa_prepare() call with protocol error, 
+which would lead to the fact that commit will be aborted, and *tpcommit(3)* 
+would return *TPEABORT* error.
+
 
 *Valid flags*
 
