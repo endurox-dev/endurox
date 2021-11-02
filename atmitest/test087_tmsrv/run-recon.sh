@@ -72,7 +72,7 @@ xa_close_entry:0:1:0
 xa_start_entry:-7:2:0
 xa_end_entry:-7:2:0
 xa_rollback_entry:-7:2:8
-xa_prepare_entry:-7:4:0
+xa_prepare_entry:-7:2:-7
 xa_commit_entry:0:1:0
 xa_recover_entry:0:1:0
 xa_forget_entry:-7:2:0
@@ -132,8 +132,9 @@ xadmin stop -y
 # tms: 0 - at prep ( connection closed)
 # tms: 3 - rollback (reconn + 2x attempts)
 # tms: 2 - forget
-verify_ulog "RM1" "xa_open" "18";
-verify_ulog "RM1" "xa_close" "18";
+# tms: 3 - prep attempts
+verify_ulog "RM1" "xa_open" "21";
+verify_ulog "RM1" "xa_close" "21";
 
 # clt 3x start + join after call
 # srv 3x start
@@ -144,7 +145,7 @@ verify_ulog "RM1" "xa_start" "7";
 # End must match the start count
 #
 verify_ulog "RM1" "xa_end" "7";
-verify_ulog "RM1" "xa_prepare" "1";
+verify_ulog "RM1" "xa_prepare" "4";
 #
 # (1x reconnect (for counter))
 # 1 org attempt
