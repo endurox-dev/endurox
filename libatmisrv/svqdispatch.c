@@ -461,7 +461,7 @@ expublic int sv_serve_call(int *service, int *status,
                 /* set us as a masters...
                  * of transaction due to fact that we received the call
                  */
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator=EXTRUE;
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags|=XA_TXINFO_INITIATOR;
             }
         }
         else if (G_server_conf.service_array[call_no]->autotran)
