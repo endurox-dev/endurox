@@ -177,7 +177,7 @@ echo "COMMIT Retry"
 echo "************************************************************************"
 
 clean_ulog;
-xadmin start -y || go_out 1
+
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -211,6 +211,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin start -y || go_out 1
 
 NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
@@ -253,7 +254,7 @@ echo "RECOVER Retry"
 echo "************************************************************************"
 
 clean_ulog;
-xadmin start -y || go_out 1
+
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -285,7 +286,7 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
-
+xadmin start -y || go_out 1
 
 NDRX_CCTAG="RM1" tmrecovercl
 RET=$?
@@ -334,7 +335,6 @@ echo "OPEN/CLOSE Retry (system does not start...)"
 echo "************************************************************************"
 
 clean_ulog;
-xadmin start -y || go_out 1
 
 cat << EOF > lib1.rets
 xa_open_entry:-5:2:0
@@ -367,7 +367,7 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
-
+xadmin start -y || go_out 1
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -385,6 +385,118 @@ if [[ $ERR != *"TPERMERR"* ]]; then
 fi
 
 xadmin stop -y
+
+echo ""
+echo "************************************************************************"
+echo "Prepare Retry, other err -> TPEABORT"
+echo "************************************************************************"
+
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:-3:1:0
+xa_commit_entry:0:2:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+xadmin start -y || go_out 1
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPEABORT"* ]]; then
+    echo "Expected TPEABORT"
+    go_out 1
+fi
+
+#
+# Get the final readings...
+# 
+xadmin stop -y
+
+echo ""
+echo "************************************************************************"
+echo "Prepare Retry, other err configred recon"
+echo "************************************************************************"
+
+export NDRX_XA_FLAGS="RECON:*:3:100:-3,-7"
+
+clean_ulog;
+
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:-3:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+xadmin start -y || go_out 1
+
+NDRX_CCTAG="RM1" ./atmiclt87
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Build atmiclt87 failed"
+    go_out 1
+fi
+
 
 go_out 0
 

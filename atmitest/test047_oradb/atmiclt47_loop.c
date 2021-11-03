@@ -158,6 +158,14 @@ again:
         {
             NDRX_LOG(log_error, "ACCCLEAN failed: %s", tpstrerror(tperrno));
             sleep(1);
+            
+            /* go out if looped here */
+            if ((l=ndrx_stopwatch_get_delta_sec(&w_rsp)) > MAX_RSP)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected OK response in %d sec got %ld (2)", 
+                        MAX_RSP, l);
+                EXFAIL_OUT(ret);
+            }
         }
 
         while (EXSUCCEED != tpbegin(MAX_RSP, 0))

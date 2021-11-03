@@ -148,6 +148,7 @@ static int get_return_code(const char *func, int *cntr)
                 NULL!=setting && i<NR_SETTINGS; 
                 i++, setting=strtok_r(NULL, ":", &saveptr1))
         {
+            NDRX_LOG(log_error, "YOPT LOADING: [%s]", setting);
             all_settings[i] = setting;
         }
         
