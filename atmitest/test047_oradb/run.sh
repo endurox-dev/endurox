@@ -205,7 +205,7 @@ while [ $swmode -lt 2 ]; do
 
     if type "tcpkill" > /dev/null; then
         echo ">>>> Loop testing of recon (if available)"
-        export NDRX_XA_FLAGS="RECON:*:3:100"
+        export NDRX_XA_FLAGS="RECON:*:3:100:-3,-7"
         export NDRX_TOUT=800
         export NDRX_DEBUG_CONF=$TESTDIR/debug_loop-dom1.conf
         export NDRX_TEST047_KILL=1
