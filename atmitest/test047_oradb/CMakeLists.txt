@@ -60,6 +60,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf $ENV{ORACLE_HOME}/lib)
 # See: https://stackoverflow.com/questions/18465187/why-the-proc-c-oracle-precompiler-can-not-parse-the-windows-h-header-file
 #
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.proc
     COMMAND proc iname=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.proc SQLCHECK=SYNTAX
         MODE=ANSI CODE=ANSI_C IRECLEN=255 ORECLEN=255 PARSE=PARTIAL INCLUDE=${ENDUROX_SOURCE_DIR}/include INCLUDE=$ENV{ORACLE_HOME}/precomp/public
         ONAME=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c)
