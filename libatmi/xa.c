@@ -193,13 +193,18 @@
  * Keep the common attempts counter as for entry connect and later reconnects
  * after bad primary method.
  */
-#define GENERIC_RETRY_ENTRY \
+#define GENERIC_RETRY_ENTRY(do_rollback) \
         /* perform retry with common counter */\
         GENERIC_RETRY_CORE(0, G_atmi_tls->G_atmi_xa_curtx.is_xa_conn_error, 0, EXFALSE);\
         do\
         {\
             if (XA_OK!=ret)\
             {\
+                if (do_rollback)\
+                {\
+                    ndrx_xa_join_fail();\
+                    atmi_xa_reset_curtx();\
+                }\
                 NDRX_LOG(log_error, "finally %s - fail: %d [%s]", \
                         __func__, ret, atmi_xa_geterrstr(ret));\
                 ndrx_TPset_error_fmt_rsn(TPERMERR,  \
@@ -590,6 +595,13 @@ expublic int atmi_xa_open_entry(void)
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_open_entry(G_atmi_env.xa_open_str, 
                                     G_atmi_env.xa_rmid, 0)))
     {
+        /* required for retry engine, for ATMI it does not play big role here. */
+        if (XAER_RMERR==ret)
+        {
+            ret = XAER_RMFAIL;
+            NDRX_LOG(log_error, "atmi_xa_open_entry ret XAER_RMERR remapping to XAER_RMFAIL");
+        }
+
         NDRX_LOG(log_error, "atmi_xa_open_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
         
@@ -722,7 +734,7 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int silent_err)
     NDRX_LOG(log_debug, "%s", __func__);
     
     /* Generic Retry entry */
-    GENERIC_RETRY_ENTRY;
+    GENERIC_RETRY_ENTRY(EXFALSE);
     
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_start_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
@@ -798,7 +810,7 @@ expublic int atmi_xa_end_entry(XID *xid, long flags, int aborting)
     
     NDRX_LOG(log_debug, "atmi_xa_end_entry flags %ld", flags);
     
-    GENERIC_RETRY_ENTRY;
+    GENERIC_RETRY_ENTRY(EXFALSE);
     
     /* we do always success (as TX intiator decides commit or abort...! */
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_end_entry(xid, 
@@ -914,7 +926,7 @@ expublic int atmi_xa_rollback_entry(XID *xid, long flags)
     
     NDRX_LOG(log_debug, "atmi_xa_rollback_entry");
     
-    GENERIC_RETRY_ENTRY;
+    GENERIC_RETRY_ENTRY(EXFALSE);
     
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_rollback_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
@@ -947,7 +959,7 @@ expublic int atmi_xa_prepare_entry(XID *xid, long flags)
     
     NDRX_LOG(log_debug, "atmi_xa_prepare_entry");
     
-    GENERIC_RETRY_ENTRY;
+    GENERIC_RETRY_ENTRY(EXFALSE);
      
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
@@ -992,7 +1004,7 @@ expublic int atmi_xa_forget_entry(XID *xid, long flags)
     
     NDRX_LOG(log_debug, "atmi_xa_forget_entry");
      
-    GENERIC_RETRY_ENTRY;
+    GENERIC_RETRY_ENTRY(EXFALSE);
     
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_forget_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
@@ -1024,7 +1036,7 @@ expublic int atmi_xa_commit_entry(XID *xid, long flags)
     GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE);
     
-    GENERIC_RETRY_ENTRY;
+    GENERIC_RETRY_ENTRY(EXFALSE);
     NDRX_LOG(log_debug, "atmi_xa_commit_entry");
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_commit_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
@@ -1055,7 +1067,7 @@ expublic int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags)
     
     NDRX_LOG(log_debug, "%s", __func__);
     
-    GENERIC_RETRY_ENTRY;
+    GENERIC_RETRY_ENTRY(EXFALSE);
     
     if (0 > (ret = G_atmi_env.xa_sw->xa_recover_entry(xids, count,
                                     G_atmi_env.xa_rmid, flags)))
@@ -1094,6 +1106,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_TPBEGIN);
     atmi_xa_tx_info_t xai;
     long tmflags = 0;
+    GENERIC_RETRY_DEF;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY */
     
     NDRX_LOG(log_debug, "%s enter", __func__);
@@ -1165,8 +1178,6 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
      * + we should join the transaction i.e. current thread.
      */
     
-    /* Load tx info... */
-    
     if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, 0))
     {
         NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
@@ -1176,7 +1187,6 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     
     NDRX_LOG(log_debug, "About to load tx info");
     
-    
     /* Only when we have in transaction, then install the handler */
     if (EXSUCCEED!= atmi_xa_set_curtx_from_xai(&xai))
     {
@@ -1184,7 +1194,6 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
         ndrx_TPset_error_msg(TPEPROTO,  "tpbegin: - failed to set curren tx");
         EXFAIL_OUT(ret);
     }
-    
     /*G_atmi_xa_curtx.is_in_tx = TRUE;*/
     G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags |= XA_TXINFO_INITIATOR;
     
@@ -1208,6 +1217,8 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     else
     {
         NDRX_LOG(log_debug, "Working in dynamic mode...");
+        /* if connection is bad, please reconect */
+        GENERIC_RETRY_ENTRY(EXTRUE);
     }
 
     NDRX_LOG(log_debug, "Process joined to transaction [%s] OK",
@@ -1899,6 +1910,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
     int new_rm = EXFALSE;
     char src_tmknownrms[2];
     long tmflags = 0;
+    GENERIC_RETRY_DEF;
+
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY; */
     
     /* Do the same static flow if ax_reg was already called in dynamic mode
@@ -1928,6 +1941,9 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             NDRX_LOG(log_debug, "Dynamic reg + process start "
                                 "just remember the transaction");
             
+            /* if connection is bad, please reconect */
+            GENERIC_RETRY_ENTRY(EXTRUE);
+
             /* OK, but how BTID is filled?,
              * BTID is set on second pass by bellow common source
              */
@@ -1935,8 +1951,12 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             {
                 EXFAIL_OUT(ret);
             }
+
             /* keep the origin flag. */
             G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags = tranid_flags;
+
+            /* if connection is bad, please reconect */
+            GENERIC_RETRY_ENTRY(EXTRUE);
 
             /* Do not do anything more... */
             goto out;

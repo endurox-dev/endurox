@@ -52,12 +52,28 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define PROC_RESTART do { \
+        /* in dynamic mode Enduro/X xa libs may not track the point where\
+         * SQL lost connection by it self\
+         */\
+        if (M_dyn && (-3135 == sqlca.sqlcode || -3114==sqlca.sqlcode))\
+        {\
+            NDRX_LOG(log_error, "Lost connection, let process to re-init");\
+            if (tran_started)\
+            {\
+                tpabort(0);\
+            }\
+            tpexit();\
+        }\
+} while(0)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 exprivate char M_errmark[16] = "TESTERROR";
 exprivate long M_tout = 60;
+exprivate int M_dyn = EXFALSE; /* are we in dynamic mode? */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -120,6 +136,8 @@ void BALANCE (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Failed to select: %d: %.70s", 
                 sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+
+        PROC_RESTART;
         EXFAIL_OUT(ret);
     }
     
@@ -248,6 +266,8 @@ void ACCOPEN (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Failed to select: %d: %.70s", 
                 sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+
+        PROC_RESTART;
         EXFAIL_OUT(ret);
     }
     
@@ -315,6 +335,8 @@ void ACCCLEAN (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Failed to delete: %d: %.70s", 
                 sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+
+        PROC_RESTART;
         EXFAIL_OUT(ret);
     }
     
@@ -427,6 +449,7 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret = EXSUCCEED;
+    char *p;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     if (NULL!=getenv(KILL_TEST_ENV))
@@ -434,6 +457,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_STRCPY_SAFE(M_errmark, "LOOPERR");
         M_tout = MAX_RSP;
     }
+
+    if (NULL!=(p=getenv("NDRX_XA_DRIVERLIB")) && NULL!=strstr(p, "libndrxxaorad"))
+    {
+        M_dyn = EXTRUE;
+    }
+
     if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "Failed to open DB!");
@@ -465,7 +494,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
 out:
-    return EXSUCCEED;
+    return ret;
 }
 
 /**
