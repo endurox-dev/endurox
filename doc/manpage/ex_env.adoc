@@ -152,11 +152,13 @@ Mandatory Env. Variables
     xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
     closed the connection. The format for the tag is:
     *RECON*:<comma separated list of error codes e.g. 4,-8,* - any err>:<number 
-    of attempts>:<sleep between attempts milli-sec>'
+    of attempts>:<sleep between attempts milli-sec>[:<non_start_error codes for retry>]'
     example: *RECON*':*:3:100', meaning reconnect (do xa_close()/xa_open()) 
     on any xa_start error, do the 3x attempts, sleep 100 milliseconds between attempts.
     Flag *RECON* for other XA calls that xa_start() would also perform reconnects, 
-    but that would be applied to *XAER_RMFAIL* errors only.
+    but that would be applied to *XAER_RMFAIL* errors only by default. To change
+    the list of error codes for xa_prepare, xa_commit, xa_rollback, xa_recover,
+    xa_forget retries, set the comma seperated list of codes in *non_start_error* position.
     With *NOJOIN* indicates that XA Switch does not support *TMJOIN* mode.
     With *NOSTARTXID* indicates that transaction session does not start with
     identifier, but only when process disconnects from transaction, it is possible
