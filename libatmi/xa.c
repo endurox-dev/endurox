@@ -383,6 +383,9 @@ expublic int atmi_xa_init(void)
      */
     NDRX_LOG(log_debug, "xa_flags = [%s]", G_atmi_env.xa_flags);
     G_atmi_env.xa_fsync_flags=0;
+    
+    /* default other retry is XAER_RMFAIL */
+    NDRX_STRCPY_SAFE(G_atmi_env.xa_recon_retcodes_other, ",-7,");
     if (EXEOS!=G_atmi_env.xa_flags[0])
     {
         char *tag_ptr;
@@ -426,7 +429,6 @@ expublic int atmi_xa_init(void)
             {
                 value_first = tag_token;
                 G_atmi_env.xa_recon_usleep = EXFAIL;
-
                 NDRX_LOG(log_warn, "Parsing RECON tag... [%s]", value_first);
 
                 while ((value_token = strtok_r(value_first, ":", &value_ptr)))
@@ -463,6 +465,17 @@ expublic int atmi_xa_init(void)
                             /* so user gives us milliseconds */
                             NDRX_LOG(log_debug, "RECON: 4: [%s]", value_token);
                             G_atmi_env.xa_recon_usleep = atol(value_token)*1000;
+                            break;
+                        case 5:
+                            /* This is list of error codes */
+                            NDRX_LOG(log_debug, "RECON: 5: [%s]", value_token);
+                            snprintf(G_atmi_env.xa_recon_retcodes_other, 
+                                    sizeof(G_atmi_env.xa_recon_retcodes_other),
+                                    ",%s,", value_token);
+
+                            /* Remove spaces and tabs.. */
+                            ndrx_str_strip(G_atmi_env.xa_recon_retcodes_other, "\t ");
+
                             break;
                     }
                 }
@@ -660,10 +673,11 @@ out:
 
 /**
  * Test the RECON settings for error 
+ * @param list error code checking list
  * @param retcode return code for xa_start to test for
  * @return TRUE - do retry, FALSE - no retry
  */
-exprivate int is_error_in_recon_list(int retcode)
+exprivate int is_error_in_recon_list(char *list, int retcode)
 {
     char scanstr[16];
     char scanstr2[4] = ",*,";
@@ -672,15 +686,15 @@ exprivate int is_error_in_recon_list(int retcode)
     snprintf(scanstr, sizeof(scanstr), ",%d,", retcode);
     
     NDRX_LOG(log_warn, "%s testing return code [%s] in recon list [%s]", 
-            __func__, scanstr, G_atmi_env.xa_recon_retcodes);
+            __func__, scanstr, list);
     
-    if (NULL!=strstr(G_atmi_env.xa_recon_retcodes, scanstr))
+    if (NULL!=strstr(list, scanstr))
     {
         NDRX_LOG(log_warn, "matched by code - DO RETRY");
         ret = EXTRUE;
         goto out;
     }
-    else if (NULL!=strstr(G_atmi_env.xa_recon_retcodes, scanstr2))
+    else if (NULL!=strstr(list, scanstr2))
     {
         NDRX_LOG(log_warn, "matched by wildcard - DO RETRY");
         ret = EXTRUE;
@@ -732,7 +746,7 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int silent_err)
         /* Core retry engine, no final checks please */
         GENERIC_RETRY_CORE(
             (G_atmi_env.xa_sw->xa_start_entry(xid, G_atmi_env.xa_rmid, flags))
-            , (need_retry && is_error_in_recon_list(ret))
+            , (need_retry && is_error_in_recon_list(G_atmi_env.xa_recon_retcodes, ret))
             , (XA_OK!=ret)
             , EXTRUE);
 
@@ -793,7 +807,7 @@ expublic int atmi_xa_end_entry(XID *xid, long flags, int aborting)
         /* generic retry to keep the connection status with us */
         GENERIC_RETRY(
             (G_atmi_env.xa_sw->xa_end_entry(xid, G_atmi_env.xa_rmid, flags))
-            , (XAER_RMFAIL==ret)
+            , (is_error_in_recon_list(G_atmi_env.xa_recon_retcodes_other, ret))
             , (XA_OK!=ret)
             );
     }
@@ -910,7 +924,7 @@ expublic int atmi_xa_rollback_entry(XID *xid, long flags)
          */
         GENERIC_RETRY(
             (G_atmi_env.xa_sw->xa_rollback_entry(xid, G_atmi_env.xa_rmid, flags))
-            , (XAER_RMFAIL==ret)
+            , (is_error_in_recon_list(G_atmi_env.xa_recon_retcodes_other, ret))
             , (XA_OK!=ret)
             );
     }
@@ -950,7 +964,7 @@ expublic int atmi_xa_prepare_entry(XID *xid, long flags)
         {
             GENERIC_RETRY(
                 (G_atmi_env.xa_sw->xa_prepare_entry(xid, G_atmi_env.xa_rmid, flags))
-                , (XAER_RMFAIL==ret)
+                , (is_error_in_recon_list(G_atmi_env.xa_recon_retcodes_other, ret))
                 , (XA_OK!=ret)
                  );
 
@@ -988,7 +1002,7 @@ expublic int atmi_xa_forget_entry(XID *xid, long flags)
          */
         GENERIC_RETRY(
                (G_atmi_env.xa_sw->xa_forget_entry(xid, G_atmi_env.xa_rmid, flags))
-               , (XAER_RMFAIL==ret)
+               , (is_error_in_recon_list(G_atmi_env.xa_recon_retcodes_other, ret))
                , (XA_OK!=ret)
                 );
     }
@@ -1048,7 +1062,7 @@ expublic int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags)
     {
         GENERIC_RETRY(
             (G_atmi_env.xa_sw->xa_recover_entry(xids, count, G_atmi_env.xa_rmid, flags))
-            , (XAER_RMFAIL==ret)
+            , (is_error_in_recon_list(G_atmi_env.xa_recon_retcodes_other, ret))
             , (0 > ret)
             );
     }
