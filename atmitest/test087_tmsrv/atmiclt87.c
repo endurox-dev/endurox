@@ -69,11 +69,24 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    if (0!=(ret=tpcall("TESTSV1", NULL, 0, &odata, &olen, 0)))
+    /* custom service */
+    if (argc>2)
     {
-        fprintf(stdout, "Failed to tpcall: %s (ret=%d)\n", tpstrerror(tperrno), ret);
-        ret=-1;
-        goto out;
+        if (0!=(ret=tpcall(argv[2], NULL, 0, &odata, &olen, 0)))
+        {
+            fprintf(stdout, "Failed to tpcall: %s (ret=%d)\n", tpstrerror(tperrno), ret);
+            ret=-1;
+            goto out;
+        }
+    }
+    else
+    {
+        if (0!=(ret=tpcall("TESTSV1", NULL, 0, &odata, &olen, 0)))
+        {
+            fprintf(stdout, "Failed to tpcall: %s (ret=%d)\n", tpstrerror(tperrno), ret);
+            ret=-1;
+            goto out;
+        }
     }
     
     if (argc>1 && argv[1][0]=='A')

@@ -202,7 +202,7 @@
             {\
                 if (do_rollback)\
                 {\
-                    ndrx_xa_join_fail();\
+                    ndrx_xa_join_fail(NULL, EXFALSE);\
                     atmi_xa_reset_curtx();\
                 }\
                 NDRX_LOG(log_error, "finally %s - fail: %d [%s]", \
@@ -234,7 +234,7 @@ exprivate MUTEX_LOCKDECL(M_is_xa_init_lock);
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate int atmi_xa_init_thread(int do_open);
-exprivate int ndrx_xa_join_fail(void);
+exprivate int ndrx_xa_join_fail(int *did_abort, int force_abort);
 
 
 /******************************************************************************/
@@ -1205,7 +1205,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
         {
             /* got to rollback the curren transaction*/
             NDRX_LOG(log_error, "Failed to join transaction!");
-            ndrx_xa_join_fail();
+            ndrx_xa_join_fail(NULL, EXFALSE);
             atmi_xa_reset_curtx();
             EXFAIL_OUT(ret);
         }
@@ -1361,6 +1361,26 @@ expublic int ndrx_tpcommit(long flags)
         do_abort = EXTRUE;
     }
     
+    /* Disassoc from transaction! */
+    
+    /* TODO: Detect when we need the END entry. 
+     * it should be work_done, or static reg!!!
+     */
+    if (!XA_IS_DYNAMIC_REG || 
+            (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
+    {
+        if (EXSUCCEED!= (ret=atmi_xa_end_entry(atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
+        {
+            NDRX_LOG(log_error, "Failed to end XA api: %d [%s] - aborting", 
+                    ret, atmi_xa_geterrstr(ret));
+            userlog("Failed to end XA api: %d [%s] - aborting", 
+                    ret, atmi_xa_geterrstr(ret));
+            
+            do_abort = EXTRUE;
+        }
+    }
+    
     if (do_abort)
     {
         ret = ndrx_tpabort(0); /*<<<<<<<<<< RETURN!!! */
@@ -1378,24 +1398,6 @@ expublic int ndrx_tpcommit(long flags)
         }
         
         return ret;
-    }
-    
-    /* Disassoc from transaction! */
-    
-    /* TODO: Detect when we need the END entry. 
-     * it should be work_done, or static reg!!!
-     */
-    if (!XA_IS_DYNAMIC_REG || 
-            (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
-    {
-        if (EXSUCCEED!= (ret=atmi_xa_end_entry(atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
-        {
-            NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
-            userlog("Failed to end XA api: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
-        }
     }
     
     NDRX_LOG(log_debug, "About to call TM flags=%ld", flags);
@@ -1482,9 +1484,10 @@ expublic int ndrx_tpabort(long flags)
     if (!XA_IS_DYNAMIC_REG || 
             (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
-        if (EXSUCCEED!= (ret=atmi_xa_end_entry(
+        /* abort anyway... */
+        if (EXSUCCEED!= atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXTRUE)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXTRUE))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1673,10 +1676,24 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), xa_flags, EXFALSE)))
         {
+            int did_abort = EXFALSE;
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s] flags: %lx", 
                     ret, atmi_xa_geterrstr(ret), xa_flags);
             userlog("Failed to end XA api: %d [%s] flags: %lx", 
                     ret, atmi_xa_geterrstr(ret), xa_flags);
+            
+            
+            ndrx_xa_join_fail(&did_abort, EXFALSE);
+            
+            if (did_abort)
+            {
+                ndrx_TPoverride_code(TPEABORT);
+            }
+            else
+            {
+                ndrx_TPoverride_code(TPESYSTEM);
+            }
+            
             goto out;
         }
     }
@@ -1849,9 +1866,11 @@ expublic int _tp_srv_join_or_new_from_call(tp_command_call_t *call,
  * and thus it would not be able to rollback it, and thus it will wait
  * timeout at tmsrv (which could be long) so better notify tmsrv to
  * perform abort. This assume that current transaction is set.
+ * @param did_abort is transaction aborted at the end?
+ * @param force_abort shall abort happen?
  * @return EXSUCCED/EXFAIL
  */
-exprivate int ndrx_xa_join_fail(void)
+exprivate int ndrx_xa_join_fail(int *did_abort, int force_abort)
 {
     UBFH *p_ub = NULL;
     int ret = EXSUCCEED;
@@ -1861,7 +1880,8 @@ exprivate int ndrx_xa_join_fail(void)
     /* no action, as we did not start the transaction
      * so that client can finalize
      */
-    if (!(G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags & XA_TXINFO_INITIATOR))
+    if (!(G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags & XA_TXINFO_INITIATOR) &&
+            !force_abort)
     {
         return EXSUCCEED;
     }
@@ -1869,7 +1889,7 @@ exprivate int ndrx_xa_join_fail(void)
     /* Save the original error/needed later! */
     ndrx_TPsave_error(&err);
         
-    NDRX_LOG(log_error, "Join/start failed, aborting to TMSRV");
+    NDRX_LOG(log_error, "xa_start() or xa_end() failed, aborting to TMSRV");
     
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPABORT, EXFALSE, EXFAIL, 
             G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L, EXFAIL)))
@@ -1880,6 +1900,11 @@ exprivate int ndrx_xa_join_fail(void)
         /* _TPoverride_code(TPETRAN); */
         
         EXFAIL_OUT(ret);
+    }
+    
+    if (NULL!=did_abort)
+    {
+        *did_abort = EXTRUE;
     }
     
 out:
@@ -1993,7 +2018,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 join_flag, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to join transaction!");
-	    ndrx_xa_join_fail();
+	    ndrx_xa_join_fail(NULL, EXFALSE);
             EXFAIL_OUT(ret);
         }
         else
@@ -2064,7 +2089,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                     join_flag, EXFALSE))
             {
                 NDRX_LOG(log_error, "Failed to join transaction!");
-		ndrx_xa_join_fail();
+		ndrx_xa_join_fail(NULL, EXFALSE);
                 EXFAIL_OUT(ret);
             }
             else
@@ -2088,7 +2113,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                         join_flag, EXFALSE))
                 {
                     NDRX_LOG(log_error, "Failed to join transaction!");
-		    ndrx_xa_join_fail();
+		    ndrx_xa_join_fail(NULL, EXFALSE);
                     EXFAIL_OUT(ret);
                 }
                 else
@@ -2099,7 +2124,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             else
             {
                 NDRX_LOG(log_error, "Failed to start transaction!");
-                ndrx_xa_join_fail();
+                ndrx_xa_join_fail(NULL, EXFALSE);
                 EXFAIL_OUT(ret);
             }
         }
@@ -2139,13 +2164,17 @@ out:
 /**
  * Disassociate current process from transaction 
  * TODO: What about CD's?
- * @return 
+ * @param force_rollback shall we rollback the transaction?
+ * @param end_fail did the end failed?
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int _tp_srv_disassoc_tx(void)
+expublic int _tp_srv_disassoc_tx(int force_rollback, int *end_fail)
 {
     int ret = EXSUCCEED;
     ATMI_TLS_ENTRY;
     
+    
+    NDRX_LOG(log_debug, "into %s() force_rollback=%d", __func__, force_rollback);
     if (NULL==G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_warn, "Not in global tx!");
@@ -2164,12 +2193,19 @@ expublic int _tp_srv_disassoc_tx(void)
                     ret, atmi_xa_geterrstr(ret));
             userlog("Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
+            
+            *end_fail = EXTRUE;
         }
     }
     
+    /* rollback the transaction if required */
+    if (force_rollback)
+    {
+        ndrx_xa_join_fail(NULL, EXTRUE);
+    }
+
     /* Remove current transaction from list */
-    atmi_xa_curtx_del(G_atmi_tls->G_atmi_xa_curtx.txinfo);
-    
+    atmi_xa_curtx_del(G_atmi_tls->G_atmi_xa_curtx.txinfo);    
     G_atmi_tls->G_atmi_xa_curtx.txinfo = NULL;
     
 out:
