@@ -541,7 +541,7 @@ fi
 # Rollback must have happen
 #
 verify_ulog "RM1" "xa_rollback" "1";
-verify_ulog "RM2" "xa_rollback" "1";
+verify_ulog "RM2" "xa_rollback" "0";
 
 
 #
