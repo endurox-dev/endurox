@@ -1037,8 +1037,8 @@ expublic int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds)
     /* Iterate over the hash! */
     EXHASH_ITER(hh, (*cds), el, elt)
     {
-         EXHASH_DEL((*cds), el);
-         NDRX_FREE(el);
+        EXHASH_DEL((*cds), el);
+        NDRX_FREE(el);
     }
     
 out:

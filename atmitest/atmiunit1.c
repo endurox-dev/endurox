@@ -674,11 +674,17 @@ Ensure(test086_tmqlimit)
     assert_equal(ret, EXSUCCEED);
 }
 
+/* first test shall fail all, as logs are overwritten */
 Ensure(test087_tmsrv)
 {
     int ret;
-    ret=system_dbg("test087_tmsrv/run.sh");
-    assert_equal(ret, EXSUCCEED);
+    if  (   (EXSUCCEED!=(ret=system_dbg("test087_tmsrv/run.sh")))
+        ||  (EXSUCCEED!=(ret=system_dbg("test087_tmsrv/run-recon.sh")))
+        ||  (EXSUCCEED!=(ret=system_dbg("test087_tmsrv/run-xa_end.sh")))
+        )
+    {
+        assert_equal(ret, EXSUCCEED);
+    } 
 }
 
 Ensure(test087_tmsrv_recon)
@@ -854,7 +860,6 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test086_tmqlimit);
 #endif
     add_test(suite, test087_tmsrv);
-    add_test(suite, test087_tmsrv_recon);
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
     

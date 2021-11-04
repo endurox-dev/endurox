@@ -359,10 +359,28 @@ out_send:
     /* well if we are in global TX we shall disconnect/end here
      * otherwise tmsrv might get locked txn..
      */
-
     if (ndrx_get_G_atmi_xa_curtx()->txinfo)
     {
-        _tp_srv_disassoc_tx();
+        int end_fail=EXFALSE;
+        int prop_fail = EXFALSE;
+        
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+        {
+            prop_fail=EXTRUE;
+        }
+        
+        _tp_srv_disassoc_tx(EXFALSE, &end_fail);
+        
+        if (prop_fail || end_fail)
+        {
+            if (end_fail)
+            {
+                NDRX_LOG(log_error, "Marking transaction as abort only "
+                        "due to xa_end() failure");
+            }
+            /* propagate back to caller */
+            call->tmtxflags|=TMTXFLAGS_IS_ABORT_ONLY;
+        }
     }
     
     /* send the reply back actually */
@@ -649,9 +667,31 @@ expublic void _tpforward (char *svc, char *data,
         goto out;
     }
     
+    /* well if we are in global TX we shall disconnect/end here
+     * otherwise tmsrv might get locked txn..
+     */
     if (ndrx_get_G_atmi_xa_curtx()->txinfo)
     {
-        _tp_srv_disassoc_tx();
+        int end_fail=EXFALSE;
+        int prop_fail = EXFALSE;
+        
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+        {
+            prop_fail=EXTRUE;
+        }
+        
+        _tp_srv_disassoc_tx(EXFALSE, &end_fail);
+        
+        if (prop_fail || end_fail)
+        {
+            if (end_fail)
+            {
+                NDRX_LOG(log_error, "Marking transaction as abort only "
+                        "due to xa_end() failure");
+            }
+            /* propagate back to caller */
+            call->tmtxflags|=TMTXFLAGS_IS_ABORT_ONLY;
+        }
     }
 
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",

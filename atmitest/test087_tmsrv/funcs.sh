@@ -220,7 +220,7 @@ function buildprograms {
     echo "************************************************************************"
     echo "Building atmisv87 NULL ..."
     echo "************************************************************************"
-    buildserver -o atmisv87_1 -rlibl87_1$LIBMODE -l atmisv87_1.c -sTESTSV1 -v
+    buildserver -o atmisv87_1 -rlibl87_1$LIBMODE -l atmisv87_1.c -sTESTSV1 -sTESTSVE1 -sTESTSVE1_RET -sTESTSVE1_NORET -v
     RET=$?
 
     if [ "X$RET" != "X0" ]; then
@@ -232,7 +232,7 @@ function buildprograms {
     echo "************************************************************************"
     echo "Building atmisv87 NULL ..."
     echo "************************************************************************"
-    buildserver -o atmisv87_2 -rlibl87_2$LIBMODE -l atmisv87_2.c -sTESTSV2 -v
+    buildserver -o atmisv87_2 -rlibl87_2$LIBMODE -l atmisv87_2.c -sTESTSV2 -sTESTSVE2 -v
     RET=$?
 
     if [ "X$RET" != "X0" ]; then

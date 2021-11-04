@@ -629,6 +629,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
         if (call->flags & TPTRANSUSPEND && NULL!=p_tranid &&
                 EXSUCCEED!=ndrx_tpsuspend(p_tranid, TPTXTMSUSPEND, EXFALSE))
         {
+            /* Override the error to TPESYSTEM */
+            ndrx_TPoverride_code(TPESYSTEM);
             EXFAIL_OUT(ret);
         }
     }

@@ -597,7 +597,9 @@ expublic int sv_serve_call(int *service, int *status,
         {
             NDRX_LOG(log_warn, "No return from service!");
             
-            /* if no return in the end... we must abort... */
+            /* if no return in the end... we must abort... 
+             * TODO: might want to use the same ndrx_xa_join_fail() / disassoc?
+             */
             if (tpgetlev() && last_call->sysflags & SYS_FLAG_AUTOTRAN)
             {
                 NDRX_LOG(log_error, "ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
@@ -1243,7 +1245,8 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
          */
         if (ndrx_get_G_atmi_xa_curtx()->txinfo)
         {
-            _tp_srv_disassoc_tx();
+            int end_fail=EXFALSE;
+            _tp_srv_disassoc_tx(EXTRUE, &end_fail);
         }
     }
 

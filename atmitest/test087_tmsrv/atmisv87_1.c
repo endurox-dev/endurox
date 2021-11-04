@@ -53,6 +53,46 @@ void TESTSV1 (TPSVCINFO *p_svc)
     tpforward("TESTSV2", NULL, 0, 0);
 }
 
+/**
+ * Standard service entry, Error server.
+ */
+void TESTSVE1 (TPSVCINFO *p_svc)
+{
+    char *odata=NULL;
+    long olen;
+    
+    /* shall generate error */
+    tpcall("TESTSVE2", NULL, 0, &odata, &olen, 0);
+    
+    /* shall keep the error */
+    tpforward("TESTSV2", NULL, 0, 0);
+}
+
+/**
+ * Standard service entry, Error server, Return
+ */
+void TESTSVE1_RET (TPSVCINFO *p_svc)
+{
+    char *odata=NULL;
+    long olen;
+    
+    /* shall generate error */
+    tpcall("TESTSVE2", NULL, 0, &odata, &olen, 0);
+    
+    tpreturn(TPSUCCESS, 0, NULL, 0, 0);
+}
+
+
+/**
+ * Standard service entry, Error server, Return
+ */
+void TESTSVE1_NORET (TPSVCINFO *p_svc)
+{
+    char *odata=NULL;
+    long olen;
+}
+
+
 int tpsvrinit (int argc, char **argv)
 {
     return tpopen();

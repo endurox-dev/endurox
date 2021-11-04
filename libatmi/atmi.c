@@ -71,6 +71,7 @@
 
 /**
  * API entry for tpacall
+ * Currently tpacall does not automatically suspend global transaction.
  * @param svc
  * @param data
  * @param len
@@ -90,7 +91,14 @@ expublic int tpacall (char *svc, char *data, long len, long flags)
         ret=EXFAIL;
         goto out;
     }
-
+    
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo && (flags & TPNOREPLY))
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "Flag TPNOREPLY is not supported in "
+                "global transaction mode");
+        EXFAIL_OUT(ret);
+    }
+    
     /*flags|=TPNOREPLY;  force that we do not wait for answer! - not needed here really!
      causes problems with serice async replies!, See doc for tpacall! */
             
@@ -131,6 +139,13 @@ expublic int tpacallex (char *svc, char *data,
     {
         ret=EXFAIL;
         goto out;
+    }
+    
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo && (flags & TPNOREPLY))
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "Flag TPNOREPLY is not supported in "
+                "global transaction mode");
+        EXFAIL_OUT(ret);
     }
 
     /*flags|=TPNOREPLY;  force that we do not wait for answer! - not needed here really!

@@ -30,6 +30,10 @@ response by using *tpgetrply()* If *TPNOTRAN* is not specified and current
 process is in global transaction, then system will make destination process 
 run in same destination process.
 
+tpacall() current does not suspend the global transaction before sending
+the data. If such logic is reuqired, the *tpsuspend(3)* shall be used
+for this purpose.
+
 *Valid flags*
 
 *TPNOTRAN* Do not call service in transaction mode. This is effective in 
@@ -44,6 +48,7 @@ return error. The error code for this situation is *TPEBLOCK*.
 
 *TPNOREPLY* Do not expect reply from the call. This works with principle
 "send and forget". In this case return value for successful call is *0*.
+This flag cannot be used in global transaction mode.
 
 *TPNOTIME* Do not use timeout setting when sending message to queue,
 process will wait indefinatelly to submit the message to blocking IPC queue.
@@ -60,7 +65,8 @@ Note that *tpstrerror()* returns generic error message plus custom message
 with debug info from last function call.
 
 *TPEINVAL* Invalid parameter is given to function. Either service name is 
-NULL or flags does not allow to change the value.
+NULL or flags does not allow to change the value. Process is in global
+transaction and *TPNOREPLY* flag is used.
 
 *TPENOENT* No service ('svc' parameter) advertised in system.
 
