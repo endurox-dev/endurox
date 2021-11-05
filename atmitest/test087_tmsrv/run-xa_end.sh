@@ -549,6 +549,74 @@ verify_ulog "RM2" "xa_rollback" "0";
 #
 export NDRX_TOUT=10
 
+
+
+echo ""
+echo "************************************************************************"
+echo "SUSPEND failed"
+echo "************************************************************************"
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:-4:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+
+# start only here, as we want fresh tables...
+xadmin stop -y || go_out 1
+export NDRX_TOUT=5
+xadmin start -y || go_out 1
+
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 C SUSPEND 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPEABORT"* ]]; then
+    echo "Expected TPEABORT"
+    go_out 1
+fi
+
+#
+# Rollback must have happen
+#
+verify_ulog "RM1" "xa_rollback" "1";
+verify_ulog "RM2" "xa_rollback" "0";
+
+
 go_out 0
 
 # vim: set ts=4 sw=4 et smartindent:

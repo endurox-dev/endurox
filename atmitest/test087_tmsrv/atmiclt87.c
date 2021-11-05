@@ -72,7 +72,27 @@ int main(int argc, char** argv)
     /* custom service */
     if (argc>2)
     {
-        if (0!=(ret=tpcall(argv[2], NULL, 0, &odata, &olen, 0)))
+        if (0==strcmp(argv[2], "SUSPEND"))
+        {
+            TPTRANID tid;
+            
+            if (0!=(ret=tpsuspend (&tid, 0)))
+            {
+                fprintf(stdout, "Failed to tpsuspend: %s (ret=%d)\n", tpstrerror(tperrno), ret);
+                ret=-1;
+                goto out;
+            }
+            
+            /* lets resume... */
+            if (0!=(ret=tpresume (&tid, 0)))
+            {
+                fprintf(stdout, "Failed to tpresume: %s (ret=%d)\n", tpstrerror(tperrno), ret);
+                ret=-1;
+                goto out;
+            }
+            
+        }
+        else if (0!=(ret=tpcall(argv[2], NULL, 0, &odata, &olen, 0)))
         {
             fprintf(stdout, "Failed to tpcall: %s (ret=%d)\n", tpstrerror(tperrno), ret);
             ret=-1;
