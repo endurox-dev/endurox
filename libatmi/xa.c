@@ -1383,7 +1383,8 @@ expublic int ndrx_tpcommit(long flags)
     
     if (do_abort)
     {
-        ret = ndrx_tpabort(0); /*<<<<<<<<<< RETURN!!! */
+        /* common termination at commit. */
+        ret = ndrx_tpabort(0, EXFALSE);
         
         /* in this case the tmsrv might already rolled back
          * thus assume that transaction is aborted.
@@ -1397,7 +1398,7 @@ expublic int ndrx_tpcommit(long flags)
             ret=EXFAIL;
         }
         
-        return ret;
+        return ret; /*<<<<<<<<<< RETURN!!! */
     }
     
     NDRX_LOG(log_debug, "About to call TM flags=%ld", flags);
@@ -1441,9 +1442,10 @@ out:
  * API implementation of tpabort
  * @param timeout
  * @param flags
+ * @param call_xa_end shall the xa_end() be called?
  * @return 
  */
-expublic int ndrx_tpabort(long flags)
+expublic int ndrx_tpabort(long flags, int call_xa_end)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -1481,18 +1483,21 @@ expublic int ndrx_tpabort(long flags)
     }
     
     /* Disassoc from transaction! */
-    if (!XA_IS_DYNAMIC_REG || 
-            (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
+    if (call_xa_end)
     {
-        /* abort anyway... */
-        if (EXSUCCEED!= atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXTRUE))
+        if (!XA_IS_DYNAMIC_REG || 
+                (XA_TXINFO_AXREG_CLD & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
         {
-            NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
-            userlog("Failed to end XA api: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
+            /* abort anyway... */
+            if (EXSUCCEED!= atmi_xa_end_entry(
+                    atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXTRUE))
+            {
+                NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
+                        ret, atmi_xa_geterrstr(ret));
+                userlog("Failed to end XA api: %d [%s]", 
+                        ret, atmi_xa_geterrstr(ret));
+            }
         }
     }
     
