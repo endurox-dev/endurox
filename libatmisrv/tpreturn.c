@@ -109,7 +109,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             }
             else
             {
-                if (EXSUCCEED!=ndrx_tpabort(0))
+                if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
                 {
                     NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
                     userlog("Auto abort failed: %s", tpstrerror(tperrno));
@@ -196,7 +196,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         else
         {
             /* try to abort */
-            if (EXSUCCEED!=ndrx_tpabort(0))
+            if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
             {
                 NDRX_LOG(log_error, "Auto abort failed: %s - returning TPESVCERR", 
                         tpstrerror(tperrno));

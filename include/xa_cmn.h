@@ -455,7 +455,7 @@ extern NDRX_API int ndrx_tpopen(void);
 extern NDRX_API int ndrx_tpclose(void);
 extern NDRX_API int ndrx_tpbegin(unsigned long timeout, long flags);
 extern NDRX_API int ndrx_tpcommit(long flags);
-extern NDRX_API int ndrx_tpabort(long flags);
+extern NDRX_API int ndrx_tpabort(long flags, int call_xa_end);
 extern NDRX_API int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting);
 extern NDRX_API int ndrx_tpresume (TPTRANID *tranid, long flags);
 extern NDRX_API int ndrx_tpscmt(long flags);

@@ -412,7 +412,7 @@ expublic int tpabort (long flags)
         goto out;
     }
     
-    ret=ndrx_tpabort(flags);
+    ret=ndrx_tpabort(flags, EXTRUE);
     
 out:
     return ret;

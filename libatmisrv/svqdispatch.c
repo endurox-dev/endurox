@@ -606,7 +606,7 @@ expublic int sv_serve_call(int *service, int *status,
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
                 userlog("ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
-                if (EXSUCCEED!=ndrx_tpabort(0))
+                if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
                 {
                     NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
                     userlog("Auto abort failed: %s", tpstrerror(tperrno));
@@ -897,7 +897,7 @@ expublic int sv_serve_connect(int *service, int *status,
                 userlog("ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
                 
-                if (EXSUCCEED!=ndrx_tpabort(0))
+                if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
                 {
                     NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
                     userlog("Auto abort failed: %s", tpstrerror(tperrno));
