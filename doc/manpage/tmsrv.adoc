@@ -267,10 +267,14 @@ in the resource, but transaction is not managed by Enduro/X as already rolled ba
 To overcome this limitation, careful transaction timeout planing shall be performed which
 applies to tpbegin() setting and timeout setting at the resource for inactive transactions.
 
+If transaction expires at *tmsrv*, this fact does not terminate any *tpcall(3)* operations,
+except that if called service's associate resource manager is not registered with given
+global transaction.
+
 EXIT STATUS
 -----------
 *0*::
-Success
+SuccessG
 
 *1*::
 Failure
