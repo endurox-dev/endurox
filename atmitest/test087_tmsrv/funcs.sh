@@ -220,7 +220,7 @@ function buildprograms {
     echo "************************************************************************"
     echo "Building atmisv87 NULL ..."
     echo "************************************************************************"
-    buildserver -o atmisv87_1 -rlibl87_1$LIBMODE -l atmisv87_1.c -sTESTSV1 -sTESTSVE1 -sTESTSVE1_RET -sTESTSVE1_NORET -v
+    buildserver -o atmisv87_1 -rlibl87_1$LIBMODE -l atmisv87_1.c -sTESTSV1 -sTESTSVE1 -sTESTSVE1_RET -sTESTSVE1_NORET -sTEST1_PART -v
     RET=$?
 
     if [ "X$RET" != "X0" ]; then

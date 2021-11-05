@@ -549,8 +549,6 @@ verify_ulog "RM2" "xa_rollback" "0";
 #
 export NDRX_TOUT=10
 
-
-
 echo ""
 echo "************************************************************************"
 echo "SUSPEND failed"
@@ -616,6 +614,60 @@ fi
 verify_ulog "RM1" "xa_rollback" "1";
 verify_ulog "RM2" "xa_rollback" "0";
 
+echo ""
+echo "************************************************************************"
+echo "Validate participant commit/abort rejection"
+echo "************************************************************************"
+clean_ulog;
+
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+# start here, we want fresh tables loaded...
+xadmin sreload -y || go_out 1
+
+NDRX_CCTAG="RM1" ./atmiclt87 C TEST1_PART
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Build atmiclt87 failed"
+    go_out 1
+fi
+
+verify_ulog "RM1" "xa_rollback" "0";
+verify_ulog "RM2" "xa_rollback" "0";
+
+verify_ulog "RM1" "xa_commit" "1";
+verify_ulog "RM2" "xa_commit" "0";
 
 go_out 0
 
