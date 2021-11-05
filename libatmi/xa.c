@@ -1308,27 +1308,24 @@ expublic int ndrx_tpcommit(long flags)
     {
         NDRX_LOG(log_error, "tpcommit: - tpopen() was not called!");
         ndrx_TPset_error_msg(TPEPROTO,  "tpcommit - tpopen() was not called!");
-        EXFAIL_OUT(ret);
+        ret=EXFAIL;
+        goto out_no_reset;
     }
 
     if (0!=flags && !(flags & TPTXCOMMITDLOG))
     {
         NDRX_LOG(log_error, "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
         ndrx_TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* flag is shared with tx: */
-    if (TX_COMMIT_DECISION_LOGGED == G_atmi_tls->tx_commit_return)
-    {
-        flags|=TPTXCOMMITDLOG;
+        ret=EXFAIL;
+        goto out_no_reset;
     }
     
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "tpcommit: Not in global TX");
         ndrx_TPset_error_msg(TPEPROTO,  "tpcommit: Not in global TX");
-        EXFAIL_OUT(ret);
+        ret=EXFAIL;
+        goto out_no_reset;
         
     }
             
@@ -1339,7 +1336,14 @@ expublic int ndrx_tpcommit(long flags)
     {
         NDRX_LOG(log_error, "tpcommit: Not not initiator");
         ndrx_TPset_error_msg(TPEPROTO,  "tpcommit: Not not initiator");
-        EXFAIL_OUT(ret);
+        ret=EXFAIL;
+        goto out_no_reset;
+    }
+    
+    /* flag is shared with tx: */
+    if (TX_COMMIT_DECISION_LOGGED == G_atmi_tls->tx_commit_return)
+    {
+        flags|=TPTXCOMMITDLOG;
     }
     
     /* Check situation with call descriptors */
@@ -1420,6 +1424,12 @@ expublic int ndrx_tpcommit(long flags)
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         
 out:
+                            
+    /* reset global transaction info */
+    atmi_xa_reset_curtx();
+
+out_no_reset:
+
     if (NULL!=p_ub)
     {
         /* save errors */
@@ -1431,8 +1441,6 @@ out:
         ndrx_TPrestore_error(&err);
     }
 
-    /* reset global transaction info */
-    atmi_xa_reset_curtx();
 
     return ret;
 }
@@ -1457,29 +1465,32 @@ expublic int ndrx_tpabort(long flags, int call_xa_end)
     {
         NDRX_LOG(log_error, "tpabort: - tpopen() was not called!");
         ndrx_TPset_error_msg(TPEPROTO,  "tpabort - tpopen() was not called!");
-        EXFAIL_OUT(ret);
+        ret=EXFAIL;
+        goto out_no_reset;
     }
 
     if (0!=flags)
     {
         NDRX_LOG(log_error, "tpabort: flags != 0");
         ndrx_TPset_error_msg(TPEINVAL,  "tpabort: flags != 0");
-        EXFAIL_OUT(ret);
+        ret=EXFAIL;
+        goto out_no_reset;
     }
     
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_error, "tpabort: Not in global TX");
         ndrx_TPset_error_msg(TPEPROTO,  "tpabort: Not in global TX");
-        EXFAIL_OUT(ret);
-        
+        ret=EXFAIL;
+        goto out_no_reset;
     }
             
     if (!(XA_TXINFO_INITIATOR & G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags))
     {
         NDRX_LOG(log_error, "tpabort: Not not initiator");
         ndrx_TPset_error_msg(TPEPROTO,  "tpabort: Not not initiator");
-        EXFAIL_OUT(ret);
+        ret=EXFAIL;
+        goto out_no_reset;
     }
     
     /* Disassoc from transaction! */
@@ -1517,6 +1528,11 @@ expublic int ndrx_tpabort(long flags, int call_xa_end)
     NDRX_LOG(log_debug, "Transaction [%s] abort OK",
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
 out:
+    /* reset global transaction info */
+    atmi_xa_reset_curtx();
+
+out_no_reset:
+
     if (NULL!=p_ub)
     {
         /* save errors */
@@ -1528,8 +1544,7 @@ out:
         ndrx_TPrestore_error(&err);
     }
 
-    /* reset global transaction info */
-    atmi_xa_reset_curtx();
+
 
     return ret;
 }

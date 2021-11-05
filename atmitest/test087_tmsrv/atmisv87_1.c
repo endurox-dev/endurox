@@ -84,6 +84,64 @@ void TESTSVE1_RET (TPSVCINFO *p_svc)
 
 
 /**
+ * Participant tests of the transaction APIs.
+ */
+void TEST1_PART (TPSVCINFO *p_svc)
+{
+    int ret = EXSUCCEED;
+    
+    
+    if (EXSUCCEED==tpabort(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must not abort!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEPROTO!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must be TPEPROTO, got %d!", tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!tpgetlev())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Process shall stay in transaction, but is not");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED==tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must not commit!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEPROTO!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must be TPEPROTO, got %d!", tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!tpgetlev())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Process shall stay in transaction, but is not");
+        EXFAIL_OUT(ret);
+    }
+    
+    
+out:
+    
+    if (EXSUCCEED==ret)
+    {
+        tpreturn(TPSUCCESS, 0, NULL, 0, 0);
+    }
+    else
+    {
+        tpreturn(TPFAIL, 0, NULL, 0, 0); 
+    }
+}
+
+
+/**
  * Standard service entry, Error server, Return
  */
 void TESTSVE1_NORET (TPSVCINFO *p_svc)

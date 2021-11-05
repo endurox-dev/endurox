@@ -29,6 +29,13 @@ tpabort() is allowed for autotran started transactions for configured service
 or in service to which autotran stared transaction call was forwarded. 
 After executing abort server process normally will leave a transaction.
 
+In case if process is joined to the transaction (i.e. it is not an initiator
+of the transaction) and tpabort() is called, the error *TPEPROTO* is returned,
+process keeps participation in the transaction.
+
+After the call process leaves the global transaction if one is in the progress,
+except if noted otherwise in the error description.
+
 RETURN VALUE
 ------------
 On success, *tpabort()* return zero; on error, -1 is returned, 
@@ -41,6 +48,7 @@ Note that *tpstrerror()* returns generic error message plus custom message
 with debug info from last function call.
 
 *TPEINVAL* flags was not 0.
+The caller's state with respect to the transaction is not changed.
 
 *TPETIME* Transaction manager (*tmsrv(8)*) did not respond in configured 
 time-out time. The state of transaction is unknown.
@@ -56,6 +64,7 @@ of transaction is unknown.
 
 *TPEPROTO* XA subsystem was not initialized (did not call *tpopen()*), no global 
 transaction started or caller is not initiator of transaction.
+The caller's state with respect to the transaction is not changed.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
 or debugs for more info.
