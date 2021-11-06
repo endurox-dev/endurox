@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <ndebug.h>
 #include <atmi.h>
-
+#include <ndrstandard.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -90,7 +90,6 @@ void TEST1_PART (TPSVCINFO *p_svc)
 {
     int ret = EXSUCCEED;
     
-    
     if (EXSUCCEED==tpabort(0))
     {
         NDRX_LOG(log_error, "TESTERROR: Must not abort!");
@@ -140,6 +139,48 @@ out:
     }
 }
 
+
+/**
+ * Our transaction still attached
+ */
+void TESTSVE1_TRANRET (TPSVCINFO *p_svc)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=tpbegin(40, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+        userlog("TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }    
+out:
+    if (EXSUCCEED==ret)
+    {
+        tpreturn(TPSUCCESS, 0, NULL, 0, 0);
+    }
+    else
+    {
+        tpreturn(TPFAIL, 0, NULL, 0, 0);
+    }
+}
+
+/**
+ * Open tran, forward
+ */
+void TESTSVE1_TRANFWD (TPSVCINFO *p_svc)
+{
+    if (EXSUCCEED!=tpbegin(40, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+        userlog("TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+    }    
+    
+    tpforward("TESTSV2", NULL, 0, 0);
+}
 
 /**
  * Standard service entry, Error server, Return

@@ -45,6 +45,10 @@ to join the global transaction too. If invalid service name is specified in
 'svc' (service is not advertised in system), then call will be returned 
 the caller with service error (*TPESVCERR*). 'flags' is reserved for future use.
 
+If process have started a global transaction and performs tpforward() without
+completing the transaction, transaction is automatically aborted and initiating
+service caller receives *TPESVCERR* error.
+
 *tpreturn()* will make the current service routine go back/pop-up the stack to 
 Enduro/X polling mechanisms for next incoming message.
 

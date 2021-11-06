@@ -54,7 +54,14 @@ int main(int argc, char** argv)
     int ret = 0;
     char *odata=NULL;
     long olen;
+    int do_tran = EXTRUE;
     
+    
+    if (argc>1 && argv[1][0]=='N')
+    {
+        do_tran=EXFALSE;
+    }
+        
     if (0!=tpopen())
     {
         fprintf(stderr, "Failed to topopen: %s\n", tpstrerror(tperrno));
@@ -62,7 +69,7 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    if (0!=tpbegin(15, 0))
+    if (do_tran && 0!=tpbegin(15, 0))
     {
         fprintf(stderr, "Failed to tpbegin: %s\n", tpstrerror(tperrno));
         ret=-1;
@@ -109,7 +116,7 @@ int main(int argc, char** argv)
         }
     }
     
-    if (argc>1 && argv[1][0]=='A')
+    if (do_tran && argc>1 && argv[1][0]=='A')
     {
         if (0!=tpabort(0))
         {
@@ -122,7 +129,7 @@ int main(int argc, char** argv)
             fprintf(stdout, "TPABORT OK\n");
         }
     }
-    else if (tpgetlev())
+    else if (do_tran && tpgetlev())
     {
         if (0!=tpcommit(0))
         {
