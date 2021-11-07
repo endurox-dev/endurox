@@ -67,7 +67,8 @@
 exprivate int initiated_tran_attached(void)
 {
     if (NULL!=G_atmi_tls->G_atmi_xa_curtx.txinfo
-            && (G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags & XA_TXINFO_INITIATOR))
+            && (G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags & XA_TXINFO_INITIATOR)
+            && !(ndrx_get_G_last_call()->sysflags & SYS_FLAG_AUTOTRAN))
     {
         return EXTRUE;
     }
