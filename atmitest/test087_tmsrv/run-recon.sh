@@ -176,9 +176,6 @@ echo "************************************************************************"
 echo "COMMIT Retry"
 echo "************************************************************************"
 
-clean_ulog;
-
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -211,6 +208,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+clean_ulog;
 xadmin start -y || go_out 1
 
 NDRX_CCTAG="RM1" ./atmiclt87
@@ -253,8 +251,6 @@ echo "************************************************************************"
 echo "RECOVER Retry"
 echo "************************************************************************"
 
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -286,6 +282,8 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+clean_ulog;
 xadmin start -y || go_out 1
 
 NDRX_CCTAG="RM1" tmrecovercl
@@ -334,8 +332,6 @@ echo "************************************************************************"
 echo "OPEN/CLOSE Retry (system does not start...)"
 echo "************************************************************************"
 
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:-5:2:0
 xa_close_entry:-7:2:0
@@ -367,6 +363,8 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+clean_ulog;
 xadmin start -y || go_out 1
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
@@ -390,8 +388,6 @@ echo ""
 echo "************************************************************************"
 echo "Prepare Retry, other err -> TPEABORT"
 echo "************************************************************************"
-
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -424,6 +420,8 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+clean_ulog;
 xadmin start -y || go_out 1
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
@@ -450,11 +448,6 @@ echo ""
 echo "************************************************************************"
 echo "Prepare Retry, other err configred recon"
 echo "************************************************************************"
-
-export NDRX_XA_FLAGS="RECON:*:3:100:-3,-7"
-
-clean_ulog;
-
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -487,6 +480,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+export NDRX_XA_FLAGS="RECON:*:3:100:-3,-7"
+clean_ulog;
 xadmin start -y || go_out 1
 
 NDRX_CCTAG="RM1" ./atmiclt87
