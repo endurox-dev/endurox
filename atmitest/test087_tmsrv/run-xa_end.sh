@@ -65,7 +65,6 @@ echo ""
 echo "************************************************************************"
 echo "Server XA end fails (of the first server in the chain)"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -100,6 +99,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin start -y || go_out 1
 
@@ -126,7 +126,6 @@ echo ""
 echo "************************************************************************"
 echo "xa_end() failure at tpcommit() entry"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -162,6 +161,7 @@ xa_start_entry:0:1:0
 EOF
 
 
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin sreload -y || go_out 1
 
@@ -184,7 +184,6 @@ echo ""
 echo "************************************************************************"
 echo "Client abort OK, after end fails"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -219,7 +218,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
-
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin sreload -y || go_out 1
 
@@ -239,7 +238,6 @@ echo ""
 echo "************************************************************************"
 echo "Forward abort only propagate"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -274,7 +272,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
-
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin sreload -y || go_out 1
 
@@ -301,7 +299,6 @@ echo ""
 echo "************************************************************************"
 echo "Return abort propagate"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -337,6 +334,7 @@ xa_start_entry:0:1:0
 EOF
 
 
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin sreload -y || go_out 1
 
@@ -362,7 +360,6 @@ echo ""
 echo "************************************************************************"
 echo "Forward abort propagate (normal)"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -396,7 +393,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
-
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin sreload -y || go_out 1
 
@@ -422,7 +419,6 @@ echo ""
 echo "************************************************************************"
 echo "Return abort propagate (normal)"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -457,6 +453,7 @@ xa_start_entry:0:1:0
 EOF
 
 
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin sreload -y || go_out 1
 
@@ -482,7 +479,6 @@ echo ""
 echo "************************************************************************"
 echo "No return from the server"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -516,7 +512,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
-
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin stop -y || go_out 1
 export NDRX_TOUT=5
@@ -553,7 +549,6 @@ echo ""
 echo "************************************************************************"
 echo "SUSPEND failed"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -587,10 +582,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
-
+clean_ulog;
 # start only here, as we want fresh tables...
 xadmin stop -y || go_out 1
-export NDRX_TOUT=5
 xadmin start -y || go_out 1
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 C SUSPEND 2>&1`
@@ -618,7 +612,6 @@ echo ""
 echo "************************************************************************"
 echo "Validate participant commit/abort rejection"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -652,6 +645,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+clean_ulog;
 # start here, we want fresh tables loaded...
 xadmin sreload -y || go_out 1
 
@@ -673,7 +667,6 @@ echo ""
 echo "************************************************************************"
 echo "Server starts transaction and performs tpreturn"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -707,6 +700,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+clean_ulog;
 # start here, we want fresh tables loaded...
 xadmin sreload -y || go_out 1
 
@@ -739,7 +733,6 @@ echo ""
 echo "************************************************************************"
 echo "Server starts transaction and performs tpforward"
 echo "************************************************************************"
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -773,6 +766,7 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+clean_ulog;
 # start here, we want fresh tables loaded...
 xadmin sreload -y || go_out 1
 

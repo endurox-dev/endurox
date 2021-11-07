@@ -161,7 +161,7 @@ static int get_return_code(const char *func, int *cntr)
                 NULL!=setting && i<NR_SETTINGS; 
                 i++, setting=strtok_r(NULL, ":", &saveptr1))
         {
-            /*NDRX_LOG(log_error, "LOADING: [%s]", setting);*/
+            NDRX_LOG(log_error, "LOADING: [%s]", setting);
             all_settings[i] = setting;
         }
         
@@ -173,8 +173,8 @@ static int get_return_code(const char *func, int *cntr)
         }
         
         if (0==strcmp(all_settings[SETTING_FUNC], func) && 
-                (NULL==all_settings[SETTING_PROC] ||
-                    NULL!=all_settings[SETTING_PROC] && NULL!=strstr(progname, all_settings[SETTING_PROC])
+                ((NULL==all_settings[SETTING_PROC]) ||
+                    (NULL!=all_settings[SETTING_PROC] && NULL!=strstr(progname, all_settings[SETTING_PROC]))
                 ))
         {
             NDRX_LOG(log_error, TRM ": Matched [%s]", func);
