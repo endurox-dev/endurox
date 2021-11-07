@@ -274,7 +274,7 @@ NR_CALLS=`tail -1 wakeup.out  | cut -d ' '  -f3`
 
 TEST_PERF=$NR_CALLS
 
-if [ "$TEST_PERF" -gt "$TEST_PERF_MIN" ]; then
+if [ "$TEST_PERF" -ge "$TEST_PERF_MIN" ]; then
 
     rm wakeup.out 2>/dev/null
     exbenchcl -n1 -P -t30 -b "{}" -f EX_DATA -S1 -QMYSPACE -sWAKEUP -E -I
@@ -296,7 +296,7 @@ if [ "$TEST_PERF" -gt "$TEST_PERF_MIN" ]; then
     fi
 
 else
-    echo "Skipping thread wakup test as disk performance $NR_CALLS < 40"
+    echo "Skipping thread wakup test as disk performance $TEST_PERF < $TEST_PERF_MIN"
 fi
 
 ################################################################################
