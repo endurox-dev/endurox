@@ -575,7 +575,8 @@ expublic void _tpforward (char *svc, char *data,
                 svc, G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
         
         /* pass the data fields to, as these shall be freed */
-        return _tpreturn(TPFAIL, TPESVCERR, data, len, TPSOFTERR);
+        _tpreturn(TPFAIL, TPESVCERR, data, len, TPSOFTERR);
+	return;
     }
     
     /* try the DDR */
