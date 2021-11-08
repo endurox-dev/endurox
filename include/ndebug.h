@@ -423,13 +423,13 @@ extern NDRX_API ndrx_debug_t * debug_get_ubf_ptr(void);
 extern NDRX_API ndrx_debug_t * debug_get_tp_ptr(void);
 
 extern NDRX_API void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
-        long line, const char *func, char *fmt, ...);
+        long line, const char *func, const char *fmt, ...);
 
 extern NDRX_API void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
-        long line, const char *func, char *comment, void *ptr, void *ptr2, long len);
+        long line, const char *func, const char *comment, void *ptr, void *ptr2, long len);
 
 extern NDRX_API void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
-        long line, const char *func, char *comment, void *ptr, long len);
+        long line, const char *func, const char *comment, void *ptr, long len);
 
 extern NDRX_API void ndrx_dbg_lock(void);
 extern NDRX_API void ndrx_dbg_unlock(void);

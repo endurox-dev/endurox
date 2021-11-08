@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
+#include <nstdutil.h>
+#include <ndebug.h>
 
 #define MAX_FORMAT_LEN  20
 #define MAX_WFORMAT_LEN 3
@@ -246,6 +248,42 @@ static PSInteger _string_split(HPSCRIPTVM v)
     return 1;
 }
 
+/**
+ * Block split the strings, i.e. keep the block together with block escaping option
+ * Currently only ASCII version.
+ * @param v
+ * @return 
+ */
+static PSInteger _string_strtokblk(HPSCRIPTVM v)
+{
+    const PSChar *str,*seps, *quote;
+    PSChar *stemp, *p;
+    ps_getstring(v,2,&str);
+    ps_getstring(v,3,&seps);
+    ps_getstring(v,4,&quote);
+    PSInteger sepsize = ps_getsize(v,3);
+    if(sepsize == 0) return ps_throwerror(v,_SC("empty separators string"));
+    
+    PSInteger quotesize = ps_getsize(v,4);
+    if(quotesize == 0) return ps_throwerror(v,_SC("empty quotes string"));
+    
+    PSInteger memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    memcpy(stemp,str,memsize);
+    
+    ps_newarray(v,0);
+    
+    for (p = ndrx_strtokblk ( (char *)stemp, (char *)seps, (char *)quote); 
+        NULL!=p;
+        p = ndrx_strtokblk (NULL, (char *)seps, (char *)quote))
+    {
+        ps_pushstring(v,p,-1);
+        ps_arrayappend(v,-2);
+    }
+
+    return 1;
+}
+
 static PSInteger _string_escape(HPSCRIPTVM v)
 {
     const PSChar *str;
@@ -463,6 +501,7 @@ static const PSRegFunction stringlib_funcs[]={
     _DECL_FUNC(lstrip,2,_SC(".s")),
     _DECL_FUNC(rstrip,2,_SC(".s")),
     _DECL_FUNC(split,3,_SC(".ss")),
+    _DECL_FUNC(strtokblk,4,_SC(".sss")),
     _DECL_FUNC(escape,2,_SC(".s")),
     _DECL_FUNC(startswith,3,_SC(".ss")),
     _DECL_FUNC(endswith,3,_SC(".ss")),
