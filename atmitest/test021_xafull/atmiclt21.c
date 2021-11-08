@@ -83,6 +83,25 @@ int main(int argc, char** argv) {
             ret=EXFAIL;
             goto out;
         }
+        
+        ret=tpacall("RUNTX", (char *)p_ub, 0, TPNOREPLY);
+        
+        if (EXSUCCEED==ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpacall+TPNOREPLY must fail");
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        if (tperrno!=TPEINVAL)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpacall+TPNOREPLY: expected TPEINVAL got %d:%s",
+                    tperrno, tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        ret = EXSUCCEED;
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD COMMIT", 0L);
 

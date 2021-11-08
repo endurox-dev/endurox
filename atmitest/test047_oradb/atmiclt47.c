@@ -146,7 +146,13 @@ int main(int argc, char** argv)
         goto out;
     }
 
-    check_balance(tmp, &bal);
+    NDRX_STRCPY_SAFE(tmp, "ACC000");
+    if (EXSUCCEED==check_balance(tmp, &bal))
+    {
+        NDRX_LOG(log_error, "check_balance must fail for [%s]", tmp);
+        ret=EXFAIL;
+        goto out;
+    }
     
     if (EXSUCCEED != tpcommit(0))
     {

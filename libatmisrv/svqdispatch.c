@@ -434,7 +434,7 @@ expublic int sv_serve_call(int *service, int *status,
                 /* set us as a masters...
                  * of transaction due to fact that we received the call
                  */
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator=EXTRUE;
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags|=XA_TXINFO_INITIATOR;
             }
         }
         else if (G_server_conf.service_array[call_no]->autotran)
@@ -570,14 +570,16 @@ expublic int sv_serve_call(int *service, int *status,
         {
             NDRX_LOG(log_warn, "No return from service!");
             
-            /* if no return in the end... we must abort... */
+            /* if no return in the end... we must abort... 
+             * TODO: might want to use the same ndrx_xa_join_fail() / disassoc?
+             */
             if (tpgetlev() && last_call->sysflags & SYS_FLAG_AUTOTRAN)
             {
                 NDRX_LOG(log_error, "ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
                 userlog("ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
-                if (EXSUCCEED!=ndrx_tpabort(0))
+                if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
                 {
                     NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
                     userlog("Auto abort failed: %s", tpstrerror(tperrno));
@@ -857,7 +859,7 @@ expublic int sv_serve_connect(int *service, int *status,
                 userlog("ERROR: Auto-tran started [%s], but no tpreturn() - ABORTING...", 
                         G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
                 
-                if (EXSUCCEED!=ndrx_tpabort(0))
+                if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
                 {
                     NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
                     userlog("Auto abort failed: %s", tpstrerror(tperrno));
@@ -1200,7 +1202,8 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
          */
         if (ndrx_get_G_atmi_xa_curtx()->txinfo)
         {
-            _tp_srv_disassoc_tx();
+            int end_fail=EXFALSE;
+            _tp_srv_disassoc_tx(EXTRUE, &end_fail);
         }
     }
 

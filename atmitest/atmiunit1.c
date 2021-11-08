@@ -681,10 +681,23 @@ Ensure(test086_tmqlimit)
     assert_equal(ret, EXSUCCEED);
 }
 
+/* first test shall fail all, as logs are overwritten */
 Ensure(test087_tmsrv)
 {
     int ret;
-    ret=system_dbg("test087_tmsrv/run.sh");
+    if  (   (EXSUCCEED!=(ret=system_dbg("test087_tmsrv/run.sh")))
+        ||  (EXSUCCEED!=(ret=system_dbg("test087_tmsrv/run-recon.sh")))
+        ||  (EXSUCCEED!=(ret=system_dbg("test087_tmsrv/run-xa_end.sh")))
+        )
+    {
+        assert_equal(ret, EXSUCCEED);
+    } 
+}
+
+Ensure(test087_tmsrv_recon)
+{
+    int ret;
+    ret=system_dbg("test087_tmsrv/run-recon.sh");
     assert_equal(ret, EXSUCCEED);
 }
 

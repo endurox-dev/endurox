@@ -504,7 +504,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     config->default_respawn = 0;
                 }
 
-                NDRX_LOG(log_debug, "respawn: %c", config->default_reloadonchange?'Y':'N');
+                NDRX_LOG(log_debug, "respawn: %c", config->default_respawn?'Y':'N');
                 xmlFree(p);
             }
             else if (0==strcmp((char*)cur->name, "rqaddr"))
@@ -1109,8 +1109,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             {
                 p_srvnode->respawn = 1;
             }
-            NDRX_LOG(log_debug, "reloadonchange: %c",
-                                              p_srvnode->reloadonchange?'Y':'N');
+            NDRX_LOG(log_debug, "respawn: %c",
+                                              p_srvnode->respawn?'Y':'N');
             xmlFree(p);
         }
         else if (0==strcmp((char*)cur->name, "fullpath"))

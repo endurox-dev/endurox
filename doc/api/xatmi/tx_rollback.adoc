@@ -1,5 +1,5 @@
-TX_COMMIT(3)
-============
+TX_ROLLBACK(3)
+==============
 :doctype: manpage
 
 
@@ -33,6 +33,10 @@ is no more in global transaction.
 
 TX API is base on TP API. This function is based on *tpabort(3)* and it is possible
 to mix these two API kinds.
+
+In case if process is joined to the transaction (i.e. it is not an initiator
+of the transaction) and tx_rollback() is called, the error *TX_PROTOCOL_ERROR* is returned,
+process keeps participation in the transaction.
 
 RETURN VALUE
 ------------

@@ -198,7 +198,7 @@ by xa_recover+TMSTARTRSCAN and TMENDRSCAN flags. The xa_recover is enabled by
 is expected error code XAER_NOTA (transaction not found) as the scan is performed
 for non existent XID, generated for each worker thread. For xa_recover it is 
 expected that operation succeeds. If the operations goes out of the normal 
-behavior, then reconnection procedure is set in *NDRX_XA_FLAGS* - tag *RECON*
+behavior, then re-connection procedure is set in *NDRX_XA_FLAGS* - tag *RECON*
 i.e. thread will perform xa_close() and xa_open() and retry operation. See the
 *ex_env(5)* manpage for the details. But for quick reference you may use value
 'RECON:*:3:100' which will perform 3x attempts on any error by sleeping 100 ms in
@@ -247,10 +247,34 @@ For more details consult with Oracle instructions, as basically Enduro/X uses
 plain X/Open XA API for managing the transactions, and it is expected that
 Oracle DB provides support for XA API.
 
+LIMITATIONS
+-----------
+When using dynamic registration xa switches with the *RECON* XA flag functionality,
+to keep the process working in case if communications are lost while executing non XA AP code
+e.g. SQL statements, the process by it self must perform *tpclose(3)*/*tpopen(3)* until
+it succeeds, or process shall perform exit so that Enduro/X would restart it. 
+This extra logic is needed due to fact, that if outside of XA API communications are lost, 
+the Enduro/X by it self would not see that comms status have changed because ax_start() 
+is executed only when resource is modified by the application. 
+If comms are not working in the application, the resource is not modified and 
+thus ax_start() is not invoked.
+
+When process joins the transaction (either initiator or participating XATMI server), firstly
+it register with *tmsrv* and only then performs xa_start() API call. If transaction
+at *tmsrv* expires concurrently while joining process have not yet called the xa_start(),
+there is possibility that orphan transaction may be created (i.e. created active transaction 
+in the resource, but transaction is not managed by Enduro/X as already rolled back). 
+To overcome this limitation, careful transaction timeout planing shall be performed which
+applies to tpbegin() setting and timeout setting at the resource for inactive transactions.
+
+If transaction expires at *tmsrv*, this fact does not terminate any *tpcall(3)* operations,
+except that if called service's associate resource manager is not registered with given
+global transaction.
+
 EXIT STATUS
 -----------
 *0*::
-Success
+SuccessG
 
 *1*::
 Failure

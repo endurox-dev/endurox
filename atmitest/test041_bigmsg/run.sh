@@ -67,8 +67,8 @@ RET=$?
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-	echo "Test error detected!"
-	RET=-2
+    echo "Test error detected!"
+    RET=-2
 fi
 
 xadmin killall atmi.sv41 2>/dev/null

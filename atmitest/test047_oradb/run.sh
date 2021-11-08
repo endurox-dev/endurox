@@ -70,12 +70,9 @@ set_dom1() {
     export NDRX_XA_RES_ID=1
     export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+nolocal=f+Threads=true+Loose_Coupling=false"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
-    export NDRX_XA_DRIVERLIB=libndrxxaoras.so
     export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1
-    # TODO: Add both test modes... 
-#    export NDRX_XA_FLAGS="NOJOIN;BTIGHT"
-#    export NDRX_XA_FLAGS="NOJOIN"
+    export NDRX_XA_FLAGS="RECON:*:3:100"
     # XA SECTION, END
 }
 
@@ -89,8 +86,6 @@ function go_out {
     xadmin stop -y
     xadmin down -y
 
-
-
     # If some alive stuff left...
     xadmin killall atmiclt47
 
@@ -98,51 +93,167 @@ function go_out {
     exit $1
 }
 
-rm *.log 2>/dev/null
-j=0
-while [ $j -lt 2 ]; do
+set_dom1;
 
-    # Any bridges that are live must be killed!
-    xadmin killall tpbridge
-    set_dom1;
+#
+# Do static switch / dynamic switch tests
+#
+swmode=0
+while [ $swmode -lt 2 ]; do
 
-    if [ $j -eq 1 ]; then
-        echo ">>> No Join, tight branching test"
-        export NDRX_XA_FLAGS="NOJOIN;BTIGHT"
+    if [ $swmode -eq 0 ]; then
+        echo ">>> Static Switch testing"
+        export NDRX_XA_DRIVERLIB=libndrxxaoras.so
     else
-        echo ">>> With JOIN"
+        echo ">>> Dynamic Switch testing"
+        export NDRX_XA_DRIVERLIB=libndrxxaorad.so
     fi
 
+    echo "Going down..."
     xadmin down -y
-    xadmin start -y || go_out 1
+    #
+    # assuming sudos are configured
+    #
+    if type "tcpkill" > /dev/null; then
+        sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill
+    fi
 
-    RET=0
+    rm *.log 2>/dev/null
+    j=0
+    while [ $j -lt 2 ]; do
 
-    xadmin psc
-    xadmin ppm
-    echo "Running off client"
+        if [ $j -eq 1 ]; then
+            echo ">>>> No Join, tight branching test"
+            export NDRX_XA_FLAGS="$NDRX_XA_FLAGS;NOJOIN;BTIGHT"
+        else
+            echo ">>>> With JOIN"
+        fi
 
-    xadmin forgetlocal -y
-    xadmin abortlocal -y
-    xadmin recoverlocal
+        xadmin down -y
+        xadmin start -y || go_out 1
 
-    set_dom1;
-    (./atmiclt47 2>&1) >> ./atmiclt-dom1.log
+        RET=0
 
-    RET=$?
+        xadmin psc
+        xadmin ppm
+        echo "Running off client"
 
-    if [[ "X$RET" != "X0" ]]; then
-        go_out $RET
+        xadmin forgetlocal -y
+        xadmin abortlocal -y
+        xadmin recoverlocal
+
+        (./atmiclt47 2>&1) >> ./atmiclt-dom1.log
+
+        RET=$?
+
+        if [ "X$RET" != "X0" ]; then
+            go_out $RET
+        fi
+
+        # Catch is there is test error!!!
+        if [ "X`grep TESTERROR *.log`" != "X" ]; then
+            echo "Test error detected!"
+            RET=-2
+            go_out -2
+        fi
+
+        j=$(( j + 1 ))
+    done
+
+    #
+    # Currently this is linux only test!
+    #
+    # only if have tcpkill 
+    # test recon engine, when connections randomly breaks up
+    #
+    # For Ora tests  required sudo configuration, adjust the paths accordingly to the OS
+    # ----------------------
+    # user1   ALL=(ALL)   NOPASSWD: /sbin/tcpkill,/bin/kill,/bin/xadmin,/home/user1/endurox/dist/bin/xadmin
+    # ----------------------
+    # 
+    # To recover from broken connections, enable tcp keepalive
+    # ----------------------
+    # # cat << EOF >> /etc/sysctl.conf
+    #
+    # net.ipv4.tcp_keepalive_time=15
+    # net.ipv4.tcp_keepalive_intvl=15
+    # net.ipv4.tcp_keepalive_probes=3
+    # 
+    # EOF
+    # # sysctl -f /etc/sysctl.conf
+    # ----------------------
+    # 
+    # Enable broken connections on tnsname.ora
+    # ----------------------
+    # XASVC =
+    # (DESCRIPTION=
+    # (FAILOVER=on)
+    # (ENABLE=broken)
+    # (ADDRESS=(PROTOCOL=tcp)(HOST=rac1-vip)(PORT=1521))
+    # (ADDRESS=(PROTOCOL=tcp)(HOST=rac2-vip)(PORT=1521))
+    # (CONNECT_DATA=
+    # (SERVICE_NAME=XASVC)
+    # (FAILOVER_MODE=
+    # (TYPE=SESSION)
+    # (METHOD=BASIC)
+    # (RETRIES=10)
+    # (DELAY=15)
+    # )
+    # )
+    # )
+    # ----------------------
+
+    if type "tcpkill" > /dev/null; then
+        echo ">>>> Loop testing of recon (if available)"
+        # use common incl normal use
+        #export NDRX_XA_FLAGS="RECON:*:3:100:-3,-7"
+        # reset btight flag...
+        export NDRX_XA_FLAGS="RECON:*:3:100"
+        export NDRX_TOUT=800
+        export NDRX_DEBUG_CONF=$TESTDIR/debug_loop-dom1.conf
+        export NDRX_TEST047_KILL=1
+        sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill >/dev/null 2>&1
+        xadmin stop -y
+        xadmin start -y
+        (./atmiclt47_loop 2>&1) > ./atmiclt_loop-dom1.log &
+        LOOP_PID=$!
+        echo "Wait for startup..."
+        sleep 5
+        # while binary is working kill connections periodically
+        # and expect binary to complete in the time
+        while kill -0 $LOOP_PID >/dev/null 2>&1
+        do
+
+            # kill connections for 5 sec
+            sudo tcpkill -i $EX_ORA_IF port $EX_ORA_PORT >/dev/null  2>&1 & 
+            TCPKILL_PID=$!
+            echo "Wait 5 (tcpkill work)"
+            sleep 5
+            sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill >/dev/null 2>&1 
+
+            # let binary 
+            echo "Wait 220 (OK work)"
+            sleep 220
+
+        done
+
+        sudo LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH` PATH=`echo $PATH` `which xadmin` killall tcpkill >/dev/null 2>&1 
     fi
 
     # Catch is there is test error!!!
     if [ "X`grep TESTERROR *.log`" != "X" ]; then
         echo "Test error detected!"
-        RET=-2
+        RET=-3
     fi
 
-    j=$(( j + 1 ))
+    if [ "X`grep -i "timed out" *.log | grep aborting`" != "X" ]; then
+        echo "There must be no timed-out transactions!"
+        RET=-4
+    fi
+
+    swmode=$(( swmode + 1 ))
 done
+
 
 go_out $RET
 

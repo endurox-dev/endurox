@@ -197,6 +197,9 @@ echo "***** PC *****"
 xadmin pc
 echo "***** PC, END *****"
 
+# wait for processes to boot, seems on some machines
+# the processes are still booting...
+sleep 5
 test_proc_cnt "ndrxbatchmode.sh" "3" "34"
 OUT2=`xadmin pc`
 
