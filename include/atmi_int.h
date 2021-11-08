@@ -481,7 +481,12 @@ struct atmi_lib_env
     long xa_flags_sys;          /**< Internal driver specfic flags */
     struct xa_switch_t * xa_sw; /**< handler to XA switch     */
     
+    /** return codes for retry of the start */
     char xa_recon_retcodes[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
+    
+    /** retry does for all other xa_ calls */
+    char xa_recon_retcodes_other[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
+    
     int xa_recon_times;         /**< Number of times to retry the recon    */
     long xa_recon_usleep;       /**< Microseconds to sleep between retries */
     

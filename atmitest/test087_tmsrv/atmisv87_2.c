@@ -53,6 +53,14 @@ void TESTSV2 (TPSVCINFO *p_svc)
     tpreturn(TPSUCCESS, 0, NULL, 0, 0);
 }
 
+/**
+ * Standard service entry, server 2, ERROR
+ */
+void TESTSVE2 (TPSVCINFO *p_svc)
+{
+    tpreturn(TPFAIL, 0, NULL, 0, 0);
+}
+
 int tpsvrinit (int argc, char **argv)
 {
     return tpopen();

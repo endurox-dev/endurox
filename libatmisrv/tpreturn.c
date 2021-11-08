@@ -59,10 +59,29 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Detect are we still part of our transaction
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int initiated_tran_attached(void)
+{
+    if (NULL!=G_atmi_tls->G_atmi_xa_curtx.txinfo
+            && (G_atmi_tls->G_atmi_xa_curtx.txinfo->tranid_flags & XA_TXINFO_INITIATOR)
+            && !(ndrx_get_G_last_call()->sysflags & SYS_FLAG_AUTOTRAN))
+    {
+        return EXTRUE;
+    }
+    
+    return EXFALSE;
+}
+
 /**
  * Internal version to tpreturn.
  * This is
  * TODO: If we are in thread, then disassoc of global txn must happen here!
+ * In case if we are initiators of txn, and it is still running, we return
+ * TPSVCERR. And transaction is aborted.
  * @param rval
  * @param rcode
  * @param data
@@ -108,7 +127,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             }
             else
             {
-                if (EXSUCCEED!=ndrx_tpabort(0))
+                if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
                 {
                     NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
                     userlog("Auto abort failed: %s", tpstrerror(tperrno));
@@ -116,9 +135,42 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             }
         }
         
+        /* If our tran is open, terminate it... */
+        if (initiated_tran_attached())
+        {
+            NDRX_LOG(log_error, "Still in transaction [%s] - aborting",
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+            userlog("Still in transaction [%s] - aborting",
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        
+            if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
+            {
+                NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
+                userlog("Auto abort failed: %s", tpstrerror(tperrno));
+            }
+        }
+        
         goto out;
     }
 
+    /* If our tran is open, terminate it... */
+    if (initiated_tran_attached())
+    {
+        /* return TPESVCERR back to caller */
+        rcode=TPESVCERR;
+        flags=TPSOFTERR;
+        
+        NDRX_LOG(log_error, "Still in transaction [%s] - aborting, returning TPESVCERR",
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        userlog("Still in transaction [%s] - aborting, returning TPESVCERR",
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
+        {
+            NDRX_LOG(log_error, "Auto abort failed: %s", tpstrerror(tperrno));
+            userlog("Auto abort failed: %s", tpstrerror(tperrno));
+        }
+    }
+    
     /* client with last call is acceptable...! 
      * As it can be a server's companion thread
      */
@@ -195,7 +247,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         else
         {
             /* try to abort */
-            if (EXSUCCEED!=ndrx_tpabort(0))
+            if (EXSUCCEED!=ndrx_tpabort(0, EXTRUE))
             {
                 NDRX_LOG(log_error, "Auto abort failed: %s - returning TPESVCERR", 
                         tpstrerror(tperrno));
@@ -353,10 +405,28 @@ out_send:
     /* well if we are in global TX we shall disconnect/end here
      * otherwise tmsrv might get locked txn..
      */
-
     if (ndrx_get_G_atmi_xa_curtx()->txinfo)
     {
-        _tp_srv_disassoc_tx();
+        int end_fail=EXFALSE;
+        int prop_fail = EXFALSE;
+        
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+        {
+            prop_fail=EXTRUE;
+        }
+        
+        _tp_srv_disassoc_tx(EXFALSE, &end_fail);
+        
+        if (prop_fail || end_fail)
+        {
+            if (end_fail)
+            {
+                NDRX_LOG(log_error, "Marking transaction as abort only "
+                        "due to xa_end() failure");
+            }
+            /* propagate back to caller */
+            call->tmtxflags|=TMTXFLAGS_IS_ABORT_ONLY;
+        }
     }
     
     /* send the reply back actually */
@@ -488,6 +558,20 @@ expublic void _tpforward (char *svc, char *data,
     NDRX_LOG(log_debug, "%s enter", fn);
     
     NDRX_STRCPY_SAFE(svcddr, svc);
+    
+    /* abort / tpreturn transaction if we are initiator & transaction
+     * is still started
+     */
+    if (initiated_tran_attached())
+    {
+        NDRX_LOG(log_error, "Cannot forward to [%s] - initiated transaction [%s] is attached",
+                svc, G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        
+        /* pass the data fields to, as these shall be freed */
+        _tpreturn(TPFAIL, TPESVCERR, data, len, TPSOFTERR);
+	return;
+    }
+    
     /* try the DDR */
     if (EXFAIL==ndrx_ddr_grp_get(svcddr, sizeof(svcddr), data, len,
         &prio))
@@ -639,9 +723,31 @@ expublic void _tpforward (char *svc, char *data,
         goto out;
     }
     
+    /* well if we are in global TX we shall disconnect/end here
+     * otherwise tmsrv might get locked txn..
+     */
     if (ndrx_get_G_atmi_xa_curtx()->txinfo)
     {
-        _tp_srv_disassoc_tx();
+        int end_fail=EXFALSE;
+        int prop_fail = EXFALSE;
+        
+        if (ndrx_get_G_atmi_xa_curtx()->txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
+        {
+            prop_fail=EXTRUE;
+        }
+        
+        _tp_srv_disassoc_tx(EXFALSE, &end_fail);
+        
+        if (prop_fail || end_fail)
+        {
+            if (end_fail)
+            {
+                NDRX_LOG(log_error, "Marking transaction as abort only "
+                        "due to xa_end() failure");
+            }
+            /* propagate back to caller */
+            call->tmtxflags|=TMTXFLAGS_IS_ABORT_ONLY;
+        }
     }
 
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s",
@@ -732,6 +838,9 @@ out:
  */
 expublic void _tpcontinue (void)
 {
+    
+    /* shall we abort transaction, if not terminated? */
+    
     /* mvitolin 11.01.2017 
      * We can do thing when we are not running in integration mode!
      */

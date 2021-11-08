@@ -60,20 +60,25 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf $ENV{ORACLE_HOME}/lib)
 # See: https://stackoverflow.com/questions/18465187/why-the-proc-c-oracle-precompiler-can-not-parse-the-windows-h-header-file
 #
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.proc
     COMMAND proc iname=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.proc SQLCHECK=SYNTAX
-        MODE=ANSI IRECLEN=255 ORECLEN=255 PARSE=PARTIAL INCLUDE=${ENDUROX_SOURCE_DIR}/include INCLUDE=$ENV{ORACLE_HOME}/precomp/public
+        MODE=ANSI CODE=ANSI_C IRECLEN=255 ORECLEN=255 PARSE=PARTIAL INCLUDE=${ENDUROX_SOURCE_DIR}/include INCLUDE=$ENV{ORACLE_HOME}/precomp/public
         ONAME=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c)
 
 add_executable (atmi.sv47 atmisv47.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt47 atmiclt47.c)
+add_executable (atmiclt47_loop atmiclt47_loop.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv47 clntsh atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+# libatmi shall come first, as it exposes ax_reg() if doing dynamic-reg tests
+target_link_libraries (atmi.sv47 atmisrvinteg atmi clntsh ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt47 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt47_loop atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv47 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt47 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt47_loop PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 

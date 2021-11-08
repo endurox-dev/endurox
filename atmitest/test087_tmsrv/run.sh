@@ -46,278 +46,19 @@ else
     cd $TESTNAME
 fi;
 
-. ../testenv.sh
-
-export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
-export PATH=$PATH:$TESTDIR
-export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=10
-export NDRX_CCONFIG=$TESTDIR/test.ini
-export NDRX_SILENT=Y
-NDRX_EXT=so
-if [ "$(uname)" == "Darwin" ]; then
-    NDRX_EXT=dylib
-fi
-export NDRX_XA_DRIVERLIB=../../xadrv/tms/libndrxxatmsx.$NDRX_EXT
-
-
-UNAME=`uname`
-
 #
-# Get the crash lib...
+# Load shared run functions
 #
-case $UNAME in
-
-  Darwin)
-    export NDRX_PLUGINS=libt86_lcf.dylib
-    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$TESTDIR/../test086_tmqlimit
-    ;;
-
-  AIX)
-    export NDRX_PLUGINS=libt86_lcf.so
-    export LIBPATH=$LIBPATH:$TESTDIR/../test086_tmqlimit
-    ;;
-
-  *)
-    export NDRX_PLUGINS=libt86_lcf.so
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TESTDIR/../test086_tmqlimit
-    ;;
-esac
-
-#
-# Domain 1 - here client will live
-#
-set_dom1() {
-    echo "Setting domain 1"
-    . ../dom1.sh
-    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
-    export NDRX_DMNLOG=$TESTDIR/ndrxd-dom1.log
-    export NDRX_LOG=$TESTDIR/ndrx-dom1.log
-    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
-}
-
-#
-# Generic exit function
-#
-function go_out {
-    echo "Test exiting with: $1"
-    
-    set_dom1;
-    xadmin stop -y
-    xadmin down -y 2>/dev/null
-
-    popd 2>/dev/null
-    exit $1
-}
-
-#
-#  cleanup tmsrv logfiles
-#
-function clean_logs {
-    #
-    # Cleanup test logs...
-    #
-    rm -rf ./log1 2>/dev/null; mkdir ./log1
-    rm -rf ./log2 2>/dev/null; mkdir ./log2
-}
-
-#
-# Prior test, clean ulog
-#
-function clean_ulog {
-
-    rm ULOG*
-    > tmsrv_lib1.log
-    > tmsrv_lib2.log
-}
-
-#
-# Verify ULOG ops
-#
-function verify_ulog {
-
-    rmid=$1
-    operation=$2
-    count=$3
-
-    cnt=`grep "$rmid: $operation" ULOG* | wc -l|  awk '{print $1}'`
-
-    if [[ "X$cnt" != "X$count" ]]; then
-        echo "$rmid expected $operation $count times, got $cnt"
-        go_out -1
-    fi
-}
-
-#
-# Verify number of log files
-#
-function verify_logfiles {
-
-    rmlog=$1
-    count=$2
-
-    cnt=`ls -1 ./$rmlog/TRN* 2>/dev/null | wc -l | awk '{print $1}'`
-
-    if [[ "X$cnt" != "X$count" ]]; then
-        echo "Expected $rmlog to have $count logs but got $cnt"
-        go_out -1
-    fi
-}
-
-#
-# Verify that debug log contains 
-#
-function have_output {
-
-    cmd=$1
-    cmd="$cmd | wc -l | awk '{print \$1}'"
-    cnt=`eval $cmd`
-    
-    if [ "X$cnt" == "X0" ]; then
-        echo "Expected >0 lines of output from [$cmd] got [$cnt]"
-        go_out -1
-    fi
-}
-
-#
-# Build programs
-#
-function buildprograms {
-
-    LIBMODE=$1
-
-    ################################################################################
-    echo "Building programs..."
-    ################################################################################
-
-    echo ""
-    echo "************************************************************************"
-    echo "Building tmsrv libl87_1$LIBMODE ..."
-    echo "************************************************************************"
-    buildtms -o tmsrv_lib1 -rlibl87_1$LIBMODE -v
-
-    RET=$?
-
-    if [ "X$RET" != "X0" ]; then
-        echo "Failed to build tmstest: $RET"
-        go_out 1
-    fi
-
-    echo ""
-    echo "************************************************************************"
-    echo "Building tmsrv libl87_2$LIBMODE ..."
-    echo "************************************************************************"
-    buildtms -o tmsrv_lib2 -rlibl87_2$LIBMODE -v
-
-    RET=$?
-
-    if [ "X$RET" != "X0" ]; then
-        echo "Failed to build tmstest: $RET"
-        go_out 1
-    fi
-
-    echo ""
-    echo "************************************************************************"
-    echo "Building atmiclt87 NULL ..."
-    echo "************************************************************************"
-    buildclient -o atmiclt87 -rlibl87_1$LIBMODE -l atmiclt87.c -v
-    RET=$?
-
-    if [ "X$RET" != "X0" ]; then
-        echo "Build atmiclt87 failed"
-        go_out 1
-    fi
-
-    echo ""
-    echo "************************************************************************"
-    echo "Building atmisv87 NULL ..."
-    echo "************************************************************************"
-    buildserver -o atmisv87_1 -rlibl87_1$LIBMODE -l atmisv87_1.c -sTESTSV1 -v
-    RET=$?
-
-    if [ "X$RET" != "X0" ]; then
-        echo "Build atmiclt87 failed"
-        go_out 1
-    fi
-
-    echo ""
-    echo "************************************************************************"
-    echo "Building atmisv87 NULL ..."
-    echo "************************************************************************"
-    buildserver -o atmisv87_2 -rlibl87_2$LIBMODE -l atmisv87_2.c -sTESTSV2 -v
-    RET=$?
-
-    if [ "X$RET" != "X0" ]; then
-        echo "Build atmiclt87 failed"
-        go_out 1
-    fi
-
-}
-
-#
-# We will work only in dom1
-#
-set_dom1;
-
-################################################################################
-echo "Configure build environment..."
-################################################################################
-
-# Additional, application specific
-COMPFLAGS=""
-#
-# export the library path.
-#
-case $UNAME in
-
-  AIX)
-    # check compiler, we have a set of things required for each compiler to actually build the binary
-    $CC -qversion 2>/dev/null
-    RET=$?
-    export OBJECT_MODE=64
-
-    if [ "X$RET" == "X0" ]; then
-	echo "Xlc compiler..."
-        COMPFLAGS="-brtl -qtls -q64"
-    else
-	echo "Default to gcc..."
-        COMPFLAGS="-Wl,-brtl -maix64"
-    fi
-
-    ;;
-  SunOS)
-        COMPFLAGS="-m64"
-    ;;
-
-  *)
-    # default..
-    ;;
-esac
-
-# Support sanitizer
-if [ "X`xadmin pmode 2>/dev/null | grep '#define NDRX_SANITIZE'`" != "X" ]; then
-    COMPFLAGS="$COMPFLAGS -fsanitize=address"
-fi
-
-export NDRX_HOME=.
-export PATH=$PATH:$PWD/../../buildtools
-export CFLAGS="-I../../include -L../../libatmi -L../../libatmiclt -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd $COMPFLAGS"
-
-clean_logs;
-rm *.log
-rm ULOG*
+source ./funcs.sh
 
 #
 # Firstly test with join
 #
 buildprograms "";
 
-xadmin start -y || go_out 1
-
 #
 # Run OK case...
 #
-
 echo ""
 echo "************************************************************************"
 echo "Commit OK case ..."
@@ -355,6 +96,8 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+# start here, we want fresh tables loaded...
+xadmin start -y || go_out 1
 
 NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
@@ -364,7 +107,7 @@ if [ "X$RET" != "X0" ]; then
     go_out 1
 fi
 
-#verify restults ops...
+#verify results ops...
 verify_ulog "RM1" "xa_prepare" "1";
 verify_ulog "RM1" "xa_commit" "1";
 verify_ulog "RM1" "xa_rollback" "0";
@@ -379,13 +122,91 @@ verify_ulog "RM2" "xa_rollback" "0";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
 
+
+#
+# rollback at join failure
+#
+echo ""
+echo "************************************************************************"
+echo "Rollback at join failure"
+echo "************************************************************************"
+
+#
+# so client starts OK
+# client join fails
+#
+cat << EOF > lib1.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:-4
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+cat << EOF > lib2.rets
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+xa_end_entry:0:1:0
+xa_rollback_entry:0:1:0
+xa_prepare_entry:0:1:0
+xa_commit_entry:0:1:0
+xa_recover_entry:0:1:0
+xa_forget_entry:0:1:0
+xa_complete_entry:0:1:0
+xa_open_entry:0:1:0
+xa_close_entry:0:1:0
+xa_start_entry:0:1:0
+EOF
+
+xadmin sreload -y
+clean_ulog;
+
+#
+# Must be aborted.
+#
+ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
+RET=$?
+# print the stuff
+echo "[$ERR]"
+
+if [ "X$RET" == "X0" ]; then
+    echo "atmiclt87 must fail"
+    go_out 1
+fi
+
+if [[ $ERR != *"TPESYSTEM"* ]]; then
+    echo "Expected TPESYSTEM"
+    go_out 1
+fi
+
+#verify results ops...
+verify_ulog "RM1" "xa_prepare" "0";
+verify_ulog "RM1" "xa_commit" "0";
+verify_ulog "RM1" "xa_rollback" "1";
+verify_ulog "RM1" "xa_forget" "0";
+verify_logfiles "log1" "0"
+# check number of suspends (1 - call suspend, 1 - sever end, 1 - client end)
+verify_ulog "RM1" "xa_end" "2";
+
+verify_ulog "RM2" "xa_prepare" "0";
+verify_ulog "RM2" "xa_commit" "0";
+verify_ulog "RM2" "xa_rollback" "1";
+verify_ulog "RM2" "xa_forget" "0";
+verify_logfiles "log2" "0"
+
 echo ""
 echo "************************************************************************"
 echo "Commit OK read only ..."
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -418,6 +239,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
@@ -453,9 +277,6 @@ echo "************************************************************************"
 echo "Commit OK read only ... (first RO)"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -488,6 +309,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
 
@@ -515,9 +339,6 @@ echo ""
 echo "************************************************************************"
 echo "Commit OK read only ... (both)"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -551,6 +372,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 NDRX_CCTAG="RM1" ./atmiclt87
 RET=$?
 
@@ -577,9 +401,6 @@ echo ""
 echo "************************************************************************"
 echo "Commit fail read only + aborted"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -613,6 +434,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
 # print the stuff
@@ -645,9 +469,6 @@ echo ""
 echo "************************************************************************"
 echo "Commit fail aborted + aborting"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 # this is aborted
 cat << EOF > lib1.rets
@@ -683,6 +504,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
 # print the stuff
@@ -705,7 +529,9 @@ verify_ulog "RM1" "xa_rollback" "0";
 verify_ulog "RM1" "xa_forget" "0";
 verify_logfiles "log1" "0"
 
-verify_ulog "RM2" "xa_prepare" "1";
+# no prepare please as we already know that we will do rollback due to first
+# prepare fail
+verify_ulog "RM2" "xa_prepare" "0";
 verify_ulog "RM2" "xa_commit" "0";
 verify_ulog "RM2" "xa_rollback" "1";
 verify_ulog "RM2" "xa_forget" "0";
@@ -723,9 +549,6 @@ echo ""
 echo "************************************************************************"
 echo "Commit fail aborting + aborted"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 # Lowest rank
 cat << EOF > lib1.rets
@@ -761,6 +584,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
 # print the stuff
@@ -783,9 +609,9 @@ verify_ulog "RM1" "xa_rollback" "1";
 verify_ulog "RM1" "xa_forget" "0";
 verify_logfiles "log1" "0"
 
-verify_ulog "RM2" "xa_prepare" "1";
+verify_ulog "RM2" "xa_prepare" "0";
 verify_ulog "RM2" "xa_commit" "0";
-verify_ulog "RM2" "xa_rollback" "0";
+verify_ulog "RM2" "xa_rollback" "1";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
 
@@ -793,9 +619,6 @@ echo ""
 echo "************************************************************************"
 echo "Commit PREP XAER_NOTA  ..."
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -828,6 +651,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -862,9 +688,6 @@ echo "************************************************************************"
 echo "Commit PREP XA_RBBASE  ..."
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -896,6 +719,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -930,9 +756,6 @@ echo "************************************************************************"
 echo "Commit PREP XAER_PROTO (any error)  ..."
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -964,6 +787,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -998,9 +824,6 @@ echo "************************************************************************"
 echo "Commit failures: XAER_RMERR - heuristic"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1032,6 +855,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1067,9 +893,6 @@ echo "************************************************************************"
 echo "Commit failures: XAER_RMFAIL - retry OK"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1102,6 +925,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
 # print the stuff
@@ -1130,9 +956,6 @@ echo ""
 echo "************************************************************************"
 echo "Commit failures: XAER_RETRY - retry OK"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -1166,6 +989,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
 # print the stuff
@@ -1194,9 +1020,6 @@ echo ""
 echo "************************************************************************"
 echo "Commit failures: XA_HEURHAZ - heuristic"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -1229,6 +1052,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1264,9 +1090,6 @@ echo "************************************************************************"
 echo "Commit failures: XA_HEURHAZ - heuristic  / tries exceeded"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1298,6 +1121,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1338,9 +1164,6 @@ echo "************************************************************************"
 echo "Commit failures: XA_HEURCOM - heuristic"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1372,6 +1195,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1407,9 +1233,6 @@ echo "************************************************************************"
 echo "Commit failures: XA_HEURRB - heuristic"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1441,6 +1264,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1476,9 +1302,6 @@ echo "************************************************************************"
 echo "Commit failures: XA_HEURMIX - heuristic"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1510,6 +1333,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1545,9 +1371,6 @@ echo "************************************************************************"
 echo "Commit failures: XA_HEURCOM / XA_HEURHAZ - hazard"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1579,6 +1402,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1614,9 +1440,6 @@ echo "************************************************************************"
 echo "Commit failures: XA_RBBASE - heuristic"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1648,6 +1471,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -1682,9 +1508,6 @@ echo "************************************************************************"
 echo "Commit failures: XAER_PROTO - (any err) -> committed"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1717,6 +1540,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
 # print the stuff
@@ -1745,9 +1571,6 @@ echo ""
 echo "************************************************************************"
 echo "Abort OK"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -1780,6 +1603,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -1815,9 +1641,6 @@ echo "************************************************************************"
 echo "Abort OK XA_RDONLY"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1850,6 +1673,9 @@ xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
 
+xadmin sreload -y
+clean_ulog;
+
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
 # print the stuff
@@ -1878,9 +1704,6 @@ echo ""
 echo "************************************************************************"
 echo "Abort XA_HEURHAZ"
 echo "************************************************************************"
-
-xadmin sreload -y
-clean_ulog;
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -1913,6 +1736,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -1948,9 +1774,6 @@ echo "************************************************************************"
 echo "Abort XA_HEURRB"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -1982,6 +1805,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -2017,9 +1843,6 @@ echo "************************************************************************"
 echo "Abort XA_HEURCOM"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2051,6 +1874,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -2086,9 +1912,6 @@ echo "************************************************************************"
 echo "Abort XA_HEURMIX"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2120,6 +1943,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -2155,9 +1981,6 @@ echo "************************************************************************"
 echo "Abort XAER_RMFAIL"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2189,6 +2012,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -2223,9 +2049,6 @@ echo "************************************************************************"
 echo "Abort XAER_NOTA (OK)"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2257,6 +2080,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -2291,9 +2117,6 @@ echo "************************************************************************"
 echo "Abort XAER_PROTO (any sort of error, not expected) OK"
 echo "************************************************************************"
 
-xadmin sreload -y
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2325,6 +2148,9 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -2360,10 +2186,6 @@ echo "************************************************************************"
 echo "Abort Crash recovery (no duplicate ops in case of heuristic ops)"
 echo "************************************************************************"
 
-xadmin sreload -y
-xadmin lcf tcrash -A 36 -a -n
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2395,6 +2217,10 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+xadmin lcf tcrash -A 36 -a -n
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 A 2>&1`
 RET=$?
@@ -2454,10 +2280,6 @@ echo "************************************************************************"
 echo "Commit Crash recovery (no duplicate ops in case of heuristic ops)"
 echo "************************************************************************"
 
-xadmin sreload -y
-xadmin lcf tcrash -A 80 -a -n
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2489,6 +2311,10 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+xadmin lcf tcrash -A 80 -a -n
+clean_ulog;
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -2547,10 +2373,6 @@ echo "************************************************************************"
 echo "Automatic rollback of active records"
 echo "************************************************************************"
 
-xadmin sreload -y
-xadmin lcf tcrash -A 40 -a -n
-clean_ulog;
-
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
 xa_close_entry:0:1:0
@@ -2582,6 +2404,10 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+xadmin sreload -y
+xadmin lcf tcrash -A 40 -a -n
+clean_ulog;
 
 ERR=`NDRX_TOUT=5 NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?
@@ -2640,9 +2466,6 @@ echo ""
 echo "************************************************************************"
 echo "Retry on prepare... (unexpected error - suspend flag test)"
 echo "************************************************************************"
-clean_ulog;
-# must have abort error...
-xadmin sreload -y
 
 cat << EOF > lib1.rets
 xa_open_entry:0:1:0
@@ -2675,6 +2498,10 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 EOF
+
+clean_ulog;
+# must have abort error...
+xadmin sreload -y
 
 ERR=`NDRX_CCTAG="RM1" ./atmiclt87 2>&1`
 RET=$?

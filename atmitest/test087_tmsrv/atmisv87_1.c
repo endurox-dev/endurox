@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <ndebug.h>
 #include <atmi.h>
-
+#include <ndrstandard.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -52,6 +52,145 @@ void TESTSV1 (TPSVCINFO *p_svc)
 {
     tpforward("TESTSV2", NULL, 0, 0);
 }
+
+/**
+ * Standard service entry, Error server.
+ */
+void TESTSVE1 (TPSVCINFO *p_svc)
+{
+    char *odata=NULL;
+    long olen;
+    
+    /* shall generate error */
+    tpcall("TESTSVE2", NULL, 0, &odata, &olen, 0);
+    
+    /* shall keep the error */
+    tpforward("TESTSV2", NULL, 0, 0);
+}
+
+/**
+ * Standard service entry, Error server, Return
+ */
+void TESTSVE1_RET (TPSVCINFO *p_svc)
+{
+    char *odata=NULL;
+    long olen;
+    
+    /* shall generate error */
+    tpcall("TESTSVE2", NULL, 0, &odata, &olen, 0);
+    
+    tpreturn(TPSUCCESS, 0, NULL, 0, 0);
+}
+
+
+/**
+ * Participant tests of the transaction APIs.
+ */
+void TEST1_PART (TPSVCINFO *p_svc)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED==tpabort(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must not abort!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEPROTO!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must be TPEPROTO, got %d!", tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!tpgetlev())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Process shall stay in transaction, but is not");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED==tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must not commit!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEPROTO!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must be TPEPROTO, got %d!", tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!tpgetlev())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Process shall stay in transaction, but is not");
+        EXFAIL_OUT(ret);
+    }
+    
+    
+out:
+    
+    if (EXSUCCEED==ret)
+    {
+        tpreturn(TPSUCCESS, 0, NULL, 0, 0);
+    }
+    else
+    {
+        tpreturn(TPFAIL, 0, NULL, 0, 0); 
+    }
+}
+
+
+/**
+ * Our transaction still attached
+ */
+void TESTSVE1_TRANRET (TPSVCINFO *p_svc)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=tpbegin(40, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+        userlog("TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }    
+out:
+    if (EXSUCCEED==ret)
+    {
+        tpreturn(TPSUCCESS, 0, NULL, 0, 0);
+    }
+    else
+    {
+        tpreturn(TPFAIL, 0, NULL, 0, 0);
+    }
+}
+
+/**
+ * Open tran, forward
+ */
+void TESTSVE1_TRANFWD (TPSVCINFO *p_svc)
+{
+    if (EXSUCCEED!=tpbegin(40, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+        userlog("TESTERROR: Failed to begin transaction: %s",
+                tpstrerror(tperrno));
+    }    
+    
+    tpforward("TESTSV2", NULL, 0, 0);
+}
+
+/**
+ * Standard service entry, Error server, Return
+ */
+void TESTSVE1_NORET (TPSVCINFO *p_svc)
+{
+    char *odata=NULL;
+    long olen;
+}
+
 
 int tpsvrinit (int argc, char **argv)
 {

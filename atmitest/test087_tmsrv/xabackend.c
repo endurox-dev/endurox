@@ -41,6 +41,9 @@
 #include <userlog.h>
 #include <tmenv.h>
 #include <thlock.h>
+#include <sys_unix.h>
+
+#include "ndebug.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #ifdef TEST_RM1
@@ -58,12 +61,13 @@
 #endif
 
 #define MAX_LEN     1024    /**< Max command len                        */
-#define NR_SETTINGS 4       /**< Number of settings used                */
+#define NR_SETTINGS 5       /**< Number of settings used                */
 
 #define SETTING_FUNC        0
 #define SETTING_RET1        1
 #define SETTING_CNT         2
 #define SETTING_RET2        3
+#define SETTING_PROC        4   /**< To which process this setting applies? */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -119,8 +123,16 @@ static int get_return_code(const char *func, int *cntr)
     char buffer[MAX_LEN];
     int matched = 0;
     char *setting, *saveptr1;
-    char *all_settings[4];
+    char *all_settings[NR_SETTINGS];
     int i, line=0, ret;
+    static __thread char progname[PATH_MAX+1];
+    static __thread int first = EXTRUE;
+    
+    if (first)
+    {
+        NDRX_STRCPY_SAFE(progname, EX_PROGNAME);
+        first = EXFALSE;
+    }
 
     fp = fopen(TEST_RETS, "r");
     
@@ -132,6 +144,9 @@ static int get_return_code(const char *func, int *cntr)
 
     while (fgets(buffer, MAX_LEN - 1, fp))
     {
+        
+        memset(all_settings, 0, sizeof(all_settings));
+        
         /* Remove trailing newline */
         buffer[strcspn(buffer, "\n")] = 0;
         buffer[strcspn(buffer, "\r")] = 0;
@@ -142,20 +157,27 @@ static int get_return_code(const char *func, int *cntr)
          * ret1 is returned while cntr < attempts
          * ret2 if returned if cntr>= attempts
          */
-        for (i=0, setting=strtok_r(buffer, ":", &saveptr1); NULL!=setting && i<NR_SETTINGS; i++, setting=strtok_r(NULL, ":", &saveptr1))
+        for (i=0, setting=strtok_r(buffer, ":", &saveptr1); 
+                NULL!=setting && i<NR_SETTINGS; 
+                i++, setting=strtok_r(NULL, ":", &saveptr1))
         {
+            NDRX_LOG(log_error, "LOADING: [%s]", setting);
             all_settings[i] = setting;
         }
         
-        if (i!=NR_SETTINGS)
+        if (i<NR_SETTINGS-1)
         {
             userlog( TRM ": Invalid settings, line %d expect args %d got %d", 
                     line, NR_SETTINGS, i);
             exit(-1);
         }
         
-        if (0==strcmp(all_settings[SETTING_FUNC], func))
+        if (0==strcmp(all_settings[SETTING_FUNC], func) && 
+                ((NULL==all_settings[SETTING_PROC]) ||
+                    (NULL!=all_settings[SETTING_PROC] && NULL!=strstr(progname, all_settings[SETTING_PROC]))
+                ))
         {
+            NDRX_LOG(log_error, TRM ": Matched [%s]", func);
             matched=1;
             break;
         }
@@ -168,6 +190,7 @@ static int get_return_code(const char *func, int *cntr)
     if (!matched)
     {
         userlog(TRM ": func not found [%s]", func);
+        NDRX_LOG(log_error, TRM ": func not found [%s]", func);
         exit(-1);
     }
     
@@ -176,18 +199,45 @@ static int get_return_code(const char *func, int *cntr)
     if (*cntr < atoi(all_settings[SETTING_CNT]))
     {
         *cntr = *cntr + 1;
-        
         ret=atoi(all_settings[SETTING_RET1]);
+        NDRX_LOG(log_error, "%s counter: %d ret [%d]", func, *cntr, ret);
+        
     }
     else
     {
         ret=atoi(all_settings[SETTING_RET2]);
+        NDRX_LOG(log_error, "%s counter: %d ret [%d]", func, *cntr, ret);
     }
     
     userlog(TRM ": FUNC [%s] return %d", func, ret);
     
     return ret;
 }
+
+
+#define ATTEMPT(closed_OK) do {\
+        static int attempt = 0;\
+        if (!closed_OK && !M_is_open) \
+        {\
+            return XAER_RMERR;\
+        }\
+        userlog(TRM ": %s attempt=%d rmid=%d flags=%ld (TMASYNC=%d TMONEPHASE=%d "\
+        "TMFAIL=%d TMNOWAIT=%d TMRESUME=%d TMSUCCESS=%d TMSUSPEND=%d TMSTARTRSCAN=%d TMENDRSCAN=%d TMMULTIPLE=%d TMJOIN=%d TMMIGRATE=%d)",\
+            __func__, attempt, rmid, flags,\
+            !!(flags & TMASYNC),\
+            !!(flags & TMONEPHASE),\
+            !!(flags & TMFAIL),\
+            !!(flags & TMNOWAIT),\
+            !!(flags & TMRESUME),\
+            !!(flags & TMSUCCESS),\
+            !!(flags & TMSUSPEND),\
+            !!(flags & TMSTARTRSCAN),\
+            !!(flags & TMENDRSCAN),\
+            !!(flags & TMMULTIPLE),\
+            !!(flags & TMJOIN),\
+            !!(flags & TMMIGRATE));\
+        return get_return_code(__func__, &attempt);\
+    } while (0)
 
 static int xa_open_entry(char *xa_info, int rmid, long flags)
 {
@@ -215,7 +265,9 @@ static int xa_open_entry(char *xa_info, int rmid, long flags)
     M_is_open = 1;
     M_rmid = rmid;
              
-    return XA_OK;
+    /* return XA_OK; */
+    
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_close_entry(char *xa_info, int rmid, long flags)
@@ -226,70 +278,49 @@ static int xa_close_entry(char *xa_info, int rmid, long flags)
     }
     
     M_is_open = 0;
-    return XA_OK;
+    /* return XA_OK; */
+    
+    ATTEMPT(EXTRUE);
 }
-
-#define ATTEMPT \
-    static int attempt = 0;\
-    if (!M_is_open) \
-    {\
-        return XAER_RMERR;\
-    }\
-    userlog(TRM ": %s attempt=%d rmid=%d flags=%ld (TMASYNC=%d TMONEPHASE=%d "\
-    "TMFAIL=%d TMNOWAIT=%d TMRESUME=%d TMSUCCESS=%d TMSUSPEND=%d TMSTARTRSCAN=%d TMENDRSCAN=%d TMMULTIPLE=%d TMJOIN=%d TMMIGRATE=%d)",\
-        __func__, attempt, rmid, flags,\
-	!!(flags & TMASYNC),\
-	!!(flags & TMONEPHASE),\
-	!!(flags & TMFAIL),\
-	!!(flags & TMNOWAIT),\
-	!!(flags & TMRESUME),\
-	!!(flags & TMSUCCESS),\
-	!!(flags & TMSUSPEND),\
-	!!(flags & TMSTARTRSCAN),\
-	!!(flags & TMENDRSCAN),\
-	!!(flags & TMMULTIPLE),\
-	!!(flags & TMJOIN),\
-	!!(flags & TMMIGRATE));\
-    return get_return_code(__func__, &attempt);
 
 static int xa_start_entry(XID *xid, int rmid, long flags)
 {    
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_end_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_rollback_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_prepare_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_commit_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_recover_entry(XID *xid, long count, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_forget_entry(XID *xid, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 static int xa_complete_entry(int *handle, int *retval, int rmid, long flags)
 {
-    ATTEMPT;
+    ATTEMPT(EXFALSE);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

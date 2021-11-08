@@ -39,6 +39,13 @@ tpacall, conversational session). If commit is performed in such scenario,
 that might result with orphan active transaction branches, or partial commit 
 even having abort-only marking in outstanding call.
 
+In case if process is joined to the transaction (i.e. it is not an initiator
+of the transaction) and tpcommit() is called, the error *TPEPROTO* is returned,
+process keeps participation in the transaction.
+
+After the call process leaves the global transaction if one is in the progress,
+except if noted otherwise in the error description.
+
 *Valid flags*
 
 *TPTXCOMMITDLOG* If set, tpcommit will return when decision for commit is logged
@@ -57,6 +64,7 @@ Note that *tpstrerror()* returns generic error message plus custom
 message with debug info from last function call.
 
 *TPEINVAL* flags was not 0 or was not *TPTXCOMMITDLOG*.
+The caller's state with respect to the transaction is not changed.
 
 *TPETIME* Transaction manager (*tmsrv(8)*) did not respond in configured 
 time-out time. The state of transaction is unknown.
@@ -75,6 +83,8 @@ The state of transaction is unknown.
 
 *TPEPROTO* XA subsystem was not initialized (did not call *tpopen()*), 
 no global transaction started or caller is not initiator of transaction.
+The caller's state 
+with respect to the transaction is not changed.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user 
 log, or debugs for more info.

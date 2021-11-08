@@ -42,6 +42,7 @@
 #include <atmi.h>
 #include <ndrstandard.h>
 #include <ubf.h>
+#include <ubfutil.h>
 #include <test.fd.h>
 #include <string.h>
 #include "test47.h"
@@ -51,10 +52,28 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define PROC_RESTART do { \
+        /* in dynamic mode Enduro/X xa libs may not track the point where\
+         * SQL lost connection by it self\
+         */\
+        if (M_dyn && (-3135 == sqlca.sqlcode || -3114==sqlca.sqlcode))\
+        {\
+            NDRX_LOG(log_error, "Lost connection, let process to re-init");\
+            if (tran_started)\
+            {\
+                tpabort(0);\
+            }\
+            tpexit();\
+        }\
+} while(0)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate char M_errmark[16] = "TESTERROR";
+exprivate long M_tout = 60;
+exprivate int M_dyn = EXFALSE; /* are we in dynamic mode? */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -65,6 +84,7 @@ void BALANCE (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
+    int tran_started=EXFALSE;
 
     EXEC SQL BEGIN DECLARE SECTION;
     long h_balance;
@@ -73,6 +93,18 @@ void BALANCE (TPSVCINFO *p_svc)
     
     NDRX_LOG(log_debug, "%s got call", __func__);
     
+    if (!tpgetlev())
+    {
+        /* start a transaction */
+        if (EXSUCCEED!=tpbegin(M_tout, 0))
+        {
+            NDRX_LOG(log_error, "Failed to start transaction: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        tran_started=EXTRUE;
+    }
+
     /* reallocate the buffer... */
     p_ub = (UBFH *)tprealloc((char *)p_ub, Bsizeof(p_ub) + 1024);
     
@@ -82,7 +114,7 @@ void BALANCE (TPSVCINFO *p_svc)
     }
 
     /* Just print the buffer */
-    Bprint(p_ub);
+    ndrx_debug_dump_UBF(log_debug, "BALANCE got call", p_ub);
 
     if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, h_accnum, 0))
     {
@@ -104,6 +136,8 @@ void BALANCE (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Failed to select: %d: %.70s", 
                 sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+
+        PROC_RESTART;
         EXFAIL_OUT(ret);
     }
     
@@ -116,6 +150,27 @@ void BALANCE (TPSVCINFO *p_svc)
     }
     
 out:
+
+    if (tran_started)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=tpcommit(0))
+            {
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+                ret=EXFAIL;
+            }
+        }
+        
+        if (EXFAIL==ret)
+        {
+            if (EXSUCCEED!=tpabort(0))
+            {
+                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno));
+            }
+        }
+    }
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,
@@ -142,7 +197,7 @@ void ACCOPEN (TPSVCINFO *p_svc)
     if (!tpgetlev())
     {
         /* start a transaction */
-        if (EXSUCCEED!=tpbegin(60, 0))
+        if (EXSUCCEED!=tpbegin(M_tout, 0))
         {
             NDRX_LOG(log_error, "Failed to start transaction: %s", 
                     tpstrerror(tperrno));
@@ -152,31 +207,31 @@ void ACCOPEN (TPSVCINFO *p_svc)
     }
     
     /* Just print the buffer */
-    Bprint(p_ub);
+    ndrx_debug_dump_UBF(log_debug, "ACCOPEN got call", p_ub);
     
 
     if (EXSUCCEED!=tpsuspend (&trn, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to suspend: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to suspend: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
     if (EXSUCCEED!=tpresume (&trn, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to resume: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to resume: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
     /* suspend again, now resume with no optimization */
     if (EXSUCCEED!=tpsuspend (&trn, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to suspend: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to suspend: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
     if (EXSUCCEED!=tpresume (&trn, TPTXNOOPTIM))
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to resume TPTXNOOPTIM: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "%s: failed to resume TPTXNOOPTIM: %s", M_errmark, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
@@ -211,6 +266,8 @@ void ACCOPEN (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Failed to select: %d: %.70s", 
                 sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+
+        PROC_RESTART;
         EXFAIL_OUT(ret);
     }
     
@@ -261,7 +318,7 @@ void ACCCLEAN (TPSVCINFO *p_svc)
     if (!tpgetlev())
     {
         /* start a transaction */
-        if (EXSUCCEED!=tpbegin(60, 0))
+        if (EXSUCCEED!=tpbegin(M_tout, 0))
         {
             NDRX_LOG(log_error, "Failed to start transaction: %s", 
                     tpstrerror(tperrno));
@@ -278,6 +335,8 @@ void ACCCLEAN (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Failed to delete: %d: %.70s", 
                 sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+
+        PROC_RESTART;
         EXFAIL_OUT(ret);
     }
     
@@ -390,8 +449,20 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret = EXSUCCEED;
+    char *p;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
+    if (NULL!=getenv(KILL_TEST_ENV))
+    {
+        NDRX_STRCPY_SAFE(M_errmark, "LOOPERR");
+        M_tout = MAX_RSP;
+    }
+
+    if (NULL!=(p=getenv("NDRX_XA_DRIVERLIB")) && NULL!=strstr(p, "libndrxxaorad"))
+    {
+        M_dyn = EXTRUE;
+    }
+
     if (EXSUCCEED!=tpopen())
     {
         NDRX_LOG(log_error, "Failed to open DB!");
@@ -423,7 +494,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
 out:
-    return EXSUCCEED;
+    return ret;
 }
 
 /**
