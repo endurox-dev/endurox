@@ -115,7 +115,7 @@ Ensure(basic_script_func_call)
     /* Finally call the stuff .*/
     ps_pushroottable(v);
     ps_pushstring(v,"testHello",-1);
-    ps_get(v,-2); //get the function from the root table
+    ps_get(v,-2); /* get the function from the root table */
     /* what is this? */
     ps_pushroottable(v);
     ps_pushstring(v, "Jimbo", -1);
@@ -139,7 +139,7 @@ Ensure(basic_script_func_call)
     printf("Got result: [%s]\n", s);
     assert_string_equal(s, "Jimbo Hello World");
     
-    ps_pop(v,3); //pops the roottable and the function
+    ps_pop(v,3); /* pops the roottable and the function*/
 
     ps_close(v);
 }

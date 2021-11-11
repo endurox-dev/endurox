@@ -284,7 +284,7 @@ Ensure(test_nstd_NDRX_STRNCPY_EOS)
     assert_equal(dst[3], 0);
     assert_equal(dst[4], 1);
     assert_equal(dst[5], 1);
-    assert_equal(dst[6], 1);
+    assert_equal(dst[6], 1); 
 }
 
 /**

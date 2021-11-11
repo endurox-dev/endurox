@@ -271,6 +271,8 @@ extern NDRX_API void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t 
 extern NDRX_API int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index);
 extern NDRX_API int ndrx_growlist_append(ndrx_growlist_t *list, void *item);
 extern NDRX_API void ndrx_growlist_free(ndrx_growlist_t *list);
+extern NDRX_API int ndrx_growlist_add_many(ndrx_growlist_t *list, void *item, int index, int count);
+extern NDRX_API int ndrx_growlist_append_many(ndrx_growlist_t *list, void *item, int count);
 
 extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec);
 extern NDRX_API long ndrx_timespec_get_delta(struct timespec *stop, struct timespec *start);
@@ -390,6 +392,7 @@ extern NDRX_API char *ndrx_strtokblk ( char *input, char *delimit, char *qotesym
 extern NDRX_API int ndrx_str_valid_cid(char *str, int max_len);
 extern NDRX_API int ndrx_str_ends_with(char *str, char *needle);
 extern NDRX_API long ndrx_file_age(char *fname);
+extern NDRX_API char *ndrx_file_read(char *fname, size_t *bytes_loaded);
 
 /* String handling, where macros does not work: */
 
