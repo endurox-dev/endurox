@@ -733,6 +733,7 @@ expublic int tmq_reload_conf(char *cf)
         }
 
 #ifdef HAVE_GETLINE
+	/* does the line stays with longest buffer? if read longer and then shorter data line */
         while (EXFAIL!=(read = getline(&line, &len, f))) 
 #else
         len = sizeof(line);

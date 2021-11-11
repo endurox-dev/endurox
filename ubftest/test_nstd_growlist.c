@@ -46,6 +46,30 @@
 #include <nstdutil.h>
 
 /**
+ * Test string buffer mode
+ */
+Ensure(test_nstd_growlist_strbuf)
+{
+    ndrx_growlist_t list;
+    ndrx_growlist_init(&list, 2, sizeof(char));
+    
+    assert_equal(EXSUCCEED, ndrx_growlist_append_many(&list, "HELLO WORLD", 11));
+    /* add EOS: */
+    assert_equal(EXSUCCEED, ndrx_growlist_append_many(&list, "", 1));
+
+    assert_string_equal(list.mem, "HELLO WORLD");
+    assert_equal(list.maxindexused, 11);
+    
+    /* add some more stuff..., include EOS */
+    assert_equal(EXSUCCEED, ndrx_growlist_add_many(&list, " FROM MARS1", 11, 12));
+    assert_string_equal(list.mem, "HELLO WORLD FROM MARS1");
+    assert_equal(list.maxindexused, 22);
+    
+    ndrx_growlist_free(&list);
+
+}
+    
+/**
  * Basic grow list testing
  */
 Ensure(test_nstd_growlist)
@@ -102,7 +126,7 @@ TestSuite *ubf_nstd_growlist(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_nstd_growlist);
-            
+    add_test(suite, test_nstd_growlist_strbuf);
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

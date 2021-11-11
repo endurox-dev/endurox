@@ -1491,7 +1491,7 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
  * Initialize the grow list
  * @param list ptr to list (can be un-initialized memory)
  * @param step number of elements by which to reallocate ahead
- * @param size number of element
+ * @param size element size
  */
 expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
 {
@@ -1511,11 +1511,24 @@ expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
  */
 expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
 {
+    return ndrx_growlist_add_many(list, item, index, 1);
+}
+
+/**
+ * Add many items with single shot
+ * @param list list where to add
+ * @param item ptr to first item
+ * @param index where to load
+ * @param count number of items in ptr (consecutive one by one)
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_growlist_add_many(ndrx_growlist_t *list, void *item, int index, int count)
+{
     int ret = EXSUCCEED;
     int next_blocks;
     size_t new_size;
     char *p;
-
+    
     if (NULL==list->mem)
     {
         new_size = list->step * list->size;
@@ -1530,7 +1543,7 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
         list->itemsalloc+=list->step;
     }
     
-    while (index+1 > list->itemsalloc)
+    while (index+count > list->itemsalloc)
     {
         list->itemsalloc+=list->step;
         
@@ -1560,12 +1573,12 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
     
     NDRX_DUMP(log_debug, "data for writting", item, list->size);
     */
-    memcpy( p, item, list->size);
+    memcpy( p, item, list->size*count);
     
     
-    if (index > list->maxindexused)
+    if ((index+count-1) > list->maxindexused)
     {
-        list->maxindexused = index;
+        list->maxindexused = index+count-1;
     }
     
 out:
@@ -1583,6 +1596,18 @@ out:
 expublic int ndrx_growlist_append(ndrx_growlist_t *list, void *item)
 {
     return ndrx_growlist_add(list, item, list->maxindexused+1);
+}
+
+/**
+ * Added multiple items to the buffer
+ * @param list list item
+ * @param item item to add (ptr to first)
+ * @param count to add
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_growlist_append_many(ndrx_growlist_t *list, void *item, int count)
+{
+    return ndrx_growlist_add_many(list, item, list->maxindexused+1, count);
 }
 
 /**
@@ -2331,4 +2356,64 @@ out:
     return diff;
 }
 
+/**
+ * Load the file in malloc'd buffer
+ * @param fname
+ * @param list non init list 
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic char *ndrx_file_read(char *fname, size_t *bytes_loaded)
+{
+    FILE *f = NULL;
+    char *buf=NULL;
+    size_t cur_len =0;
+    size_t nrread=0;
+    size_t allocd=0;
+#define LOAD_STEP   1024
+    
+    if (NULL==(f=NDRX_FOPEN(fname, "rb")))
+    {
+        _Nset_error_fmt(NENOENT, "Failed to open [%s] file: %s", 
+                fname, strerror(errno));
+        goto out;
+    }
+    
+    do
+    {
+        cur_len+=nrread;
+        if (allocd - cur_len < LOAD_STEP)
+        {
+            allocd+=LOAD_STEP;
+            buf = NDRX_REALLOC(buf, allocd);
+            
+            if (NULL==buf)
+            {
+                _Nset_error_fmt(NENOENT, "Failed to malloc %d bytes", (int)allocd);
+                goto out;
+            }
+        }
+    } while ((nrread = fread(&buf[cur_len], 1, LOAD_STEP, f)) >= 1);
+        
+    
+    if (ferror(f)) 
+    {
+        _Nset_error_fmt(NESYSTEM, "Failed to read [%s] file: %s", fname, strerror(errno));
+        
+        NDRX_FREE(buf);
+        buf=NULL;
+        goto out;
+    }
+    
+    *bytes_loaded=cur_len;
+    
+out:
+            
+    if (NULL!=f)
+    {
+        NDRX_FCLOSE(f);
+    }
+
+    return buf;
+}
+    
 /* vim: set ts=4 sw=4 et smartindent: */
