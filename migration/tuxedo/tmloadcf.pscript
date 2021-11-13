@@ -1,0 +1,290 @@
+//
+// Ubb config to Enduro/X converter
+//
+
+//Include wizard base.
+compilestring(getwizardbase())();
+
+////////////////////////////////////////////////////////////////////////////////
+// UBB Config, functions called by tmloadcf as flex & bison parses.
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// Globals
+//
+
+//This will keep open handles
+M_instances <- {};
+
+M_wizzard <- WizardBase();
+
+//
+// Parsed UBB Config:
+//
+M_resources <- {};
+M_sections <- {};
+
+//Current values
+M_cur_section <- {};
+M_cur_default <- {};
+M_cur_param <- {};
+M_values <- [];
+M_default_cntr <-0;
+
+//Add resource/keyword value
+function tux_add_val(arg)
+{
+    M_values.append(arg);
+}
+
+//Add resource parameter
+function tux_add_res_parm(arg)
+{
+    M_resources[arg] <-M_values;
+    M_values<-[]; //reset
+}
+
+//Add section parameter
+function tux_add_sect_parm(arg)
+{
+    local is_default=false;
+    //Track all the defaults
+    if (arg=="DEFAULT:")
+    {
+        arg="DEFAULT:"+M_default_cntr;
+        M_default_cntr++;
+        is_default = true;
+    }
+
+    M_cur_section.params[arg]<-{};
+    M_cur_section.order.append(M_cur_section.params[arg]);  
+
+    //Add link to previous default
+    M_cur_section.params[arg].defaults <- M_cur_default;
+    M_cur_section.params[arg].keywords <- {};
+ 
+    //Refresh current default
+    if (is_default)
+    {
+        M_cur_default = M_cur_section.params[arg];
+    }
+
+    //Save current param
+    M_cur_param = M_cur_section.params[arg];
+}
+
+//Mark group as participating in routing
+function tux_mark_group_routed(arg)
+{
+    if (arg in M_sections["*GROUPS"].params 
+            && !( "routed" in M_sections["*GROUPS"].params[arg]))
+    {
+        M_sections["*GROUPS"].params[arg].routed<-true;
+        print("GROUP ["+arg+"] -> routed");
+    }
+}
+
+//Add keyword to parameter
+function tux_add_sect_keyw(arg)
+{   
+    M_cur_param.keywords[arg] <- M_values;
+
+    if (M_cur_section.name == "*ROUTING" && arg=="RANGES")
+    {
+        //Parse the DDR range.
+        tux_ddr_parse(M_values[0]);
+    }
+
+    M_values<-[];
+}
+
+//Add section
+function tux_add_sect(arg)
+{
+    M_sections[arg] <- {};
+    M_sections[arg].params <- {};
+    M_sections[arg].name <- arg;
+    M_sections[arg].order <- [];
+
+    M_cur_default <- {};
+    M_cur_section = M_sections[arg];
+    M_cur_param  <- {};
+    M_default_cntr=0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Generator section
+////////////////////////////////////////////////////////////////////////////////
+
+
+//Additional initializations
+function init()
+{
+    M_wizzard.qpath = "/dev/mqueue";
+    if ("FREEBSD"==getosname())
+    {
+        M_wizzard.qpath = "/mnt/mqueue";
+    }
+}
+
+//Prepare texts for instance
+//@param instance current object of interest
+//@param machine current machine of processing
+function generate(instance, machine)
+{
+    //Prepare set file
+    instance.set_text <-
+/******************************************************************************/
+@"#/bin/bash
+#
+# @(#) Load this script in environment before Enduro/X start
+#
+export NDRX_APPHOME="+instance.app_home+@"
+export NDRX_CCONFIG="+instance.ndrx_conf+@"
+export PATH=$PATH:"+instance.ndrx_bin+@"
+export CDPATH=$CDPATH:.:$NDRX_APPHOME
+";
+/******************************************************************************/
+    print("set_file: ["+instance.set_text+"]");
+
+    //Prepare ini file, global
+
+    instance.ini_text <-
+/******************************************************************************/
+@"[@global]
+NDRX_CLUSTERISED=1
+NDRX_CMDWAIT=1
+NDRX_CONFIG="+instance.ndrx_conf+"/ndrxconfig."+instance.prefix+@".xml
+NDRX_DMNLOG=${NDRX_APPHOME}/log/ndrxd.log
+NDRX_DPID=${NDRX_APPHOME}/tmp/ndrxd.pid
+NDRX_DQMAX=100
+NDRX_IPCKEY="+M_resources["IPCKEY"][0]+@"
+NDRX_LDBAL=0
+NDRX_LEV=5
+NDRX_LOG=${NDRX_APPHOME}/log/xadmin.log
+NDRX_MSGMAX=100
+NDRX_MSGSIZEMAX=56000
+NDRX_NODEID=1
+NDRX_QPATH="+M_wizzard.qpath+@"
+NDRX_QPREFIX=/"+instance.prefix+@"
+NDRX_RNDK=0myWI5nu
+NDRX_SRVMAX=10000
+NDRX_SVCMAX=20000
+NDRX_TOUT="+ M_resources["SCANUNIT"][0].tointeger() 
+      * M_resources["BLOCKTIME"][0].tointeger() +@"
+NDRX_UBFMAXFLDS=16000
+NDRX_THREADSTACKSIZE=8192
+NDRX_LIBEXT="+M_wizzard.shared_lib_pfx+@"
+NDRX_ULOG=${NDRX_APPHOME}/log
+# TODO, replace if not found already in env:
+#FIELDTBLS=Exfields
+#FLDTBLDIR=${NDRX_APPHOME}/ubftab
+";
+/******************************************************************************/
+
+    //Prepare ini, any groups for this particular machine
+    //Remember, only those groups/cctags for which either routing is used
+    //Or two phase commit is used.
+    
+    print("ini_file: ["+instance.ini_text+"]");
+
+}
+
+//Generate Enduro/X configs.
+function ex_generate(arg)
+{
+    local nodeid=0;
+
+    init();
+
+    //Open output objects for each of the machine
+    if ("*MACHINES" in M_sections)
+    {
+        foreach(idx,val in M_sections["*MACHINES"].params)
+        {
+            print("Machine: "+idx);
+            M_instances[val]<-{};
+            
+            local machine = M_sections["*MACHINES"].params[idx];
+            local instance = M_instances[val];
+            instance.name <-val;
+
+            instance.prefix <- machine.keywords["LMID"][0].tolower();
+            instance.app_home <- strcommon(machine.keywords["APPDIR"][0] , 
+                            machine.keywords["TUXCONFIG"][0]);
+            instance.use_rel <- false;
+            if (instance.app_home=="/")
+            {
+                instance.app_home = machine.keywords["APPDIR"][0];
+                instance.app_bin <- machine.keywords["APPDIR"][0];
+                instance.app_conf <- dirname(machine.keywords["TUXCONFIG"][0]);
+
+                instance.ndrx_conf = instance.app_conf;
+                instance.ndrx_bin =  instance.app_bin;
+            }
+            else
+            {
+                //get relative path, strip off the last / from the string
+                instance.app_home = rstrips(instance.app_home, "/");
+
+                if (instance.app_home=="")
+                {
+                    //Exception case, not nice..
+                    instance.app_home="/";
+                }
+
+                instance.app_bin <- strdiff(machine.keywords["APPDIR"][0],
+                                                instance.app_home);
+                instance.app_bin = lstrips(instance.app_bin, "/");
+
+                instance.app_conf <- strdiff(dirname(machine.keywords["TUXCONFIG"][0]),
+                                                instance.app_home);
+                instance.app_conf = lstrips(instance.app_conf, "/");
+
+                instance.use_rel = true;
+
+                //Prepare further folders
+                instance.ndrx_conf <- "${NDRX_APPHOME}/"+instance.app_conf;
+                instance.ndrx_bin <- "${NDRX_APPHOME}/"+instance.app_bin;
+            }
+
+            //Prepare some identifiers
+            nodeid++;
+            instance.nodeid <- nodeid;
+/*
+            if (regexp("^0x|^0X").match(M_resources["IPCKEY"][0]))
+            {
+                instance.ipckey <- substr(M_resources["IPCKEY"][0], 2, -1);
+            }
+            else
+            {
+                instance.ipckey <- M_resources["IPCKEY"][0]
+            }
+*/
+
+            //Dump some config
+            print("use_rel = "+instance.use_rel);
+            print("nodeid = "+instance.nodeid);
+            print("prefix = "+instance.prefix);
+            print("app_home = "+instance.app_home);
+            print("app_conf = "+instance.app_bin);
+            print("app_bin = "+instance.app_conf);
+
+            //Load Tuxedo defaults
+            if (!("BLOCKTIME" in M_resources))
+            {
+                M_resources["BLOCKTIME"]<-[];
+                M_resources["BLOCKTIME"].append("6");
+            }
+
+            if (!("SCANUNIT" in M_resources))
+            {
+                M_resources["SCANUNIT"]<-[];
+                M_resources["SCANUNIT"].append("10");
+            }
+
+            generate(instance, machine);
+        }
+    }
+
+}

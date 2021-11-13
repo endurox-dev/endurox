@@ -38,8 +38,14 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <ndebug.h>
+
+#ifdef NDRX_TMLOADCF
+#include "tux.h"
+#else
 #include <ndrxd.h>
 #include <ndrx_ddr.h>
+#endif
     
 extern int ddrlex (void);
 %}
@@ -78,7 +84,7 @@ extern int ddrlex (void);
 
 
 group_expression:
-            range_expr COLON range_val   { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, $3, EXTRUE)) {YYERROR;} }
+            range_expr COLON range_val  { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, $3, EXTRUE)) {YYERROR;} }
           | range_expr COLON DEFAULT    { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, NULL, EXFALSE)) {YYERROR;} }
           | range_expr COLON MIN        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, "MIN", EXFALSE)) {YYERROR;} }
           | range_expr COLON MAX        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, "MAX", EXFALSE)) {YYERROR;} }

@@ -46,6 +46,9 @@
 #include <errno.h>
 
 
+#define _XOPEN_SOURCE_EXTENDED 1
+#include <libgen.h>
+
 extern "C" const char ndrx_G_resource_WizardBase[];
 
 //Read the line from terminal
@@ -153,7 +156,7 @@ static PSInteger _exutil_chmod(HPSCRIPTVM v)
         
         if (EXSUCCEED!=chmod(file, mod))
         {
-            sprintf(err, "chmod failed: %d:%s", 
+            snprintf(err, sizeof(err), "chmod failed: %d:%s", 
                     errno, strerror(errno));
             return ps_throwerror(v,err);
         }
@@ -163,7 +166,6 @@ static PSInteger _exutil_chmod(HPSCRIPTVM v)
     }
     return 0;
 }
-
 
 //Write user log message
 //@param msg    Message
@@ -180,7 +182,7 @@ static PSInteger _exutil_mkdir(HPSCRIPTVM v)
         {
             if (EXSUCCEED!=mkdir(s, 0777))
             {
-                sprintf(err, "mkdir failed: %d:%s", 
+                snprintf(err, sizeof(err), "mkdir failed: %d:%s", 
                         errno, strerror(errno));
                 return ps_throwerror(v,err);
             }
@@ -189,6 +191,48 @@ static PSInteger _exutil_mkdir(HPSCRIPTVM v)
         return 1;
     }
     return 0;
+}
+
+/**
+ * Return filename in path
+ * @param v
+ * @return 
+ */
+static PSInteger _exutil_basename(HPSCRIPTVM v)
+{
+    const PSChar *str;
+    PSInteger memsize;
+    PSChar * stemp;
+    
+    ps_getstring(v,2,&str);
+    memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    memcpy(stemp, str, memsize);
+    
+    ps_pushstring(v,basename(stemp),-1);
+    
+    return 1;
+}
+
+/**
+ * return path to file
+ * @param v
+ * @return 
+ */
+static PSInteger _exutil_dirname(HPSCRIPTVM v)
+{
+    const PSChar *str;
+    PSInteger memsize;
+    PSChar * stemp;
+    
+    ps_getstring(v,2,&str);
+    memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    memcpy(stemp, str, memsize);
+    
+    ps_pushstring(v,dirname(stemp),-1);
+    
+    return 1;
 }
 
 #define _DECL_FUNC(name,nparams,pmask) {_SC(#name),_exutil_##name,nparams,pmask}
@@ -202,6 +246,8 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(mkdir,2,_SC(".s")),
         _DECL_FUNC(fileexists,2,_SC(".s")),
         _DECL_FUNC(chmod,3,_SC(".ss")),
+        _DECL_FUNC(basename,2,_SC(".s")),
+        _DECL_FUNC(dirname,2,_SC(".s")),
 	{0,0}
 };
 #undef _DECL_FUNC

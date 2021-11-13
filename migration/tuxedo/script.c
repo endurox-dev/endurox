@@ -47,6 +47,7 @@
 #include <exregex.h>
 #include "tux.h"
 #include "tux.tab.h"
+#include "ddr.tab.h"
 #include "ndebug.h"
 #include <sys_unix.h>
 #include <atmi_int.h>
@@ -59,7 +60,12 @@
 #include <psstdstring.h>
 #include <psstdexutil.h>
 #include <psstdaux.h>
+
 /*---------------------------Externs------------------------------------*/
+extern void ddr_scan_string (char *yy_str  );
+extern int ddrlex_destroy  (void);
+extern int ndrx_G_ddrcolumn;
+
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -90,8 +96,6 @@ expublic int call_add_func(const char *func, char *arg)
         }
         EXFAIL_OUT(ret);
     }
-    
-    NDRX_LOG(log_error, "OK");
     
     ps_pop(v,3); /* pops the roottable and the function*/
     
@@ -147,6 +151,128 @@ expublic int tux_add_sect(char *arg)
     ret=call_add_func(__func__, arg);
     NDRX_FREE(arg);
     return ret;
+}
+
+/**
+ * This is callback from script
+ * When DDR is requested to be parsed.
+ * @param v
+ * @return 1 - ok, 0 - fail
+ */
+static PSInteger tux_ddr_parse(HPSCRIPTVM v)
+{
+    int ret = EXSUCCEED;
+    const PSChar *s;
+    char err[256];
+    
+    memset(&ndrx_G_ddrp, 0, sizeof(ndrx_G_ddrp));
+    /* init the string builder */
+    ndrx_growlist_init(&ndrx_G_ddrp.stringbuffer, 200, sizeof(char));
+    
+    if(PS_SUCCEEDED(ps_getstring(v,2,&s)))
+    {
+        NDRX_LOG(log_error, "PARSE RANGE [%s]", s);
+        /* start to parse... */
+        ndrx_G_ddrcolumn=0;
+        /* NDRX_LOG(log_info, "Parsing config: [%s]", expr); */
+        ddr_scan_string((char *)s);
+
+        if (EXSUCCEED!=ddrparse() || EXSUCCEED!=ndrx_G_ddrp.error)
+        {
+            NDRX_LOG(log_error, "Failed to parse tux config");
+
+            /* free parsers... */
+            ddrlex_destroy();
+
+            /* well if we hav */
+            EXFAIL_OUT(ret);
+        }
+        ddrlex_destroy();
+    }    
+    else
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    /* free up string buffer */
+    ndrx_growlist_free(&ndrx_G_ddrp.stringbuffer);
+    
+    if (EXSUCCEED!=ret)
+    {
+        return ps_throwerror(v, "Failed to parse DDR expression");
+    }
+
+    return ret;
+}
+
+/**
+ * Mark group as routed
+ * @param seq
+ * @param grp
+ * @param is_mallocd
+ * @return 
+ */
+expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_mallocd)
+{
+    int ret;
+    
+    ret = call_add_func("tux_mark_group_routed", grp);
+    
+    NDRX_FREE(grp);
+    
+    return ret;
+}
+
+/**
+ * Dummy not used
+ * @param range
+ * @param is_negative
+ * @param dealloc
+ * @return 
+ */
+expublic char *ndrx_ddr_new_rangeval(char *range, int is_negative, int dealloc)
+{   
+    char *ret=NULL;
+    int len;
+    
+    if (!is_negative)
+    {
+        ret=NDRX_STRDUP(range);
+    }
+    else
+    {
+        NDRX_ASPRINTF(&ret, &len, "-%s", range);
+    }
+    
+    if (dealloc)
+    {
+        NDRX_FREE(range);
+    }
+    
+    return ret;
+
+}
+
+/**
+ * Dummy not used.
+ * @param range_min
+ * @param range_max
+ * @return 
+ */
+expublic ndrx_routcritseq_dl_t * ndrx_ddr_new_rangeexpr(char *range_min, char *range_max)
+{   
+    if (NULL!=range_min)
+    {
+        NDRX_FREE(range_min);
+    }
+    
+    if (range_max!=range_min && NULL!=range_max)
+    {
+        NDRX_FREE(range_max);
+    }
+    
+    return (ndrx_routcritseq_dl_t *)(1);
 }
 
 /**
@@ -221,6 +347,13 @@ expublic int tux_init_vm(char *script_nm)
     psstd_register_stringlib(v);
     psstd_register_exutillib(v);
 
+    /* register new func for DDR parsing. */
+    ps_pushstring(v,"tux_ddr_parse",-1);
+    ps_newclosure(v,tux_ddr_parse,0);
+    ps_setparamscheck(v,2,".s");
+    ps_setnativeclosurename(v,-1,"tux_ddr_parse");
+    ps_newslot(v,-3,PSFalse);
+    
     /* aux library
      * sets error handlers */
     psstd_seterrorhandlers(v);
@@ -258,9 +391,9 @@ expublic int tux_init_vm(char *script_nm)
         }
     }
     
+    
     NDRX_LOG(log_debug, "VM Script Loaded");
      
-    
 out:
 
     if (NULL!=script)

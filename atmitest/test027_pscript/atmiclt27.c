@@ -56,19 +56,19 @@
 
 void printfunc(HPSCRIPTVM v,const PSChar *s,...)
 {
-        va_list vl;
-        va_start(vl, s);
-        vfprintf(stdout, s, vl);
-        va_end(vl);
+    va_list vl;
+    va_start(vl, s);
+    vfprintf(stdout, s, vl);
+    va_end(vl);
 }
 
 
 void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
 {
-        va_list vl;
-        va_start(vl, s);
-        vfprintf(stderr, s, vl);
-        va_end(vl);
+    va_list vl;
+    va_start(vl, s);
+    vfprintf(stderr, s, vl);
+    va_end(vl);
 }
 
 //int main(int argc, char* argv[])
