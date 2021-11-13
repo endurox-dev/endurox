@@ -30,50 +30,87 @@ M_cur_default <- {};
 M_cur_param <- {};
 M_values <- [];
 M_default_cntr <-0;
+M_spec_cntr <-0;
 
-//Add resource/keyword value
+/**
+ * Add resource/keyword value
+ */
 function tux_add_val(arg)
 {
     M_values.append(arg);
 }
 
-//Add resource parameter
+/**
+ * Add resource parameter
+ */
 function tux_add_res_parm(arg)
 {
     M_resources[arg] <-M_values;
     M_values<-[]; //reset
 }
 
-//Add section parameter
+/**
+ * Add section parameter
+ */
 function tux_add_sect_parm(arg)
 {
     local is_default=false;
+    local org_name = arg;
     //Track all the defaults
     if (arg=="DEFAULT:")
     {
-        arg="DEFAULT:"+M_default_cntr;
+        arg="DEFAULT:@"+M_default_cntr;
         M_default_cntr++;
         is_default = true;
+        //Add prefix to all params "D." -> meaning default
+        arg="D."+arg;
+    }
+    else if (M_cur_section.name == "*SERVERS" || M_cur_section.name == "*SERVICES")
+    {
+        //Special array based groups
+        arg=arg+"@"+M_spec_cntr;
+        M_spec_cntr++;
+        //Add prefix to all params "P." -> meaning param
+        arg="P."+arg;
+    }
+    else
+    {
+        arg="P."+arg;
     }
 
+    //Check if entry exists & reject?
+    if (arg in M_cur_section.params)
+    {
+        throw("Parameter ["+org_name+"] of section ["+M_cur_section.name+"] already defined");
+    }
+
+    print("Adding param ["+arg+"]");
     M_cur_section.params[arg]<-{};
     M_cur_section.order.append(M_cur_section.params[arg]);  
 
     //Add link to previous default
     M_cur_section.params[arg].defaults <- M_cur_default;
     M_cur_section.params[arg].keywords <- {};
+    M_cur_section.params[arg].name <- org_name;
  
     //Refresh current default
     if (is_default)
     {
+        M_cur_section.params[arg].is_default<-true;
         M_cur_default = M_cur_section.params[arg];
+    }
+    else
+    {
+        M_cur_section.params[arg].is_default<-false;
     }
 
     //Save current param
     M_cur_param = M_cur_section.params[arg];
 }
 
-//Mark group as participating in routing
+/**
+ * Mark group as participating in routing
+ */
 function tux_mark_group_routed(arg)
 {
     if (arg in M_sections["*GROUPS"].params 
@@ -84,7 +121,9 @@ function tux_mark_group_routed(arg)
     }
 }
 
-//Add keyword to parameter
+/**
+ * Add keyword to parameter, callback
+ */
 function tux_add_sect_keyw(arg)
 {   
     M_cur_param.keywords[arg] <- M_values;
@@ -98,7 +137,9 @@ function tux_add_sect_keyw(arg)
     M_values<-[];
 }
 
-//Add section
+/**
+ * Add section, callback
+ */
 function tux_add_sect(arg)
 {
     M_sections[arg] <- {};
@@ -110,6 +151,7 @@ function tux_add_sect(arg)
     M_cur_section = M_sections[arg];
     M_cur_param  <- {};
     M_default_cntr=0;
+    M_spec_cntr=0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -117,7 +159,9 @@ function tux_add_sect(arg)
 ////////////////////////////////////////////////////////////////////////////////
 
 
-//Additional initializations
+/**
+ * Additional initializations
+ */
 function init()
 {
     M_wizzard.qpath = "/dev/mqueue";
@@ -127,11 +171,117 @@ function init()
     }
 }
 
-//Prepare texts for instance
-//@param instance current object of interest
-//@param machine current machine of processing
+/**
+ * Get default value for section param.
+ * Note that platformscript does not allow to use identifier "default" as
+ * variable name.
+ * @param param param object of the section
+ * @param keyword keyword of interest
+ * @param stock_default stock default value (if param value not present, and any
+ * chained default value is not found
+ * @return action value read
+ */
+function get_val(param, keyword, stock_default)
+{
+    if (! (keyword in param.keywords))
+    {
+        //Lookup in reverse order from current default
+        local dflt = param.defaults;
+
+        while (("keywords" in dflt) && !(keyword in dflt.keywords))
+        {
+            //Step back to previous default
+            if ("defaults" in dflt)
+            {
+                dflt = dflt.defaults;
+            }
+            else
+            {
+                //No more defaults in the section
+                break;
+            }
+        }
+
+        if ("keywords" in dflt && keyword in dflt.keywords)
+        {
+            return dflt.keywords[keyword];
+        }
+        else
+        {
+            if (stock_default=="")
+            {
+                throw("No stock value available for param ["+param.name+"]");
+            }
+            return stock_default;
+        }
+    }
+    else
+    {
+        return param.keywords[keyword];
+    }
+}
+
+/**
+ * Prepare free ID ranges for given instance. For upper number we take
+ *  number of total servers + 2000.
+ * @param instance instance of interest
+ */
+function prep_free_ranges(instance)
+{
+    //We need to register all ranges
+    //All ranges must be sorted
+    //The free interval must be detected
+
+    instance.ranges<-[];
+
+    foreach(idx,val in M_sections["*SERVERS"].params)
+    {
+        local server = M_sections["*SERVERS"].params[idx];
+        
+        if (!server.is_default)
+        {
+            local range = {};
+            local server_srvgrp = get_val(server, "SRVGRP", "");
+            local group_lmid = get_val(
+                M_sections["*GROUPS"].params["P."+server_srvgrp[0]], "LMID", "")[0];
+
+            if (group_lmid == instance.lmid)
+            {
+                //OK this is our server
+                range.min <-get_val(server, "MIN", ["1"]);
+                range.max <-get_val(server, "MAX", range.min);
+                range.srvid <-get_val(server, "SRVID", "");
+/*
+                if (range.max[0] < range.min[0])
+                {
+                    throw(format("Invalid server %s range min=%s > max=%s",
+                            server.name, range.min[0], range.max[0]));
+                }
+                range.min[0] = range.min[0]+range.srvid[0];
+                range.max[0] = range.max[0]+range.srvid[0];
+*/              
+                    
+                print(format("Used rang srvid: %s %s - %s", 
+                    range.srvid[0], range.min[0], range.max[0]));
+                instance.ranges.append(range);
+            }
+        }
+
+    }
+
+}
+
+/**
+ * Prepare texts for instance
+ * @param instance current object of interest
+ * @param machine current machine of processing
+ */
 function generate(instance, machine)
 {
+
+    //Prepare ranges
+    prep_free_ranges(instance);
+
     //Prepare set file
     instance.set_text <-
 /******************************************************************************/
@@ -168,17 +318,20 @@ NDRX_NODEID=1
 NDRX_QPATH="+M_wizzard.qpath+@"
 NDRX_QPREFIX=/"+instance.prefix+@"
 NDRX_RNDK=0myWI5nu
-NDRX_SRVMAX=10000
-NDRX_SVCMAX=20000
+NDRX_SRVMAX="+ M_resources["MAXSERVERS"][0]+@"
+NDRX_SVCMAX="+M_resources["MAXSERVICES"][0]+@"
 NDRX_TOUT="+ M_resources["SCANUNIT"][0].tointeger() 
       * M_resources["BLOCKTIME"][0].tointeger() +@"
 NDRX_UBFMAXFLDS=16000
+# if needed per binary, move to CCTAG section or binary environment
 NDRX_THREADSTACKSIZE=8192
 NDRX_LIBEXT="+M_wizzard.shared_lib_pfx+@"
 NDRX_ULOG=${NDRX_APPHOME}/log
 # TODO, replace if not found already in env:
 #FIELDTBLS=Exfields
 #FLDTBLDIR=${NDRX_APPHOME}/ubftab
+NDRX_RTSVCMAX=???
+NDRX_RTGRP=???
 ";
 /******************************************************************************/
 
@@ -190,7 +343,10 @@ NDRX_ULOG=${NDRX_APPHOME}/log
 
 }
 
-//Generate Enduro/X configs.
+/**
+ * Generate Enduro/X configs. Callback from tmloadcf. At this point
+ * all configs are parsed.
+ */
 function ex_generate(arg)
 {
     local nodeid=0;
@@ -202,13 +358,15 @@ function ex_generate(arg)
     {
         foreach(idx,val in M_sections["*MACHINES"].params)
         {
-            print("Machine: "+idx);
-            M_instances[val]<-{};
-            
             local machine = M_sections["*MACHINES"].params[idx];
-            local instance = M_instances[val];
-            instance.name <-val;
+            M_instances[machine.name]<-{};
 
+            local instance = M_instances[machine.name];
+            instance.name <- machine.name;
+            instance.lmid <- machine.keywords.LMID[0];
+
+            print("Machine: "+instance.name);
+            
             instance.prefix <- machine.keywords["LMID"][0].tolower();
             instance.app_home <- strcommon(machine.keywords["APPDIR"][0] , 
                             machine.keywords["TUXCONFIG"][0]);
@@ -283,7 +441,31 @@ function ex_generate(arg)
                 M_resources["SCANUNIT"].append("10");
             }
 
+            //Use Enduro/X default 20K
+            if (!("MAXSERVICES" in M_resources) || M_resources["MAXSERVICES"][0].tointeger() < 20000)
+            {
+                M_resources["MAXSERVICES"]<-[];
+                M_resources["MAXSERVICES"].append("20000");
+            }
+
+            if (!("MAXSERVERS" in M_resources) || M_resources["MAXSERVERS"][0].tointeger() < 10000)
+            {
+                M_resources["MAXSERVERS"]<-[];
+                M_resources["MAXSERVERS"].append("10000");
+            }
+
+            if (!("MAXSERVERS" in M_resources) || M_resources["MAXSERVERS"][0].tointeger() < 10000)
+            {
+                M_resources["MAXSERVERS"]<-[];
+                M_resources["MAXSERVERS"].append("10000");
+            }
+
+            //MAXRTDATA -> default 100KB (min ex)
+            //MAXTRANTIME -> set some reasonable amount? Or 2147483647 ? as for tux?
+
             generate(instance, machine);
+            //print(get_val(M_sections["*SERVERS"][""]));
+
         }
     }
 
