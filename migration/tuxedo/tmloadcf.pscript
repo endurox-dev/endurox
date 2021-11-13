@@ -27,10 +27,12 @@ M_sections <- {};
 //Current values
 M_cur_section <- {};
 M_cur_default <- {};
+
+//This is hash of arrays.
+//For one parameter there may be actually several parameters with the same
+//name
 M_cur_param <- {};
 M_values <- [];
-M_default_cntr <-0;
-M_spec_cntr <-0;
 
 /**
  * Add resource/keyword value
@@ -55,57 +57,46 @@ function tux_add_res_parm(arg)
 function tux_add_sect_parm(arg)
 {
     local is_default=false;
-    local org_name = arg;
-    //Track all the defaults
-    if (arg=="DEFAULT:")
-    {
-        arg="DEFAULT:@"+M_default_cntr;
-        M_default_cntr++;
-        is_default = true;
-        //Add prefix to all params "D." -> meaning default
-        arg="D."+arg;
-    }
-    else if (M_cur_section.name == "*SERVERS" || M_cur_section.name == "*SERVICES")
-    {
-        //Special array based groups
-        arg=arg+"@"+M_spec_cntr;
-        M_spec_cntr++;
-        //Add prefix to all params "P." -> meaning param
-        arg="P."+arg;
-    }
-    else
-    {
-        arg="P."+arg;
-    }
-
-    //Check if entry exists & reject?
-    if (arg in M_cur_section.params)
-    {
-        throw("Parameter ["+org_name+"] of section ["+M_cur_section.name+"] already defined");
-    }
 
     print("Adding param ["+arg+"]");
-    M_cur_section.params[arg]<-{};
-    M_cur_section.order.append(M_cur_section.params[arg]);  
+
+    if (arg == "DEFAULT:")
+    {
+        is_default=true;
+    }
+
+    param <- {};
 
     //Add link to previous default
-    M_cur_section.params[arg].defaults <- M_cur_default;
-    M_cur_section.params[arg].keywords <- {};
-    M_cur_section.params[arg].name <- org_name;
+    param.defaults <- M_cur_default;
+    param.keywords <- {};
+    param.name <- arg;
  
     //Refresh current default
     if (is_default)
     {
-        M_cur_section.params[arg].is_default<-true;
-        M_cur_default = M_cur_section.params[arg];
+        param.is_default<-true;
+        M_cur_default = param;
     }
     else
     {
-        M_cur_section.params[arg].is_default<-false;
+        param.is_default<-false;
     }
 
     //Save current param
-    M_cur_param = M_cur_section.params[arg];
+    M_cur_param = param;
+
+    //Now this is array
+    if (! (arg in M_cur_section.params))
+    {
+        M_cur_section.params[arg]<-[]
+    }
+
+    //Get this individual in the order
+    M_cur_section.order.append(param);  
+    //This is now array.
+    M_cur_section.params[arg].append(param);
+
 }
 
 /**
@@ -116,7 +107,7 @@ function tux_mark_group_routed(arg)
     if (arg in M_sections["*GROUPS"].params 
             && !( "routed" in M_sections["*GROUPS"].params[arg]))
     {
-        M_sections["*GROUPS"].params[arg].routed<-true;
+        M_sections["*GROUPS"].params[arg][0].routed<-true;
         print("GROUP ["+arg+"] -> routed");
     }
 }
@@ -150,8 +141,6 @@ function tux_add_sect(arg)
     M_cur_default <- {};
     M_cur_section = M_sections[arg];
     M_cur_param  <- {};
-    M_default_cntr=0;
-    M_spec_cntr=0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -210,7 +199,7 @@ function get_val(param, keyword, stock_default)
         {
             if (stock_default=="")
             {
-                throw("No stock value available for param ["+param.name+"]");
+                throw("No stock "+keyword+" value available for param ["+param.name+"]");
             }
             return stock_default;
         }
@@ -236,14 +225,14 @@ function prep_free_ranges(instance)
 
     foreach(idx,val in M_sections["*SERVERS"].params)
     {
-        local server = M_sections["*SERVERS"].params[idx];
+        local server = M_sections["*SERVERS"].params[idx][0];
         
         if (!server.is_default)
         {
             local range = {};
             local server_srvgrp = get_val(server, "SRVGRP", "");
             local group_lmid = get_val(
-                M_sections["*GROUPS"].params["P."+server_srvgrp[0]], "LMID", "")[0];
+                M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", "")[0];
 
             if (group_lmid == instance.lmid)
             {
@@ -358,7 +347,7 @@ function ex_generate(arg)
     {
         foreach(idx,val in M_sections["*MACHINES"].params)
         {
-            local machine = M_sections["*MACHINES"].params[idx];
+            local machine = M_sections["*MACHINES"].params[idx][0];
             M_instances[machine.name]<-{};
 
             local instance = M_instances[machine.name];
