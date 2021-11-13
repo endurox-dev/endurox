@@ -56,12 +56,22 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic ndrx_tux_parser_t ndrx_G_tuxp;      /**< Parsing time attributes*/
+expublic ndrx_tux_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
 /*---------------------------Statics------------------------------------*/
 exprivate int M_syntax_check = EXFALSE;     /**< Syntax check only (no plot) */
 exprivate ndrx_growlist_t  M_strbuf;
 /*---------------------------Prototypes---------------------------------*/
 
 extern int tuxdebug;
+
+/**
+ * DDR parsing error
+ */
+void ddrerror(char *s, ...)
+{
+        char errbuf[2048];
+}
+
 /**
  * Generate parsing error
  * @param s
@@ -108,8 +118,14 @@ void tuxerror(char *s, ...)
         va_end(ap);
         NDRX_LOG(log_error, "Failed to parse: %s", errbuf);
         
-        _Nset_error_msg(NEFORMAT, errbuf);
-        
+        if (_Nis_error())
+        {
+            _Nappend_error_msg(errbuf);
+        }
+        else
+        {
+            _Nset_error_msg(NEFORMAT, errbuf);
+        }
         ndrx_G_tuxp.error = EXFAIL;
     }
 }

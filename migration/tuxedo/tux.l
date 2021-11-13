@@ -54,13 +54,11 @@ int ndrx_G_tuxline = 1;
 %%
 
 
-^#.*|^\s+#.*            { 
-printf("Ignore [%s]\n", tuxtext);
+^[ \t\r]*#.*$           { 
                         }
-
-\s+                     { 
+                        
+[ \t\r]+                { 
                         }
-
 "DEFAULT:"              { 
     
                             tuxlval.val = NDRX_STRDUP("DEFAULT:");

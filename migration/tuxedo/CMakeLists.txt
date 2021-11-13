@@ -58,8 +58,11 @@ include_directories (${ENDUROX_SOURCE_DIR}/include)
 BISON_TARGET(EXPRPARSER tux.y ${CMAKE_CURRENT_BINARY_DIR}/tux.tab.c)
 FLEX_TARGET(EXPRSCANNER tux.l ${CMAKE_CURRENT_BINARY_DIR}/tux.lex.c)
 
-add_executable (tmloadcf tux.c tux.tab.c tux.lex.c script.c)
+BISON_TARGET(EXPRPARSER ddr_range.y ${CMAKE_CURRENT_BINARY_DIR}/ddr.tab.c)
+FLEX_TARGET(EXPRSCANNER ddr_range.l ${CMAKE_CURRENT_BINARY_DIR}/ddr.lex.c)
 
+add_executable (tmloadcf tux.c tux.tab.c tux.lex.c ddr.tab.c ddr.lex.c script.c)
+target_compile_definitions(tmloadcf PUBLIC NDRX_TMLOADCF)
 target_link_libraries (tmloadcf psstdlib ps nstd ${RT_LIB} pthread m)
 
 install (TARGETS 

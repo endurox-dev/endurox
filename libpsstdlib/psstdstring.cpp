@@ -249,6 +249,129 @@ static PSInteger _string_split(HPSCRIPTVM v)
 }
 
 /**
+ * Return common part of the string.
+ * @param v
+ * @return 
+ */
+static PSInteger _string_strcommon(HPSCRIPTVM v)
+{
+    const PSChar *str,*str2;
+    PSChar *stemp;
+    int i, len;
+    ps_getstring(v,2,&str);
+    ps_getstring(v,3,&str2);
+    PSInteger memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    memcpy(stemp,str,memsize);
+    len = strlen(stemp);
+    
+    for (i=0; i<len; i++)
+    {
+        if (stemp[i]!=str2[i])
+        {
+            stemp[i] = EXEOS;
+            break;
+        }
+    }
+    
+    ps_pushstring(v,stemp,-1);
+    
+    return 1;
+}
+
+/**
+ * Return differential part from first string
+ * @param v
+ * @return 
+ */
+static PSInteger _string_strdiff(HPSCRIPTVM v)
+{
+    const PSChar *str,*str2;
+    PSChar *stemp;
+    int i, len;
+    static char empty[]="";
+    char *ret=empty;
+    ps_getstring(v,2,&str);
+    ps_getstring(v,3,&str2);
+    PSInteger memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    memcpy(stemp,str,memsize);
+    len = strlen(stemp);
+    
+    for (i=0; i<len; i++)
+    {
+        if (stemp[i]!=str2[i])
+        {
+            ret = &stemp[i];
+            break;
+        }
+    }
+    
+    ps_pushstring(v,ret,-1);
+    
+    return 1;
+}
+
+/**
+ * Right strip symbols
+ * @param v
+ * @return 
+ */
+static PSInteger _string_rstrips(HPSCRIPTVM v)
+{
+    const PSChar *str,*str2;
+    PSChar *stemp;
+    char *ret;
+    ps_getstring(v,2,&str);
+    ps_getstring(v,3,&str2);
+    PSInteger memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    memcpy(stemp,str,memsize);   
+    ndrx_str_rstrip(stemp, (char *)str2);
+    ret = stemp;
+    ps_pushstring(v,ret,-1);
+    return 1;
+}
+
+/**
+ * Right strip symbols
+ * @param v
+ * @return 
+ */
+static PSInteger _string_lstrips(HPSCRIPTVM v)
+{
+    const PSChar *str,*str2;
+    PSChar *stemp;
+    char *ret;
+    ps_getstring(v,2,&str);
+    ps_getstring(v,3,&str2);
+    ret = ndrx_str_lstrip_ptr((char *)str, (char *)str2);
+    ps_pushstring(v,ret,-1);
+    return 1;
+}
+
+/**
+ * Strip symbols off
+ * @param v
+ * @return 
+ */
+static PSInteger _string_strips(HPSCRIPTVM v)
+{
+    const PSChar *str,*str2;
+    PSChar *stemp;
+    char *ret;
+    ps_getstring(v,2,&str);
+    ps_getstring(v,3,&str2);
+    PSInteger memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    memcpy(stemp,str,memsize);   
+    ret = ndrx_str_strip((char *)stemp, (char *)str2);
+    ps_pushstring(v,ret,-1);
+    return 1;
+}
+
+
+/**
  * Block split the strings, i.e. keep the block together with block escaping option
  * Currently only ASCII version.
  * @param v
@@ -501,6 +624,13 @@ static const PSRegFunction stringlib_funcs[]={
     _DECL_FUNC(lstrip,2,_SC(".s")),
     _DECL_FUNC(rstrip,2,_SC(".s")),
     _DECL_FUNC(split,3,_SC(".ss")),
+    _DECL_FUNC(strcommon,3,_SC(".ss")),
+    _DECL_FUNC(strdiff,3,_SC(".ss")),
+    
+    _DECL_FUNC(rstrips,3,_SC(".ss")),
+    _DECL_FUNC(lstrips,3,_SC(".ss")),
+    _DECL_FUNC(strips,3,_SC(".ss")),
+    
     _DECL_FUNC(strtokblk,4,_SC(".sss")),
     _DECL_FUNC(escape,2,_SC(".s")),
     _DECL_FUNC(startswith,3,_SC(".ss")),
