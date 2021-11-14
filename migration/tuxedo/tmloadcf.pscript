@@ -382,6 +382,9 @@ function prep_groups(instance)
 
             if ("OPENINFO" in group.keywords)
             {
+                //Mark that this instance uses xa.
+                instance.xa_used<-true;
+
                 group.plot<-true;
 
                 group.rmid <- get_val(group, "GRPNO", null)[0];
@@ -413,7 +416,7 @@ function prep_groups(instance)
                     {
                         M_folder_gen[instance.app_home+"/qdata"]<-{};
                     }
-
+                    group.qspace<-qspace;
                     group.data_folder <- instance.app_home+"/qdata/rm"+group.rmid;
                     M_folder_gen[group.data_folder]<-{};
 
@@ -451,6 +454,22 @@ function prep_groups(instance)
 
         }
     }
+}
+
+/**
+ * Prepare binaries:
+ * For this LMID:
+ * Remove: WSL/TMSYSEVT/JSL/TMMETADATA/TMFAN/TMQFORWARD
+ * Mark: if found TMSYSEVT or TMUSREVT -> tpevsrv needed.
+ * Mark: If WSL or JSL used -> restincl needed (incl clients section) & cpmsrv
+ * Extract: Group qspace shall be appended with automatic Qs from TMQFORWARD instances.
+ * Transform: If for server -A is found, remove it. If -A is not found, add -N
+ *  as Enduro/X advertises all by default.
+ * Transform: TMQUEUE -> tmqueue, replace min/max=1, update clopt.
+ */
+function prep_servers(instance)
+{
+    //TODO
 }
 
 
@@ -548,6 +567,7 @@ NDRX_XA_DRIVERLIB=libndrxxaqdisks."+M_wizzard.shared_lib_pfx+@"
 ; dylib needed for osx
 NDRX_XA_RMLIB=libndrxxaqdisk."+M_wizzard.shared_lib_pfx+@"
 NDRX_XA_LAZY_INIT=0
+NDRX_XA_FLAGS=FDATASYNC;DSYNC
 ";
 /******************************************************************************/
             }
@@ -563,7 +583,7 @@ NDRX_XA_CLOSE_STR="+group.closeinfo+@"
 NDRX_XA_DRIVERLIB=libndrxxatmsx."+M_wizzard.shared_lib_pfx+@"
 NDRX_XA_RMLIB=-
 NDRX_XA_LAZY_INIT=1
-NDRX_XA_FLAGS=RECON:*:3:100
+NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC
 ";
 /******************************************************************************/
             }
@@ -585,6 +605,19 @@ NDRX_XA_FLAGS=RECON:*:3:100
     }
 
     //print("ini_file (groups): ["+instance.ini_groups_text+"]");
+
+    //Generate debug config
+
+    prep_servers(instance);
+
+    instance.ini_debug_text<-
+/******************************************************************************/
+@"[@debug]
+#* - goes for all binaries not listed bellow
+*= ndrx=3 ubf=1 tp=3 file=
+";
+/******************************************************************************/
+    //Add additional servers such as tmsrv, restincl, tpevsrv
 
 }
 
@@ -729,6 +762,21 @@ function ex_generate(arg)
             {
                 //For performance reasons use more.
                 instance.rtsvcmax *=2;
+            }
+
+            //Schedule system folders
+            M_folder_gen[instance.app_home]<-{};
+            M_folder_gen[instance.app_home+"/log"]<-{};
+            M_folder_gen[instance.app_home+"/tmp"]<-{};
+
+            if (instance.use_rel)
+            {
+                M_folder_gen[instance.app_home+"/"+instance.app_bin]<-{};
+                M_folder_gen[instance.app_home+"/"+instance.app_conf]<-{};
+            }
+            else
+            {
+                M_folder_gen[instance.app_conf]<-{};
             }
 
             generate(instance, machine);
