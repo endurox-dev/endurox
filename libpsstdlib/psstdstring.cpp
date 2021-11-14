@@ -351,6 +351,50 @@ static PSInteger _string_lstrips(HPSCRIPTVM v)
 }
 
 /**
+ * Substring
+ * @param [script] string
+ * @param [script] postion from
+ * @param [script] number of chars (or -1 till the end).
+ * @param v
+ * @return [script] string
+ */
+static PSInteger _string_substr(HPSCRIPTVM v)
+{
+    PSInteger offset, length;
+    const PSChar *str;
+    PSChar *stemp;
+    char *ret;
+    PSInteger memsize;
+    int i, len;
+    
+    ps_getstring(v,2,&str);
+    ps_getinteger(v,3,&offset);
+    ps_getinteger(v,4,&length);
+    
+    memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    
+    len = strlen(str);
+    
+    if (offset>=len)
+    {
+        NDRX_STRCPY_SAFE(stemp, "");
+    }
+    else
+    {
+        for (i=offset; i < len && ( (i-offset) < length || length < 0); i++)
+        {
+            stemp[i-offset]=str[i];
+        }
+        stemp[i-offset]=EXEOS;
+    }
+    
+    ret = stemp;
+    ps_pushstring(v,ret,-1);
+    return 1;
+}
+
+/**
  * Strip symbols off
  * @param v
  * @return 
@@ -626,12 +670,11 @@ static const PSRegFunction stringlib_funcs[]={
     _DECL_FUNC(split,3,_SC(".ss")),
     _DECL_FUNC(strcommon,3,_SC(".ss")),
     _DECL_FUNC(strdiff,3,_SC(".ss")),
-    
     _DECL_FUNC(rstrips,3,_SC(".ss")),
     _DECL_FUNC(lstrips,3,_SC(".ss")),
     _DECL_FUNC(strips,3,_SC(".ss")),
-    
     _DECL_FUNC(strtokblk,4,_SC(".sss")),
+    _DECL_FUNC(substr,4,_SC(".snn")),
     _DECL_FUNC(escape,2,_SC(".s")),
     _DECL_FUNC(startswith,3,_SC(".ss")),
     _DECL_FUNC(endswith,3,_SC(".ss")),

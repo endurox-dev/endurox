@@ -34,6 +34,19 @@ M_cur_default <- {};
 M_cur_param <- {};
 M_values <- [];
 
+
+//Folders for generation
+//Each key is full path to the disk 
+//with following attributes:
+//.exists true|false
+//.generated true|false
+//Used on error termination to cleanup
+M_folder_gen <- {};
+
+//List of files generated
+//Used on error termination to clean
+M_files_gen <- {};
+
 /**
  * Add resource/keyword value
  */
@@ -215,7 +228,7 @@ function get_val(param, keyword, stock_default)
  * @param instance instance of interest
  * @return max number of routing services used
  */
-function get_routing_service(instance)
+function get_routing_services(instance)
 {
     local cnt=0;
 
@@ -280,7 +293,8 @@ function prep_free_ranges(instance)
                 if (range.max[0].tointeger() < range.min[0].tointeger())
                 {
                     throw(format("Invalid server %s range min=%d > max=%d",
-                            server.name, range.min[0].tointeger(), range.max[0].tointeger()));
+                            server.name, range.min[0].tointeger()
+                            , range.max[0].tointeger()));
                 }
                 range.min = range.min[0].tointeger()+range.srvid[0].tointeger();
                 range.max = range.max[0].tointeger()+range.srvid[0].tointeger();
@@ -348,6 +362,99 @@ function prep_free_ranges(instance)
 }
 
 /**
+ * Prepare groups of interest for this particular node.
+ * Mark the group is it used or not (used if routed or have xa).
+ * Prepare open/close infos / xa infos, (extract xa settings).
+ */
+function prep_groups(instance)
+{
+    foreach(idx,group in M_sections["*GROUPS"].order)
+    {
+        //Get our groups
+        if ( !group.is_default && (get_val(group, "LMID", null)[0] == instance.lmid))
+        {
+            group.plot<-false;
+
+            if ("routed" in group)
+            {
+                group.plot<-true;
+            }
+
+            if ("OPENINFO" in group.keywords)
+            {
+                group.plot<-true;
+
+                group.rmid <- get_val(group, "GRPNO", null)[0];
+                local openinfo = get_val(group, "OPENINFO", null)[0];
+
+                //Get the Switch name
+                local ex = regexp(@"^(.*):.*");
+
+                local res = ex.capture(openinfo)[1];
+
+                group.xaswitch <-openinfo.slice(res.begin, res.end);
+
+                print("Got switch: ["+group.xaswitch+"]");
+
+                if (group.xaswitch== "TUXEDO/QM")
+                {
+                    //Special case for MQ
+                    //We only need Qspace name, the data will be stored
+                    // in app_home/qdata/rm<rmid>
+
+                    ex = regexp(@"^.*:.*:(.*)");
+                    res = ex.capture(openinfo)[1];
+                    local qspace = openinfo.slice(res.begin,res.end);
+                    group.openinfo <- "datadir=\"${NDRX_APPHOME}/qdata/rm"+group.rmid+"\",qspace=\""+qspace+"\"";
+                    group.closeinfo <- "${NDRX_XA_OPEN_STR}";
+                    
+                    //Schedule folder for creation.
+                    if ( !(instance.app_home+"/qdata" in M_folder_gen))
+                    {
+                        M_folder_gen[instance.app_home+"/qdata"]<-{};
+                    }
+
+                    group.data_folder <- instance.app_home+"/qdata/rm"+group.rmid;
+                    M_folder_gen[group.data_folder]<-{};
+
+                }
+                else
+                {
+                    ex = regexp(@"^.*:(.*)");
+                    res = ex.capture(openinfo)[1];
+                    //Extract the values, transform the "TUXEDO/QM"
+                    group.openinfo <- openinfo.slice(res.begin,res.end);
+                    local closeinfo = get_val(group, "CLOSEINFO", [""])[0];
+                    
+                    if (closeinfo=="")
+                    {
+                        group.closeinfo <- "${NDRX_XA_OPEN_STR}";
+                    }
+                    else
+                    {
+                        ex = regexp(@"^.*:(.*)");
+                        res = ex.capture(closeinfo)[1];
+                        group.closeinfo <- closeinfo.slice(res.begin,res.end);
+                    }
+                }
+
+                //Schedule folders to be created
+                if ( !(instance.app_home+"/tmlogs" in M_folder_gen))
+                {
+                    M_folder_gen[instance.app_home+"/tmlogs"]<-{};
+                }
+
+                group.tmlogs<-"${NDRX_APPHOME}/tmlogs/rm"+group.rmid;
+                M_folder_gen[group.tmlogs]<-{};
+
+            }
+
+        }
+    }
+}
+
+
+/**
  * Prepare texts for instance
  * @param instance current object of interest
  * @param machine current machine of processing
@@ -375,7 +482,7 @@ export CDPATH=$CDPATH:.:$NDRX_APPHOME
 
     //Prepare ini file, global
 
-    instance.ini_text <-
+    instance.ini_global_text <-
 /******************************************************************************/
 @"[@global]
 NDRX_CLUSTERISED=1
@@ -384,7 +491,7 @@ NDRX_CONFIG="+instance.ndrx_conf+"/ndrxconfig."+instance.prefix+@".xml
 NDRX_DMNLOG=${NDRX_APPHOME}/log/ndrxd.log
 NDRX_DPID=${NDRX_APPHOME}/tmp/ndrxd.pid
 NDRX_DQMAX=100
-NDRX_IPCKEY="+M_resources["IPCKEY"][0]+@"
+NDRX_IPCKEY="+instance.ipckey+@"
 NDRX_LDBAL=0
 NDRX_LEV=5
 NDRX_LOG=${NDRX_APPHOME}/log/xadmin.log
@@ -393,7 +500,7 @@ NDRX_MSGSIZEMAX=56000
 NDRX_NODEID=1
 NDRX_QPATH="+M_wizzard.qpath+@"
 NDRX_QPREFIX=/"+instance.prefix+@"
-NDRX_RNDK=0myWI5nu
+NDRX_RNDK="+rands(8)+@"
 NDRX_SRVMAX="+ M_resources["MAXSERVERS"][0]+@"
 NDRX_SVCMAX="+M_resources["MAXSERVICES"][0]+@"
 NDRX_TOUT="+ M_resources["SCANUNIT"][0].tointeger() 
@@ -415,7 +522,69 @@ NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
     //Remember, only those groups/cctags for which either routing is used
     //Or two phase commit is used.
     
-    print("ini_file: ["+instance.ini_text+"]");
+    print("ini_file (global): ["+instance.ini_global_text+"]");
+
+    prep_groups(instance);
+
+    instance.ini_groups_text<-"";
+/******************************************************************************/
+    //Generate groups...
+    foreach(idx,group in M_sections["*GROUPS"].order)
+    {
+        //Get our groups
+        if (!group.is_default && get_val(group, "LMID", null)[0] == instance.lmid &&
+            group.plot)
+        {
+            local group_text ="";
+
+            if ("TUXEDO/QM"==group.xaswitch)
+            {
+                group_text=
+@"[@global/"+group.name+@"]
+NDRX_XA_RES_ID="+group.rmid+@"
+NDRX_XA_OPEN_STR="+group.openinfo+@"
+NDRX_XA_CLOSE_STR="+group.closeinfo+@"
+NDRX_XA_DRIVERLIB=libndrxxaqdisks."+M_wizzard.shared_lib_pfx+@"
+; dylib needed for osx
+NDRX_XA_RMLIB=libndrxxaqdisk."+M_wizzard.shared_lib_pfx+@"
+NDRX_XA_LAZY_INIT=0
+";
+/******************************************************************************/
+            }
+            else
+            {
+                group_text=
+/******************************************************************************/
+@"[@global/"+group.name+@"]
+NDRX_XA_RES_ID="+group.rmid+@"
+NDRX_XA_OPEN_STR="+group.openinfo+@"
+NDRX_XA_CLOSE_STR="+group.closeinfo+@"
+# use built in switch resolver
+NDRX_XA_DRIVERLIB=libndrxxatmsx."+M_wizzard.shared_lib_pfx+@"
+NDRX_XA_RMLIB=-
+NDRX_XA_LAZY_INIT=1
+NDRX_XA_FLAGS=RECON:*:3:100
+";
+/******************************************************************************/
+            }
+            
+            print("ini_file (group) [\n"+group_text+"]");
+            //Add the group to the listing
+            if (""==instance.ini_groups_text)
+            {
+                instance.ini_groups_text=group_text;
+            }
+            else
+            {
+                instance.ini_groups_text+="\n"+group_text;
+            }
+        }
+
+        //Prepare TMQ queues
+        //Queue names will be extracted for forward binaries (if any found)
+    }
+
+    //print("ini_file (groups): ["+instance.ini_groups_text+"]");
 
 }
 
@@ -485,8 +654,8 @@ function ex_generate(arg)
             //Prepare some identifiers
             nodeid++;
             instance.nodeid <- nodeid;
-/*
-            if (regexp("^0x|^0X").match(M_resources["IPCKEY"][0]))
+
+            if (regexp("^0x.*|^0X.*").match(M_resources["IPCKEY"][0]))
             {
                 instance.ipckey <- substr(M_resources["IPCKEY"][0], 2, -1);
             }
@@ -494,7 +663,6 @@ function ex_generate(arg)
             {
                 instance.ipckey <- M_resources["IPCKEY"][0]
             }
-*/
 
             //Dump some config
             print("use_rel = "+instance.use_rel);
@@ -550,7 +718,7 @@ function ex_generate(arg)
             }
 
             //Calculate number of routing services, if any.
-            instance.rtsvcmax<-get_routing_service(instance);
+            instance.rtsvcmax<-get_routing_services(instance);
 
             //Use fault, if not any set.
             if (instance.rtsvcmax == 0)

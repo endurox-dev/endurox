@@ -235,6 +235,45 @@ static PSInteger _exutil_dirname(HPSCRIPTVM v)
     return 1;
 }
 
+/**
+ * Return random string
+ * @param v
+ * @param [script] len
+ * @return [script] random string a-zA-Z0-9
+ */
+static PSInteger _exutil_rands(HPSCRIPTVM v)
+{
+    PSChar *stemp;
+    PSInteger len;
+    static int first = EXTRUE;
+    char table[]="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    int i, tablen;
+    
+    if (first)
+    {
+        srand(time(NULL));
+        first=EXFALSE;
+    }
+    
+    ps_getinteger(v,2,&len);
+    
+    PSInteger memsize = (len+1)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    
+    memset(stemp, 0, (len+1)*sizeof(PSChar));
+    
+    tablen = strlen(table);
+    for (i=0; i<len; i++)
+    {
+        stemp[i]= table[rand() % tablen];
+    }
+    
+    ps_pushstring(v,stemp,-1);
+    
+    return 1;
+}
+
+
 #define _DECL_FUNC(name,nparams,pmask) {_SC(#name),_exutil_##name,nparams,pmask}
 static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
@@ -248,6 +287,7 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(chmod,3,_SC(".ss")),
         _DECL_FUNC(basename,2,_SC(".s")),
         _DECL_FUNC(dirname,2,_SC(".s")),
+        _DECL_FUNC(rands,2,_SC(".n")),
 	{0,0}
 };
 #undef _DECL_FUNC
