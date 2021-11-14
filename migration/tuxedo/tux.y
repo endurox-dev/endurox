@@ -57,12 +57,6 @@ extern int tuxlex (void);
 %token DEFAULT      /**< default symbol  */
 %token RESOURCES    /**< resources sect  */
 
-/* shift / reduce error, take right path (longest) */
-/*
-%right OPTION
-%left COMMA
-*/
-//%expect 1
 %start tux_loop
 
 %type <val> OPTION
