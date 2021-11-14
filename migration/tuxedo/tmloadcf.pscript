@@ -197,7 +197,7 @@ function get_val(param, keyword, stock_default)
         }
         else
         {
-            if (stock_default=="")
+            if (stock_default==null)
             {
                 throw("No stock "+keyword+" value available for param ["+param.name+"]");
             }
@@ -211,6 +211,44 @@ function get_val(param, keyword, stock_default)
 }
 
 /**
+ * Return number of services for instance used for routing
+ * @param instance instance of interest
+ * @return max number of routing services used
+ */
+function get_routing_service(instance)
+{
+    local cnt=0;
+
+    foreach(idx,service in M_sections["*SERVICES"].order)
+    {
+        if (!service.is_default)
+        {
+            local range = {};
+            local service_srvgrp = get_val(service, "SRVGRP", "");
+            
+            //Service may have no group -> affect all
+            if (service_srvgrp =="")
+            {
+                cnt++;
+            }
+            else
+            {
+                local group_lmid = get_val(
+                    M_sections["*GROUPS"].params[service_srvgrp[0]][0], "LMID", null)[0];
+
+                if (group_lmid == instance.lmid)
+                {
+                    cnt++;
+                }
+
+            }
+        }
+    }
+    print("Routing services: "+cnt);
+    return cnt;
+}
+
+/**
  * Prepare free ID ranges for given instance. For upper number we take
  *  number of total servers + 2000.
  * @param instance instance of interest
@@ -220,19 +258,17 @@ function prep_free_ranges(instance)
     //We need to register all ranges
     //All ranges must be sorted
     //The free interval must be detected
-
+    local start = 1;
     instance.ranges<-[];
 
-    foreach(idx,val in M_sections["*SERVERS"].params)
+    foreach(idx,server in M_sections["*SERVERS"].order)
     {
-        local server = M_sections["*SERVERS"].params[idx][0];
-        
         if (!server.is_default)
         {
             local range = {};
             local server_srvgrp = get_val(server, "SRVGRP", "");
             local group_lmid = get_val(
-                M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", "")[0];
+                M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", null)[0];
 
             if (group_lmid == instance.lmid)
             {
@@ -240,22 +276,73 @@ function prep_free_ranges(instance)
                 range.min <-get_val(server, "MIN", ["1"]);
                 range.max <-get_val(server, "MAX", range.min);
                 range.srvid <-get_val(server, "SRVID", "");
-/*
-                if (range.max[0] < range.min[0])
+
+                if (range.max[0].tointeger() < range.min[0].tointeger())
                 {
-                    throw(format("Invalid server %s range min=%s > max=%s",
-                            server.name, range.min[0], range.max[0]));
+                    throw(format("Invalid server %s range min=%d > max=%d",
+                            server.name, range.min[0].tointeger(), range.max[0].tointeger()));
                 }
-                range.min[0] = range.min[0]+range.srvid[0];
-                range.max[0] = range.max[0]+range.srvid[0];
-*/              
+                range.min = range.min[0].tointeger()+range.srvid[0].tointeger();
+                range.max = range.max[0].tointeger()+range.srvid[0].tointeger();
                     
-                print(format("Used rang srvid: %s %s - %s", 
-                    range.srvid[0], range.min[0], range.max[0]));
+                //print(format("Used rang srvid: %s %d - %d", 
+                //    range.srvid[0], range.min[0], range.max[0]));
                 instance.ranges.append(range);
+            }
+        }    
+    }
+
+    instance.ranges.sort(@(a,b) a.min <=> b.min);
+    instance.free_ranges <- [];
+
+    foreach(idx,range in instance.ranges)
+    {
+        print(format("Used range %d - %d", 
+                range.min, range.max));
+    }
+
+    //Add first range if any
+    local len = instance.ranges.len();
+    if (len > 0)
+    {
+        if (instance.ranges[0].min > 1)
+        {
+            local fr = {};
+            fr.min <- 1;
+            fr.max <- (instance.ranges[0].min - 1);
+            instance.free_ranges.append(fr);
+        }
+
+        local i=0;
+        for (; i<len-1; i++)
+        {
+            if (instance.ranges[i].max+1< instance.ranges[i+1].min)
+            {
+                local fr = {};
+                fr.min <- (instance.ranges[i].max   + 1);
+                fr.max <- (instance.ranges[i+1].min - 1);
+                instance.free_ranges.append(fr);
             }
         }
 
+        //Add some free range+10K
+        local fr = {};
+        fr.min <- (instance.ranges[i].max   + 1);
+        fr.max <- (instance.ranges[i].max   + 1 + 10000);
+        instance.free_ranges.append(fr);
+    }
+    else
+    {
+        local fr = {};
+        fr.min <- 1;
+        fr.max <- 10000;
+        instance.free_ranges.append(fr);
+    }
+
+    foreach(idx,range in instance.free_ranges)
+    {
+        print(format("Free range %d - %d", 
+                range.min, range.max));
     }
 
 }
@@ -319,8 +406,8 @@ NDRX_ULOG=${NDRX_APPHOME}/log
 # TODO, replace if not found already in env:
 #FIELDTBLS=Exfields
 #FLDTBLDIR=${NDRX_APPHOME}/ubftab
-NDRX_RTSVCMAX=???
-NDRX_RTGRP=???
+NDRX_RTSVCMAX="+instance.rtsvcmax+@"
+NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
 ";
 /******************************************************************************/
 
@@ -448,12 +535,35 @@ function ex_generate(arg)
                 M_resources["MAXSERVERS"]<-[];
                 M_resources["MAXSERVERS"].append("10000");
             }
+            
+            //Default transaction time
+            if (!("MAXTRANTIME" in M_resources))
+            {
+                M_resources["MAXTRANTIME"]<-[];
+                M_resources["MAXTRANTIME"].append("2147483647");
+            }
 
-            //MAXRTDATA -> default 100KB (min ex)
-            //MAXTRANTIME -> set some reasonable amount? Or 2147483647 ? as for tux?
+            if (!("MAXRTDATA" in M_resources) || M_resources["MAXRTDATA"][0].tointeger() < 102400)
+            {
+                M_resources["MAXRTDATA"]<-[];
+                M_resources["MAXRTDATA"].append("102400");
+            }
+
+            //Calculate number of routing services, if any.
+            instance.rtsvcmax<-get_routing_service(instance);
+
+            //Use fault, if not any set.
+            if (instance.rtsvcmax == 0)
+            {
+                instance.rtsvcmax = 1000;
+            }
+            else
+            {
+                //For performance reasons use more.
+                instance.rtsvcmax *=2;
+            }
 
             generate(instance, machine);
-            //print(get_val(M_sections["*SERVERS"][""]));
 
         }
     }
