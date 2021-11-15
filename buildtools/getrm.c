@@ -55,6 +55,9 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+exprivate ndrx_rm_def_t *M_rms = NULL;
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -105,7 +108,7 @@ out:
 
 /**
  * Get resource manager and last files for xa_switch_name by rm_name
- * 
+ * Function is not thread safe.
  * @param rm_name resource manager name to search for
  * @param p_rmdef Resource manager define struct
  * @return EXFAIL (failed to process), EXTRUE if found, EXSUCCEED if not found but ok
@@ -118,75 +121,120 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
     char *tmp;
     char ndrx_home_rmfile[NDRX_BPATH_MAX]={EXEOS};
     char buf[NDRX_BPATH_MAX+1];
+    static int first = EXTRUE;
+    ndrx_rm_def_t *el = NULL, *elt;
     
-    config=getenv(CONF_NDRX_RMFILE);
-    
-    if (NULL!=config)
+    if (first)
     {
-        NDRX_LOG(log_info , "RM file - using [%s]", CONF_NDRX_RMFILE);
-    }
-    else if (NULL!=(tmp=getenv(CONF_NDRX_HOME)))
-    {
-        NDRX_LOG(log_info , "RM file try from home [%s]", tmp);
-        
-        snprintf(ndrx_home_rmfile, sizeof(ndrx_home_rmfile), 
-                                "%s/udataobj/RM", tmp);
-        config = ndrx_home_rmfile;
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Resource Manager file not set (no %s or %s)!", 
-                CONF_NDRX_RMFILE, CONF_NDRX_HOME);
-        EXFAIL_OUT(ret);
-    }
-    
-    NDRX_LOG(log_debug, "Try to open: [%s]", config);
+        config=getenv(CONF_NDRX_RMFILE);
 
-    if (NULL==(fp=NDRX_FOPEN(config, "r")))
-    {
-        int err = errno;
-        NDRX_LOG(log_error, "Failed to open RM file [%s]: %s", config, strerror(err));
-        
-        _Nset_error_fmt(NENOENT, "Failed to open RM file [%s]: %s", 
-                config, strerror(err));
-        
-        EXFAIL_OUT(ret);
-    }
-    
-     /* process line by line */
-    while (NULL!=fgets(buf, sizeof(buf), fp))
-    {
-        char *stripped;
-        
-        ndrx_str_rstrip(buf," \t\n\r");
-        stripped = ndrx_str_lstrip_ptr(buf," \t\n\r");
-        
-        if (EXEOS==stripped[0] || '#'==stripped[0])
+        if (NULL!=config)
         {
-            /* skip comments */
-            continue;
+            NDRX_LOG(log_info , "RM file - using [%s]", CONF_NDRX_RMFILE);
         }
-        
-        /* try to parse rm switch */
-        if (EXSUCCEED!=parse_rm_string(stripped, p_rmdef))
+        else if (NULL!=(tmp=getenv(CONF_NDRX_HOME)))
         {
+            NDRX_LOG(log_info , "RM file try from home [%s]", tmp);
+
+            snprintf(ndrx_home_rmfile, sizeof(ndrx_home_rmfile), 
+                                    "%s/udataobj/RM", tmp);
+            config = ndrx_home_rmfile;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Resource Manager file not set (no %s or %s)!", 
+                    CONF_NDRX_RMFILE, CONF_NDRX_HOME);
             EXFAIL_OUT(ret);
         }
-        
-        if (0==strcmp(p_rmdef->rmname, rm_name))
+
+        NDRX_LOG(log_debug, "Try to open: [%s]", config);
+
+        if (NULL==(fp=NDRX_FOPEN(config, "r")))
         {
-            NDRX_LOG(log_info, "rm_name=[%s] found in file [%s] on line [%s]", 
-                    rm_name, config, buf);
-            ret=EXTRUE;
-            break;
+            int err = errno;
+            NDRX_LOG(log_error, "Failed to open RM file [%s]: %s", config, strerror(err));
+
+            _Nset_error_fmt(NENOENT, "Failed to open RM file [%s]: %s", 
+                    config, strerror(err));
+
+            EXFAIL_OUT(ret);
         }
+
+         /* process line by line */
+        while (NULL!=fgets(buf, sizeof(buf), fp))
+        {
+            char *stripped;
+
+            ndrx_str_rstrip(buf," \t\n\r");
+            stripped = ndrx_str_lstrip_ptr(buf," \t\n\r");
+
+            if (EXEOS==stripped[0] || '#'==stripped[0])
+            {
+                /* skip comments */
+                continue;
+            }
+            
+            
+            /* Alloc new tmp_rm */
+            
+            if (NULL==(el = NDRX_FPMALLOC(sizeof(ndrx_rm_def_t),0)))
+            {
+                NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", 
+                        sizeof(ndrx_rm_def_t), strerror(errno));
+                EXFAIL_OUT(ret);
+            }
+            
+            memset(el, 0, sizeof(el));
+            
+            /* try to parse rm switch */
+            if (EXSUCCEED!=parse_rm_string(stripped, el))
+            {
+                EXFAIL_OUT(ret);
+            }
+            
+            /* Add to cache */
+            EXHASH_ADD_STR(M_rms, rmname, el);
+            
+            el=NULL;
+        }
+        
+        /* cached OK */
+        first=EXFALSE;
     }
     
+    EXHASH_FIND_STR(M_rms, rm_name, el);
+    
+    if (NULL!=el)
+    {
+        NDRX_LOG(log_info, "rm_name=[%s] found switch [%s] libs [%s]", 
+                rm_name, el->structname, el->libnames);
+        ret=EXTRUE;
+        memcpy(p_rmdef, el, sizeof(*p_rmdef));
+    }
+    
+    el=NULL;
+    
 out:
+    
+    if (NULL!=el)
+    {
+        NDRX_FPFREE(el);
+    }
+
     if (NULL!=fp)
     {
         NDRX_FCLOSE(fp);
         fp = NULL;
+    }
+
+    if (EXFAIL==ret)
+    {
+        /* delete the cache... */
+        EXHASH_ITER(hh, M_rms, el, elt)
+        {
+            EXHASH_DEL(M_rms, el);
+            NDRX_FPFREE(el);
+        }
     }
 
     return ret;
