@@ -60,7 +60,7 @@
 #include <psstdstring.h>
 #include <psstdexutil.h>
 #include <psstdaux.h>
-
+#include "buildtools.h"
 /*---------------------------Externs------------------------------------*/
 extern void ddr_scan_string (char *yy_str  );
 extern int ddrlex_destroy  (void);
@@ -299,6 +299,31 @@ expublic void printfunc(HPSCRIPTVM v,const PSChar *s,...)
 }
 
 /**
+ * Get RM switch
+ * @param [script] RM name
+ * @return XASwitch struct name, or "" empty string
+ */
+static PSInteger tux_get_rmswitch(HPSCRIPTVM v)
+{
+    const PSChar *str;
+    
+    ndrx_rm_def_t sw;
+    ps_getstring(v,2,&str);
+    
+    if (EXTRUE==ndrx_get_rm_name((char *)str, &sw))
+    {
+        ps_pushstring(v, sw.structname, -1);
+    }
+    else
+    {
+        ps_pushstring(v, "", -1);
+    }
+    
+    return 1;
+
+}
+
+/**
  * Error function
  * @param v
  * @param s
@@ -350,6 +375,13 @@ expublic int tux_init_vm(char *script_nm)
     /* register new func for DDR parsing. */
     ps_pushstring(v,"tux_ddr_parse",-1);
     ps_newclosure(v,tux_ddr_parse,0);
+    ps_setparamscheck(v,2,".s");
+    ps_setnativeclosurename(v,-1,"tux_ddr_parse");
+    ps_newslot(v,-3,PSFalse);
+    
+    /* Switch resolver */
+    ps_pushstring(v,"tux_get_rmswitch",-1);
+    ps_newclosure(v,tux_get_rmswitch,0);
     ps_setparamscheck(v,2,".s");
     ps_setnativeclosurename(v,-1,"tux_ddr_parse");
     ps_newslot(v,-3,PSFalse);

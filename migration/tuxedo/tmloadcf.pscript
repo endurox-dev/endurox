@@ -373,7 +373,7 @@ function prep_groups(instance)
         //Get our groups
         if ( !group.is_default && (get_val(group, "LMID", null)[0] == instance.lmid))
         {
-            group.plot<-false;
+            group.plot<-true;
 
             if ("routed" in group)
             {
@@ -385,8 +385,6 @@ function prep_groups(instance)
                 //Mark that this instance uses xa.
                 instance.xa_used<-true;
 
-                group.plot<-true;
-
                 group.rmid <- get_val(group, "GRPNO", null)[0];
                 local openinfo = get_val(group, "OPENINFO", null)[0];
 
@@ -395,11 +393,11 @@ function prep_groups(instance)
 
                 local res = ex.capture(openinfo)[1];
 
-                group.xaswitch <-openinfo.slice(res.begin, res.end);
+                group.xaswitchname <-openinfo.slice(res.begin, res.end);
 
-                print("Got switch: ["+group.xaswitch+"]");
-
-                if (group.xaswitch== "TUXEDO/QM")
+                print("Got switch: ["+group.xaswitchname+"]");
+                
+                if (group.xaswitchname== "TUXEDO/QM")
                 {
                     //Special case for MQ
                     //We only need Qspace name, the data will be stored
@@ -423,8 +421,6 @@ function prep_groups(instance)
                 }
                 else
                 {
-			//TODO: Resolve switch, if switch is known, use Enduro/X standard
-			//tmsrv loader. If switch is unknown, use the TMSNAME binary.
                     ex = regexp(@"^.*:(.*)");
                     res = ex.capture(openinfo)[1];
                     //Extract the values, transform the "TUXEDO/QM"
@@ -471,7 +467,21 @@ function prep_groups(instance)
  */
 function prep_servers(instance)
 {
-    //TODO
+    foreach(idx,server in M_sections["*SERVERS"].order)
+    {
+    
+        if (!server.is_default)
+        {
+            local server_srvgrp = get_val(server, "SRVGRP", null);
+            local group_lmid = get_val(
+                M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", null)[0];
+
+            if (group_lmid == instance.lmid)
+            {
+                print("Processing binary: ["+server.name+"]");
+            }
+        }
+    }
 }
 
 
@@ -545,6 +555,9 @@ NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
     
     print("ini_file (global): ["+instance.ini_global_text+"]");
 
+    //TODO - pre-process binaries + this shall remove any groups
+    //Defined but not used by any binary or any default -> do not plot
+
     prep_groups(instance);
 
     instance.ini_groups_text<-"";
@@ -558,15 +571,14 @@ NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
     foreach(idx,group in M_sections["*GROUPS"].order)
     {
         //Get our groups
-        if (!group.is_default && get_val(group, "LMID", null)[0] == instance.lmid &&
-            group.plot)
+        if (!group.is_default && get_val(group, "LMID", null)[0] == instance.lmid)
         {
-            local group_text ="";
+            local group_text ="[@global/"+group.name+"]";
 
-            if ("TUXEDO/QM"==group.xaswitch)
+            if ("xaswitchname" in group && "TUXEDO/QM"==group.xaswitchname)
             {
-                group_text=
-@"[@global/"+group.name+@"]
+                group_text+=
+@"
 NDRX_XA_RES_ID="+group.rmid+@"
 NDRX_XA_OPEN_STR="+group.openinfo+@"
 NDRX_XA_CLOSE_STR="+group.closeinfo+@"
@@ -574,15 +586,14 @@ NDRX_XA_DRIVERLIB=libndrxxaqdisks."+M_wizzard.shared_lib_pfx+@"
 ; dylib needed for osx
 NDRX_XA_RMLIB=libndrxxaqdisk."+M_wizzard.shared_lib_pfx+@"
 NDRX_XA_LAZY_INIT=0
-NDRX_XA_FLAGS=FDATASYNC;DSYNC
-";
+NDRX_XA_FLAGS=FDATASYNC;DSYNC";
 /******************************************************************************/
             }
-            else
+            else if ("xaswitchname" in group)
             {
-                group_text=
+                group_text+=
 /******************************************************************************/
-@"[@global/"+group.name+@"]
+@"
 NDRX_XA_RES_ID="+group.rmid+@"
 NDRX_XA_OPEN_STR="+group.openinfo+@"
 NDRX_XA_CLOSE_STR="+group.closeinfo+@"
@@ -590,10 +601,16 @@ NDRX_XA_CLOSE_STR="+group.closeinfo+@"
 NDRX_XA_DRIVERLIB=libndrxxatmsx."+M_wizzard.shared_lib_pfx+@"
 NDRX_XA_RMLIB=-
 NDRX_XA_LAZY_INIT=1
-NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC
-";
+NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
 /******************************************************************************/
             }
+
+            if ("routed" in group)
+            {
+                group_text+="\nNDRX_RTGRP="+group.name;
+            }
+
+            group_text+="\n";            
             
             print("ini_file (group) [\n"+group_text+"]");
             //Add the group to the listing

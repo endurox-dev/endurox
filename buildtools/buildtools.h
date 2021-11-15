@@ -66,6 +66,8 @@ struct ndrx_rm_def
     char rmname[NDRX_RMNAME_MAX+1];
     char structname[NDRX_RMNAME_MAX+1];
     char libnames[NDRX_BPATH_MAX+1];
+    
+    EX_hash_handle hh; /**< makes this structure hashable               */
 };
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/

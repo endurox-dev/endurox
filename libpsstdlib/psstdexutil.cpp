@@ -31,6 +31,7 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#define __USE_POSIX_IMPLICITLY
 #include <ndrstandard.h>
 #include <pscript.h>
 #include <time.h>
@@ -274,6 +275,171 @@ static PSInteger _exutil_rands(HPSCRIPTVM v)
 }
 
 
+/**
+ * Parse clopt, with <block1> -- free args
+ * @param v PS virtual machine
+ * @param [script] clopt command line options
+ * @param [script] optstring for getopt
+ * @param [script] groups groups of argsX
+ * @return {.args1[{.opt, .val}], .args2[{.opt, .val}] .freeargs[]}
+ */
+static PSInteger _exutil_parseclopt(HPSCRIPTVM v, int nr_groups)
+{
+    int ret = PS_OK;
+    const PSChar *argv, *optstring, *optstring2;
+    int c;
+    char *token=NULL;
+    PSInteger memsize;
+    PSChar * stemp;
+    char seps[] = NDRX_CMDLINE_SEP; /* to avoid c++ warning */
+    char quotes[] = "\"";
+    ndrx_growlist_t list;
+    int index;
+    int bufsz;
+    int i;
+    ps_getstring(v,2,&argv);
+    ps_getstring(v,3,&optstring);
+    
+    if (nr_groups > 1)
+    {
+        ps_getstring(v,4,&optstring2);
+    }
+    
+    bufsz = strlen(argv)+1;
+    memsize = (bufsz)*sizeof(PSChar);
+    stemp = ps_getscratchpad(v,memsize);
+    
+    ndrx_growlist_init(&list, 10, sizeof(char *));
+    
+    /* getopt require this: */
+    if (EXSUCCEED!=ndrx_growlist_append(&list, (void *)&token))
+    {
+        NDRX_LOG(log_error, "ndrx_growlist_append() failed - oom?");
+        ret=PS_ERROR;
+        goto out;
+    }
+    
+    /* load dummy name for parse... */
+    NDRX_STRCPY_SAFE_DST(stemp, argv, bufsz);
+    
+    /* have strtok which respects quoted strings... */
+    token = ndrx_strtokblk(stemp, seps, quotes);
+    while( token != NULL )
+    {
+        /* Store the token up there... */
+        if (EXSUCCEED!=ndrx_growlist_append(&list, (void *)&token))
+        {
+            NDRX_LOG(log_error, "ndrx_growlist_append() failed - oom?");
+            ret=PS_ERROR;
+            goto out;
+        }
+        
+        /* Push tokens to array */
+        token = ndrx_strtokblk( NULL, seps, quotes);
+    }
+    
+#ifdef __GNU_LIBRARY__
+    optind=0; /* reset lib, so that we can scan again. */
+#else
+    optind=1; /* reset lib, so that we can scan again. */
+#endif
+    
+    /* return value table 
+     * table stays on the stack to have return value.
+     */
+    ps_newtable(v);
+    
+    for (i=0; i<nr_groups; i++)
+    {
+        char key[16];
+        const PSChar *p_opts = optstring;
+        
+        if (i==1)
+        {
+            p_opts = optstring2;
+        }
+        
+        snprintf(key, sizeof(key), "args%d", i+1);
+        
+        /* set the hash key... */
+        ps_pushstring(v, key,-1);
+        /* the value is array */
+        ps_newarray(v, 0);
+
+        while ((c = getopt (list.maxindexused+1, (char **)list.mem, (const char *)p_opts)) != -1)
+        {
+            char opt[2] = {(char)c, EXEOS};
+            
+            /* Load parsed argument */
+            ps_newtable(v);
+
+            ps_pushstring(v,"opt",-1);
+            ps_pushstring(v,opt,-1);
+            ps_newslot(v,-3,PSFalse);
+
+            if (NULL!=optarg)
+            {
+                ps_pushstring(v,"val",-1);
+                ps_pushstring(v,optarg,-1);
+                ps_newslot(v,-3,PSFalse);
+            }
+
+            ps_arrayappend(v,-2);
+        }
+        ps_newslot(v,-3,PSFalse);
+    }
+    
+    /* set the hash key... */
+    ps_pushstring(v,"freeargs",-1);
+    
+    /* value is array */
+    ps_newarray(v, 0);
+    
+    for (index = optind; index < list.maxindexused+1; index++)
+    {
+        ps_pushstring(v,((char **)list.mem)[index],-1);
+        ps_arrayappend(v,-2);
+    }
+
+    ps_newslot(v,-3,PSFalse);
+    
+out:
+    
+    ndrx_growlist_free(&list);
+
+    if (PS_OK==ret)
+    {
+        return 1;
+    }
+    else
+    {
+        return ps_throwerror(v, "Failed to process");
+    }
+}
+
+/**
+ * Parse clopt with 1 group
+ * @param [script] clopt first group -- free args
+ * @param [script] optstring 
+ * @return see _exutil_parseclopt
+ */
+static PSInteger _exutil_parseclopt1(HPSCRIPTVM v)
+{
+    return _exutil_parseclopt(v, 1);
+}
+
+/**
+ * Parse clopt with 2 groups -a -r -g -s 
+ * @param [script] clot first group -- second group -- free args
+ * @param optstring1 opt string for first group
+ * @param optstring2 opt string for for second group
+ * @return see _exutil_parseclopt
+ */
+static PSInteger _exutil_parseclopt2(HPSCRIPTVM v)
+{
+    return _exutil_parseclopt(v, 2);
+}
+
 #define _DECL_FUNC(name,nparams,pmask) {_SC(#name),_exutil_##name,nparams,pmask}
 static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
@@ -288,6 +454,8 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(basename,2,_SC(".s")),
         _DECL_FUNC(dirname,2,_SC(".s")),
         _DECL_FUNC(rands,2,_SC(".n")),
+        _DECL_FUNC(parseclopt1,3,_SC(".ss")),
+        _DECL_FUNC(parseclopt2,4,_SC(".sss")),
 	{0,0}
 };
 #undef _DECL_FUNC

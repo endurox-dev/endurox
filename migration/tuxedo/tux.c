@@ -69,7 +69,7 @@ extern int tuxdebug;
  */
 void ddrerror(char *s, ...)
 {
-        char errbuf[2048];
+    char errbuf[2048];
 }
 
 /**
