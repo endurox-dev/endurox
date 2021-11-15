@@ -423,6 +423,8 @@ function prep_groups(instance)
                 }
                 else
                 {
+			//TODO: Resolve switch, if switch is known, use Enduro/X standard
+			//tmsrv loader. If switch is unknown, use the TMSNAME binary.
                     ex = regexp(@"^.*:(.*)");
                     res = ex.capture(openinfo)[1];
                     //Extract the values, transform the "TUXEDO/QM"
@@ -548,6 +550,11 @@ NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
     instance.ini_groups_text<-"";
 /******************************************************************************/
     //Generate groups...
+    //TODO: Add DDR setting of any group
+    //In case if group is not plotting, just add empty group
+    //Empty group shall be set in case if process have default group defined
+    //And process group is different than default, thus we should be able to
+    //reset process away from default (even to empty)
     foreach(idx,group in M_sections["*GROUPS"].order)
     {
         //Get our groups
