@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
     /***************************************************************************/
     
     /* set tout to 5 */        
-    if (TX_OK!=(ret=tx_set_transaction_timeout(2)))
+    if (TX_OK!=(ret=tx_set_transaction_timeout(7)))
     {
         NDRX_LOG(log_error, "TESTERROR: tx_set_transaction_timeout() fail: %d", 
                 ret);
@@ -260,10 +260,10 @@ int main(int argc, char** argv) {
         }
         
         /* check other flags... */
-        if (2!=txinf.transaction_timeout)
+        if (7!=txinf.transaction_timeout)
         {
             NDRX_LOG(log_error, "TESTERROR: tx_info tout: %d expected %d", 
-                    txinf.transaction_timeout, 2);
+                    txinf.transaction_timeout, 7);
             EXFAIL_OUT(ret);
         }
         
