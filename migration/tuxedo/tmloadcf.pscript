@@ -406,7 +406,7 @@ function prep_groups(instance)
                     ex = regexp(@"^.*:.*:(.*)");
                     res = ex.capture(openinfo)[1];
                     local qspace = openinfo.slice(res.begin,res.end);
-                    group.openinfo <- "datadir=\"${NDRX_APPHOME}/qdata/rm"+group.rmid+"\",qspace=\""+qspace+"\"";
+                    group.openinfo <- "datadir=\"${NDRX_APPHOME}/qdata/"+qspace+"\",qspace=\""+qspace+"\"";
                     group.closeinfo <- "${NDRX_XA_OPEN_STR}";
                     
                     //Schedule folder for creation.
@@ -415,8 +415,13 @@ function prep_groups(instance)
                         M_folder_gen[instance.app_home+"/qdata"]<-{};
                     }
                     group.qspace<-qspace;
-                    group.data_folder <- instance.app_home+"/qdata/rm"+group.rmid;
+                    group.data_folder <- instance.app_home+"/qdata/"+qspace;
                     M_folder_gen[group.data_folder]<-{};
+
+                    //Hashmap of auto-queues served by given queue space
+                    //internally may contains .trantime setting override.
+                    group.auto_queues<-{};
+                    group.workers<-0;
 
                 }
                 else
@@ -467,41 +472,139 @@ function prep_groups(instance)
  */
 function prep_servers(instance)
 {
-    
+    local server_optstring = "Aa:s:e:Ghl:n:o:Pp:rtv";
+
     // phase 1. Get infos about the system
-    foreach(idx,server in M_sections["*SERVERS"].order)
+    foreach(idx,server in M_sections["*SERVERS"].order) if (!server.is_default)
     {
         local server_srvgrp = get_val(server, "SRVGRP", "");
         local group_lmid = "";
 	if (server_srvgrp!="")
 	{
-		group_lmid =get_val(M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", "")[0];
+            group_lmid =get_val(M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", "")[0];
 	}
 
         if (group_lmid== "" || group_lmid == instance.lmid)
         {
+            local remove = false;
             print("Processing binary: ["+server.name+"]");
             
             /* Detect the type of the binary */
+
+            switch(server.name)
+            {
+                case "WSL":
+                case "JSL":
+                        instance.restin<-true;
+                        remove=true;
+                    break;
+                case "TMSYSEVT":
+                case "TMUSREVT":
+                        instance.events<-true;
+                        remove=true;
+                    break;
+                case "TMMETADATA":
+                case "TMFAN":
+                        remove=true;
+                    break;
+                case "TMQFORWARD":
+
+                        remove=true;
+                        
+                        local group = M_sections["*GROUPS"].params[server_srvgrp[0]][0];
+                        //Parse the group of the forward
+                        //and parse the clopt of forward, so that we get
+                        //queue name & 
+                        //Extract min setting (used to set workers for the Q)
+                        //Extract -t from clopt second group
+                        //Extract -q Q1,Q2,etc. from clopt second group
+                        
+                        local fwd_min = get_val(server, "MIN", null)[0];
+                        local fwd_clopt = get_val(server, "CLOPT", null)[0];
+                            
+                        //server opt string + tmqforward optstring
+                        local clopt_parsed = parseclopt2(fwd_clopt, 
+                                server_optstring, "q:t:ib:ednf:");
+
+                        //assume -1 no special timeout used.
+                        local trantime = "-1";
+
+                        foreach(idx,opt in clopt_parsed.args2)
+                        {
+                            if (opt.opt=="t")
+                            {
+                                trantime= opt.val;
+                                break;
+                            }
+                        }
+
+                        foreach(idx,opt in clopt_parsed.args2)
+                        {
+                            if (opt.opt=="q")
+                            {
+                                //Split Q by ,
+                                //And load each Q
+                                local qs = split(opt.val, ",");
+                                foreach (idx, qq in qs)
+                                {  
+                                    //Must be loaded.
+                                    print(format("Adding Q [%s] to group [%s] trantime: %s",
+                                                qq, group.name, trantime));
+                                    group.auto_queues[qq]<-{};
+                                    group.auto_queues[qq].queue<-qq;
+                                    group.auto_queues[qq].trantime<-trantime;
+                                    group.auto_queues[qq].workers<-fwd_min;
+                                    group.workers+=fwd_min.tointeger();
+                                }
+                            }
+                        }
+                    break;
+            }
+
+            if (remove)
+            {
+                //remove this hash key
+                if (server.name in M_sections["*SERVERS"].params)
+                {
+                    delete M_sections["*SERVERS"].params[server.name];
+                }
+                //remove this...
+                M_sections["*SERVERS"].order.remove(idx);
+            }
             
         }   
     }
-    
+
     // phase 2. Prepare binaries into instance.servers array, each element is hash with
     // key settings for the server or default to be generated.
     
-    // phase 3. Merge consecutive defaults, remove last default if no binaries follow
+    // phase 4. Merge consecutive defaults, remove last default if no binaries follow
     
     
 }
 
+/**
+ * prepare networking. This will update each
+ * machine with LMID with ip/host/binding port information
+ */
+function prep_networking()
+{   
+    //TODO: Add call to getservbyname() to get port by name.
+    //TODO: 
+    //155.2.193.18:some-port
+    //155.2.193.18:2334
+    //some.domain:some-port
+    //some.domain:2334
+    //0x0002010101020304
+    //etc..
+
+}
 
 /**
  * Prepare texts for instance
  * @param instance current object of interest
- * @param machine current machine of processing
  */
-function generate(instance, machine)
+function generate(instance)
 {
 
     //Prepare ranges
@@ -539,7 +642,7 @@ NDRX_LEV=5
 NDRX_LOG=${NDRX_APPHOME}/log/xadmin.log
 NDRX_MSGMAX=100
 NDRX_MSGSIZEMAX=56000
-NDRX_NODEID=1
+NDRX_NODEID="+instance.machine.nodeid+@"
 NDRX_QPATH="+M_wizzard.qpath+@"
 NDRX_QPREFIX=/"+instance.prefix+@"
 NDRX_RNDK="+rands(8)+@"
@@ -669,9 +772,16 @@ function ex_generate(arg)
     //Open output objects for each of the machine
     if ("*MACHINES" in M_sections)
     {
-        foreach(idx,val in M_sections["*MACHINES"].params)
+        local nodeid=1;
+        foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
         {
-            local machine = M_sections["*MACHINES"].params[idx][0];
+            val[0].nodeid<-nodeid;
+            nodeid++;
+        }
+
+        foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
+        {
+            local machine = val[0];
             M_instances[machine.name]<-{};
 
             local instance = M_instances[machine.name];
@@ -814,7 +924,13 @@ function ex_generate(arg)
                 M_folder_gen[instance.app_conf]<-{};
             }
 
-            generate(instance, machine);
+            //TODO: Parse networking. WHere possible for each machine assign
+            //the hostname/ip_addr, and listening port (we will bind on 0.0.0.0
+            //in listen mode)
+
+            instance.machine<-machine;
+
+            generate(instance);
 
         }
     }
