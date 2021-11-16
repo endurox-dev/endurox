@@ -124,6 +124,9 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
     static int first = EXTRUE;
     ndrx_rm_def_t *el = NULL, *elt;
     
+    p_rmdef->rmname[0]=EXEOS;
+    p_rmdef->structname[0]=EXEOS;
+    p_rmdef->libnames[0]=EXEOS;
     if (first)
     {
         config=getenv(CONF_NDRX_RMFILE);
@@ -174,9 +177,7 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
                 continue;
             }
             
-            
             /* Alloc new tmp_rm */
-            
             if (NULL==(el = NDRX_FPMALLOC(sizeof(ndrx_rm_def_t),0)))
             {
                 NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", 
@@ -184,7 +185,9 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
                 EXFAIL_OUT(ret);
             }
             
-            memset(el, 0, sizeof(el));
+            el->rmname[0]=EXEOS;
+            el->structname[0]=EXEOS;
+            el->libnames[0]=EXEOS;
             
             /* try to parse rm switch */
             if (EXSUCCEED!=parse_rm_string(stripped, el))
@@ -207,9 +210,11 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
     if (NULL!=el)
     {
         NDRX_LOG(log_info, "rm_name=[%s] found switch [%s] libs [%s]", 
-                rm_name, el->structname, el->libnames);
+                el->rmname, el->structname, el->libnames);
         ret=EXTRUE;
-        memcpy(p_rmdef, el, sizeof(*p_rmdef));
+    	NDRX_STRCPY_SAFE(p_rmdef->rmname, el->rmname);
+    	NDRX_STRCPY_SAFE(p_rmdef->structname, el->structname);
+    	NDRX_STRCPY_SAFE(p_rmdef->libnames, el->libnames);
     }
     
     el=NULL;

@@ -480,6 +480,8 @@ function prep_servers(instance)
             {
                 print("Processing binary: ["+server.name+"]");
             }
+
+
         }
     }
 }
