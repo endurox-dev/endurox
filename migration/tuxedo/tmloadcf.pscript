@@ -561,15 +561,10 @@ function prep_servers(instance)
                     break;
             }
 
+            //do not process the deleted servers
             if (remove)
             {
-                //remove this hash key
-                if (server.name in M_sections["*SERVERS"].params)
-                {
-                    delete M_sections["*SERVERS"].params[server.name];
-                }
-                //remove this...
-                M_sections["*SERVERS"].order.remove(idx);
+		server.deleted<-true;
             }
             
         }   
