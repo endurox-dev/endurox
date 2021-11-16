@@ -127,12 +127,16 @@ expublic long ndrx_platf_stack_get_size(void)
                 if (0==M_stack_size)
                 {
                     NDRX_LOG(log_info, "Using OS Default new thread stack size...");
-                    MUTEX_UNLOCK_V(M_stack_size_lock);
                 }
             }
+            else
+            {
+                /* use 8MB default, if setting not present */
+                M_stack_size=NDRX_STACK_MAX;
+            }
             
-            /* if it was set to 0, or EXFAIL */
-            if (M_stack_size <= 0)
+            /* if it was set to -1 */
+            if (M_stack_size < 0)
             {
                 if (EXSUCCEED!=getrlimit (RLIMIT_STACK, &limit))
                 {

@@ -467,23 +467,32 @@ function prep_groups(instance)
  */
 function prep_servers(instance)
 {
+    
+    // phase 1. Get infos about the system
     foreach(idx,server in M_sections["*SERVERS"].order)
     {
-    
-        if (!server.is_default)
+        local server_srvgrp = get_val(server, "SRVGRP", "");
+        local group_lmid = "";
+	if (server_srvgrp!="")
+	{
+		group_lmid =get_val(M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", "")[0];
+	}
+
+        if (group_lmid== "" || group_lmid == instance.lmid)
         {
-            local server_srvgrp = get_val(server, "SRVGRP", null);
-            local group_lmid = get_val(
-                M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", null)[0];
-
-            if (group_lmid == instance.lmid)
-            {
-                print("Processing binary: ["+server.name+"]");
-            }
-
-
-        }
+            print("Processing binary: ["+server.name+"]");
+            
+            /* Detect the type of the binary */
+            
+        }   
     }
+    
+    // phase 2. Prepare binaries into instance.servers array, each element is hash with
+    // key settings for the server or default to be generated.
+    
+    // phase 3. Merge consecutive defaults, remove last default if no binaries follow
+    
+    
 }
 
 

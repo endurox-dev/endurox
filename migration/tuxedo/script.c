@@ -175,6 +175,7 @@ static PSInteger tux_ddr_parse(HPSCRIPTVM v)
         /* start to parse... */
         ndrx_G_ddrcolumn=0;
         /* NDRX_LOG(log_info, "Parsing config: [%s]", expr); */
+        /* TODO: strdup the string, so that yacc gan to the free */
         ddr_scan_string((char *)s);
 
         if (EXSUCCEED!=ddrparse() || EXSUCCEED!=ndrx_G_ddrp.error)

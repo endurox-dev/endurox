@@ -59,6 +59,8 @@ int ndrx_G_tuxline = 1;
                         
 [ \t\r]+                { 
                         }
+#.*$                    { 
+                        }
 "DEFAULT:"              { 
     
                             tuxlval.val = NDRX_STRDUP("DEFAULT:");
