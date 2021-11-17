@@ -183,6 +183,7 @@ exprivate void print_help(char *name)
     fprintf(stderr, "  -y               Do not ask for confirmation\n");
     fprintf(stderr, "  -c               RFU, syntax check only\n");
     fprintf(stderr, "  -b               RFU, ignored\n");
+    fprintf(stderr, "  -d               Debug level 0..5\n");
     fprintf(stderr, "  -h               Print this help\n");
     fprintf(stderr, "  -s               Converter script name (if not using internal)\n"); 
 }
@@ -200,12 +201,20 @@ int main(int argc, char **argv)
     FILE *handle=NULL;
     NDRX_BANNER("TMLOADCF Tool");
     
+    /* if NDRX_DEBUG_CONF is set to empty... boot with minimum log level...*/
+
+    /* put empty config -> let tool to control the debug level */
+    if (NULL==getenv("NDRX_DEBUG_CONF"))
+    {
+        setenv("NDRX_DEBUG_CONF", "", 1);
+    }
+    tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP, 0, "", "", "");
     ndrx_growlist_init(&M_strbuf, 1000, sizeof(char));
 
     /* clear any error... */
     _Nunset_error();
             
-    while ((c = getopt (argc, argv, "nycb:hs:")) != -1)
+    while ((c = getopt (argc, argv, "nycb:hs:d:")) != -1)
     {
         switch (c)
         {
@@ -216,7 +225,9 @@ int main(int argc, char **argv)
                 print_help(argv[0]);
                 return 0; /*<<<< RETURN ! */
                 break;
-            case 'n':
+            case 'd':
+                tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP
+                        , atoi(optarg), "", "", "");
             case 'c':
                 M_syntax_check = EXTRUE;
                 break;

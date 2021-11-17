@@ -902,7 +902,13 @@ expublic void ndrx_init_debug(void)
 
     if (NULL==cconfig)
     {
-        if (NULL!=cfg_file &&
+
+        if (NULL!=cfg_file && EXEOS==cfg_file[0])
+        {
+            /* allow zero config -> no debug intially. */
+            G_tp_debug.level = G_ubf_debug.level = G_ndrx_debug.level = log_error;
+        }
+        else if (NULL!=cfg_file &&
                 NULL!=(f=fopen(cfg_file, "r")))
         {
 
