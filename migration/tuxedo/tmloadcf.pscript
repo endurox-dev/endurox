@@ -15,14 +15,12 @@ const NET_BASE_PORT = 21000;
 
 //Host IP address (assumed) by + nodeid, range 200..2NN (where NN is max cluster node id
 //Also assumed that hosts can reach each other by these addresses.
-const NET_DEFAULT_IP = 192.168.88.200;
+const NET_DEFAULT_IP_START=200;           //start IP of the nodes
+const NET_DEFAULT_IP = "192.168.88.";
 
 
 //Include wizard base.
 compilestring(getwizardbase())();
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // UBB Config, functions called by tmloadcf as flex & bison parses.
@@ -34,6 +32,9 @@ compilestring(getwizardbase())();
 
 //This will keep open handles
 M_instances <- {};
+
+//Mapping from [LMID] -> MACHINE entry
+M_lmidmachines <- {};
 
 M_wizzard <- WizardBase();
 
@@ -278,6 +279,40 @@ function get_routing_services(instance)
     }
     print("Routing services: "+cnt);
     return cnt;
+}
+
+/**
+ * Reserve number of slots in free ranges
+ * remove those ranges from next time use.
+ * @param instance current machine instance we are generating
+ * @slots number of slots required
+ * @return start index that is guaranteed to have + (slots-1) free
+ *  places.
+ */
+function reserve_range(instance, slots)
+{
+    local ret = 0;
+    foreach(idx,range in instance.free_ranges)
+    {
+        if (range.min + slots <= range.max)
+        {
+            ret=range.min;
+            //Reduce
+            range.min+=(slots-1);
+
+            if (range.min==range.max)
+            {
+                delete instance.free_ranges[idx];
+            }
+        }
+    }
+
+    if (0==ret)
+    {
+        throw("Cannot find free binary range for number of "+slots+" slots");
+    }
+
+    return ret;
 }
 
 /**
@@ -589,10 +624,37 @@ function prep_servers(instance)
         }   
     }
 
+
     // phase 2. Prepare binaries into instance.servers array, each element is hash with
     // key settings for the server or default to be generated.
+    instance.servers<-[]
+
+    local new_srv = {};
     
-    // phase 4. Merge consecutive defaults, remove last default if no binaries follow
+    //Add some reasonable defaults (mainly required by Enduro/X
+    //and may be merged later if we get some further defaults
+    new_srv.min<-1;
+    new_srv.max<-1;
+    new_srv.autokill<-1;
+    new_srv.start_max<-10;
+    new_srv.pingtime<-100;
+    new_srv.ping_max<-800;
+    new_srv.end_max<-10;
+    new_srv.killtime<-1;
+    new_srv.is_default<-1;
+
+    instance.servers.append(new_srv);
+
+    //Add event server if used.
+    if ("events" in instance)
+    {
+    }
+
+    //Add networking if used.
+
+    //Generate non deleted binaries & defaults
+    
+    //phase 4. Merge consecutive defaults, remove last default if no binaries follow
     
     
 }
@@ -600,48 +662,54 @@ function prep_servers(instance)
 /**
  * prepare networking. This will update each
  * As we need range of ports. we will extract only ip address from.
+ * IPv6 recognition during migration currently is not supported (just add manually
+ * to the tpbridge)
  * machine with LMID with ip/host/binding port information
  */
 function prep_networking()
 {   
-    //TODO: Add call to getservbyname() to get port by name.
-    //TODO: 
-    //155.2.193.18:some-port
-    //155.2.193.18:2334
-    //some.domain:some-port
-    //some.domain:2334
-    //0x0002010101020304
-    //etc..
-
-    //TODO: For each network entry.
-
-    //base port used
-    local base_port=21000;
-
     if (!("*NETWORK" in M_sections))
     {
         return;
     }
-
+     
+    // Assign each ip addr/or hostname, and add networked param
     foreach(idx,net in M_sections["*NETWORK"].params) if (!net[0].is_default)
     {
         local net = net[0];
         local naddr = get_val(net, "NADDR", null)[0];
         print(format("parsing lmid=[%s] naddr=[%s]", net.name, naddr));
+	M_lmidmachines[idx].networked<-true;
 
         if (regexp("^//[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:.*").match(naddr))
         {
-            print("Extract by ip");
+            local ex = regexp("^//([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3}):.*");
+            local res = ex.capture(naddr);
+            local ip = naddr.slice(res[1].begin,res[1].end)+"."+
+                        naddr.slice(res[2].begin,res[2].end)+"."+
+                        naddr.slice(res[3].begin,res[3].end)+"."+
+                        naddr.slice(res[4].begin,res[4].end);
+            print("Extract by ip: "+ip);
+            M_lmidmachines[idx].ip <- ip;
+            
         }
         else if (regexp("^//.*:.*").match(naddr))
         {
-            print("Extract by hostname");
+            local ex = regexp(@"^//(.*):.*");
+            local res = ex.capture(naddr);
+            local hostname = naddr.slice(res[1].begin,res[1].end);
+            print("Extract by hostname: "+hostname);
+            M_lmidmachines[idx].hostname <- ip;
         }
         else
         {
-            print("Use default addresses");
+            
+            local ip_start = NET_DEFAULT_IP_START + M_lmidmachines[idx].nodeid;
+            local ip = "192.168.88."+ip_start;
+            print("Use default addresses: "+ip);
+            M_lmidmachines[idx].hostname <- ip;
         }
-
+	
     }
 
 }
@@ -783,14 +851,15 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
                 instance.ini_groups_text+="\n"+group_text;
             }
         }
-
         //Prepare TMQ queues
         //Queue names will be extracted for forward binaries (if any found)
     }
 
     //print("ini_file (groups): ["+instance.ini_groups_text+"]");
 
-    //Generate debug config
+    //TODO: Generate debug config
+    //TODO: Generate forward queues (if have in any of our interested groups)
+
 
     prep_servers(instance);
 
@@ -826,6 +895,10 @@ function ex_generate(arg)
     {
         val[0].nodeid<-nodeid;
         nodeid++;
+        
+        //Map LMID:MACHINE
+        local lmid = get_val(val[0], "LMID", null)[0];
+        M_lmidmachines[lmid]<-val[0];
     }
 
     //Assign networking identifiers
