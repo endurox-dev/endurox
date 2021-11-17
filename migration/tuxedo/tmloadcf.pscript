@@ -427,12 +427,8 @@ function prep_groups(instance)
         //Get our groups
         if ( !group.is_default && (get_val(group, "LMID", null)[0] == instance.lmid))
         {
-            group.plot<-true;
-
-            if ("routed" in group)
-            {
-                group.plot<-true;
-            }
+            //Would be set to plotting, once phase 4 of servers processing is done
+            group.plot<-false;
 
             if ("OPENINFO" in group.keywords)
             {
@@ -531,14 +527,10 @@ function prep_servers(instance)
     // phase 1. Get infos about the system
     foreach(idx,server in M_sections["*SERVERS"].order) if (!server.is_default)
     {
-        local server_srvgrp = get_val(server, "SRVGRP", "");
-        local group_lmid = "";
-	if (server_srvgrp!="")
-	{
-            group_lmid =get_val(M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", "")[0];
-	}
+        local server_srvgrp = get_val(server, "SRVGRP", null);
+        local group_lmid =get_val(M_sections["*GROUPS"].params[ server_srvgrp[0] ][0], "LMID", null)[0];
 
-        if (group_lmid== "" || group_lmid == instance.lmid)
+        if (group_lmid == instance.lmid)
         {
             local remove = false;
             print("Processing binary: ["+server.name+"]");
@@ -642,20 +634,261 @@ function prep_servers(instance)
     new_srv.end_max<-10;
     new_srv.killtime<-1;
     new_srv.is_default<-1;
+    instance.servers.append(new_srv);
 
+    //Add common configuration server
+    new_srv = {};
+    new_srv.bin<-"cconfsrv";
+    new_srv.srvid <- reserve_range(instance, 2);
+    new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/cconfsrv.${NDRX_SVSRVID}.log -r";
+    new_srv.min<-2;
+    new_srv.max<-2;
+    instance.servers.append(new_srv);
+
+    //Add tpadmin server
+    new_srv = {};
+    new_srv.bin<-"tpadmsv";
+    new_srv.srvid <- reserve_range(instance, 2);
+    new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tpadmsv.${NDRX_SVSRVID}.log -r";
+    new_srv.min<-2;
+    new_srv.max<-2;
     instance.servers.append(new_srv);
 
     //Add event server if used.
     if ("events" in instance)
     {
+        new_srv = {};
+        new_srv.bin<-"tpevsrv";
+        new_srv.srvid <- reserve_range(instance, 1);
+        new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log -r";
+        new_srv.min<-1;
+        new_srv.max<-1;
+        instance.servers.append(new_srv);
     }
 
     //Add networking if used.
+    if ( "networked" in M_lmidmachines[instance.lmid])
+    {
+        //link this machine with other networked machines.
+        //the order of the machines
+        //lets without -f, add manually if different architecture hosts
+        //have been found.
+        foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
+        {
+            local machine = val[0];
+            local lmid  = machine.keywords.LMID[0];
+
+            new_srv = {};
+            new_srv.bin<-"tpbridge";
+            new_srv.srvid <-reserve_range(instance, 1);
+            new_srv.min<-1;
+            new_srv.max<-1;
+
+            if (machine.nodeid < instance.nodeid)
+            {
+                //In this case we take passive role and accept incoming connections
+                new_srv.sysopt<-("-e ${NDRX_APPHOME}/log/tpbridge."+machine.nodeid+ "."+instance.nodeid+".log");
+
+                new_srv.appopt<-"-n"+machine.nodeid+" -r -i 0.0.0.0 -p "
+                        +(NET_BASE_PORT+machine.nodeid)+" -tP -z30";
+
+                instance.servers.append(new_srv);
+            }
+            else if (machine.nodeid > instance.nodeid)
+            {
+
+                //This is active role, we connect 
+                new_srv.sysopt<-"-e ${NDRX_APPHOME}/log/tpbridge." 
+                        +machine.nodeid+ "."+instance.nodeid+".log";
+
+                if ("ip" in machine)
+                {
+                    new_srv.appopt<-"-n"+machine.nodeid+" -r -i "+machine.ip+" -p "
+                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
+                }
+                else
+                {
+                    new_srv.appopt<-"-n"+machine.nodeid+" -r -h "+machine.host+" -p "
+                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
+                }
+
+                instance.servers.append(new_srv);
+            }
+        }
+    }
+
+    //loop over the binaries & defaults, if not deleted, add (for our instance)
+    foreach(idx,server in M_sections["*SERVERS"].order) if (! ("deleted" in server))
+    {
+        local proceed=false;
+        if (server.is_default)
+        {
+            //Any default is OK
+            proceed=true;
+        }
+        else
+        {
+            local server_srvgrp = get_val(server, "SRVGRP", null);
+            local group_lmid =get_val(M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", null)[0];
+            if (group_lmid==instance.lmid)
+            {
+                proceed=true;
+            }
+        }
+        
+        if (proceed)
+        {
+            //Process the binary, add to arrays...
+            new_srv = {};
+            new_srv.is_default <- server.is_default;
+            
+            if (!new_srv.is_default)
+            {
+                //Load clopt & app opt
+                local clopt = get_val(server, "CLOPT", null)[0];
+                local clopt_parsed = parseclopt1(clopt, server_optstring);
+                local have_A=false;
+                local have_e=false;
+                local sysopt = "";
+                local appopt = "";
+
+                //Check is -A not present, if so then we need to set -N
+                foreach(idx,opt in clopt_parsed.args1)
+                {
+                    if (opt.opt=="A")
+                    {
+                        have_A=true;
+                    }
+                    
+                    if (opt.opt=="e")
+                    {
+                        have_e=true;
+                    }
+                }
+                
+                if (!have_A)
+                {
+                    sysopt = "-N";
+                }
+
+                //Add -e file to write the stderr to log files.
+                if (!have_e)
+                {
+                    if (sysopt!="")
+                    {
+                        sysopt= sysopt + " " + " -e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
+                    }
+                    else
+                    {
+                        sysopt= " -e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
+                    }
+                }
+
+                //If string contains tab, space or newline - add quotes
+                //For both sysopt and appopt.
+
+                //Now generate clopt...
+                foreach(idx,opt in clopt_parsed.args1) if (opt.opt != "A")
+                {
+                    sysopt=sysopt + " -"+opt.opt;
+                    if ("val" in opt)
+                    {
+                        if (null!=opt.val.find(" ") || null!=opt.val.find("\n") || null!=opt.val.find("\t"))
+                        {
+                            sysopt=sysopt + " \"" + opt.val + "\"";
+                        }
+                        else
+                        {
+                            sysopt=sysopt + " " + opt.val;
+                        }
+                    }
+                }
+
+                //Generate app opts
+                foreach(idx,opt in clopt_parsed.freeargs)
+                {
+                    if (appopt=="")
+                    {
+                        appopt=opt;
+                    }
+                    else
+                    {
+                        if (null!=opt.find(" ") || null!=opt.find("\n") || null!=opt.find("\t"))
+                        {
+                            appopt=appopt + " \"" + opt + "\"";
+                        }
+                        else
+                        {
+                            appopt=appopt + " " + opt;
+                        }
+                    }
+                }
+                
+                print("Built sysopt ["+sysopt+"]");
+                print("Built appopt ["+appopt+"]");
+                new_srv.sysopt <- sysopt;
+                new_srv.appopt <- appopt;
+            }
+
+            if ("SRVGRP" in server.keywords)
+            {
+                new_srv.cctag<-server.keywords.SRVGRP[0];
+            }
+
+            if ("SRVID" in server.keywords)
+            {
+                new_srv.srvid<-server.keywords.SRVID[0];
+            }
+
+            if ("MIN" in server.keywords)
+            {
+                new_srv.min<-server.keywords.MIN[0];
+            }
+
+            if ("MAX" in server.keywords)
+            {
+                new_srv.max<-server.keywords.MAX[0];
+            }
+
+            if ("ENVFILE" in server.keywords)
+            {
+                new_srv.env<-server.keywords.ENVFILE[0];
+            }
+
+            //Not used on Linux
+            if ("RQADDR" in server.keywords)
+            {
+                new_srv.rqaddr<-server.keywords.RQADDR[0];
+            }
+            
+            if ("RESTART" in server.keywords)
+            {
+                new_srv.respawn<-server.keywords.RESTART[0];
+            }
+
+            if ("MAXDISPATCHTHREADS" in server.keywords)
+            {
+                new_srv.maxdispatchthreads<-server.keywords.MAXDISPATCHTHREADS[0];
+            }
+
+            if ("MINDISPATCHTHREADS" in server.keywords)
+            {
+                new_srv.mindispatchthreads<-server.keywords.MINDISPATCHTHREADS[0];
+            }
+
+            //THREADSTACKSIZE this goes to process, thus read value from defaults...
+            local stacksz = get_val(server, "THREADSTACKSIZE", ""); 
+
+            if (stacksz=="")
+            {
+                new_srv.threadstacksize<-stacksz;
+            }
+        }
+
+    }
 
     //Generate non deleted binaries & defaults
-    
     //phase 4. Merge consecutive defaults, remove last default if no binaries follow
-    
     
 }
 
@@ -707,7 +940,7 @@ function prep_networking()
             local ip_start = NET_DEFAULT_IP_START + M_lmidmachines[idx].nodeid;
             local ip = "192.168.88."+ip_start;
             print("Use default addresses: "+ip);
-            M_lmidmachines[idx].hostname <- ip;
+            M_lmidmachines[idx].ip <- ip;
         }
 	
     }
