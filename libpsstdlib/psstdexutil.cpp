@@ -45,6 +45,7 @@
 #include <ndrx_config.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <netdb.h>
 
 
 #define _XOPEN_SOURCE_EXTENDED 1
@@ -233,6 +234,64 @@ static PSInteger _exutil_dirname(HPSCRIPTVM v)
     
     ps_pushstring(v,dirname(stemp),-1);
     
+    return 1;
+}
+
+
+/**
+ * netdb entry, resolve service by name
+ * Not thread safe version (but at least c is cross platform)
+ * @param [script] name 
+ * @param [script] proto
+ * @return [script] port number, or -1
+ */
+static PSInteger _exutil_getservbyname(HPSCRIPTVM v)
+{
+    const PSChar *name, *proto;
+    PSInteger ret=EXFAIL;
+    struct servent	*sptr;
+    
+    ps_getstring(v,2,&name);
+    ps_getstring(v,3,&proto);
+    
+    if (NULL==(sptr = getservbyname(name, proto)))
+    {
+        NDRX_LOG(log_error, "Failed to lookup port %s/%s: %s", 
+                name, proto, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* results are in network order */
+    ret = ntohs(sptr->s_port);
+    
+out:
+    
+    ps_pushinteger(v, ret);
+
+    return 1;
+}
+
+/**
+ * Convert hex to long number
+ * @param [script] hex (without 0x suffix)
+ * @return [script] converted integer
+ */
+static PSInteger _exutil_hex2int(HPSCRIPTVM v)
+{
+    const PSChar *hex;
+    long l;
+    PSInteger ret=EXFAIL;
+    
+    ps_getstring(v,2,&hex);
+    
+    sscanf(hex, "%lx", &l);
+    
+    ret = l;
+    
+out:
+    
+    ps_pushinteger(v, ret);
+
     return 1;
 }
 
@@ -456,6 +515,9 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(rands,2,_SC(".n")),
         _DECL_FUNC(parseclopt1,3,_SC(".ss")),
         _DECL_FUNC(parseclopt2,4,_SC(".sss")),
+        _DECL_FUNC(getservbyname,3,_SC(".sss")),
+        _DECL_FUNC(hex2int,2,_SC(".ss")),
+        
 	{0,0}
 };
 #undef _DECL_FUNC

@@ -2,8 +2,27 @@
 // Ubb config to Enduro/X converter
 //
 
+
+////////////////////////////////////////////////////////////////////////////////
+// General constants
+////////////////////////////////////////////////////////////////////////////////
+
+//Base range for port number.
+//Each machine shall be accessible in range of 21001..210NN (where NN max number of
+//of cluster nodes).
+//Converter from *NETWORK section does not extract ports, just hostnames
+const NET_BASE_PORT = 21000;
+
+//Host IP address (assumed) by + nodeid, range 200..2NN (where NN is max cluster node id
+//Also assumed that hosts can reach each other by these addresses.
+const NET_DEFAULT_IP = 192.168.88.200;
+
+
 //Include wizard base.
 compilestring(getwizardbase())();
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // UBB Config, functions called by tmloadcf as flex & bison parses.
@@ -580,6 +599,7 @@ function prep_servers(instance)
 
 /**
  * prepare networking. This will update each
+ * As we need range of ports. we will extract only ip address from.
  * machine with LMID with ip/host/binding port information
  */
 function prep_networking()
@@ -592,6 +612,37 @@ function prep_networking()
     //some.domain:2334
     //0x0002010101020304
     //etc..
+
+    //TODO: For each network entry.
+
+    //base port used
+    local base_port=21000;
+
+    if (!("*NETWORK" in M_sections))
+    {
+        return;
+    }
+
+    foreach(idx,net in M_sections["*NETWORK"].params) if (!net[0].is_default)
+    {
+        local net = net[0];
+        local naddr = get_val(net, "NADDR", null)[0];
+        print(format("parsing lmid=[%s] naddr=[%s]", net.name, naddr));
+
+        if (regexp("^//[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:.*").match(naddr))
+        {
+            print("Extract by ip");
+        }
+        else if (regexp("^//.*:.*").match(naddr))
+        {
+            print("Extract by hostname");
+        }
+        else
+        {
+            print("Use default addresses");
+        }
+
+    }
 
 }
 
@@ -760,174 +811,179 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
  */
 function ex_generate(arg)
 {
-    local nodeid=0;
+    local nodeid=1;
 
     init();
 
     //Open output objects for each of the machine
-    if ("*MACHINES" in M_sections)
+    if (!("*MACHINES" in M_sections))
     {
-        local nodeid=1;
-        foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
-        {
-            val[0].nodeid<-nodeid;
-            nodeid++;
-        }
-
-        foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
-        {
-            local machine = val[0];
-            M_instances[machine.name]<-{};
-
-            local instance = M_instances[machine.name];
-            instance.name <- machine.name;
-            instance.lmid <- machine.keywords.LMID[0];
-
-            print("Machine: "+instance.name);
-            
-            instance.prefix <- machine.keywords["LMID"][0].tolower();
-            instance.app_home <- strcommon(machine.keywords["APPDIR"][0] , 
-                            machine.keywords["TUXCONFIG"][0]);
-            instance.use_rel <- false;
-            if (instance.app_home=="/")
-            {
-                instance.app_home = machine.keywords["APPDIR"][0];
-                instance.app_bin <- machine.keywords["APPDIR"][0];
-                instance.app_conf <- dirname(machine.keywords["TUXCONFIG"][0]);
-
-                instance.ndrx_conf = instance.app_conf;
-                instance.ndrx_bin =  instance.app_bin;
-            }
-            else
-            {
-                //get relative path, strip off the last / from the string
-                instance.app_home = rstrips(instance.app_home, "/");
-
-                if (instance.app_home=="")
-                {
-                    //Exception case, not nice..
-                    instance.app_home="/";
-                }
-
-                instance.app_bin <- strdiff(machine.keywords["APPDIR"][0],
-                                                instance.app_home);
-                instance.app_bin = lstrips(instance.app_bin, "/");
-
-                instance.app_conf <- strdiff(dirname(machine.keywords["TUXCONFIG"][0]),
-                                                instance.app_home);
-                instance.app_conf = lstrips(instance.app_conf, "/");
-
-                instance.use_rel = true;
-
-                //Prepare further folders
-                instance.ndrx_conf <- "${NDRX_APPHOME}/"+instance.app_conf;
-                instance.ndrx_bin <- "${NDRX_APPHOME}/"+instance.app_bin;
-            }
-
-            //Prepare some identifiers
-            nodeid++;
-            instance.nodeid <- nodeid;
-
-            if (regexp("^0x.*|^0X.*").match(M_resources["IPCKEY"][0]))
-            {
-                instance.ipckey <- substr(M_resources["IPCKEY"][0], 2, -1);
-            }
-            else
-            {
-                instance.ipckey <- M_resources["IPCKEY"][0]
-            }
-
-            //Dump some config
-            print("use_rel = "+instance.use_rel);
-            print("nodeid = "+instance.nodeid);
-            print("prefix = "+instance.prefix);
-            print("app_home = "+instance.app_home);
-            print("app_conf = "+instance.app_bin);
-            print("app_bin = "+instance.app_conf);
-
-            //Load Tuxedo defaults
-            if (!("BLOCKTIME" in M_resources))
-            {
-                M_resources["BLOCKTIME"]<-[];
-                M_resources["BLOCKTIME"].append("6");
-            }
-
-            if (!("SCANUNIT" in M_resources))
-            {
-                M_resources["SCANUNIT"]<-[];
-                M_resources["SCANUNIT"].append("10");
-            }
-
-            //Use Enduro/X default 20K
-            if (!("MAXSERVICES" in M_resources) || M_resources["MAXSERVICES"][0].tointeger() < 20000)
-            {
-                M_resources["MAXSERVICES"]<-[];
-                M_resources["MAXSERVICES"].append("20000");
-            }
-
-            if (!("MAXSERVERS" in M_resources) || M_resources["MAXSERVERS"][0].tointeger() < 10000)
-            {
-                M_resources["MAXSERVERS"]<-[];
-                M_resources["MAXSERVERS"].append("10000");
-            }
-
-            if (!("MAXSERVERS" in M_resources) || M_resources["MAXSERVERS"][0].tointeger() < 10000)
-            {
-                M_resources["MAXSERVERS"]<-[];
-                M_resources["MAXSERVERS"].append("10000");
-            }
-            
-            //Default transaction time
-            if (!("MAXTRANTIME" in M_resources))
-            {
-                M_resources["MAXTRANTIME"]<-[];
-                M_resources["MAXTRANTIME"].append("2147483647");
-            }
-
-            if (!("MAXRTDATA" in M_resources) || M_resources["MAXRTDATA"][0].tointeger() < 102400)
-            {
-                M_resources["MAXRTDATA"]<-[];
-                M_resources["MAXRTDATA"].append("102400");
-            }
-
-            //Calculate number of routing services, if any.
-            instance.rtsvcmax<-get_routing_services(instance);
-
-            //Use fault, if not any set.
-            if (instance.rtsvcmax == 0)
-            {
-                instance.rtsvcmax = 1000;
-            }
-            else
-            {
-                //For performance reasons use more.
-                instance.rtsvcmax *=2;
-            }
-
-            //Schedule system folders
-            M_folder_gen[instance.app_home]<-{};
-            M_folder_gen[instance.app_home+"/log"]<-{};
-            M_folder_gen[instance.app_home+"/tmp"]<-{};
-
-            if (instance.use_rel)
-            {
-                M_folder_gen[instance.app_home+"/"+instance.app_bin]<-{};
-                M_folder_gen[instance.app_home+"/"+instance.app_conf]<-{};
-            }
-            else
-            {
-                M_folder_gen[instance.app_conf]<-{};
-            }
-
-            //TODO: Parse networking. WHere possible for each machine assign
-            //the hostname/ip_addr, and listening port (we will bind on 0.0.0.0
-            //in listen mode)
-
-            instance.machine<-machine;
-
-            generate(instance);
-
-        }
+        print("No machines defined");
+        return;
+    }
+    
+    foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
+    {
+        val[0].nodeid<-nodeid;
+        nodeid++;
     }
 
+    //Assign networking identifiers
+    prep_networking();
+
+    //Generate each node
+    foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
+    {
+        local machine = val[0];
+        M_instances[machine.name]<-{};
+
+        local instance = M_instances[machine.name];
+        instance.name <- machine.name;
+        instance.lmid <- machine.keywords.LMID[0];
+
+        print("Machine: "+instance.name);
+
+        instance.prefix <- machine.keywords["LMID"][0].tolower();
+        instance.app_home <- strcommon(machine.keywords["APPDIR"][0] , 
+                        machine.keywords["TUXCONFIG"][0]);
+        instance.use_rel <- false;
+        if (instance.app_home=="/")
+        {
+            instance.app_home = machine.keywords["APPDIR"][0];
+            instance.app_bin <- machine.keywords["APPDIR"][0];
+            instance.app_conf <- dirname(machine.keywords["TUXCONFIG"][0]);
+
+            instance.ndrx_conf = instance.app_conf;
+            instance.ndrx_bin =  instance.app_bin;
+        }
+        else
+        {
+            //get relative path, strip off the last / from the string
+            instance.app_home = rstrips(instance.app_home, "/");
+
+            if (instance.app_home=="")
+            {
+                //Exception case, not nice..
+                instance.app_home="/";
+            }
+
+            instance.app_bin <- strdiff(machine.keywords["APPDIR"][0],
+                                            instance.app_home);
+            instance.app_bin = lstrips(instance.app_bin, "/");
+
+            instance.app_conf <- strdiff(dirname(machine.keywords["TUXCONFIG"][0]),
+                                            instance.app_home);
+            instance.app_conf = lstrips(instance.app_conf, "/");
+
+            instance.use_rel = true;
+
+            //Prepare further folders
+            instance.ndrx_conf <- "${NDRX_APPHOME}/"+instance.app_conf;
+            instance.ndrx_bin <- "${NDRX_APPHOME}/"+instance.app_bin;
+        }
+
+        //Prepare some identifiers
+        nodeid++;
+        instance.nodeid <- nodeid;
+
+        if (regexp("^0x.*|^0X.*").match(M_resources["IPCKEY"][0]))
+        {
+            instance.ipckey <- substr(M_resources["IPCKEY"][0], 2, -1);
+        }
+        else
+        {
+            instance.ipckey <- M_resources["IPCKEY"][0]
+        }
+
+        //Dump some config
+        print("use_rel = "+instance.use_rel);
+        print("nodeid = "+instance.nodeid);
+        print("prefix = "+instance.prefix);
+        print("app_home = "+instance.app_home);
+        print("app_conf = "+instance.app_bin);
+        print("app_bin = "+instance.app_conf);
+
+        //Load Tuxedo defaults
+        if (!("BLOCKTIME" in M_resources))
+        {
+            M_resources["BLOCKTIME"]<-[];
+            M_resources["BLOCKTIME"].append("6");
+        }
+
+        if (!("SCANUNIT" in M_resources))
+        {
+            M_resources["SCANUNIT"]<-[];
+            M_resources["SCANUNIT"].append("10");
+        }
+
+        //Use Enduro/X default 20K
+        if (!("MAXSERVICES" in M_resources) || M_resources["MAXSERVICES"][0].tointeger() < 20000)
+        {
+            M_resources["MAXSERVICES"]<-[];
+            M_resources["MAXSERVICES"].append("20000");
+        }
+
+        if (!("MAXSERVERS" in M_resources) || M_resources["MAXSERVERS"][0].tointeger() < 10000)
+        {
+            M_resources["MAXSERVERS"]<-[];
+            M_resources["MAXSERVERS"].append("10000");
+        }
+
+        if (!("MAXSERVERS" in M_resources) || M_resources["MAXSERVERS"][0].tointeger() < 10000)
+        {
+            M_resources["MAXSERVERS"]<-[];
+            M_resources["MAXSERVERS"].append("10000");
+        }
+
+        //Default transaction time
+        if (!("MAXTRANTIME" in M_resources))
+        {
+            M_resources["MAXTRANTIME"]<-[];
+            M_resources["MAXTRANTIME"].append("2147483647");
+        }
+
+        if (!("MAXRTDATA" in M_resources) || M_resources["MAXRTDATA"][0].tointeger() < 102400)
+        {
+            M_resources["MAXRTDATA"]<-[];
+            M_resources["MAXRTDATA"].append("102400");
+        }
+
+        //Calculate number of routing services, if any.
+        instance.rtsvcmax<-get_routing_services(instance);
+
+        //Use fault, if not any set.
+        if (instance.rtsvcmax == 0)
+        {
+            instance.rtsvcmax = 1000;
+        }
+        else
+        {
+            //For performance reasons use more.
+            instance.rtsvcmax *=2;
+        }
+
+        //Schedule system folders
+        M_folder_gen[instance.app_home]<-{};
+        M_folder_gen[instance.app_home+"/log"]<-{};
+        M_folder_gen[instance.app_home+"/tmp"]<-{};
+
+        if (instance.use_rel)
+        {
+            M_folder_gen[instance.app_home+"/"+instance.app_bin]<-{};
+            M_folder_gen[instance.app_home+"/"+instance.app_conf]<-{};
+        }
+        else
+        {
+            M_folder_gen[instance.app_conf]<-{};
+        }
+
+        //TODO: Parse networking. WHere possible for each machine assign
+        //the hostname/ip_addr, and listening port (we will bind on 0.0.0.0
+        //in listen mode)
+
+        instance.machine<-machine;
+
+        generate(instance);
+
+    }
 }
