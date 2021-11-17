@@ -31,6 +31,7 @@ SYNOPSIS
         <mindispatchthreads>MIN_DISPTHREADS_DEFAULT</mindispatchthreads>
         <maxdispatchthreads>MAX_DISPTHREADS_DEFAULT</maxdispatchthreads>
         <autokill>AUTOKILL_DEFAULT</autokill>
+        <respawn>RESPAWN_DEFAULT<respawn>
         <env>ENV_OVERRIDE_DEFAULT</env>
         <start_max>MAX_STARTUP_TIME_DEFAULT</start_max>
         <pingtime>PING_EVERY_TIME_DEFAULT</pingtime>
@@ -79,7 +80,7 @@ SYNOPSIS
             <exportsvcs>ATMI_SERVER_EXPORT_SERVICES</exportsvcs>
             <blacklistsvcs>ATMI_BLACKLIST_SERVICES</blacklistsvcs>
             <srvstartwait>NDRXD_SRV_START_WAIT</srvstartwait>
-            <srvstopwait>NDRXD_SRV_STOP_WAITT</srvstopwait>
+            <srvstopwait>NDRXD_SRV_STOP_WAIT</srvstopwait>
             <cctag>COMMON_CONFIG_TAG</cctag>
             <protected>PROTECTED_SERVER</protected>
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
@@ -342,7 +343,7 @@ PARAMETERS
     Default value for this is 30 seconds.
 'NDRXD_SRV_STOP_WAIT_DEFAULT'::
     Number of seconds to wait for server to shutdown. If not started in given time,
-    then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
+    then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT'.
     Default value for this is 30 seconds.
 'KILL_TIME_DEFAULT'::
     Time in sanity units after which to progress from first signal -2 to next signal
@@ -422,10 +423,11 @@ PARAMETERS
     This name cannot contain special symbols like path separator '/'
     and it cannot contains commas ','! Commas are used as internal
     queue separator combined with binary names.
-'RESPAWN_SRV'::
+'RESPAWN_DEFAULT'::
     Do the automatic process re-spawning if process is died for some reason. The default
     value is *Y*, meaning that processes are automatically recovered. If set to 'N' or 'n',
     then sanity checks will not automatically re-boot the process.
+    This can be overridden by 'RESPAWN_SRV'.
 'SERVER_ID'::
     Server ID. It is internal ID for server instance. For each separate ATMI server
     the ID must be unique. Also special care should be take when MAX_SERVERS_SRV is greater
