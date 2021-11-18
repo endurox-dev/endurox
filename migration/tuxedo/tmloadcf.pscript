@@ -434,6 +434,7 @@ function prep_groups(instance)
         {
             //Plot all groups, maked later as non plottable
             group.plot<-true;
+            group.tmsrv_plotted<-false;
 
             if ("OPENINFO" in group.keywords)
             {
@@ -564,7 +565,7 @@ function prep_servers(instance)
                     server.keywords["MIN"]<-["1"];
                     server.keywords["MAX"]<-["1"];
                     //Match the forwarders at plotting, by group lookup...
-                    server.keywords["CLOPT"]<-["-e ${NDRX_APPHOME}/log/tmqueue_${NDRX_SVSRVID}.log -r -- -s1 -p10"];
+                    server.keywords["CLOPT"]<-["-A -e ${NDRX_APPHOME}/log/tmqueue_${NDRX_SVSRVID}.log -r -- -s1 -p10"];
                     
                     break;
                 case "TMQFORWARD":
@@ -735,11 +736,13 @@ function prep_servers(instance)
             }
         }
     }
-
+    
     //loop over the binaries & defaults, if not deleted, add (for our instance)
     if ("*SERVERS" in M_sections) foreach(idx,server in M_sections["*SERVERS"].order) if (! ("deleted" in server))
     {
         local proceed=false;
+        local server_srvgrp = "";
+        local group = {};
         if (server.is_default)
         {
             //Any default is OK
@@ -747,8 +750,9 @@ function prep_servers(instance)
         }
         else
         {
-            local server_srvgrp = get_val(server, "SRVGRP", null);
-            local group_lmid =get_val(M_sections["*GROUPS"].params[server_srvgrp[0]][0], "LMID", null)[0];
+            server_srvgrp = get_val(server, "SRVGRP", null)[0];
+            group = M_sections["*GROUPS"].params[server_srvgrp][0];
+            local group_lmid =get_val(group, "LMID", null)[0];
             if (group_lmid==instance.lmid)
             {
                 proceed=true;
@@ -759,6 +763,13 @@ function prep_servers(instance)
         {
             //Process the binary, add to arrays...
             new_srv = {};
+            
+            if (server_srvgrp!="")
+            {
+                new_srv.srvgrp <-server_srvgrp;
+                new_srv.group<-group;
+            }
+
             new_srv.bin <- server.name;
             new_srv.is_default <- server.is_default;
             
@@ -914,9 +925,6 @@ function prep_servers(instance)
 
     }
     
-    //TODO: if any tmsrv are plotted, then add tmrecoversv at the end of the servers
-    //So that at boot we can recover orphaned transactions.
-    
     local prev_server={};
     prev_server.is_default<-false;
     
@@ -953,6 +961,77 @@ function prep_servers(instance)
     }
     
     //OK Ready to plot debug, forward queues, server defaults + servers.
+
+    local servers_final=[];
+
+    // Copy all servers to final list
+    // in case if xa is used, add tmsrv firstly
+
+    //Add tmrecoversv at the end...
+    local have_xa = false;
+    foreach (idx, server in instance.servers)
+    {
+        //Check does this depend on XA group?
+        //srvgrp is for translated binaries. which basically pull in the tmsrv
+        if (!server.is_default && "srvgrp" in server &&
+                !server.deleted)
+        {
+            local group = M_sections["*GROUPS"].params[ server.srvgrp ][0];
+            local tmscout =get_val(group, "TMSCOUNT", [""])[0];
+            
+            //This is tmsrv group
+            if ("xaswitchname" in group && !group.tmsrv_plotted)
+            {
+                local cnt = 1;
+                if (tmscout!="")
+                {
+                    cnt = tmscout.tointeger();
+                }
+                //Add tmsrv here
+                //Keep the same group setting
+                //either direct cctag (if set) or then it must come from
+                //the default.
+                new_srv = {};
+                new_srv.bin<-"tmsrv";
+                new_srv.srvid <- reserve_range(instance, cnt);
+                new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tmsrv.${NDRX_SVSRVID}.log -r";
+                new_srv.appopt <- "-t1 -l"+group.tmlogs;
+                new_srv.min<-cnt;
+                new_srv.max<-cnt;
+                if ("cctag" in server)
+                {
+                    new_srv.cctag = server.cctag;
+                }
+                new_srv.is_default<-false;
+                group.tmsrv_plotted=true;
+                servers_final.append(new_srv);
+                have_xa=true;
+            }
+
+            //perform correction on tmq so that forward thread pool
+            if (server.bin=="tmqueue")
+            {
+                //get the group & forwarder count
+                //workers
+                local workers = server.group.workers;
+
+                if (workers<10)
+                {
+                    workers=10;
+                }
+
+                server.appopt+=" -f"+workers;
+            }
+        }
+
+        if (!server.deleted)
+        {
+            servers_final.append(server);
+        }
+    }
+    
+    instance.servers = servers_final;
+
 }
 
 /**
@@ -1237,7 +1316,7 @@ function gen_xml_file(instance)
 /******************************************************************************/
 
     //Process binary by binary...
-    foreach (idx, server in instance.servers) if (!server.deleted)
+    foreach (idx, server in instance.servers)
     {
         if (server.is_default)
         {
