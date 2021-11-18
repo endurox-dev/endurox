@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
     /***************************************************************************/
     for (i=0; i<5; i++)
     {
-        if (EXSUCCEED!=tpbegin(2, 0))
+        if (EXSUCCEED!=tpbegin(5, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
