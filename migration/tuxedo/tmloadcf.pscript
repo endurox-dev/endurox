@@ -252,28 +252,31 @@ function get_routing_services(instance)
 {
     local cnt=0;
 
-    foreach(idx,service in M_sections["*SERVICES"].order)
+    if ("*SERVICES" in M_sections)
     {
-        if (!service.is_default)
+        foreach(idx,service in M_sections["*SERVICES"].order)
         {
-            local range = {};
-            local service_srvgrp = get_val(service, "SRVGRP", "");
-            
-            //Service may have no group -> affect all
-            if (service_srvgrp =="")
+            if (!service.is_default)
             {
-                cnt++;
-            }
-            else
-            {
-                local group_lmid = get_val(
-                    M_sections["*GROUPS"].params[service_srvgrp[0]][0], "LMID", null)[0];
-
-                if (group_lmid == instance.lmid)
+                local range = {};
+                local service_srvgrp = get_val(service, "SRVGRP", "");
+                
+                //Service may have no group -> affect all
+                if (service_srvgrp =="")
                 {
                     cnt++;
                 }
+                else
+                {
+                    local group_lmid = get_val(
+                        M_sections["*GROUPS"].params[service_srvgrp[0]][0], "LMID", null)[0];
 
+                    if (group_lmid == instance.lmid)
+                    {
+                        cnt++;
+                    }
+
+                }
             }
         }
     }
@@ -328,7 +331,7 @@ function prep_free_ranges(instance)
     local start = 1;
     instance.ranges<-[];
 
-    foreach(idx,server in M_sections["*SERVERS"].order)
+    if ("SERVERS" in M_sections) foreach(idx,server in M_sections["*SERVERS"].order)
     {
         if (!server.is_default)
         {
@@ -427,8 +430,8 @@ function prep_groups(instance)
         //Get our groups
         if ( !group.is_default && (get_val(group, "LMID", null)[0] == instance.lmid))
         {
-            //Would be set to plotting, once phase 4 of servers processing is done
-            group.plot<-false;
+            //Plot all groups, maked later as non plottable
+            group.plot<-true;
 
             if ("OPENINFO" in group.keywords)
             {
@@ -525,7 +528,7 @@ function prep_servers(instance)
     local server_optstring = "Aa:s:e:Ghl:n:o:Pp:rtv";
 
     // phase 1. Get infos about the system
-    foreach(idx,server in M_sections["*SERVERS"].order) if (!server.is_default)
+    if ("*SERVERS" in M_sections) foreach(idx,server in M_sections["*SERVERS"].order) if (!server.is_default)
     {
         local server_srvgrp = get_val(server, "SRVGRP", null);
         local group_lmid =get_val(M_sections["*GROUPS"].params[ server_srvgrp[0] ][0], "LMID", null)[0];
@@ -610,7 +613,7 @@ function prep_servers(instance)
             //do not process the deleted servers
             if (remove)
             {
-		server.deleted<-true;
+                server.deleted<-true;
             }
             
         }   
@@ -633,7 +636,7 @@ function prep_servers(instance)
     new_srv.ping_max<-800;
     new_srv.end_max<-10;
     new_srv.killtime<-1;
-    new_srv.is_default<-1;
+    new_srv.is_default<-true;
     instance.servers.append(new_srv);
 
     //Add common configuration server
@@ -643,6 +646,7 @@ function prep_servers(instance)
     new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/cconfsrv.${NDRX_SVSRVID}.log -r";
     new_srv.min<-2;
     new_srv.max<-2;
+    new_srv.is_default<-false;
     instance.servers.append(new_srv);
 
     //Add tpadmin server
@@ -652,6 +656,7 @@ function prep_servers(instance)
     new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tpadmsv.${NDRX_SVSRVID}.log -r";
     new_srv.min<-2;
     new_srv.max<-2;
+    new_srv.is_default<-false;
     instance.servers.append(new_srv);
 
     //Add event server if used.
@@ -663,6 +668,7 @@ function prep_servers(instance)
         new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log -r";
         new_srv.min<-1;
         new_srv.max<-1;
+        new_srv.is_default<-false;
         instance.servers.append(new_srv);
     }
 
@@ -683,6 +689,7 @@ function prep_servers(instance)
             new_srv.srvid <-reserve_range(instance, 1);
             new_srv.min<-1;
             new_srv.max<-1;
+            new_srv.is_default<-false;
 
             if (machine.nodeid < instance.nodeid)
             {
@@ -718,7 +725,7 @@ function prep_servers(instance)
     }
 
     //loop over the binaries & defaults, if not deleted, add (for our instance)
-    foreach(idx,server in M_sections["*SERVERS"].order) if (! ("deleted" in server))
+    if ("*SERVERS" in M_sections) foreach(idx,server in M_sections["*SERVERS"].order) if (! ("deleted" in server))
     {
         local proceed=false;
         if (server.is_default)
@@ -886,10 +893,38 @@ function prep_servers(instance)
         }
 
     }
-
-    //Generate non deleted binaries & defaults
-    //phase 4. Merge consecutive defaults, remove last default if no binaries follow
     
+    local prev_server={};
+    prev_server.is_default<-false;
+    
+    //phase 4. Merge consecutive defaults, remove last default if no binaries follow
+    foreach (idx, server in instance.servers)
+    {
+        //If current one is default and previous is also de
+        if (server.is_default && prev_server.is_default)
+        {
+            //Copy all current server attribs over prev_server
+            //and delete curren entry.
+            foreach (idx, keyword in server)
+            {
+                prev_server[keyword]<-server[keyword];
+            }
+            //Remove current entry...
+            delete instance.servers[idx];
+        }
+        else
+        {
+            prev_server = server;
+        }
+        
+        //Mark group used...
+        if ("SRVGRP" in server)
+        {
+                M_sections["*GROUPS"].params[server["SRVGRP"]][0].plot<-true;
+        }
+    }
+    
+    //OK Ready to plot debug, forward queues, server defaults + servers.
 }
 
 /**
@@ -912,7 +947,7 @@ function prep_networking()
         local net = net[0];
         local naddr = get_val(net, "NADDR", null)[0];
         print(format("parsing lmid=[%s] naddr=[%s]", net.name, naddr));
-	M_lmidmachines[idx].networked<-true;
+        M_lmidmachines[idx].networked<-true;
 
         if (regexp("^//[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:.*").match(naddr))
         {
@@ -932,7 +967,34 @@ function prep_networking()
             local res = ex.capture(naddr);
             local hostname = naddr.slice(res[1].begin,res[1].end);
             print("Extract by hostname: "+hostname);
-            M_lmidmachines[idx].hostname <- ip;
+            M_lmidmachines[idx].hostname <- hostname;
+        }
+        /* extract by hex */
+        else if (regexp("^//[xX]0002[0-9A-Fa-f]{12}").match(naddr)
+                || regexp("^0[xX]0002[0-9A-Fa-f]{12}").match(naddr))
+        {
+            local hex_str = "";
+            
+            if ("//"==substr(naddr, 0, 2))
+            {
+                // //x0002 or //X0002
+                hex_str=substr(naddr, 7, -1);
+            }
+            else
+            {
+                // 0x0002 or 0X0002
+                hex_str=substr(naddr, 6, -1);
+            }
+            print("Got hex ip: [" +hex_str+ "]");
+            
+            local ex = regexp("^....(..)(..)(..)(..)");
+            local res = ex.capture(naddr);
+            local ip =  hex2int(hex_str.slice(res[1].begin,res[1].end)) + "." +
+                        hex2int(hex_str.slice(res[2].begin,res[2].end)) + "." +
+                        hex2int(hex_str.slice(res[3].begin,res[3].end)) + "." +
+                        hex2int(hex_str.slice(res[4].begin,res[4].end));
+            print("Extract by hex-ip: "+ip);
+            M_lmidmachines[idx].ip <- ip;
         }
         else
         {
@@ -1159,8 +1221,8 @@ function ex_generate(arg)
             instance.app_bin <- machine.keywords["APPDIR"][0];
             instance.app_conf <- dirname(machine.keywords["TUXCONFIG"][0]);
 
-            instance.ndrx_conf = instance.app_conf;
-            instance.ndrx_bin =  instance.app_bin;
+            instance.ndrx_conf<- instance.app_conf;
+            instance.ndrx_bin <- instance.app_bin;
         }
         else
         {
@@ -1206,8 +1268,8 @@ function ex_generate(arg)
         print("nodeid = "+instance.nodeid);
         print("prefix = "+instance.prefix);
         print("app_home = "+instance.app_home);
-        print("app_conf = "+instance.app_bin);
-        print("app_bin = "+instance.app_conf);
+        print("app_conf = "+instance.app_conf);
+        print("app_bin = "+instance.app_bin);
 
         //Load Tuxedo defaults
         if (!("BLOCKTIME" in M_resources))
