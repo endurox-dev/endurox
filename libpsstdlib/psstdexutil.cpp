@@ -273,6 +273,7 @@ out:
 
 /**
  * Convert hex to long number
+ * TODO: move to stdstring
  * @param [script] hex (without 0x suffix)
  * @return [script] converted integer
  */
