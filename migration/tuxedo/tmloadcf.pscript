@@ -425,8 +425,10 @@ function prep_free_ranges(instance)
  */
 function prep_groups(instance)
 {
-    foreach(idx,group in M_sections["*GROUPS"].order)
+    foreach(idx,igroup in M_sections["*GROUPS"].params)
     {
+        //Single group only supported...
+        local group = igroup[0];
         //Get our groups
         if ( !group.is_default && (get_val(group, "LMID", null)[0] == instance.lmid))
         {
@@ -556,6 +558,15 @@ function prep_servers(instance)
                 case "TMFAN":
                         remove=true;
                     break;
+                case "TMQUEUE":
+                    //Translate to tmqueue
+                    server.name="tmqueue";
+                    server.keywords["MIN"]<-["1"];
+                    server.keywords["MAX"]<-["1"];
+                    //Match the forwarders at plotting, by group lookup...
+                    server.keywords["CLOPT"]<-["-e ${NDRX_APPHOME}/log/tmqueue_${NDRX_SVSRVID}.log -r -- -s1 -p10"];
+                    
+                    break;
                 case "TMQFORWARD":
 
                         remove=true;
@@ -636,6 +647,7 @@ function prep_servers(instance)
     new_srv.ping_max<-800;
     new_srv.end_max<-10;
     new_srv.killtime<-1;
+    new_srv.respawn<-"Y";
     new_srv.is_default<-true;
     instance.servers.append(new_srv);
 
@@ -747,10 +759,15 @@ function prep_servers(instance)
         {
             //Process the binary, add to arrays...
             new_srv = {};
+            new_srv.bin <- server.name;
             new_srv.is_default <- server.is_default;
             
             if (!new_srv.is_default)
             {
+                
+                //TODO: In case if for given binary there is XA group
+                //and for this XA group tmsrv is not added, then do it here.
+                
                 //Load clopt & app opt
                 local clopt = get_val(server, "CLOPT", null)[0];
                 local clopt_parsed = parseclopt1(clopt, server_optstring);
@@ -886,13 +903,19 @@ function prep_servers(instance)
             //THREADSTACKSIZE this goes to process, thus read value from defaults...
             local stacksz = get_val(server, "THREADSTACKSIZE", ""); 
 
-            if (stacksz=="")
+            if (stacksz!="")
             {
-                new_srv.threadstacksize<-stacksz;
+                //Our stack is in KB
+                new_srv.threadstacksize<- (stacksz[0].tointeger() / 1024);
             }
+            
+            instance.servers.append(new_srv);
         }
 
     }
+    
+    //TODO: if any tmsrv are plotted, then add tmrecoversv at the end of the servers
+    //So that at boot we can recover orphaned transactions.
     
     local prev_server={};
     prev_server.is_default<-false;
@@ -907,20 +930,25 @@ function prep_servers(instance)
             //and delete curren entry.
             foreach (idx, keyword in server)
             {
-                prev_server[keyword]<-server[keyword];
+                prev_server[idx]<-server[idx];
             }
             //Remove current entry...
-            delete instance.servers[idx];
+            instance.servers[idx].deleted<-true;
         }
         else
         {
+            //Ensure deleted tags
+            if (!("deleted" in instance.servers[idx]))
+            {
+                instance.servers[idx].deleted<-false;
+            }
             prev_server = server;
         }
         
         //Mark group used...
         if ("SRVGRP" in server)
         {
-                M_sections["*GROUPS"].params[server["SRVGRP"]][0].plot<-true;
+            M_sections["*GROUPS"].params[server["SRVGRP"]][0].plot<-true;
         }
     }
     
@@ -1010,15 +1038,11 @@ function prep_networking()
 }
 
 /**
- * Prepare texts for instance
+ * Generate set file
  * @param instance current object of interest
  */
-function generate(instance)
+function gen_set_file(instance)
 {
-
-    //Prepare ranges
-    prep_free_ranges(instance);
-
     //Prepare set file
     instance.set_text <-
 /******************************************************************************/
@@ -1032,11 +1056,21 @@ export PATH=$PATH:"+instance.ndrx_bin+@"
 export CDPATH=$CDPATH:.:$NDRX_APPHOME
 ";
 /******************************************************************************/
-    print("set_file: ["+instance.set_text+"]");
+    print("set_file: [\n"+instance.set_text+"]");
+}
 
-    //Prepare ini file, global
-
-    instance.ini_global_text <-
+/**
+ * Generate ini file.
+ * This contains sections:
+ * - global env
+ * - cctag/group envs
+ * - debug settings
+ * - forward queues, if any
+ */
+function gen_ini_file(instance)
+{
+    /* global settings */
+    instance.ini_text <-
 /******************************************************************************/
 @"[@global]
 NDRX_CLUSTERISED=1
@@ -1072,29 +1106,13 @@ NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
 ";
 /******************************************************************************/
 
-    //Prepare ini, any groups for this particular machine
-    //Remember, only those groups/cctags for which either routing is used
-    //Or two phase commit is used.
-    
-    print("ini_file (global): ["+instance.ini_global_text+"]");
-
-    //TODO - pre-process binaries + this shall remove any groups
-    //Defined but not used by any binary or any default -> do not plot
-
-    prep_groups(instance);
-
-    instance.ini_groups_text<-"";
-/******************************************************************************/
-    //Generate groups...
-    //TODO: Add DDR setting of any group
-    //In case if group is not plotting, just add empty group
-    //Empty group shall be set in case if process have default group defined
-    //And process group is different than default, thus we should be able to
-    //reset process away from default (even to empty)
-    foreach(idx,group in M_sections["*GROUPS"].order)
+    /* per group / cctag settings: */
+    foreach(idx,igroup in M_sections["*GROUPS"].params)
     {
+        local group = igroup[0];
         //Get our groups
-        if (!group.is_default && get_val(group, "LMID", null)[0] == instance.lmid)
+        if (!group.is_default &&
+            get_val(group, "LMID", null)[0] == instance.lmid && group.plot)
         {
             local group_text ="[@global/"+group.name+"]";
 
@@ -1132,41 +1150,231 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
             {
                 group_text+="\nNDRX_RTGRP="+group.name;
             }
-
-            group_text+="\n";            
             
-            print("ini_file (group) [\n"+group_text+"]");
-            //Add the group to the listing
-            if (""==instance.ini_groups_text)
-            {
-                instance.ini_groups_text=group_text;
-            }
-            else
-            {
-                instance.ini_groups_text+="\n"+group_text;
-            }
+            instance.ini_text+="\n"+group_text+"\n";
+            
         }
-        //Prepare TMQ queues
-        //Queue names will be extracted for forward binaries (if any found)
     }
 
-    //print("ini_file (groups): ["+instance.ini_groups_text+"]");
-
-    //TODO: Generate debug config
-    //TODO: Generate forward queues (if have in any of our interested groups)
-
-
-    prep_servers(instance);
-
-    instance.ini_debug_text<-
+    // Debugs per binary:
+    instance.ini_text+="\n"+
 /******************************************************************************/
 @"[@debug]
 #* - goes for all binaries not listed bellow
 *= ndrx=3 ubf=1 tp=3 file=
 ";
 /******************************************************************************/
-    //Add additional servers such as tmsrv, restincl, tpevsrv
+    
+    //Plot server debug only once.
+    local server_plotted={};
+    foreach (idx, server in instance.servers) if (!server.is_default)
+    {
+        if (!(server.bin in server_plotted))
+        {
+            //Add debug entry.
+            instance.ini_text+=format("%s= file=${NDRX_APPHOME}/log/%s.${NDRX_SVSRVID}.log\n", 
+                server.bin, server.bin);
+            server_plotted[server.bin] <-true;
+        }
+    }
+    
+    //Process the queues now
+    foreach(idx,igroup in M_sections["*GROUPS"].params)
+    {
+        //Single group only supported...
+        local group = igroup[0];
+        //Get our groups
+        if ( !group.is_default && (get_val(group, "LMID", null)[0] == instance.lmid) 
+                && "qspace" in group)
+        {
+            instance.ini_text+="\n"+
+@"[@queue/"+group.name+@"]
+# Review as necessary, see q.conf man page for details
+@=svcnm=-,autoq=n,tries=3,waitinit=0,waitretry=30,waitretrymax=90,memonly=n,mode=fifo,workers=1
+";
+            //Add forward queues
+            foreach (indx,qq in group.auto_queues)
+            {
+                instance.ini_text+=format("%s=%s", indx, indx);
+                if (qq.workers!="1")
+                {
+                    instance.ini_text+=format(",workers=%s", qq.workers);
+                }
+                
+                if (qq.trantime!="-1")
+                {
+                    instance.ini_text+=format(",txtout=%s", qq.trantime);
+                }
+                instance.ini_text+="\n";
+            }
+        }
+    }
+    
+    print("app.ini: [\n"+instance.ini_text+"]");
 
+}
+
+/**
+ * Generate Enduro/X final XML configuration
+ */
+function gen_xml_file(instance)
+{
+    /* global settings */
+    instance.xml_text <-
+/******************************************************************************/
+@"<?xml version=""1.0"" ?>
+<endurox>
+    <appconfig>
+        <sanity>1</sanity>
+        <brrefresh>5</brrefresh>
+        <restart_min>1</restart_min>
+        <restart_step>1</restart_step>
+        <restart_max>5</restart_max>
+        <restart_to_check>20</restart_to_check>
+        <gather_pq_stats>Y</gather_pq_stats>
+    </appconfig>
+";
+/******************************************************************************/
+
+    //Process binary by binary...
+    foreach (idx, server in instance.servers) if (!server.deleted)
+    {
+        if (server.is_default)
+        {
+            instance.xml_text+=
+"   <defaults>\n";
+        }
+        else
+        {
+            instance.xml_text+=
+"   <server name=\""+server.bin+"\">\n";
+        }
+
+        if ("autokill" in server)
+        {
+            instance.xml_text+=
+"       <autokill>"+server.autokill+"</autokill>\n";
+        }
+        
+        if ("start_max" in server)
+        {
+            instance.xml_text+=
+"       <start_max>"+server.start_max+"</start_max>\n";
+        }
+        
+        if ("pingtime" in server)
+        {
+            instance.xml_text+=
+"       <pingtime>"+server.pingtime+"</pingtime>\n";
+        }
+        
+        if ("ping_max" in server)
+        {
+            instance.xml_text+=
+"       <ping_max>"+server.ping_max+"</ping_max>\n";
+        }
+        
+        if ("end_max" in server)
+        {
+            instance.xml_text+=
+"       <end_max>"+server.end_max+"</end_max>\n";
+        }
+        
+        if ("killtime" in server)
+        {
+            instance.xml_text+=
+"       <killtime>"+server.killtime+"</killtime>\n";
+        }
+        
+        if ("cctag" in server)
+        {
+            instance.xml_text+=
+"       <cctag>"+server.cctag+"</cctag>\n";
+        }
+        
+        if ("min" in server)
+        {
+            instance.xml_text+=
+"       <min>"+server.min+"</min>\n";
+        }
+        
+        if ("max" in server)
+        {
+            instance.xml_text+=
+"       <max>"+server.max+"</max>\n";
+        }
+        
+        if ("srvid" in server)
+        {
+            instance.xml_text+=
+"       <srvid>"+server.srvid+"</srvid>\n";
+        }
+        
+        if ("env" in server)
+        {
+            instance.xml_text+=
+"       <env>"+server.env+"</env>\n";
+        }
+        
+        if ("rqaddr" in server)
+        {
+            instance.xml_text+=
+"       <rqaddr>"+server.rqaddr+"</rqaddr>\n";
+        }
+        
+        if ("respawn" in server)
+        {
+            instance.xml_text+=
+"       <respawn>"+server.respawn+"</respawn>\n";
+        }
+        
+        if ("mindispatchthreads" in server)
+        {
+            instance.xml_text+=
+"       <mindispatchthreads>"+server.mindispatchthreads+"</mindispatchthreads>\n";
+        }
+        
+        if ("maxdispatchthreads" in server)
+        {
+            instance.xml_text+=
+"       <maxdispatchthreads>"+server.maxdispatchthreads+"</maxdispatchthreads>\n";
+        }
+        
+        if ("sysopt" in server)
+        {
+            instance.xml_text+=
+"       <sysopt>"+server.sysopt+"</sysopt>\n";
+        }
+        
+        if ("appopt" in server && server.appopt!="")
+        {
+            instance.xml_text+=
+"       <appopt>"+server.appopt+"</appopt>\n";
+        }
+        
+        if (!server.is_default && "threadstacksize" in server)
+        {
+            instance.xml_text+=
+@"       <envs>
+            <env name=""NDRX_THREADSTACKSIZE"">"+server.threadstacksize+@"</env>
+        </envs>\n";
+        }
+        
+        if (server.is_default)
+        {
+            instance.xml_text+=
+"   </defaults>\n";
+        }
+        else
+        {
+            instance.xml_text+=
+"   </server>\n";
+        }
+        
+    }
+    
+    print("ndrxconfig.ini: [\n"+instance.xml_text+"]");
+    
 }
 
 /**
@@ -1345,13 +1553,21 @@ function ex_generate(arg)
             M_folder_gen[instance.app_conf]<-{};
         }
 
-        //TODO: Parse networking. WHere possible for each machine assign
-        //the hostname/ip_addr, and listening port (we will bind on 0.0.0.0
-        //in listen mode)
-
         instance.machine<-machine;
+        
+        //Process groups
+        prep_groups(instance);
+    
+        //Prepare ranges
+        prep_free_ranges(instance);
+        
+        //Build server listings
+        prep_servers(instance);
 
-        generate(instance);
+        //Generate file contents:
+        gen_set_file(instance);
+        gen_ini_file(instance);
+        gen_xml_file(instance);
 
     }
 }
