@@ -432,8 +432,7 @@ function prep_groups(instance)
         //Get our groups
         if ( !group.is_default && (get_val(group, "LMID", null)[0] == instance.lmid))
         {
-            //Plot all groups, maked later as non plottable
-            group.plot<-true;
+            group.plot<-false;
             group.tmsrv_plotted<-false;
 
             if ("OPENINFO" in group.keywords)
@@ -686,15 +685,21 @@ function prep_servers(instance)
     }
 
     //Add networking if used.
-    if ( "networked" in M_lmidmachines[instance.lmid])
+    if ( instance.machine.networked)
     {
         //link this machine with other networked machines.
         //the order of the machines
         //lets without -f, add manually if different architecture hosts
         //have been found.
-        foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
+        foreach(idx,val in M_sections["*MACHINES"].params) 
         {
             local machine = val[0];
+
+            if (machine.is_default || !machine.networked)
+            {
+                continue;
+            }
+
             local lmid  = machine.keywords.LMID[0];
 
             new_srv = {};
@@ -1031,9 +1036,19 @@ function prep_servers(instance)
     }
     
     instance.servers = servers_final;
-    //TODO: if all binaries reference the same CCTAG, then
-    //then just update the first default to use this particular CCTAG
-    //no need for each binary to keep the setting
+
+    //mark groups to plot
+    foreach (idx, server in instance.servers)
+    {
+        if ("group" in server)
+        {
+            server.group.plot=true;
+        }
+    }
+
+    //TODO: In reverse order merge cctags to the default, if all bins till the default
+    //live in the same cctag
+    
 
 }
 
@@ -1241,7 +1256,7 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
 /******************************************************************************/
 @"[@debug]
 #* - goes for all binaries not listed bellow
-*= ndrx=3 ubf=1 tp=3 file=
+*= ndrx=3 ubf=1 tp=3 threaded=l file=
 ";
 /******************************************************************************/
     
@@ -1256,6 +1271,11 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
                 server.bin, server.bin);
             server_plotted[server.bin] <-true;
         }
+    }
+
+    if (instance.restin)
+    {
+        instance.ini_text+=format("restincl= file=${NDRX_APPHOME}/log/restincl.rin1.log\n");
     }
     
     //Process the queues now
@@ -1289,6 +1309,23 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
             }
         }
     }
+
+    //Add restin config, if WSL/JOLT seen
+    if (instance.restin)
+    {
+        instance.ini_text+="\n"+
+@"[@restin]
+defaults={""errors"":""json2ubf"", ""conv"":""json2ubf""}
+
+# Instance 1, see restincl manpage for the web service formats
+[@restin/RIN1]
+port=8080
+ip=0.0.0.0
+# invoke by: http://this.host:8080/SOME_SERVICE1
+/SOME_SERVICE1={""svc"":""SOME_SERVICE1""}
+/SOME_SERVICE2={""svc"":""SOME_SERVICE2""}
+";
+    }
     
     print("app.ini: [\n"+instance.ini_text+"]");
 
@@ -1317,142 +1354,270 @@ function gen_xml_file(instance)
 /******************************************************************************/
 
     //Process binary by binary...
+    local servers_open = false;
+    local tab="";
     foreach (idx, server in instance.servers)
     {
         if (server.is_default)
         {
+
+            if (servers_open)
+            {
+                instance.xml_text+=
+"    </servers>\n";
+                tab="";
+                servers_open=false;
+            }
             instance.xml_text+=
-"   <defaults>\n";
+"    <defaults>\n";
         }
         else
         {
+            if (!servers_open)
+            {
+                instance.xml_text+=
+"    <servers>\n";
+                servers_open=true;
+                tab="    ";
+            }
             instance.xml_text+=
-"   <server name=\""+server.bin+"\">\n";
+tab+"    <server name=\""+server.bin+"\">\n";
         }
 
         if ("autokill" in server)
         {
             instance.xml_text+=
-"       <autokill>"+server.autokill+"</autokill>\n";
+tab+"        <autokill>"+server.autokill+"</autokill>\n";
         }
         
         if ("start_max" in server)
         {
             instance.xml_text+=
-"       <start_max>"+server.start_max+"</start_max>\n";
+tab+"        <start_max>"+server.start_max+"</start_max>\n";
         }
         
         if ("pingtime" in server)
         {
             instance.xml_text+=
-"       <pingtime>"+server.pingtime+"</pingtime>\n";
+tab+"        <pingtime>"+server.pingtime+"</pingtime>\n";
         }
         
         if ("ping_max" in server)
         {
             instance.xml_text+=
-"       <ping_max>"+server.ping_max+"</ping_max>\n";
+tab+"        <ping_max>"+server.ping_max+"</ping_max>\n";
         }
         
         if ("end_max" in server)
         {
             instance.xml_text+=
-"       <end_max>"+server.end_max+"</end_max>\n";
+tab+"        <end_max>"+server.end_max+"</end_max>\n";
         }
         
         if ("killtime" in server)
         {
             instance.xml_text+=
-"       <killtime>"+server.killtime+"</killtime>\n";
+tab+"        <killtime>"+server.killtime+"</killtime>\n";
         }
         
         if ("cctag" in server)
         {
             instance.xml_text+=
-"       <cctag>"+server.cctag+"</cctag>\n";
+tab+"        <cctag>"+server.cctag+"</cctag>\n";
         }
         
         if ("min" in server)
         {
             instance.xml_text+=
-"       <min>"+server.min+"</min>\n";
+tab+"        <min>"+server.min+"</min>\n";
         }
         
         if ("max" in server)
         {
             instance.xml_text+=
-"       <max>"+server.max+"</max>\n";
+tab+"        <max>"+server.max+"</max>\n";
         }
         
         if ("srvid" in server)
         {
             instance.xml_text+=
-"       <srvid>"+server.srvid+"</srvid>\n";
+tab+"        <srvid>"+server.srvid+"</srvid>\n";
         }
         
         if ("env" in server)
         {
             instance.xml_text+=
-"       <env>"+server.env+"</env>\n";
+tab+"        <env>"+server.env+"</env>\n";
         }
         
         if ("rqaddr" in server)
         {
             instance.xml_text+=
-"       <rqaddr>"+server.rqaddr+"</rqaddr>\n";
+tab+"        <rqaddr>"+server.rqaddr+"</rqaddr>\n";
         }
         
         if ("respawn" in server)
         {
             instance.xml_text+=
-"       <respawn>"+server.respawn+"</respawn>\n";
+tab+"        <respawn>"+server.respawn+"</respawn>\n";
         }
         
         if ("mindispatchthreads" in server)
         {
             instance.xml_text+=
-"       <mindispatchthreads>"+server.mindispatchthreads+"</mindispatchthreads>\n";
+tab+"        <mindispatchthreads>"+server.mindispatchthreads+"</mindispatchthreads>\n";
         }
         
         if ("maxdispatchthreads" in server)
         {
             instance.xml_text+=
-"       <maxdispatchthreads>"+server.maxdispatchthreads+"</maxdispatchthreads>\n";
+tab+"        <maxdispatchthreads>"+server.maxdispatchthreads+"</maxdispatchthreads>\n";
         }
         
         if ("sysopt" in server)
         {
             instance.xml_text+=
-"       <sysopt>"+server.sysopt+"</sysopt>\n";
+tab+"        <sysopt>"+server.sysopt+"</sysopt>\n";
         }
         
         if ("appopt" in server && server.appopt!="")
         {
             instance.xml_text+=
-"       <appopt>"+server.appopt+"</appopt>\n";
+tab+"        <appopt>"+server.appopt+"</appopt>\n";
         }
         
         if (!server.is_default && "threadstacksize" in server)
         {
             instance.xml_text+=
-@"       <envs>
-            <env name=""NDRX_THREADSTACKSIZE"">"+server.threadstacksize+@"</env>
-        </envs>\n";
+tab+@"        <envs><env name=""NDRX_THREADSTACKSIZE"">"+server.threadstacksize+@"</env></envs>\n";
         }
         
         if (server.is_default)
         {
             instance.xml_text+=
-"   </defaults>\n";
+tab+"    </defaults>\n";
         }
         else
         {
             instance.xml_text+=
-"   </server>\n";
+tab+"    </server>\n";
         }
         
     }
+
+    //Terminate the servers if was open..
+    if (servers_open)
+    {
+        instance.xml_text+=
+"    </servers>\n";
+        tab="";
+        servers_open=false;
+    }
+
+    //Write client (restin) if needed.
+    if (instance.restin)
+    {
+        instance.xml_text+=
+@"    <clients>
+        <client cmdline=""restincl"">
+            <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_APPHOME}/log/restincl.rin1.log""/>
+        </client>
+    </clients>";
+    }
+
+    //Prepare services.
+
+    if (instance.rtservices > 0)
+    {
+        //Only once
+        local service_once={};
+        /* global settings */
+        instance.xml_text+="    <services>\n";
+
+        //OK, plot services section.
+        foreach(idx,service in M_sections["*SERVICES"].order)
+        {
+            local svcok = false;
+
+            if (!service.is_default)
+            {
+                if (service_once)
+                local range = {};
+                local service_srvgrp = get_val(service, "SRVGRP", "");
+                
+                //Service may have no group -> affect all
+                if (service_srvgrp =="")
+                {
+                    svcok=true;
+                }
+                else
+                {
+                    local group_lmid = get_val(
+                        M_sections["*GROUPS"].params[service_srvgrp[0]][0], "LMID", null)[0];
+
+                    if (group_lmid == instance.lmid)
+                    {
+                        svcok=true;
+                    }
+                }
+            }
+            else
+            {
+                svcok=true;
+            }
+
+            if (svcok)
+            {
+                if (service.name in service_once)
+                {
+                    //Skip this, already exported
+                    continue;
+                }
+                
+                service_once[service.name]<-true;
+
+                if (service.is_default)
+                {
+                    instance.xml_text+="        <defaults";
+                }
+                else
+                {
+                    instance.xml_text+="        <service svcnm=\""+service.name+"\"";
+                }
     
+                if ("PRIO" in service.keywords)
+                {
+                    instance.xml_text+=" prio=\""+service.keywords["PRIO"][0]+"\"";
+                }
+
+                if ("ROUTING" in service.keywords)
+                {
+                    instance.xml_text+=" routing=\""+service.keywords["ROUTING"][0]+"\"";
+                }
+
+                if ("AUTOTRAN" in service.keywords)
+                {
+                    instance.xml_text+=" autotran=\""+service.keywords["AUTOTRAN"][0]+"\"";
+                }
+
+                if ("TRANTIME" in service.keywords)
+                {
+                    instance.xml_text+=" trantime=\""+service.keywords["TRANTIME"][0]+"\"";
+                }
+
+                //close the tag
+                instance.xml_text+="/>\n";
+            }
+        }
+
+        instance.xml_text+="    </services>\n";
+
+    }
+
+    //Prepare routing
+    
+    instance.xml_text+="</endurox>\n";
+
     print("ndrxconfig.ini: [\n"+instance.xml_text+"]");
     
 }
@@ -1477,6 +1642,7 @@ function ex_generate(arg)
     foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
     {
         val[0].nodeid<-nodeid;
+        val[0].networked<-false;
         nodeid++;
         
         //Map LMID:MACHINE
@@ -1488,14 +1654,21 @@ function ex_generate(arg)
     prep_networking();
 
     //Generate each node
-    foreach(idx,val in M_sections["*MACHINES"].params) if (!val[0].is_default)
+    foreach(idx,val in M_sections["*MACHINES"].params)
     {
         local machine = val[0];
+
+        if (machine.is_default)
+        {
+            continue;
+        }
+
         M_instances[machine.name]<-{};
 
         local instance = M_instances[machine.name];
         instance.name <- machine.name;
         instance.lmid <- machine.keywords.LMID[0];
+        instance.restin <-false;
 
         print("Machine: "+instance.name);
 
@@ -1538,9 +1711,7 @@ function ex_generate(arg)
             instance.ndrx_bin <- "${NDRX_APPHOME}/"+instance.app_bin;
         }
 
-        //Prepare some identifiers
-        nodeid++;
-        instance.nodeid <- nodeid;
+        instance.nodeid <- machine.nodeid;
 
         if (regexp("^0x.*|^0X.*").match(M_resources["IPCKEY"][0]))
         {
@@ -1605,6 +1776,9 @@ function ex_generate(arg)
         }
 
         //Calculate number of routing services, if any.
+        instance.rtservices<-get_routing_services(instance);
+
+        //resources setting
         instance.rtsvcmax<-get_routing_services(instance);
 
         //Use fault, if not any set.
