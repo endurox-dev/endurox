@@ -1420,6 +1420,7 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     int ret=EXSUCCEED;
     int appconfig_found=EXFALSE;
 
+    G_sys_config.last_line = 0;
     if (NULL==cur)
     {
         NDRX_LOG(log_error, "Empty config?");

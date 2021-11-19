@@ -1,6 +1,12 @@
 //
 // Ubb config to Enduro/X converter
 //
+// Some Caveats:
+// - In Tuxedo srvid is per group setting. In Enduor/X this setting is per instance.
+//   So in case if duplicate srvid's are detected, loader will allocate completely
+//   new numbers.
+// - Groups are not supported per service entry. Thus to affected machines
+//   only first service entry is exported.
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -295,18 +301,20 @@ function get_routing_services(instance)
 function reserve_range(instance, slots)
 {
     local ret = 0;
+
     foreach(idx,range in instance.free_ranges)
     {
-        if (range.min + slots <= range.max)
+        if (range.min + (slots-1) <= range.max)
         {
             ret=range.min;
             //Reduce
-            range.min+=(slots-1);
-
-            if (range.min==range.max)
+            range.min=range.min+slots;
+            
+            if (range.min>range.max)
             {
-                delete instance.free_ranges[idx];
+                instance.free_ranges.remove(idx);
             }
+            break;
         }
     }
 
@@ -331,7 +339,7 @@ function prep_free_ranges(instance)
     local start = 1;
     instance.ranges<-[];
 
-    if ("SERVERS" in M_sections) foreach(idx,server in M_sections["*SERVERS"].order)
+    if ("*SERVERS" in M_sections) foreach(idx,server in M_sections["*SERVERS"].order)
     {
         if (!server.is_default)
         {
@@ -816,11 +824,11 @@ function prep_servers(instance)
                 {
                     if (sysopt!="")
                     {
-                        sysopt= sysopt + " " + " -e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
+                        sysopt= sysopt + " " + "-e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
                     }
                     else
                     {
-                        sysopt= " -e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
+                        sysopt= "-e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
                     }
                 }
 
@@ -830,7 +838,14 @@ function prep_servers(instance)
                 //Now generate clopt...
                 foreach(idx,opt in clopt_parsed.args1) if (opt.opt != "A")
                 {
-                    sysopt=sysopt + " -"+opt.opt;
+                    if (sysopt=="")
+                    {
+                        sysopt="-"+opt.opt;
+                    }
+                    else
+                    {
+                        sysopt=sysopt + " -"+opt.opt;
+                    }
                     if ("val" in opt)
                     {
                         //TODO: Escape " if found
@@ -1115,6 +1130,13 @@ function prep_servers(instance)
             continue_till_default=true;
         }
     }
+    ////////////////////////////////////////////////////////////////////////////
+    //TODO: Check buildtms binary instances, shall be used these were possible.
+    //TODO: Check at the end, do we have range duplications in servers, if
+    // so, allocate new numbers for entire machine
+    //TODO: If using restincl -> add cpmsrv instance
+    ////////////////////////////////////////////////////////////////////////////
+
 }
 
 /**
@@ -1206,6 +1228,8 @@ function prep_networking()
 function gen_set_file(instance)
 {
     //Prepare set file
+    //Needs to set CCONFIG to the file, not the folder, if several configs
+    //live there, it will load them all.
     instance.set_text <-
 /******************************************************************************/
 @"#/bin/bash
@@ -1213,7 +1237,7 @@ function gen_set_file(instance)
 # @(#) Load this script in environment before Enduro/X start
 #
 export NDRX_APPHOME="+instance.app_home+@"
-export NDRX_CCONFIG="+instance.ndrx_conf+@"
+export NDRX_CCONFIG="+instance.ndrx_conf+"/"+"app."+instance.prefix+@".ini
 export PATH=$PATH:"+instance.ndrx_bin+@"
 export CDPATH=$CDPATH:.:$NDRX_APPHOME
 ";
@@ -1321,7 +1345,9 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
 /******************************************************************************/
 @"[@debug]
 #* - goes for all binaries not listed bellow
-*= ndrx=3 ubf=1 tp=3 threaded=l file=
+*= ndrx=3 ubf=1 tp=3 threaded=l file=${NDRX_APPHOME}/log/endurox.org
+xadmin= file=${NDRX_APPHOME}/log/xadmin.log
+ndrxd= file=${NDRX_APPHOME}/log/ndrxd.log
 ";
 /******************************************************************************/
     
@@ -1587,7 +1613,8 @@ tab+"    </server>\n";
           <client cmdline=""restincl"">
               <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_APPHOME}/log/restincl.rin1.log""/>
           </client>
-    </clients>";
+    </clients>
+";
     }
 
     //Prepare services.
@@ -1703,16 +1730,16 @@ tab+"    </server>\n";
             if (!rt_started)
             {
                 instance.xml_text+="    <routing>\n";
+                rt_started=true;
             }
-            //TODO: Print down the route...
-
-
-            instance.xml_text+="    <routing>\n";
-@"      <route routing=""+route.name+@"">
+            
+            instance.xml_text+=
+@"        <route routing="""+route.name+@""">
             <field>"+field+@"</field>
             <ranges>"+ranges+@"</ranges>
             <buftype>UBF</buftype>
-        </route>";
+        </route>
+";
 
         }
 
@@ -1741,21 +1768,21 @@ function write_files()
             if (fileexists(instance.set_file))
             {
                 //print file name
-                print_stdout("Configuration file exists: ["+"]\n");
+                print_stdout("Configuration file exists: ["+instance.set_file+"]\n");
                 config_exists = true;
             }
 
             if (fileexists(instance.ini_file))
             {
                 //print file name
-                print_stdout("Configuration file exists: ["+"]\n");
+                print_stdout("Configuration file exists: ["+instance.ini_file+"]\n");
                 config_exists = true;
             }
             
             if (fileexists(instance.xml_file))
             {
                 //print file name
-                print_stdout("Configuration file exists: ["+"]\n");
+                print_stdout("Configuration file exists: ["+instance.xml_file+"]\n");
                 config_exists = true;
             }
         }
@@ -1774,22 +1801,49 @@ function write_files()
         //Write files
         foreach (idx, instance in M_instances)
         {
-            local out = file(instance.set_file,"w");
-            out.writes(contents);
-            out.close();
+            try
+            {
+                local out = file(instance.set_file,"w");
+                out.writes(instance.set_text);
+                out.close();
+            } 
+            catch (e)
+            {
+                print(e);
+                throw(format("Cannot write [%s] file", instance.set_file));
+            }
+
             M_files_gen.append(instance.set_file);
 
             //Give chmod to execute the file 
             chmod(instance.set_file, "755");
 
-            out = file(instance.ini_file,"w");
-            out.writes(contents);
-            out.close();
+            try
+            {
+                local out = file(instance.ini_file,"w");
+                out.writes(instance.ini_text);
+                out.close();
+            }
+            catch (e)
+            {
+                print(e);
+                throw(format("Cannot write [%s] file", instance.ini_file));
+            }
+
             M_files_gen.append(instance.ini_file);
 
-            out = file(instance.xml_file,"w");
-            out.writes(contents);
-            out.close();
+            try
+            {
+                local out = file(instance.xml_file,"w");
+                out.writes(instance.xml_text);
+                out.close();
+            }
+            catch (e)
+            {
+                print(e);
+                throw(format("Cannot write [%s] file", instance.xml_file));
+            }
+
             M_files_gen.append(instance.xml_file);
         }
         
@@ -2036,4 +2090,3 @@ function ex_cleanup(arg)
 {
 
 }
-

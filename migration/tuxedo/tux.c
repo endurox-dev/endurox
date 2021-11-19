@@ -183,6 +183,8 @@ exprivate void print_help(char *name)
     fprintf(stderr, "  -y               Do not ask for confirmation\n");
     fprintf(stderr, "  -c               RFU, syntax check only\n");
     fprintf(stderr, "  -b               RFU, ignored\n");
+    fprintf(stderr, "  -l <LMID>        Convert only specified LMID\n");
+    fprintf(stderr, "  -a               Do not try to re-use SRVIDs, assign new\n");
     fprintf(stderr, "  -d               Debug level 0..5\n");
     fprintf(stderr, "  -h               Print this help\n");
     fprintf(stderr, "  -s               Converter script name (if not using internal)\n"); 

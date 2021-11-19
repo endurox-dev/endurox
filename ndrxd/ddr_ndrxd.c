@@ -236,8 +236,8 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
         if (EXSUCCEED!=ndrx_regcomp(&M_floatexp, "^[-+]?(([0-9]*[.]?[0-9]+([ed][-+]?[0-9]+)?))$"))
         {
             NDRX_LOG(log_error, "Failed to compile regexp of tag float check");
-            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to compile regexp of tag float check!", 
-                G_sys_config.config_file_short);
+            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to compile regexp of tag float check near line %d!", 
+                G_sys_config.config_file_short, G_sys_config.last_line);
             EXFAIL_OUT(ret);
         }
         
@@ -246,8 +246,8 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
         if (EXSUCCEED!=ndrx_regcomp(&M_intexp, "^[+-]?([0-9])+$"))
         {
             NDRX_LOG(log_error, "Failed to compile regexp of tag int check");
-            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to compile regexp of tag int check!", 
-                G_sys_config.config_file_short);
+            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to compile regexp of tag int check near line %d!", 
+                G_sys_config.config_file_short, G_sys_config.last_line);
             EXFAIL_OUT(ret);
         }
         
@@ -259,8 +259,8 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
             || NULL!=strchr(grp, ','))
     {
         NDRX_LOG(log_error, "Invalid group code [%s]", grp);
-        NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Invalid group code [%s]", 
-            G_sys_config.config_file_short, grp);
+        NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Invalid group code [%s] near line %d", 
+            G_sys_config.config_file_short, grp, G_sys_config.last_line);
         EXFAIL_OUT(ret);
     }
     
@@ -268,8 +268,8 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
     if (len > NDRX_DDR_GRP_MAX)
     {
         NDRX_LOG(log_error, "Group code [%s] too long max %d", grp, NDRX_DDR_GRP_MAX);
-        NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Group code [%s] too long max %d",
-            G_sys_config.config_file_short, grp, NDRX_DDR_GRP_MAX);
+        NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Group code [%s] too long max %d near line %d",
+            G_sys_config.config_file_short, grp, NDRX_DDR_GRP_MAX, G_sys_config.last_line);
         EXFAIL_OUT(ret);
     }
     
@@ -320,9 +320,10 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                         seq->cseq.strrange, grp,
                         ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
                 NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Invalid upper range [%s] "
-                        "for grp [%s] routing [%s] buffer type [%s]",
-                    G_sys_config.config_file_short, seq->cseq.strrange, grp,
-                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
+                        "for grp [%s] routing [%s] buffer type [%s] near line %d",
+                        G_sys_config.config_file_short, seq->cseq.strrange, grp,
+                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype,
+                        G_sys_config.last_line);
                 EXFAIL_OUT(ret);
             }
             
@@ -338,9 +339,10 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                         seq->cseq.strrange, grp,
                         ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
                 NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Invalid lower range [%s] "
-                        "for grp [%s] routing [%s] buffer type [%s]",
-                    G_sys_config.config_file_short,  seq->cseq.strrange, grp,
-                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
+                        "for grp [%s] routing [%s] buffer type [%s] near line %d",
+                        G_sys_config.config_file_short,  seq->cseq.strrange, grp,
+                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype,
+                        G_sys_config.last_line);
                 EXFAIL_OUT(ret);
             }
             
@@ -357,9 +359,10 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                         seq->cseq.strrange, grp,
                         ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
                 NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Invalid lower range [%s] "
-                        "for grp [%s] routing [%s] buffer type [%s]",
-                    G_sys_config.config_file_short,  seq->cseq.strrange, grp,
-                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
+                        "for grp [%s] routing [%s] buffer type [%s] near line %d",
+                        G_sys_config.config_file_short,  seq->cseq.strrange, grp,
+                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype,
+                        G_sys_config.last_line);
                 EXFAIL_OUT(ret);
             }
             
@@ -370,9 +373,10 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                         seq->cseq.strrange, grp, 
                         ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
                 NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Invalid upper range [%s] "
-                        "for grp [%s] routing [%s] buffer type [%s]",
-                    G_sys_config.config_file_short,  seq->cseq.strrange, grp,
-                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
+                        "for grp [%s] routing [%s] buffer type [%s] near line %d",
+                        G_sys_config.config_file_short,  seq->cseq.strrange, grp,
+                        ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype,
+                        G_sys_config.last_line);
                 EXFAIL_OUT(ret);
             }
             
@@ -389,11 +393,12 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                         seq->cseq.lowerd, seq->cseq.upperd, grp, 
                         ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
                 NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Lower [%lf] greater than upper [%lf] for grp [%s] "
-                        "routing [%s] buffer type [%s]",
+                        "routing [%s] buffer type [%s] near line %d",
                         G_sys_config.config_file_short,  seq->cseq.lowerd, 
                         seq->cseq.upperd, grp,
                         ndrx_G_ddrp.p_crit->routcrit.criterion, 
-                        ndrx_G_ddrp.p_crit->routcrit.buftype);
+                        ndrx_G_ddrp.p_crit->routcrit.buftype,
+                        G_sys_config.last_line);
                 EXFAIL_OUT(ret);
             }
         }
@@ -428,11 +433,12 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                         seq->cseq.strrange, seq->cseq.strrange + seq->cseq.strrange_upper, grp, 
                         ndrx_G_ddrp.p_crit->routcrit.criterion, ndrx_G_ddrp.p_crit->routcrit.buftype);
                 NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Lower [%s] greater than upper [%s] for grp [%s] "
-                        "routing [%s] buffer type [%s]",
+                        "routing [%s] buffer type [%s] near line %d",
                         G_sys_config.config_file_short,  
                         seq->cseq.strrange, seq->cseq.strrange + seq->cseq.strrange_upper, grp,
                         ndrx_G_ddrp.p_crit->routcrit.criterion, 
-                        ndrx_G_ddrp.p_crit->routcrit.buftype);
+                        ndrx_G_ddrp.p_crit->routcrit.buftype,
+                        G_sys_config.last_line);
                 EXFAIL_OUT(ret);
             }
             
@@ -537,8 +543,8 @@ expublic ndrx_routcritseq_dl_t * ndrx_ddr_new_rangeexpr(char *range_min, char *r
     {
         NDRX_LOG(log_error, "(%s) malloc %d bytes!", 
                 G_sys_config.config_file_short, sz);
-        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) malloc %d bytes!", 
-                G_sys_config.config_file_short, sz);
+        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) malloc %d bytes! near line %d", 
+                G_sys_config.config_file_short, sz, G_sys_config.last_line);
         goto out;
     }
     
@@ -630,9 +636,12 @@ void ddrerror(char *s, ...)
         int len;
 
         va_start(ap, s);
-        snprintf(errbuf, sizeof(errbuf), "Routing range of [%s] buftype [%s]. Near of %d-%d: ", 
+        snprintf(errbuf, sizeof(errbuf), "(%s) Routing range of [%s] buftype [%s]. "
+                "Near line %d, near expr of %d-%d: ", 
+                G_sys_config.config_file_short,
                 ndrx_G_ddrp.p_crit->routcrit.criterion, 
                 ndrx_G_ddrp.p_crit->routcrit.buftype,
+                G_sys_config.last_line,
                 ddrlloc.first_column, ddrlloc.last_column);
         len=strlen(errbuf);
         vsnprintf(errbuf+len, sizeof(errbuf)-len, s, ap);
@@ -677,8 +686,8 @@ exprivate int ndrx_parse_range(ndrx_routcrit_typehash_t *p_crit)
     if (EXSUCCEED!=ddrparse() || EXSUCCEED!=ndrx_G_ddrp.error)
     {
         NDRX_LOG(log_error, "Failed to parse range: [%s]", p_crit->ranges);
-        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) failed to parse range", 
-                G_sys_config.config_file_short, p_crit->ranges);
+        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) failed to parse range near line %d", 
+                G_sys_config.config_file_short, p_crit->ranges, G_sys_config.last_line);
         
         /* free parsers... */
         ddrlex_destroy();
@@ -711,10 +720,14 @@ exprivate ndrx_routcrit_hash_t * ndrx_criterion_get(config_t *config, char *crit
     
     if (len > NDRX_DDR_CRITMAX)
     {
-        NDRX_LOG(log_error, "(%s) Invalid criterion name [%s] len is %d, but max is %d",
-                G_sys_config.config_file_short, criterion, len, NDRX_DDR_CRITMAX);
-        NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid criterion name [%s] len is %d but max is %d",
-                G_sys_config.config_file_short, criterion, len, NDRX_DDR_CRITMAX);
+        NDRX_LOG(log_error, "(%s) Invalid criterion name [%s] len is %d, but max is %d"
+                " near line %d",
+                G_sys_config.config_file_short, criterion, len, NDRX_DDR_CRITMAX,
+                G_sys_config.last_line);
+        NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid criterion name [%s] len is %d but max is %d"
+                " near line %d",
+                G_sys_config.config_file_short, criterion, len, NDRX_DDR_CRITMAX,
+                G_sys_config.last_line);
         goto out;
     }
     
@@ -722,8 +735,9 @@ exprivate ndrx_routcrit_hash_t * ndrx_criterion_get(config_t *config, char *crit
     {
         NDRX_LOG(log_error, "(%s) Empty criterion name",
                 G_sys_config.config_file_short);
-        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Empty criterion name",
-                G_sys_config.config_file_short);
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Empty criterion name near line %d",
+                G_sys_config.config_file_short,
+                G_sys_config.last_line);
         goto out;
     }
     
@@ -741,8 +755,10 @@ exprivate ndrx_routcrit_hash_t * ndrx_criterion_get(config_t *config, char *crit
             NDRX_LOG(log_error, "(%s) Failed to malloc %d byte (ndrx_routcrit_hash_t): %s", 
                     G_sys_config.config_file_short, sizeof(ndrx_routcrit_hash_t), strerror(err));
             
-            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to malloc %d byte (ndrx_routcrit_hash_t): %s", 
-                    G_sys_config.config_file_short, sizeof(ndrx_routcrit_hash_t), strerror(err));
+            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to malloc %d byte (ndrx_routcrit_hash_t): %s"
+                    " near line %d", 
+                    G_sys_config.config_file_short, sizeof(ndrx_routcrit_hash_t), strerror(err),
+                    G_sys_config.last_line);
             goto out;
         }
         
@@ -787,8 +803,8 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
         if (NULL==p_svc)
         {
             NDRX_LOG(log_error, "malloc failed for ndrx_routsvc_t!");
-            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) malloc failed for srvnode!", 
-                    G_sys_config.config_file_short);
+            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) malloc failed for srvnode! near line %d", 
+                    G_sys_config.config_file_short, G_sys_config.last_line);
             EXFAIL_OUT(ret);
         }
         memcpy(p_svc, p_defaults, sizeof(ndrx_services_hash_t));
@@ -806,8 +822,9 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
                 NDRX_LOG(log_error, "(%s) Too long service name [%s] in <services> section max %d", 
                     G_sys_config.config_file_short, p, XATMI_SERVICE_NAME_LENGTH);
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Too long service name "
-                        "[%s] in <services> section max %d", 
-                    G_sys_config.config_file_short, p, XATMI_SERVICE_NAME_LENGTH);
+                        "[%s] in <services> section max %d near line %d", 
+                    G_sys_config.config_file_short, p, XATMI_SERVICE_NAME_LENGTH,
+                    G_sys_config.last_line);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
@@ -828,9 +845,9 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
                     NDRX_MSGPRIO_MIN, NDRX_MSGPRIO_MAX);
 
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
-                    "(%s) Invalid prio %d in <services> section min %d max %d",    
+                    "(%s) Invalid prio %d in <services> section min %d max %d near line %d",    
                     G_sys_config.config_file_short, p_svc->routsvc.prio,
-                    NDRX_MSGPRIO_MIN, NDRX_MSGPRIO_MAX);
+                    NDRX_MSGPRIO_MIN, NDRX_MSGPRIO_MAX, G_sys_config.last_line);
 
                 xmlFree(p);
                 EXFAIL_OUT(ret);
@@ -865,10 +882,11 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
                         NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2);
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
                     "(%s) Invalid autotran setting [%s] in <services> "
-                        "section, expected values [%c%c%c%c]", 
+                        "section, expected values [%c%c%c%c] near line %d", 
                         G_sys_config.config_file_short, p,
                         NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
-                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2);
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2,
+                        G_sys_config.last_line);
 
                 xmlFree(p);
                 EXFAIL_OUT(ret);
@@ -891,8 +909,9 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
             NDRX_LOG(log_error, "(%s) Empty service definition", 
                     G_sys_config.config_file_short);
 
-            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Empty service definition", 
-                    G_sys_config.config_file_short);
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Empty service definition near line %d", 
+                    G_sys_config.config_file_short,
+                    G_sys_config.last_line);
             EXFAIL_OUT(ret);
         }
     
@@ -903,8 +922,9 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
             NDRX_LOG(log_error, "(%s) Service [%s] already defined", 
                     G_sys_config.config_file_short, p_svc->svcnm);
 
-            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Service [%s] already defined", 
-                    G_sys_config.config_file_short,p_svc->svcnm);
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Service [%s] already defined"
+                    " near line %d", 
+                    G_sys_config.config_file_short,p_svc->svcnm, G_sys_config.last_line);
             EXFAIL_OUT(ret);
         }
 
@@ -945,6 +965,7 @@ expublic int ndrx_services_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur
     {
         is_service= (0==strcmp((char*)cur->name, "service"));
         is_defaults= (0==strcmp((char*)cur->name, "defaults"));
+        G_sys_config.last_line = cur->line;
         
         if (is_service || is_defaults)
         {
@@ -952,7 +973,8 @@ expublic int ndrx_services_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur
             if (EXSUCCEED!=ndrx_service_parse(config, doc, cur, is_defaults, &default_svc))
             {
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
-                        "parse <service> section", G_sys_config.config_file_short);
+                        "parse <service> section near line %d", 
+                        G_sys_config.config_file_short, G_sys_config.last_line);
                 ret=EXFAIL;
                 goto out;
             }
@@ -1275,8 +1297,9 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     {
         NDRX_LOG(log_error, "(%s) Missing `routing' attribute",
                 G_sys_config.config_file_short);
-        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Missing `routing' attribute",
-                G_sys_config.config_file_short);
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Missing `routing' attribute"
+                " near line %d",
+                G_sys_config.config_file_short, G_sys_config.last_line);
         EXFAIL_OUT(ret);
     }
     
@@ -1287,8 +1310,10 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     {
         NDRX_LOG(log_error, "(%s) Failed to malloc %d bytes", 
                 G_sys_config.config_file_short, *p_crit);
-        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to malloc %d bytes",
-                G_sys_config.config_file_short, *p_crit);
+        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to malloc %d bytes"
+                " near line %d",
+                G_sys_config.config_file_short, *p_crit,
+                G_sys_config.last_line);
         goto out;
     }
     
@@ -1303,6 +1328,7 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     cur=cur->children;
     for (; cur; cur=cur->next)
     {
+        G_sys_config.last_line=cur->line;
         p = (char *)xmlNodeGetContent(cur);
         
         if (0==strcmp("field", (char *)cur->name))
@@ -1315,8 +1341,10 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             {
                 NDRX_LOG(log_error, "(%s) <ranges> already loaded for route [%s]", 
                         G_sys_config.config_file_short, p_crit->routcrit.criterion);
-                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) <ranges> already loaded for route [%s]", 
-                        G_sys_config.config_file_short, p_crit->routcrit.criterion);
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) <ranges> already loaded for route [%s]"
+                        " near line %d", 
+                        G_sys_config.config_file_short, p_crit->routcrit.criterion,
+                        G_sys_config.last_line);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
@@ -1346,8 +1374,10 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             {
                 NDRX_LOG(log_error, "(%s) Invalid <routing> buftype [%s]",
                         G_sys_config.config_file_short, p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid <routing> buftype [%s]",
-                        G_sys_config.config_file_short, p);
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid <routing> buftype [%s]"
+                        " near line %d",
+                        G_sys_config.config_file_short, p,
+                        G_sys_config.last_line);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
@@ -1363,8 +1393,10 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             {
                 NDRX_LOG(log_error, "(%s) Buffer type [%s] already defined for route [%s]",
                         G_sys_config.config_file_short, p, p_route->criterion);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Buffer type [%s] already defined for route [%s]",
-                        G_sys_config.config_file_short, p, p_route->criterion);
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Buffer type [%s] already defined for route [%s]"
+                        " near line %d",
+                        G_sys_config.config_file_short, p, p_route->criterion,
+                        G_sys_config.last_line);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }   
@@ -1387,8 +1419,10 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             {
                 NDRX_LOG(log_error, "(%s) Invalid field type [%s]",
                         G_sys_config.config_file_short, p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid field type [%s]",
-                        G_sys_config.config_file_short, p);
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid field type [%s]"
+                        " near line %d",
+                        G_sys_config.config_file_short, p,
+                        G_sys_config.last_line);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
@@ -1411,9 +1445,11 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             NDRX_LOG(log_error, "(%s) Invalid routing field [%s] for route [%s]",
                         G_sys_config.config_file_short, 
                     p_crit->routcrit.field, p_route->criterion);
-            NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid routing field [%s] for route [%s]",
-                        G_sys_config.config_file_short, 
-                    p_crit->routcrit.field, p_route->criterion);
+            NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid routing field [%s] for route [%s]"
+                    " near line %d",
+                    G_sys_config.config_file_short, 
+                    p_crit->routcrit.field, p_route->criterion,
+                    G_sys_config.last_line);
             EXFAIL_OUT(ret);
         }
         
@@ -1429,9 +1465,11 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_error, "(%s) Failed to detect field type [%s]: %s",
                             G_sys_config.config_file_short, 
                         p_crit->routcrit.field, Bstrerror(Berror));
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to detect field type [%s]: %s",
-                            G_sys_config.config_file_short, 
-                        p_crit->routcrit.field, Bstrerror(Berror));
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to detect field type [%s]: %s"
+                        " near line %d",
+                        G_sys_config.config_file_short, 
+                        p_crit->routcrit.field, Bstrerror(Berror),
+                        G_sys_config.last_line);
                 EXFAIL_OUT(ret);
             }
         }
@@ -1463,10 +1501,12 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                             G_sys_config.config_file_short, 
                             p_crit->routcrit.field, Btype(p_crit->routcrit.fldid),
                             p_crit->routcrit.fieldtypeid);
-            NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Unroutable UBF field [%s] type [%s] (%d)",
+            NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Unroutable UBF field [%s] type [%s] (%d)"
+                            " near line %d",
                             G_sys_config.config_file_short, 
                             p_crit->routcrit.field, Btype(p_crit->routcrit.fldid),
-                            p_crit->routcrit.fieldtypeid);
+                            p_crit->routcrit.fieldtypeid,
+                            G_sys_config.last_line);
             EXFAIL_OUT(ret);
         }
     }
@@ -1527,13 +1567,15 @@ expublic int ndrx_routing_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     for (; cur ; cur=cur->next)
     {
+        G_sys_config.last_line = cur->line;
         if (0==strcmp((char*)cur->name, "route"))
         {
             /* Get the server name */
             if (EXSUCCEED!=ndrx_route_parse(config, doc, cur))
             {
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
-                        "parse <route> section", G_sys_config.config_file_short);
+                        "parse <route> section near line %d", 
+                        G_sys_config.config_file_short, G_sys_config.last_line);
                 ret=EXFAIL;
                 goto out;
             }
