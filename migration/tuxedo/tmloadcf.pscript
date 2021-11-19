@@ -1046,10 +1046,73 @@ function prep_servers(instance)
         }
     }
 
-    //TODO: In reverse order merge cctags to the default, if all bins till the default
-    //live in the same cctag
-    
+    //Merge CCTAGS, if applied 
+    local len = instance.servers.len();
+    local last_cctag = "";
+    local first = false;
+    local continue_till_default = false;
+    local matching_servers = [];
 
+    for (local i=len-1; i>=0; i--)
+    {
+        local server = instance.servers[i];
+
+        if (i==len-1)
+        {
+            first=true;
+        }
+
+        if (server.is_default)
+        {
+            if (!continue_till_default && last_cctag!="")
+            {
+                //Merge the cctag to default
+                server.cctag<-last_cctag;
+                //Remove default from all linked servers
+                
+                foreach (idx, sv in matching_servers)
+                {
+                    delete sv.cctag;
+                }
+
+            }
+            else
+            {
+                //If and there is no default cctag for this default
+                //then stop merging.
+                //Because then further default merges might affect this particular
+                //group and following binaries (i.e. get cctag from previous default)
+                //Thus stop merging here.
+                break;
+            }
+
+            first = true;
+            last_cctag="";
+            matching_servers = [];
+        }
+        else if (continue_till_default)
+        {
+            continue;
+        }
+        else if ("cctag" in server)
+        {
+            if (first)
+            {
+                last_cctag = server.cctag;
+                //Append in case if we want to merge the group...
+                matching_servers.append(server);
+            }
+            else if (last_cctag != server.cctag)
+            {
+                last_cctag="";
+                continue_till_default=true;
+            }
+        }
+        else
+        {
+            continue_till_default=true;
+        }
+    }
 }
 
 /**
@@ -1519,9 +1582,9 @@ tab+"    </server>\n";
     {
         instance.xml_text+=
 @"    <clients>
-        <client cmdline=""restincl"">
-            <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_APPHOME}/log/restincl.rin1.log""/>
-        </client>
+          <client cmdline=""restincl"">
+              <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_APPHOME}/log/restincl.rin1.log""/>
+          </client>
     </clients>";
     }
 
@@ -1628,15 +1691,34 @@ tab+"    </server>\n";
             local ranges = get_val(route, "RANGES", null)[0];
             local buftype = get_val(route, "BUFTYPE", null)[0];
 
-            if (buftype!="FML32" || buftype!="FML")
+            if (buftype!="FML32" && buftype!="FML")
             {
                 error(format("Ignoring route [%s] as buffer type [%s] not supported", 
                         route.name, buftype));
                 continue;
             }
 
+            if (!rt_started)
+            {
+                instance.xml_text+="    <routing>\n";
+            }
             //TODO: Print down the route...
+
+
+            instance.xml_text+="    <routing>\n";
+@"      <route routing=""+route.name+@"">
+            <field>"+field+@"</field>
+            <ranges>"+ranges+@"</ranges>
+            <buftype>UBF</buftype>
+        </route>";
+
         }
+
+        if (rt_started)
+        {
+            instance.xml_text+="    </routing>\n";
+        }
+
     }
     
     instance.xml_text+="</endurox>\n";
@@ -1845,6 +1927,20 @@ function ex_generate(arg)
         gen_set_file(instance);
         gen_ini_file(instance);
         gen_xml_file(instance);
-
     }
+
+    //Verify files (ask for overwrite, if any missing)
+
+    //Create folders (if any missing, log created)
+
+    //Write files  (log created)
+
 }
+
+
+//TODO Have a callback for cleanup, if any file was created
+function ex_cleanup(arg)
+{
+
+}
+
