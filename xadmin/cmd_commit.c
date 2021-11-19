@@ -142,7 +142,7 @@ expublic int cmd_commit(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     }
     
     /* Check for confirmation */
-    if (!chk_confirm("Are you sure you want to commit the transaction?", confirm))
+    if (!ndrx_chk_confirm("Are you sure you want to commit the transaction?", confirm))
     {
         EXFAIL_OUT(ret);
     }

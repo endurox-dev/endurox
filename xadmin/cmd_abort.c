@@ -156,7 +156,7 @@ expublic int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     }
     
     /* Check for confirmation */
-    if (!chk_confirm("Are you sure you want to abort the transaction?", confirm))
+    if (!ndrx_chk_confirm("Are you sure you want to abort the transaction?", confirm))
     {
         EXFAIL_OUT(ret);
     }

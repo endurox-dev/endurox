@@ -500,6 +500,56 @@ static PSInteger _exutil_parseclopt2(HPSCRIPTVM v)
     return _exutil_parseclopt(v, 2);
 }
 
+/**
+ * Check confirm call
+ * @param [script] Message
+ * @return [script] TRUE (accept) / FALSE (rejected)
+ */
+static PSInteger _exutil_chk_confirm(HPSCRIPTVM v)
+{
+    const PSChar *str;
+    PSInteger ret;
+    
+    ps_getstring(v,2,&str);
+    
+    ret = ndrx_chk_confirm((char *)str, EXFALSE);
+
+    ps_pushinteger(v, ret);
+    return 1;
+}
+
+/**
+ * Print to stdout
+ * @param [stdout] message
+ * @return 1
+ */
+static PSInteger _exutil_print_stdout(HPSCRIPTVM v)
+{
+    const PSChar *str;
+    PSInteger ret;
+    
+    ps_getstring(v,2,&str);
+    
+    fprintf(stdout, "%s", str);    
+    return 1;
+}
+
+/**
+ * Print to stderr
+ * @param [stdout] message
+ * @return 1
+ */
+static PSInteger _exutil_print_stderr(HPSCRIPTVM v)
+{
+    const PSChar *str;
+    PSInteger ret;
+    
+    ps_getstring(v,2,&str);
+    
+    fprintf(stdout, "%s", str);    
+    return 1;
+}
+
 #define _DECL_FUNC(name,nparams,pmask) {_SC(#name),_exutil_##name,nparams,pmask}
 static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
@@ -518,7 +568,9 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(parseclopt2,4,_SC(".sss")),
         _DECL_FUNC(getservbyname,3,_SC(".sss")),
         _DECL_FUNC(hex2int,2,_SC(".ss")),
-        
+        _DECL_FUNC(chk_confirm,2,_SC(".ss")),
+        _DECL_FUNC(print_stdout,2,_SC(".ss")),
+        _DECL_FUNC(print_stderr,2,_SC(".ss")),
 	{0,0}
 };
 #undef _DECL_FUNC

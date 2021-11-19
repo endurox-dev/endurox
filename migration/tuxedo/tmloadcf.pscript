@@ -65,7 +65,7 @@ M_folder_gen <- {};
 
 //List of files generated
 //Used on error termination to clean
-M_files_gen <- {};
+M_files_gen <- [];
 
 /**
  * Add resource/keyword value
@@ -833,6 +833,7 @@ function prep_servers(instance)
                     sysopt=sysopt + " -"+opt.opt;
                     if ("val" in opt)
                     {
+                        //TODO: Escape " if found
                         if (null!=opt.val.find(" ") || null!=opt.val.find("\n") || null!=opt.val.find("\t"))
                         {
                             sysopt=sysopt + " \"" + opt.val + "\"";
@@ -853,6 +854,7 @@ function prep_servers(instance)
                     }
                     else
                     {
+                        //TODO: Escape " if found
                         if (null!=opt.find(" ") || null!=opt.find("\n") || null!=opt.find("\t"))
                         {
                             appopt=appopt + " \"" + opt + "\"";
@@ -1728,6 +1730,71 @@ tab+"    </server>\n";
 }
 
 /**
+ * Write configuration files to the disk
+ */
+function write_files()
+{
+        local config_exists = false;
+        //Verify files (ask for overwrite, if any missing)
+        foreach (idx, instance in M_instances)
+        {
+            if (fileexists(instance.set_file))
+            {
+                //print file name
+                print_stdout("Configuration file exists: ["+"]\n");
+                config_exists = true;
+            }
+
+            if (fileexists(instance.ini_file))
+            {
+                //print file name
+                print_stdout("Configuration file exists: ["+"]\n");
+                config_exists = true;
+            }
+            
+            if (fileexists(instance.xml_file))
+            {
+                //print file name
+                print_stdout("Configuration file exists: ["+"]\n");
+                config_exists = true;
+            }
+        }
+
+        //Ask for confirmation, if needed
+        if (config_exists 
+                && M_y_opt != "1" 
+                && 0==chk_confirm("Really overwrite Enduro/X configuration files?"))
+        {
+            print("Aborted configuration file generation");
+            return;
+        }
+
+        //TODO: Create folders (if any missing, log created)
+
+        //Write files
+        foreach (idx, instance in M_instances)
+        {
+            local out = file(instance.set_file,"w");
+            out.writes(contents);
+            out.close();
+            M_files_gen.append(instance.set_file);
+
+            //Give chmod to execute the file 
+            chmod(instance.set_file, "755");
+
+            out = file(instance.ini_file,"w");
+            out.writes(contents);
+            out.close();
+            M_files_gen.append(instance.ini_file);
+
+            out = file(instance.xml_file,"w");
+            out.writes(contents);
+            out.close();
+            M_files_gen.append(instance.xml_file);
+        }
+        
+}
+/**
  * Generate Enduro/X configs. Callback from tmloadcf. At this point
  * all configs are parsed.
  */
@@ -1773,6 +1840,13 @@ function ex_generate(arg)
         local instance = M_instances[machine.name];
         instance.name <- machine.name;
         instance.lmid <- machine.keywords.LMID[0];
+
+        if (M_l_opt!="" && instance.lmid!=M_l_opt)
+        {
+            print("Skipping node ["+instance.lmid+"] as -l present");
+            continue;
+        }
+
         instance.restin <-false;
 
         print("Machine: "+instance.name);
@@ -1783,12 +1857,18 @@ function ex_generate(arg)
         instance.use_rel <- false;
         if (instance.app_home=="/")
         {
+            //this is absolute path
             instance.app_home = machine.keywords["APPDIR"][0];
             instance.app_bin <- machine.keywords["APPDIR"][0];
             instance.app_conf <- dirname(machine.keywords["TUXCONFIG"][0]);
 
             instance.ndrx_conf<- instance.app_conf;
             instance.ndrx_bin <- instance.app_bin;
+
+            instance.set_file <-format("%s/set.%s", instance.app_conf, instance.prefix);
+            instance.xml_file <-format("%s/ndrxconfig.%s.xml", instance.app_conf, instance.prefix);
+            instance.ini_file <-format("%s/app.%s.ini", instance.app_conf, instance.prefix);
+
         }
         else
         {
@@ -1814,6 +1894,14 @@ function ex_generate(arg)
             //Prepare further folders
             instance.ndrx_conf <- "${NDRX_APPHOME}/"+instance.app_conf;
             instance.ndrx_bin <- "${NDRX_APPHOME}/"+instance.app_bin;
+
+
+            instance.set_file <-format("%s/%s/set.%s", instance.app_home, 
+                instance.app_conf, instance.prefix);
+            instance.xml_file <-format("%s/%s/ndrxconfig.%s.xml", instance.app_home, 
+                instance.app_conf, instance.prefix);
+            instance.ini_file <-format("%s/%s/app.%s.ini", instance.app_home, 
+                instance.app_conf, instance.prefix);
         }
 
         instance.nodeid <- machine.nodeid;
@@ -1834,6 +1922,10 @@ function ex_generate(arg)
         print("app_home = "+instance.app_home);
         print("app_conf = "+instance.app_conf);
         print("app_bin = "+instance.app_bin);
+
+        print("set_file = "+instance.set_file);
+        print("ini_file = "+instance.ini_file);
+        print("xml_file = "+instance.xml_file);
 
         //Load Tuxedo defaults
         if (!("BLOCKTIME" in M_resources))
@@ -1929,14 +2021,15 @@ function ex_generate(arg)
         gen_xml_file(instance);
     }
 
-    //Verify files (ask for overwrite, if any missing)
+    print(format("M_n_opt=%s", M_n_opt));
+    print(format("M_y_opt=%s", M_y_opt));
+    print(format("M_l_opt=%s", M_l_opt));
 
-    //Create folders (if any missing, log created)
-
-    //Write files  (log created)
-
+    if (M_n_opt!="1")
+    {
+        write_files();
+    }
 }
-
 
 //TODO Have a callback for cleanup, if any file was created
 function ex_cleanup(arg)

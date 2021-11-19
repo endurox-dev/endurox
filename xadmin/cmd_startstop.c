@@ -237,7 +237,7 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     }
     
     if (EXFAIL==srvid && EXEOS==srvnm[0] &&
-          !chk_confirm("Are you sure you want to start application?", confirm))
+          !ndrx_chk_confirm("Are you sure you want to start application?", confirm))
     {
         EXFAIL_OUT(ret);
     }
@@ -333,7 +333,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     }
     
     if (EXFAIL==srvid && EXEOS==srvnm[0] &&
-          !chk_confirm("Are you sure you want to stop application?", confirm))
+          !ndrx_chk_confirm("Are you sure you want to stop application?", confirm))
     {
         EXFAIL_OUT(ret);
     }
@@ -611,7 +611,7 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     }
     
     if (EXFAIL==srvid && EXEOS==srvnm[0] &&
-          !chk_confirm("Are you sure you want to start application?", confirm))
+          !ndrx_chk_confirm("Are you sure you want to start application?", confirm))
     {
         EXFAIL_OUT(ret);
     }

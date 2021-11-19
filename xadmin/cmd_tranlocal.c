@@ -444,7 +444,7 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
             msg);
     
     /* Check for confirmation */
-    if (!chk_confirm(msgfmt, confirm))
+    if (!ndrx_chk_confirm(msgfmt, confirm))
     {
         EXFAIL_OUT(ret);
     }
