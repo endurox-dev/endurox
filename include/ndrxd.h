@@ -324,6 +324,7 @@ typedef struct
                         * process becomes in normal mode */
     ndrx_stopwatch_t time_from_restart; /**< Time counter, how long we are restarting/learning */
     int     fullstart;  /**< Are we in full start mode or not? */
+    int     last_line;  /**< Last line parsed in config (for error reporting) */
 } sys_config_t;
 
 /**
