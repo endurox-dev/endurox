@@ -1526,7 +1526,6 @@ tab+"    </server>\n";
     }
 
     //Prepare services.
-
     if (instance.rtservices > 0)
     {
         //Only once
@@ -1615,6 +1614,30 @@ tab+"    </server>\n";
     }
 
     //Prepare routing
+
+    if ("*ROUTING" in M_sections)
+    {
+        local rt_started=false;
+
+        foreach(idx,route in M_sections["*ROUTING"].params)
+        {
+            //Single routing supported only (afaik Tuxedo also has requires single route)
+            route = route[0];
+            local field = get_val(route, "FIELD", null)[0];
+            local fieldtype = get_val(route, "FIELDTYPE", null)[0];
+            local ranges = get_val(route, "RANGES", null)[0];
+            local buftype = get_val(route, "BUFTYPE", null)[0];
+
+            if (buftype!="FML32" || buftype!="FML")
+            {
+                error(format("Ignoring route [%s] as buffer type [%s] not supported", 
+                        route.name, buftype));
+                continue;
+            }
+
+            //TODO: Print down the route...
+        }
+    }
     
     instance.xml_text+="</endurox>\n";
 
