@@ -1031,6 +1031,9 @@ function prep_servers(instance)
     }
     
     instance.servers = servers_final;
+    //TODO: if all binaries reference the same CCTAG, then
+    //then just update the first default to use this particular CCTAG
+    //no need for each binary to keep the setting
 
 }
 
@@ -1173,8 +1176,6 @@ NDRX_SVCMAX="+M_resources["MAXSERVICES"][0]+@"
 NDRX_TOUT="+ M_resources["SCANUNIT"][0].tointeger() 
       * M_resources["BLOCKTIME"][0].tointeger() +@"
 NDRX_UBFMAXFLDS=16000
-# if needed per binary, move to CCTAG section or binary environment
-NDRX_THREADSTACKSIZE=8192
 NDRX_LIBEXT="+M_wizzard.shared_lib_pfx+@"
 NDRX_ULOG=${NDRX_APPHOME}/log
 # TODO, replace if not found already in env:
