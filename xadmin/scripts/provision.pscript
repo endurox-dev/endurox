@@ -405,8 +405,8 @@ class Provision extends WizardBase {
 			ndrxconfigXmlVal=ndrxconfigXmlVal+
 		@"
 		<server name=""tpevsrv"">
-			<min>2</min>
-			<max>2</max>
+			<min>1</min>
+			<max>1</max>
 			<srvid>20</srvid>
 			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpevsrv.log -r</sysopt>
 		</server>";
