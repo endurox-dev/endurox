@@ -393,6 +393,7 @@ extern NDRX_API int ndrx_str_valid_cid(char *str, int max_len);
 extern NDRX_API int ndrx_str_ends_with(char *str, char *needle);
 extern NDRX_API long ndrx_file_age(char *fname);
 extern NDRX_API char *ndrx_file_read(char *fname, size_t *bytes_loaded);
+extern NDRX_API int ndrx_chk_confirm(char *message, short is_confirmed);
 
 /* String handling, where macros does not work: */
 

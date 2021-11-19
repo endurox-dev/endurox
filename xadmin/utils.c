@@ -84,58 +84,6 @@ expublic char * ndrx_xadmin_nodeid(void)
 }
 
 /**
- * If confirmation is required for command, then check it.
- * @param message
- * @param argc
- * @param argv
- * @return TRUE/FALSE
- */
-expublic int chk_confirm(char *message, short is_confirmed)
-{
-    int ret=EXFALSE;
-    char buffer[128];
-    int ans_ok = EXFALSE;
-    
-    if (!is_confirmed)
-    {
-        if (isatty(0))
-        {
-            do
-            {
-                /* Ask Are you sure */
-                fprintf(stderr, "%s [Y/N]: ", message);
-                while (NULL==fgets(buffer, sizeof(buffer), stdin))
-                {
-                    /* do nothing */
-                }
-
-                if (toupper(buffer[0])=='Y' && '\n'==buffer[1] && EXEOS==buffer[2])
-                {
-                    ret=EXTRUE;
-                    ans_ok=EXTRUE;
-                }
-                else if (toupper(buffer[0])=='N' && '\n'==buffer[1] && EXEOS==buffer[2])
-                {
-                    ret=EXFALSE;
-                    ans_ok=EXTRUE;
-                }
-
-            } while (!ans_ok);
-        }
-        else
-        {
-            NDRX_LOG(log_warn, "Not tty, assuming no for: %s", message);
-        }
-    }
-    else
-    {
-        ret=EXTRUE;
-    }
-    
-    return ret;
-}
-
-/**
  * Quick wrapper for argument parsing...
  * @param message
  * @param artc
@@ -162,7 +110,7 @@ expublic int chk_confirm_clopt(char *message, int argc, char **argv)
     }
     
     
-    ret = chk_confirm(message, confirm);
+    ret = ndrx_chk_confirm(message, confirm);
     
 out:
     return ret;

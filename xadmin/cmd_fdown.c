@@ -84,7 +84,7 @@ expublic int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
         EXFAIL_OUT(ret);
     }
     
-    if (!chk_confirm("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
+    if (!ndrx_chk_confirm("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
                     "THE APP SESSION?", confirm))
     {
         EXFAIL_OUT(ret);
@@ -131,7 +131,7 @@ expublic int cmd_udown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
         EXFAIL_OUT(ret);
     }
     
-    if (!chk_confirm("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
+    if (!ndrx_chk_confirm("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
                     "THE APP SESSION?", confirm))
     {
         EXFAIL_OUT(ret);

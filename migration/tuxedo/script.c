@@ -350,9 +350,13 @@ expublic void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
 /**
  * Start the VM, firstly to fill up the structures
  * @param script_nm script name to load
- * @return 
+ * @param n_opt check only
+ * @param y_opt auto confirm overwrite
+ * @param l_opt LMDID only which shall be generated.
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tux_init_vm(char *script_nm)
+expublic int tux_init_vm(char *script_nm,
+        char *n_opt, char *y_opt, char *l_opt)
 {
     int ret=EXSUCCEED;
     const PSChar *s;
@@ -365,6 +369,20 @@ expublic int tux_init_vm(char *script_nm)
     
     ps_pushroottable(v);
     
+    /* Load settings into root table */
+    
+    ps_pushstring(v,"M_n_opt",-1);
+    ps_pushstring(v,n_opt,-1);
+    ps_newslot(v,-3,PSFalse);
+    
+    ps_pushstring(v,"M_y_opt",-1);
+    ps_pushstring(v,y_opt,-1);
+    ps_newslot(v,-3,PSFalse);
+    
+    ps_pushstring(v,"M_l_opt",-1);
+    ps_pushstring(v,l_opt,-1);
+    ps_newslot(v,-3,PSFalse);
+                
     /* register functions */
     psstd_register_bloblib(v);
     psstd_register_iolib(v);
