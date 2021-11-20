@@ -198,9 +198,10 @@ int main(int argc, char **argv)
     int ret = EXSUCCEED;
     int c;
     char line[PATH_MAX+1];
-    char n_opt[2] = ""; /* no write */
-    char y_opt[2] = ""; /* auto confirm */
-    char l_opt[30+1] = "";  /* generate particular LMID only */
+    char n_opt[2] = ""; /**< no write */
+    char y_opt[2] = ""; /**< auto confirm */
+    char a_opt[2] = ""; /**< assing numbers */
+    char l_opt[30+1] = "";  /**< generate particular LMID only */
     char script_nm[PATH_MAX+1]="";
     size_t len = 0;
     FILE *handle=NULL;
@@ -223,6 +224,9 @@ int main(int argc, char **argv)
     {
         switch (c)
         {
+            case 'a':
+                a_opt[0]='1';
+                break;
             case 'l':
                 NDRX_STRCPY_SAFE(l_opt, optarg);
                 break;

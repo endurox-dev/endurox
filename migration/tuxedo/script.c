@@ -353,10 +353,11 @@ expublic void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
  * @param n_opt check only
  * @param y_opt auto confirm overwrite
  * @param l_opt LMDID only which shall be generated.
+ * @param a_opt assign new SRVIDs
  * @return EXSUCCEED/EXFAIL
  */
 expublic int tux_init_vm(char *script_nm,
-        char *n_opt, char *y_opt, char *l_opt)
+        char *n_opt, char *y_opt, char *l_opt, char *a_opt)
 {
     int ret=EXSUCCEED;
     const PSChar *s;
@@ -382,7 +383,11 @@ expublic int tux_init_vm(char *script_nm,
     ps_pushstring(v,"M_l_opt",-1);
     ps_pushstring(v,l_opt,-1);
     ps_newslot(v,-3,PSFalse);
-                
+    
+    ps_pushstring(v,"M_a_opt",-1);
+    ps_pushstring(v,a_opt,-1);
+    ps_newslot(v,-3,PSFalse);
+    
     /* register functions */
     psstd_register_bloblib(v);
     psstd_register_iolib(v);
