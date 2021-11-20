@@ -2,7 +2,7 @@
 // Ubb config to Enduro/X converter
 //
 // Some Caveats:
-// - In Tuxedo srvid is per group setting. In Enduor/X this setting is per instance.
+// - In Tuxedo srvid is per group setting. In Enduro/X this setting is per instance.
 //   So in case if duplicate srvid's are detected, loader will allocate completely
 //   new numbers.
 // - Groups are not supported per service entry. Thus to affected machines
@@ -514,7 +514,7 @@ function prep_groups(instance)
                     M_folder_gen[instance.app_home+"/tmlogs"]<-{};
                 }
 
-                group.tmlogs<-"${NDRX_APPHOME}/tmlogs/rm"+group.rmid;
+                group.tmlogs<-instance.app_home+"/tmlogs/rm"+group.rmid;
                 M_folder_gen[group.tmlogs]<-{};
 
             }
@@ -613,7 +613,7 @@ function prep_servers(instance)
                     server.keywords["MIN"]<-["1"];
                     server.keywords["MAX"]<-["1"];
                     //Match the forwarders at plotting, by group lookup...
-                    server.keywords["CLOPT"]<-["-A -e ${NDRX_APPHOME}/log/tmqueue_${NDRX_SVSRVID}.log -r -- -s1 -p10"];
+                    server.keywords["CLOPT"]<-["-A -e ${NDRX_APPHOME}/log/tmqueue.${NDRX_SVSRVID}.log -r -- -s1 -p10"];
                     
                     break;
                 case "TMQFORWARD":
@@ -1013,6 +1013,7 @@ function prep_servers(instance)
             new_srv.is_default<-false;
             new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tmrecoversv.log -r";
             new_srv.appopt <- "-p -s10";
+            new_srv.cctag<-"/"; //Allow merge
             instance.servers.append(new_srv);
         }
 
@@ -1027,6 +1028,7 @@ function prep_servers(instance)
             new_srv.is_default<-false;
             new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/cpmsrv.log -r";
             new_srv.appopt <- "-k3 -i1";
+            new_srv.cctag<-"/"; //Allow merge
             instance.servers.append(new_srv);
         }
     }
@@ -1112,6 +1114,22 @@ function prep_servers(instance)
 
     instance.servers = servers_final;
 
+    //Remove any un-needed defaults from the end
+    local len = instance.servers.len();
+    
+    for (local i=len-1; i>=0; i--)
+    {
+        local server = instance.servers[i];
+        if (server.is_default)
+        {
+            instance.servers.remove(i);
+        }
+        else
+        {
+            break;
+        }
+    }
+
     //mark groups to plot
     foreach (idx, server in instance.servers)
     {
@@ -1121,8 +1139,10 @@ function prep_servers(instance)
         }
     }
 
-/*
-    //Merge CCTAGS, if applied 
+    //Merge from bellow to to up.
+    //if all servers bellow default have the same group and default have also
+    //group set, then set common group in the default and clear the cctag
+    //setting from bellow servers
     local len = instance.servers.len();
     local last_cctag = "";
     local first = false;
@@ -1189,7 +1209,6 @@ function prep_servers(instance)
             continue_till_default=true;
         }
     }
-*/
 
     //Verify server IDs
     local id_check = {};
@@ -1213,7 +1232,6 @@ function prep_servers(instance)
         }
         else
         {
-            print("YOPT bin "+server.bin);
             min = server.real_min;
         }
 
@@ -1381,7 +1399,11 @@ export CDPATH=$CDPATH:.:$NDRX_APPHOME
  */
 function gen_ini_file(instance)
 {
-    /* global settings */
+    //TODO: pull in ENVFILE. If found FIELDTBLS32 or FLDTBLDIR32, translate
+    //to FIELDTBLS or FLDTBLDIR.
+    //Also Support #738 shall be fixed, so that we can ignore non-loadable files
+    //FIELDTBLS shall be appended with Exfields. Append FLDTBLDIR with ubftab
+    //of the distribution.
     instance.ini_text <-
 /******************************************************************************/
 @"[@global]
@@ -1472,8 +1494,8 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
 @"[@debug]
 #* - goes for all binaries not listed bellow
 *= ndrx=3 ubf=1 tp=3 threaded=l file=${NDRX_APPHOME}/log/endurox.org
-xadmin= file=${NDRX_APPHOME}/log/xadmin.log
-ndrxd= file=${NDRX_APPHOME}/log/ndrxd.log
+xadmin=file=${NDRX_APPHOME}/log/xadmin.log
+ndrxd=file=${NDRX_APPHOME}/log/ndrxd.log
 ";
 /******************************************************************************/
     
@@ -1484,7 +1506,7 @@ ndrxd= file=${NDRX_APPHOME}/log/ndrxd.log
         if (!(server.bin in server_plotted))
         {
             //Add debug entry.
-            instance.ini_text+=format("%s= file=${NDRX_APPHOME}/log/%s.${NDRX_SVSRVID}.log\n", 
+            instance.ini_text+=format("%s=file=${NDRX_APPHOME}/log/%s.${NDRX_SVSRVID}.log\n", 
                 server.bin, server.bin);
             server_plotted[server.bin] <-true;
         }
@@ -1492,7 +1514,7 @@ ndrxd= file=${NDRX_APPHOME}/log/ndrxd.log
 
     if (instance.restin)
     {
-        instance.ini_text+=format("restincl= file=${NDRX_APPHOME}/log/restincl.rin1.log\n");
+        instance.ini_text+=format("restincl=file=${NDRX_APPHOME}/log/restincl.rin1.log\n");
     }
     
     //Process the queues now
@@ -1507,12 +1529,12 @@ ndrxd= file=${NDRX_APPHOME}/log/ndrxd.log
             instance.ini_text+="\n"+
 @"[@queue/"+group.name+@"]
 # Review as necessary, see q.conf man page for details
-@=svcnm=-,autoq=n,tries=3,waitinit=0,waitretry=30,waitretrymax=90,memonly=n,mode=fifo,workers=1
+@=svcnm=@,autoq=n,tries=3,waitinit=0,waitretry=30,waitretrymax=90,memonly=n,mode=fifo,workers=1
 ";
             //Add forward queues
             foreach (indx,qq in group.auto_queues)
             {
-                instance.ini_text+=format("%s=%s", indx, indx);
+                instance.ini_text+=format("%s=autoq=y", indx, indx);
                 if (qq.workers!="1")
                 {
                     instance.ini_text+=format(",workers=%s", qq.workers);
@@ -1923,6 +1945,30 @@ function write_files()
         }
 
         //TODO: Create folders (if any missing, log created)
+        //Firstly transfer the hashmap to array, sort the array, so that shortest
+        //folders come first as we are going to create them (if not exists)
+        
+        local dirs = [];
+
+        foreach (idx, dir in M_folder_gen)
+        {
+            dir.name<-idx;
+            dirs.append(dir);
+        }
+        
+        //sort
+        dirs.sort(@(a,b) a.name.len() <=> b.name.len());
+
+        //Check dirs...
+        foreach (idx, dir in dirs)
+        {
+            if (!(fileexists(dir.name)))
+            {
+                print("Creating directory ["+dir.name+"]...");
+                mkdir(dir.name);
+                dir.created<-true;
+            }
+        }
 
         //Write files
         foreach (idx, instance in M_instances)
@@ -2028,7 +2074,7 @@ function ex_generate(arg)
         M_instances[machine.name]<-instance;
 
         instance.restin <-false;
-        instance.xa_used<-true;
+        instance.xa_used<-false;
         print("Machine: "+instance.name);
 
         instance.prefix <- machine.keywords["LMID"][0].tolower();
@@ -2211,8 +2257,55 @@ function ex_generate(arg)
     }
 }
 
-//TODO Have a callback for cleanup, if any file was created
+/**
+ * Cleanup call when script have failed.
+ * @param arg not used
+ */
 function ex_cleanup(arg)
 {
+    print("File cleanup...");
+    //Remove created files
+    foreach (idx, file in M_files_gen)
+    {
+        try
+        {
+            print("Removing ["+file+"]");
+            unlink(file);
+        }
+        catch (e)
+        {
+            error(e);
+        }
+    }
 
+    print("Folder cleanup...");
+    //Remove created diretories...
+    local dirs = [];
+
+    foreach (idx, dir in M_folder_gen)
+    {
+        dir.name<-idx;
+        dirs.append(dir);
+    }
+
+    //sort, reverse order, deepest dir first...
+    dirs.sort(@(a,b) b.name.len() <=>a.name.len());
+
+    //Check dirs...
+    foreach (idx, dir in dirs)
+    {
+        if ("created" in dir)
+        {
+            print("Removing directory ["+dir.name+"]...");
+            try
+            {
+                mkdir(dir.name);
+            }
+            catch (e)
+            {
+                //Just print error..
+                error(e);
+            }
+        }
+    }
 }

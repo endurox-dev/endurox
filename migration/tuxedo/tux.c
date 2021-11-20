@@ -313,6 +313,8 @@ int main(int argc, char **argv)
         
         if (EXSUCCEED!=call_add_func("ex_generate", ""))
         {
+            /* clean up...! */
+            call_add_func("ex_cleanup", "");
             EXFAIL_OUT(ret);
         }
     }

@@ -184,10 +184,58 @@ static PSInteger _exutil_mkdir(HPSCRIPTVM v)
         {
             if (EXSUCCEED!=mkdir(s, 0777))
             {
-                snprintf(err, sizeof(err), "mkdir failed: %d:%s", 
-                        errno, strerror(errno));
+                snprintf(err, sizeof(err), "mkdir [%s] failed: %d:%s", 
+                        s, errno, strerror(errno));
                 return ps_throwerror(v,err);
             }
+        }
+        
+        return 1;
+    }
+    return 0;
+}
+
+/**
+ * Remove directory
+ * @param v
+ * @return 
+ */
+static PSInteger _exutil_rmdir(HPSCRIPTVM v)
+{
+    const PSChar *s;
+    char err[256];
+    
+    if(PS_SUCCEEDED(ps_getstring(v,2,&s)))
+    {
+        if (EXSUCCEED!=rmdir(s))
+        {
+            snprintf(err, sizeof(err), "rmdir [%s] failed: %d:%s", 
+                    s, errno, strerror(errno));
+            return ps_throwerror(v,err);
+        }
+        
+        return 1;
+    }
+    return 0;
+}
+
+/**
+ * Remove file
+ * @param v
+ * @return 
+ */
+static PSInteger _exutil_unlink(HPSCRIPTVM v)
+{
+    const PSChar *s;
+    char err[256];
+    
+    if(PS_SUCCEEDED(ps_getstring(v,2,&s)))
+    {
+        if (EXSUCCEED!=unlink(s))
+        {
+            snprintf(err, sizeof(err), "unlink [%s] failed: %d:%s", 
+                    s, errno, strerror(errno));
+            return ps_throwerror(v,err);
         }
         
         return 1;
@@ -559,6 +607,8 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(getwizardbase,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
         _DECL_FUNC(mkdir,2,_SC(".s")),
+        _DECL_FUNC(rmdir,2,_SC(".s")),
+        _DECL_FUNC(unlink,2,_SC(".s")),
         _DECL_FUNC(fileexists,2,_SC(".s")),
         _DECL_FUNC(chmod,3,_SC(".ss")),
         _DECL_FUNC(basename,2,_SC(".s")),
