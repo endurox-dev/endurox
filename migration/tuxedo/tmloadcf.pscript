@@ -523,6 +523,46 @@ function prep_groups(instance)
 }
 
 /**
+ * Merge defaults for current instance
+ */
+function merge_defaults(instance)
+{
+    local prev_server={};
+    prev_server.is_default<-false;
+    foreach (idx, server in instance.servers)
+    {
+        //If current one is default and previous is also de
+        if (server.is_default && prev_server.is_default)
+        {
+            //Copy all current server attribs over prev_server
+            //and delete curren entry.
+            foreach (idx, keyword in server)
+            {
+                prev_server[idx]<-server[idx];
+            }
+            //Remove current entry...
+            instance.servers[idx].deleted<-true;
+        }
+        else
+        {
+            //Ensure deleted tags
+            if (!("deleted" in instance.servers[idx]))
+            {
+                instance.servers[idx].deleted<-false;
+            }
+            prev_server = server;
+        }
+        
+        //Mark group used...
+        if ("SRVGRP" in server)
+        {
+            M_sections["*GROUPS"].params[server["SRVGRP"]][0].plot<-true;
+        }
+    }
+    
+}
+
+/**
  * Prepare binaries:
  * For this LMID:
  * Remove: WSL/TMSYSEVT/JSL/TMMETADATA/TMFAN/TMQFORWARD
@@ -788,10 +828,6 @@ function prep_servers(instance)
             
             if (!new_srv.is_default)
             {
-                
-                //TODO: In case if for given binary there is XA group
-                //and for this XA group tmsrv is not added, then do it here.
-                
                 //Load clopt & app opt
                 local clopt = get_val(server, "CLOPT", null)[0];
                 local clopt_parsed = parseclopt1(clopt, server_optstring);
@@ -824,11 +860,11 @@ function prep_servers(instance)
                 {
                     if (sysopt!="")
                     {
-                        sysopt= sysopt + " " + "-e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
+                        sysopt= sysopt + " " + "-e ${NDRX_APPHOME}/log/"+new_srv.bin+".${NDRX_SVSRVID}.log"; 
                     }
                     else
                     {
-                        sysopt= "-e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log"; 
+                        sysopt= "-e ${NDRX_APPHOME}/log/"+new_srv.bin+".${NDRX_SVSRVID}.log"; 
                     }
                 }
 
@@ -946,51 +982,52 @@ function prep_servers(instance)
         }
 
     }
-    
-    local prev_server={};
-    prev_server.is_default<-false;
-    
-    //phase 4. Merge consecutive defaults, remove last default if no binaries follow
-    foreach (idx, server in instance.servers)
+
+    if (instance.xa_used || instance.restin)
     {
-        //If current one is default and previous is also de
-        if (server.is_default && prev_server.is_default)
+        //Add new defaults, do not re-use cctag
+        new_srv={};
+        new_srv.min<-1;
+        new_srv.max<-1;
+        new_srv.respawn<-"Y";
+        new_srv.is_default<-true;
+        new_srv.cctag<-"/"; //Use root global settings
+        instance.servers.append(new_srv);
+
+        if (instance.xa_used)
         {
-            //Copy all current server attribs over prev_server
-            //and delete curren entry.
-            foreach (idx, keyword in server)
-            {
-                prev_server[idx]<-server[idx];
-            }
-            //Remove current entry...
-            instance.servers[idx].deleted<-true;
+            //Add new defaults, do not re-use cctag
+            new_srv={};
+            new_srv.bin <- "tmrecoversv";
+            new_srv.srvid <- reserve_range(instance, 1);
+            new_srv.is_default<-false;
+            new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tmrecoversv.log -r";
+            new_srv.appopt <- "-p -s10";
+            instance.servers.append(new_srv);
         }
-        else
+
+        if (instance.restin)
         {
-            //Ensure deleted tags
-            if (!("deleted" in instance.servers[idx]))
-            {
-                instance.servers[idx].deleted<-false;
-            }
-            prev_server = server;
-        }
-        
-        //Mark group used...
-        if ("SRVGRP" in server)
-        {
-            M_sections["*GROUPS"].params[server["SRVGRP"]][0].plot<-true;
+            //Add new defaults, do not re-use cctag
+            new_srv={};
+            new_srv.bin <- "cpmsrv";
+            new_srv.srvid <- reserve_range(instance, 1);
+            new_srv.is_default<-false;
+            new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/cpmsrv.log -r";
+            new_srv.appopt <- "-k3 -i1";
+            instance.servers.append(new_srv);
         }
     }
-    
-    //OK Ready to plot debug, forward queues, server defaults + servers.
 
+
+    //phase 4. Merge consecutive defaults, remove last default if no binaries follow
+    merge_defaults(instance);
+
+    //OK Ready to plot debug, forward queues, server defaults + servers.
     local servers_final=[];
 
     // Copy all servers to final list
     // in case if xa is used, add tmsrv firstly
-
-    //Add tmrecoversv at the end...
-    local have_xa = false;
     foreach (idx, server in instance.servers)
     {
         //Check does this depend on XA group?
@@ -1014,7 +1051,17 @@ function prep_servers(instance)
                 //either direct cctag (if set) or then it must come from
                 //the default.
                 new_srv = {};
-                new_srv.bin<-"tmsrv";
+
+                
+                if (group.xaswitchname== "TUXEDO/QM")
+                {
+                    new_srv.bin<-"tmsrv";
+                }
+                else
+                {
+                    new_srv.bin<-get_val(group, "TMSNAME", null)[0];
+                }
+
                 new_srv.srvid <- reserve_range(instance, cnt);
                 new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tmsrv.${NDRX_SVSRVID}.log -r";
                 new_srv.appopt <- "-t1 -l"+group.tmlogs;
@@ -1027,7 +1074,6 @@ function prep_servers(instance)
                 new_srv.is_default<-false;
                 group.tmsrv_plotted=true;
                 servers_final.append(new_srv);
-                have_xa=true;
             }
 
             //perform correction on tmq so that forward thread pool
@@ -1051,7 +1097,7 @@ function prep_servers(instance)
             servers_final.append(server);
         }
     }
-    
+
     instance.servers = servers_final;
 
     //mark groups to plot
@@ -1063,6 +1109,7 @@ function prep_servers(instance)
         }
     }
 
+/*
     //Merge CCTAGS, if applied 
     local len = instance.servers.len();
     local last_cctag = "";
@@ -1130,12 +1177,15 @@ function prep_servers(instance)
             continue_till_default=true;
         }
     }
+*/
     ////////////////////////////////////////////////////////////////////////////
     //TODO: Check buildtms binary instances, shall be used these were possible.
     //TODO: Check at the end, do we have range duplications in servers, if
     // so, allocate new numbers for entire machine
     //TODO: If using restincl -> add cpmsrv instance
     ////////////////////////////////////////////////////////////////////////////
+
+    //TODO: Verify server IDs
 
 }
 
@@ -1889,9 +1939,7 @@ function ex_generate(arg)
             continue;
         }
 
-        M_instances[machine.name]<-{};
-
-        local instance = M_instances[machine.name];
+        local instance = {};
         instance.name <- machine.name;
         instance.lmid <- machine.keywords.LMID[0];
 
@@ -1901,8 +1949,10 @@ function ex_generate(arg)
             continue;
         }
 
-        instance.restin <-false;
+        M_instances[machine.name]<-instance;
 
+        instance.restin <-false;
+        instance.xa_used<-true;
         print("Machine: "+instance.name);
 
         instance.prefix <- machine.keywords["LMID"][0].tolower();
