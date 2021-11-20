@@ -79,7 +79,8 @@ extern int tux_add_res_parm(char *arg);
 extern int tux_add_sect_parm(char *arg);
 extern int tux_add_sect_keyw(char *arg);
 extern int tux_add_sect(char *arg);
-extern int tux_init_vm(char *script_nm, char *n_opt, char *y_opt, char *l_opt);
+extern int tux_init_vm(char *script_nm, char *n_opt, char *y_opt, char *l_opt,
+        char *a_opt);
 extern int call_add_func(const char *func, char *arg);
 
 extern char *ndrx_ddr_new_rangeval(char *range, int is_negative, int dealloc);

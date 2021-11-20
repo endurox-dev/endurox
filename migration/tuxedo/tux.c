@@ -220,7 +220,7 @@ int main(int argc, char **argv)
     /* clear any error... */
     _Nunset_error();
             
-    while ((c = getopt (argc, argv, "nycb:hs:d:l:")) != -1)
+    while ((c = getopt (argc, argv, "nycb:hs:d:l:a")) != -1)
     {
         switch (c)
         {
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
         }
         
         /* Init VM */
-        if (EXSUCCEED!=tux_init_vm(script_nm, n_opt, y_opt, l_opt))
+        if (EXSUCCEED!=tux_init_vm(script_nm, n_opt, y_opt, l_opt, a_opt))
         {
             _Nset_error_msg(NESYSTEM, "Failed to load converter script");
             EXFAIL_OUT(ret);
