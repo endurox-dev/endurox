@@ -24,6 +24,7 @@ const NET_BASE_PORT = 21000;
 const NET_DEFAULT_IP_START=200;           //start IP of the nodes
 const NET_DEFAULT_IP = "192.168.88.";
 
+const IDFREE_SPACE  = 30;                 //Free srvids between new binaries, auto-assign
 
 //Include wizard base.
 compilestring(getwizardbase())();
@@ -942,6 +943,13 @@ function prep_servers(instance)
             {
                 new_srv.max<-server.keywords.MAX[0];
             }
+                
+            if (!server.is_default)
+            {
+                //resolve min/max for final check
+                new_srv.real_min <- get_val(server, "MIN", null)[0].tointeger();
+                new_srv.real_max <-  get_val(server, "MAX", null)[0].tointeger();
+            }
 
             if ("ENVFILE" in server.keywords)
             {
@@ -1000,6 +1008,8 @@ function prep_servers(instance)
             new_srv={};
             new_srv.bin <- "tmrecoversv";
             new_srv.srvid <- reserve_range(instance, 1);
+            new_srv.real_min<-1;
+            new_srv.real_max<-1;
             new_srv.is_default<-false;
             new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tmrecoversv.log -r";
             new_srv.appopt <- "-p -s10";
@@ -1012,6 +1022,8 @@ function prep_servers(instance)
             new_srv={};
             new_srv.bin <- "cpmsrv";
             new_srv.srvid <- reserve_range(instance, 1);
+            new_srv.real_min<-1;
+            new_srv.real_max<-1;
             new_srv.is_default<-false;
             new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/cpmsrv.log -r";
             new_srv.appopt <- "-k3 -i1";
@@ -1178,14 +1190,78 @@ function prep_servers(instance)
         }
     }
 */
-    ////////////////////////////////////////////////////////////////////////////
-    //TODO: Check buildtms binary instances, shall be used these were possible.
-    //TODO: Check at the end, do we have range duplications in servers, if
-    // so, allocate new numbers for entire machine
-    //TODO: If using restincl -> add cpmsrv instance
-    ////////////////////////////////////////////////////////////////////////////
 
-    //TODO: Verify server IDs
+    //Verify server IDs
+    local id_check = {};
+    local have_dup = false;
+
+    foreach (idx, server in instance.servers)
+    {
+        if (server.is_default)
+        {
+            continue;
+        }
+
+        local min = 0;
+        local max = 0;
+
+        if ("min" in server)
+        {
+            min = server.min;
+            //For further processing
+            server.real_min<-min;
+        }
+        else
+        {
+            print("YOPT bin "+server.bin);
+            min = server.real_min;
+        }
+
+        if ("max" in server)
+        {
+            max = server.max;
+            //For further processing
+            server.real_max<-max;
+        }
+        else
+        {
+            max = server.real_max;
+        }
+
+        print("BIN "+server.bin+" srvid="+server.srvid+" max="+max);
+
+        for (local i=server.srvid.tointeger(); i<server.srvid.tointeger()+max.tointeger(); i++)
+        {
+            print("Check: "+i);
+            if (i in id_check)
+            {
+                error("Got duplicate id ["+i+"] -> fallback to new assign");
+                have_dup = true;
+                //break; keep looping needs to setup all real_max
+            }
+            
+            id_check[i]<-true;
+        }
+
+    }
+
+    //IDFREE_SPACE
+    //Loop over the all binaries 
+    local srvid_base=1;
+    if (have_dup || "1"== M_a_opt)
+    {
+        print("Assigning new numbers...");
+        foreach (idx, server in instance.servers)
+        {
+            if (server.is_default)
+            {
+                continue;
+            }
+            
+            server.srvid=srvid_base;
+            srvid_base+=(server.real_max.tointeger()+IDFREE_SPACE);
+        }
+    }
 
 }
 
