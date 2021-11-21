@@ -1,0 +1,45 @@
+Migrating from Oracle Tuxedo to Enduro/X
+========================================
+:doctype: book
+
+== About the guide
+
+This document describes different aspects which needs to be accounted for
+when performing migration from Oracle Tuxedo to Enduro/X middleware.
+The document describes common elements which Enduro/X covers from Tuxedo
+functionality, what functionality differs and what elements in Enduro/X
+are missing and what alternatives are available to replace missing bits.
+
+Lastly document describes standard approach for performing configuration
+migration for Tuxedo UBB Config to Enduro/X based configuration
+
+== Enduro/X and Tuxedo common bits
+
+Both systems are build on X/Open *XATMI* and *XA* standards. Each of the systems
+implement extensions over theses APIs. For example Tuxedo have *FML* key-value
+structure format handling API. Enduro/X counterpart for this functionality is
+*UBF* buffers which even provide emulation for *FML* via *fml.h* and *fml32.h*
+headers shipped with Enduro/X.
+
+Enduro/X tends to implement most majority of the C APIs which are typically used in
+Tuxedo application. Some rarely used features are not implemented in
+Enduro/X. To verify your application compatibility with Enduro/X, perform manual
+scan over your code base and check each Tuxedo API 
+
+== Enduro/X and Tuxedo differences
+
+- Different Contexting.
+
+== Tuxedo connectivity
+...
+
+== Migrating source code
+...
+
+== Migrating configuration
+...
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////
