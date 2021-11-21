@@ -58,6 +58,8 @@ typedef struct
     int     error;       /**< error is not set                           */
     int     line;        /**< Line number of config                      */
     ndrx_growlist_t  stringbuffer;   /**< list used for string build */
+    char errbuf[1024];
+    char *parsebuf;     /**< currently parsing buffer ptr, for ddr       */
 } ndrx_tux_parser_t;
 
 /*---------------------------Globals------------------------------------*/
