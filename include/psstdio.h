@@ -8,6 +8,7 @@
 
 struct PSStream {
     virtual PSInteger Read(void *buffer, PSInteger size) = 0;
+    virtual PSUserPointer ReadLine(void *buffer, PSInteger size)=0;
     virtual PSInteger Write(void *buffer, PSInteger size) = 0;
     virtual PSInteger Flush() = 0;
     virtual PSInteger Tell() = 0;
@@ -28,6 +29,7 @@ typedef void* PSFILE;
 
 PSCRIPT_API PSFILE psstd_fopen(const PSChar *,const PSChar *);
 PSCRIPT_API PSInteger psstd_fread(PSUserPointer, PSInteger, PSInteger, PSFILE);
+PSCRIPT_API PSUserPointer psstd_fgets(PSUserPointer, PSInteger, PSFILE);
 PSCRIPT_API PSInteger psstd_fwrite(const PSUserPointer, PSInteger, PSInteger, PSFILE);
 PSCRIPT_API PSInteger psstd_fseek(PSFILE , PSInteger , PSInteger);
 PSCRIPT_API PSInteger psstd_ftell(PSFILE);

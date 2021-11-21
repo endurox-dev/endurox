@@ -34,6 +34,10 @@ struct PSBlob : public PSStream
         _ptr += n;
         return n;
     }
+    /* Not implemented */
+    PSUserPointer ReadLine(void *buffer,PSInteger size) {
+        return NULL;
+    }
     bool Resize(PSInteger n) {
         if(!_owns) return false;
         if(n != _allocated) {

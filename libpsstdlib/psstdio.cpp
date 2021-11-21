@@ -4,6 +4,7 @@
 #include <pscript.h>
 #include <psstdio.h>
 #include "psstdstream.h"
+#include <ndrstandard.h>
 
 #define PSSTD_FILE_TYPE_TAG (PSSTD_STREAM_TYPE_TAG | 0x00000001)
 //basic API
@@ -20,6 +21,30 @@ PSInteger psstd_fread(void* buffer, PSInteger size, PSInteger count, PSFILE file
 {
     PSInteger ret = (PSInteger)fread(buffer,size,count,(FILE *)file);
     return ret;
+}
+
+PSUserPointer psstd_fgets(PSUserPointer buffer, PSInteger size, PSFILE file)
+{
+    char *ret = fgets((char *)buffer,size,(FILE *)file);
+    
+    //Strip off \r\n
+    if (NULL!=ret)
+    {
+        int len = strlen(ret);
+        
+        if (len>0 && ret[len-1]=='\n')
+        {
+            ret[len-1]=EXEOS;
+            
+            if (len>1 && ret[len-2]=='\r')
+            {
+                ret[len-2]=EXEOS;
+            }
+        }
+    }
+    
+    return (PSUserPointer)ret;
+    
 }
 
 PSInteger psstd_fwrite(const PSUserPointer buffer, PSInteger size, PSInteger count, PSFILE file)
@@ -81,6 +106,9 @@ struct PSFile : public PSStream {
     }
     PSInteger Read(void *buffer,PSInteger size) {
         return psstd_fread(buffer,1,size,_handle);
+    }
+    PSUserPointer ReadLine(PSUserPointer buffer,PSInteger size) {
+        return psstd_fgets(buffer,size,_handle);
     }
     PSInteger Write(void *buffer,PSInteger size) {
         return psstd_fwrite(buffer,1,size,_handle);

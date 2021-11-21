@@ -8,6 +8,7 @@
 #include <psstdblob.h>
 #include "psstdstream.h"
 #include "psstdblobimpl.h"
+#include <ndrstandard.h>
 
 #define SETUP_STREAM(v) \
     PSStream *self = NULL; \
@@ -200,6 +201,42 @@ PSInteger _stream_writes(HPSCRIPTVM v)
 }
 
 
+/**
+ * Read line from the stream
+ * @param [script] max line len (buffer size)
+ * @return [script] returns string, in case if empty line, shall be tested tested
+ *  that string is not eos.
+ */
+PSInteger _stream_readline(HPSCRIPTVM v)
+{
+    SETUP_STREAM(v);
+    PSInteger len;
+    PSChar *stemp=NULL;
+    
+    if(PS_SUCCEEDED(ps_getinteger(v,2,&len)))
+    {
+        if (len<=0)
+        {
+            return ps_throwerror(v,_SC("Invalid len argument"));
+        }
+                
+        stemp = ps_getscratchpad(v,len);
+        stemp[0] = EXEOS;
+   
+        if(NULL==self->ReadLine((void *)stemp,len))
+        {
+            if (!self->EOS())
+            {
+                return ps_throwerror(v,_SC("io error"));
+            }
+        }
+    }
+    
+    
+   ps_pushstring(v,stemp, -1);
+   return 1;
+}
+
 
 PSInteger _stream_seek(HPSCRIPTVM v)
 {
@@ -265,6 +302,7 @@ static const PSRegFunction _stream_methods[] = {
     _DECL_STREAM_FUNC(writeblob,-2,_SC("xx")),
     _DECL_STREAM_FUNC(writen,3,_SC("xnn")),
     _DECL_STREAM_FUNC(writes,2,_SC("xs")),
+    _DECL_STREAM_FUNC(readline,2,_SC("xn")),
     _DECL_STREAM_FUNC(seek,-2,_SC("xnn")),
     _DECL_STREAM_FUNC(tell,1,_SC("x")),
     _DECL_STREAM_FUNC(len,1,_SC("x")),

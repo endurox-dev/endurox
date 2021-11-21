@@ -342,9 +342,13 @@ exprivate int _ubf_load_def_table(void)
 
         if ( EXFALSE==exist_fld )
         {
+            /*
+             * Support #738
             ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s in [%s]", p, flddir);
             ret=EXFAIL;
             goto out;
+             */
+            userlog("Field table [%s] not found in [%s]", p, flddir);
         }
         /* Close file */
         p=strtok_r(NULL, ",", &p_flds);

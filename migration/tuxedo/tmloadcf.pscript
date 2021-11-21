@@ -1372,11 +1372,97 @@ function prep_networking()
 function prep_envfile(instance)
 {
 
+    //Key is env name, value is value
+    instance.envfile <-{};
+
     if ("ENVFILE" in instance.machine.keywords)
     {
         local envfile = instance.machine.keywords["ENVFILE"][0];
         print("Parsing env file ["+envfile+"]");
+        local myfile = file(envfile,"r");
+        
+        //Read line by line, process it 
+        while (1)
+        {
+
+            local line = "";
+            try
+            {
+                line = myfile.readline(1024*10);
+            }
+            catch (e)
+            {
+                myfile.close();
+                print(e);
+                throw e;
+            }
+
+            if (line=="" && myfile.eos())
+            {
+                break;
+            }
+
+            if (line=="")
+            {
+                continue;
+            }
+
+            if (regexp(@"^#.*|[ \t\r]+#.*").match(line))
+            {
+                continue;
+            }
+
+            //Process the line
+            local ex = regexp("^(.*)=(.*)");
+            local res = ex.capture(line);
+
+            if (res.len()!=3)
+            {
+                error("Invalid envfile line ["+line+"] - ignoring");
+                continue;
+            }
+
+            local envname = line.slice(res[1].begin,res[1].end);
+            local envvalue = line.slice(res[2].begin,res[2].end);
+
+            if (envname=="FIELDTBLS32")
+            {
+                envname="FIELDTBLS";
+            }
+
+            if (envname=="FLDTBLDIR32")
+            {
+                envname="FLDTBLDIR";
+            }
+
+            if (envname=="VIEWDIR32")
+            {
+                envname="VIEWDIR";
+            }
+
+            if (envname=="VIEWFILES32")
+            {
+                envname="VIEWFILES";
+            }
+
+            //Additional processing
+            if (envname=="FIELDTBLS")
+            {
+                envvalue=envvalue+",Exfields";
+            }
+
+            if (envname=="FLDTBLDIR")
+            {
+                envvalue=envvalue+":${NDRX_HOME}/share/endurox/ubftab";
+            }
+
+            print(format("Adding env from envfile [%s] = [%s]", envname, envvalue));
+            instance.envfile[envname]<-envvalue;
+        }
+
+        myfile.close();
     }
+
 }
 
 /**
@@ -1394,10 +1480,14 @@ function gen_set_file(instance)
 #
 # @(#) Load this script in environment before Enduro/X start
 #
+
+# update to correspond actual Enduro/X installation path
+export NDRX_HOME=/usr
 export NDRX_APPHOME="+instance.app_home+@"
 export NDRX_CCONFIG="+instance.ndrx_conf+"/"+"app."+instance.prefix+@".ini
 export PATH=$PATH:"+instance.ndrx_bin+@"
 export CDPATH=$CDPATH:.:$NDRX_APPHOME
+
 ";
 /******************************************************************************/
     print("set_file: [\n"+instance.set_text+"]");
@@ -1445,11 +1535,16 @@ NDRX_UBFMAXFLDS=16000
 NDRX_LIBEXT="+M_wizzard.shared_lib_pfx+@"
 NDRX_ULOG=${NDRX_APPHOME}/log
 # TODO, replace if not found already in env:
+# If present in envfile, these will be imported bellow.
 #FIELDTBLS=Exfields
 #FLDTBLDIR=${NDRX_APPHOME}/ubftab
 NDRX_RTSVCMAX="+instance.rtsvcmax+@"
 NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
 ";
+   foreach(env, val in instance.envfile)
+   {
+        instance.ini_text+=format("%s=%s\n", env, val);
+   }
 /******************************************************************************/
 
     /* per group / cctag settings: */
