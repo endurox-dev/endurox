@@ -574,7 +574,6 @@ static PSInteger _exutil_chk_confirm(HPSCRIPTVM v)
 static PSInteger _exutil_print_stdout(HPSCRIPTVM v)
 {
     const PSChar *str;
-    PSInteger ret;
     
     ps_getstring(v,2,&str);
     
@@ -590,7 +589,6 @@ static PSInteger _exutil_print_stdout(HPSCRIPTVM v)
 static PSInteger _exutil_print_stderr(HPSCRIPTVM v)
 {
     const PSChar *str;
-    PSInteger ret;
     
     ps_getstring(v,2,&str);
     
@@ -617,10 +615,10 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(parseclopt1,3,_SC(".ss")),
         _DECL_FUNC(parseclopt2,4,_SC(".sss")),
         _DECL_FUNC(getservbyname,3,_SC(".sss")),
-        _DECL_FUNC(hex2int,2,_SC(".ss")),
-        _DECL_FUNC(chk_confirm,2,_SC(".ss")),
-        _DECL_FUNC(print_stdout,2,_SC(".ss")),
-        _DECL_FUNC(print_stderr,2,_SC(".ss")),
+        _DECL_FUNC(hex2int,2,_SC(".s")),
+        _DECL_FUNC(chk_confirm,2,_SC(".s")),
+        _DECL_FUNC(print_stdout,2,_SC(".s")),
+        _DECL_FUNC(print_stderr,2,_SC(".s")),
 	{0,0}
 };
 #undef _DECL_FUNC
