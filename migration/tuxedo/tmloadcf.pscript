@@ -1365,6 +1365,20 @@ function prep_networking()
 
 }
 
+
+/**
+ * Function parses envfile and performs few transformations
+ */
+function prep_envfile(instance)
+{
+
+    if ("ENVFILE" in instance.machine.keywords)
+    {
+        local envfile = instance.machine.keywords["ENVFILE"][0];
+        print("Parsing env file ["+envfile+"]");
+    }
+}
+
 /**
  * Generate set file
  * @param instance current object of interest
@@ -2028,6 +2042,11 @@ function ex_generate(arg)
 {
     local nodeid=1;
 
+    print(format("M_n_opt=[%s]", M_n_opt));
+    print(format("M_y_opt=[%s]", M_y_opt));
+    print(format("M_l_opt=[%s]", M_l_opt));
+    print(format("M_a_opt=[%s]", M_a_opt));
+
     init();
 
     //Open output objects for each of the machine
@@ -2241,15 +2260,14 @@ function ex_generate(arg)
         //Build server listings
         prep_servers(instance);
 
+        //Load the instance environment
+        prep_envfile(instance);
+
         //Generate file contents:
         gen_set_file(instance);
         gen_ini_file(instance);
         gen_xml_file(instance);
     }
-
-    print(format("M_n_opt=%s", M_n_opt));
-    print(format("M_y_opt=%s", M_y_opt));
-    print(format("M_l_opt=%s", M_l_opt));
 
     if (M_n_opt!="1")
     {
