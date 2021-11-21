@@ -162,7 +162,7 @@ expublic int tux_add_sect(char *arg)
 static PSInteger tux_ddr_parse(HPSCRIPTVM v)
 {
     int ret = EXSUCCEED;
-    const PSChar *s;
+    const PSChar *s=NULL;
     char err[256];
     
     memset(&ndrx_G_ddrp, 0, sizeof(ndrx_G_ddrp));
@@ -174,8 +174,9 @@ static PSInteger tux_ddr_parse(HPSCRIPTVM v)
         NDRX_LOG(log_error, "PARSE RANGE [%s]", s);
         /* start to parse... */
         ndrx_G_ddrcolumn=0;
-        /* NDRX_LOG(log_info, "Parsing config: [%s]", expr); */
-        /* TODO: strdup the string, so that yacc gan to the free */
+                
+        ndrx_G_ddrp.parsebuf=(char *)s;
+        
         ddr_scan_string((char *)s);
 
         if (EXSUCCEED!=ddrparse() || EXSUCCEED!=ndrx_G_ddrp.error)
@@ -196,12 +197,22 @@ static PSInteger tux_ddr_parse(HPSCRIPTVM v)
     }
     
 out:
+    
     /* free up string buffer */
     ndrx_growlist_free(&ndrx_G_ddrp.stringbuffer);
     
     if (EXSUCCEED!=ret)
     {
-        return ps_throwerror(v, "Failed to parse DDR expression");
+        if (EXEOS!=ndrx_G_ddrp.errbuf[0])
+        {
+            return ps_throwerror(v, ndrx_G_ddrp.errbuf);
+        }
+        else
+        {
+            snprintf(err, sizeof(err), "Failed to parse DDR expression [%.20s] near line %d",
+                    (char *)s, ndrx_G_tuxline);
+            return ps_throwerror(v, err);
+        }
     }
 
     return ret;
@@ -221,6 +232,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
     ret = call_add_func("tux_mark_group_routed", grp);
     
     NDRX_FREE(grp);
+    NDRX_FREE(seq);
     
     return ret;
 }
@@ -273,7 +285,7 @@ expublic ndrx_routcritseq_dl_t * ndrx_ddr_new_rangeexpr(char *range_min, char *r
         NDRX_FREE(range_max);
     }
     
-    return (ndrx_routcritseq_dl_t *)(1);
+    return (ndrx_routcritseq_dl_t *)(NDRX_MALLOC(1));
 }
 
 /**

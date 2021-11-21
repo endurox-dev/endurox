@@ -47,6 +47,7 @@
 #include <exregex.h>
 #include "tux.h"
 #include "tux.tab.h"
+#include "ddr.tab.h"
 #include "ndebug.h"
 #include <sys_unix.h>
 #include <atmi_int.h>
@@ -69,7 +70,47 @@ extern int tuxdebug;
  */
 void ddrerror(char *s, ...)
 {
-    char errbuf[2048];
+    /* Log only first error! */
+    if (EXFAIL!=ndrx_G_ddrp.error)
+    {
+        va_list ap;
+        char context[31];
+        char *p=NULL;
+        int i, ctx_start;
+        char *mem = ndrx_G_ddrp.parsebuf;
+        int len=strlen(mem);
+        
+        ctx_start = ddrlloc.first_column;
+        
+        NDRX_LOG(log_error, "ctx_start=%d len=%d (%s)", ctx_start, len, mem);
+        memset(context, 0, sizeof(context));
+        
+        /* prepare context of max 30 chars. */
+        p = &context[16];
+        
+        for (i=15; i>=0 && (ctx_start-(15-i)) >= 0 && '\n'!=mem[ctx_start-(15-i)]; i--)
+        {
+            p--;
+            *p=mem[ctx_start-(15-i)];
+        }
+
+        for (i=1; i<15 && ctx_start+i<len && '\n'!=mem[ctx_start+i]; i++)
+        {
+            context[15+i]=mem[ctx_start+i];
+        }
+
+        va_start(ap, s);
+        snprintf(ndrx_G_ddrp.errbuf, sizeof(ndrx_G_ddrp.errbuf), 
+                "UBBConfig DDR parse error, line: %d near expression [%s]: ", 
+                ndrx_G_tuxline, p);
+        
+        len=strlen(ndrx_G_ddrp.errbuf);
+        vsnprintf(ndrx_G_ddrp.errbuf+len, sizeof(ndrx_G_ddrp.errbuf)-len, s, ap);
+        va_end(ap);
+        NDRX_LOG(log_error, "Failed to parse: %s", ndrx_G_ddrp.errbuf);
+
+        ndrx_G_ddrp.error = EXFAIL;
+    }
 }
 
 /**
@@ -98,7 +139,7 @@ void tuxerror(char *s, ...)
         /* prepare context of max 30 chars. */
         p = &context[16];
         
-        for (i=15; i>=0 && '\n'!=mem[ctx_start-(15-i)] && (ctx_start-(15-i)) >= 0; i--)
+        for (i=15; i>=0 && (ctx_start-(15-i)) >= 0 && '\n'!=mem[ctx_start-(15-i)]; i--)
         {
             p--;
             *p=mem[ctx_start-(15-i)];
