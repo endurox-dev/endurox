@@ -80,16 +80,16 @@ resource_loop:
         ;
 
 opt_add:
-       OPTION					{if (EXSUCCEED!=tux_add_val($1)) {YYERROR;} }
-	| opt_add COMMA OPTION			{if (EXSUCCEED!=tux_add_val($3)) {YYERROR;} }
-	;
+        OPTION                                  {if (EXSUCCEED!=tux_add_val($1)) {YYERROR;} }
+        | opt_add COMMA OPTION                  {if (EXSUCCEED!=tux_add_val($3)) {YYERROR;} }
+        ;
 opt:
-        OPTION					{if (EXSUCCEED!=tux_add_sect_parm($1)) {YYERROR;} }
+        OPTION                                  {if (EXSUCCEED!=tux_add_sect_parm($1)) {YYERROR;} }
         | DEFAULT                               {if (EXSUCCEED!=tux_add_sect_parm($1)) {YYERROR;} }
         | OPTION EQUAL opt_add                  {if (EXSUCCEED!=tux_add_sect_keyw($1)) {YYERROR;} }
 
 section_loop:
-        SECTION               			{if (EXSUCCEED!=tux_add_sect($1)) {YYERROR;} } 
+        SECTION                                 {if (EXSUCCEED!=tux_add_sect($1)) {YYERROR;} } 
         | section_loop opt
         ;
     
@@ -101,17 +101,5 @@ tux_loop:
 ;
 
 %%
-/*
- 
- *res
-param value
 
-*sect
-param key=value,value
-param key=value,value
- 
- 
- */
-        
-        
 /* vim: set ts=4 sw=4 et smartindent: */
