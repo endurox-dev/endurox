@@ -478,13 +478,16 @@ function prep_groups(instance)
             group.plot<-false;
             group.tmsrv_plotted<-false;
 
-            if ("OPENINFO" in group.keywords)
+            local tux_openinfo = get_val(group, "OPENINFO", [""])[0];
+            local tux_tmsname = get_val(group, "TMSNAME", [""])[0];
+
+            if (tux_openinfo!="" && tux_tmsname!="")
             {
                 //Mark that this instance uses xa.
                 instance.xa_used<-true;
 
                 group.rmid <- get_val(group, "GRPNO", null)[0];
-                local openinfo = get_val(group, "OPENINFO", null)[0];
+                local openinfo = tux_openinfo;
 
                 //Get the Switch name
                 local ex = regexp(@"^(.*):.*");
@@ -977,12 +980,17 @@ function prep_servers(instance)
             {
                 new_srv.max<-server.keywords.MAX[0];
             }
+            else if ("min" in new_srv)
+            {
+                new_srv.max<-new_srv.min;
+            }
                 
             if (!server.is_default)
             {
                 //resolve min/max for final check
                 new_srv.real_min <- get_val(server, "MIN", null)[0].tointeger();
-                new_srv.real_max <-  get_val(server, "MAX", null)[0].tointeger();
+                //Default MAX is same as MIN
+                new_srv.real_max <-  get_val(server, "MAX", [new_srv.real_min])[0].tointeger();
             }
 
             if ("ENVFILE" in server.keywords)
@@ -1117,7 +1125,7 @@ function prep_servers(instance)
                 new_srv.max<-cnt;
                 if ("cctag" in server)
                 {
-                    new_srv.cctag = server.cctag;
+                    new_srv.cctag<- server.cctag;
                 }
                 new_srv.is_default<-false;
                 group.tmsrv_plotted=true;
@@ -2007,7 +2015,7 @@ tab+"    </server>\n";
             //Single routing supported only (afaik Tuxedo also has requires single route)
             route = route[0];
             local field = get_val(route, "FIELD", null)[0];
-            local fieldtype = get_val(route, "FIELDTYPE", null)[0];
+            local fieldtype = get_val(route, "FIELDTYPE", ["STRING"])[0];
             local ranges = get_val(route, "RANGES", null)[0];
             local buftype = get_val(route, "BUFTYPE", null)[0];
 
@@ -2225,16 +2233,18 @@ function ex_generate(arg)
         instance.xa_used<-false;
         print("Machine: "+instance.name);
 
+        local tux_appdir = get_val(val[0], "APPDIR", null)[0];
+        local tux_tuxconfig = get_val(val[0], "TUXCONFIG", null)[0];
+
         instance.prefix <- machine.keywords["LMID"][0].tolower();
-        instance.app_home <- strcommon(machine.keywords["APPDIR"][0] , 
-                        machine.keywords["TUXCONFIG"][0]);
+        instance.app_home <- strcommon(tux_appdir, tux_tuxconfig);
         instance.use_rel <- false;
         if (instance.app_home=="/")
         {
             //this is absolute path
-            instance.app_home = machine.keywords["APPDIR"][0];
-            instance.app_bin <- machine.keywords["APPDIR"][0];
-            instance.app_conf <- dirname(machine.keywords["TUXCONFIG"][0]);
+            instance.app_home = tux_appdir;
+            instance.app_bin <- tux_appdir;
+            instance.app_conf <- dirname(tux_tuxconfig);
 
             instance.ndrx_conf<- instance.app_conf;
             instance.ndrx_bin <- instance.app_bin;
@@ -2255,11 +2265,10 @@ function ex_generate(arg)
                 instance.app_home="/";
             }
 
-            instance.app_bin <- strdiff(machine.keywords["APPDIR"][0],
-                                            instance.app_home);
+            instance.app_bin <- strdiff(tux_appdir, instance.app_home);
             instance.app_bin = lstrips(instance.app_bin, "/");
 
-            instance.app_conf <- strdiff(dirname(machine.keywords["TUXCONFIG"][0]),
+            instance.app_conf <- strdiff(dirname(tux_tuxconfig),
                                             instance.app_home);
             instance.app_conf = lstrips(instance.app_conf, "/");
 
