@@ -1417,9 +1417,9 @@ function prep_envfile(instance)
     //Key is env name, value is value
     instance.envfile <-{};
 
-    if ("ENVFILE" in instance.machine.keywords)
+    local envfile = get_val(instance.machine, "ENVFILE", [""])[0];
+    if (envfile!="")
     {
-        local envfile = instance.machine.keywords["ENVFILE"][0];
         print("Parsing env file ["+envfile+"]");
         local myfile = file(envfile,"r");
         
@@ -1527,11 +1527,25 @@ function gen_set_file(instance)
 export NDRX_HOME=/usr
 export NDRX_APPHOME="+instance.app_home+@"
 export NDRX_CCONFIG="+instance.ndrx_conf+"/"+"app."+instance.prefix+@".ini
-export PATH=$PATH:"+instance.ndrx_bin+@"
 export CDPATH=$CDPATH:.:$NDRX_APPHOME
-
-";
+export PATH=$PATH:"+instance.ndrx_bin;
 /******************************************************************************/
+
+    //Add additional folders to the path, if exists ...
+
+    foreach (idx, folder in instance.appdir_add)
+    {
+        if (folder.use_rel)
+        {
+            instance.set_text+=":$NDRX_APPHOME/"+folder.path;
+        }
+        else
+        {
+            instance.set_text+=":"+folder.path;
+        }
+    }
+    instance.set_text+="\n";
+
     print("set_file: [\n"+instance.set_text+"]");
 }
 
@@ -1640,6 +1654,10 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
     }
 
     // Debugs per binary:
+    // TODO: might wnat to use "ULOGPFX" for log storing, not?
+    // Also needs to decide is it relative path or full path...
+    // And if it contains  sub-folders (as with appdir), recursively we shall
+    // create them.
     instance.ini_text+="\n"+
 /******************************************************************************/
 @"[@debug]
@@ -1879,7 +1897,7 @@ tab+"        <appopt>"+server.appopt+"</appopt>\n";
         if (!server.is_default && "threadstacksize" in server)
         {
             instance.xml_text+=
-tab+@"        <envs><env name=""NDRX_THREADSTACKSIZE"">"+server.threadstacksize+@"</env></envs>\n";
+tab+@"        <envs><env name=""NDRX_THREADSTACKSIZE"">"+server.threadstacksize+"</env></envs>\n";
         }
         
         if (server.is_default)
@@ -2235,6 +2253,27 @@ function ex_generate(arg)
 
         local tux_appdir = get_val(val[0], "APPDIR", null)[0];
         local tux_tuxconfig = get_val(val[0], "TUXCONFIG", null)[0];
+        local tux_appdir_add = [];
+
+        if (null!=tux_appdir.find(":"))
+        {
+            //Split the tux_appdir and use first part for tux_appdir purposes.
+            //the other parts later would be checked for relative/full type
+            //and would be filled to tux_appdir_add variable.
+
+            local appdirs =  split(tux_appdir, ":");
+            tux_appdir = appdirs[0];
+
+            local len = appdirs.len();
+
+            for (local i=1; i<len; i++)
+            {
+                local add = {};
+                add.orgpath<-appdirs[i];
+                tux_appdir_add.append(add);
+            }
+        }
+        
 
         instance.prefix <- machine.keywords["LMID"][0].tolower();
         instance.app_home <- strcommon(tux_appdir, tux_tuxconfig);
@@ -2287,6 +2326,31 @@ function ex_generate(arg)
                 instance.app_conf, instance.prefix);
         }
 
+        //Process additional folders
+
+        foreach(dix, folder in tux_appdir_add)
+        {
+            local common = strcommon(folder.orgpath, instance.app_home)
+                
+            //Schedule folder anyway
+            M_folder_gen[folder.orgpath]<-{};
+
+            if (common=="/")
+            {
+                //Use full path ..
+                folder.path <- folder.orgpath;
+                folder.use_rel <- false;
+            }
+            else
+            {
+                folder.path <- strdiff(folder.orgpath, instance.app_home);
+                folder.path=lstrips(folder.path, "/");
+                folder.use_rel <- true;
+            }
+        }
+
+        //Additional folders to be added
+        instance.appdir_add <- tux_appdir_add;
         instance.nodeid <- machine.nodeid;
 
         if (regexp("^0x.*|^0X.*").match(M_resources["IPCKEY"][0]))
