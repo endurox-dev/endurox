@@ -22,16 +22,50 @@ structure format handling API. Enduro/X counterpart for this functionality is
 headers shipped with Enduro/X.
 
 Enduro/X tends to implement most majority of the C APIs which are typically used in
-Tuxedo application. Some rarely used features are not implemented in
-Enduro/X. To verify your application compatibility with Enduro/X, perform manual
-scan over your code base and check each Tuxedo API 
+Tuxedo application. To verify your application compatibility with Enduro/X, 
+perform manual scan over your code base and check each Tuxedo API in Enduro/X
+documentation.
 
 == Enduro/X and Tuxedo differences
 
-- Different Contexting.
+=== UBB Configuration vs Enduro/X ini/xml format
 
-== Tuxedo connectivity
 ...
+
+=== Configuration groups
+
+...
+
+=== Clustering
+
+In Enduro/X applications each instance works as "master" node, forming
+a peer to peer cluster. This means that each cluster node needs to be started
+separately in opposite to Tuxedo, where cluster application is started from
+master node, and secondary nodes are started by the master.
+
+Enduro/X cluster works in similar fashion as Tuxedo Gateway, except that
+*tpforward(3)* and all other APIs work in the same mode as Tuxedo's multi-machine
+configuration (i.e. MODEL=MP).
+
+== Tuxedo connectivity and bindings
+
+- Enduro/X does not have *WebLogic Tuxedo Connector* or *Jolt* libraries
+for Java. But Enduro/X provides Web Services interface module *endurox-connect*,
+particularly *restincl(8)* from which XATMI services can be exposed as JSONS 
+web services. With this Enduro/X services may be called from any language which supports web
+services. Web services API provides capability for managing global transactions.
+
+- Enduro/X counterpart to the Tuxedo *SALT* is endurox-connect module. The
+*restincl(8)* serves the inbound web services traffic and *restousv(8)* services
+the outbound traffic. The message formats between *SALT* and *endurox-connect*
+are different. Enduro/X counter part tends to use *JSON* message formats. However
+*restincl* is extensible and provides general purpose module for incoming
+web traffic handling from XATMI perspective (this includes any kind of web traffic
+handling, file upload, custom message formats, etc.).
+
+- *endurox-java* package serves as direct counterpart of the *Oracle Tuxedo Java*. Some
+of the APIs are different, but majority conforms to the *TJATMI*. Enduro/X implementation
+is based on JNI binding code. Each java instance is started as separate binary.
 
 == Migrating source code
 ...
