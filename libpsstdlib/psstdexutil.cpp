@@ -169,8 +169,10 @@ static PSInteger _exutil_chmod(HPSCRIPTVM v)
     return 0;
 }
 
-//Write user log message
-//@param msg    Message
+//mkdir, change to 755 mode. 
+//Allow recursive mkdir. In that case we shall return an array
+//of directories created.
+//@param[script] dir    Diretory to create
 static PSInteger _exutil_mkdir(HPSCRIPTVM v)
 {
     const PSChar *s;

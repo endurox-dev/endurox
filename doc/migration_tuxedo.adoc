@@ -30,7 +30,13 @@ documentation.
 
 === UBB Configuration vs Enduro/X ini/xml format
 
-...
+Tuxedo use UBB configuration file, which is kind of extended ini file. This
+describes majority of information used for Tuxedo application instance.
+
+Other hand Enduro/X uses two separate files for the configuration. One is
+XML configuration file (*ndrxconfig.xml* typically) which describes the XATMI
+server and client processes, services and DDR info. The other file is standard 
+*ini* file (typically *app.ini*) which include per binary configuration.
 
 === Configuration groups
 
