@@ -55,13 +55,23 @@ find_package(FLEX)
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/include)
 
+add_custom_command(
+  OUTPUT tmloadcf.cnut
+  COMMAND pscript -c -o tmloadcf.cnut tmloadcf.pscript
+  DEPENDS tmloadcf.pscript)
+
+add_custom_command(
+  OUTPUT tmloadcf_bytecode.c
+  COMMAND exembedfile tmloadcf.cnut tmloadcf_bytecode
+  DEPENDS tmloadcf.cnut)
+
 BISON_TARGET(EXPRPARSER tux.y ${CMAKE_CURRENT_BINARY_DIR}/tux.tab.c)
 FLEX_TARGET(EXPRSCANNER tux.l ${CMAKE_CURRENT_BINARY_DIR}/tux.lex.c)
 
 BISON_TARGET(EXPRPARSER ddr_range.y ${CMAKE_CURRENT_BINARY_DIR}/ddr.tab.c)
 FLEX_TARGET(EXPRSCANNER ddr_range.l ${CMAKE_CURRENT_BINARY_DIR}/ddr.lex.c)
 
-add_executable (tmloadcf tux.c tux.tab.c tux.lex.c ddr.tab.c ddr.lex.c script.c getrm.c)
+add_executable (tmloadcf tux.c tux.tab.c tux.lex.c ddr.tab.c ddr.lex.c script.c getrm.c tmloadcf_bytecode.c)
 target_compile_definitions(tmloadcf PUBLIC NDRX_TMLOADCF)
 target_link_libraries (tmloadcf psstdlib ps nstd ${RT_LIB} pthread m)
 
