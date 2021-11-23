@@ -426,27 +426,36 @@ expublic int tux_init_vm(char *script_nm,
      * sets error handlers */
     psstd_seterrorhandlers(v);
     
-    script=ndrx_file_read(script_nm, &len);
-    
-    if (NULL==script)
+    if (EXEOS!=script_nm[0])
     {
-        EXFAIL_OUT(ret);
-    }
-    
-    /* Compile & load the script */
-    if (PS_FAILED(ps_compilebuffer(v, script, len, script_nm, PSTrue)))
-    {
-        if(PS_SUCCEEDED(ps_getstring(v, -1, &err)))
+        script=ndrx_file_read(script_nm, &len);
+
+        if (NULL==script)
         {
-            _Nset_error_fmt(NESYSTEM, "Failed to compile script: %s", err);
             EXFAIL_OUT(ret);
         }
-        EXFAIL_OUT(ret);
+
+        /* Compile & load the script */
+        if (PS_FAILED(ps_compilebuffer(v, script, len, script_nm, PSTrue)))
+        {
+            if(PS_SUCCEEDED(ps_getstring(v, -1, &err)))
+            {
+                _Nset_error_fmt(NESYSTEM, "Failed to compile script: %s", err);
+                EXFAIL_OUT(ret);
+            }
+            EXFAIL_OUT(ret);
+        }
     }
     else
     {
-       ps_pushroottable(v);
+        /* TODO: ps_readclosure() to read ndrx_G_resource_tmloadcf_bytecode / 
+         * ndrx_G_resource_tmloadcf_bytecode_len_def 
+         */
     }
+    
+    
+    ps_pushroottable(v);
+    
     
     /* Load the function */
     if (PS_FAILED(ps_call(v,1,PSTrue, PSTrue)))
