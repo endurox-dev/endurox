@@ -425,6 +425,52 @@ PSRESULT psstd_loadfile(HPSCRIPTVM v,const PSChar *filename,PSBool printerror)
     return ps_throwerror(v,_SC("cannot open the file"));
 }
 
+/**
+ * Memory reader
+ * @param memptr field offset must be reset to 0 when starting to read
+ * @param buf output buffer
+ * @param size output buffer size
+ * @return bytes read, or -1 (in case of error or EOF)
+ */
+static PSInteger mem_read(PSUserPointer memreader,PSUserPointer buf,PSInteger size)
+{
+    PSInteger ret;
+    PSMemReader *reader = (PSMemReader *)memreader;
+    int out_block = reader->size - reader->offset;
+    
+    if (out_block > size)
+    {
+        out_block = size;
+    }
+    else if (out_block==0)
+    {
+        /* nothing to load / EOF */
+        ret = -1;
+        goto out;
+    }
+    /* load bytes */
+    memcpy(buf, reader->memptr+reader->offset, out_block);
+    reader->offset+=out_block;
+    ret = out_block;
+    
+out:
+    return ret;
+}
+
+/**
+ * Load bytecode from memory block
+ * @param v VirtualMachine
+ * @param reader ptr to mem reader structure
+ * @return PS_OK, PS_ERROR 
+ */
+PSRESULT psstd_loadmem(HPSCRIPTVM v, PSMemReader *reader)
+{
+    if(PS_SUCCEEDED(ps_readclosure(v,mem_read,reader))) {
+        return PS_OK;
+    }
+    return PS_ERROR;
+}
+
 PSRESULT psstd_dofile(HPSCRIPTVM v,const PSChar *filename,PSBool retval,PSBool printerror)
 {
     if(PS_SUCCEEDED(psstd_loadfile(v,filename,printerror))) {
