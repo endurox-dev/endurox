@@ -27,6 +27,16 @@ extern "C" {
 
 typedef void* PSFILE;
 
+/**
+ * bytecode reader structure
+ */
+typedef struct
+{
+    char *memptr;	/**< ptr to memory block                        */
+    size_t size;	/**< size of memory block                       */
+    size_t offset;	/**< current position 				*/
+} PSMemReader;
+
 PSCRIPT_API PSFILE psstd_fopen(const PSChar *,const PSChar *);
 PSCRIPT_API PSInteger psstd_fread(PSUserPointer, PSInteger, PSInteger, PSFILE);
 PSCRIPT_API PSUserPointer psstd_fgets(PSUserPointer, PSInteger, PSFILE);
@@ -40,12 +50,15 @@ PSCRIPT_API PSInteger psstd_feof(PSFILE);
 PSCRIPT_API PSRESULT psstd_createfile(HPSCRIPTVM v, PSFILE file,PSBool own);
 PSCRIPT_API PSRESULT psstd_getfile(HPSCRIPTVM v, PSInteger idx, PSFILE *file);
 
-//compiler helpers
+/* compiler helpers */
 PSCRIPT_API PSRESULT psstd_loadfile(HPSCRIPTVM v,const PSChar *filename,PSBool printerror);
 PSCRIPT_API PSRESULT psstd_dofile(HPSCRIPTVM v,const PSChar *filename,PSBool retval,PSBool printerror);
 PSCRIPT_API PSRESULT psstd_writeclosuretofile(HPSCRIPTVM v,const PSChar *filename);
-
 PSCRIPT_API PSRESULT psstd_register_iolib(HPSCRIPTVM v);
+
+/* Load bytecode from memory */
+PSCRIPT_API PSRESULT psstd_loadmem(HPSCRIPTVM v, PSMemReader *reader);
+
 
 #ifdef __cplusplus
 } /*extern "C"*/

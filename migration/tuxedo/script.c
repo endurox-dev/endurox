@@ -66,6 +66,9 @@ extern void ddr_scan_string (char *yy_str  );
 extern int ddrlex_destroy  (void);
 extern int ndrx_G_ddrcolumn;
 
+extern const char ndrx_G_resource_tmloadcf_bytecode[];
+extern const size_t ndrx_G_resource_tmloadcf_bytecode_len;
+
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -448,11 +451,27 @@ expublic int tux_init_vm(char *script_nm,
     }
     else
     {
-        /* TODO: ps_readclosure() to read ndrx_G_resource_tmloadcf_bytecode / 
-         * ndrx_G_resource_tmloadcf_bytecode_len_def 
-         */
+        PSMemReader reader;
+        
+        memset(&reader, 0, sizeof(reader));
+        
+        reader.memptr = ndrx_G_resource_tmloadcf_bytecode;
+        reader.size = ndrx_G_resource_tmloadcf_bytecode_len;
+        
+        if (PS_FAILED(psstd_loadmem(v, &reader)))
+        {
+            if(PS_SUCCEEDED(ps_getstring(v, -1, &err)))
+            {
+                _Nset_error_fmt(NESYSTEM, "Failed to load bytecode: %s", err);
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                _Nset_error_msg(NESYSTEM, "Failed to load bytecode: no error specfied");
+                EXFAIL_OUT(ret);
+            }
+        }
     }
-    
     
     ps_pushroottable(v);
     

@@ -1,7 +1,7 @@
 ##
-## @brief Tuxedo Ubbconfig importer
+## @brief Platform script build support module
 ##
-## @file CMakeLists.txt
+## @file pscript.cmake
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -32,48 +32,16 @@
 ## -----------------------------------------------------------------------------
 ##
 
-# Set a minimum version
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required (VERSION 3.1) 
 
-# Add debug options
-# By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
-	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
-	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+macro(pscript_embed source_file)
 
-# Osx has very outdated bison,
-# thus install by brew install bison
-if(PLATFORM STREQUAL "Darwin")
-    set(BISON_EXECUTABLE "/usr/local/opt/bison/bin/bison" CACHE PATH "Bison executable")
-endif()
+add_custom_command(
+  OUTPUT ${source_file}_bytecode.c
+  COMMAND pscript -c -o ${source_file}.cnut ${source_file}.pscript
+  COMMAND exembedfile ${source_file}.cnut ${source_file}_bytecode
+  COMMAND rm ${source_file}.cnut
+  DEPENDS ${source_file}.pscript)
 
-find_package(BISON)
-find_package(FLEX)
-#find_package(pscript)
-include(pscript)
+endmacro(pscript_embed source_file)
 
-# Make sure the compiler can find include files from UBF library
-include_directories (${ENDUROX_SOURCE_DIR}/include)
-
-pscript_embed(tmloadcf)
-
-BISON_TARGET(EXPRPARSER tux.y ${CMAKE_CURRENT_BINARY_DIR}/tux.tab.c)
-FLEX_TARGET(EXPRSCANNER tux.l ${CMAKE_CURRENT_BINARY_DIR}/tux.lex.c)
-
-BISON_TARGET(EXPRPARSER ddr_range.y ${CMAKE_CURRENT_BINARY_DIR}/ddr.tab.c)
-FLEX_TARGET(EXPRSCANNER ddr_range.l ${CMAKE_CURRENT_BINARY_DIR}/ddr.lex.c)
-
-add_executable (tmloadcf tux.c tux.tab.c tux.lex.c ddr.tab.c ddr.lex.c script.c getrm.c tmloadcf_bytecode.c)
-target_compile_definitions(tmloadcf PUBLIC NDRX_TMLOADCF)
-target_link_libraries (tmloadcf psstdlib ps nstd ${RT_LIB} pthread m)
-
-install (TARGETS 
-    tmloadcf
-    DESTINATION bin)
-
-install (FILES
-    tmloadcf.pscript
-    DESTINATION share/endurox/config)
-# vim: set ts=4 sw=4 et smartindent:
