@@ -798,7 +798,7 @@ function prep_servers(instance)
             if (machine.nodeid < instance.nodeid)
             {
                 //In this case we take passive role and accept incoming connections
-                new_srv.sysopt<-("-e ${NDRX_APPHOME}/log/tpbridge."+machine.nodeid+ "."+instance.nodeid+".log");
+                new_srv.sysopt<-("-e ${NDRX_APPHOME}/log/tpbridge."+instance.nodeid+ "."+machine.nodeid+".log");
 
                 new_srv.appopt<-"-n"+machine.nodeid+" -r -i 0.0.0.0 -p "
                         +(NET_BASE_PORT+machine.nodeid)+" -tP -z30";
@@ -810,17 +810,17 @@ function prep_servers(instance)
 
                 //This is active role, we connect 
                 new_srv.sysopt<-"-e ${NDRX_APPHOME}/log/tpbridge." 
-                        +machine.nodeid+ "."+instance.nodeid+".log";
+                        +instance.nodeid+ "."+machine.nodeid+".log";
 
                 if ("ip" in machine)
                 {
                     new_srv.appopt<-"-n"+machine.nodeid+" -r -i "+machine.ip+" -p "
-                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
+                        +(NET_BASE_PORT+instance.nodeid)+" -tA -z30";
                 }
                 else
                 {
                     new_srv.appopt<-"-n"+machine.nodeid+" -r -h "+machine.host+" -p "
-                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
+                        +(NET_BASE_PORT+instance.nodeid)+" -tA -z30";
                 }
 
                 instance.servers.append(new_srv);
@@ -988,7 +988,7 @@ function prep_servers(instance)
             if (!server.is_default)
             {
                 //resolve min/max for final check
-                new_srv.real_min <- get_val(server, "MIN", null)[0].tointeger();
+                new_srv.real_min <- get_val(server, "MIN", ["1"])[0].tointeger();
                 //Default MAX is same as MIN
                 new_srv.real_max <-  get_val(server, "MAX", [new_srv.real_min])[0].tointeger();
             }
@@ -2278,6 +2278,7 @@ function ex_generate(arg)
         instance.prefix <- machine.keywords["LMID"][0].tolower();
         instance.app_home <- strcommon(tux_appdir, tux_tuxconfig);
         instance.use_rel <- false;
+
         if (instance.app_home=="/")
         {
             //this is absolute path

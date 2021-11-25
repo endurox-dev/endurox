@@ -455,7 +455,7 @@ expublic int tux_init_vm(char *script_nm,
         
         memset(&reader, 0, sizeof(reader));
         
-        reader.memptr = ndrx_G_resource_tmloadcf_bytecode;
+        reader.memptr = (char *)ndrx_G_resource_tmloadcf_bytecode;
         reader.size = ndrx_G_resource_tmloadcf_bytecode_len;
         
         if (PS_FAILED(psstd_loadmem(v, &reader)))

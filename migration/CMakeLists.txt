@@ -34,6 +34,8 @@
 cmake_minimum_required(VERSION 3.1)
 
 # Sub Dirs
+IF (NOT DEFINE_DISABLEPSCRIPT)
 add_subdirectory (tuxedo)
+ENDIF()
 
 # vim: set ts=4 sw=4 et smartindent:
