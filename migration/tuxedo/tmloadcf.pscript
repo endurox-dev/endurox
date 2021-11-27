@@ -235,6 +235,37 @@ function init()
 }
 
 /**
+ * Schedule directory creation.
+ * Folder creation is performed in recursive way by consulting each section to
+ * the schedule and disk existence prior adding to the hash.
+ * @param folder folder to create
+ */
+function schedule_directory(folder)
+{
+    local comps = split(folder, "/");
+    local path="/";
+    local len = comps.len();
+
+    for (local i=1; i<len; i++)
+    {
+
+        if (path=="/")
+        {
+            path+=comps[i];
+        }
+        else
+        {
+            path+="/"+comps[i];
+        }
+
+        if (!(path in M_folder_gen) && !fileexists(path))
+        {
+            M_folder_gen[path]<-{};
+        }
+    }
+}
+
+/**
  * Get default value for section param.
  * Note that platformscript does not allow to use identifier "default" as
  * variable name.
@@ -513,11 +544,13 @@ function prep_groups(instance)
                     //Schedule folder for creation.
                     if ( !(instance.app_home+"/qdata" in M_folder_gen))
                     {
-                        M_folder_gen[instance.app_home+"/qdata"]<-{};
+                        //M_folder_gen[instance.app_home+"/qdata"]<-{};
+                        schedule_directory(instance.app_home+"/qdata");
                     }
                     group.qspace<-qspace;
                     group.data_folder <- instance.app_home+"/qdata/"+qspace;
-                    M_folder_gen[group.data_folder]<-{};
+                    //M_folder_gen[group.data_folder]<-{};
+                    schedule_directory(group.data_folder);
 
                     //Hashmap of auto-queues served by given queue space
                     //internally may contains .trantime setting override.
@@ -548,11 +581,13 @@ function prep_groups(instance)
                 //Schedule folders to be created
                 if ( !(instance.app_home+"/tmlogs" in M_folder_gen))
                 {
-                    M_folder_gen[instance.app_home+"/tmlogs"]<-{};
+                    //M_folder_gen[instance.app_home+"/tmlogs"]<-{};
+                    schedule_directory(instance.app_home+"/tmlogs");
                 }
 
                 group.tmlogs<-instance.app_home+"/tmlogs/rm"+group.rmid;
-                M_folder_gen[group.tmlogs]<-{};
+                //M_folder_gen[group.tmlogs]<-{};
+                schedule_directory(group.tmlogs);
 
             }
 
@@ -2078,116 +2113,120 @@ tab+"    </server>\n";
  */
 function write_files()
 {
-        local config_exists = false;
-        //Verify files (ask for overwrite, if any missing)
-        foreach (idx, instance in M_instances)
+    local config_exists = false;
+    //Verify files (ask for overwrite, if any missing)
+    foreach (idx, instance in M_instances)
+    {
+        if (fileexists(instance.set_file))
         {
-            if (fileexists(instance.set_file))
-            {
-                //print file name
-                print_stdout("Configuration file exists: ["+instance.set_file+"]\n");
-                config_exists = true;
-            }
-
-            if (fileexists(instance.ini_file))
-            {
-                //print file name
-                print_stdout("Configuration file exists: ["+instance.ini_file+"]\n");
-                config_exists = true;
-            }
-            
-            if (fileexists(instance.xml_file))
-            {
-                //print file name
-                print_stdout("Configuration file exists: ["+instance.xml_file+"]\n");
-                config_exists = true;
-            }
+            //print file name
+            print_stdout("Configuration file exists: ["+instance.set_file+"]\n");
+            config_exists = true;
         }
 
-        //Ask for confirmation, if needed
-        if (config_exists 
-                && M_y_opt != "1" 
-                && 0==chk_confirm("Really overwrite Enduro/X configuration files?"))
+        if (fileexists(instance.ini_file))
         {
-            print("Aborted configuration file generation");
-            return;
+            //print file name
+            print_stdout("Configuration file exists: ["+instance.ini_file+"]\n");
+            config_exists = true;
         }
 
-        //TODO: Create folders (if any missing, log created)
-        //Firstly transfer the hashmap to array, sort the array, so that shortest
-        //folders come first as we are going to create them (if not exists)
-        
-        local dirs = [];
-
-        foreach (idx, dir in M_folder_gen)
+        if (fileexists(instance.xml_file))
         {
-            dir.name<-idx;
-            dirs.append(dir);
+            //print file name
+            print_stdout("Configuration file exists: ["+instance.xml_file+"]\n");
+            config_exists = true;
         }
-        
-        //sort
-        dirs.sort(@(a,b) a.name.len() <=> b.name.len());
+    }
 
-        //Check dirs...
-        foreach (idx, dir in dirs)
+    //Ask for confirmation, if needed
+    if (config_exists 
+            && M_y_opt != "1" 
+            && 0==chk_confirm("Really overwrite Enduro/X configuration files?"))
+    {
+        print("Aborted configuration file generation");
+        return;
+    }
+
+    //TODO: Create folders (if any missing, log created)
+    //Firstly transfer the hashmap to array, sort the array, so that shortest
+    //folders come first as we are going to create them (if not exists)
+
+    local dirs = [];
+
+    foreach (idx, dir in M_folder_gen)
+    {
+        dir.name<-idx;
+        dirs.append(dir);
+    }
+
+    //sort
+    dirs.sort(@(a,b) a.name.len() <=> b.name.len());
+
+    //Check dirs...
+    foreach (idx, dir in dirs)
+    {
+/*
+        if (!(fileexists(dir.name)))
         {
-            if (!(fileexists(dir.name)))
-            {
-                print("Creating directory ["+dir.name+"]...");
-                mkdir(dir.name);
-                dir.created<-true;
-            }
+*/
+            print("Creating directory ["+dir.name+"]...");
+            mkdir(dir.name);
+            dir.created<-true;
+/*
         }
+*/
+    }
 
-        //Write files
-        foreach (idx, instance in M_instances)
+    //Write files
+    foreach (idx, instance in M_instances)
+    {
+        try
         {
-            try
-            {
-                local out = file(instance.set_file,"w");
-                out.writes(instance.set_text);
-                out.close();
-            } 
-            catch (e)
-            {
-                print(e);
-                throw(format("Cannot write [%s] file", instance.set_file));
-            }
-
-            M_files_gen.append(instance.set_file);
-
-            //Give chmod to execute the file 
-            chmod(instance.set_file, "755");
-
-            try
-            {
-                local out = file(instance.ini_file,"w");
-                out.writes(instance.ini_text);
-                out.close();
-            }
-            catch (e)
-            {
-                print(e);
-                throw(format("Cannot write [%s] file", instance.ini_file));
-            }
-
-            M_files_gen.append(instance.ini_file);
-
-            try
-            {
-                local out = file(instance.xml_file,"w");
-                out.writes(instance.xml_text);
-                out.close();
-            }
-            catch (e)
-            {
-                print(e);
-                throw(format("Cannot write [%s] file", instance.xml_file));
-            }
-
-            M_files_gen.append(instance.xml_file);
+            local out = file(instance.set_file,"w");
+            out.writes(instance.set_text);
+            out.close();
+        } 
+        catch (e)
+        {
+            print(e);
+            throw(format("Cannot write [%s] file", instance.set_file));
         }
-        
+
+        M_files_gen.append(instance.set_file);
+
+        //Give chmod to execute the file 
+        chmod(instance.set_file, "755");
+
+        try
+        {
+            local out = file(instance.ini_file,"w");
+            out.writes(instance.ini_text);
+            out.close();
+        }
+        catch (e)
+        {
+            print(e);
+            throw(format("Cannot write [%s] file", instance.ini_file));
+        }
+
+        M_files_gen.append(instance.ini_file);
+
+        try
+        {
+            local out = file(instance.xml_file,"w");
+            out.writes(instance.xml_text);
+            out.close();
+        }
+        catch (e)
+        {
+            print(e);
+            throw(format("Cannot write [%s] file", instance.xml_file));
+        }
+
+        M_files_gen.append(instance.xml_file);
+    }
+
 }
 /**
  * Generate Enduro/X configs. Callback from tmloadcf. At this point
@@ -2334,7 +2373,8 @@ function ex_generate(arg)
             local common = strcommon(folder.orgpath, instance.app_home)
                 
             //Schedule folder anyway
-            M_folder_gen[folder.orgpath]<-{};
+            //M_folder_gen[folder.orgpath]<-{};
+            schedule_directory(folder.orgpath);
 
             if (common=="/")
             {
@@ -2438,18 +2478,24 @@ function ex_generate(arg)
         }
 
         //Schedule system folders
-        M_folder_gen[instance.app_home]<-{};
-        M_folder_gen[instance.app_home+"/log"]<-{};
-        M_folder_gen[instance.app_home+"/tmp"]<-{};
+        //M_folder_gen[instance.app_home]<-{};
+        schedule_directory(instance.app_home);
+        //M_folder_gen[instance.app_home+"/log"]<-{};
+        schedule_directory(instance.app_home+"/log");
+        //M_folder_gen[instance.app_home+"/tmp"]<-{};
+        schedule_directory(instance.app_home+"/tmp");
 
         if (instance.use_rel)
         {
-            M_folder_gen[instance.app_home+"/"+instance.app_bin]<-{};
-            M_folder_gen[instance.app_home+"/"+instance.app_conf]<-{};
+            //M_folder_gen[instance.app_home+"/"+instance.app_bin]<-{};
+            schedule_directory(instance.app_home+"/"+instance.app_bin);
+            //M_folder_gen[instance.app_home+"/"+instance.app_conf]<-{};
+            schedule_directory(instance.app_home+"/"+instance.app_conf);
         }
         else
         {
-            M_folder_gen[instance.app_conf]<-{};
+            //M_folder_gen[instance.app_conf]<-{};
+            schedule_directory(instance.app_conf);
         }
 
         instance.machine<-machine;
@@ -2500,7 +2546,7 @@ function ex_cleanup(arg)
     }
 
     print("Folder cleanup...");
-    //Remove created diretories...
+    //Remove created directories...
     local dirs = [];
 
     foreach (idx, dir in M_folder_gen)
