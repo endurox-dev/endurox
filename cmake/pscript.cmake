@@ -34,14 +34,21 @@
 
 cmake_minimum_required (VERSION 3.1) 
 
-macro(pscript_embed source_file)
+#
+# Embed platform script
+# 
+# @param source_file full name of platform script file
+# @param output_prefix output file name without extension. finally will gate suffix .c
+#
+macro(pscript_embed source_file output_prefix)
+
 
 add_custom_command(
-  OUTPUT ${source_file}_bytecode.c
-  COMMAND pscript -c -o ${source_file}.cnut ${source_file}.pscript
-  COMMAND exembedfile ${source_file}.cnut ${source_file}_bytecode
-  COMMAND rm ${source_file}.cnut
-  DEPENDS ${source_file}.pscript)
+  OUTPUT ${output_prefix}.c
+  COMMAND pscript -c -o ${output_prefix}.cnut ${source_file}
+  COMMAND exembedfile ${output_prefix}.cnut ${output_prefix}
+  COMMAND rm ${output_prefix}.cnut
+  DEPENDS ${source_file})
 
 endmacro(pscript_embed source_file)
 

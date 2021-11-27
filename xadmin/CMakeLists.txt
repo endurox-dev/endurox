@@ -51,10 +51,14 @@ include_directories (${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
 # Make sure the linker can find the UBF library once it is built.
 #link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-add_custom_command(
-  OUTPUT provision.c
-  COMMAND exembedfile scripts/provision.pscript provision
-  DEPENDS scripts/provision.pscript)
+include(pscript)
+
+set(SCRIPTS "")
+
+IF (NOT DEFINE_DISABLEPSCRIPT)
+	pscript_embed(scripts/provision.pscript provision)
+	list(APPEND SCRIPTS provision.c)
+ENDIF()
 
 add_custom_command(
   OUTPUT gen_go_server.c
@@ -119,7 +123,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
                 cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
-                provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
+		${SCRIPTS} Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
                 gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
                 gen_test_local cmd_cs.c cmd_cd.c cmd_ci.c
                 cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c cmd_util.c

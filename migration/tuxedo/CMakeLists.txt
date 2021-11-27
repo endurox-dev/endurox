@@ -57,7 +57,7 @@ include(pscript)
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/include)
 
-pscript_embed(tmloadcf)
+pscript_embed(tmloadcf.pscript tmloadcf_bytecode)
 
 BISON_TARGET(EXPRPARSER tux.y ${CMAKE_CURRENT_BINARY_DIR}/tux.tab.c)
 FLEX_TARGET(EXPRSCANNER tux.l ${CMAKE_CURRENT_BINARY_DIR}/tux.lex.c)
