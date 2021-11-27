@@ -56,59 +56,44 @@ include(pscript)
 set(SCRIPTS "")
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
-	pscript_embed(scripts/provision.pscript provision)
-	list(APPEND SCRIPTS provision.c)
+    pscript_embed(scripts/provision.pscript provision)
+    list(APPEND SCRIPTS provision.c)
+
+    pscript_embed(scripts/gen_go_server.pscript gen_go_server)
+    list(APPEND SCRIPTS gen_go_server.c)
+
+    pscript_embed(scripts/gen_go_client.pscript gen_go_client)
+    list(APPEND SCRIPTS gen_go_client.c)
+
+    pscript_embed(scripts/gen_ubf_tab.pscript gen_ubf_tab)
+    list(APPEND SCRIPTS gen_ubf_tab.c)
+
+    pscript_embed(scripts/gen_c_client.pscript gen_c_client)
+    list(APPEND SCRIPTS gen_c_client.c)
+
+    pscript_embed(scripts/gen_c_server.pscript gen_c_server)
+    list(APPEND SCRIPTS gen_c_server.c)
+
+    pscript_embed(scripts/gen_java_client.pscript gen_java_client)
+    list(APPEND SCRIPTS gen_java_client.c)
+
+    pscript_embed(scripts/gen_java_server.pscript gen_java_server)
+    list(APPEND SCRIPTS gen_java_server.c)
+
+    pscript_embed(scripts/gen_test_local.pscript gen_test_local)
+    list(APPEND SCRIPTS gen_test_local.c)
+
 ENDIF()
-
-add_custom_command(
-  OUTPUT gen_go_server.c
-  COMMAND exembedfile scripts/gen_go_server.pscript gen_go_server
-  DEPENDS scripts/gen_go_server.pscript)
-
-add_custom_command(
-  OUTPUT gen_go_client.c
-  COMMAND exembedfile scripts/gen_go_client.pscript gen_go_client
-  DEPENDS scripts/gen_go_client.pscript)
-  
-add_custom_command(
-  OUTPUT gen_ubf_tab.c
-  COMMAND exembedfile scripts/gen_ubf_tab.pscript gen_ubf_tab
-  DEPENDS scripts/gen_ubf_tab.pscript)
 
 add_custom_command(
   OUTPUT Exfields.c
   COMMAND exembedfile ../include/Exfields Exfields
   DEPENDS ../include/Exfields)
-  
-add_custom_command(
-  OUTPUT gen_c_client.c
-  COMMAND exembedfile scripts/gen_c_client.pscript gen_c_client
-  DEPENDS scripts/gen_c_client.pscript)
-
-add_custom_command(
-  OUTPUT gen_c_server.c
-  COMMAND exembedfile scripts/gen_c_server.pscript gen_c_server
-  DEPENDS scripts/gen_c_server.pscript)
-
-add_custom_command(
-  OUTPUT gen_java_client.c
-  COMMAND exembedfile scripts/gen_java_client.pscript gen_java_client
-  DEPENDS scripts/gen_java_client.pscript)
-
-add_custom_command(
-  OUTPUT gen_java_server.c
-  COMMAND exembedfile scripts/gen_java_server.pscript gen_java_server
-  DEPENDS scripts/gen_java_server.pscript)
-
-add_custom_command(
-  OUTPUT gen_test_local.c
-  COMMAND exembedfile scripts/gen_test_local.pscript gen_test_local
-  DEPENDS scripts/gen_test_local.pscript)
 
 add_custom_command(
   OUTPUT ndrx_config.c
   COMMAND exembedfile ../include/ndrx_config.h ndrx_config
-  DEPENDS scripts/gen_test_local.pscript)
+  DEPENDS ../include/ndrx_config.h)
 
 if(DEFINED EX_USE_SYSVQ OR DEFINED EX_USE_SVAPOLL)
     SET(SOURCE1 "cmd_svmaps.c")
@@ -123,13 +108,11 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
                 cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
-		${SCRIPTS} Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
-                gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
-                gen_test_local cmd_cs.c cmd_cd.c cmd_ci.c
+		${SCRIPTS} Exfields.c cmd_provision.c cmd_gen.c
+                cmd_cs.c cmd_cd.c cmd_ci.c
                 cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c cmd_util.c
                 cmd_appconfig.c cmd_dping.c linenoise.c cmd_tranlocal.c
-                cmd_tmib.c taboutput.c gen_java_client.c gen_java_server.c
-                cmd_lcf.c cmd_prtsvc.c)
+                cmd_tmib.c taboutput.c cmd_lcf.c cmd_prtsvc.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

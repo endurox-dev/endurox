@@ -67,14 +67,28 @@
 /*---------------------------Externs------------------------------------*/
 
 extern const char ndrx_G_resource_gen_go_server[];
+extern const size_t ndrx_G_resource_gen_go_server_len;
+
 extern const char ndrx_G_resource_gen_go_client[];
+extern const size_t ndrx_G_resource_gen_go_client_len;
+
 extern const char ndrx_G_resource_gen_c_client[];
+extern const size_t ndrx_G_resource_gen_c_client_len;
+
 extern const char ndrx_G_resource_gen_c_server[];
+extern const size_t ndrx_G_resource_gen_c_server_len;
+
 extern const char ndrx_G_resource_gen_ubf_tab[];
+extern const size_t ndrx_G_resource_gen_ubf_tab_len;
+
 extern const char ndrx_G_resource_gen_test_local[];
+extern const size_t ndrx_G_resource_gen_test_local_len;
 
 extern const char ndrx_G_resource_gen_java_server[];
+extern const size_t ndrx_G_resource_gen_java_server_len;
+
 extern const char ndrx_G_resource_gen_java_client[];
+extern const size_t ndrx_G_resource_gen_java_client_len;
 
 /*---------------------------Macros-------------------------------------*/
 /* #define GEN_DEBUG 1 */
@@ -85,11 +99,12 @@ struct gen_hash
 {
     char command[PATH_MAX+1];
     
-    char *stock; /* allocated in memory */
+    const char *stock; /**< allocated in memory                               */
+    size_t stock_len; /**< Number of bytes in stock built-in script      */
     
-    char *fname; /* allocated on disk */
+    char *fname; /**< allocated on disk                                 */
     
-    EX_hash_handle hh; /* makes this structure hashable        */
+    EX_hash_handle hh; /**< makes this structure hashable               */
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -115,12 +130,13 @@ exprivate gen_hash_t * gen_get(char *command)
 
 /**
  * Add static command
- * @param ptr
- * @param file
- * @param command
- * @return 
+ * @param command command name
+ * @param stock built in script bytes
+ * @param stock built_len script bytes len
+ * @param fname file name on disk based script
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate int reg_cmd(char *command, const char *stock, const char *fname)
+exprivate int reg_cmd(char *command, const char *stock, size_t stock_len, const char *fname)
 {
     gen_hash_t *gen;
     int ret = EXSUCCEED;
@@ -137,16 +153,10 @@ exprivate int reg_cmd(char *command, const char *stock, const char *fname)
     
     if (stock)
     {
-        if (NULL==(gen->stock = strdup(stock)))
-        {
-            int err = errno;
-            NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
-            userlog("Failed to alloc: %s", strerror(err));
-            EXFAIL_OUT(ret);
-        }
+        gen->stock = stock;
+        gen->stock_len = stock_len;
     }
-    
-    if (fname)
+    else if (fname)
     {
         if (NULL==(gen->fname = strdup(fname)))
         {
@@ -161,7 +171,9 @@ exprivate int reg_cmd(char *command, const char *stock, const char *fname)
     fprintf(stderr, "Adding command [%s]", gen->command);
 #endif
     
-    /* add stuff to hash */
+    /* add stuff to hash 
+     * TODO: How about duplicate check?
+     */
     EXHASH_ADD_STR( M_gen_res, command, gen );
     
 out:
@@ -170,11 +182,6 @@ out:
     {
         if (gen)
         {
-            if (gen->stock)
-            {
-                free(gen->stock);
-            }
-            
             if (gen->fname)
             {
                 free(gen->fname);
@@ -205,16 +212,17 @@ expublic int cmd_gen_load_scripts(void)
     char *p;
     int i;
     
+#define EMB_RES(name) name, name##_len
     
     /* 1. List strings in memory, start with "gen_001" */
-    if (EXSUCCEED!=reg_cmd("go server", ndrx_G_resource_gen_go_server, NULL)
-        || EXSUCCEED!=reg_cmd("go client", ndrx_G_resource_gen_go_client, NULL)
-        || EXSUCCEED!=reg_cmd("c server", ndrx_G_resource_gen_c_server, NULL)
-        || EXSUCCEED!=reg_cmd("c client", ndrx_G_resource_gen_c_client, NULL)
-        || EXSUCCEED!=reg_cmd("java server", ndrx_G_resource_gen_java_server, NULL)
-        || EXSUCCEED!=reg_cmd("java client", ndrx_G_resource_gen_java_client, NULL)    
-        || EXSUCCEED!=reg_cmd("ubf tab", ndrx_G_resource_gen_ubf_tab, NULL)
-        || EXSUCCEED!=reg_cmd("test local", ndrx_G_resource_gen_test_local, NULL)
+    if (EXSUCCEED!=reg_cmd("go server", EMB_RES(ndrx_G_resource_gen_go_server), NULL)
+        || EXSUCCEED!=reg_cmd("go client", EMB_RES(ndrx_G_resource_gen_go_client), NULL)
+        || EXSUCCEED!=reg_cmd("c server", EMB_RES(ndrx_G_resource_gen_c_server), NULL)
+        || EXSUCCEED!=reg_cmd("c client", EMB_RES(ndrx_G_resource_gen_c_client), NULL)
+        || EXSUCCEED!=reg_cmd("java server", EMB_RES(ndrx_G_resource_gen_java_server), NULL)
+        || EXSUCCEED!=reg_cmd("java client", EMB_RES(ndrx_G_resource_gen_java_client), NULL)    
+        || EXSUCCEED!=reg_cmd("ubf tab", EMB_RES(ndrx_G_resource_gen_ubf_tab), NULL)
+        || EXSUCCEED!=reg_cmd("test local", EMB_RES(ndrx_G_resource_gen_test_local), NULL)
        )
     {
         EXFAIL_OUT(ret);
@@ -286,7 +294,7 @@ expublic int cmd_gen_load_scripts(void)
                             start, path);
 #endif
                     
-                    if (EXSUCCEED!=reg_cmd(start, NULL, path))
+                    if (EXSUCCEED!=reg_cmd(start, NULL, 0, path))
                     {
                         EXFAIL_OUT(ret);
                     }
@@ -465,8 +473,13 @@ expublic int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     /* do some stuff with pscript here */
     if (gen->stock)
     {
-        if (PS_FAILED(ps_compilebuffer(v, gen->stock, 
-                    strlen(gen->stock), "gen.ps", PSTrue)))
+        PSMemReader reader;
+        
+        memset(&reader, 0, sizeof(reader));
+        reader.memptr = (char *)gen->stock;
+        reader.size = gen->stock_len;
+        
+        if (PS_FAILED(psstd_loadmem(v, &reader)))
         {
             fprintf(stderr, "Failed to compile stock script\n");
 
