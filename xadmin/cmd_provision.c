@@ -65,6 +65,7 @@
 /*---------------------------Macros-------------------------------------*/
 /* Have some access to resources */
 extern const char ndrx_G_resource_provision[];
+extern const size_t ndrx_G_resource_provision_len;
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -87,7 +88,8 @@ expublic int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int 
     PSInteger res;
     int i;
     const PSChar *err;
-        
+    PSMemReader reader;
+    
     v = ps_open(1024); /* creates a VM with initial stack size 1024 */
     
     ps_setprintfunc(v,printfunc,errorfunc);
@@ -166,14 +168,14 @@ expublic int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int 
     /* Load the command line arguments to the script */
     
     ps_newslot(v, -3, PSFalse );/*1*/
+    memset(&reader, 0, sizeof(reader));
+    reader.memptr = (char *)ndrx_G_resource_provision;
+    reader.size = ndrx_G_resource_provision_len;
 
-
-    
     /* do some stuff with pscript here */
-    if (PS_FAILED(ps_compilebuffer(v, ndrx_G_resource_provision, 
-                strlen(ndrx_G_resource_provision), "provision.ps", PSTrue)))
+    if (PS_FAILED(psstd_loadmem(v, &reader)))
     {
-        fprintf(stderr, "Failed to compile...\n");
+        fprintf(stderr, "Failed to load byte\n");
 
         if(PS_SUCCEEDED(ps_getstring(v,-1,&err)))
         {
