@@ -614,13 +614,13 @@ The demo *app.ini* section looks like:
 NDRX_CLUSTERISED=1
 NDRX_CMDWAIT=1
 NDRX_CONFIG=${NDRX_APPHOME}/conf/ndrxconfig.xml
-NDRX_DMNLOG=${NDRX_APPHOME}/log/ndrxd.log
+NDRX_DMNLOG=${NDRX_ULOG}/ndrxd.log
 NDRX_DPID=${NDRX_APPHOME}/tmp/ndrxd.pid
 NDRX_DQMAX=100
 NDRX_IPCKEY=44000
 NDRX_LDBAL=0
 NDRX_LEV=5
-NDRX_LOG=${NDRX_APPHOME}/log/xadmin.log
+NDRX_LOG=${NDRX_ULOG}/xadmin.log
 NDRX_MSGMAX=100
 NDRX_MSGSIZEMAX=56000
 NDRX_NODEID=2
@@ -648,8 +648,8 @@ NDRX_XA_LAZY_INIT=0
 [@debug]
 ; * - goes for all binaries not listed bellow
 *= ndrx=5 ubf=1 tp=5 file=
-xadmin= ndrx=5 ubf=1 tp=5 file=${NDRX_APPHOME}/log/xadmin.log
-ndrxd= ndrx=5 ubf=1 tp=5 file=${NDRX_APPHOME}/log/ndrxd.log
+xadmin= ndrx=5 ubf=1 tp=5 file=${NDRX_ULOG}/xadmin.log
+ndrxd= ndrx=5 ubf=1 tp=5 file=${NDRX_ULOG}/ndrxd.log
 
 ; Queue definitions goes here, see man q.conf(5) for syntax
 [@queue]
@@ -770,40 +770,40 @@ insight on how to configure the system.
 			<min>2</min>
 			<max>2</max>
 			<srvid>1</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/log/cconfsrv.log -r</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/cconfsrv.log -r</sysopt>
 		</server>
 		<server name="tpevsrv">
 			<min>2</min>
 			<max>2</max>
 			<srvid>20</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/log/tpevsrv.log -r</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tpevsrv.log -r</sysopt>
 		</server>
 		<server name="tmsrv">
 			<min>3</min>
 			<max>3</max>
 			<srvid>40</srvid>
 			<cctag>RM1TMQ</cctag>
-			<sysopt>-e ${NDRX_APPHOME}/log/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/tmlogs/rm1</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/tmlogs/rm1</sysopt>
 		</server>
 		<server name="tmqueue">
 			<min>1</min>
 			<max>1</max>
 			<srvid>60</srvid>
 			<cctag>RM1TMQ</cctag>
-			<sysopt>-e ${NDRX_APPHOME}/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1</sysopt>
 		</server>
 		<server name="tpbridge">
 			<min>1</min>
 			<max>1</max>
 			<srvid>150</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/log/tpbridge_2.log -r</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tpbridge_2.log -r</sysopt>
 			<appopt>-f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30</appopt>
 		</server>
 		<server name="cpmsrv">
 			<min>1</min>
 			<max>1</max>
 			<srvid>9999</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/log/cpmsrv.log -r -- -k3 -i1</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/cpmsrv.log -r -- -k3 -i1</sysopt>
 		</server>
 	</servers>
 	<!-- 
@@ -817,11 +817,11 @@ insight on how to configure the system.
 			- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
 		-->
 		<client cmdline="your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
-			<exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_APPHOME}/log/testbin-1.log"/>
-			<exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_APPHOME}/log/testbin-3.log"/>
+			<exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/testbin-1.log"/>
+			<exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_ULOG}/testbin-3.log"/>
 		</client>
 		<client cmdline="your_test_binary2.sh -t ${NDRX_CLTTAG}">
-			<exec tag="TAG3" autostart="Y" log="${NDRX_APPHOME}/log/testbin2-1.log"/>
+			<exec tag="TAG3" autostart="Y" log="${NDRX_ULOG}/testbin2-1.log"/>
 		</client>
 	</clients>
 </endurox>
@@ -1182,7 +1182,7 @@ of the group:
                 <min>1</min>
                 <max>1</max>
                 <cctag>Group1</cctag>
-                <sysopt>-e ${NDRX_APPHOME}/log/TM1.log -r -- -t60 -l${NDRX_APPHOME}/log/RM1 </sysopt>
+                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm1 </sysopt>
             </server>
 
             <server name="tmsrv">
@@ -1190,7 +1190,7 @@ of the group:
                 <min>1</min>
                 <max>1</max>
                 <cctag>Group2</cctag>
-                <sysopt>-e ${NDRX_APPHOME}/log/TM1.log -r -- -t60 -l${NDRX_APPHOME}/log/RM2 </sysopt>
+                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm2 </sysopt>
             </server>
 
             <server name="tmsrv">
@@ -1198,7 +1198,7 @@ of the group:
                 <min>1</min>
                 <max>1</max>
                 <cctag>Group3</cctag>
-                <sysopt>-e ${NDRX_APPHOME}/log/TM1.log -r -- -t60 -l${NDRX_APPHOME}/log/RM3 </sysopt>
+                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm3 </sysopt>
             </server>
 
             <server name="tmsrv">
@@ -1206,31 +1206,31 @@ of the group:
                 <min>1</min>
                 <max>1</max>
                 <cctag>Group4</cctag>
-                <sysopt>-e ${NDRX_APPHOME}/log/TM1.log -r -- -t60 -l${NDRX_APPHOME}/log/RM4 </sysopt>
+                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm4 </sysopt>
             </server>
 
             <server name="test_orasv">
                 <srvid>400</srvid>
                 <cctag>Group2</cctag>
-                <sysopt>-e ${NDRX_APPHOME}/log/test_orasv.log -r</sysopt>
+                <sysopt>-e ${NDRX_ULOG}/test_orasv.log -r</sysopt>
             </server>
 
             <server name="test_pgsv">
                 <srvid>500</srvid>
                 <cctag>Group3</cctag>
-                <sysopt>-e ${NDRX_APPHOME}/log/test_pgsv.log -r</sysopt>
+                <sysopt>-e ${NDRX_ULOG}/test_pgsv.log -r</sysopt>
             </server>
 
             <server name="tmqueue">
                 <max>1</max>
                 <srvid>600</srvid>
                 <cctag>Group4</cctag>
-                <sysopt>-e ${NDRX_APPHOME}/log/tmqueue.log -r -- -m MYSPACE -s1</sysopt>
+                <sysopt>-e ${NDRX_ULOG}/tmqueue.log -r -- -m MYSPACE -s1</sysopt>
             </server>
     </servers>
 	<clients>
 		<client cmdline="test_nullcl" CCTAG="Group1">
-			<exec tag="NULLCL" autostart="Y" log="${NDRX_APPHOME}/log/testnullbin.log"/>
+			<exec tag="NULLCL" autostart="Y" log="${NDRX_ULOG}/testnullbin.log"/>
 		</client>
 	</clients>
 

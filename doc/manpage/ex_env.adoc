@@ -36,7 +36,15 @@ Mandatory Env. Variables
     will be returned.
 
 *NDRX_ULOG*='ULOG_PATH'::
-    Writable system path where to write user logs.
+    Writable system path where to write user logs. Significant
+    system events as well as *userlog(3)* output is written
+    to file *ULOG.YYYYMMDD*, where 'YYYYMMDD' correspond to current
+    date. This directory also typically is used to output any process
+    related Enduro/X logs, from internal logging 
+    (topics *ndrx* and *ubf*) or from user logging (*tp* topic)
+    performed by *tplog(3)* or by *ndebug.h* macros. Logfile names 
+    are configured at *[@debug]* section in common-configuration ini 
+    file or in *ndrxdebug.conf(5)* configuration file.
 
 *NDRX_QPREFIX*='APP_PREFIX'::
     Prefix used for POSIX IPC resources (shm and queue).
@@ -407,13 +415,13 @@ Mandatory Env. Variables
     number gives better performance for linear hashing - less probability for collision. 
     Default value is *1000*.
 
-*NDRX_RTCRTMAX*='CRITERION_BUFFER_SIZE':
+*NDRX_RTCRTMAX*='CRITERION_BUFFER_SIZE'::
     This is number of bytes available for routing criterion storage. Default
     value is *102400* which corresponds to *100* KB. One *<route>* tag takes
     about 300 bytes and one range entry take about 64 bytes (by not including
     the string data which is dynamic length).
 
-*NDRX_RTGRP*='ROUTING_GROUP':
+*NDRX_RTGRP*='ROUTING_GROUP'::
     This is routing group code. If environment variable is present for XATMI server
     process, then any service advertise and unadvertise will operate in bulk with
     original service name and additionally added suffix of "@<NDRX_RTGRP>". For
