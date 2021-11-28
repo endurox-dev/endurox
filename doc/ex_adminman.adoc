@@ -1153,7 +1153,7 @@ NDRX_XA_LAZY_INIT=1
 #
 [@global/Group4]
 NDRX_XA_RES_ID=4
-NDRX_XA_OPEN_STR=${NDRX_APPHOME}/queues/QSPACE1
+NDRX_XA_OPEN_STR=datadir="${NDRX_APPHOME}/queues/QSPACE1",qspace="QSPACE1"
 NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
 NDRX_XA_RMLIB=libndrxxaqdisk.so
@@ -1225,7 +1225,7 @@ of the group:
                 <max>1</max>
                 <srvid>600</srvid>
                 <cctag>Group4</cctag>
-                <sysopt>-e ${NDRX_ULOG}/tmqueue.log -r -- -m MYSPACE -s1</sysopt>
+                <sysopt>-e ${NDRX_ULOG}/tmqueue.log -r -- -s1</sysopt>
             </server>
     </servers>
 	<clients>
@@ -1248,7 +1248,7 @@ $ NDRX_CCTAG=Group2 ./test_oracl
 
 Note that this configuration assumes that following folders are created:
 
-. $\{NDRX_APPHOME\}/log/RM[1,2,3,4] - Transaction manager machine readable logs 
+. $\{NDRX_APPHOME\}/tmlogs/rm[1,2,3,4] - Transaction manager machine readable logs 
 for transaction completion and recovery.
 
 . $\{NDRX_APPHOME\}/queues/QSPACE1 - Folder for persistent queue data storage.
