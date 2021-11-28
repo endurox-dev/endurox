@@ -1562,7 +1562,7 @@ function gen_set_file(instance)
 export NDRX_HOME=/usr
 export NDRX_APPHOME="+instance.app_home+@"
 export NDRX_CCONFIG="+instance.ndrx_conf+"/"+"app."+instance.prefix+@".ini
-export CDPATH=$CDPATH:.:$NDRX_APPHOME
+export CDPATH=$CDPATH:.:${NDRX_APPHOME}
 export PATH=$PATH:"+instance.ndrx_bin;
 /******************************************************************************/
 
@@ -1572,7 +1572,7 @@ export PATH=$PATH:"+instance.ndrx_bin;
     {
         if (folder.use_rel)
         {
-            instance.set_text+=":$NDRX_APPHOME/"+folder.path;
+            instance.set_text+=":${NDRX_APPHOME}/"+folder.path;
         }
         else
         {
@@ -1594,11 +1594,6 @@ export PATH=$PATH:"+instance.ndrx_bin;
  */
 function gen_ini_file(instance)
 {
-    //TODO: pull in ENVFILE. If found FIELDTBLS32 or FLDTBLDIR32, translate
-    //to FIELDTBLS or FLDTBLDIR.
-    //Also Support #738 shall be fixed, so that we can ignore non-loadable files
-    //FIELDTBLS shall be appended with Exfields. Append FLDTBLDIR with ubftab
-    //of the distribution.
     instance.ini_text <-
 /******************************************************************************/
 @"[@global]
@@ -2166,16 +2161,9 @@ function write_files()
     //Check dirs...
     foreach (idx, dir in dirs)
     {
-/*
-        if (!(fileexists(dir.name)))
-        {
-*/
-            print("Creating directory ["+dir.name+"]...");
-            mkdir(dir.name);
-            dir.created<-true;
-/*
-        }
-*/
+        print("Creating directory ["+dir.name+"]...");
+        mkdir(dir.name);
+        dir.created<-true;
     }
 
     //Write files
@@ -2354,20 +2342,33 @@ function ex_generate(arg)
             instance.use_rel = true;
 
             //Prepare further folders
-            instance.ndrx_conf <- "${NDRX_APPHOME}/"+instance.app_conf;
-            instance.ndrx_bin <- "${NDRX_APPHOME}/"+instance.app_bin;
 
+            local conf_full = instance.app_home;
+            if (instance.app_conf!="")
+            {
+                instance.ndrx_conf <- "${NDRX_APPHOME}/"+instance.app_conf;
+                conf_full+="/"+instance.app_conf;
+            }
+            else
+            {
+                instance.ndrx_conf <- "${NDRX_APPHOME}";
+            }
 
-            instance.set_file <-format("%s/%s/set.%s", instance.app_home, 
-                instance.app_conf, instance.prefix);
-            instance.xml_file <-format("%s/%s/ndrxconfig.%s.xml", instance.app_home, 
-                instance.app_conf, instance.prefix);
-            instance.ini_file <-format("%s/%s/app.%s.ini", instance.app_home, 
-                instance.app_conf, instance.prefix);
+            if (instance.app_bin!="")
+            {
+                instance.ndrx_bin <- "${NDRX_APPHOME}/"+instance.app_bin;
+            }
+            else
+            {
+                instance.ndrx_bin <- "${NDRX_APPHOME}";
+            }
+
+            instance.set_file <-format("%s/set.%s", conf_full, instance.prefix);
+            instance.xml_file <-format("%s/ndrxconfig.%s.xml", conf_full, instance.prefix);
+            instance.ini_file <-format("%s/app.%s.ini", conf_full, instance.prefix);
         }
 
         //Process additional folders
-
         foreach(dix, folder in tux_appdir_add)
         {
             local common = strcommon(folder.orgpath, instance.app_home)
