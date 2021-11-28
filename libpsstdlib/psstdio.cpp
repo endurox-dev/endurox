@@ -5,6 +5,7 @@
 #include <psstdio.h>
 #include "psstdstream.h"
 #include <ndrstandard.h>
+#include <errno.h>
 
 #define PSSTD_FILE_TYPE_TAG (PSSTD_STREAM_TYPE_TAG | 0x00000001)
 //basic API
@@ -155,13 +156,19 @@ static PSInteger _file_constructor(HPSCRIPTVM v)
 {
     const PSChar *filename,*mode;
     bool owns = true;
+    char dbg_name[PATH_MAX+1];
     PSFile *f;
     PSFILE newf;
     if(ps_gettype(v,2) == OT_STRING && ps_gettype(v,3) == OT_STRING) {
         ps_getstring(v, 2, &filename);
         ps_getstring(v, 3, &mode);
         newf = psstd_fopen(filename, mode);
-        if(!newf) return ps_throwerror(v, _SC("cannot open file"));
+        if(!newf) {
+	    int err = errno;
+	    snprintf(dbg_name, sizeof(dbg_name), _SC("cannot open file [%s]: %s"),
+			    filename, strerror(errno));
+	    return ps_throwerror(v, dbg_name);
+	}
     } else if(ps_gettype(v,2) == OT_USERPOINTER) {
         owns = !(ps_gettype(v,3) == OT_NULL);
         ps_getuserpointer(v,2,&newf);
