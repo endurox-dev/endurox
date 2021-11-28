@@ -384,7 +384,7 @@ class Provision extends WizardBase {
 			<min>2</min>
 			<max>2</max>
 			<srvid>1</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/cconfsrv.log -r</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/cconfsrv.log -r</sysopt>
 		</server>";
 		
 		}
@@ -396,7 +396,7 @@ class Provision extends WizardBase {
 			<min>2</min>
 			<max>2</max>
 			<srvid>10</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpadmsv.log -r</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tpadmsv.log -r</sysopt>
 		</server>";
 		
 		//Install event server
@@ -408,7 +408,7 @@ class Provision extends WizardBase {
 			<min>1</min>
 			<max>1</max>
 			<srvid>20</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpevsrv.log -r</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tpevsrv.log -r</sysopt>
 		</server>";
 		}
 		
@@ -430,14 +430,14 @@ class Provision extends WizardBase {
 			<max>3</max>
 			<srvid>40</srvid>
 			<cctag>RM1TMQ</cctag>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/"+tmDir+@"/rm1</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/"+tmDir+@"/rm1</sysopt>
 		</server>
 		<server name=""tmqueue"">
 			<min>1</min>
 			<max>1</max>
 			<srvid>60</srvid>
 			<cctag>RM1TMQ</cctag>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tmqueue-rm1.log -r -- -s1</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -s1</sysopt>
 		</server>";
 		}
 		
@@ -459,7 +459,7 @@ class Provision extends WizardBase {
 			<min>1</min>
 			<max>1</max>
 			<srvid>150</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/tpbridge_"+otherNodeId+@".log -r</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/tpbridge_"+otherNodeId+@".log -r</sysopt>
 			<appopt>-f -n"+otherNodeId+@" -r -i "+ip+" -p "+port+" -t"+bridgeRole.toupper()+@" -z30</appopt>
 		</server>";
 		}
@@ -500,7 +500,7 @@ class Provision extends WizardBase {
 			<min>1</min>
 			<max>1</max>
 			<srvid>9999</srvid>
-			<sysopt>-e ${NDRX_APPHOME}/"+logDir+@"/cpmsrv.log -r -- -k3 -i1</sysopt>
+			<sysopt>-e ${NDRX_ULOG}/cpmsrv.log -r -- -k3 -i1</sysopt>
 		</server>";
 		}
 		ndrxconfigXmlVal=ndrxconfigXmlVal+@"
@@ -538,11 +538,11 @@ class Provision extends WizardBase {
 			- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
 		-->
 		<client cmdline=""your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}"">
-			<exec tag=""TAG1"" subsect=""SUBSECTION1"" autostart=""Y"" log=""${NDRX_APPHOME}/"+logDir+@"/testbin-1.log""/>
-			<exec tag=""TAG2"" subsect=""SUBSECTION2"" autostart=""Y"" log=""${NDRX_APPHOME}/"+logDir+@"/testbin-3.log""/>
+			<exec tag=""TAG1"" subsect=""SUBSECTION1"" autostart=""Y"" log=""${NDRX_ULOG}/testbin-1.log""/>
+			<exec tag=""TAG2"" subsect=""SUBSECTION2"" autostart=""Y"" log=""${NDRX_ULOG}/testbin-3.log""/>
 		</client>
 		<client cmdline=""your_test_binary2.sh -t ${NDRX_CLTTAG}"">
-			<exec tag=""TAG3"" autostart=""Y"" log=""${NDRX_APPHOME}/"+logDir+@"/testbin2-1.log""/>
+			<exec tag=""TAG3"" autostart=""Y"" log=""${NDRX_ULOG}/testbin2-1.log""/>
 		</client>"+_ucl1+@"
 	</clients>";
 		}
@@ -562,13 +562,13 @@ class Provision extends WizardBase {
 NDRX_CLUSTERISED=1
 NDRX_CMDWAIT=1
 NDRX_CONFIG=${NDRX_APPHOME}/"+confDir+@"/ndrxconfig.xml
-NDRX_DMNLOG=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
+NDRX_DMNLOG=${NDRX_ULOG}/ndrxd.log
 NDRX_DPID=${NDRX_APPHOME}/"+tempDir+@"/ndrxd.pid
 NDRX_DQMAX=100
 NDRX_IPCKEY="+ipckey+@"
 NDRX_LDBAL="+ldbal+@"
 NDRX_LEV=5
-NDRX_LOG=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
+NDRX_LOG=${NDRX_ULOG}/xadmin.log
 NDRX_MSGMAX="+msgmax+@"
 NDRX_MSGSIZEMAX="+msgsizemax+@"
 NDRX_NODEID="+nodeid+@"
@@ -611,8 +611,8 @@ appiniVal=appiniVal+@"
 [@debug]
 ; * - goes for all binaries not listed bellow
 *= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=
-xadmin= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/xadmin.log
-ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+logDir+@"/ndrxd.log
+xadmin= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_ULOG}/xadmin.log
+ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_ULOG}/ndrxd.log
 ";
 
 
