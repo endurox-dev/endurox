@@ -685,7 +685,7 @@ function prep_servers(instance)
                     server.keywords["MIN"]<-["1"];
                     server.keywords["MAX"]<-["1"];
                     //Match the forwarders at plotting, by group lookup...
-                    server.keywords["CLOPT"]<-["-A -e ${NDRX_APPHOME}/log/tmqueue.${NDRX_SVSRVID}.log -r -- -s1 -p10"];
+                    server.keywords["CLOPT"]<-["-A -e ${NDRX_ULOG}/tmqueue.${NDRX_SVSRVID}.log -r -- -s1 -p10"];
                     
                     break;
                 case "TMQFORWARD":
@@ -776,7 +776,7 @@ function prep_servers(instance)
     new_srv = {};
     new_srv.bin<-"cconfsrv";
     new_srv.srvid <- reserve_range(instance, 2);
-    new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/cconfsrv.${NDRX_SVSRVID}.log -r";
+    new_srv.sysopt <- "-e ${NDRX_ULOG}/cconfsrv.${NDRX_SVSRVID}.log -r";
     new_srv.min<-2;
     new_srv.max<-2;
     new_srv.is_default<-false;
@@ -786,7 +786,7 @@ function prep_servers(instance)
     new_srv = {};
     new_srv.bin<-"tpadmsv";
     new_srv.srvid <- reserve_range(instance, 2);
-    new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tpadmsv.${NDRX_SVSRVID}.log -r";
+    new_srv.sysopt <- "-e ${NDRX_ULOG}/tpadmsv.${NDRX_SVSRVID}.log -r";
     new_srv.min<-2;
     new_srv.max<-2;
     new_srv.is_default<-false;
@@ -798,7 +798,7 @@ function prep_servers(instance)
         new_srv = {};
         new_srv.bin<-"tpevsrv";
         new_srv.srvid <- reserve_range(instance, 1);
-        new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tpevsrv.${NDRX_SVSRVID}.log -r";
+        new_srv.sysopt <- "-e ${NDRX_ULOG}/tpevsrv.${NDRX_SVSRVID}.log -r";
         new_srv.min<-1;
         new_srv.max<-1;
         new_srv.is_default<-false;
@@ -833,7 +833,7 @@ function prep_servers(instance)
             if (machine.nodeid < instance.nodeid)
             {
                 //In this case we take passive role and accept incoming connections
-                new_srv.sysopt<-("-e ${NDRX_APPHOME}/log/tpbridge."+instance.nodeid+ "."+machine.nodeid+".log");
+                new_srv.sysopt<-("-e ${NDRX_ULOG}/tpbridge."+instance.nodeid+ "."+machine.nodeid+".log");
 
                 new_srv.appopt<-"-n"+machine.nodeid+" -r -i 0.0.0.0 -p "
                         +(NET_BASE_PORT+machine.nodeid)+" -tP -z30";
@@ -844,7 +844,7 @@ function prep_servers(instance)
             {
 
                 //This is active role, we connect 
-                new_srv.sysopt<-"-e ${NDRX_APPHOME}/log/tpbridge." 
+                new_srv.sysopt<-"-e ${NDRX_ULOG}/tpbridge." 
                         +instance.nodeid+ "."+machine.nodeid+".log";
 
                 if ("ip" in machine)
@@ -933,11 +933,11 @@ function prep_servers(instance)
                 {
                     if (sysopt!="")
                     {
-                        sysopt= sysopt + " " + "-e ${NDRX_APPHOME}/log/"+new_srv.bin+".${NDRX_SVSRVID}.log"; 
+                        sysopt= sysopt + " " + "-e ${NDRX_ULOG}/"+new_srv.bin+".${NDRX_SVSRVID}.log"; 
                     }
                     else
                     {
-                        sysopt= "-e ${NDRX_APPHOME}/log/"+new_srv.bin+".${NDRX_SVSRVID}.log"; 
+                        sysopt= "-e ${NDRX_ULOG}/"+new_srv.bin+".${NDRX_SVSRVID}.log"; 
                     }
                 }
 
@@ -1088,7 +1088,7 @@ function prep_servers(instance)
             new_srv.real_min<-1;
             new_srv.real_max<-1;
             new_srv.is_default<-false;
-            new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tmrecoversv.log -r";
+            new_srv.sysopt <- "-e ${NDRX_ULOG}/tmrecoversv.log -r";
             new_srv.appopt <- "-p -s10";
             new_srv.cctag<-"/"; //Allow merge
             instance.servers.append(new_srv);
@@ -1103,7 +1103,7 @@ function prep_servers(instance)
             new_srv.real_min<-1;
             new_srv.real_max<-1;
             new_srv.is_default<-false;
-            new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/cpmsrv.log -r";
+            new_srv.sysopt <- "-e ${NDRX_ULOG}/cpmsrv.log -r";
             new_srv.appopt <- "-k3 -i1";
             new_srv.cctag<-"/"; //Allow merge
             instance.servers.append(new_srv);
@@ -1154,7 +1154,7 @@ function prep_servers(instance)
                 }
 
                 new_srv.srvid <- reserve_range(instance, cnt);
-                new_srv.sysopt <- "-e ${NDRX_APPHOME}/log/tmsrv.${NDRX_SVSRVID}.log -r";
+                new_srv.sysopt <- "-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r";
                 new_srv.appopt <- "-t1 -l"+group.tmlogs;
                 new_srv.min<-cnt;
                 new_srv.max<-cnt;
@@ -1600,13 +1600,14 @@ function gen_ini_file(instance)
 NDRX_CLUSTERISED=1
 NDRX_CMDWAIT=1
 NDRX_CONFIG="+instance.ndrx_conf+"/ndrxconfig."+instance.prefix+@".xml
-NDRX_DMNLOG=${NDRX_APPHOME}/log/ndrxd.log
+NDRX_ULOG="+instance.log_rel+@"
+NDRX_DMNLOG=${NDRX_ULOG}/ndrxd.log
 NDRX_DPID=${NDRX_APPHOME}/tmp/ndrxd.pid
 NDRX_DQMAX=100
 NDRX_IPCKEY="+instance.ipckey+@"
 NDRX_LDBAL=0
 NDRX_LEV=5
-NDRX_LOG=${NDRX_APPHOME}/log/xadmin.log
+NDRX_LOG=${NDRX_ULOG}/xadmin.log
 NDRX_MSGMAX=100
 NDRX_MSGSIZEMAX=56000
 NDRX_NODEID="+instance.machine.nodeid+@"
@@ -1619,7 +1620,6 @@ NDRX_TOUT="+ M_resources["SCANUNIT"][0].tointeger()
       * M_resources["BLOCKTIME"][0].tointeger() +@"
 NDRX_UBFMAXFLDS=16000
 NDRX_LIBEXT="+M_wizzard.shared_lib_pfx+@"
-NDRX_ULOG=${NDRX_APPHOME}/log
 # TODO, replace if not found already in env:
 # If present in envfile, these will be imported bellow.
 #FIELDTBLS=Exfields
@@ -1684,7 +1684,6 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
     }
 
     // Debugs per binary:
-    // TODO: might wnat to use "ULOGPFX" for log storing, not?
     // Also needs to decide is it relative path or full path...
     // And if it contains  sub-folders (as with appdir), recursively we shall
     // create them.
@@ -1692,9 +1691,9 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
 /******************************************************************************/
 @"[@debug]
 #* - goes for all binaries not listed bellow
-*= ndrx=3 ubf=1 tp=3 threaded=l file=${NDRX_APPHOME}/log/endurox.org
-xadmin=file=${NDRX_APPHOME}/log/xadmin.log
-ndrxd=file=${NDRX_APPHOME}/log/ndrxd.log
+*= ndrx=3 ubf=1 tp=3 threaded=l file=${NDRX_ULOG}/endurox.org
+xadmin=file=${NDRX_ULOG}/xadmin.log
+ndrxd=file=${NDRX_ULOG}/ndrxd.log
 ";
 /******************************************************************************/
     
@@ -1705,7 +1704,7 @@ ndrxd=file=${NDRX_APPHOME}/log/ndrxd.log
         if (!(server.bin in server_plotted))
         {
             //Add debug entry.
-            instance.ini_text+=format("%s=file=${NDRX_APPHOME}/log/%s.${NDRX_SVSRVID}.log\n", 
+            instance.ini_text+=format("%s=file=${NDRX_ULOG}/%s.${NDRX_SVSRVID}.log\n", 
                 server.bin, server.bin);
             server_plotted[server.bin] <-true;
         }
@@ -1713,7 +1712,7 @@ ndrxd=file=${NDRX_APPHOME}/log/ndrxd.log
 
     if (instance.restin)
     {
-        instance.ini_text+=format("restincl=file=${NDRX_APPHOME}/log/restincl.rin1.log\n");
+        instance.ini_text+=format("restincl=file=${NDRX_ULOG}/restincl.rin1.log\n");
     }
     
     //Process the queues now
@@ -1958,7 +1957,7 @@ tab+"    </server>\n";
         instance.xml_text+=
 @"    <clients>
           <client cmdline=""restincl"">
-              <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_APPHOME}/log/restincl.rin1.log""/>
+              <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_ULOG}/restincl.rin1.log""/>
           </client>
     </clients>
 ";
@@ -2377,7 +2376,7 @@ function ex_generate(arg)
             //M_folder_gen[folder.orgpath]<-{};
             schedule_directory(folder.orgpath);
 
-            if (common=="/")
+            if (common!=instance.app_home)
             {
                 //Use full path ..
                 folder.path <- folder.orgpath;
@@ -2402,6 +2401,47 @@ function ex_generate(arg)
         else
         {
             instance.ipckey <- M_resources["IPCKEY"][0]
+        }
+
+        //Resolve logging directory also... full or relative against the home
+        local log_dir = get_val(val[0], "ULOGPFX", [""])[0];
+
+        if (log_dir=="")
+        {
+            instance.log_full <- instance.app_home + "/log";
+            instance.log_rel <- "${NDRX_APPHOME}/log";
+        }
+        else
+        {
+            //Just take dirname 
+            log_dir = dirname(log_dir);            
+
+            if (log_dir==instance.app_home)
+            {
+                //Use log anyway
+                instance.log_full <- instance.app_home + "/log";
+                instance.log_rel <- "${NDRX_APPHOME}/log";
+            }
+            else
+            {
+                local common = strcommon(log_dir, instance.app_home);
+                local diff = strdiff(log_dir, instance.app_home);
+                
+                diff = lstrips(diff, "/");
+
+                if (common!=instance.app_home)
+                {
+                    //use full path to logs...
+                    instance.log_full <- log_dir;
+                    instance.log_rel <- log_dir;
+                }
+                else 
+                {
+                    //Relative to app home with log suffix...
+                    instance.log_full <- instance.app_home+"/"+diff;
+                    instance.log_rel <- "${NDRX_APPHOME}/"+diff;
+                }
+            }
         }
 
         //Dump some config
@@ -2479,18 +2519,13 @@ function ex_generate(arg)
         }
 
         //Schedule system folders
-        //M_folder_gen[instance.app_home]<-{};
         schedule_directory(instance.app_home);
-        //M_folder_gen[instance.app_home+"/log"]<-{};
-        schedule_directory(instance.app_home+"/log");
-        //M_folder_gen[instance.app_home+"/tmp"]<-{};
+        schedule_directory(instance.log_full);
         schedule_directory(instance.app_home+"/tmp");
 
         if (instance.use_rel)
         {
-            //M_folder_gen[instance.app_home+"/"+instance.app_bin]<-{};
             schedule_directory(instance.app_home+"/"+instance.app_bin);
-            //M_folder_gen[instance.app_home+"/"+instance.app_conf]<-{};
             schedule_directory(instance.app_home+"/"+instance.app_conf);
         }
         else
