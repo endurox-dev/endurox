@@ -1,7 +1,7 @@
 /**
- * @brief Migrate tuxedo config
+ * @brief Migrate tuxedo ubb config, parser
  *
- * @file tux.y
+ * @file ubb.y
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -33,13 +33,13 @@
  */
 
 /* %define api.prefix {tux}*/
-%name-prefix "tux"
+%name-prefix "ubb"
 
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include <ndebug.h>
-#include "tux.h"
+#include "ubb.h"
     
 extern int tuxlex (void);
 %}

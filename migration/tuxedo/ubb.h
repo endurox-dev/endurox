@@ -1,7 +1,7 @@
 /**
- * @brief Common/shared data structures between server & client.
+ * @brief Tuxedo ubb config parser -> Enduro/X translator
  *
- * @file tux.h
+ * @file ubb.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,8 +31,8 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef TUX_H
-#define	TUX_H
+#ifndef UBB_H
+#define	UBB_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -94,6 +94,6 @@ extern int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_mal
 }
 #endif
 
-#endif	/* NDRX_TUX_H */
+#endif	/* UBB_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */

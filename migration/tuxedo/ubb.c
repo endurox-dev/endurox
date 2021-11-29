@@ -1,7 +1,7 @@
 /**
  * @brief Tuxedo ubbconfig parsing routines
  *
- * @file tux.c
+ * @file ubb.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -45,8 +45,8 @@
 #include <nstdutil.h>
 
 #include <exregex.h>
-#include "tux.h"
-#include "tux.tab.h"
+#include "ubb.h"
+#include "ubb.tab.h"
 #include "ddr.tab.h"
 #include "ndebug.h"
 #include <sys_unix.h>
@@ -56,8 +56,8 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-expublic ndrx_tux_parser_t ndrx_G_tuxp;      /**< Parsing time attributes*/
-expublic ndrx_tux_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
+expublic ndrx_parser_t ndrx_G_tuxp;      /**< Parsing time attributes*/
+expublic ndrx_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
 /*---------------------------Statics------------------------------------*/
 exprivate int M_syntax_check = EXFALSE;     /**< Syntax check only (no plot) */
 exprivate ndrx_growlist_t  M_strbuf;
@@ -171,7 +171,7 @@ void tuxerror(char *s, ...)
     }
 }
 
-extern void tux_scan_string (char *yy_str  );
+extern void scan_string (char *yy_str  );
 extern int tuxlex_destroy  (void);
 extern int ndrx_G_tuxcolumn;
 /**
@@ -190,7 +190,7 @@ exprivate int parse_ubbconfig(char *expr)
     
     ndrx_G_tuxcolumn=0;
     /* NDRX_LOG(log_info, "Parsing config: [%s]", expr); */
-    tux_scan_string(expr);
+    scan_string(expr);
             
     if (EXSUCCEED!=tuxparse() || EXSUCCEED!=ndrx_G_tuxp.error)
     {
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
         }
         
         /* Init VM */
-        if (EXSUCCEED!=tux_init_vm(script_nm, n_opt, y_opt, l_opt, a_opt))
+        if (EXSUCCEED!=init_vm(script_nm, n_opt, y_opt, l_opt, a_opt))
         {
             _Nset_error_msg(NESYSTEM, "Failed to load converter script");
             EXFAIL_OUT(ret);

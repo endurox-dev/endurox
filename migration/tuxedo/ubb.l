@@ -1,7 +1,7 @@
 /**
- * @brief Tuxedo config lexer
+ * @brief Tuxedo ubb config lexer
  *
- * @file tux.l
+ * @file ubb.l
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,7 +31,7 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-%option prefix="tux"
+%option prefix="ubb"
 %option noyywrap nodefault yylineno
 /* Context for reading field */
 %x STRING
@@ -41,13 +41,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <nstdutil.h>
-#include "tux.h"
-#include "tux.tab.h"
+#include "ubb.h"
+#include "ubb.tab.h"
 /* Handle locations */
-int ndrx_G_tuxcolumn = 1;
-int ndrx_G_tuxline = 1;
-#define YY_USER_ACTION tuxlloc.first_column = ndrx_G_tuxcolumn; tuxlloc.last_column = ndrx_G_tuxcolumn+tuxleng-1; \
-                                               ndrx_G_tuxcolumn +=tuxleng;
+int ndrx_G_ubbcolumn = 1;
+int ndrx_G_ubbline = 1;
+#define YY_USER_ACTION ubblloc.first_column = ndrx_G_ubbcolumn; ubblloc.last_column = ndrx_G_ubbcolumn+ubbleng-1; \
+                                               ndrx_G_ubbcolumn +=ubbleng;
 
 %}
 
@@ -63,10 +63,10 @@ int ndrx_G_tuxline = 1;
                         }
 "DEFAULT:"              { 
     
-                            tuxlval.val = NDRX_STRDUP("DEFAULT:");
-                            if (NULL==tuxlval.val)
+                            ubblval.val = NDRX_STRDUP("DEFAULT:");
+                            if (NULL==ubblval.val)
                             {
-                                tuxerror("Failed to copy string - OOM?"); 
+                                ubberror("Failed to copy string - OOM?"); 
                                 return EOL;
                             }
                             return DEFAULT; 
@@ -85,20 +85,20 @@ int ndrx_G_tuxline = 1;
                         }
 
 \*[A-Za-z0-9]+          { 
-                            tuxlval.val = NDRX_STRDUP(tuxtext);
-                            if (NULL==tuxlval.val)
+                            ubblval.val = NDRX_STRDUP(ubbtext);
+                            if (NULL==ubblval.val)
                             {
-                                tuxerror("Failed to copy string - OOM?");
+                                ubberror("Failed to copy string - OOM?");
                                 return EOL;
                             }
                             return SECTION; 
                         }
 
 [A-Za-z0-9_]+           {
-                            tuxlval.val = NDRX_STRDUP(tuxtext);
-                            if (NULL==tuxlval.val)
+                            ubblval.val = NDRX_STRDUP(ubbtext);
+                            if (NULL==ubblval.val)
                             {
-                                tuxerror("Failed to copy string - OOM?"); 
+                                ubberror("Failed to copy string - OOM?"); 
                                 return EOL;
                             }
                             return OPTION;
@@ -106,54 +106,54 @@ int ndrx_G_tuxline = 1;
 
 "\""                    {
                             BEGIN STRING;
-                            ndrx_growlist_free(&ndrx_G_tuxp.stringbuffer);
+                            ndrx_growlist_free(&ndrx_G_ubbp.stringbuffer);
                         }
 
 <STRING>\\\\            {
                                 char c='\\';
-                                if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_tuxp.stringbuffer, &c))
+                                if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ubbp.stringbuffer, &c))
                                 {
-                                    tuxerror("Failed to append text to string buffer"); 
+                                    ubberror("Failed to append text to string buffer"); 
                                     return EOL;
                                 }
                         }
 
 <STRING>\\\"            {
                                 char c='\"';
-                                if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_tuxp.stringbuffer, &c))
+                                if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ubbp.stringbuffer, &c))
                                 {
-                                    tuxerror("Failed to append text to string buffer"); 
+                                    ubberror("Failed to append text to string buffer"); 
                                     return EOL;
                                 }
                         }
 
 <STRING>[^\n\"]         {
                             /* add string, char by char? */
-                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_tuxp.stringbuffer, tuxtext))
+                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ubbp.stringbuffer, ubbtext))
                             {
-                                tuxerror("Failed to append text to string buffer"); 
+                                ubberror("Failed to append text to string buffer"); 
                                 return EOL;
                             }
                         }
                         
 <STRING>\n              {
                             /* add string, char by char? */
-                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_tuxp.stringbuffer, tuxtext))
+                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ubbp.stringbuffer, ubbtext))
                             {
-                                tuxerror("Failed to append text to string buffer"); 
+                                ubberror("Failed to append text to string buffer"); 
                                 return EOL;
                             }
-                            ndrx_G_tuxline++;
+                            ndrx_G_ubbline++;
                         }
 
 <STRING>\"              {
                             char c='\0';
-                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_tuxp.stringbuffer, &c))
+                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ubbp.stringbuffer, &c))
                             {
-                                tuxerror("Failed to append text to string buffer"); 
+                                ubberror("Failed to append text to string buffer"); 
                                 return EOL;
                             }
-                            tuxlval.val=NDRX_STRDUP(ndrx_G_tuxp.stringbuffer.mem);
+                            ubblval.val=NDRX_STRDUP(ndrx_G_ubbp.stringbuffer.mem);
                             BEGIN INITIAL;
                             return OPTION;
                         }
@@ -163,11 +163,11 @@ int ndrx_G_tuxline = 1;
 
 [ \n]                   {
                             /* count the lines for the error */
-                            ndrx_G_tuxline++;
+                            ndrx_G_ubbline++;
                         }
 
 .                       {
-                            tuxerror("Invalid character [%s]", tuxtext); 
+                            ubberror("Invalid character [%s]", ubbtext); 
                             return EOL;
                         }
 
@@ -183,7 +183,7 @@ int ndrx_G_tuxline = 1;
                       && (!defined(TUX_FLEX_SUBMINOR_VERSION)                  \
                               || TUX_FLEX_SUBMINOR_VERSION < 9))))
 
-#define tuxlex_destroy() tux_delete_buffer(YY_CURRENT_BUFFER)
+#define ubblex_destroy() ubb_delete_buffer(YY_CURRENT_BUFFER)
 
 #endif
 
