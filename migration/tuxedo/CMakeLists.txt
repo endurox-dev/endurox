@@ -59,8 +59,8 @@ include_directories (${ENDUROX_SOURCE_DIR}/include)
 
 pscript_embed(tmloadcf.pscript tmloadcf_bytecode)
 
-BISON_TARGET(EXPRPARSER tux.y ${CMAKE_CURRENT_BINARY_DIR}/tux.tab.c)
-FLEX_TARGET(EXPRSCANNER tux.l ${CMAKE_CURRENT_BINARY_DIR}/tux.lex.c)
+BISON_TARGET(EXPRPARSER ubb.y ${CMAKE_CURRENT_BINARY_DIR}/ubb.tab.c)
+FLEX_TARGET(EXPRSCANNER ubb.l ${CMAKE_CURRENT_BINARY_DIR}/ubb.lex.c)
 
 BISON_TARGET(EXPRPARSER ddr_range.y ${CMAKE_CURRENT_BINARY_DIR}/ddr.tab.c)
 FLEX_TARGET(EXPRSCANNER ddr_range.l ${CMAKE_CURRENT_BINARY_DIR}/ddr.lex.c)
