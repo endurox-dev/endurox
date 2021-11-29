@@ -15,7 +15,7 @@ migration for Tuxedo UBB Config to Enduro/X based configuration
 
 == Enduro/X and Tuxedo common bits
 
-Both systems are build on X/Open *XATMI* and *XA* standards. Each of the systems
+Both systems are build on X/Open *XATMI*, *XA*, *TX* standards. Each of the systems
 implement extensions over theses APIs. For example Tuxedo have *FML* key-value
 structure format handling API. Enduro/X counterpart for this functionality is
 *UBF* buffers which even provide emulation for *FML* via *fml.h* and *fml32.h*
@@ -26,6 +26,15 @@ Tuxedo application. To verify your application compatibility with Enduro/X,
 perform manual scan over your code base and check each Tuxedo API in Enduro/X
 documentation.
 
+If looking on Tuxedo UBBCONFIG and Enduro/X ndrxconfig.xml/app.ini, then following
+similarities projects:
+
+- "*RESOURCES" section projects to app.ini [@global] section
+
+- ...
+
+- ...
+
 == Enduro/X and Tuxedo differences
 
 === UBB Configuration vs Enduro/X ini/xml format
@@ -34,7 +43,7 @@ documentation.
 describes majority of information used for Tuxedo application instance.
 
 Other hand *Enduro/X* uses two separate files for the configuration. One is
-XML configuration file (*ndrxconfig.xml* typically) which describes the XATMI
+XML configuration file (*ndrxconfig.xml(5)* typically) which describes the XATMI
 server and client processes, services and DDR info. The other file is standard 
 *ini* file (typically *app.ini*) which include per binary configuration.
 
@@ -50,8 +59,40 @@ groups provides XA configuration per binary, also these groups internally
 affect how XATMI IPC messages (such as *tpcall(3)*) land on the particular
 server process instances.
 
-...
+In Enduro/X direct such grouping is not available, however Enduro/X have
+common-configuration framework, which allows to bind different configuration
+settings to binaries via *<cctag />* marking. Effectively, configuration
+sub-sections may be used in similar way as Tuxedo groups. Via configuration
+sub-sections following resources may be configured: *XA* configuration, *DDR*
+routing. Normally *cctag* sub-section does not make server to participarte in
+routing group, but within *[@global/<cctag>]* section parameter *NDRX_RTGRP*
+may be set, which would make the process additionally advertise routing services.
 
+However by using *cctag* settings, different settings from *ex_env(5)*
+may be applied to set of the binaries, including timeouts, UBF/FML settings, etc.
+
+Tuxedo's *SRVID* shall be unique within group, in Enduro/X *<srvid />* setting
+must be unique at instance level.
+
+=== Service dispatching
+
+By default in Tuxedo, if *RQADDR* setting is not configured, each server have
+it's own request queue, where then in round-robin or similar fashion requests
+from ATMI clients are dispatched. If *RQADDR* is configured, then 
+services may work in Multiple Servers, Single Queue (*MSSQ*) model. However,
+here requirement is that these servers listening one queue have all the same
+services.
+
+In Enduro/X when working in Linux (and FreeBSD), by default all 
+services operate in *MSSQ* mode. Basically in Enduro/X each service 
+is queue were several executables perform epoll() + EPOLLEXCLUSIVE 
+listing on messages. Result is that different servers may have
+different sets of services (including shared set of services) and on these shared
+services effectively *MSSQ* mode will work out-of-the-box.
+
+On IBM AIX and Oracle Solaris *<rqaddr />* principle may be used in the same way
+as Tuxedo does. For MacOS *<rqaddr />* is not available and request dispatching
+is done in round-robin fashion only.
 
 === Clustering
 
@@ -63,6 +104,24 @@ master node, and secondary nodes are started by the master.
 Enduro/X cluster works in similar fashion as Tuxedo Gateway, except that
 *tpforward(3)* and all other APIs work in the same mode as Tuxedo's multi-machine
 configuration (i.e. MODEL=MP).
+
+=== Cluster connectivity
+
+In Tuxedo, on each server *tlisten* binary shall be started which listens for
+any other node to connect. In Tuxedo this binary must be started before Tuxedo
+is booted.
+
+In Enduro/X each cluster link (between this and other nodes) must be defined in 
+*<servers />* as a normal ATMI server. The server process is *tpbridge(8)*. In one
+node listening/binding address/port must be set, in other node client mode shall
+be configured to connect to first node.
+
+If node *1* shall be connected to nodes *2* and *3*, then on node *1*, two 
+*tpbridge* process shall be configured, to establish links to nodes *2* and *3*.
+
+In Enduro/X cluster each server is identified with unique number in range for
+1..32, set in *NDRX_NODEID* parameter. This similar to Tuxedo's *LMID*, but
+value is strinctly limited to numbers only.
 
 == Tuxedo connectivity and bindings
 
