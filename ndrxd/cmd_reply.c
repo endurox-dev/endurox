@@ -76,7 +76,7 @@ expublic int simple_command_reply(command_call_t * call,
     if (call->flags & NDRXD_CALL_FLAGS_DEADQ)
     {
         NDRX_LOG(log_error, "Reply queue already dead - no reply back!");
-        return EXFAIL;
+	EXFAIL_OUT(ret);
     }
 
     /* form up the reply */
