@@ -111,7 +111,7 @@ M_files_gen <- [];
 /**
  * Add resource/keyword value
  */
-function tux_add_val(arg)
+function ubb_add_val(arg)
 {
     M_values.append(arg);
 }
@@ -119,7 +119,7 @@ function tux_add_val(arg)
 /**
  * Add resource parameter
  */
-function tux_add_res_parm(arg)
+function ubb_add_res_parm(arg)
 {
     M_resources[arg] <-M_values;
     M_values<-[]; //reset
@@ -128,7 +128,7 @@ function tux_add_res_parm(arg)
 /**
  * Add section parameter
  */
-function tux_add_sect_parm(arg)
+function ubb_add_sect_parm(arg)
 {
     local is_default=false;
 
@@ -176,7 +176,7 @@ function tux_add_sect_parm(arg)
 /**
  * Mark group as participating in routing
  */
-function tux_mark_group_routed(arg)
+function ubb_mark_group_routed(arg)
 {
     if (arg in M_sections["*GROUPS"].params 
             && !( "routed" in M_sections["*GROUPS"].params[arg]))
@@ -189,14 +189,14 @@ function tux_mark_group_routed(arg)
 /**
  * Add keyword to parameter, callback
  */
-function tux_add_sect_keyw(arg)
+function ubb_add_sect_keyw(arg)
 {   
     M_cur_param.keywords[arg] <- M_values;
 
     if (M_cur_section.name == "*ROUTING" && arg=="RANGES")
     {
         //Parse the DDR range.
-        tux_ddr_parse(M_values[0]);
+        ubb_ddr_parse(M_values[0]);
     }
 
     M_values<-[];
@@ -205,7 +205,7 @@ function tux_add_sect_keyw(arg)
 /**
  * Add section, callback
  */
-function tux_add_sect(arg)
+function ubb_add_sect(arg)
 {
     M_sections[arg] <- {};
     M_sections[arg].params <- {};
@@ -509,16 +509,16 @@ function prep_groups(instance)
             group.plot<-false;
             group.tmsrv_plotted<-false;
 
-            local tux_openinfo = get_val(group, "OPENINFO", [""])[0];
-            local tux_tmsname = get_val(group, "TMSNAME", [""])[0];
+            local ubb_openinfo = get_val(group, "OPENINFO", [""])[0];
+            local ubb_tmsname = get_val(group, "TMSNAME", [""])[0];
 
-            if (tux_openinfo!="" && tux_tmsname!="")
+            if (ubb_openinfo!="" && ubb_tmsname!="")
             {
                 //Mark that this instance uses xa.
                 instance.xa_used<-true;
 
                 group.rmid <- get_val(group, "GRPNO", null)[0];
-                local openinfo = tux_openinfo;
+                local openinfo = ubb_openinfo;
 
                 //Get the Switch name
                 local ex = regexp(@"^(.*):.*");
@@ -2282,18 +2282,18 @@ function ex_generate(arg)
         instance.xa_used<-false;
         print("Machine: "+instance.name);
 
-        local tux_appdir = get_val(val[0], "APPDIR", null)[0];
-        local tux_tuxconfig = get_val(val[0], "TUXCONFIG", null)[0];
-        local tux_appdir_add = [];
+        local ubb_appdir = get_val(val[0], "APPDIR", null)[0];
+        local ubb_tuxconfig = get_val(val[0], "TUXCONFIG", null)[0];
+        local ubb_appdir_add = [];
 
-        if (null!=tux_appdir.find(":"))
+        if (null!=ubb_appdir.find(":"))
         {
-            //Split the tux_appdir and use first part for tux_appdir purposes.
+            //Split the ubb_appdir and use first part for ubb_appdir purposes.
             //the other parts later would be checked for relative/full type
-            //and would be filled to tux_appdir_add variable.
+            //and would be filled to ubb_appdir_add variable.
 
-            local appdirs =  split(tux_appdir, ":");
-            tux_appdir = appdirs[0];
+            local appdirs =  split(ubb_appdir, ":");
+            ubb_appdir = appdirs[0];
 
             local len = appdirs.len();
 
@@ -2301,21 +2301,21 @@ function ex_generate(arg)
             {
                 local add = {};
                 add.orgpath<-appdirs[i];
-                tux_appdir_add.append(add);
+                ubb_appdir_add.append(add);
             }
         }
         
 
         instance.prefix <- machine.keywords["LMID"][0].tolower();
-        instance.app_home <- strcommon(tux_appdir, tux_tuxconfig);
+        instance.app_home <- strcommon(ubb_appdir, ubb_tuxconfig);
         instance.use_rel <- false;
 
         if (instance.app_home=="/")
         {
             //this is absolute path
-            instance.app_home = tux_appdir;
-            instance.app_bin <- tux_appdir;
-            instance.app_conf <- dirname(tux_tuxconfig);
+            instance.app_home = ubb_appdir;
+            instance.app_bin <- ubb_appdir;
+            instance.app_conf <- dirname(ubb_tuxconfig);
 
             instance.ndrx_conf<- instance.app_conf;
             instance.ndrx_bin <- instance.app_bin;
@@ -2336,10 +2336,10 @@ function ex_generate(arg)
                 instance.app_home="/";
             }
 
-            instance.app_bin <- strdiff(tux_appdir, instance.app_home);
+            instance.app_bin <- strdiff(ubb_appdir, instance.app_home);
             instance.app_bin = lstrips(instance.app_bin, "/");
 
-            instance.app_conf <- strdiff(dirname(tux_tuxconfig),
+            instance.app_conf <- strdiff(dirname(ubb_tuxconfig),
                                             instance.app_home);
             instance.app_conf = lstrips(instance.app_conf, "/");
 
@@ -2373,7 +2373,7 @@ function ex_generate(arg)
         }
 
         //Process additional folders
-        foreach(dix, folder in tux_appdir_add)
+        foreach(dix, folder in ubb_appdir_add)
         {
             local common = strcommon(folder.orgpath, instance.app_home)
                 
@@ -2396,7 +2396,7 @@ function ex_generate(arg)
         }
 
         //Additional folders to be added
-        instance.appdir_add <- tux_appdir_add;
+        instance.appdir_add <- ubb_appdir_add;
         instance.nodeid <- machine.nodeid;
 
         if (regexp("^0x.*|^0X.*").match(M_resources["IPCKEY"][0]))

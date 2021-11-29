@@ -45,8 +45,8 @@
 #include <nstdutil.h>
 
 #include <exregex.h>
-#include "tux.h"
-#include "tux.tab.h"
+#include "ubb.h"
+#include "ubb.tab.h"
 #include "ddr.tab.h"
 #include "ndebug.h"
 #include <sys_unix.h>
@@ -108,7 +108,7 @@ out:
      
 }
 
-expublic int tux_add_val(char *arg)
+expublic int ubb_add_val(char *arg)
 {
     int ret=EXSUCCEED;
     NDRX_LOG(log_debug, "Add value [%s]", arg);
@@ -119,7 +119,7 @@ expublic int tux_add_val(char *arg)
     return ret;
 }
 
-expublic int tux_add_res_parm(char *arg)
+expublic int ubb_add_res_parm(char *arg)
 {
     int ret=EXSUCCEED;
     NDRX_LOG(log_debug, "Add resource param [%s]", arg);
@@ -129,7 +129,7 @@ expublic int tux_add_res_parm(char *arg)
     return ret;
 }
 
-expublic int tux_add_sect_parm(char *arg)
+expublic int ubb_add_sect_parm(char *arg)
 {
     int ret=EXSUCCEED;
     NDRX_LOG(log_debug, "Add section param [%s]", arg);
@@ -138,7 +138,7 @@ expublic int tux_add_sect_parm(char *arg)
     return ret;
 }
 
-expublic int tux_add_sect_keyw(char *arg)
+expublic int ubb_add_sect_keyw(char *arg)
 {
     int ret=EXSUCCEED;
     NDRX_LOG(log_debug, "Add section keyword [%s]", arg);
@@ -147,7 +147,7 @@ expublic int tux_add_sect_keyw(char *arg)
     return ret;
 }
 
-expublic int tux_add_sect(char *arg)
+expublic int ubb_add_sect(char *arg)
 {
     int ret=EXSUCCEED;
     NDRX_LOG(log_debug, "Add section [%s]", arg);
@@ -162,7 +162,7 @@ expublic int tux_add_sect(char *arg)
  * @param v
  * @return 1 - ok, 0 - fail
  */
-static PSInteger tux_ddr_parse(HPSCRIPTVM v)
+static PSInteger ubb_ddr_parse(HPSCRIPTVM v)
 {
     int ret = EXSUCCEED;
     const PSChar *s=NULL;
@@ -213,7 +213,7 @@ out:
         else
         {
             snprintf(err, sizeof(err), "Failed to parse DDR expression [%.20s] near line %d",
-                    (char *)s, ndrx_G_tuxline);
+                    (char *)s, ndrx_G_ubbline);
             return ps_throwerror(v, err);
         }
     }
@@ -232,7 +232,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
 {
     int ret;
     
-    ret = call_add_func("tux_mark_group_routed", grp);
+    ret = call_add_func("ubb_mark_group_routed", grp);
     
     NDRX_FREE(grp);
     NDRX_FREE(seq);
@@ -319,7 +319,7 @@ expublic void printfunc(HPSCRIPTVM v,const PSChar *s,...)
  * @param [script] RM name
  * @return XASwitch struct name, or "" empty string
  */
-static PSInteger tux_get_rmswitch(HPSCRIPTVM v)
+static PSInteger ubb_get_rmswitch(HPSCRIPTVM v)
 {
     const PSChar *str;
     
@@ -371,7 +371,7 @@ expublic void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
  * @param a_opt assign new SRVIDs
  * @return EXSUCCEED/EXFAIL
  */
-expublic int tux_init_vm(char *script_nm,
+expublic int init_vm(char *script_nm,
         char *n_opt, char *y_opt, char *l_opt, char *a_opt)
 {
     int ret=EXSUCCEED;
@@ -412,17 +412,17 @@ expublic int tux_init_vm(char *script_nm,
     psstd_register_exutillib(v);
 
     /* register new func for DDR parsing. */
-    ps_pushstring(v,"tux_ddr_parse",-1);
-    ps_newclosure(v,tux_ddr_parse,0);
+    ps_pushstring(v,"ubb_ddr_parse",-1);
+    ps_newclosure(v,ubb_ddr_parse,0);
     ps_setparamscheck(v,2,".s");
-    ps_setnativeclosurename(v,-1,"tux_ddr_parse");
+    ps_setnativeclosurename(v,-1,"ubb_ddr_parse");
     ps_newslot(v,-3,PSFalse);
     
     /* Switch resolver */
-    ps_pushstring(v,"tux_get_rmswitch",-1);
-    ps_newclosure(v,tux_get_rmswitch,0);
+    ps_pushstring(v,"ubb_get_rmswitch",-1);
+    ps_newclosure(v,ubb_get_rmswitch,0);
     ps_setparamscheck(v,2,".s");
-    ps_setnativeclosurename(v,-1,"tux_ddr_parse");
+    ps_setnativeclosurename(v,-1,"ubb_ddr_parse");
     ps_newslot(v,-3,PSFalse);
     
     /* aux library

@@ -60,28 +60,28 @@ typedef struct
     ndrx_growlist_t  stringbuffer;   /**< list used for string build */
     char errbuf[1024];
     char *parsebuf;     /**< currently parsing buffer ptr, for ddr       */
-} ndrx_tux_parser_t;
+} ndrx_ubb_parser_t;
 
 /*---------------------------Globals------------------------------------*/
-extern ndrx_tux_parser_t ndrx_G_tuxp;      /**< Parsing time attributes, ubb*/
-extern ndrx_tux_parser_t ndrx_G_ddrp;      /**< Parsing time attributes, ddr*/
+extern ndrx_ubb_parser_t ndrx_G_ubbp;      /**< Parsing time attributes, ubb*/
+extern ndrx_ubb_parser_t ndrx_G_ddrp;      /**< Parsing time attributes, ddr*/
 
-extern int ndrx_G_tuxcolumn;
-extern int ndrx_G_tuxline;
+extern int ndrx_G_ubbcolumn;
+extern int ndrx_G_ubbline;
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern void tuxerror(char *s, ...);
+extern void ubberror(char *s, ...);
 extern void ddrerror(char *s, ...);
-extern int tuxaddarg(char *arg);
-extern int tuxaddres(char *arg);
+extern int ubbaddarg(char *arg);
+extern int ubbaddres(char *arg);
 
-extern int tux_add_val(char *arg);
-extern int tux_add_res_parm(char *arg);
-extern int tux_add_sect_parm(char *arg);
-extern int tux_add_sect_keyw(char *arg);
-extern int tux_add_sect(char *arg);
-extern int tux_init_vm(char *script_nm, char *n_opt, char *y_opt, char *l_opt,
+extern int ubb_add_val(char *arg);
+extern int ubb_add_res_parm(char *arg);
+extern int ubb_add_sect_parm(char *arg);
+extern int ubb_add_sect_keyw(char *arg);
+extern int ubb_add_sect(char *arg);
+extern int init_vm(char *script_nm, char *n_opt, char *y_opt, char *l_opt,
         char *a_opt);
 extern int call_add_func(const char *func, char *arg);
 

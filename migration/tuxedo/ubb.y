@@ -32,7 +32,7 @@
  * -----------------------------------------------------------------------------
  */
 
-/* %define api.prefix {tux}*/
+/* %define api.prefix {ubb}*/
 %name-prefix "ubb"
 
 %{
@@ -41,7 +41,7 @@
 #include <ndebug.h>
 #include "ubb.h"
     
-extern int tuxlex (void);
+extern int ubblex (void);
 %}
 
 %union {
@@ -57,7 +57,7 @@ extern int tuxlex (void);
 %token DEFAULT      /**< default symbol  */
 %token RESOURCES    /**< resources sect  */
 
-%start tux_loop
+%start ubb_loop
 
 %type <val> OPTION
 %type <val> SECTION
@@ -70,33 +70,33 @@ extern int tuxlex (void);
 
 %%
 res_opt_arg:
-        OPTION                                  {if (EXSUCCEED!=tux_add_val($1)) {YYERROR;}}
-        | res_opt_arg COMMA OPTION              {if (EXSUCCEED!=tux_add_val($3)) {YYERROR;} }
+        OPTION                                  {if (EXSUCCEED!=ubb_add_val($1)) {YYERROR;}}
+        | res_opt_arg COMMA OPTION              {if (EXSUCCEED!=ubb_add_val($3)) {YYERROR;} }
         ;
 
 resource_loop:
         RESOURCES
-        | resource_loop OPTION res_opt_arg      {if (EXSUCCEED!=tux_add_res_parm($2)) {YYERROR;} }
+        | resource_loop OPTION res_opt_arg      {if (EXSUCCEED!=ubb_add_res_parm($2)) {YYERROR;} }
         ;
 
 opt_add:
-        OPTION                                  {if (EXSUCCEED!=tux_add_val($1)) {YYERROR;} }
-        | opt_add COMMA OPTION                  {if (EXSUCCEED!=tux_add_val($3)) {YYERROR;} }
+        OPTION                                  {if (EXSUCCEED!=ubb_add_val($1)) {YYERROR;} }
+        | opt_add COMMA OPTION                  {if (EXSUCCEED!=ubb_add_val($3)) {YYERROR;} }
         ;
 opt:
-        OPTION                                  {if (EXSUCCEED!=tux_add_sect_parm($1)) {YYERROR;} }
-        | DEFAULT                               {if (EXSUCCEED!=tux_add_sect_parm($1)) {YYERROR;} }
-        | OPTION EQUAL opt_add                  {if (EXSUCCEED!=tux_add_sect_keyw($1)) {YYERROR;} }
+        OPTION                                  {if (EXSUCCEED!=ubb_add_sect_parm($1)) {YYERROR;} }
+        | DEFAULT                               {if (EXSUCCEED!=ubb_add_sect_parm($1)) {YYERROR;} }
+        | OPTION EQUAL opt_add                  {if (EXSUCCEED!=ubb_add_sect_keyw($1)) {YYERROR;} }
 
 section_loop:
-        SECTION                                 {if (EXSUCCEED!=tux_add_sect($1)) {YYERROR;} } 
+        SECTION                                 {if (EXSUCCEED!=ubb_add_sect($1)) {YYERROR;} } 
         | section_loop opt
         ;
     
-tux_loop:
+ubb_loop:
         resource_loop
-        | tux_loop section_loop
-        | tux_loop EOL
+        | ubb_loop section_loop
+        | ubb_loop EOL
         ;
 ;
 
