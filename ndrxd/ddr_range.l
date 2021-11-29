@@ -46,7 +46,7 @@
 
 #ifdef NDRX_TMLOADCF
 /* we are building converter */
-#include "tux.h"
+#include "ubb.h"
 #include "ddr.tab.h"
 #else
 #include <ndrx_ddr.h>

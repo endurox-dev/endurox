@@ -56,14 +56,14 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-expublic ndrx_parser_t ndrx_G_tuxp;      /**< Parsing time attributes*/
-expublic ndrx_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
+expublic ndrx_ubb_parser_t ndrx_G_ubbp;      /**< Parsing time attributes*/
+expublic ndrx_ubb_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
 /*---------------------------Statics------------------------------------*/
 exprivate int M_syntax_check = EXFALSE;     /**< Syntax check only (no plot) */
 exprivate ndrx_growlist_t  M_strbuf;
 /*---------------------------Prototypes---------------------------------*/
 
-extern int tuxdebug;
+extern int ubbdebug;
 
 /**
  * DDR parsing error
@@ -102,7 +102,7 @@ void ddrerror(char *s, ...)
         va_start(ap, s);
         snprintf(ndrx_G_ddrp.errbuf, sizeof(ndrx_G_ddrp.errbuf), 
                 "UBBConfig DDR parse error, line: %d near expression [%s]: ", 
-                ndrx_G_tuxline, p);
+                ndrx_G_ubbline, p);
         
         len=strlen(ndrx_G_ddrp.errbuf);
         vsnprintf(ndrx_G_ddrp.errbuf+len, sizeof(ndrx_G_ddrp.errbuf)-len, s, ap);
@@ -118,10 +118,10 @@ void ddrerror(char *s, ...)
  * @param s
  * @param ...
  */
-void tuxerror(char *s, ...)
+void ubberror(char *s, ...)
 {
     /* Log only first error! */
-    if (EXFAIL!=ndrx_G_tuxp.error)
+    if (EXFAIL!=ndrx_G_ubbp.error)
     {
         va_list ap;
         char errbuf[2048];
@@ -131,7 +131,7 @@ void tuxerror(char *s, ...)
         char *mem = M_strbuf.mem;
         int len=strlen(mem);
         
-        ctx_start = tuxlloc.first_column;
+        ctx_start = ubblloc.first_column;
         
         NDRX_LOG(log_error, "ctx_start=%d len=%d", ctx_start, len);
         memset(context, 0, sizeof(context));
@@ -152,7 +152,7 @@ void tuxerror(char *s, ...)
 
         va_start(ap, s);
         snprintf(errbuf, sizeof(errbuf), "UBBConfig error line: %d near expression [%s]: ", 
-                ndrx_G_tuxline, p);
+                ndrx_G_ubbline, p);
         
         len=strlen(errbuf);
         vsnprintf(errbuf+len, sizeof(errbuf)-len, s, ap);
@@ -167,13 +167,13 @@ void tuxerror(char *s, ...)
         {
             _Nset_error_msg(NEFORMAT, errbuf);
         }
-        ndrx_G_tuxp.error = EXFAIL;
+        ndrx_G_ubbp.error = EXFAIL;
     }
 }
 
-extern void scan_string (char *yy_str  );
-extern int tuxlex_destroy  (void);
-extern int ndrx_G_tuxcolumn;
+extern void ubb_scan_string (char *yy_str  );
+extern int ubblex_destroy  (void);
+extern int ndrx_G_ubbcolumn;
 /**
  * Parse range
  * @param p_crit current criterion in parse subject
@@ -182,32 +182,32 @@ extern int ndrx_G_tuxcolumn;
 exprivate int parse_ubbconfig(char *expr)
 {
     int ret = EXSUCCEED;
-    memset(&ndrx_G_tuxp, 0, sizeof(ndrx_G_tuxp));
+    memset(&ndrx_G_ubbp, 0, sizeof(ndrx_G_ubbp));
     /* init the string builder */
-    ndrx_growlist_init(&ndrx_G_tuxp.stringbuffer, 200, sizeof(char));
+    ndrx_growlist_init(&ndrx_G_ubbp.stringbuffer, 200, sizeof(char));
     
     /* start to parse... */
     
-    ndrx_G_tuxcolumn=0;
+    ndrx_G_ubbcolumn=0;
     /* NDRX_LOG(log_info, "Parsing config: [%s]", expr); */
-    scan_string(expr);
+    ubb_scan_string(expr);
             
-    if (EXSUCCEED!=tuxparse() || EXSUCCEED!=ndrx_G_tuxp.error)
+    if (EXSUCCEED!=ubbparse() || EXSUCCEED!=ndrx_G_ubbp.error)
     {
-        NDRX_LOG(log_error, "Failed to parse tux config");
+        NDRX_LOG(log_error, "Failed to parse ubb config");
         
         /* free parsers... */
-        tuxlex_destroy();
+        ubblex_destroy();
         
         /* well if we hav */
         
         EXFAIL_OUT(ret);
     }
-    tuxlex_destroy();
+    ubblex_destroy();
     
 out:
     /* free up string buffer */
-    ndrx_growlist_free(&ndrx_G_tuxp.stringbuffer);
+    ndrx_growlist_free(&ndrx_G_ubbp.stringbuffer);
 
     return ret;    
 }
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
     char script_nm[PATH_MAX+1]="";
     size_t len = 0;
     FILE *handle=NULL;
-    NDRX_BANNER("TMLOADCF Tool");
+    NDRX_BANNER("TMLOADCF Tuxedo Ubbconfig to Enduro/X migration tool");
     
     /* if NDRX_DEBUG_CONF is set to empty... boot with minimum log level...*/
 
