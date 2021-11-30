@@ -369,10 +369,12 @@ expublic void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
  * @param y_opt auto confirm overwrite
  * @param l_opt LMDID only which shall be generated.
  * @param a_opt assign new SRVIDs
+ * @param p_opt prefix
  * @return EXSUCCEED/EXFAIL
  */
 expublic int init_vm(char *script_nm,
-        char *n_opt, char *y_opt, char *l_opt, char *a_opt)
+        char *n_opt, char *y_opt, char *l_opt, char *a_opt,
+        char *p_opt)
 {
     int ret=EXSUCCEED;
     const PSChar *s;
@@ -401,6 +403,10 @@ expublic int init_vm(char *script_nm,
     
     ps_pushstring(v,"M_a_opt",-1);
     ps_pushstring(v,a_opt,-1);
+    ps_newslot(v,-3,PSFalse);
+    
+    ps_pushstring(v,"M_p_opt",-1);
+    ps_pushstring(v,p_opt,-1);
     ps_newslot(v,-3,PSFalse);
     
     /* register functions */

@@ -353,7 +353,7 @@ static PSInteger _string_lstrips(HPSCRIPTVM v)
 /**
  * Substring
  * @param [script] string
- * @param [script] postion from
+ * @param [script] postion from, 0 based
  * @param [script] number of chars (or -1 till the end).
  * @param v
  * @return [script] string

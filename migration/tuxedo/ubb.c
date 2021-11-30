@@ -245,6 +245,7 @@ int main(int argc, char **argv)
     char y_opt[2] = ""; /**< auto confirm */
     char a_opt[2] = ""; /**< assing numbers */
     char l_opt[30+1] = "";  /**< generate particular LMID only */
+    char p_opt[PATH_MAX+1] = "";  /**< output prefix */
     char script_nm[PATH_MAX+1]="";
     size_t len = 0;
     FILE *handle=NULL;
@@ -263,10 +264,13 @@ int main(int argc, char **argv)
     /* clear any error... */
     _Nunset_error();
             
-    while ((c = getopt (argc, argv, "nycb:hS:D:L:A")) != -1)
+    while ((c = getopt (argc, argv, "nycb:hS:D:L:AP:")) != -1)
     {
         switch (c)
         {
+            case 'P':
+                NDRX_STRCPY_SAFE(p_opt, optarg);
+                break;
             case 'A':
                 a_opt[0]='1';
                 break;
@@ -343,7 +347,7 @@ int main(int argc, char **argv)
         }
         
         /* Init VM */
-        if (EXSUCCEED!=init_vm(script_nm, n_opt, y_opt, l_opt, a_opt))
+        if (EXSUCCEED!=init_vm(script_nm, n_opt, y_opt, l_opt, a_opt, p_opt))
         {
             _Nset_error_msg(NESYSTEM, "Failed to load converter script");
             EXFAIL_OUT(ret);

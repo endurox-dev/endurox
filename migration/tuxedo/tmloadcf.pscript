@@ -259,7 +259,7 @@ function schedule_directory(folder)
         }
 
         if (!(path in M_folder_gen) && !fileexists(path))
-        {
+        {            
             M_folder_gen[path]<-{};
         }
     }
@@ -2232,6 +2232,18 @@ function ex_generate(arg)
     print(format("M_y_opt=[%s]", M_y_opt));
     print(format("M_l_opt=[%s]", M_l_opt));
     print(format("M_a_opt=[%s]", M_a_opt));
+    
+    if ("./"==substr(M_p_opt, 0, 2))
+    {
+        M_p_opt = getcwd() + "/" +substr(M_p_opt, 2, -1);
+    }
+    else if (M_p_opt!="" && "/"!=substr(M_p_opt, 0, 1))
+    {
+        //This is relative too
+        M_p_opt = getcwd() + "/" + M_p_opt;
+    }
+    
+    print(format("M_p_opt=[%s]", M_p_opt));
 
     init();
 
@@ -2284,6 +2296,12 @@ function ex_generate(arg)
 
         local ubb_appdir = get_val(val[0], "APPDIR", null)[0];
         local ubb_tuxconfig = get_val(val[0], "TUXCONFIG", null)[0];
+
+        if (M_p_opt!="" && M_p_opt!="/")
+        {
+            ubb_tuxconfig = M_p_opt + ubb_tuxconfig;
+        }
+
         local ubb_appdir_add = [];
 
         if (null!=ubb_appdir.find(":"))
@@ -2300,12 +2318,25 @@ function ex_generate(arg)
             for (local i=1; i<len; i++)
             {
                 local add = {};
-                add.orgpath<-appdirs[i];
+                
+                if (M_p_opt!="" && M_p_opt!="/")
+                {
+                    add.orgpath<- (M_p_opt + appdirs[i]);
+                }
+                else
+                {
+                    add.orgpath<- appdirs[i];
+                }
+
                 ubb_appdir_add.append(add);
             }
         }
-        
 
+        if (M_p_opt!="" && M_p_opt!="/")
+        {
+            ubb_appdir = M_p_opt + ubb_appdir;
+        }
+        
         instance.prefix <- machine.keywords["LMID"][0].tolower();
         instance.app_home <- strcommon(ubb_appdir, ubb_tuxconfig);
         instance.use_rel <- false;
@@ -2418,6 +2449,12 @@ function ex_generate(arg)
         }
         else
         {
+            //Add prefix
+            if (M_p_opt!="" && M_p_opt!="/")
+            {
+                log_dir = M_p_opt + log_dir;
+            }
+
             //Just take dirname 
             log_dir = dirname(log_dir);            
 
