@@ -33,21 +33,21 @@ similarities projects:
 [width="80%", options="header"]
 |=========================================================
 |Ubb config section|Enduro/X ndrxconfig.xml|Enduro/X app.ini|Comments
-|\*RESOURCES|-|[@global] section|Approximate mapping
-|\*MACHINES|-|[@global], [@debug] path related infos
-|\*GROUPS|-|[@global/<CCTAG>] - global settings per tag, [@queue/<CCTAG>] - persistent
+|*RESOURCES|-|[@global] section|Approximate mapping
+|*MACHINES|-|[@global], [@debug] path related infos|Approximate mapping
+|*GROUPS|-|[@global/<CCTAG>] - global settings per tag, [@queue/<CCTAG>] - persistent
 queue configuration per tag.|Approximate mapping
-|\*NETWORK|Bridge is established as *tpbridge(8)* XATMI server 
+|*NETWORK|Bridge is established as *tpbridge(8)* XATMI server 
 processes in <servers /> section|-|Approximate mapping
-|\*SERVERS|<endurox><servers> tag |-|-
-|\*SERVERS server|<endurox><servers><server name="server"> tag |-|-
-|\*SERVERS DEFAULT:|<endurox><defaults> tag |-|-
-|\*SERVICES|<endurox>/<services>|-|Service settings are global per instance, i.e.
+|*SERVERS|<endurox><servers> tag |-|-
+|*SERVERS server|<endurox><servers><server name="server"> tag |-|-
+|*SERVERS DEFAULT:|<endurox><defaults> tag |-|-
+|*SERVICES|<endurox>/<services>|-|Service settings are global per instance, i.e.
 cannot be configured per cctag.
-|\*SERVICES service|<endurox>/<services>/<service svcnm="service">|-|-
-|\*SERVICES DEFAULT:|<endurox>/<services>/<defaults>|-|-
-|\*ROUTING|<endurox>/<routing>|-|Defaults not supported at this section.
-|\*ROUTING route|<endurox>/<routing>/<route routing="route">|-|-
+|*SERVICES service|<endurox>/<services>/<service svcnm="service">|-|-
+|*SERVICES DEFAULT:|<endurox>/<services>/<defaults>|-|-
+|*ROUTING|<endurox>/<routing>|-|Defaults not supported at this section.
+|*ROUTING route|<endurox>/<routing>/<route routing="route">|-|-
 |=========================================================
 
 == Enduro/X and Tuxedo differences
