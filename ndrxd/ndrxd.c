@@ -228,9 +228,9 @@ int main_init(int argc, char** argv)
 {
     int ret=EXSUCCEED;
     char *p;
-    struct sigaction oldact;
+/*    struct sigaction oldact;*/
     pid_t ndrxd_pid;
-    sigaction(SIGINT, NULL, &oldact);
+/*    sigaction(SIGINT, NULL, &oldact);*/
 
     /* common env loader will init the debug lib
      * which might call `ps' for process name
@@ -257,9 +257,11 @@ int main_init(int argc, char** argv)
         exit(EXFAIL);
     }
     
-    /* We will ignore all stuff requesting shutdown! */
+    /* We will ignore all stuff requesting shutdown! 
     sigaction(SIGSEGV, NULL, &oldact);
     sigaction(SIGPIPE, &oldact, NULL);
+    why?
+    */
 
     signal(SIGHUP, SIG_IGN);
     signal(SIGTERM, SIG_IGN);

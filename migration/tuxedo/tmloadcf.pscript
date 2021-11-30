@@ -700,8 +700,8 @@ function prep_servers(instance)
                         //Extract -t from clopt second group
                         //Extract -q Q1,Q2,etc. from clopt second group
                         
-                        local fwd_min = get_val(server, "MIN", null)[0];
-                        local fwd_clopt = get_val(server, "CLOPT", null)[0];
+                        local fwd_min = get_val(server, "MIN", ["1"])[0];
+                        local fwd_clopt = get_val(server, "CLOPT", ["-A"])[0];
                             
                         //server opt string + tmqforward optstring
                         local clopt_parsed = parseclopt2(fwd_clopt, 
@@ -902,7 +902,7 @@ function prep_servers(instance)
             if (!new_srv.is_default)
             {
                 //Load clopt & app opt
-                local clopt = get_val(server, "CLOPT", null)[0];
+                local clopt = get_val(server, "CLOPT", ["-A"])[0];
                 local clopt_parsed = parseclopt1(clopt, server_optstring);
                 local have_A=false;
                 local have_e=false;

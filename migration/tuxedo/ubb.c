@@ -224,11 +224,13 @@ exprivate void print_help(char *name)
     fprintf(stderr, "  -y               Do not ask for confirmation\n");
     fprintf(stderr, "  -c               RFU, syntax check only\n");
     fprintf(stderr, "  -b               RFU, ignored\n");
-    fprintf(stderr, "  -l <LMID>        Convert only specified LMID\n");
-    fprintf(stderr, "  -a               Do not try to re-use SRVIDs, assign new\n");
-    fprintf(stderr, "  -d               Debug level 0..5\n");
+    fprintf(stderr, "  -L <LMID>        Convert only specified LMID\n");
+    fprintf(stderr, "  -A               Do not try to re-use SRVIDs, assign new\n");
+    fprintf(stderr, "  -D               Debug level 0..5\n");
     fprintf(stderr, "  -h               Print this help\n");
-    fprintf(stderr, "  -s               Converter script name (if not using internal)\n"); 
+    fprintf(stderr, "  -S               Converter script name (if not using internal)\n"); 
+    /* All directories and files created, shall be made with prefix, mostly needed for testing: */
+    fprintf(stderr, "  -P               Output directories and files prefix\n"); 
 }
 
 /**
@@ -261,14 +263,14 @@ int main(int argc, char **argv)
     /* clear any error... */
     _Nunset_error();
             
-    while ((c = getopt (argc, argv, "nycb:hs:d:l:a")) != -1)
+    while ((c = getopt (argc, argv, "nycb:hS:D:L:A")) != -1)
     {
         switch (c)
         {
-            case 'a':
+            case 'A':
                 a_opt[0]='1';
                 break;
-            case 'l':
+            case 'L':
                 NDRX_STRCPY_SAFE(l_opt, optarg);
                 break;
             case 'n':
@@ -279,14 +281,14 @@ int main(int argc, char **argv)
                 /* Pass this to the script */
                 y_opt[0]='1';
                 break;
-            case 's':
+            case 'S':
                 NDRX_STRCPY_SAFE(script_nm, optarg);
                 break;
             case 'h':
                 print_help(argv[0]);
                 return 0; /*<<<< RETURN ! */
                 break;
-            case 'd':
+            case 'D':
                 tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP
                         , atoi(optarg), "", "", "");
             case 'c':

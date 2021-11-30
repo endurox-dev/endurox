@@ -118,7 +118,7 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
      * [@debug/RM1]
      * [@debug/DBG2]
      */
-    if (NULL!=G_cctag)
+    if (NULL!=G_cctag && 0!=strcmp(G_cctag, NDRX_INICFG_SUBSECT_SPERATOR_STR))
     {
         len = strlen(section);
         if (NULL!=G_cctag)
