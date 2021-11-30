@@ -1416,12 +1416,12 @@ function prep_networking()
             if ("//"==substr(naddr, 0, 2))
             {
                 // //x0002 or //X0002
-                hex_str=substr(naddr, 7, -1);
+                hex_str=substr(naddr, 7);
             }
             else
             {
                 // 0x0002 or 0X0002
-                hex_str=substr(naddr, 6, -1);
+                hex_str=substr(naddr, 6);
             }
             print("Got hex ip: [" +hex_str+ "]");
             
@@ -2235,7 +2235,7 @@ function ex_generate(arg)
     
     if ("./"==substr(M_p_opt, 0, 2))
     {
-        M_p_opt = getcwd() + "/" +substr(M_p_opt, 2, -1);
+        M_p_opt = getcwd() + "/" +substr(M_p_opt, 2);
     }
     else if (M_p_opt!="" && "/"!=substr(M_p_opt, 0, 1))
     {
@@ -2432,7 +2432,7 @@ function ex_generate(arg)
 
         if (regexp("^0x.*|^0X.*").match(M_resources["IPCKEY"][0]))
         {
-            instance.ipckey <- substr(M_resources["IPCKEY"][0], 2, -1);
+            instance.ipckey <- substr(M_resources["IPCKEY"][0], 2);
         }
         else
         {

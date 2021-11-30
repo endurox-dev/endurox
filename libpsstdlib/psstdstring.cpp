@@ -351,10 +351,10 @@ static PSInteger _string_lstrips(HPSCRIPTVM v)
 }
 
 /**
- * Substring
+ * Substring, perl like
  * @param [script] string
- * @param [script] postion from, 0 based
- * @param [script] number of chars (or -1 till the end).
+ * @param [script] postion from, 0 based, if -1, then position is form str end.
+ * @param [script] number of chars, if negative, then number of chars to strip from the end.
  * @param v
  * @return [script] string
  */
@@ -365,16 +365,38 @@ static PSInteger _string_substr(HPSCRIPTVM v)
     PSChar *stemp;
     char *ret;
     PSInteger memsize;
-    int i, len;
+    int i, len, len_tmp;
     
     ps_getstring(v,2,&str);
     ps_getinteger(v,3,&offset);
-    ps_getinteger(v,4,&length);
+    
+    len_tmp = len = strlen(str);
+    
+    if (offset<0)
+    {
+        /* substract from total len.. */
+        offset+=len_tmp;
+    }
+    
+    if(ps_gettop(v) > 3)
+    {
+        ps_getinteger(v,4,&length);
+        
+        if (length < 0)
+        {
+            fprintf(stderr, "YOPT LEN: [%d]\n", length);
+            /* actually would be -... */
+            len+=length;
+            length = len_tmp;
+        }
+    }
+    else
+    {
+        length = len_tmp;
+    }
     
     memsize = (ps_getsize(v,2)+1)*sizeof(PSChar);
     stemp = ps_getscratchpad(v,memsize);
-    
-    len = strlen(str);
     
     if (offset>=len)
     {
@@ -382,7 +404,7 @@ static PSInteger _string_substr(HPSCRIPTVM v)
     }
     else
     {
-        for (i=offset; i < len && ( (i-offset) < length || length < 0); i++)
+        for (i=offset; i < len && ( (i-offset) < length); i++)
         {
             stemp[i-offset]=str[i];
         }
@@ -674,7 +696,7 @@ static const PSRegFunction stringlib_funcs[]={
     _DECL_FUNC(lstrips,3,_SC(".ss")),
     _DECL_FUNC(strips,3,_SC(".ss")),
     _DECL_FUNC(strtokblk,4,_SC(".sss")),
-    _DECL_FUNC(substr,4,_SC(".snn")),
+    _DECL_FUNC(substr,-3,_SC(".snn")),
     _DECL_FUNC(escape,2,_SC(".s")),
     _DECL_FUNC(startswith,3,_SC(".ss")),
     _DECL_FUNC(endswith,3,_SC(".ss")),
