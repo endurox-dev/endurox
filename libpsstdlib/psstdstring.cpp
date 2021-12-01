@@ -384,7 +384,6 @@ static PSInteger _string_substr(HPSCRIPTVM v)
         
         if (length < 0)
         {
-            fprintf(stderr, "YOPT LEN: [%d]\n", length);
             /* actually would be -... */
             len+=length;
             length = len_tmp;

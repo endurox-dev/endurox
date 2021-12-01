@@ -1864,8 +1864,16 @@ tab+"        <killtime>"+server.killtime+"</killtime>\n";
         
         if ("cctag" in server)
         {
-            instance.xml_text+=
+            if (server.cctag=="/")
+            {
+                instance.xml_text+=
+tab+"        <cctag/>\n";
+            }
+            else
+            {
+                instance.xml_text+=
 tab+"        <cctag>"+server.cctag+"</cctag>\n";
+            }
         }
         
         if ("min" in server)
