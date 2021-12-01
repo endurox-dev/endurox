@@ -365,16 +365,16 @@ expublic void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
 /**
  * Start the VM, firstly to fill up the structures
  * @param script_nm script name to load
- * @param n_opt check only
- * @param y_opt auto confirm overwrite
- * @param l_opt LMDID only which shall be generated.
- * @param a_opt assign new SRVIDs
- * @param p_opt prefix
+ * @param opt_n check only
+ * @param opt_y auto confirm overwrite
+ * @param opt_L LMDID only which shall be generated.
+ * @param opt_A assign new SRVIDs
+ * @param opt_P prefix
  * @return EXSUCCEED/EXFAIL
  */
 expublic int init_vm(char *script_nm,
-        char *n_opt, char *y_opt, char *l_opt, char *a_opt,
-        char *p_opt)
+        char *opt_n, char *opt_y, char *opt_L, char *opt_A,
+        char *opt_P)
 {
     int ret=EXSUCCEED;
     const PSChar *s;
@@ -389,24 +389,24 @@ expublic int init_vm(char *script_nm,
     
     /* Load settings into root table */
     
-    ps_pushstring(v,"M_n_opt",-1);
-    ps_pushstring(v,n_opt,-1);
+    ps_pushstring(v,"M_opt_n",-1);
+    ps_pushstring(v,opt_n,-1);
     ps_newslot(v,-3,PSFalse);
     
-    ps_pushstring(v,"M_y_opt",-1);
-    ps_pushstring(v,y_opt,-1);
+    ps_pushstring(v,"M_opt_y",-1);
+    ps_pushstring(v,opt_y,-1);
     ps_newslot(v,-3,PSFalse);
     
-    ps_pushstring(v,"M_l_opt",-1);
-    ps_pushstring(v,l_opt,-1);
+    ps_pushstring(v,"M_opt_L",-1);
+    ps_pushstring(v,opt_L,-1);
     ps_newslot(v,-3,PSFalse);
     
-    ps_pushstring(v,"M_a_opt",-1);
-    ps_pushstring(v,a_opt,-1);
+    ps_pushstring(v,"M_opt_A",-1);
+    ps_pushstring(v,opt_A,-1);
     ps_newslot(v,-3,PSFalse);
     
-    ps_pushstring(v,"M_p_opt",-1);
-    ps_pushstring(v,p_opt,-1);
+    ps_pushstring(v,"M_opt_P",-1);
+    ps_pushstring(v,opt_P,-1);
     ps_newslot(v,-3,PSFalse);
     
     /* register functions */

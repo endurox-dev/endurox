@@ -1348,7 +1348,7 @@ function prep_servers(instance)
     //IDFREE_SPACE
     //Loop over the all binaries 
     local srvid_base=1;
-    if (have_dup || "1"== M_a_opt)
+    if (have_dup || "1"== M_opt_A)
     {
         print("Assigning new numbers...");
         foreach (idx, server in instance.servers)
@@ -2148,7 +2148,7 @@ function write_files()
 
     //Ask for confirmation, if needed
     if (config_exists 
-            && M_y_opt != "1" 
+            && M_opt_y != "1" 
             && 0==chk_confirm("Really overwrite Enduro/X configuration files?"))
     {
         print("Aborted configuration file generation");
@@ -2236,22 +2236,22 @@ function ex_generate(arg)
 {
     local nodeid=1;
 
-    print(format("M_n_opt=[%s]", M_n_opt));
-    print(format("M_y_opt=[%s]", M_y_opt));
-    print(format("M_l_opt=[%s]", M_l_opt));
-    print(format("M_a_opt=[%s]", M_a_opt));
+    print(format("M_opt_n=[%s]", M_opt_n));
+    print(format("M_opt_y=[%s]", M_opt_y));
+    print(format("M_opt_L=[%s]", M_opt_L));
+    print(format("M_opt_A=[%s]", M_opt_A));
     
-    if ("./"==substr(M_p_opt, 0, 2))
+    if ("./"==substr(M_opt_P, 0, 2))
     {
-        M_p_opt = getcwd() + "/" +substr(M_p_opt, 2);
+        M_opt_P = getcwd() + "/" +substr(M_opt_P, 2);
     }
-    else if (M_p_opt!="" && "/"!=substr(M_p_opt, 0, 1))
+    else if (M_opt_P!="" && "/"!=substr(M_opt_P, 0, 1))
     {
         //This is relative too
-        M_p_opt = getcwd() + "/" + M_p_opt;
+        M_opt_P = getcwd() + "/" + M_opt_P;
     }
     
-    print(format("M_p_opt=[%s]", M_p_opt));
+    print(format("M_opt_P=[%s]", M_opt_P));
 
     init();
 
@@ -2290,7 +2290,7 @@ function ex_generate(arg)
         instance.name <- machine.name;
         instance.lmid <- machine.keywords.LMID[0];
 
-        if (M_l_opt!="" && instance.lmid!=M_l_opt)
+        if (M_opt_L!="" && instance.lmid!=M_opt_L)
         {
             print("Skipping node ["+instance.lmid+"] as -l present");
             continue;
@@ -2305,9 +2305,9 @@ function ex_generate(arg)
         local ubb_appdir = get_val(val[0], "APPDIR", null)[0];
         local ubb_tuxconfig = get_val(val[0], "TUXCONFIG", null)[0];
 
-        if (M_p_opt!="" && M_p_opt!="/")
+        if (M_opt_P!="" && M_opt_P!="/")
         {
-            ubb_tuxconfig = M_p_opt + ubb_tuxconfig;
+            ubb_tuxconfig = M_opt_P + ubb_tuxconfig;
         }
 
         local ubb_appdir_add = [];
@@ -2327,9 +2327,9 @@ function ex_generate(arg)
             {
                 local add = {};
                 
-                if (M_p_opt!="" && M_p_opt!="/")
+                if (M_opt_P!="" && M_opt_P!="/")
                 {
-                    add.orgpath<- (M_p_opt + appdirs[i]);
+                    add.orgpath<- (M_opt_P + appdirs[i]);
                 }
                 else
                 {
@@ -2340,9 +2340,9 @@ function ex_generate(arg)
             }
         }
 
-        if (M_p_opt!="" && M_p_opt!="/")
+        if (M_opt_P!="" && M_opt_P!="/")
         {
-            ubb_appdir = M_p_opt + ubb_appdir;
+            ubb_appdir = M_opt_P + ubb_appdir;
         }
         
         instance.prefix <- machine.keywords["LMID"][0].tolower();
@@ -2458,9 +2458,9 @@ function ex_generate(arg)
         else
         {
             //Add prefix
-            if (M_p_opt!="" && M_p_opt!="/")
+            if (M_opt_P!="" && M_opt_P!="/")
             {
-                log_dir = M_p_opt + log_dir;
+                log_dir = M_opt_P + log_dir;
             }
 
             //Just take dirname 
@@ -2604,7 +2604,7 @@ function ex_generate(arg)
         gen_xml_file(instance);
     }
 
-    if (M_n_opt!="1")
+    if (M_opt_n!="1")
     {
         write_files();
     }
