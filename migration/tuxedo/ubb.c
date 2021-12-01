@@ -241,11 +241,11 @@ int main(int argc, char **argv)
     int ret = EXSUCCEED;
     int c;
     char line[PATH_MAX+1];
-    char n_opt[2] = ""; /**< no write */
-    char y_opt[2] = ""; /**< auto confirm */
-    char a_opt[2] = ""; /**< assing numbers */
-    char l_opt[30+1] = "";  /**< generate particular LMID only */
-    char p_opt[PATH_MAX+1] = "";  /**< output prefix */
+    char opt_n[2] = ""; /**< no write */
+    char opt_y[2] = ""; /**< auto confirm */
+    char opt_A[2] = ""; /**< assing numbers */
+    char opt_L[30+1] = "";  /**< generate particular LMID only */
+    char opt_P[PATH_MAX+1] = "";  /**< output prefix */
     char script_nm[PATH_MAX+1]="";
     size_t len = 0;
     FILE *handle=NULL;
@@ -269,21 +269,21 @@ int main(int argc, char **argv)
         switch (c)
         {
             case 'P':
-                NDRX_STRCPY_SAFE(p_opt, optarg);
+                NDRX_STRCPY_SAFE(opt_P, optarg);
                 break;
             case 'A':
-                a_opt[0]='1';
+                opt_A[0]='1';
                 break;
             case 'L':
-                NDRX_STRCPY_SAFE(l_opt, optarg);
+                NDRX_STRCPY_SAFE(opt_L, optarg);
                 break;
             case 'n':
                 /* Pass this to the script */
-                n_opt[0]='1';
+                opt_n[0]='1';
                 break;
             case 'y':
                 /* Pass this to the script */
-                y_opt[0]='1';
+                opt_y[0]='1';
                 break;
             case 'S':
                 NDRX_STRCPY_SAFE(script_nm, optarg);
@@ -347,7 +347,7 @@ int main(int argc, char **argv)
         }
         
         /* Init VM */
-        if (EXSUCCEED!=init_vm(script_nm, n_opt, y_opt, l_opt, a_opt, p_opt))
+        if (EXSUCCEED!=init_vm(script_nm, opt_n, opt_y, opt_L, opt_A, opt_P))
         {
             _Nset_error_msg(NESYSTEM, "Failed to load converter script");
             EXFAIL_OUT(ret);

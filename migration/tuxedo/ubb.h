@@ -81,8 +81,8 @@ extern int ubb_add_res_parm(char *arg);
 extern int ubb_add_sect_parm(char *arg);
 extern int ubb_add_sect_keyw(char *arg);
 extern int ubb_add_sect(char *arg);
-extern int init_vm(char *script_nm, char *n_opt, char *y_opt, char *l_opt,
-        char *a_opt, char *p_opt);
+extern int init_vm(char *script_nm, char *opt_n, char *opt_y, char *opt_L,
+        char *opt_A, char *opt_P);
 extern int call_add_func(const char *func, char *arg);
 
 extern char *ndrx_ddr_new_rangeval(char *range, int is_negative, int dealloc);
