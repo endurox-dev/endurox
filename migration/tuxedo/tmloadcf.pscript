@@ -1103,21 +1103,51 @@ function prep_servers(instance)
                 new_srv.respawn<-server.keywords.RESTART[0];
             }
 
-            //TODO:
-            //If MAXDISPATCHTHREADS==1, then no need for this setting at all
+
+            //If MAXDISPATCHTHREADS<=1, then no need for this setting at all
             //Except, we shall understand do we get something from previous defaults
             //If there is no previous default, then do not plot this
             //If there is previous default and it differs form this setting, then we need to plot
             //the thing, also if max=1, then min shall be set to 1 too...
 
+            //Get default
+            local default_max=1;
+            local default_min=1;
+
+            if ("keywords" in server.defaults)
+            {
+                default_max = get_val(server.defaults, "MAXDISPATCHTHREADS", ["1"])[0].tointeger();
+                default_min = get_val(server.defaults, "MINDISPATCHTHREADS", ["1"])[0].tointeger();
+            }
+
             if ("MAXDISPATCHTHREADS" in server.keywords)
             {
-                new_srv.maxdispatchthreads<-server.keywords.MAXDISPATCHTHREADS[0];
+                local thrds = server.keywords.MAXDISPATCHTHREADS[0].tointeger();
+                //Set only if default was bigger than 1
+                if (thrds<=1 && default_max>1 || thrds>1)
+                {
+                    //Enduro/X default is 1
+                    if (thrds<1)
+                    {
+                        thrds=1;
+                    }
+                    new_srv.maxdispatchthreads<-thrds;
+                }
             }
 
             if ("MINDISPATCHTHREADS" in server.keywords)
             {
-                new_srv.mindispatchthreads<-server.keywords.MINDISPATCHTHREADS[0];
+                local thrds = server.keywords.MINDISPATCHTHREADS[0].tointeger();
+                //Set only if default was bigger than 1
+                if (thrds<=1 && default_min>1 || thrds>1)
+                {
+                    //Enduro/X default is 1
+                    if (thrds<1)
+                    {
+                        thrds=1;
+                    }
+                    new_srv.mindispatchthreads<-thrds;
+                }
             }
 
             //THREADSTACKSIZE this goes to process, thus read value from defaults...
