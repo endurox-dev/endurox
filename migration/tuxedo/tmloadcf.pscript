@@ -526,8 +526,16 @@ function prep_groups(instance)
                 local res = {};
                 if (openinfo!="")
                 {
-                    local res = ex.capture(openinfo)[1];
-                    group.xaswitchname <-openinfo.slice(res.begin, res.end);
+                    local cap = ex.capture(openinfo);
+                    if (null!=cap)
+                    {
+                        local res = cap[1];
+                        group.xaswitchname <-openinfo.slice(res.begin, res.end);
+                    }
+                    else
+                    {
+                        group.xaswitchname <-"";
+                    }
                 }
                 else
                 {

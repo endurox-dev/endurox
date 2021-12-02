@@ -1,8 +1,9 @@
 #!/bin/bash
 ##
-## @brief Tuxedo to Enduro/X migration tools - test launcher
+## @brief Perform UBB config test. This one uses routing, persistent queues,
+##  null switches.
 ##
-## @file run.sh
+## @file ubb_config1-run.sh
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -33,54 +34,58 @@
 ## -----------------------------------------------------------------------------
 ##
 
-export TESTNAME="test090_tuxmig"
-
-PWD=`pwd`
-if [ `echo $PWD | grep $TESTNAME ` ]; then
-    # Do nothing 
-    echo > /dev/null
-else
-    # started from parent folder
-    pushd .
-    echo "Doing cd"
-    cd $TESTNAME
-fi;
-
-. ../testenv.sh
-
-export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
-export PATH=$PATH:$TESTDIR
-export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=10
-
 #
 # Generic exit function
 #
 function go_out {
     echo "Test exiting with: $1"
+
+    xadmin stop -y
+    xadmin down -y
+    
     popd 2>/dev/null
     exit $1
 }
 
-
 ################################################################################
-./ubb_config1-run.sh
+echo "Testing ubb_config1"
+################################################################################
+
+rm -rf ./runtime 2>/dev/null
+../../migration/tuxedo/tmloadcf ubb_config1 -P ./runtime
 
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
-################################################################################
 
-# Catch is there is test error!!!
-if [ "X`grep TESTERROR *.log`" != "X" ]; then
-    echo "Test error detected!"
-    RET=-2
+#
+# put down some bins
+#
+ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90
+ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_2
+ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_3
+ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_4
+ln -s $TESTDIR/atmiclt90 runtime/user90/bin/atmiclt90
+
+# Start the runtime
+
+pushd .
+
+cd runtime/user90/conf
+. set.test1
+
+xadmin start -y
+
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
 fi
 
-go_out $RET
+xadmin pc
 
+
+go_out $RET
 
 # vim: set ts=4 sw=4 et smartindent:
 
