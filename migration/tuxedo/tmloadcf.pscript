@@ -512,7 +512,7 @@ function prep_groups(instance)
             local ubb_openinfo = get_val(group, "OPENINFO", [""])[0];
             local ubb_tmsname = get_val(group, "TMSNAME", [""])[0];
 
-            if (ubb_openinfo!="" && ubb_tmsname!="")
+            if (ubb_tmsname!="")
             {
                 //Mark that this instance uses xa.
                 instance.xa_used<-true;
@@ -1151,6 +1151,7 @@ function prep_servers(instance)
                 else
                 {
                     new_srv.bin<-get_val(group, "TMSNAME", null)[0];
+                    //TODO: If name is "TMS", we shall configure null switch
                 }
 
                 new_srv.srvid <- reserve_range(instance, cnt);
