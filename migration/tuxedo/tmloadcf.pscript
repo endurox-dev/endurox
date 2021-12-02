@@ -636,6 +636,49 @@ function merge_defaults(instance)
 }
 
 /**
+ * Escape string, includes escape for double quotes, and xml escape of 
+ * <>&
+ * @param str string to escape
+ * @param attr is this XML attribute value?
+ * @return escaped string
+ */
+function escape_clopt_xml(str, attr)
+{
+    local ret = "";
+    foreach (i, c in str)
+    {
+        local chr=format("%c", c);
+
+        switch (chr)
+        {
+            case "\"":
+                if (attr)
+                {
+                    chr = "&quot;";
+                }
+                else
+                {
+                    chr = "\\"+chr;
+                }
+                break;
+            case "&":
+                chr = "&amp;";
+                break;
+            case "<":
+                chr = "&lt;";
+                break;
+            case ">":
+                chr = "&gt;";
+                break;
+        }
+
+        ret=ret+chr;
+    }
+
+    return ret;
+}
+
+/**
  * Prepare binaries:
  * For this LMID:
  * Remove: WSL/TMSYSEVT/JSL/TMMETADATA/TMFAN/TMQFORWARD
@@ -960,11 +1003,11 @@ function prep_servers(instance)
                         //TODO: Escape " if found
                         if (null!=opt.val.find(" ") || null!=opt.val.find("\n") || null!=opt.val.find("\t"))
                         {
-                            sysopt=sysopt + " \"" + opt.val + "\"";
+                            sysopt=sysopt + " \"" + escape_clopt_xml(opt.val, false) + "\"";
                         }
                         else
                         {
-                            sysopt=sysopt + " " + opt.val;
+                            sysopt=sysopt + " " + escape_clopt_xml(opt.val, false);
                         }
                     }
                 }
@@ -978,14 +1021,13 @@ function prep_servers(instance)
                     }
                     else
                     {
-                        //TODO: Escape " if found
                         if (null!=opt.find(" ") || null!=opt.find("\n") || null!=opt.find("\t"))
                         {
-                            appopt=appopt + " \"" + opt + "\"";
+                            appopt=appopt + " \"" + escape_clopt_xml(opt, false) + "\"";
                         }
                         else
                         {
-                            appopt=appopt + " " + opt;
+                            appopt=appopt + " " + escape_clopt_xml(opt, false);
                         }
                     }
                 }
