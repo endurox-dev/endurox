@@ -28,6 +28,26 @@ Tuxedo application. To verify your application compatibility with Enduro/X,
 perform manual scan over your code base and check each Tuxedo API in Enduro/X
 documentation.
 
+Enduro/X uses different configuration file formats than Tuxedo, however majority
+of the configuration concepts are the same.
+
+Enduro/X provides tool *tmloadcf(8)* which allows to automatically convert Tuxedo
+UBB configuration.
+
+== Migration process
+...
+
+=== Automatic configuration migration
+...
+
+=== Manual configuration migration
+
+Even if configuration is being migrated by automatic approach, it is worth to
+read this section. This allows get solid understand of the Enduro/X concepts by using
+existing Tuxedo knowledge.
+
+==== Configuration files
+
 If looking on Tuxedo UBBCONFIG and Enduro/X ndrxconfig.xml/app.ini, then following
 similarities projects:
 
@@ -169,16 +189,6 @@ handling, file upload, custom message formats, etc.).
 of the APIs are different, but majority conforms to the *TJATMI*. Enduro/X implementation
 is based on JNI binding code. Each java instance is started as separate binary.
 
-== Migration process
-
-=== Migrating source code
-...
-
-=== Migrating configuration
-...
-
-=== Testing
-...
 
 ////////////////////////////////////////////////////////////////
 The index is normally left completely empty, it's contents being
