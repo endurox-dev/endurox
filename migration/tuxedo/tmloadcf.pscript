@@ -1086,6 +1086,13 @@ function prep_servers(instance)
                 new_srv.respawn<-server.keywords.RESTART[0];
             }
 
+            //TODO:
+            //If MAXDISPATCHTHREADS==1, then no need for this setting at all
+            //Except, we shall understand do we get something from previous defaults
+            //If there is no previous default, then do not plot this
+            //If there is previous default and it differs form this setting, then we need to plot
+            //the thing, also if max=1, then min shall be set to 1 too...
+
             if ("MAXDISPATCHTHREADS" in server.keywords)
             {
                 new_srv.maxdispatchthreads<-server.keywords.MAXDISPATCHTHREADS[0];
