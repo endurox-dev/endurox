@@ -149,6 +149,19 @@ In Enduro/X cluster each server is identified with unique number in range for
 1..32, set in *NDRX_NODEID* parameter. This similar to Tuxedo's *LMID*, but
 value is strinctly limited to numbers only.
 
+=== Transaction management
+
+While both platforms provide distributed transaction processing APIs and both
+perform according to X/Open XA protocol, internally architecture for both products
+are different. Key aspects are mentioned here:
+
+- Log format
+
+- Transaction managers
+
+- Recovery
+
+
 == Tuxedo connectivity and bindings
 
 - Enduro/X does not have *WebLogic Tuxedo Connector* or *Jolt* libraries
