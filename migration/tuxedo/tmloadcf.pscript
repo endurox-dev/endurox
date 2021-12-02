@@ -523,13 +523,30 @@ function prep_groups(instance)
                 //Get the Switch name
                 local ex = regexp(@"^(.*):.*");
 
-                local res = ex.capture(openinfo)[1];
-
-                group.xaswitchname <-openinfo.slice(res.begin, res.end);
+                local res = {};
+                if (openinfo!="")
+                {
+                    local res = ex.capture(openinfo)[1];
+                    group.xaswitchname <-openinfo.slice(res.begin, res.end);
+                }
+                else
+                {
+                    group.xaswitchname <-"";
+                }
+                //Save TMS too..
+                group.tmsname<-ubb_tmsname;
 
                 print("Got switch: ["+group.xaswitchname+"]");
                 
-                if (group.xaswitchname== "TUXEDO/QM")
+                //Support for null switch
+                if (group.tmsname=="TMS")
+                {
+                     group.openinfo <- "-";
+                     group.closeinfo <- "-";
+                     group.driverlib<-"libndrxxanulls."+M_wizzard.shared_lib_pfx;
+                     group.rmlib<-"-";
+                }
+                else if (group.xaswitchname== "TUXEDO/QM")
                 {
                     //Special case for MQ
                     //We only need Qspace name, the data will be stored
@@ -1000,7 +1017,7 @@ function prep_servers(instance)
                     }
                     if ("val" in opt)
                     {
-                        //TODO: Escape " if found
+                        //Escape " if found
                         if (null!=opt.val.find(" ") || null!=opt.val.find("\n") || null!=opt.val.find("\t"))
                         {
                             sysopt=sysopt + " \"" + escape_clopt_xml(opt.val, false) + "\"";
@@ -1172,7 +1189,7 @@ function prep_servers(instance)
             local tmscout =get_val(group, "TMSCOUNT", [""])[0];
             
             //This is tmsrv group
-            if ("xaswitchname" in group && !group.tmsrv_plotted)
+            if ("tmsname" in group && !group.tmsrv_plotted)
             {
                 local cnt = 1;
                 if (tmscout!="")
@@ -1186,14 +1203,13 @@ function prep_servers(instance)
                 new_srv = {};
 
                 
-                if (group.xaswitchname== "TUXEDO/QM")
+                if (group.xaswitchname== "TUXEDO/QM" || group.tmsname=="TMS")
                 {
                     new_srv.bin<-"tmsrv";
                 }
                 else
                 {
                     new_srv.bin<-get_val(group, "TMSNAME", null)[0];
-                    //TODO: If name is "TMS", we shall configure null switch
                 }
 
                 new_srv.srvid <- reserve_range(instance, cnt);
@@ -1691,7 +1707,21 @@ NDRX_RTCRTMAX="+M_resources["MAXRTDATA"][0]+@"
         {
             local group_text ="[@global/"+group.name+"]";
 
-            if ("xaswitchname" in group && "TUXEDO/QM"==group.xaswitchname)
+            //Support for null switches...
+            if ("tmsname" in group && "driverlib" in group)
+            {
+                group_text+=
+@"
+NDRX_XA_RES_ID="+group.rmid+@"
+NDRX_XA_OPEN_STR="+group.openinfo+@"
+NDRX_XA_CLOSE_STR="+group.closeinfo+@"
+NDRX_XA_DRIVERLIB="+group.driverlib+@"
+NDRX_XA_RMLIB="+group.rmlib+@"
+NDRX_XA_LAZY_INIT=0
+NDRX_XA_FLAGS=FDATASYNC;DSYNC";
+/******************************************************************************/
+            }
+            else if ("xaswitchname" in group && "TUXEDO/QM"==group.xaswitchname)
             {
                 group_text+=
 @"
@@ -1699,7 +1729,6 @@ NDRX_XA_RES_ID="+group.rmid+@"
 NDRX_XA_OPEN_STR="+group.openinfo+@"
 NDRX_XA_CLOSE_STR="+group.closeinfo+@"
 NDRX_XA_DRIVERLIB=libndrxxaqdisks."+M_wizzard.shared_lib_pfx+@"
-; dylib needed for osx
 NDRX_XA_RMLIB=libndrxxaqdisk."+M_wizzard.shared_lib_pfx+@"
 NDRX_XA_LAZY_INIT=0
 NDRX_XA_FLAGS=FDATASYNC;DSYNC";
