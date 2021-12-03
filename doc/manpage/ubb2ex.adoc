@@ -26,7 +26,7 @@ and by checking the stack trace/line number in the *ubb2ex.pscript* file (provid
 in distribution).
 
 As input 'UBBCONFIG_file' or *stdin* is used. Enduro/X parses the structure of
-the UBB configuration file, loads into platform script data structures, after which
+the UBB configuration file, loads it into platform script data structures, after which
 a script (built in in *ubb2ex* or provided from command line) starts to compose
 the equivalent Enduro/X configuration. Additionally converter script deferences 
 *ENVFILE* from the UBB configuration and copies values to *app.ini* *[@global]* section.
