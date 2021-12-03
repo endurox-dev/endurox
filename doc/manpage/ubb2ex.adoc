@@ -49,7 +49,7 @@ all of them are produced.
 
 . *TUXCONFIG* from UBBCONFIG.
 
-. *ULOGPFX* from UBBCONFIG (directroy used as general Enduro/X directory for logs
+. *ULOGPFX* from UBBCONFIG, directroy used as general Enduro/X directory for logs
 including ULOG by it self.
 
 . *${NDRX_APPHOME}/tmlogs/rm<RMID>* for resource manager logs, if distributed
