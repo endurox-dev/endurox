@@ -2,16 +2,13 @@ UBB2EX(8)
 =========
 :doctype: manpage
 
-
 NAME
 ----
 ubb2ex - Oracle Tuxedo UBB Configuration file migration to Enduro/X
 
-
 SYNOPSIS
 --------
 *ubb2ex* ['OPTS'] {'UBBCONFIG_file' | -}
-
 
 DESCRIPTION
 -----------
@@ -140,7 +137,6 @@ This may be modified if some fine tuning is needed for particular environment.
 Script cannot be executed by *pscript* interpreter, due to fact that *ubbex* provides
 additional functions to script engine, required by the migration script by it self.
 
-
 [*-P* 'OUTPUT_PREFIX']::
 This is output files and directories prefix. As Tuxedo UBBCONFIG uses absolute path,
 this parameter allows to generate the migrated configuration relative to the
@@ -154,7 +150,6 @@ Success
 *1*::
 Failure
 
-
 EXAMPLE
 -------
 See *atmitest/test090_tuxmig* for sample usage.
@@ -163,11 +158,9 @@ BUGS
 ----
 Report bugs to support@mavimax.com
 
-
 SEE ALSO
 --------
 *migration_tuxedo(guides)* *ex_env(5)* *ndrxconfig.xml(5)*
-
 
 COPYING
 -------
