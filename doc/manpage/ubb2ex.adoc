@@ -23,7 +23,7 @@ It is expected that provided UBBCONFIG is valid. *ubb2ex* performs
 limited validation of the input configuration file, and if file is invalid,
 at some scenarios, error cause may be determined only in debug mode (*-D5* flag)
 and by checking the stack trace/line number in the *ubb2ex.pscript* file (provided
-in distribution, for reference and modification purposes).
+in distribution).
 
 As input 'UBBCONFIG_file' or *stdin* is used. Enduro/X parses the structure of
 the UBB configuration file, loads into platform script data structures, after which
