@@ -1,0 +1,153 @@
+UBB2EX(8)
+=========
+:doctype: manpage
+
+
+NAME
+----
+ubb2ex - Oracle Tuxedo UBB Configuration file migration to Enduro/X
+
+
+SYNOPSIS
+--------
+*ubb2ex* ['OPTS'] {'UBBCONFIG_file' | -}
+
+
+DESCRIPTION
+-----------
+Tuxedo UBBCONFIG converter to Enduro/X configuration parses Tuxedo
+text version of configuration and produces as close as possible matched
+Enduro/X configuration files.
+
+It is expected that provided UBBCONFIG is valid. *ubb2ex* performs
+limited validation of the input configuration file, and if file is invalid,
+at some scenarios, error cause may be determined only in debug mode (*-D5* flag)
+and by checking the stack trace/line number in the *ubb2ex.pscript* file (provided
+in distribution, for reference and modification purposes).
+
+As input 'UBBCONFIG_file' or *stdin* is used. Enduro/X parses the structure of
+the UBB configuration file, loads into platform script data structures, after which
+a script (built in in *ubb2ex* or provided from command line) starts to compose
+the equivalent Enduro/X configuration. Additionally converter script deferences 
+*ENVFILE* from the UBB configuration and copies values to *app.ini* *[@global]* section.
+
+*ubb2ex* produces following files *TUXCONFIG* directory:
+
+. *set.<lmid_lower_case>* - provides initial environment.
+
+. *app.<lmid_lower_case>.ini* - per process based configuration, mainly global
+resource settings, cctag subsections (close equivalent) to Tuxedo groups,
+debug configuration and if used, persistent queue (/Q) configuration.
+
+. *ndrxconfig.<lmid_lower_case>.xml* - process registry used by *ndrxd* and *cpmsrv*,
+mostly resembles UBB configuration.
+
+The migration tool produces different sets of configuration files, because
+Enduro/X uses peer-to-peer clustering principles, thus for each of the peer servers
+different set of files are produced (and separated by lower-case LMID identifier from
+UBB configuration).
+
+Migration script supports following Tuxedo features:
+
+- Migration of \*RESOURCES section
+
+- Migration of \*GROUPS section
+
+- Migration of \*NETWORK section
+
+- Migration of \*SERVERS section
+
+- Migration of \*SERVICES section
+
+- Migration of \*ROUTING section
+
+Tool performs mappings of the such processes as:
+
+.UBBCONFIG - Enduro/X process mappings
+[width="80%", options="header"]
+|=========================================================
+|Tuxedo process|Enduro/X process
+| *TMS*| *tmsrv(8)*
+| *TMSYSEVT* and *TMUSREVT* |  *tpevsrv(8)*
+| *TMQUEUE* and *TMQUEUE* |  *tmqueue(8)*
+| *WSL* and *JSL* |  *restincl(8)* from *endurox-connect* package.
+Basic configuration is provided.
+|=========================================================
+
+For more details on how the configuration is mapped to Enduro/X, please read 
+*migration_tuxedo(guides)(Migrating from Oracle Tuxedo to Enduro/X)* user guide.
+
+OPTIONS
+-------
+[*-n*]::
+Do syntax check only.
+
+[*-y*]::
+Auto confirmation, when asking for existing file overwrite.
+
+[*-n*]::
+Do not process UBF mapping during compilation of the view file. This can be useful
+in cases if the environment is not configured during the build time and field
+definition files are not accessible at the time.
+
+[*-c*]::
+RFU, same as *-n* currently.
+
+[*-b* 'BLOCKS']::
+RFU, ignored.
+
+[*-L* 'LMID']::
+Convert only this specified LMID form the UBBCONFIG file.
+
+[*-A*]::
+Assign new SRVIDs. Enduro/X by default tries to use server IDs in UBBCONFIG.
+Enduro/X requires IDs to be unique at instance level, but UBBCONFIG
+only requires them to be unique at group level, the *ubb2ex* migration tool
+automatically assigns new IDs only if it finds that there are some duplicate
+numbers between the UBBCONFIG groups.
+
+[*-D* 'DEBUG_LEVEL']::
+Debug level *1..5*, where *5* is debug details, *1* is fatal error. Default is
+*2* (error). If no environment is configured, log is printed to *stderr*.
+
+[*-S* 'PATH_TO_SCRIPT_FILE']::
+This parameter specifies path to external migration tool script name. The
+base version which is also built-in in the *ubb2ex* migration tool are provided
+for reference and modification purposes typically at */usr/share/endurox/config/ubb2ex.pscript*.
+This may be modified if some fine tuning is needed for particular environment.
+Script cannot be executed by *pscript* interpreter, due to fact that *ubbex* provides
+additional functions to script engine, required by the migration script by it self.
+
+
+[*-P* 'OUTPUT_PREFIX']::
+This is output files and directories prefix. As Tuxedo UBBCONFIG uses absolute path,
+this parameter allows to generate the migrated configuration relative to the
+'OUTPUT_PREFIX'.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+
+EXAMPLE
+-------
+See *atmitest/test090_tuxmig* for sample usage.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+
+SEE ALSO
+--------
+*migration_tuxedo(guides)* *ex_env(5)* *ndrxconfig.xml(5)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

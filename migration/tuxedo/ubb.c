@@ -59,7 +59,6 @@
 expublic ndrx_ubb_parser_t ndrx_G_ubbp;      /**< Parsing time attributes*/
 expublic ndrx_ubb_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
 /*---------------------------Statics------------------------------------*/
-exprivate int M_syntax_check = EXFALSE;     /**< Syntax check only (no plot) */
 exprivate ndrx_growlist_t  M_strbuf;
 /*---------------------------Prototypes---------------------------------*/
 
@@ -222,15 +221,15 @@ exprivate void print_help(char *name)
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -n               Do syntax check only\n");
     fprintf(stderr, "  -y               Do not ask for confirmation\n");
-    fprintf(stderr, "  -c               RFU, syntax check only\n");
-    fprintf(stderr, "  -b               RFU, ignored\n");
+    fprintf(stderr, "  -c               RFU, same as -n\n");
+    fprintf(stderr, "  -b <BLOCKS>      RFU, ignored\n");
     fprintf(stderr, "  -L <LMID>        Convert only specified LMID\n");
     fprintf(stderr, "  -A               Do not try to re-use SRVIDs, assign new\n");
     fprintf(stderr, "  -D               Debug level 0..5\n");
-    fprintf(stderr, "  -h               Print this help\n");
     fprintf(stderr, "  -S               Converter script name (if not using internal)\n"); 
     /* All directories and files created, shall be made with prefix, mostly needed for testing: */
     fprintf(stderr, "  -P               Output directories and files prefix\n"); 
+    fprintf(stderr, "  -h               Print this help\n");
 }
 
 /**
@@ -295,8 +294,9 @@ int main(int argc, char **argv)
             case 'D':
                 tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP
                         , atoi(optarg), "", "", "");
+		break;
             case 'c':
-                M_syntax_check = EXTRUE;
+                opt_n[0]='1';
                 break;
             case 'b':
                 NDRX_LOG(log_debug, "Ignored flag [%c]", c);
