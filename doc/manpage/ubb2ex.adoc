@@ -42,6 +42,11 @@ debug configuration and if used, persistent queue (/Q) configuration.
 . *ndrxconfig.<lmid_lower_case>.xml* - process registry used by *ndrxd* and *cpmsrv*,
 mostly resembles UBB configuration.
 
+The migration tool produces different sets of configuration files, because
+Enduro/X uses peer-to-peer clustering principles, thus for each of the peer servers
+different set of files are produced (and separated by lower-case LMID identifier from
+UBB configuration).
+
 Additionaly as the result directories are created (if not exist):
 
 . *APPDIR* from UBBCONFIG. This may contain colon (:) separated directories - 
@@ -62,11 +67,6 @@ transactions are used.
 Where *${NDRX_APPHOME}* is determined by following principles: It is common part 
 between Tuxedo's *APPDIR* and *TUXCONFIG*. If common part is not found 
 (i.e. it is root directory */*), then *${NDRX_APPHOME}* is set to *APPDIR*.
-
-The migration tool produces different sets of configuration files, because
-Enduro/X uses peer-to-peer clustering principles, thus for each of the peer servers
-different set of files are produced (and separated by lower-case LMID identifier from
-UBB configuration).
 
 Migration script supports following Tuxedo features:
 
