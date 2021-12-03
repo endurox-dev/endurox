@@ -72,7 +72,6 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
 * Transaction Management - Global Transactions - Two-phase commit protocol - X/Open XA
 * Clustering - on peer-to-peer basis
 * Multi-threaded Event broker (also called publish and subscribe messaging)
-* Security - Cluster link encryption with GNU PGP framework
 * System process monitoring and self healing (pings and restarts)
 * SOA Service cache. XATMI services can be cached to LMDB database. Resulting 
         that next call to service from any local client receives results 

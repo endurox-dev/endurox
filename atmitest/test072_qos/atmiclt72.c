@@ -116,7 +116,7 @@ int main(int argc, char** argv)
     while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 500)
     {
         NDRX_LOG(log_warn, "Waiting sent=%ld got=%ld for queues to flush at bridges... (spent: %lds)",
-                sentread, sent, t);
+                sent, sentread, t);
         
         /* maybe call different service ... 
          * an few minutes to get the right number, before give up?

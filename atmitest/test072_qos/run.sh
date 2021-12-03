@@ -52,6 +52,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=350
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -85,11 +86,19 @@ function go_out {
     echo "Test exiting with: $1"
     
     set_dom1;
+    echo "Domain 1 stats"
+    xadmin pq
+    xadmin pqa
+
     xadmin stop -y
     xadmin down -y
 
 
     set_dom2;
+    echo "Domain 2 stats"
+    xadmin pq
+    xadmin pqa
+
     xadmin stop -y
     xadmin down -y
 
