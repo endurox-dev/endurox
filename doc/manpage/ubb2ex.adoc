@@ -44,7 +44,7 @@ mostly resembles UBB configuration.
 
 Additionaly as the result directories are created (if not exist):
 
-. *APPDIR* from UBBCONFIG. This may contain colon (:) separated directories
+. *APPDIR* from UBBCONFIG. This may contain colon (:) separated directories - 
 all of them are produced.
 
 . *TUXCONFIG* from UBBCONFIG.
