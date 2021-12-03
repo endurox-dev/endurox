@@ -42,6 +42,27 @@ debug configuration and if used, persistent queue (/Q) configuration.
 . *ndrxconfig.<lmid_lower_case>.xml* - process registry used by *ndrxd* and *cpmsrv*,
 mostly resembles UBB configuration.
 
+Additiionaly as the result directories are created (if not exist):
+
+. *APPDIR* from UBBCONFIG. This may contain colon (:) separated directories
+all of them are produced.
+
+. *TUXCONFIG* from UBBCONFIG.
+
+. *ULOGPFX* from UBBCONFIG (directroy used as general Enduro/X directory for logs
+including ULOG by it self.
+
+. *${NDRX_APPHOME}/tmlogs/rm<RMID>* for resource manager logs, if distributed
+transactions are used.
+
+. *${NDRX_APPHOME}/qdata/<QSPACE>* for persistent queues, if used.
+
+. *${NDRX_APPHOME}/tmp* for storing PID files.
+
+Where *${NDRX_APPHOME}* is determined by following principles: It is common part 
+between Tuxedo's *APPDIR* and *TUXCONFIG*. If common part is not found 
+(i.e. it is root directory */*), then *${NDRX_APPHOME}* is set to *APPDIR*.
+
 The migration tool produces different sets of configuration files, because
 Enduro/X uses peer-to-peer clustering principles, thus for each of the peer servers
 different set of files are produced (and separated by lower-case LMID identifier from
@@ -49,17 +70,17 @@ UBB configuration).
 
 Migration script supports following Tuxedo features:
 
-- Migration of \*RESOURCES section
+. Migration of \*RESOURCES section
 
-- Migration of \*GROUPS section
+. Migration of \*GROUPS section
 
-- Migration of \*NETWORK section
+. Migration of \*NETWORK section
 
-- Migration of \*SERVERS section
+. Migration of \*SERVERS section
 
-- Migration of \*SERVICES section
+. Migration of \*SERVICES section
 
-- Migration of \*ROUTING section
+. Migration of \*ROUTING section
 
 Tool performs mappings of the such processes as:
 
