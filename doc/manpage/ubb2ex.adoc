@@ -16,8 +16,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Tuxedo UBBCONFIG converter to Enduro/X configuration parses Tuxedo
-text version of configuration and produces as close as possible matched
-Enduro/X configuration files.
+text version of configuration and produces as close as possible
+Enduro/X configuration.
 
 It is expected that provided UBBCONFIG is valid. *ubb2ex* performs
 limited validation of the input configuration file, and if file is invalid,
