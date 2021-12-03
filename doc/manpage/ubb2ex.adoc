@@ -42,7 +42,7 @@ debug configuration and if used, persistent queue (/Q) configuration.
 . *ndrxconfig.<lmid_lower_case>.xml* - process registry used by *ndrxd* and *cpmsrv*,
 mostly resembles UBB configuration.
 
-Additiionaly as the result directories are created (if not exist):
+Additionaly as the result directories are created (if not exist):
 
 . *APPDIR* from UBBCONFIG. This may contain colon (:) separated directories
 all of them are produced.
