@@ -70,17 +70,17 @@ between Tuxedo's *APPDIR* and *TUXCONFIG*. If common part is not found
 
 Migration script supports following Tuxedo features:
 
-. Migration of \*RESOURCES section
+. Migration of "*RESOURCES" section
 
-. Migration of \*GROUPS section
+. Migration of "*GROUPS" section
 
-. Migration of \*NETWORK section
+. Migration of "*NETWORK" section
 
-. Migration of \*SERVERS section
+. Migration of "*SERVERS" section
 
-. Migration of \*SERVICES section
+. Migration of "*SERVICES" section
 
-. Migration of \*ROUTING section
+. Migration of "*ROUTING" section
 
 Tool performs mappings of the such processes as:
 
