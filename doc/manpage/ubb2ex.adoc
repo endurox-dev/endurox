@@ -2,31 +2,28 @@ UBB2EX(8)
 =========
 :doctype: manpage
 
-
 NAME
 ----
 ubb2ex - Oracle Tuxedo UBB Configuration file migration to Enduro/X
-
 
 SYNOPSIS
 --------
 *ubb2ex* ['OPTS'] {'UBBCONFIG_file' | -}
 
-
 DESCRIPTION
 -----------
 Tuxedo UBBCONFIG converter to Enduro/X configuration parses Tuxedo
-text version of configuration and produces as close as possible matched
-Enduro/X configuration files.
+text version of configuration and produces as close as possible
+Enduro/X configuration.
 
 It is expected that provided UBBCONFIG is valid. *ubb2ex* performs
 limited validation of the input configuration file, and if file is invalid,
 at some scenarios, error cause may be determined only in debug mode (*-D5* flag)
 and by checking the stack trace/line number in the *ubb2ex.pscript* file (provided
-in distribution, for reference and modification purposes).
+in distribution).
 
 As input 'UBBCONFIG_file' or *stdin* is used. Enduro/X parses the structure of
-the UBB configuration file, loads into platform script data structures, after which
+the UBB configuration file, loads it into platform script data structures, after which
 a script (built in in *ubb2ex* or provided from command line) starts to compose
 the equivalent Enduro/X configuration. Additionally converter script deferences 
 *ENVFILE* from the UBB configuration and copies values to *app.ini* *[@global]* section.
@@ -47,19 +44,40 @@ Enduro/X uses peer-to-peer clustering principles, thus for each of the peer serv
 different set of files are produced (and separated by lower-case LMID identifier from
 UBB configuration).
 
+Additionaly as the result directories are created (if not exist):
+
+. *APPDIR* from UBBCONFIG. This may contain colon (:) separated directories - 
+all of them are produced.
+
+. *TUXCONFIG* from UBBCONFIG.
+
+. *ULOGPFX* from UBBCONFIG, directroy used as general Enduro/X directory for logs
+including ULOG by it self.
+
+. *${NDRX_APPHOME}/tmlogs/rm<RMID>* for resource manager logs, if distributed
+transactions are used.
+
+. *${NDRX_APPHOME}/qdata/<QSPACE>* for persistent queues, if used.
+
+. *${NDRX_APPHOME}/tmp* for storing PID files.
+
+Where *${NDRX_APPHOME}* is determined by following principles: It is common part 
+between Tuxedo's *APPDIR* and *TUXCONFIG*. If common part is not found 
+(i.e. it is root directory */*), then *${NDRX_APPHOME}* is set to *APPDIR*.
+
 Migration script supports following Tuxedo features:
 
-- Migration of \*RESOURCES section
+. Migration of *RESOURCES section
 
-- Migration of \*GROUPS section
+. Migration of *GROUPS section
 
-- Migration of \*NETWORK section
+. Migration of *NETWORK section
 
-- Migration of \*SERVERS section
+. Migration of *SERVERS section
 
-- Migration of \*SERVICES section
+. Migration of *SERVICES section
 
-- Migration of \*ROUTING section
+. Migration of *ROUTING section
 
 Tool performs mappings of the such processes as:
 
@@ -97,7 +115,8 @@ RFU, same as *-n* currently.
 RFU, ignored.
 
 [*-L* 'LMID']::
-Convert only this specified LMID form the UBBCONFIG file.
+Migrate only this specified LMID form the UBBCONFIG file. Default is
+to migate all machines.
 
 [*-A*]::
 Assign new SRVIDs. Enduro/X by default tries to use server IDs in UBBCONFIG.
@@ -118,7 +137,6 @@ This may be modified if some fine tuning is needed for particular environment.
 Script cannot be executed by *pscript* interpreter, due to fact that *ubbex* provides
 additional functions to script engine, required by the migration script by it self.
 
-
 [*-P* 'OUTPUT_PREFIX']::
 This is output files and directories prefix. As Tuxedo UBBCONFIG uses absolute path,
 this parameter allows to generate the migrated configuration relative to the
@@ -132,7 +150,6 @@ Success
 *1*::
 Failure
 
-
 EXAMPLE
 -------
 See *atmitest/test090_tuxmig* for sample usage.
@@ -141,11 +158,9 @@ BUGS
 ----
 Report bugs to support@mavimax.com
 
-
 SEE ALSO
 --------
 *migration_tuxedo(guides)* *ex_env(5)* *ndrxconfig.xml(5)*
-
 
 COPYING
 -------
