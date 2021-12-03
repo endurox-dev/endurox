@@ -44,7 +44,7 @@ set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            edb_dump edb_copy edb_stat edb_load tpcachebtsv tpcached tpcachesv
            libndrxxapq libndrxxaecpg libndrxxawsmqs libndrxxaoras tpadmsv libndrxxanulls
            libndrxxatmsx exbenchcl exbenchsv libndrxxaqdisks
-           tmrecovercl tmrecoversv)
+           tmrecovercl tmrecoversv ubb2ex)
 
 set(HTML_FILES ${MAN5_NAMES} ${MAN8_NAMES})
 
