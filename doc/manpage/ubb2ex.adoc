@@ -118,7 +118,8 @@ RFU, same as *-n* currently.
 RFU, ignored.
 
 [*-L* 'LMID']::
-Convert only this specified LMID form the UBBCONFIG file.
+Migrate only this specified LMID form the UBBCONFIG file. Default is
+to migate all machines.
 
 [*-A*]::
 Assign new SRVIDs. Enduro/X by default tries to use server IDs in UBBCONFIG.
