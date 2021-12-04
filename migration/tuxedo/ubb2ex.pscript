@@ -1813,7 +1813,7 @@ NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
 /******************************************************************************/
 @"[@debug]
 #* - goes for all binaries not listed bellow
-*= ndrx=3 ubf=1 tp=3 threaded=l file=${NDRX_ULOG}/endurox.org
+*= ndrx=3 ubf=1 tp=3 threaded=l file=${NDRX_ULOG}/endurox.log
 xadmin=file=${NDRX_ULOG}/xadmin.log
 ndrxd=file=${NDRX_ULOG}/ndrxd.log
 ";
