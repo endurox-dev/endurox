@@ -51,8 +51,9 @@ function go_out {
 echo "Testing ubb_config1"
 ################################################################################
 
+export NDRX_SILENT=Y
 rm -rf ./runtime 2>/dev/null
-../../migration/tuxedo/tmloadcf ubb_config1 -P ./runtime
+../../migration/tuxedo/ubb2ex ubb_config1 -P ./runtime
 
 RET=$?
 
@@ -69,6 +70,7 @@ ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_3
 ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_4
 ln -s $TESTDIR/atmiclt90 runtime/user90/bin/atmiclt90
 ln -s $TESTDIR/../../exbench/exbenchsv runtime/user90/bin/exbenchsv
+ln -s $TESTDIR/../../exbench/exbenchcl runtime/user90/bin/exbenchcl
 
 # Start the runtime
 
@@ -85,6 +87,58 @@ fi
 
 xadmin pc
 
+################################################################################
+echo ">>> Checking DDR..."
+################################################################################
+
+exbenchcl -n1 -P -t9999 -b '{"T_STRING_10_FLD":"2"}' -f EX_DATA -S1024 -R500
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
+
+#xadmin psc
+
+DDR1=`xadmin psc | grep "EXBENCH@DDR1 EXBENCHSV    exbenchsv   600     0     0"`
+
+if [ "X$DDR1" == "X" ]; then
+    echo "DDR routing not working (1)"
+    go_out -1
+fi
+
+DDR2=`xadmin psc | grep "EXBENCH@DDR2 EXBENCHSV    exbenchsv   700   500     0"`
+
+if [ "X$DDR2" == "X" ]; then
+    echo "DDR routing not working (2)"
+    go_out -1
+fi
+
+################################################################################
+echo ">>> Checking /Q..."
+################################################################################
+
+# Enqueue To Q space, wait for notification back...
+exbenchcl -n1 -P -t9999 -b '{}' -f EX_DATA -S1024 -R1000 -sQGRP1_2 -QQSPA -I -E
+
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
+
+# Enqueue To Q space, wait for notification back...
+exbenchcl -n1 -P -t9999 -b '{}' -f EX_DATA -S1024 -R1000 -sQGRP1_2 -QQSPB -I -E
+
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
+
+# Enqueue To Q space, wait for notification back...
+exbenchcl -n1 -P -t9999 -b '{}' -f EX_DATA -S1024 -R1000 -sQGRP1_2 -QQSPC -I -E
+
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
+
+# List the Qs...
+xadmin mqlq
 
 go_out $RET
 
