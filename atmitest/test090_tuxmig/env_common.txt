@@ -1,2 +1,0 @@
-FLDTBLDIR32=${TESTDIR}/../../ubftest/ubftab
-FIELDTBLS=test.fd

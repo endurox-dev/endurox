@@ -516,6 +516,9 @@ exprivate int tmfilter(char *svcnm)
     int i, len;
     int cnt = 0;
     
+    /* TODO: If having DDR trailer, skip such TMs
+     * otherwise we make duplicate requests
+     */
     if (0==strncmp(svcnm, "@TM", 3))
     {
         /* Now it should have 3x dashes inside */

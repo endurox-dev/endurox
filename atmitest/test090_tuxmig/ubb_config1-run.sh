@@ -68,6 +68,7 @@ ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_2
 ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_3
 ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_4
 ln -s $TESTDIR/atmiclt90 runtime/user90/bin/atmiclt90
+ln -s $TESTDIR/../../exbench/exbenchsv runtime/user90/bin/exbenchsv
 
 # Start the runtime
 
