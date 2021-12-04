@@ -76,6 +76,10 @@ if [ "X$RET" != "X0" ]; then
 fi
 ################################################################################
 
+#TODO: Check networking
+#TODO: Check SRVID re-generate.
+#TODO: Check Ubb-syntax error.
+
 # Catch is there is test error!!!
 #if [ "X`grep TESTERROR *.log`" != "X" ]; then
 #    echo "Test error detected!"

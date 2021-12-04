@@ -137,7 +137,7 @@ DEFAULT:	SRVGRP=DFLTGRP
 
 "atmi.sv90"	SRVID=100 MIN=2 MAX=4 CLOPT="-A -- -s -o -m -e"
 
-"atmi.sv90_2"	SRVID=200 MIN=2 MAX=4 CLOPT="-A -e /tmp/err.out -- -c \"HELLO WORLD\""
+"atmi.sv90_2"	SRVID=200 MIN=2 MAX=4 CLOPT="-A -e /tmp/err.out -- -c \"HELLO \\\"WORLD\""
 "atmi.sv90_3"	SRVID=300 MIN=2 MAX=4 CLOPT="-- -c 'this shall start with -N flag'"
 
 "atmi.sv90_3"	SRVID=400 MIN=2 MAX=4 SRVGRP=DDR1 CLOPT="-sTESTSV_DDR:TESTSV -- -c 'DDR1'"
