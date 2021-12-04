@@ -135,13 +135,13 @@ DEFAULT:	SRVGRP=DFLTGRP
 		CLOPT="-A"
 		LMID=h
 
-"atmi.sv90"	SRVID=100 MIN=2 MAX=4 CLOPT="-A -- -s -o -m -e"
+"atmi.sv90"	SRVID=100 MIN=2 MAX=4 CLOPT="-A --"
 
 "atmi.sv90_2"	SRVID=200 MIN=2 MAX=4 CLOPT="-A -e /tmp/err.out -- -c \"HELLO \\\"WORLD\""
-"atmi.sv90_3"	SRVID=300 MIN=2 MAX=4 CLOPT="-- -c 'this shall start with -N flag'"
+"atmi.sv90_3"	SRVID=300 MIN=2 MAX=4 CLOPT="--"
 
-"atmi.sv90_3"	SRVID=400 MIN=2 MAX=4 SRVGRP=DDR1 CLOPT="-sTESTSV_DDR:TESTSV -- -c 'DDR1'"
-"atmi.sv90_4"	SRVID=500 MIN=2 MAX=4 SRVGRP=DDR2 CLOPT="-sTESTSV_DDR:TESTSV -- -c 'DDR2'"
+"atmi.sv90_3"	SRVID=400 MIN=2 MAX=4 SRVGRP=DDR1 CLOPT="-sTESTSV_DDR:TESTSV -- "
+"atmi.sv90_4"	SRVID=500 MIN=2 MAX=4 SRVGRP=DDR2 CLOPT="-sTESTSV_DDR:TESTSV -- "
 #
 # Use As Q responder
 #
