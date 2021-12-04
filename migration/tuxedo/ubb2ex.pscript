@@ -1,7 +1,7 @@
 /**
  * @brief Tuxedo UBB configuration import tool
  *
- * @file tmloadcf.pscript
+ * @file ubb2ex.pscript
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -64,7 +64,7 @@ const IDFREE_SPACE  = 30;                 //Free srvids between new binaries, au
 compilestring(getwizardbase())();
 
 ////////////////////////////////////////////////////////////////////////////////
-// UBB Config, functions called by tmloadcf as flex & bison parses.
+// UBB Config, functions called by ubb2ex as flex & bison parses.
 ////////////////////////////////////////////////////////////////////////////////
 
 //
@@ -2345,7 +2345,7 @@ function write_files()
 
 }
 /**
- * Generate Enduro/X configs. Callback from tmloadcf. At this point
+ * Generate Enduro/X configs. Callback from ubb2ex. At this point
  * all configs are parsed.
  */
 function ex_generate(arg)
