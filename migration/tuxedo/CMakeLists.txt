@@ -57,7 +57,7 @@ include(pscript)
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/include)
 
-pscript_embed(tmloadcf.pscript tmloadcf_bytecode)
+pscript_embed(ubb2ex.pscript ubb2ex_bytecode)
 
 BISON_TARGET(EXPRPARSER ubb.y ${CMAKE_CURRENT_BINARY_DIR}/ubb.tab.c)
 FLEX_TARGET(EXPRSCANNER ubb.l ${CMAKE_CURRENT_BINARY_DIR}/ubb.lex.c)
@@ -65,15 +65,15 @@ FLEX_TARGET(EXPRSCANNER ubb.l ${CMAKE_CURRENT_BINARY_DIR}/ubb.lex.c)
 BISON_TARGET(EXPRPARSER ddr_range.y ${CMAKE_CURRENT_BINARY_DIR}/ddr.tab.c)
 FLEX_TARGET(EXPRSCANNER ddr_range.l ${CMAKE_CURRENT_BINARY_DIR}/ddr.lex.c)
 
-add_executable (tmloadcf ubb.c ubb.tab.c ubb.lex.c ddr.tab.c ddr.lex.c script.c getrm.c tmloadcf_bytecode.c)
-target_compile_definitions(tmloadcf PUBLIC NDRX_TMLOADCF)
-target_link_libraries (tmloadcf psstdlib ps nstd ${RT_LIB} pthread m)
+add_executable (ubb2ex ubb.c ubb.tab.c ubb.lex.c ddr.tab.c ddr.lex.c script.c getrm.c ubb2ex_bytecode.c)
+target_compile_definitions(ubb2ex PUBLIC NDRX_TMLOADCF)
+target_link_libraries (ubb2ex psstdlib ps nstd ${RT_LIB} pthread m)
 
 install (TARGETS 
-    tmloadcf
+    ubb2ex
     DESTINATION bin)
 
 install (FILES
-    tmloadcf.pscript
+    ubb2ex.pscript
     DESTINATION share/endurox/config)
 # vim: set ts=4 sw=4 et smartindent:

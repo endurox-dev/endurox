@@ -66,8 +66,8 @@ extern void ddr_scan_string (char *yy_str  );
 extern int ddrlex_destroy  (void);
 extern int ndrx_G_ddrcolumn;
 
-extern const char ndrx_G_resource_tmloadcf_bytecode[];
-extern const size_t ndrx_G_resource_tmloadcf_bytecode_len;
+extern const char ndrx_G_resource_ubb2ex_bytecode[];
+extern const size_t ndrx_G_resource_ubb2ex_bytecode_len;
 
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -461,8 +461,8 @@ expublic int init_vm(char *script_nm,
         
         memset(&reader, 0, sizeof(reader));
         
-        reader.memptr = (char *)ndrx_G_resource_tmloadcf_bytecode;
-        reader.size = ndrx_G_resource_tmloadcf_bytecode_len;
+        reader.memptr = (char *)ndrx_G_resource_ubb2ex_bytecode;
+        reader.size = ndrx_G_resource_ubb2ex_bytecode_len;
         
         if (PS_FAILED(psstd_loadmem(v, &reader)))
         {
