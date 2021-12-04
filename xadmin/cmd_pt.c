@@ -263,37 +263,6 @@ out:
 }
 
 /**
- * Filter the service names, return TRUE for those which matches individual TMs
- * @param svcnm
- * @return TRUE/FALSE
- */
-exprivate int tmfilter(char *svcnm)
-{
-    int i, len;
-    int cnt = 0;
-    
-    /*printf("Testing: [%s]\n", svcnm);*/
-    /* example: @TM-1-1-310 */
-    if (0==strncmp(svcnm, "@TM", 3))
-    {
-        /* Now it should have 3x dashes inside */
-        len = strlen(svcnm);
-        for (i=0; i<len; i++)
-        {
-            if ('-'==svcnm[i])
-            {
-                cnt++;
-            }
-        }
-    }
-    
-    if (3==cnt)
-        return EXTRUE;
-    else
-        return EXFALSE;
-}
-
-/**
  * Print XA transactions
  * @param p_cmd_map
  * @param argc
@@ -312,7 +281,7 @@ expublic int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         EXFAIL_OUT(ret);
     }
     
-    list = ndrx_get_svc_list(tmfilter);
+    list = ndrx_get_svc_list(ndrx_tmfilter_srv);
     
     LL_FOREACH_SAFE(list,el,tmp)
     {
