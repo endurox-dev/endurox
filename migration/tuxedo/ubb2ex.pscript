@@ -869,6 +869,8 @@ function prep_servers(instance)
         new_srv.sysopt <- "-e ${NDRX_ULOG}/tpevsrv.${NDRX_SVSRVID}.log -r";
         new_srv.min<-1;
         new_srv.max<-1;
+        new_srv.mindispatchthreads<-5;
+        new_srv.maxdispatchthreads<-5;
         new_srv.is_default<-false;
         instance.servers.append(new_srv);
     }
@@ -901,7 +903,7 @@ function prep_servers(instance)
             if (machine.nodeid < instance.nodeid)
             {
                 //In this case we take passive role and accept incoming connections
-                new_srv.sysopt<-("-e ${NDRX_ULOG}/tpbridge."+instance.nodeid+ "."+machine.nodeid+".log");
+                new_srv.sysopt<-("-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log");
 
                 new_srv.appopt<-"-n"+machine.nodeid+" -r -i 0.0.0.0 -p "
                         +(NET_BASE_PORT+machine.nodeid)+" -tP -z30";
@@ -912,8 +914,7 @@ function prep_servers(instance)
             {
 
                 //This is active role, we connect 
-                new_srv.sysopt<-"-e ${NDRX_ULOG}/tpbridge." 
-                        +instance.nodeid+ "."+machine.nodeid+".log";
+                new_srv.sysopt<-"-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log";
 
                 if ("ip" in machine)
                 {
@@ -1826,6 +1827,7 @@ ndrxd=file=${NDRX_ULOG}/ndrxd.log
         if (!(server.bin in server_plotted))
         {
             //Add debug entry.
+            //TODO: no srvid for cpmsrv, tpevsrv
             instance.ini_text+=format("%s=file=${NDRX_ULOG}/%s.${NDRX_SVSRVID}.log\n", 
                 server.bin, server.bin);
             server_plotted[server.bin] <-true;
