@@ -606,7 +606,6 @@ function prep_groups(instance)
                 //Schedule folders to be created
                 if ( !(instance.app_home+"/tmlogs" in M_folder_gen))
                 {
-                    //M_folder_gen[instance.app_home+"/tmlogs"]<-{};
                     schedule_directory(instance.app_home+"/tmlogs");
                 }
 

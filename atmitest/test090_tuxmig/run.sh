@@ -62,6 +62,9 @@ function go_out {
     exit $1
 }
 
+# Some preparations
+echo "FLDTBLDIR32=${TESTDIR}/../../ubftest/ubftab" > env_common.txt
+echo "FIELDTBLS=test.fd" >> env_common.txt
 
 ################################################################################
 ./ubb_config1-run.sh

@@ -34,6 +34,16 @@ of the configuration concepts are the same.
 Enduro/X provides tool *tmloadcf(8)* which allows to automatically convert Tuxedo
 UBB configuration.
 
+
+== API compatibility aspects
+
+Mostly all XATMI/FML calls are supported by Enduro/X with the same logic and
+parameters. This section lists some (but not all) known differences:
+
+- *tpgetctxt(3)* Enduro/X version after the call puts current thread outside
+of any context association.
+
+
 == Migration process
 ...
 
@@ -45,8 +55,6 @@ UBB configuration.
 Even if configuration is being migrated by automatic approach, it is worth to
 read this section. This allows get solid understand of the Enduro/X concepts by using
 existing Tuxedo knowledge.
-
-==== Configuration files
 
 If looking on Tuxedo UBBCONFIG and Enduro/X ndrxconfig.xml/app.ini, then following
 similarities projects:
@@ -72,16 +80,44 @@ cannot be configured per cctag.
 |*ROUTING route|<endurox>/<routing>/<route routing="route">|-|-
 |=========================================================
 
-== Enduro/X and Tuxedo differences
+.Tuxedo - Enduro/X key binaries mapping
+[width="80%", options="header"]
+|=========================================================
+|Tuxedo binary|Enduro/X equivalent|Comments
+|tmadmin|xadmin|There are set of common commands, like psc, start, etc.
+|BBL, DBBBL|ndrxd|
+|tlisten|tpbridge|Enduro/X binary is booted as a normal XATMI binary, i.e.
+it is not required to start it before application boots
+|TMSYSEVT,TMUSEREV|tpevsrv|Also Enduro/X event server is booted as a normal
+XATMI binary.
+|TMS|tmsrv|Enduro/X version of *tmsrv* supports loading XA switches via shared
+libraries. So it is possible to configure *tmsrv* instances for different resources
+without need to perform *buildtms(8)*. Enduro/X supports Tuxedo mode too, when
+transaction manager is built for particular resource manager.
+|=========================================================
 
-=== API Differences
+=== Creating base configuration for Enduro/X
 
-This section lists known API differences between two middlewares.
+It is recommended to create base configuration for Enduro/X which is then amended
+to match the migrated system setup.
 
-=== ATMI API
+In order to create a working instance of the Enduro/X application, you may use
+following command:
 
-- *tpgetctxt(3)* Enduro/X version after the call puts current thread outside
-of any context association.
+--------------------------------------------------------------------------------
+
+$ xadmin provision
+
+--------------------------------------------------------------------------------
+
+This will create base system layout, including directories and configuration files
+such as:
+
+- ndrxconfig.xml
+- app.ini
+- set (environment loader)
+
+For further document we assume that system code "test1" is used.
 
 === UBB Configuration vs Enduro/X ini/xml format
 
@@ -97,7 +133,7 @@ Typically Enduro/X application are configure with third environment file
 which loads the env variables in the shell session. File name typically
 starts with *set*.
 
-=== Configuration groups
+=== Converting Tuxedo groups to Enduro/X CCTAGs
 
 At Core of the *Tuxedo* application, principle of service grouping is used.
 The grouping splits the binaries/servers in some logical groups. These
