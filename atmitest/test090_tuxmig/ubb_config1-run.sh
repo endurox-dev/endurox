@@ -140,6 +140,13 @@ fi
 # List the Qs...
 xadmin mqlq
 
+
+################################################################################
+echo ">>> Checking Eventing..."
+################################################################################
+
+# TODO: implement exbenchsv -> subscribe to event, exbenchcl -> issue events
+
 go_out $RET
 
 # vim: set ts=4 sw=4 et smartindent:
