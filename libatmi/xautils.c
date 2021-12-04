@@ -1045,6 +1045,64 @@ out:
     return ret;
 }
 
+/**
+ * Filter the service names, return TRUE for those which matches individual TMs
+ * Well we shall work only at resource ID level.
+ * Thus only on -1
+ * @param svcnm service name to check
+ * @param nr_match number of dashes to match in service name
+ * @return TRUE/FALSE
+ */
+expublic int ndrx_tmfilter_int(char *svcnm, int nr_match)
+{
+    int i, len;
+    int cnt = 0;
+    int is_ddr = EXFALSE;
+    
+    /*printf("Testing: [%s]\n", svcnm);*/
+    /* example: @TM-1-1-310 */
+    if (0==strncmp(svcnm, "@TM", 3))
+    {
+        /* Now it should have 3x dashes inside */
+        len = strlen(svcnm);
+        for (i=0; i<len; i++)
+        {
+            if ('-'==svcnm[i])
+            {
+                cnt++;
+            }
+            else if (i>0 && NDRX_SYS_SVC_PFXC==svcnm[i])
+            {
+                is_ddr=EXTRUE;
+            }
+        }
+    }
+    
+    /* normally we do not process any DDRs, just may happen due to configuration */
+    if (nr_match==cnt && !is_ddr)
+        return EXTRUE;
+    else
+        return EXFALSE;
+}
 
+/**
+ * Filter out service name used by the RM (common service name of RM)
+ * @param svcnm svcnm to check
+ * @return EXTRUE/EXFALSE
+ */
+expublic int ndrx_tmfilter_common(char *svcnm)
+{
+    return ndrx_tmfilter_int(svcnm, 1);
+}
+
+/**
+ * Match particular TMSRV service name
+ * @param svcnm service name to check
+ * @return EXTRUE/EXFALSE
+ */
+expublic int ndrx_tmfilter_srv(char *svcnm)
+{
+    return ndrx_tmfilter_int(svcnm, 3);
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

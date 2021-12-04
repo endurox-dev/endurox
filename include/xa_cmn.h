@@ -449,6 +449,8 @@ extern NDRX_API atmi_xa_tx_cd_t * atmi_xa_cd_find(atmi_xa_tx_cd_t **cds, int cd)
 extern NDRX_API int atmi_xa_cd_isanyreg(atmi_xa_tx_cd_t **cds);
 extern NDRX_API void atmi_xa_cd_unreg(atmi_xa_tx_cd_t **cds, int cd);
 extern NDRX_API int atmi_xa_cd_unregall(atmi_xa_tx_cd_t **cds);
+extern NDRX_API int ndrx_tmfilter_common(char *svcnm);
+extern NDRX_API int ndrx_tmfilter_srv(char *svcnm);
 
 /* API sections */
 extern NDRX_API int ndrx_tpopen(void);
