@@ -106,9 +106,10 @@ int init(int argc, char** argv)
     char svcnm_base[XATMI_SERVICE_NAME_LENGTH+1]="EXBENCH";
     int c;
     int svcnum=0;
+    char event[XATMI_EVENT_MAX+1]="";
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "s:N:TU:--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "s:N:TU:e:--")) != EXFAIL)
     {
         switch(c)
         {
@@ -124,7 +125,9 @@ int init(int argc, char** argv)
             case 'T':
                 M_tran = EXTRUE;
                 break;
-            
+            case 'e':
+                NDRX_STRCPY_SAFE(event, optarg);
+                break;
         }
     }
     
@@ -143,6 +146,20 @@ int init(int argc, char** argv)
         NDRX_LOG(log_error, "Failed to initialise EXBENCH: %s!", tpstrerror(tperrno));
         ret=EXFAIL;
         goto out;
+    }
+    
+    if (EXEOS!=event[0])
+    {
+        TPEVCTL evctl;
+        memset(&evctl, 0, sizeof(evctl));
+        evctl.flags|=TPEVSERVICE;
+        NDRX_STRCPY_SAFE(evctl.name1, svcnm);
+        if (EXFAIL==tpsubscribe(event, NULL, &evctl, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to subscribe to [%s] event: %s", 
+                    event, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
     }
 
     if (M_tran && EXSUCCEED!=tpopen())

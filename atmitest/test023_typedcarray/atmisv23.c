@@ -155,7 +155,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         goto out;
     }
 
-    strcpy(evctl.name1, "TEST23");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST23");
     evctl.flags|=TPEVSERVICE;
 
     /* Subscribe to event server */

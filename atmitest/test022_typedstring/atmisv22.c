@@ -153,7 +153,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         goto out;
     }
 
-    strcpy(evctl.name1, "TEST22");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST22");
     evctl.flags|=TPEVSERVICE;
 
     /* Subscribe to event server */
@@ -164,7 +164,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         ret=EXFAIL;
     }
 
-    strcpy(evctl.name1, "TEST22_2");
+    NDRX_STRCPY_SAFE(evctl.name1, "TEST22_2");
     /* Subscribe to event server */
     if (EXFAIL==(M_subs_to_unsibscribe=tpsubscribe("TEST22EV", "Hello (.*) Pluto", &evctl, 0L)))
     {

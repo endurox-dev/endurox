@@ -141,6 +141,10 @@ field. When *exbenchsv* receives the request and if it sees that *EX_CLTID* is s
 it performs the tpnotify() call with the request buffer and only after
 that performs tpreturn().
 
+[*-e*]::
+Perform *tppost(3)* instead of *tpcall(3)*. If parameter is set, event name
+is set in *-s* parameter.
+
 [*-h*]::
 Print usage.
 
