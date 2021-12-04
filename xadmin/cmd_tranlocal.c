@@ -262,39 +262,6 @@ out:
 }
 
 /**
- * Filter the service names, return TRUE for those which matches individual TMs
- * Well we shall work only at resource ID level.
- * Thus only on -1
- * @param svcnm
- * @return TRUE/FALSE
- */
-exprivate int tmfilter(char *svcnm)
-{
-    int i, len;
-    int cnt = 0;
-    
-    /*printf("Testing: [%s]\n", svcnm);*/
-    /* example: @TM-1-1-310 */
-    if (0==strncmp(svcnm, "@TM", 3))
-    {
-        /* Now it should have 3x dashes inside */
-        len = strlen(svcnm);
-        for (i=0; i<len; i++)
-        {
-            if ('-'==svcnm[i])
-            {
-                cnt++;
-            }
-        }
-    }
-    
-    if (1==cnt)
-        return EXTRUE;
-    else
-        return EXFALSE;
-}
-
-/**
  * Print local transactions for all or particular TM
  * @param p_cmd_map
  * @param argc
@@ -350,7 +317,7 @@ expublic int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc,
     {
         NDRX_LOG(log_debug, "TM Service name not specified - query all");
         
-        list = ndrx_get_svc_list(tmfilter);
+        list = ndrx_get_svc_list(ndrx_tmfilter_common);
 
         LL_FOREACH_SAFE(list,el,tmp)
         {
@@ -467,7 +434,7 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
     {
         NDRX_LOG(log_debug, "TM Service name not specified - query all");
         
-        list = ndrx_get_svc_list(tmfilter);
+        list = ndrx_get_svc_list(ndrx_tmfilter_common);
 
         LL_FOREACH_SAFE(list,el,tmp)
         {
