@@ -505,37 +505,6 @@ out:
 }
 
 /**
- * Filter the service names, return TRUE for those which matches individual TMs
- * Well we shall work only at resource ID level.
- * Thus only on -1
- * @param svcnm
- * @return TRUE/FALSE
- */
-exprivate int tmfilter(char *svcnm)
-{
-    int i, len;
-    int cnt = 0;
-    
-    if (0==strncmp(svcnm, "@TM", 3))
-    {
-        /* Now it should have 3x dashes inside */
-        len = strlen(svcnm);
-        for (i=0; i<len; i++)
-        {
-            if ('-'==svcnm[i])
-            {
-                cnt++;
-            }
-        }
-    }
-    
-    if (1==cnt)
-        return EXTRUE;
-    else
-        return EXFALSE;
-}
-
-/**
  * Scan all the TMSRVs for transaction
  * Check the status of transaction (base branch tid 0) by the originator
  * if TPEMATCH, then abort transaction & cache the result
@@ -557,7 +526,7 @@ expublic int ndrx_tmrecover_do(void)
     
     M_aborted = 0;
 
-    list = ndrx_get_svc_list(tmfilter);
+    list = ndrx_get_svc_list(ndrx_tmfilter_common);
 
     LL_FOREACH_SAFE(list,el,tmp)
     {
