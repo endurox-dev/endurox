@@ -41,6 +41,9 @@ and server done.
 [*-U* 'SLEEP_MICROSEC']::
 Number of microseconds to sleep in the service functions. Default is *0*.
 
+[*-e* 'EVENT_NAME']::
+Event name to which to subscribe.
+
 
 EXIT STATUS
 -----------

@@ -1193,7 +1193,7 @@ function prep_servers(instance)
             new_srv.real_min<-1;
             new_srv.real_max<-1;
             new_srv.is_default<-false;
-            new_srv.sysopt <- "-e ${NDRX_ULOG}/tmrecoversv.log -r";
+            new_srv.sysopt <- "-e ${NDRX_ULOG}/tmrecoversv.${NDRX_SVSRVID}.log -r";
             new_srv.appopt <- "-p -s10";
             new_srv.cctag<-"/"; //Allow merge
             instance.servers.append(new_srv);
@@ -1208,7 +1208,7 @@ function prep_servers(instance)
             new_srv.real_min<-1;
             new_srv.real_max<-1;
             new_srv.is_default<-false;
-            new_srv.sysopt <- "-e ${NDRX_ULOG}/cpmsrv.log -r";
+            new_srv.sysopt <- "-e ${NDRX_ULOG}/cpmsrv.${NDRX_SVSRVID}.log -r";
             new_srv.appopt <- "-k3 -i1";
             new_srv.cctag<-"/"; //Allow merge
             instance.servers.append(new_srv);

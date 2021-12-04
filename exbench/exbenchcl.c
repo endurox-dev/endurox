@@ -68,7 +68,7 @@
 exprivate int M_nr_threads=1;
 
 /* if contains %d then it is replaced with thread number */
-exprivate char M_svcnm[XATMI_SERVICE_NAME_LENGTH+1]="EXBENCH";
+exprivate char M_svcnm[XATMI_EVENT_MAX+1]="EXBENCH";
 exprivate int M_runtime=60;             /**< run for 60 sec default          */
 exprivate char *M_sample_data=NULL;     /**< data to send                    */
 exprivate BFLDID M_fld=BBADFLDID;       /**< field used for random data fill */
@@ -95,6 +95,7 @@ exprivate int M_tran = EXFALSE; /**< use distr tran */
 exprivate int M_notify_mode = EXFALSE;  /**< shall notification be expected */
 exprivate __thread long M_sent=0;               /** Current position of thread */
 exprivate __thread long M_notif_sent_acq = EXFAIL;  /**< ACQ position          */
+exprivate int M_event_mode=EXFALSE; /**< is event mode enabled?                */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -234,7 +235,16 @@ expublic void thread_process(void *ptr, int *p_finish_off)
         else
         {
             rcv_buf=NULL;
-            if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
+            if (M_event_mode)
+            {
+                if (tppost(svcnm, buf, 0, 0)<=0)
+                {
+                    NDRX_LOG(log_error, "Failed to post event [%s]: %s", 
+                            svcnm, tpstrerror(tperrno));
+                    exit(-1);
+                }
+            }
+            else if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
             {
                 NDRX_LOG(log_error, "Failed to call [%s]: %s", 
                         svcnm, tpstrerror(tperrno));
@@ -374,6 +384,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -R <msgnum>      Number of requests (time or nr first to stop)\n");
     fprintf(stderr, "  -T <tout_sec>    Initiate global transaction for XATMI calls\n");
     fprintf(stderr, "  -I               Wait for client notification\n");
+    fprintf(stderr, "  -e               Post the event, -s serves as event\n");
 }
 
 /**
@@ -408,10 +419,13 @@ expublic int main( int argc, char** argv )
      */
     M_buftype = ndrx_get_buffer_descr("UBF", NULL);
 
-    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:T:I")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:T:Ie")) != -1)
     {
         switch (c)
         {
+            case 'e':
+                M_event_mode=EXTRUE;
+                break;
             case 'A':
                 M_autoq = EXTRUE;
                 break;
@@ -506,6 +520,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_numreq=[%ld]", M_numreq);
     NDRX_LOG(log_info, "M_tran=[%d]", M_tran);
     NDRX_LOG(log_info, "M_notify_mode=[%d]", M_notify_mode);
+    NDRX_LOG(log_info, "M_event_mode=[%d]", M_event_mode);
     
     /* allocate the buffer & fill with random data */
     
