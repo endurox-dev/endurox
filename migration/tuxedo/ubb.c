@@ -248,7 +248,7 @@ int main(int argc, char **argv)
     char script_nm[PATH_MAX+1]="";
     size_t len = 0;
     FILE *handle=NULL;
-    NDRX_BANNER("TMLOADCF Tuxedo Ubbconfig to Enduro/X migration tool");
+    NDRX_BANNER("UBB2EX Tool");
     
     /* if NDRX_DEBUG_CONF is set to empty... boot with minimum log level...*/
 
