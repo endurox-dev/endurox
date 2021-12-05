@@ -81,6 +81,7 @@ cd runtime/user90/conf
 
 xadmin start -y
 
+RET=$?
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
@@ -92,6 +93,7 @@ echo ">>> Checking DDR..."
 ################################################################################
 
 exbenchcl -n1 -P -t9999 -b '{"T_STRING_10_FLD":"2"}' -f EX_DATA -S1024 -R500
+RET=$?
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
@@ -119,6 +121,7 @@ echo ">>> Checking /Q..."
 # Enqueue To Q space, wait for notification back...
 exbenchcl -n1 -P -t9999 -b '{}' -f EX_DATA -S1024 -R1000 -sQGRP1_2 -QQSPA -I -E
 
+RET=$?
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
@@ -126,6 +129,7 @@ fi
 # Enqueue To Q space, wait for notification back...
 exbenchcl -n1 -P -t9999 -b '{}' -f EX_DATA -S1024 -R1000 -sQGRP1_2 -QQSPB -I -E
 
+RET=$?
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
@@ -133,6 +137,7 @@ fi
 # Enqueue To Q space, wait for notification back...
 exbenchcl -n1 -P -t9999 -b '{}' -f EX_DATA -S1024 -R1000 -sQGRP1_2 -QQSPC -I -E
 
+RET=$?
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
@@ -146,7 +151,7 @@ echo ">>> Checking Events..."
 ################################################################################
 
 exbenchcl -n5 -P -t9999 -b '{"T_STRING_10_FLD":"0"}' -f EX_DATA -S1024 -R1000 -sTESTEV -e
-
+RET=$?
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
@@ -169,6 +174,30 @@ fi
 ################################################################################
 echo ">>> Checking missing -A -> -N..."
 ################################################################################
+
+OUT=`xadmin psc | grep "TESTSV       TESTSV       atmi.sv9+   500"`
+
+if [ "X$OUT" != "X" ]; then
+    echo "TESTSV must not be advertised by srvid=500"
+    go_out -1
+fi
+
+################################################################################
+echo ">>> Compare outputs of the XML"
+################################################################################
+
+OUT=`diff $TESTDIR/ubb_config1.xml $TESTDIR/runtime/user90/conf/ndrxconfig.test1.xml`
+
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
+
+if [ "X$OUT" != "X" ]; then
+    echo "ubb_config1.xml!=runtime/user90/conf/ndrxconfig.test1.xml: [$OUT]"
+    go_out -1
+fi
+
 
 go_out $RET
 

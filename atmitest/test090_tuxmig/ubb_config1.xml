@@ -1,0 +1,272 @@
+<?xml version="1.0" ?>
+<endurox>
+    <appconfig>
+        <sanity>1</sanity>
+        <brrefresh>5</brrefresh>
+        <restart_min>1</restart_min>
+        <restart_step>1</restart_step>
+        <restart_max>5</restart_max>
+        <restart_to_check>20</restart_to_check>
+        <gather_pq_stats>Y</gather_pq_stats>
+    </appconfig>
+    <defaults>
+        <autokill>1</autokill>
+        <start_max>10</start_max>
+        <pingtime>100</pingtime>
+        <ping_max>800</ping_max>
+        <end_max>10</end_max>
+        <killtime>1</killtime>
+        <min>1</min>
+        <max>1</max>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="cconfsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>1</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cconfsrv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+        <server name="tpadmsv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>3</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpadmsv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+        <server name="tpevsrv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>5</srvid>
+            <mindispatchthreads>5</mindispatchthreads>
+            <maxdispatchthreads>5</maxdispatchthreads>
+            <sysopt>-e ${NDRX_ULOG}/tpevsrv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag>QGRP1</cctag>
+        <respawn>N</respawn>
+    </defaults>
+    <servers>
+        <server name="tmsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>8</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm8</appopt>
+        </server>
+        <server name="tmqueue">
+            <min>1</min>
+            <max>1</max>
+            <srvid>40</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-s1 -p10 -f10</appopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag>QGRP2</cctag>
+        <respawn>N</respawn>
+    </defaults>
+    <servers>
+        <server name="tmsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>12</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm9</appopt>
+        </server>
+        <server name="tmqueue">
+            <min>1</min>
+            <max>1</max>
+            <srvid>50</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-s1 -p10 -f30</appopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag>QGRP3</cctag>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="tmsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>14</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm10</appopt>
+        </server>
+        <server name="tmqueue">
+            <min>1</min>
+            <max>1</max>
+            <srvid>60</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-s1 -p10 -f30</appopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag>DFLTGRP</cctag>
+        <min>1</min>
+        <max>5</max>
+        <respawn>N</respawn>
+    </defaults>
+    <servers>
+        <server name="atmi.sv90">
+            <min>2</min>
+            <max>4</max>
+            <srvid>100</srvid>
+            <sysopt>-e ${NDRX_ULOG}/atmi.sv90.${NDRX_SVSRVID}.log</sysopt>
+        </server>
+        <server name="atmi.sv90_2">
+            <min>1</min>
+            <max>4</max>
+            <srvid>200</srvid>
+            <sysopt>-e /tmp/err.out</sysopt>
+            <appopt>-c "HELLO \"WORLD"</appopt>
+        </server>
+        <server name="atmi.sv90_3">
+            <min>2</min>
+            <max>4</max>
+            <srvid>300</srvid>
+            <sysopt>-N -e ${NDRX_ULOG}/atmi.sv90_3.${NDRX_SVSRVID}.log</sysopt>
+        </server>
+        <server name="tmsrv">
+            <cctag>DDR1</cctag>
+            <min>1</min>
+            <max>1</max>
+            <srvid>10</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm11</appopt>
+        </server>
+        <server name="atmi.sv90_3">
+            <cctag>DDR1</cctag>
+            <min>2</min>
+            <max>4</max>
+            <srvid>400</srvid>
+            <sysopt>-N -e ${NDRX_ULOG}/atmi.sv90_3.${NDRX_SVSRVID}.log -s TESTSV_DDR:TESTSV</sysopt>
+        </server>
+        <server name="tmsrv">
+            <cctag>DDR2</cctag>
+            <min>1</min>
+            <max>1</max>
+            <srvid>16</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm12</appopt>
+        </server>
+        <server name="atmi.sv90_4">
+            <cctag>DDR2</cctag>
+            <min>2</min>
+            <max>4</max>
+            <srvid>500</srvid>
+            <sysopt>-N -e ${NDRX_ULOG}/atmi.sv90_4.${NDRX_SVSRVID}.log -s TESTSV_DDR:TESTSV</sysopt>
+        </server>
+        <server name="exbenchsv">
+            <cctag>DDR1</cctag>
+            <min>1</min>
+            <max>1</max>
+            <srvid>600</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exbenchsv.${NDRX_SVSRVID}.log -s QGRP1_2,QGRP2_2,QGRP3_2:EXBENCH</sysopt>
+            <appopt>-T</appopt>
+        </server>
+        <server name="exbenchsv">
+            <cctag>DDR2</cctag>
+            <min>1</min>
+            <max>1</max>
+            <srvid>700</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exbenchsv.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-T -eTESTEV</appopt>
+        </server>
+        <server name="exbenchsv">
+            <cctag>DDR2</cctag>
+            <min>1</min>
+            <max>1</max>
+            <srvid>750</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exbenchsv.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-eTESTEV -s TESTEV</appopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag>QGRP3</cctag>
+        <min>10</min>
+        <max>11</max>
+    </defaults>
+    <servers>
+        <server name="TMS_ORA_1">
+            <cctag>ORAGRP1</cctag>
+            <min>2</min>
+            <max>2</max>
+            <srvid>17</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm5</appopt>
+        </server>
+        <server name="orabin1">
+            <cctag>ORAGRP1</cctag>
+            <srvid>2000</srvid>
+            <sysopt>-e ${NDRX_ULOG}/orabin1.${NDRX_SVSRVID}.log</sysopt>
+        </server>
+        <server name="TMS_ORA_2">
+            <cctag>ORAGRP2</cctag>
+            <min>2</min>
+            <max>2</max>
+            <srvid>19</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm6</appopt>
+        </server>
+        <server name="orabin2">
+            <cctag>ORAGRP2</cctag>
+            <srvid>2100</srvid>
+            <sysopt>-e ${NDRX_ULOG}/orabin2.${NDRX_SVSRVID}.log</sysopt>
+        </server>
+        <server name="TMS_ORA_3">
+            <cctag>ORAGRP3</cctag>
+            <min>2</min>
+            <max>2</max>
+            <srvid>22</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm7</appopt>
+        </server>
+        <server name="orabin3">
+            <cctag>ORAGRP3</cctag>
+            <srvid>2200</srvid>
+            <sysopt>-e ${NDRX_ULOG}/orabin3.${NDRX_SVSRVID}.log</sysopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag/>
+        <min>1</min>
+        <max>1</max>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="tmrecoversv">
+            <srvid>6</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmrecoversv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-p -s10</appopt>
+        </server>
+        <server name="cpmsrv">
+            <srvid>7</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-k3 -i1</appopt>
+        </server>
+    </servers>
+    <clients>
+          <client cmdline="restincl">
+              <exec tag="RESTIN" autostart="Y" subsect="RIN1" cctag="RIN1" log="${NDRX_ULOG}/restincl.rin1.log"/>
+          </client>
+    </clients>
+    <services>
+        <defaults autotran="Y" trantime="60"/>
+        <service svcnm="TESTSV_DDR" routing="ROUT1"/>
+        <service svcnm="EXBENCH" routing="ROUT2" autotran="Y"/>
+    </services>
+    <routing>
+        <route routing="ROUT1">
+            <field>T_STRING_10_FLD</field>
+            <ranges>'0':DDR1,'2':DDR2,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+        <route routing="ROUT2">
+            <field>T_STRING_10_FLD</field>
+            <ranges>'0':DDR1,'2':DDR2,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+    </routing>
+</endurox>

@@ -2568,6 +2568,9 @@ function ex_generate(arg)
         }
 
         //Resolve logging directory also... full or relative against the home
+        //TODO: Add support for TLOGDEVICE
+        //Move processing to the function, which would retun full path 
+        //Or relative path, or prefered default.
         local log_dir = get_val(val[0], "ULOGPFX", [""])[0];
 
         if (log_dir=="")
