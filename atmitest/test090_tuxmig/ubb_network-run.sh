@@ -1,8 +1,8 @@
 #!/bin/bash
 ##
-## @brief Tuxedo to Enduro/X migration tools - test launcher
+## @brief Execute networked UBB test
 ##
-## @file run.sh
+## @file ubb_network-run.sh
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -33,70 +33,44 @@
 ## -----------------------------------------------------------------------------
 ##
 
-export TESTNAME="test090_tuxmig"
-
-PWD=`pwd`
-if [ `echo $PWD | grep $TESTNAME ` ]; then
-    # Do nothing 
-    echo > /dev/null
-else
-    # started from parent folder
-    pushd .
-    echo "Doing cd"
-    cd $TESTNAME
-fi;
-
-. ../testenv.sh
-
-export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
-export PATH=$PATH:$TESTDIR
-export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=10
-
 #
 # Generic exit function
 #
 function go_out {
     echo "Test exiting with: $1"
+
+    xadmin stop -y
+    xadmin down -y
+    
     popd 2>/dev/null
     exit $1
 }
 
-# Some preparations
-echo "FLDTBLDIR32=${TESTDIR}/../../ubftest/ubftab" > env_common.txt
-echo "FIELDTBLS=test.fd" >> env_common.txt
+#
+# Enduro/X not yet booted
+#
+function go_out_silent {
+    echo "Test exiting with: $1"
+
+    popd 2>/dev/null
+    exit $1
+}
 
 ################################################################################
-./ubb_config1-run.sh
+echo ">>> Testing ubb_network -> E/X convert"
+################################################################################
+
+export NDRX_SILENT=Y
+rm -rf ./runtime 2>/dev/null
+../../migration/tuxedo/ubb2ex ubb_config1 -P ./runtime
 
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
-    go_out $RET
+    go_out_silent $RET
 fi
-################################################################################
-
-./ubb_network-run.sh
-
-RET=$?
-
-if [ "X$RET" != "X0" ]; then
-    go_out $RET
-fi
-################################################################################
-
-#TODO: Check networking
-#TODO: Check SRVID re-generate.
-#TODO: Check Ubb-syntax error.
-#TODO: Test 
-# Catch is there is test error!!!
-#if [ "X`grep TESTERROR *.log`" != "X" ]; then
-#    echo "Test error detected!"
-#    RET=-2
-#fi
 
 go_out $RET
-
 
 # vim: set ts=4 sw=4 et smartindent:
 

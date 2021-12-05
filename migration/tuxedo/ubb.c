@@ -60,6 +60,7 @@ expublic ndrx_ubb_parser_t ndrx_G_ubbp;      /**< Parsing time attributes*/
 expublic ndrx_ubb_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
 /*---------------------------Statics------------------------------------*/
 exprivate ndrx_growlist_t  M_strbuf;
+exprivate char M_curfile[PATH_MAX+1]="UBBCONFIG(stdin)";/**< current UBB config file*/
 /*---------------------------Prototypes---------------------------------*/
 
 extern int ubbdebug;
@@ -100,8 +101,8 @@ void ddrerror(char *s, ...)
 
         va_start(ap, s);
         snprintf(ndrx_G_ddrp.errbuf, sizeof(ndrx_G_ddrp.errbuf), 
-                "UBBConfig DDR parse error, line: %d near expression [%s]: ", 
-                ndrx_G_ubbline, p);
+                "%s DDR parse error, line: %d near expression [%s]: ", 
+                M_curfile, ndrx_G_ubbline, p);
         
         len=strlen(ndrx_G_ddrp.errbuf);
         vsnprintf(ndrx_G_ddrp.errbuf+len, sizeof(ndrx_G_ddrp.errbuf)-len, s, ap);
@@ -150,8 +151,8 @@ void ubberror(char *s, ...)
         }
 
         va_start(ap, s);
-        snprintf(errbuf, sizeof(errbuf), "UBBConfig error line: %d near expression [%s]: ", 
-                ndrx_G_ubbline, p);
+        snprintf(errbuf, sizeof(errbuf), "%s error line: %d near expression [%s]: ", 
+                M_curfile, ndrx_G_ubbline, p);
         
         len=strlen(errbuf);
         vsnprintf(errbuf+len, sizeof(errbuf)-len, s, ap);
@@ -319,6 +320,7 @@ int main(int argc, char **argv)
             /* read from file 
              *  + add 
              */
+            NDRX_STRCPY_SAFE(M_curfile, argv[optind]);
             if (NULL==(handle=NDRX_FOPEN(argv[optind], "r")))
             {
                 NDRX_LOG(log_error, "Failed to open [%s]: %s", argv[optind], strerror(errno));

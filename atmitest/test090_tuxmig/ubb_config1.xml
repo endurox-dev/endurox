@@ -255,7 +255,7 @@
     <services>
         <defaults autotran="Y" trantime="60"/>
         <service svcnm="TESTSV_DDR" routing="ROUT1"/>
-        <service svcnm="EXBENCH" routing="ROUT2" autotran="Y"/>
+        <service svcnm="EXBENCH" prio="10" routing="ROUT2" autotran="Y" trantime="40"/>
     </services>
     <routing>
         <route routing="ROUT1">

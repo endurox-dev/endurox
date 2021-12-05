@@ -1513,15 +1513,15 @@ function prep_networking()
             M_lmidmachines[idx].hostname <- hostname;
         }
         /* extract by hex */
-        else if (regexp("^//[xX]0002[0-9A-Fa-f]{12}").match(naddr)
+        else if (regexp("^\\\\[xX]0002[0-9A-Fa-f]{12}").match(naddr)
                 || regexp("^0[xX]0002[0-9A-Fa-f]{12}").match(naddr))
         {
             local hex_str = "";
             
-            if ("//"==substr(naddr, 0, 2))
+            if ("\\"==substr(naddr, 0, 1))
             {
-                // //x0002 or //X0002
-                hex_str=substr(naddr, 7);
+                // \x0002 or \\X0002
+                hex_str=substr(naddr, 6);
             }
             else
             {
@@ -2348,6 +2348,29 @@ function write_files()
     }
 
 }
+
+/**
+ * General validation
+ */
+function validate()
+{
+    local grp_nos = {};
+
+    //Validate that groups are unique
+    foreach(idx, group in M_sections["*GROUPS"].order) if (!group.is_default)
+    {
+        local no = get_val(group, "GRPNO", null)[0];
+
+        if (no in grp_nos)
+        {
+            throw("Duplicate GRPNO="+no+" for group ["+group.name+"]");
+        }
+        else
+        {
+            grp_nos[no]<-"1";
+        }
+    }
+}
 /**
  * Generate Enduro/X configs. Callback from ubb2ex. At this point
  * all configs are parsed.
@@ -2374,6 +2397,7 @@ function ex_generate(arg)
     print(format("M_opt_P=[%s]", M_opt_P));
 
     init();
+    validate();
 
     //Open output objects for each of the machine
     if (!("*MACHINES" in M_sections))
@@ -2466,6 +2490,9 @@ function ex_generate(arg)
         }
         
         instance.prefix <- machine.keywords["LMID"][0].tolower();
+        # TODO: we might get partial folder matches
+        # in those cases we shall step back one level, to have full match
+        # ending with /.
         instance.app_home <- strcommon(ubb_appdir, ubb_tuxconfig);
         instance.use_rel <- false;
 

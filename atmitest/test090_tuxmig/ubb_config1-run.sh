@@ -47,8 +47,18 @@ function go_out {
     exit $1
 }
 
+#
+# Enduor/X not yet booted
+#
+function go_out_silent {
+    echo "Test exiting with: $1"
+
+    popd 2>/dev/null
+    exit $1
+}
+
 ################################################################################
-echo "Testing ubb_config1"
+echo ">>> Testing ubb_config1 -> E/X convert"
 ################################################################################
 
 export NDRX_SILENT=Y
@@ -58,7 +68,7 @@ rm -rf ./runtime 2>/dev/null
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
-    go_out $RET
+    go_out_silent $RET
 fi
 
 #
@@ -188,13 +198,15 @@ echo ">>> Compare outputs of the XML"
 
 OUT=`diff $TESTDIR/ubb_config1.xml $TESTDIR/runtime/user90/conf/ndrxconfig.test1.xml`
 
+echo $OUT
+
 RET=$?
 if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
 if [ "X$OUT" != "X" ]; then
-    echo "ubb_config1.xml!=runtime/user90/conf/ndrxconfig.test1.xml: [$OUT]"
+    echo "ubb_config1.xml!=runtime/user90/conf/ndrxconfig.test1.xml"
     go_out -1
 fi
 
