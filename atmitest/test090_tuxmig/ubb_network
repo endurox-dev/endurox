@@ -1,0 +1,95 @@
+#
+# Testing of networking, duplicate server ids, trailing 
+#
+*RESOURCES
+IPCKEY 46000
+DOMAINID HELLODOM
+UID 1196
+GID 11
+PERM 0660
+MAXSERVERS 20
+MAXSERVICES 40
+MAXGTT 20
+MASTER SITE1
+SCANUNIT 11
+SANITYSCAN 12
+BBLQUERY 170
+BLOCKTIME 31
+MODEL MP
+LDBAL Y
+
+#
+# Also check that we do not have any sort of shared 
+# config/bin/log folder
+#
+*MACHINES
+server1 LMID=SITE1 TUXDIR="/x1_app/bin"
+APPDIR="/usr1_1/app"
+ENVFILE="./env_common.txt" 
+TLOGDEVICE="/usr1_2/tlog/TLOG" TLOGNAME=TLOG
+TUXCONFIG="/usr1_3/conf/tuxconfig" TYPE="RHEL"
+ULOGPFX="/usr1_4/log/ULOG"
+
+server2 LMID=SITE2 TUXDIR="/x1_app/bin"
+APPDIR="/usr2_1/app"
+ENVFILE="./env_common.txt" 
+TLOGDEVICE="/usr2_2/tlog/TLOG" TLOGNAME=TLOG
+TUXCONFIG="/usr2_3/conf/tuxconfig" TYPE="RHEL"
+ULOGPFX="/usr2_4/log/ULOG"
+
+server3 LMID=SITE3 TUXDIR="/x1_app/bin"
+APPDIR="/usr3_1/app"
+ENVFILE="./env_common.txt" 
+TLOGDEVICE="/usr3_2/tlog/TLOG" TLOGNAME=TLOG
+TUXCONFIG="/usr3_3/conf/tuxconfig" TYPE="RHEL"
+ULOGPFX="/usr3_4/log/ULOG"
+
+server4 LMID=SITE4 TUXDIR="/x1_app/bin"
+APPDIR="/usr4_1/app"
+ENVFILE="./env_common.txt" 
+TLOGDEVICE="/usr4_2/tlog/TLOG" TLOGNAME=TLOG
+TUXCONFIG="/usr4_3/conf/tuxconfig" TYPE="RHEL"
+ULOGPFX="/usr4_4/log/ULOG"
+
+*NETWORK
+SITE1 NADDR="//localhost:999"
+NLSADDR="server1"
+
+SITE2 NADDR="//127.0.0.1:999"
+NLSADDR="server2"
+
+# hex format, first variant
+SITE3 NADDR="\\X00020AFF7F000001"
+NLSADDR="server3"
+
+# hex format, second variant
+SITE4 NADDR="0x00020AFF7F000001"
+NLSADDR="server4"
+
+*GROUPS
+
+SITE1_GRP LMID=SITE1 GRPNO=1
+SITE2_GRP LMID=SITE2 GRPNO=2
+SITE3_GRP LMID=SITE3 GRPNO=3
+SITE4_GRP LMID=SITE4 GRPNO=4
+
+# these shall not be plotted as not used:
+SITE5_GRP LMID=SITE4 GRPNO=5
+SITE6_GRP LMID=SITE4 GRPNO=6
+SITE7_GRP LMID=SITE4 GRPNO=7
+
+*SERVERS
+#
+DEFAULT:
+RESTART=Y MAXGEN=5 REPLYQ=Y CLOPT="-A"
+
+exbenchsv SRVID=100 MIN=1 MAX=1 SRVGRP=SITE1_GRP CLOPT="-A -- -sSERVER1"
+exbenchsv SRVID=100 MIN=1 MAX=1 SRVGRP=SITE2_GRP CLOPT="-A -- -sSERVER2"
+exbenchsv SRVID=100 MIN=1 MAX=1 SRVGRP=SITE3_GRP CLOPT="-A -- -sSERVER3"
+exbenchsv SRVID=100 MIN=1 MAX=1 SRVGRP=SITE4_GRP CLOPT="-A -- -sSERVER4"
+
+# Shall be removed:
+DEFAULT: RESTART=Y MAXGEN=5 REPLYQ=Y CLOPT="-A"
+DEFAULT: RESTART=Y MAXGEN=5 REPLYQ=Y CLOPT="-A"
+DEFAULT: RESTART=Y MAXGEN=5 REPLYQ=Y CLOPT="-A"
+
