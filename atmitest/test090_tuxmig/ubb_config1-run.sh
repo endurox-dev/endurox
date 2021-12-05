@@ -142,10 +142,14 @@ xadmin mqlq
 
 
 ################################################################################
-echo ">>> Checking Eventing..."
+echo ">>> Checking Events..."
 ################################################################################
 
-# TODO: implement exbenchsv -> subscribe to event, exbenchcl -> issue events
+exbenchcl -n5 -P -t9999 -b '{"T_STRING_10_FLD":"0"}' -f EX_DATA -S1024 -R1000 -sTESTEV -e
+
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
 
 go_out $RET
 

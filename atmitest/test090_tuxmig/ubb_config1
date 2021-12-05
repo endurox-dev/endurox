@@ -146,8 +146,8 @@ DEFAULT:	SRVGRP=DFLTGRP
 # Use As Q responder
 #
 exbenchsv  SRVID=600 MIN=1 MAX=1 SRVGRP=DDR1 CLOPT="-sQGRP1_2,QGRP2_2,QGRP3_2:EXBENCH -A -- -T"
-exbenchsv SRVID=700 MIN=1 MAX=1 SRVGRP=DDR2 CLOPT="-A -- -T"
-
+exbenchsv SRVID=700 MIN=1 MAX=1 SRVGRP=DDR2 CLOPT="-A -- -T -eTESTEV"
+exbenchsv SRVID=750 MIN=1 MAX=1 SRVGRP=DDR2 CLOPT="-A -- -eTESTEV -s TESTEV"
 #
 # Have some forward queues...
 #
