@@ -165,7 +165,7 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
-    signed char c;
+    int  c;
     sigset_t blockMask;
     NDRX_LOG(log_debug, "tpsvrinit called");
     

@@ -137,7 +137,7 @@ DEFAULT:	SRVGRP=DFLTGRP
 
 "atmi.sv90"	SRVID=100 MIN=2 MAX=4 CLOPT="-A --"
 
-"atmi.sv90_2"	SRVID=200 MIN=2 MAX=4 CLOPT="-A -e /tmp/err.out -- -c \"HELLO \\\"WORLD\""
+"atmi.sv90_2"	SRVID=200 MIN=1 MAX=4 CLOPT="-A -e /tmp/err.out -- -c \"HELLO \\\"WORLD\""
 "atmi.sv90_3"	SRVID=300 MIN=2 MAX=4 CLOPT="--"
 
 "atmi.sv90_3"	SRVID=400 MIN=2 MAX=4 SRVGRP=DDR1 CLOPT="-sTESTSV_DDR:TESTSV -- "
@@ -167,9 +167,10 @@ TMQFORWARD      SRVID=1300 CLOPT="-A -- -i 2 -qQGRP1_1"
 TMQFORWARD      SRVID=1320 CLOPT="-A -- -i 2 -qQGRP1_2 -t60"
 TMQFORWARD      SRVID=1330 CLOPT="-A -- -i 2 -qQGRP1_3 "
 
-#
-# TODO: check merge defaults
-#
+
+# check merge max to 11
+DEFAULT:                        MAX=11
+
 orabin1       SRVID=2000 SRVGRP=ORAGRP1
 orabin2		   SRVID=2100 SRVGRP=ORAGRP2
 orabin3		   SRVID=2200 SRVGRP=ORAGRP3

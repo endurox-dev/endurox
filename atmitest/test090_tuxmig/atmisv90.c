@@ -95,7 +95,30 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret = EXSUCCEED;
+    /* Check arguments */
+    int c;
     NDRX_LOG(log_debug, "tpsvrinit called");
+    
+    /* Parse command line  */
+    while ((c = getopt(argc, argv, "c:")) != -1)
+    {
+        switch (c)
+        {
+            case 'c':
+                if (0==strcmp(optarg, "HELLO \"WORLD"))
+                {
+                    /* default debug generated is at level 3: */
+                    NDRX_LOG(log_error, "Arg c OK");
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "TESTERROR: Expected [HELLO \"WORLD] got [%s])",
+                            optarg);
+                    EXFAIL_OUT(ret);
+                }
+                break;
+        }
+    }
 
     if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
     {
