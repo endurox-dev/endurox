@@ -151,6 +151,25 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
+################################################################################
+echo ">>> Checking escaping..."
+################################################################################
+
+if [ "X`grep 'Arg c OK' $TESTDIR/runtime/user90/log/atmi.sv90_2.200.log`" == "X" ]; then
+    echo "Missing arg c check!"
+    RET=-2
+fi
+
+# Catch is there is test error!!!
+if [ "X`grep TESTERROR $TESTDIR/runtime/user90/log/*.log`" != "X" ]; then
+    echo "Test error detected!"
+    RET=-2
+fi
+
+################################################################################
+echo ">>> Checking missing -A -> -N..."
+################################################################################
+
 go_out $RET
 
 # vim: set ts=4 sw=4 et smartindent:
