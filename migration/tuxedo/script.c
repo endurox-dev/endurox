@@ -174,7 +174,7 @@ static PSInteger ubb_ddr_parse(HPSCRIPTVM v)
     
     if(PS_SUCCEEDED(ps_getstring(v,2,&s)))
     {
-        NDRX_LOG(log_error, "PARSE RANGE [%s]", s);
+        NDRX_LOG(log_debug, "PARSE RANGE [%s]", s);
         /* start to parse... */
         ndrx_G_ddrcolumn=0;
                 

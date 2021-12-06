@@ -217,6 +217,81 @@ function ubb_add_sect(arg)
     M_cur_param  <- {};
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Support functions
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return common part of two directories
+ * @path1 first path
+ * @path2 second path
+ * @return common part of "/" if not matching anthing
+ */
+function dircommon(path1, path2)
+{
+    local ret="";
+    local dir1 = split(path1, "/");
+    local dir2 = split(path2, "/");
+    local len1 = dir1.len();
+    local len2 = dir2.len();
+
+    for (local i=0; i<len1 && i<len2; i++)
+    {
+        if (dir1[i]==dir2[i])
+        {
+            if (i==0) 
+            {
+                ret =dir1[i];
+            }
+            else
+            {
+                ret=ret + "/" + dir1[i];
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+    return ret;
+}
+
+/**
+ * Componets that does not matches
+ * @param dir1 components from this directory will be returned (trailing)
+ *  which does not matches first path
+ * @param dir2 path against which to test
+ * @param relative non matching path in dir1
+ */
+function dirdiff(path1, path2)
+{
+    local ret="";
+    local dir1 = split(path1, "/");
+    local dir2 = split(path2, "/");
+    local len1 = dir1.len();
+    local len2 = dir2.len();
+    local started=false;
+
+    for (local i=0; i<len1; i++)
+    {
+        if (started || i>=len2 || dir2[i]!=dir1[i])
+        {
+            started=true;
+
+            if (ret=="")
+            {
+                ret=dir1[i];
+            }
+            else
+            {
+                ret=ret+"/"+dir1[i];
+            }
+        }
+    }
+    return ret;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Generator section
 ////////////////////////////////////////////////////////////////////////////////
@@ -919,12 +994,12 @@ function prep_servers(instance)
                 if ("ip" in machine)
                 {
                     new_srv.appopt<-"-n"+machine.nodeid+" -r -i "+machine.ip+" -p "
-                        +(NET_BASE_PORT+instance.nodeid)+" -tA -z30";
+                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
                 }
                 else
                 {
                     new_srv.appopt<-"-n"+machine.nodeid+" -r -h "+machine.hostname+" -p "
-                        +(NET_BASE_PORT+instance.nodeid)+" -tA -z30";
+                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
                 }
 
                 instance.servers.append(new_srv);
@@ -1704,6 +1779,7 @@ export PATH=$PATH:"+instance.ndrx_bin;
  */
 function gen_ini_file(instance)
 {
+    //TODO: Generate IPCKEY based on NDRX_NODEID, allow several instances on the same server
     instance.ini_text <-
 /******************************************************************************/
 @"[@global]
@@ -2490,13 +2566,11 @@ function ex_generate(arg)
         }
         
         instance.prefix <- machine.keywords["LMID"][0].tolower();
-        # TODO: we might get partial folder matches
-        # in those cases we shall step back one level, to have full match
-        # ending with /.
-        instance.app_home <- strcommon(ubb_appdir, ubb_tuxconfig);
+
+        instance.app_home <- dircommon(ubb_appdir, ubb_tuxconfig);
         instance.use_rel <- false;
 
-        if (instance.app_home=="/")
+        if (instance.app_home==M_opt_P)
         {
             //this is absolute path
             instance.app_home = ubb_appdir;
@@ -2513,21 +2587,16 @@ function ex_generate(arg)
         }
         else
         {
-            //get relative path, strip off the last / from the string
-            instance.app_home = rstrips(instance.app_home, "/");
-
             if (instance.app_home=="")
             {
                 //Exception case, not nice..
                 instance.app_home="/";
             }
 
-            instance.app_bin <- strdiff(ubb_appdir, instance.app_home);
-            instance.app_bin = lstrips(instance.app_bin, "/");
+            instance.app_bin <- dirdiff(ubb_appdir, instance.app_home);
 
-            instance.app_conf <- strdiff(dirname(ubb_tuxconfig),
+            instance.app_conf <- dirdiff(dirname(ubb_tuxconfig),
                                             instance.app_home);
-            instance.app_conf = lstrips(instance.app_conf, "/");
 
             instance.use_rel = true;
 
@@ -2561,7 +2630,7 @@ function ex_generate(arg)
         //Process additional folders
         foreach(dix, folder in ubb_appdir_add)
         {
-            local common = strcommon(folder.orgpath, instance.app_home)
+            local common = dircommon(folder.orgpath, instance.app_home)
                 
             //Schedule folder anyway
             //M_folder_gen[folder.orgpath]<-{};
@@ -2575,8 +2644,7 @@ function ex_generate(arg)
             }
             else
             {
-                folder.path <- strdiff(folder.orgpath, instance.app_home);
-                folder.path=lstrips(folder.path, "/");
+                folder.path <- dirdiff(folder.orgpath, instance.app_home);
                 folder.use_rel <- true;
             }
         }
@@ -2624,10 +2692,8 @@ function ex_generate(arg)
             }
             else
             {
-                local common = strcommon(log_dir, instance.app_home);
-                local diff = strdiff(log_dir, instance.app_home);
-                
-                diff = lstrips(diff, "/");
+                local common = dircommon(log_dir, instance.app_home);
+                local diff = dirdiff(log_dir, instance.app_home);
 
                 if (common!=instance.app_home)
                 {
