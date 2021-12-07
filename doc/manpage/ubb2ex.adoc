@@ -142,6 +142,13 @@ This is output files and directories prefix. As Tuxedo UBBCONFIG uses absolute p
 this parameter allows to generate the migrated configuration relative to the
 'OUTPUT_PREFIX'.
 
+[*-O* 'PORT_OFFSET_MULTIPLIER']::
+This is multiplier used to render local binding port number for incoming bridge
+connections. This is useful if all generated Enduro/X instances (LMIDs) are
+run on local machine. Default value is *100*. Meaning that listening socket
+port number for each *tpbridge(8)* is rendered as local 'NDRX_NODEID' *
+'PORT_OFFSET_MULTIPLIER' + remote 'NDRX_NODEID'.
+
 EXIT STATUS
 -----------
 *0*::
