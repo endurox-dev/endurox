@@ -39,8 +39,22 @@
 function go_out {
     echo "Test exiting with: $1"
 
+    . runtime/usr3_3/conf/set.site3
     xadmin stop -y
     xadmin down -y
+
+    . runtime/usr4_3/conf/set.site4
+    xadmin stop -y
+    xadmin down -y
+
+    . runtime/usr1_3/conf/set.site1
+    xadmin stop -y
+    xadmin down -y
+
+    . runtime/usr2_3/conf/set.site2
+    xadmin stop -y
+    xadmin down -y
+
     
     popd 2>/dev/null
     exit $1
@@ -62,13 +76,55 @@ echo ">>> Testing ubb_network -> E/X convert"
 
 export NDRX_SILENT=Y
 rm -rf ./runtime 2>/dev/null
-../../migration/tuxedo/ubb2ex ubb_config1 -P ./runtime
+../../migration/tuxedo/ubb2ex ubb_network -P ./runtime
 
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
     go_out_silent $RET
 fi
+
+echo ">>> Booting instances..."
+. runtime/usr3_3/conf/set.site3
+xadmin start -y
+
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to boot site3"
+    go_out $RET
+fi
+
+. runtime/usr4_3/conf/set.site4
+xadmin start -y
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to boot site4"
+    go_out $RET
+fi
+
+. runtime/usr1_3/conf/set.site1
+xadmin start -y
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to boot site1"
+    go_out $RET
+fi
+
+. runtime/usr2_3/conf/set.site2
+xadmin start -y
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to boot site2"
+    go_out $RET
+fi
+
+echo ">>> Wait for connection"
+sleep 60
+
+#
+# TODO: Validate links, from all nodes to all
+#
+xadmin psc
 
 go_out $RET
 

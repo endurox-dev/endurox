@@ -230,6 +230,7 @@ exprivate void print_help(char *name)
     fprintf(stderr, "  -S               Converter script name (if not using internal)\n"); 
     /* All directories and files created, shall be made with prefix, mostly needed for testing: */
     fprintf(stderr, "  -P               Output directories and files prefix\n"); 
+    fprintf(stderr, "  -O <OFFSET>      Listening node port offset multiplier, default 100\n"); 
     fprintf(stderr, "  -h               Print this help\n");
 }
 
@@ -245,6 +246,7 @@ int main(int argc, char **argv)
     char opt_y[2] = ""; /**< auto confirm */
     char opt_A[2] = ""; /**< assing numbers */
     char opt_L[30+1] = "";  /**< generate particular LMID only */
+    char opt_O[6+1] = "100";  /**< port offset multiplier by lisetning host */
     char opt_P[PATH_MAX+1] = "";  /**< output prefix */
     char script_nm[PATH_MAX+1]="";
     size_t len = 0;
@@ -264,10 +266,13 @@ int main(int argc, char **argv)
     /* clear any error... */
     _Nunset_error();
             
-    while ((c = getopt (argc, argv, "nycb:hS:D:L:AP:")) != -1)
+    while ((c = getopt (argc, argv, "nycb:hS:D:L:AP:O:")) != -1)
     {
         switch (c)
         {
+            case 'O':
+                NDRX_STRCPY_SAFE(opt_O, optarg);
+                break;
             case 'P':
                 NDRX_STRCPY_SAFE(opt_P, optarg);
                 break;
@@ -349,7 +354,7 @@ int main(int argc, char **argv)
         }
         
         /* Init VM */
-        if (EXSUCCEED!=init_vm(script_nm, opt_n, opt_y, opt_L, opt_A, opt_P))
+        if (EXSUCCEED!=init_vm(script_nm, opt_n, opt_y, opt_L, opt_A, opt_P, opt_O))
         {
             _Nset_error_msg(NESYSTEM, "Failed to load converter script");
             EXFAIL_OUT(ret);

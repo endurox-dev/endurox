@@ -370,11 +370,12 @@ expublic void errorfunc(HPSCRIPTVM v,const PSChar *s,...)
  * @param opt_L LMDID only which shall be generated.
  * @param opt_A assign new SRVIDs
  * @param opt_P prefix
+ * @param opt_O Lisetning port offset multiplier
  * @return EXSUCCEED/EXFAIL
  */
 expublic int init_vm(char *script_nm,
         char *opt_n, char *opt_y, char *opt_L, char *opt_A,
-        char *opt_P)
+        char *opt_P, char *opt_O)
 {
     int ret=EXSUCCEED;
     const PSChar *s;
@@ -407,6 +408,10 @@ expublic int init_vm(char *script_nm,
     
     ps_pushstring(v,"M_opt_P",-1);
     ps_pushstring(v,opt_P,-1);
+    ps_newslot(v,-3,PSFalse);
+
+    ps_pushstring(v,"M_opt_O",-1);
+    ps_pushstring(v,opt_O,-1);
     ps_newslot(v,-3,PSFalse);
     
     /* register functions */
