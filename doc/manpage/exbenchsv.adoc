@@ -21,6 +21,9 @@ responder. The service just returns succeed response with the same buffer for
 very service call. Default service name advertised is *EXBENCH*. The service
 works with any XATMI buffer type.
 
+Server supports dispatch threading, i.e. settings of *<mindispatchthreads>*, 
+*<maxdispatchthreads>*.
+
 OPTIONS
 -------
 [*-N* 'CALL_SERVICE_NAME']::

@@ -61,6 +61,14 @@ function go_out_silent {
 echo ">>> Testing ubb_config1 -> E/X convert"
 ################################################################################
 
+#
+# Cleanup by rndkey, maybe random...
+#
+
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
+
 export NDRX_SILENT=Y
 rm -rf ./runtime 2>/dev/null
 ../../migration/tuxedo/ubb2ex ubb_config1 -P ./runtime
@@ -79,6 +87,8 @@ ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_2
 ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_3
 ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_4
 ln -s $TESTDIR/atmiclt90 runtime/user90/bin/atmiclt90
+
+# Really not needed: shall be in dist path:
 ln -s $TESTDIR/../../exbench/exbenchsv runtime/user90/bin/exbenchsv
 ln -s $TESTDIR/../../exbench/exbenchcl runtime/user90/bin/exbenchcl
 
@@ -89,6 +99,8 @@ pushd .
 cd runtime/user90/conf
 . set.test1
 
+# cleanup shms...
+xadmin down -y
 xadmin start -y
 
 RET=$?
