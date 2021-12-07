@@ -715,6 +715,13 @@ Ensure(test089_tmrecover)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test090_tuxmig)
+{
+    int ret;
+    ret=system_dbg("test090_tuxmig/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -871,6 +878,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test087_tmsrv);
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
+    add_test(suite, test090_tuxmig);
     
     return suite;
 }
