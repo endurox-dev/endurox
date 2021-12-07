@@ -981,25 +981,27 @@ function prep_servers(instance)
                 new_srv.sysopt<-("-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log");
 
                 new_srv.appopt<-"-n"+machine.nodeid+" -r -i 0.0.0.0 -p "
-                        +(NET_BASE_PORT+machine.nodeid)+" -tP -z30";
+                        +(NET_BASE_PORT+instance.nodeid*100+machine.nodeid)+" -tP -z30";
 
                 instance.servers.append(new_srv);
             }
             else if (machine.nodeid > instance.nodeid)
             {
 
-                //This is active role, we connect 
+                //This is active role
+                //port number shall match our node id
+                //we shall build port number as 100*listening_node+active_node
                 new_srv.sysopt<-"-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log";
 
                 if ("ip" in machine)
                 {
                     new_srv.appopt<-"-n"+machine.nodeid+" -r -i "+machine.ip+" -p "
-                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
+                        +(NET_BASE_PORT+machine.nodeid*100+instance.nodeid)+" -tA -z30";
                 }
                 else
                 {
                     new_srv.appopt<-"-n"+machine.nodeid+" -r -h "+machine.hostname+" -p "
-                        +(NET_BASE_PORT+machine.nodeid)+" -tA -z30";
+                        +(NET_BASE_PORT+machine.nodeid*100+instance.nodeid)+" -tA -z30";
                 }
 
                 instance.servers.append(new_srv);
@@ -1790,7 +1792,7 @@ NDRX_ULOG="+instance.log_rel+@"
 NDRX_DMNLOG=${NDRX_ULOG}/ndrxd.log
 NDRX_DPID=${NDRX_APPHOME}/tmp/ndrxd."+instance.prefix+@".pid
 NDRX_DQMAX=100
-NDRX_IPCKEY="+instance.ipckey+@"
+NDRX_IPCKEY="+(instance.ipckey.tointeger()+(instance.machine.nodeid-1)*100)+@"
 NDRX_LDBAL=0
 NDRX_LEV=5
 NDRX_LOG=${NDRX_ULOG}/xadmin.log
