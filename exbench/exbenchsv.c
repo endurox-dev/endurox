@@ -179,7 +179,7 @@ out:
  */
 void uninit(void)
 {
-    TP_LOG(log_info, "Uninit");
+    TP_LOG(log_info, "uninit");
     if (M_tran)
     {
         tpclose();
@@ -187,15 +187,73 @@ void uninit(void)
 }
 
 /**
- * Server program main entry
+ * thread init
+ * @param argc
+ * @param argv
+ * @return 
+ */
+int thinit(int argc, char ** argv)
+{
+    int ret = EXSUCCEED;
+    
+    if (M_tran && EXSUCCEED!=tpopen())
+    {
+        TP_LOG(log_error, "thinit: tailed to initialise tpopen: %s!", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Thread un-init
+ */
+void thuninit(void)
+{
+    TP_LOG(log_info, "thuninit");
+    if (M_tran)
+    {
+        tpclose();
+    }
+}
+  
+
+/* Auto generated system advertise table */
+expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
+    { NULL, NULL, NULL, 0, 0 }
+};
+
+/**
+ * Server program main entry, multi-threaded support
  * @param argc	argument count
  * @param argv	argument values
  * @return SUCCEED/FAIL
  */
-int main(int argc, char** argv)
+int main( int argc, char** argv )
 {
-    /* Launch the Enduro/x thread */
-    return ndrx_main_integra(argc, argv, init, uninit, 0);
+    _tmbuilt_with_thread_option=EXTRUE;
+    struct tmsvrargs_t tmsvrargs =
+    {
+        &tmnull_switch,
+        &ndrx_G_tmdsptchtbl[0],
+        0,
+        init,
+        uninit,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        thinit,
+        thuninit
+    };
+    
+    return( _tmstartserver( argc, argv, &tmsvrargs ));
+    
 }
+
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -39,23 +39,22 @@
 function go_out {
     echo "Test exiting with: $1"
 
-    . runtime/usr3_3/conf/set.site3
+    . usr3_3/conf/set.site3
     xadmin stop -y
     xadmin down -y
 
-    . runtime/usr4_3/conf/set.site4
+    . usr4_3/conf/set.site4
     xadmin stop -y
     xadmin down -y
 
-    . runtime/usr1_3/conf/set.site1
+    . usr1_3/conf/set.site1
     xadmin stop -y
     xadmin down -y
 
-    . runtime/usr2_3/conf/set.site2
+    . usr2_3/conf/set.site2
     xadmin stop -y
     xadmin down -y
 
-    
     popd 2>/dev/null
     exit $1
 }
@@ -70,9 +69,30 @@ function go_out_silent {
     exit $1
 }
 
+#
+# Benchmark all node services 
+#
+function validate_links {
+
+    exbenchcl -n5 -P -t5 -b '{}' -f EX_DATA -S1024 -s$1
+    RET=$?
+    if [ "X$RET" != "X0" ]; then
+        echo "Failed to test service $1"
+        go_out $RET
+    fi
+}
+
 ################################################################################
 echo ">>> Testing ubb_network -> E/X convert"
 ################################################################################
+
+#
+# Cleanup by rndkey, maybe random...
+#
+
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
 
 export NDRX_SILENT=Y
 rm -rf ./runtime 2>/dev/null
@@ -84,8 +104,13 @@ if [ "X$RET" != "X0" ]; then
     go_out_silent $RET
 fi
 
+cd runtime
+pushd .
+
 echo ">>> Booting instances..."
-. runtime/usr3_3/conf/set.site3
+. usr3_3/conf/set.site3
+# cleanup shms...
+xadmin down -y
 xadmin start -y
 
 RET=$?
@@ -94,7 +119,9 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
-. runtime/usr4_3/conf/set.site4
+. usr4_3/conf/set.site4
+# cleanup shms...
+xadmin down -y
 xadmin start -y
 RET=$?
 if [ "X$RET" != "X0" ]; then
@@ -102,7 +129,9 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
-. runtime/usr1_3/conf/set.site1
+. usr1_3/conf/set.site1
+# cleanup shms...
+xadmin down -y
 xadmin start -y
 RET=$?
 if [ "X$RET" != "X0" ]; then
@@ -110,7 +139,9 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
-. runtime/usr2_3/conf/set.site2
+. usr2_3/conf/set.site2
+# cleanup shms...
+xadmin down -y
 xadmin start -y
 RET=$?
 if [ "X$RET" != "X0" ]; then
@@ -121,10 +152,64 @@ fi
 echo ">>> Wait for connection"
 sleep 60
 
-#
-# TODO: Validate links, from all nodes to all
-#
+echo ">>> Testing links from site1..."
+. usr1_3/conf/set.site1
 xadmin psc
+validate_links "SERVER1"
+validate_links "SERVER2"
+validate_links "SERVER3"
+validate_links "SERVER4"
+
+echo ">>> Testing links from site2..."
+. usr2_3/conf/set.site2
+xadmin psc
+validate_links "SERVER1"
+validate_links "SERVER2"
+validate_links "SERVER3"
+validate_links "SERVER4"
+
+echo ">>> Testing links from site3..."
+. usr3_3/conf/set.site3
+xadmin psc
+validate_links "SERVER1"
+validate_links "SERVER2"
+validate_links "SERVER3"
+validate_links "SERVER4"
+
+echo ">>> Testing links from site4..."
+. usr4_3/conf/set.site4
+xadmin psc
+validate_links "SERVER1"
+validate_links "SERVER2"
+validate_links "SERVER3"
+validate_links "SERVER4"
+
+echo ">>> Testing directories & files..."
+
+if [ ! -f "usr1_4/log/ndrxd.log" ]; then
+    echo "usr1_4/log/ndrxd.log does not exist."
+    go_out -1
+fi
+
+if [ ! -f "usr2_4/log/ndrxd.log" ]; then
+    echo "usr2_4/log/ndrxd.log does not exist."
+    go_out -1
+fi
+
+if [ ! -f "usr3_4/log/ndrxd.log" ]; then
+    echo "usr3_4/log/ndrxd.log does not exist."
+    go_out -1
+fi
+
+if [ ! -f "usr4_4/log/ndrxd.log" ]; then
+    echo "usr4_4/log/ndrxd.log does not exist."
+    go_out -1
+fi
+
+if [ ! -d "usr4_1/app/tmlogs/rm4" ]; then
+    echo "usr4_1/app/tmlogs/rm4 does not exist."
+    go_out -1
+fi
 
 go_out $RET
 

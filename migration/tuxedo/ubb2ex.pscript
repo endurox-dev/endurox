@@ -2169,9 +2169,9 @@ tab+"    </server>\n";
     {
         instance.xml_text+=
 @"    <clients>
-          <client cmdline=""restincl"">
-              <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_ULOG}/restincl.rin1.log""/>
-          </client>
+            <client cmdline=""restincl"">
+                <exec tag=""RESTIN"" autostart=""Y"" subsect=""RIN1"" cctag=""RIN1"" log=""${NDRX_ULOG}/restincl.rin1.log""/>
+            </client>
     </clients>
 ";
     }
