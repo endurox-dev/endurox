@@ -70,13 +70,13 @@ $ sudo apt-get install indent asciidoc libxml2-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev libxml2-dev git
 ---------------------------------------------------------------------
 
-==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04
+==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04, 20.04
 
 ---------------------------------------------------------------------
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc libxml2-dev \
-	cmake dia flex bison gcc g++ zlib1g-dev \
-	libssl-dev libcrypto++-dev libxml2-dev libxml2-utils git
+    cmake dia flex bison gcc g++ zlib1g-dev \
+    libssl-dev libcrypto++-dev libxml2-dev libxml2-utils git
 ---------------------------------------------------------------------
 
 If running unit tests with PostgreSQL, then following additional package shall
@@ -662,7 +662,8 @@ max_prepared_transactions = 1000                # zero disables the feature
 --------------------------------------------------------------------------------
 
 Network connection shall be enabled too for Posgres auth, edit the *pg_hba.conf*
-(for RHEL, SLES /var/lib/pgsql/data/pg_hba.conf)
+(for RHEL, SLES /var/lib/pgsql/data/pg_hba.conf. For debian/ubuntu these shall be already
+correctly set by default (according to ubuntu 20.04))
 
 Ensure that it contains following lines (for password auth):
 
