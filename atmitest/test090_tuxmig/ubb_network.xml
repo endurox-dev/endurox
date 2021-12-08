@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+<endurox>
+    <appconfig>
+        <sanity>1</sanity>
+        <brrefresh>5</brrefresh>
+        <restart_min>1</restart_min>
+        <restart_step>1</restart_step>
+        <restart_max>5</restart_max>
+        <restart_to_check>20</restart_to_check>
+        <gather_pq_stats>Y</gather_pq_stats>
+    </appconfig>
+    <defaults>
+        <autokill>1</autokill>
+        <start_max>10</start_max>
+        <pingtime>100</pingtime>
+        <ping_max>800</ping_max>
+        <end_max>10</end_max>
+        <killtime>1</killtime>
+        <min>1</min>
+        <max>1</max>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="cconfsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>1</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cconfsrv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+        <server name="tpadmsv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>33</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpadmsv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>65</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n1 -r -i 0.0.0.0 -p 21501 -tP -z30</appopt>
+        </server>
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>96</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n2 -r -i 0.0.0.0 -p 21502 -tP -z30</appopt>
+        </server>
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>127</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n3 -r -i 0.0.0.0 -p 21503 -tP -z30</appopt>
+        </server>
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>158</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n4 -r -i 0.0.0.0 -p 21504 -tP -z30</appopt>
+        </server>
+    </servers>
+    <defaults>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="tmsrv">
+            <cctag>SITE4_GRP</cctag>
+            <min>1</min>
+            <max>1</max>
+            <srvid>189</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm4</appopt>
+        </server>
+        <server name="exbenchsv">
+            <cctag>SITE4_GRP</cctag>
+            <min>1</min>
+            <max>1</max>
+            <srvid>220</srvid>
+            <mindispatchthreads>10</mindispatchthreads>
+            <maxdispatchthreads>10</maxdispatchthreads>
+            <sysopt>-e ${NDRX_ULOG}/exbenchsv.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-sSERVER4 -T</appopt>
+        </server>
+        <server name="exbenchsv">
+            <cctag>SITE5_GRP</cctag>
+            <min>10</min>
+            <max>10</max>
+            <srvid>251</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exbenchsv.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-sSERVER5</appopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag/>
+        <min>1</min>
+        <max>1</max>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="tmrecoversv">
+            <srvid>291</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmrecoversv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-p -s10</appopt>
+        </server>
+    </servers>
+    <services>
+        <service svcnm="SERVER4" autotran="Y"/>
+    </services>
+</endurox>
