@@ -230,18 +230,42 @@ grant execute on dbms_xa to <database_user>; (If using Oracle 10.2)
 
 ORACLE RAC SETTINGS
 -------------------
-If planing to use Oracle RAC, the to successfully process distributed transaction
-across binaries which are connected to different RAC nodes, Oracle RAC DTP Service
-must be configured with Singleton option, so that only one node actively serves
-the transactions.
+If planing to use Oracle RAC, to successfully process distributed transaction
+across binaries which are connected to different RAC nodes, Oracle RAC Singleton 
+Service must be configured, so that only one node actively serves the transactions,
+and this ensures XA affinity.
+
+Typically on gird infrastructure, that can be configured as:
+
+--------------------------------------------------------------------------------
+
+$ srvctl add service -db RACDB -service XARAC -preferred RAC1
+  -available RAC2
+
+--------------------------------------------------------------------------------
+
+For policy based RAC cluster management, use:
+
+--------------------------------------------------------------------------------
+
+$ srvctl add service -db RACDB -service XARAC -serverpool xa_pool
+  -cardinality SINGLETON
+
+--------------------------------------------------------------------------------
+
+*NOTE:* *-dtp*  option shall be leaved to default, which is *FALSE*.
 
 If this above is not configured and say two binaries are working with same XA
 transaction, one binary is connected to first RAC node and other binary with second RAC node,
 the transaction will not work, as XA API will not see the transaction on other
-node than where it was started.
+node than where it was started, and following error would be generated:
 
-Enduro/X does not support RAC XA Affinity and does not process 
-Oracle Fast Application Notifications (FAN).
+--------------------------------------------------------------------------------
+
+ORA-24798: cannot resume the distributed transaction branch on another instance
+
+--------------------------------------------------------------------------------
+
 
 For more details consult with Oracle instructions, as basically Enduro/X uses
 plain X/Open XA API for managing the transactions, and it is expected that
