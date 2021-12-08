@@ -1,0 +1,10 @@
+#
+# Invalid Resource identifier
+#
+
+*RESOURCES
+SOME_SETTING ABC=FFF
+IPCKEY 46000=66
+
+
+*SERVERS

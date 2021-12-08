@@ -1,0 +1,13 @@
+#
+# Quotes not terminated
+#
+
+*RESOURCES
+RES	1
+
+
+*GROUPS
+
+GABC GRPNO=1
+CABC GRPNO=1 HELLO="ABC
+

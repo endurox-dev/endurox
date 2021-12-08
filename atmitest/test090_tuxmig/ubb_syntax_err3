@@ -1,0 +1,13 @@
+#
+# Duplicate group ID
+#
+
+*RESOURCES
+RES	1
+
+
+*GROUPS
+
+GABC GRPNO=1
+CABC GRPNO=1
+
