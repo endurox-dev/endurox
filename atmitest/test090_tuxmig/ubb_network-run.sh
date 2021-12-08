@@ -55,6 +55,10 @@ function go_out {
     xadmin stop -y
     xadmin down -y
 
+    . usr5_3/conf/set.site5
+    xadmin stop -y
+    xadmin down -y
+
     popd 2>/dev/null
     exit $1
 }
@@ -149,6 +153,16 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
+. usr5_3/conf/set.site5
+# cleanup shms...
+xadmin down -y
+xadmin start -y
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to boot site5"
+    go_out $RET
+fi
+
 echo ">>> Wait for connection"
 sleep 60
 
@@ -159,6 +173,7 @@ validate_links "SERVER1"
 validate_links "SERVER2"
 validate_links "SERVER3"
 validate_links "SERVER4"
+validate_links "SERVER5"
 
 echo ">>> Testing links from site2..."
 . usr2_3/conf/set.site2
@@ -167,6 +182,7 @@ validate_links "SERVER1"
 validate_links "SERVER2"
 validate_links "SERVER3"
 validate_links "SERVER4"
+validate_links "SERVER5"
 
 echo ">>> Testing links from site3..."
 . usr3_3/conf/set.site3
@@ -175,6 +191,7 @@ validate_links "SERVER1"
 validate_links "SERVER2"
 validate_links "SERVER3"
 validate_links "SERVER4"
+validate_links "SERVER5"
 
 echo ">>> Testing links from site4..."
 . usr4_3/conf/set.site4
@@ -183,6 +200,16 @@ validate_links "SERVER1"
 validate_links "SERVER2"
 validate_links "SERVER3"
 validate_links "SERVER4"
+validate_links "SERVER5"
+
+echo ">>> Testing links from site5..."
+. usr4_3/conf/set.site4
+xadmin psc
+validate_links "SERVER1"
+validate_links "SERVER2"
+validate_links "SERVER3"
+validate_links "SERVER4"
+validate_links "SERVER5"
 
 echo ">>> Testing directories & files..."
 
