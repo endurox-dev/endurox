@@ -238,6 +238,25 @@ if [ ! -d "usr4_1/app/tmlogs/rm4" ]; then
     go_out -1
 fi
 
+################################################################################
+echo ">>> Compare outputs of the XML"
+################################################################################
+
+OUT=`diff $TESTDIR/ubb_network.xml $TESTDIR/runtime/usr4_3/conf/ndrxconfig.site4.xml`
+
+echo $OUT
+
+RET=$?
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
+
+if [ "X$OUT" != "X" ]; then
+    echo "ubb_network.xml!=runtime/usr4_3/conf/ndrxconfig.site4.xml"
+    go_out -1
+fi
+
+
 go_out $RET
 
 # vim: set ts=4 sw=4 et smartindent:

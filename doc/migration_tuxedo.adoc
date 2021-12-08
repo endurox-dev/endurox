@@ -68,16 +68,16 @@ similarities projects:
 |*GROUPS|-|[@global/<CCTAG>] - global settings per tag, [@queue/<CCTAG>] - persistent
 queue configuration per tag.|Approximate mapping
 |*NETWORK|Bridge is established as *tpbridge(8)* XATMI server 
-processes in <servers /> section|-|Approximate mapping
+processes in <servers> section|-|Approximate mapping
 |*SERVERS|<endurox><servers> tag |-|-
 |*SERVERS server|<endurox><servers><server name="server"> tag |-|-
 |*SERVERS DEFAULT:|<endurox><defaults> tag |-|-
-|*SERVICES|<endurox>/<services>|-|Service settings are global per instance, i.e.
+|*SERVICES|<endurox><services>|-|Service settings are global per instance, i.e.
 cannot be configured per cctag.
-|*SERVICES service|<endurox>/<services>/<service svcnm="service">|-|-
-|*SERVICES DEFAULT:|<endurox>/<services>/<defaults>|-|-
-|*ROUTING|<endurox>/<routing>|-|Defaults not supported at this section.
-|*ROUTING route|<endurox>/<routing>/<route routing="route">|-|-
+|*SERVICES service|<endurox<services><service svcnm="service">|-|-
+|*SERVICES DEFAULT:|<endurox><services><defaults>|-|-
+|*ROUTING|<endurox><routing>|-|Defaults not supported at this section.
+|*ROUTING route|<endurox><routing>/<route routing="route">|-|-
 |=========================================================
 
 .Tuxedo - Enduro/X key binaries mapping
@@ -132,6 +132,31 @@ server and client processes, services and DDR info. The other file is standard
 Typically Enduro/X application are configure with third environment file
 which loads the env variables in the shell session. File name typically
 starts with *set*.
+
+=== Converting "*RESOURCES" section
+
+Enduro/X resources shall be configured according to the *ex_env(5)* manpage. This
+section lists elements with the same or close meaning. Enduro/X setting
+is written in *app.ini* in *[@global]* or *[@global/<CCTAG>]* section.
+
+.Tuxedo - Enduro/X resources mapping
+[width="80%", options="header"]
+|=========================================================
+|Tuxedo setting|Enduro/X equivalent|Comments
+|IPCKEY|NDRX_IPCKEY|System wide IPC (shm, msg, sem) identifier offset.
+This is hex value. For Enduro/X *0x* or *0X* prefix must not be present in value.
+| MAXSERVERS | NDRX_SRVMAX | Max number of servers instance can handle
+| MAXSERVICES | NDRX_SVCMAX | Max number of services instance can handle.
+For Enduro/X bigger number (something like x2) is recommended, so that linear
+hashing/service lookup would work faster.
+|SCANUNIT, BLOCKTIME | NDRX_TOUT | In Enduro/X timeouts are configured in single
+variable, set in seconds. Can be converted as NDRX_TOUT=(Tux SCANUNIT) * (Tux BLOCKTIME).
+|SCANUNIT| NDRX_SCANUNIT| In case if using *SystemV* release (AIX pre 7.3, Solaris),
+Enduro/X binaries internally by additional thread scan for timeouts in the local
+process. The scanning is done by *NDRX_SCANUNIT* setting (in milliseconds), which
+by default is *1000*. For Linux, FreeBSD, MacOS release these is not applicable.
+|MAXRTDATA|NDRX_RTCRTMAX|Number of bytes available for routing criterion storage.
+|=========================================================
 
 === Converting Tuxedo groups to Enduro/X CCTAGs
 
