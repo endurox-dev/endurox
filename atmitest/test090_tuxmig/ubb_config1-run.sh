@@ -71,7 +71,7 @@ xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
 
 export NDRX_SILENT=Y
 rm -rf ./runtime 2>/dev/null
-../../migration/tuxedo/ubb2ex ubb_config1 -P ./runtime
+ubb2ex ubb_config1 -P ./runtime
 
 RET=$?
 
@@ -89,8 +89,8 @@ ln -s $TESTDIR/atmi.sv90 runtime/user90/bin/atmi.sv90_4
 ln -s $TESTDIR/atmiclt90 runtime/user90/bin/atmiclt90
 
 # Really not needed: shall be in dist path:
-ln -s $TESTDIR/../../exbench/exbenchsv runtime/user90/bin/exbenchsv
-ln -s $TESTDIR/../../exbench/exbenchcl runtime/user90/bin/exbenchcl
+#ln -s $TESTDIR/../../exbench/exbenchsv runtime/user90/bin/exbenchsv
+#ln -s $TESTDIR/../../exbench/exbenchcl runtime/user90/bin/exbenchcl
 
 # Start the runtime
 
