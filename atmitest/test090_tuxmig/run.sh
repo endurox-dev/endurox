@@ -52,6 +52,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
+export NDRX_SILENT=Y
 
 #
 # Generic exit function
@@ -60,6 +61,22 @@ function go_out {
     echo "Test exiting with: $1"
     popd 2>/dev/null
     exit $1
+}
+
+#
+# Check that syntax fails
+#
+function syntax_chk {    
+
+    rm -rf ./runtime 2>/dev/null
+    # must be in path:
+    ubb2ex $1 -P ./runtime
+    RET=$?
+    if [ "X$RET" == "X0" ]; then
+        echo "$1 must fail, but converted OK"
+        go_out -1
+    fi
+
 }
 
 # Some preparations
@@ -85,15 +102,14 @@ if [ "X$RET" != "X0" ]; then
 fi
 ################################################################################
 
-#TODO: Check networking
-#TODO: Check SRVID re-generate.
-#TODO: Check Ubb-syntax error.
-#TODO: Test 
-# Catch is there is test error!!!
-#if [ "X`grep TESTERROR *.log`" != "X" ]; then
-#    echo "Test error detected!"
-#    RET=-2
-#fi
+syntax_chk "ubb_syntax_err1"
+syntax_chk "ubb_syntax_err2"
+syntax_chk "ubb_syntax_err3"
+syntax_chk "ubb_syntax_err4"
+
+RET=0
+
+#TODO: Check folder cleanup...
 
 go_out $RET
 

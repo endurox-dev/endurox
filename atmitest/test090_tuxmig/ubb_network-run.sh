@@ -100,7 +100,7 @@ xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
 
 export NDRX_SILENT=Y
 rm -rf ./runtime 2>/dev/null
-../../migration/tuxedo/ubb2ex ubb_network -P ./runtime
+ubb2ex ubb_network -P ./runtime
 
 RET=$?
 
