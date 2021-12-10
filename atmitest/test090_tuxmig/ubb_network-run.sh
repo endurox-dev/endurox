@@ -39,23 +39,23 @@
 function go_out {
     echo "Test exiting with: $1"
 
-    . usr3_3/conf/set.site3
+    . usr3_3/conf/setsite3
     xadmin stop -y
     xadmin down -y
 
-    . usr4_3/conf/set.site4
+    . usr4_3/conf/setsite4
     xadmin stop -y
     xadmin down -y
 
-    . usr1_3/conf/set.site1
+    . usr1_3/conf/setsite1
     xadmin stop -y
     xadmin down -y
 
-    . usr2_3/conf/set.site2
+    . usr2_3/conf/setsite2
     xadmin stop -y
     xadmin down -y
 
-    . usr5_3/conf/set.site5
+    . usr5_3/conf/setsite5
     xadmin stop -y
     xadmin down -y
 
@@ -112,7 +112,7 @@ cd runtime
 pushd .
 
 echo ">>> Booting instances..."
-. usr3_3/conf/set.site3
+. usr3_3/conf/setsite3
 # cleanup shms...
 xadmin down -y
 xadmin start -y
@@ -123,7 +123,7 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
-. usr4_3/conf/set.site4
+. usr4_3/conf/setsite4
 # cleanup shms...
 xadmin down -y
 xadmin start -y
@@ -133,7 +133,7 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
-. usr1_3/conf/set.site1
+. usr1_3/conf/setsite1
 # cleanup shms...
 xadmin down -y
 xadmin start -y
@@ -143,7 +143,7 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
-. usr2_3/conf/set.site2
+. usr2_3/conf/setsite2
 # cleanup shms...
 xadmin down -y
 xadmin start -y
@@ -153,7 +153,7 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
-. usr5_3/conf/set.site5
+. usr5_3/conf/setsite5
 # cleanup shms...
 xadmin down -y
 xadmin start -y
@@ -167,7 +167,7 @@ echo ">>> Wait for connection"
 sleep 60
 
 echo ">>> Testing links from site1..."
-. usr1_3/conf/set.site1
+. usr1_3/conf/setsite1
 xadmin psc
 validate_links "SERVER1"
 validate_links "SERVER2"
@@ -176,7 +176,7 @@ validate_links "SERVER4"
 validate_links "SERVER5"
 
 echo ">>> Testing links from site2..."
-. usr2_3/conf/set.site2
+. usr2_3/conf/setsite2
 xadmin psc
 validate_links "SERVER1"
 validate_links "SERVER2"
@@ -185,7 +185,7 @@ validate_links "SERVER4"
 validate_links "SERVER5"
 
 echo ">>> Testing links from site3..."
-. usr3_3/conf/set.site3
+. usr3_3/conf/setsite3
 xadmin psc
 validate_links "SERVER1"
 validate_links "SERVER2"
@@ -194,7 +194,7 @@ validate_links "SERVER4"
 validate_links "SERVER5"
 
 echo ">>> Testing links from site4..."
-. usr4_3/conf/set.site4
+. usr4_3/conf/setsite4
 xadmin psc
 validate_links "SERVER1"
 validate_links "SERVER2"
@@ -203,7 +203,7 @@ validate_links "SERVER4"
 validate_links "SERVER5"
 
 echo ">>> Testing links from site5..."
-. usr4_3/conf/set.site4
+. usr4_3/conf/setsite4
 xadmin psc
 validate_links "SERVER1"
 validate_links "SERVER2"

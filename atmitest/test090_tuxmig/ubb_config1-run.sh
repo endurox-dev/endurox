@@ -97,7 +97,7 @@ ln -s $TESTDIR/atmiclt90 runtime/user90/bin/atmiclt90
 pushd .
 
 cd runtime/user90/conf
-. set.test1
+. settest1
 
 # cleanup shms...
 xadmin down -y

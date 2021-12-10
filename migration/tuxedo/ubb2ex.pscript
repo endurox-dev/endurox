@@ -2587,7 +2587,7 @@ function ex_generate(arg)
             instance.ndrx_conf<- instance.app_conf;
             instance.ndrx_bin <- instance.app_bin;
 
-            instance.set_file <-format("%s/set.%s", instance.app_conf, instance.prefix);
+            instance.set_file <-format("%s/set%s", instance.app_conf, instance.prefix);
             instance.xml_file <-format("%s/ndrxconfig.%s.xml", instance.app_conf, instance.prefix);
             instance.ini_file <-format("%s/app.%s.ini", instance.app_conf, instance.prefix);
 
@@ -2629,7 +2629,7 @@ function ex_generate(arg)
                 instance.ndrx_bin <- "${NDRX_APPHOME}";
             }
 
-            instance.set_file <-format("%s/set.%s", conf_full, instance.prefix);
+            instance.set_file <-format("%s/set%s", conf_full, instance.prefix);
             instance.xml_file <-format("%s/ndrxconfig.%s.xml", conf_full, instance.prefix);
             instance.ini_file <-format("%s/app.%s.ini", conf_full, instance.prefix);
         }
