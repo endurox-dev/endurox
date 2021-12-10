@@ -206,6 +206,12 @@ export PATH=$PATH:<APPDIR>
 
 --------------------------------------------------------------------------------
 
+Additionally dirname of UBB *ULOGPFX* can be used as [@global]/NDRX_ULOG. Where
+later *NDRX_ULOG* by it self means a directory where ULOG files are written by
+mask 'ULOG.YYYYMMDD' and process debug logging is written.
+
+Data from UBB *ENVFILE* may be copied to *app.ini* [@global] section.
+
 The above is just recommended way how to setup runtime environment. Other
 approaches may be used too, according to *ex_env(5)* and 
 *getting_started_tutorial(guides)(Getting Started Tutorial)*.
@@ -213,17 +219,46 @@ approaches may be used too, according to *ex_env(5)* and
 So if having Tuxedo configuration like:
 
 --------------------------------------------------------------------------------
-TODO:
+
+*MACHINES
+"SOME-MACHINE"  LMID=TEST1
+                TUXDIR="/some/folder/tuxedo12"
+        APPDIR="/user90/bin"
+        TUXCONFIG="/user90/conf/tuxconfig"
+        ULOGPFX="/user90/log/ULOG"
+        TLOGDEVICE="/user90/conf/TLOG"
+        ENVFILE="./env_common.txt" 
+        TLOGSIZE=1000
+        MAXWSCLIENTS=300
+
 --------------------------------------------------------------------------------
 
 That would be projected as following Enduro/X *set* file (*settest1*):
 
 --------------------------------------------------------------------------------
-TODO:
+
+# update to correspond actual Enduro/X installation path
+export NDRX_HOME=/usr
+export NDRX_APPHOME=/user90
+export NDRX_CCONFIG=${NDRX_APPHOME}/conf/app.test1.ini
+export CDPATH=$CDPATH:.:${NDRX_APPHOME}
+export PATH=$PATH:${NDRX_APPHOME}/bin
+
 --------------------------------------------------------------------------------
 
+Additionally *app.ini* would get:
 
-=== Converting Tuxedo groups to Enduro/X CCTAGs
+--------------------------------------------------------------------------------
+
+[@global]
+...
+NDRX_ULOG=${NDRX_APPHOME}/log
+
+# + any data from ENVFILE, directly copied here, as syntax basically is the same
+
+--------------------------------------------------------------------------------
+
+=== Converting "*GROUPS" section
 
 At Core of the *Tuxedo* application, principle of service grouping is used.
 The grouping splits the binaries/servers in some logical groups. These
