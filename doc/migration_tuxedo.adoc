@@ -115,7 +115,7 @@ such as:
 
 - ndrxconfig.xml
 - app.ini
-- set (environment loader)
+- settest1 (environment loader)
 
 For further document we assume that system code "test1" is used.
 
@@ -157,6 +157,71 @@ process. The scanning is done by *NDRX_SCANUNIT* setting (in milliseconds), whic
 by default is *1000*. For Linux, FreeBSD, MacOS release these is not applicable.
 |MAXRTDATA|NDRX_RTCRTMAX|Number of bytes available for routing criterion storage.
 |=========================================================
+
+=== Converting "*MACHINES" section
+
+In Enduro/X normally it each configuration set applies only to one machine/instance.
+So in Enduro/X there is no such direct equivalent to this section. However some
+useful information is encoded in Tuxedo counter part.
+
+When converting multi-server UBBConfig file, it is needed to split all the resources
+in UBBConfig by *LMID*. For following UBB sections that could be done via *GROUP*
+setting.
+
+If converting single machine (or multiple machines and working in different directories
+for each set of the files), then output files may be named as
+
+. set<lmid_lowercase>
+
+. ndrxconfig.xml
+
+. app.ini
+
+In case if converting multiple machines in the same configuration directories,
+following configuration naming strategy shall be used:
+
+. set<lmid_lowercase>
+
+. ndrxconfig.<lmid_lowercase>.xml
+
+. app.<lmid_lowercase>.ini
+
+Following information from "*MACHINES" section projects to Enduro/X:
+
+*settest1*:
+
+--------------------------------------------------------------------------------
+
+#/bin/bash
+#
+# @(#) Load this script in environment before Enduro/X start
+#
+
+# update to correspond actual Enduro/X installation path
+export NDRX_HOME=/usr
+export NDRX_APPHOME=<Common part between APPDIR and TUXCONFIG, if not common part, just use APPDIR >
+export NDRX_CCONFIG=<Directory name of TUXCONFIG>
+export CDPATH=$CDPATH:.:${NDRX_APPHOME}
+export PATH=$PATH:<APPDIR>
+
+--------------------------------------------------------------------------------
+
+The above is just recommended way how to setup runtime environment. Other
+approaches may be used too, according to *ex_env(5)* and 
+*getting_started_tutorial(guides)(Getting Started Tutorial)*.
+
+So if having Tuxedo configuration like:
+
+--------------------------------------------------------------------------------
+TODO:
+--------------------------------------------------------------------------------
+
+That would be projected as following Enduro/X *set* file (*settest1*):
+
+--------------------------------------------------------------------------------
+TODO:
+--------------------------------------------------------------------------------
+
 
 === Converting Tuxedo groups to Enduro/X CCTAGs
 
