@@ -200,7 +200,7 @@ Following information from "*MACHINES" section projects to Enduro/X:
 # update to correspond actual Enduro/X installation path
 export NDRX_HOME=/usr
 export NDRX_APPHOME=<Common part between APPDIR and TUXCONFIG, if not common part, just use APPDIR >
-export NDRX_CCONFIG=<Directory name of TUXCONFIG>
+export NDRX_CCONFIG=<Directory name of TUXCONFIG>/app.ini
 export CDPATH=$CDPATH:.:${NDRX_APPHOME}
 export PATH=$PATH:<APPDIR>
 
