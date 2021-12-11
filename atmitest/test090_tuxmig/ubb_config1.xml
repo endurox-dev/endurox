@@ -194,7 +194,7 @@
             <min>2</min>
             <max>2</max>
             <srvid>17</srvid>
-            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/TMS_ORA_1.${NDRX_SVSRVID}.log -r</sysopt>
             <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm5</appopt>
         </server>
         <server name="orabin1">
@@ -207,7 +207,7 @@
             <min>2</min>
             <max>2</max>
             <srvid>19</srvid>
-            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/TMS_ORA_2.${NDRX_SVSRVID}.log -r</sysopt>
             <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm6</appopt>
         </server>
         <server name="orabin2">
@@ -220,7 +220,7 @@
             <min>2</min>
             <max>2</max>
             <srvid>22</srvid>
-            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/TMS_ORA_3.${NDRX_SVSRVID}.log -r</sysopt>
             <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm7</appopt>
         </server>
         <server name="orabin3">
