@@ -69,15 +69,15 @@ similarities projects:
 queue configuration per tag.|Approximate mapping
 |*NETWORK|Bridge is established as *tpbridge(8)* XATMI server 
 processes in <servers> section|-|Approximate mapping
-|*SERVERS|<endurox><servers> tag |-|-
-|*SERVERS server|<endurox><servers><server name="server"> tag |-|-
-|*SERVERS DEFAULT:|<endurox><defaults> tag |-|-
-|*SERVICES|<endurox><services>|-|Service settings are global per instance, i.e.
+|*SERVERS|<endurox>/<servers> tag |-|-
+|*SERVERS server|<endurox>/<servers>/<server name="server"> tag |-|-
+|*SERVERS DEFAULT:|<endurox>/<defaults> tag |-|-
+|*SERVICES|<endurox>/<services>|-|Service settings are global per instance, i.e.
 cannot be configured per cctag.
-|*SERVICES service|<endurox<services><service svcnm="service">|-|-
-|*SERVICES DEFAULT:|<endurox><services><defaults>|-|-
-|*ROUTING|<endurox><routing>|-|Defaults not supported at this section.
-|*ROUTING route|<endurox><routing>/<route routing="route">|-|-
+|*SERVICES service|<endurox>/<services>/<service svcnm="service">|-|-
+|*SERVICES DEFAULT:|<endurox>/<services>/<defaults>|-|-
+|*ROUTING|<endurox>/<routing>|-|Defaults not supported at this section.
+|*ROUTING route|<endurox>/<routing>/<route routing="route">|-|-
 |=========================================================
 
 .Tuxedo - Enduro/X key binaries mapping
@@ -140,7 +140,7 @@ section lists elements with the same or close meaning. Enduro/X setting
 is written in *app.ini* in *[@global]* or *[@global/<CCTAG>]* section.
 
 .Tuxedo - Enduro/X resources mapping
-[width="80%", options="header"]
+[options="header"]
 |=========================================================
 |Tuxedo setting|Enduro/X equivalent|Comments
 |IPCKEY|NDRX_IPCKEY|System wide IPC (shm, msg, sem) identifier offset.
@@ -222,14 +222,12 @@ So if having Tuxedo configuration like:
 
 *MACHINES
 "SOME-MACHINE"  LMID=TEST1
-                TUXDIR="/some/folder/tuxedo12"
+        TUXDIR="/some/folder/tuxedo12"
         APPDIR="/user90/bin"
         TUXCONFIG="/user90/conf/tuxconfig"
         ULOGPFX="/user90/log/ULOG"
         TLOGDEVICE="/user90/conf/TLOG"
         ENVFILE="./env_common.txt" 
-        TLOGSIZE=1000
-        MAXWSCLIENTS=300
 
 --------------------------------------------------------------------------------
 
@@ -240,7 +238,7 @@ That would be projected as following Enduro/X *set* file (*settest1*):
 # update to correspond actual Enduro/X installation path
 export NDRX_HOME=/usr
 export NDRX_APPHOME=/user90
-export NDRX_CCONFIG=${NDRX_APPHOME}/conf/app.test1.ini
+export NDRX_CCONFIG=${NDRX_APPHOME}/conf/app.ini
 export CDPATH=$CDPATH:.:${NDRX_APPHOME}
 export PATH=$PATH:${NDRX_APPHOME}/bin
 
@@ -260,26 +258,76 @@ NDRX_ULOG=${NDRX_APPHOME}/log
 
 === Converting "*GROUPS" section
 
-At Core of the *Tuxedo* application, principle of service grouping is used.
-The grouping splits the binaries/servers in some logical groups. These
-groups provides XA configuration per binary, also these groups internally
-affect how XATMI IPC messages (such as *tpcall(3)*) land on the particular
-server process instances.
+Tuxedo groups can be replaced with Enduro/X CCTAGs. CCTAG basically instructs
+processes that during XATMI initialization, library shall read specific parts
+from the *app.ini* configuration file. Mainly data encoded in Tuxedo "\*GROUPS"
+entry matches to the *[@global/<CCTAG>]* subsection.
 
-In Enduro/X direct such grouping is not available, however Enduro/X have
-common-configuration framework, which allows to bind different configuration
-settings to binaries via *<cctag />* marking. Effectively, configuration
-sub-sections may be used in similar way as Tuxedo groups. Via configuration
-sub-sections following resources may be configured: *XA* configuration, *DDR*
-routing. Normally *cctag* sub-section does not make server to participarte in
-routing group, but within *[@global/<cctag>]* section parameter *NDRX_RTGRP*
-may be set, which would make the process additionally advertise routing services.
+Few more differences:
 
-However by using *cctag* settings, different settings from *ex_env(5)*
-may be applied to set of the binaries, including timeouts, UBF/FML settings, etc.
-
-Tuxedo's *SRVID* shall be unique within group, in Enduro/X *<srvid />* setting
+. Tuxedo's *SRVID* shall be unique within group, in Enduro/X *<srvid />* setting
 must be unique at instance level.
+
+. In Enduro/X CCTAGs cannot be used to encode two or more instances in one configuration
+file. If several cluster instances must be configured, then configuration must
+be split and separate set/ini/xml files shall be produced according to *LMID* setting.
+
+. Enduro/X CCTAGs may not be used to put processes in backup groups. The migration
+tool when processing such groups, only first identifier value for *LMID* is used.
+
+. In case if XA processing and DDR is not performed by the group, the CCTAG
+is not needed to be assigned to the process. The process may be removed from
+CCTAG (if default was used) the empty *<cctag />* setting may be used under the *<server />* tag.
+
+.Tuxedo - Enduro/X group mapping
+[options="header"]
+|=========================================================
+|Tuxedo setting|Enduro/X equivalent|Comments
+|GRPNO| app.ini: [@global/<CCTAG>]/NDRX_XA_RES_ID=__GRPNO__| Shall be set only if group fines XA resource
+
+|TMSNAME| ndrxconfig.xml: <endurox>/<servers>/<server name="'TMSNAME'">| If 'TMSNAME' name is *TMS*, then *tmsrv*
+name shall be used.  For null XA switch groups *app.ini* 
+*[@global/CCTAG]/NDRX_XA_DRIVERLIB*  shall be set to *libndrxxanulls.so*.
+
+For /Q queues, *[@global/CCTAG]/NDRX_XA_DRIVERLIB* shall be set to *libndrxxaqdisks.so*
+and *[@global/CCTAG]/NDRX_XA_RMLIB* shall be set to *libndrxxaqdisk.so*.
+
+For all other XA groups, *[@global/CCTAG]/NDRX_XA_DRIVERLIB* shall be set to 
+*libndrxxatmsx.so* to use built-in xa switch.
+
+|TMSCOUNT|ndrxconfig.xml: 
+<endurox>/<servers>/<server name="_TMSNAME_">/<min>__TMSCOUNT__</min> 
+and
+<endurox>/<servers>/<server name="_TMSNAME_">/<max>__TMSCOUNT__</max>|
+Configures TMSRV number of copies. In Enduro/X
+this is configured in the same way as all other XA servers.
+
+|OPENINFO| app.ini: [@global/<CCTAG>]/NDRX_XA_OPEN_STR=__OPENINFO__|When converting from
+Tuxedo, the XA vendors interface name with colon (:) must be stripped from the value
+copied to app.ini
+
+|CLOSEINFO|app.ini: [@global/<CCTAG>]/NDRX_XA_CLOSE_STR=__CLOSEINFO__|When converting from
+Tuxedo, the XA vendors interface name with colon (:) must be stripped from the value
+copied to app.ini. If not info is required by XA switch vendor, value "-" shall be used.
+
+|ENVFILE|ndrxconfig.xml: <endurox>/<servers>/<server>/<env>__ENVFILE__</env>
+or <endurox>/<defaults>/<env>__ENVFILE__</env>|
+
+|Group participates in DDR|app.ini: [@global/<CCTAG>]/NDRX_RTGRP=_GROUP_NAME_|
+*Note:* The routing group name with any service name in the grouting group, must not
+exceed *29* symbols. 
+|=========================================================
+
+Next chapter show by example how Tuxedo groups are converted to Enduro/X configuration.
+
+==== Converting XA NULL group
+TODO:
+
+==== Converting /Q XA group
+TODO:
+
+==== Converting normal XA group
+TODO:    
 
 === Service dispatching
 
