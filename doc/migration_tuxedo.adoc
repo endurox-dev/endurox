@@ -256,6 +256,93 @@ NDRX_ULOG=${NDRX_APPHOME}/log
 
 --------------------------------------------------------------------------------
 
+=== Converting "*NETWORK" section
+
+In Tuxedo, on each server *tlisten* binary shall be started which listens for
+any other node to connect. In Tuxedo this binary must be started before Tuxedo
+is booted.
+
+In Enduro/X each cluster link (between this and other node) must be defined in 
+*<servers />* as a normal ATMI server. The XATMI server process is *tpbridge(8)*. 
+In one of the nodes listening/binding address/port must be set, 
+in other node socket client mode shall be configured to connect to first node.
+
+For example, if node *1* shall be connected to nodes *2* and *3*, then on node *1*, two 
+*tpbridge* process shall be configured, to establish links to nodes *2* and *3*.
+
+In Enduro/X cluster each server is identified with unique number in range for
+1..32, set in *NDRX_NODEID* parameter. This similar to Tuxedo's *LMID*, but
+value is strictly limited to numbers only. (during conversion *LMID* keyword
+by *ubb2ex(8)* is used for resource prefixing for each instance).
+
+
+==== Establishing links between nodes, by example
+
+This assumes the scenario, when cluster is established by three nodes with LMIDs:
+SITE1, SITE2, SITE3. Each node establishes link with each.
+
+*UBB configuration:*
+
+This assumes that *tlisten* is started correctly prior Tuxedo boot.
+
+--------------------------------------------------------------------------------
+
+*NETWORK
+SITE1 NADDR="//localhost:999"
+NLSADDR="server1"
+
+SITE2 NADDR="//127.0.0.1:999"
+NLSADDR="server2"
+
+# hex format, first variant
+SITE3 NADDR="\\X00020AFF7F000001"
+NLSADDR="server3"
+
+--------------------------------------------------------------------------------
+
+*Enduro/X Configuration:*
+
+TODO: Picture with link strategy...
+
+
+*Note:* Port numbers shall be assigned manually for each of the links. *ubb2ex* uses
+following strategy: each listening socket derives the port number as:
+21000+NDRX_NODEID(currnet) * O_flag(default 100) + NDRX_NODEID(remote), e.g.
+If node *3* is listening for node 1 incoming connection, then for particular
+connection listening port would be: 21000+3*100+1 = 21301. This algorithm ensures
+that all migrated instances can be booted on localhost. If all booting on localhost
+is not needed, then when converting with *ubb2ex*, the flag -O may be set to *0*,
+which would prepare listening socket ports as number of 21000 + NDRX_NODEID(remote).
+
+
+*ndrxconfig.site1.xml*
+
+--------------------------------------------------------------------------------
+<endurox>
+...
+    <servers>
+...
+        <!-- bi-directional link to site2, we are socket clients -->
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>6</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n2 -r -i 127.0.0.1 -p 21201 -tA -z30</appopt>
+        </server>
+        <!-- bi-directional link to site3, we are socket clients -->
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>7</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n3 -r -i 127.0.0.1 -p 21301 -tA -z30</appopt>
+        </server>
+
+--------------------------------------------------------------------------------
+
+
+
 === Converting "*GROUPS" section
 
 Tuxedo groups can be replaced with Enduro/X CCTAGs. CCTAG basically instructs
@@ -317,9 +404,9 @@ copied to app.ini. If not info is required by XA switch vendor, value "-" shall 
 exceed *29* symbols. 
 |=========================================================
 
-==== Converting XA NULL group, participates in DDR
+==== Converting XA NULL group, participates in DDR, by example
 
-UBB configuration:
+*UBB configuration:*
 
 --------------------------------------------------------------------------------
 
@@ -336,9 +423,9 @@ DDR1 GRPNO=5 OPENINFO="NONE" TMSNAME="TMS TMSCOUNT=3
 
 --------------------------------------------------------------------------------
 
-Enduro/X configuration:
+*Enduro/X configuration:*
 
-*app.ini*:
+*app.ini:*
 
 --------------------------------------------------------------------------------
 
@@ -358,7 +445,7 @@ NDRX_RTGRP=DDR1
 flags shall be enabled. The downside of this is, that performance would be
 reduced significantly.
 
-*ndrxconfig.xml*:
+*ndrxconfig.xml:*
 
 --------------------------------------------------------------------------------
 <endurox>
@@ -388,17 +475,299 @@ reduced significantly.
             <srvid>420</srvid>
             <sysopt>-e ${NDRX_ULOG}/atmi.sv90_4.${NDRX_SVSRVID}.log</sysopt>
         </server>
+...
 --------------------------------------------------------------------------------
 
 When XA related CCTAG is firstly used, the *tmsrv(5)* instance shall be defined.
 For each *tmsrv* or custom built *TMS* instance used, machine readable log directory shall be defined.
 In this example directory *$\{NDRX_APPHOME\}/tmlogs/rm5* is used.
 
-==== Converting /Q XA group
+==== Converting /Q XA group, by example
+
+In case if converting Tuxedo /Q queue groups additional mapping is used, i.e.
+Tuxedo's *TMQUEUE* and *TMQFORWARD* processes are merged under single *tmqueue(8)* instance.
+Also all persistent queue setup is performed in *app.ini*, no need for any special script
+execution, as it is in case of Tuxedo.
+
+*UBB configuration:*
+
+--------------------------------------------------------------------------------
+
+*GROUPS
+...
+QGRP1   LMID=TEST1 GRPNO=8 TMSNAME=TMS_QM TMSCOUNT=2 OPENINFO="TUXEDO/QM:/user90/conf/QUEUEA:QSPA"
+
+*SERVERS
+...
+
+DEFAULT:        SRVGRP=QGRP1
+                RESTART=N
+                REPLYQ=N
+                CLOPT="-A"
+
+TMQUEUE         SRVID=40 CLOPT="-A -s QSPA:TMQUEUE -- "
+
+...
+
+DEFAULT:                        SRVGRP=QGRP1
+
+TMQFORWARD      SRVID=1100 MIN=1 MAX=1 CLOPT="-A -- -i 2 -qQGRP1_1"
+TMQFORWARD      SRVID=1120 MIN=1 MAX=1 CLOPT="-A -- -i 2 -qQGRP1_2 -t60"
+TMQFORWARD      SRVID=1130 MIN=2 MAX=3 CLOPT="-A -- -i 2 -qQGRP1_3 "
+
+--------------------------------------------------------------------------------
+
+*Enduro/X configuration:*
+
+*app.ini:*
+
+--------------------------------------------------------------------------------
+
+[@global/QGRP1]
+NDRX_XA_RES_ID=8
+NDRX_XA_OPEN_STR=datadir="${NDRX_APPHOME}/qdata/QSPA",qspace="QSPA"
+NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
+NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+NDRX_XA_LAZY_INIT=0
+NDRX_XA_FLAGS=FDATASYNC;DSYNC
+
+# Queue definitions:
+[@queue/QGRP1]
+# Review as necessary, see q.conf man page for details
+@=svcnm=@,autoq=n,tries=3,waitinit=0,waitretry=30,waitretrymax=90,memonly=n,mode=fifo,workers=1
+QGRP1_1=autoq=y
+QGRP1_3=autoq=y,workers=2
+QGRP1_2=autoq=y,txtout=60
+
+--------------------------------------------------------------------------------
+
+Section *[@queue]* shall be reviewed according to *q.conf(5)* instructions. Non automatic
+queues Enduro/X will instantiate automatically. The queue defaults are encoded in line
+starting with *@*. If *svcnm* is set to *@*, this means that automatic queue will send
+message to service whose name matches the queue name.
+
+Enduro/X persistent queues stores data in the directory on the disk, the path corresponds
+to the *datadir* setting in *NDRX_XA_OPEN_STR*. The queue space name is encoded in *qspace*
+parameter.
+
+*ndrxconfig.xml:*
+
+--------------------------------------------------------------------------------
+<endurox>
+...
+    <defaults>
+        <cctag>QGRP1</cctag>
+        <respawn>N</respawn>
+    </defaults>
+    <servers>
+        <server name="tmsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>8</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm8</appopt>
+        </server>
+        <server name="tmqueue">
+            <min>1</min>
+            <max>1</max>
+            <srvid>40</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-s1 -p10 -f10</appopt>
+        </server>
+    </servers>
+...
+
+--------------------------------------------------------------------------------
+
+*NOTE*: No instance of *TMQFORWARD* is required. All forward handling is done
+by *tmqueue(8)* process. Number of forward threads are set in *-f* parameter,
+to avoid any waiting on senders, the number of forward threads shall match
+the total number of workers (*workers* setting in queue definition) 
+configured for automatic queues.
+
+==== Converting normal XA group, by example
+
+
+*UBB configuration:*
+
+--------------------------------------------------------------------------------
+
+*GROUPS
+...
+
+ORAGRP2 LMID=TEST1
+                GRPNO=6
+                TMSNAME=TMS_ORA_2
+                TMSCOUNT=2
+                OPENINFO="Oracle_XA:ORACLE_XA+DB=ROCKY+SqlNet=SID1+ACC=P/username/password+SesTM=10+LogDir=/user90/xalog+Threads=true"
+                CLOSEINFO="Oracle_XA:CLOSE_STR"
+
+*SERVERS
+...
+orabin2       SRVID=2000 SRVGRP=ORAGRP2
+
+--------------------------------------------------------------------------------
+
+*Enduro/X configuration:*
+
+*app.ini:*
+
+--------------------------------------------------------------------------------
+
+[@global/ORAGRP2]
+NDRX_XA_RES_ID=6
+NDRX_XA_OPEN_STR=ORACLE_XA+DB=ROCKY+SqlNet=SID1+ACC=P/username/password+SesTM=10+LogDir=/user90/xalog+Threads=true
+NDRX_XA_CLOSE_STR=CLOSE_STR
+# use built in switch resolver
+NDRX_XA_DRIVERLIB=libndrxxatmsx.so
+NDRX_XA_RMLIB=-
+NDRX_XA_LAZY_INIT=1
+NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC
+
+--------------------------------------------------------------------------------
+
+*ndrxconfig.xml:*
+
+--------------------------------------------------------------------------------
+
+<endurox>
+...
+    <servers>
+...
+        <server name="TMS_ORA_2">
+            <cctag>ORAGRP2</cctag>
+            <min>2</min>
+            <max>2</max>
+            <srvid>19</srvid>
+            <sysopt>-e ${NDRX_ULOG}/TMS_ORA_2.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm6</appopt>
+        </server>
+        <server name="orabin2">
+            <cctag>ORAGRP2</cctag>
+            <srvid>2100</srvid>
+            <sysopt>-e ${NDRX_ULOG}/orabin2.${NDRX_SVSRVID}.log</sysopt>
+        </server>
+...
+--------------------------------------------------------------------------------
+
+In this case transaction manager used is custom built from *buildtms(8)* output.
+This is one of the modes that may be used. The other option Enduro/X offer is to
+use generic *tmsrv* process and use one of the our XA switch loader shared
+libraries:
+
+. *libndrxxaecpg(8)*: PostgreSQL PQ/ECPG XA switch emulator and loader. 
+Use *NDRX_XA_DRIVERLIB=libndrxxaecpg.so*, *NDRX_XA_RMLIB=-*. 
+
+. *libndrxxapq(8)*:  PostgreSQL PQ XA switch emulator and loader. 
+Use *NDRX_XA_DRIVERLIB=libndrxxapq.so*, *NDRX_XA_RMLIB=-*. 
+
+. *libndrxxaoras(8)*: Oracle DB XA Switch loader. Use *NDRX_XA_DRIVERLIB=libndrxxaoras.so* 
+for static registration switch (*xaosw*), use *NDRX_XA_DRIVERLIB=libndrxxaorad.so* 
+for dynamic registration switch (*xaoswd*). Set *NDRX_XA_RMLIB* to the DB specific shared 
+library which provides XA switches, e.g. *NDRX_XA_RMLIB=libclntsh.so*, by assuming that correct 
+shared library path is configured in the environment. *NOTE:* As *tmsrv* in Enduro/X is multi-threaded, 
+remember to set *+Threads=true* in *NDRX_XA_OPEN_STR* for Oracle DB connections.
+
+. *libndrxxawsmqs(8)*: IBM WebSphere MQ XA Driver loader. Use *NDRX_XA_DRIVERLIB=libndrxxawsmqs.so* 
+for static registration switch (*MQRMIXASwitch*), use *NDRX_XA_DRIVERLIB=libndrxxawsmqd.so* 
+for dynamic registration switch (*MQRMIXASwitchDynamic*). Set *NDRX_XA_RMLIB* to the MQ specific shared 
+library which provides XA switches, e.g. *NDRX_XA_RMLIB=libmqmxa64_r.so*, by assuming that correct 
+shared library path is configured in the environment. The multi-threaded library version shall
+be used.
+
+. *libndrxxadb2s*: IBM DB2 XA Switch loader. Use *NDRX_XA_DRIVERLIB=libndrxxadb2s.so* 
+for static registration switch (*db2xacicst_std*), use *NDRX_XA_DRIVERLIB=libndrxxadb2d.so* 
+for dynamic registration switch (*db2xacic_std*). Set *NDRX_XA_RMLIB* to the DB specific shared 
+library which provides XA switches, e.g. *NDRX_XA_RMLIB=libdb2.so*, by assuming that correct 
+shared library path is configured in the environment.
+
+The above *TMS_ORA_2* usage example may be configured as:
+
+
+*app.ini:*
+
+--------------------------------------------------------------------------------
+
+[@global/ORAGRP2]
+NDRX_XA_RES_ID=6
+NDRX_XA_OPEN_STR=ORACLE_XA+DB=ROCKY+SqlNet=SID1+ACC=P/username/password+SesTM=10+LogDir=/user90/xalog+Threads=true
+NDRX_XA_CLOSE_STR=CLOSE_STR
+NDRX_XA_DRIVERLIB=libndrxxaoras.so
+NDRX_XA_RMLIB=libclntsh.so
+NDRX_XA_LAZY_INIT=1
+NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC
+
+--------------------------------------------------------------------------------
+
+*ndrxconfig.xml:*
+
+--------------------------------------------------------------------------------
+
+<endurox>
+...
+    <servers>
+...
+        <server name="tmsrv">
+            <cctag>ORAGRP2</cctag>
+            <min>2</min>
+            <max>2</max>
+            <srvid>19</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-t1 -l ${NDRX_APPHOME}/tmlogs/rm6</appopt>
+        </server>
+        <server name="orabin2">
+            <cctag>ORAGRP2</cctag>
+            <srvid>2100</srvid>
+            <sysopt>-e ${NDRX_ULOG}/orabin2.${NDRX_SVSRVID}.log</sysopt>
+        </server>
+...
+
+--------------------------------------------------------------------------------
+
+==== Additional notes for XA processing
+
+When XA groups are used and for some reason there is chance that *tmsrv* logs
+are lost (for example, FSYNC flags were not used), additional process *tmrecoversv(5)*
+is recommended to be started at the and of application boot, which would collect the orphaned
+prepared transactions from all resource managers, and would perform the rollback of them.
+The rollbacks are not performed by resource managers automatically, due to fact that
+prepared transactions (from two phase commit protocol) are stuck in the database waiting
+for further commands from transaction managers.
+
+*Enduro/X configuration:*
+
+--------------------------------------------------------------------------------
+
+<endurox>
+..
+    <defaults>
+        <cctag/>
+        <min>1</min>
+        <max>1</max>
+    </defaults>
+    <servers>
+        <server name="tmrecoversv">
+            <srvid>6</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmrecoversv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-p -s10</appopt>
+        </server>
+
+--------------------------------------------------------------------------------
+
+
+=== Converting "*SERVERS" section
+
 TODO:
 
-==== Converting normal XA group
-TODO:    
+
+=== Converting "*SERVICES" section
+
+TODO:
+
+=== Converting "*ROUTING" section
+
+TODO:
 
 === Service dispatching
 
@@ -431,23 +800,6 @@ Enduro/X cluster works in similar fashion as Tuxedo Gateway, except that
 *tpforward(3)* and all other APIs work in the same mode as Tuxedo's multi-machine
 configuration (i.e. MODEL=MP).
 
-=== Cluster connectivity
-
-In Tuxedo, on each server *tlisten* binary shall be started which listens for
-any other node to connect. In Tuxedo this binary must be started before Tuxedo
-is booted.
-
-In Enduro/X each cluster link (between this and other nodes) must be defined in 
-*<servers />* as a normal ATMI server. The server process is *tpbridge(8)*. In one
-node listening/binding address/port must be set, in other node client mode shall
-be configured to connect to first node.
-
-If node *1* shall be connected to nodes *2* and *3*, then on node *1*, two 
-*tpbridge* process shall be configured, to establish links to nodes *2* and *3*.
-
-In Enduro/X cluster each server is identified with unique number in range for
-1..32, set in *NDRX_NODEID* parameter. This similar to Tuxedo's *LMID*, but
-value is strinctly limited to numbers only.
 
 === Transaction management
 

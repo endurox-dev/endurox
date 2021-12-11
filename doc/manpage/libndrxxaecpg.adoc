@@ -21,7 +21,7 @@ NDRX_XA_OPEN_STR={"url":"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}"
         ,"compat":"PGSQL|INFORMIX|INFORMIX_SE"
         }"
 NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
-NDRX_XA_DRIVERLIB=libndrxxapq.so
+NDRX_XA_DRIVERLIB=libndrxxaecpg.so
 NDRX_XA_RMLIB=-
 NDRX_XA_LAZY_INIT=1
 --------------------------------------------------------------------------------

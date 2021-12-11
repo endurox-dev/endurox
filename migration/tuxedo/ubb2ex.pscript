@@ -1338,7 +1338,7 @@ function prep_servers(instance)
                 }
 
                 new_srv.srvid <- reserve_range(instance, cnt);
-                new_srv.sysopt <- "-e ${NDRX_ULOG}/tmsrv.${NDRX_SVSRVID}.log -r";
+                new_srv.sysopt <- "-e ${NDRX_ULOG}/"+new_srv.bin+".${NDRX_SVSRVID}.log -r";
                 new_srv.appopt <- "-t1 -l "+group.tmlogs_rel;
                 new_srv.min<-cnt;
                 new_srv.max<-cnt;
