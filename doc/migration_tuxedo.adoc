@@ -1009,12 +1009,79 @@ configured:
 It is optional and only and only used by *xadmin mibget* command or *.TMIB* service calls.
 
 
-==== Debug configuration per binary
-TODO:
+==== Debug logging configuration per binary
+
+Enduro/X allow to configure debug log levels per binary. If no debug is configured, Enduro/X writes
+logs for the processes at highest debug level (*5*), meaning that for normal use debug configuration
+shall be configured.
+
+Enduro/X logging is split across following topics:
+
+. *ubf* - this is UBF/FML library logging. Normally shall be disabled (set to level *0*).
+
+. *ndrx* - this is XATMI internals logging, normally logging may be leaved at level *2* (error) or *3* (warning).
+
+. *tp* - user logs, wrote by *TP_LOG()* and related macros. Also applies to *tplog(3)* XATMI call. This log
+level does not affect *ULOG* output.
+
+Debug is configured according to *ndrxdebug.conf(5)* description. Sample section would look like:
+
+*app.ini:*
+
+--------------------------------------------------------------------------------
+
+[@debug]
+#* - goes for all binaries not listed bellow
+*= ndrx=3 ubf=1 tp=3 threaded=l file=${NDRX_ULOG}/endurox.log
+xadmin=file=${NDRX_ULOG}/xadmin.log
+ndrxd=file=${NDRX_ULOG}/ndrxd.log
+cconfsrv=file=${NDRX_ULOG}/cconfsrv.${NDRX_SVSRVID}.log
+atmi.sv90=file=${NDRX_ULOG}/atmi.sv90.${NDRX_SVSRVID}.log
+
+# this logs to stderr, except, if *-e* for server is set, then all logging
+# is redirected to that particular file.
+atmi.sv90_2= file=
+
+--------------------------------------------------------------------------------
+
+Debug settings are matched by the binary name. If binary is not found in the section, default * applies.
+Logging applies to all XATMI related processes, clients and servers, and stand-alone binaries which
+are just using UBF library, for example.
 
 
 ==== External connectivity replacements
-TODO:  
+
+Enduro/X does not have *WebLogic Tuxedo Connector* or *Jolt* libraries
+for Java. But Enduro/X provides Web Services interface module *endurox-connect*,
+particularly *restincl(8)* from which XATMI services can be exposed as JSONS 
+web services. With this Enduro/X services may be called from any language which supports web
+services. Web services API provides includes capability for managing global transactions
+and associating the calls with the global transactions (this applies only for *restin* incoming
+service layer).
+
+If your software uses any of these following Tuxedo binaries: *WSL/WSH*, *JSL/JSH*, *WSH*, *GWWS*
+then consider to use *endurox-connect* package. If using *ubb2ex(8)* tool, when it sees any
+of these binaries, it omits them and provides sample *restincl(8)* configuration, for accepting
+incoming web service calls.
+
+Sample configuration:
+
+
+*app.ini:*
+
+--------------------------------------------------------------------------------
+
+TODO:
+
+--------------------------------------------------------------------------------
+
+*ndrxconfig.xml:* 
+
+--------------------------------------------------------------------------------
+
+TODO:
+
+--------------------------------------------------------------------------------
 
 === Converting "*SERVICES" section
 
@@ -1071,19 +1138,7 @@ are different. Key aspects are mentioned here:
 
 == Tuxedo connectivity and bindings
 
-- Enduro/X does not have *WebLogic Tuxedo Connector* or *Jolt* libraries
-for Java. But Enduro/X provides Web Services interface module *endurox-connect*,
-particularly *restincl(8)* from which XATMI services can be exposed as JSONS 
-web services. With this Enduro/X services may be called from any language which supports web
-services. Web services API provides capability for managing global transactions.
 
-- Enduro/X counterpart to the Tuxedo *SALT* is endurox-connect module. The
-*restincl(8)* serves the inbound web services traffic and *restousv(8)* services
-the outbound traffic. The message formats between *SALT* and *endurox-connect*
-are different. Enduro/X counter part tends to use *JSON* message formats. However
-*restincl* is extensible and provides general purpose module for incoming
-web traffic handling from XATMI perspective (this includes any kind of web traffic
-handling, file upload, custom message formats, etc.).
 
 - *endurox-java* package serves as direct counterpart of the *Oracle Tuxedo Java*. Some
 of the APIs are different, but majority conforms to the *TJATMI*. Enduro/X implementation

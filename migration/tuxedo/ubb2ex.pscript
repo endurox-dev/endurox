@@ -811,7 +811,10 @@ function prep_servers(instance)
             switch(server.name)
             {
                 case "WSL":
+                case "WSH":
+                case "GWWS":
                 case "JSL":
+                case "JSH":
                         instance.restin<-true;
                         remove=true;
                     break;
