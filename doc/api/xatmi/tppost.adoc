@@ -92,7 +92,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpevsrv(8)* *tpunsubscribe(3)* *tppost(3)*
+*tpevsrv(8)* *tpsubscribe(3)* *tppost(3)*
 
 COPYING
 -------

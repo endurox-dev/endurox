@@ -90,6 +90,13 @@ TMSYSEVT	SRVGRP=ADMINGRP
 		MAXGEN=5
 		CLOPT="-A --"
 
+TMUSREVT        SRVGRP=ADMINGRP
+                SRVID=10
+                RESTART=N
+                GRACE=900
+                MAXGEN=5
+                CLOPT="-A --"
+
 # pull in restincl
 JSL		SRVGRP=ADMINGRP
 		SRVID=30
@@ -171,7 +178,7 @@ DEFAULT:                        MAX=11
 
 orabin1       SRVID=2000 SRVGRP=ORAGRP1
 orabin2		   SRVID=2100 SRVGRP=ORAGRP2
-orabin3		   SRVID=2200 SRVGRP=ORAGRP3
+orabin3		   SRVID=2200 SRVGRP=ORAGRP3 THREADSTACKSIZE=6500000
 
 #
 # TODO: check strip defaults
