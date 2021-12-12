@@ -453,7 +453,7 @@ this is configured in the same way as all other XA servers.
 
 |OPENINFO| app.ini: [@global/<CCTAG>]/NDRX_XA_OPEN_STR=__OPENINFO__|When converting from
 Tuxedo, the XA vendors interface name with colon (:) must be stripped from the value
-copied to app.ini
+copied to app.ini.
 
 |CLOSEINFO|app.ini: [@global/<CCTAG>]/NDRX_XA_CLOSE_STR=__CLOSEINFO__|When converting from
 Tuxedo, the XA vendors interface name with colon (:) must be stripped from the value
@@ -820,8 +820,201 @@ for further commands from transaction managers.
 
 === Converting "*SERVERS" section
 
+Servers and their defaults migrates to Enduro/X XML configuration relatively straight
+forward. Following section summarizes the server entry mapping
+
+.Tuxedo - Enduro/X Server mapping
+[options="header"]
+|=========================================================
+|Tuxedo setting|Enduro/X equivalent in <server>|Comments
+|SRVGRP|<cctag>|
+|SRVID|<srvid>|In Enduro/X must be unique across the instance configuration.
+|CLOPT|<sysopt>, <appopt>|In Enduro/X clopt may split by the -- in two parts
+server options goes to *<sysopt>* and all other options to *<appopt>*,
+but it is possible to leave all to the *<sysopt>*.
+|MIN|<min>|
+|MAX|<max>|
+|ENVFILE|<env>|
+|CONV|N/A|For conversational servers at Enduro/X no special settings required.
+Conversational servers builds and configures in the same way as normal XATMI
+servers.
+|RQADDR|<rqaddr>|Used only for *SystemV* polling mode (Solaris, pre AIX 7.3).
+For all other modes, it is ignored.
+|RESTART|<respawn>|For Enduro/X default is *Y*.
+|MINDISPATCHTHREADS|<mindispatchthreads>|For Enduro/X minimum and default is 1.
+|MAXDISPATCHTHREADS|<maxdispatchthreads>|For Enduro/X minimum and default is 1.
+|THREADSTACKSIZE|NDRX_THREADSTACKSIZE in app.ini, or configured in <envs> tag as:
+
+<envs><env name="NDRX_THREADSTACKSIZE">__THREADSTACKSIZE__/__1024__</env></envs>
+| Enduro/X value is in KB, thus UBB config value needs to be divided by 1024.
+
+|=========================================================
+
+==== Converting server command line options
+
+The Server command line options mostly matches between Tuxedo and Enduro/X XATMI
+servers, with few exceptions. Following table lists the details:
+
+.Tuxedo - Enduro/X Server CLOPT mapping
+[options="header"]
+|=========================================================
+|Tuxedo CLOPT|Enduro/X <sysopt>|Comments
+|-A|-N|Cross mapping applies. In Enduro/X all servers are advertised by default.
+In case if in Tuxedo configuration *-A* is used, no flag must be set in Enduro/X.
+In case if *-A* is not used in Tuxedo configuration, in Enduro/X *-N* shall be used,
+to suppress advertise all.
+|-s|-s|Enduro/X does not support @filename syntax (advertise from file). All other
+work modes of the *-s* matches.
+|-e|-e|If not configured, Enduro/X logs all *stderr* to the parent process *stderr*, 
+effectively *ndrxd(8)*.
+|-o|-e|Enduro/X redirect all *stdout* the the same *stderr* output. If not configured,
+output will be sent to parent process, *stderr*, effectively *ndrxd(8)*.
+|-r|-r|Enduro/X ignores this flag.
+|=========================================================
+
+Also the *<sysopt>* and *<appopt>* tags are not available for default value by
+*<endurox>/<defaults>*.
+
+==== Converting server, by example
+
+*UBB Configuration:*
+
+--------------------------------------------------------------------------------
+
+DEFAULT:        SRVGRP=DFLTGRP
+                MIN=1
+                MAX=5
+                REPLYQ=Y
+                MAXGEN=10
+                RESTART=N
+                CLOPT="-A"
+
+"atmi.sv90"     SRVID=100 MIN=2 MAX=4 CLOPT="-A --"
+"atmi.sv90_2"   SRVID=200 MIN=1 MAX=4 CLOPT="-A -e /tmp/err.out -- -c \"HELLO \\\"WORLD\""
+
+DEFAULT:                        MAX=11
+
+orabin3            SRVID=2200 SRVGRP=ORAGRP3 THREADSTACKSIZE=6500000
+
+--------------------------------------------------------------------------------
+
+*ndrxconfig.xml:*
+
+--------------------------------------------------------------------------------
+
+<endurox>
+...
+    <defaults>
+        <cctag>DFLTGRP</cctag>
+        <min>1</min>
+        <max>5</max>
+        <respawn>N</respawn>
+    </defaults>
+    <servers>
+        <server name="atmi.sv90">
+            <min>2</min>
+            <max>4</max>
+            <srvid>100</srvid>
+            <sysopt />
+        </server>
+        <server name="atmi.sv90_2">
+            <min>1</min>
+            <max>4</max>
+            <srvid>200</srvid>
+            <sysopt>-e /tmp/err.out</sysopt>
+            <appopt>-c "HELLO \"WORLD"</appopt>
+        </server>
+...
+    <defaults>
+        <max>11</max>
+    </defaults>
+    <servers>
+        <server name="orabin3">
+            <cctag>ORAGRP3</cctag>
+            <srvid>2200</srvid>
+            <envs><env name="NDRX_THREADSTACKSIZE">6347</env></envs>
+        </server>
+...
+
+--------------------------------------------------------------------------------
+
+
+==== Converting event server
+
+In case if application uses eventing (i.e. *tppost(3)* or *tpsubscribe(3)*, etc.)
+event server needs to be configured. Existing *TMSYSEVT* or *TMUSREVT* servers shall be replaced
+with single instance of *tpevsrv(8)*.
+
+
+==== Converting TMSYSEVT, TMUSREVT, by example
+
+*UBB configuration:*
+
+--------------------------------------------------------------------------------
+
+*SERVERS
+TMUSREVT SRVGRP=ADMINGRP SRVID=10 CLOPT="-A -- -f /user90/conf/TMUSREVT"
+TMSYSEVT SRVGRP=ADMINGRP SRVID=11 CLOPT="-A -- -f /user90/conf/TMSYSEVT"
+
+--------------------------------------------------------------------------------
+
+*ndrxconfig.xml:*
+
+Enduro/X event server does not use control file, so when converting *-f* flag for
+these servers may be ignored. For performance reasons it is recommended to set
+thread dispatch threads to larger number than default *1*.
+
+--------------------------------------------------------------------------------
+
+<endurox>
+...
+    <servers>
+    ...       
+        <server name="tpevsrv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>10</srvid>
+            <mindispatchthreads>5</mindispatchthreads>
+            <maxdispatchthreads>5</maxdispatchthreads>
+            <sysopt>-e ${NDRX_ULOG}/tpevsrv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+
+--------------------------------------------------------------------------------
+
+For any server, if no special requirement is needed, *-e* shall be configured
+and normally expected to be put to *NDRX_ULOG* directory with file name reflecting
+the binary name and it's server id.
+
+==== Adding admin server (for MIB interface)
+
+In order to enable admin interface API via *.TMIB* service, *tpadmsv(8)* shall be
+configured:
+
+--------------------------------------------------------------------------------
+
+<endurox>
+...
+    <servers>
+    ...               
+        <server name="tpadmsv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>3</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpadmsv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+
+
+--------------------------------------------------------------------------------
+
+It is optional and only and only used by *xadmin mibget* command or *.TMIB* service calls.
+
+
+==== Debug configuration per binary
 TODO:
 
+
+==== External connectivity replacements
+TODO:  
 
 === Converting "*SERVICES" section
 

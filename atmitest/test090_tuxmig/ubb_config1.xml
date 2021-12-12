@@ -227,6 +227,7 @@
             <cctag>ORAGRP3</cctag>
             <srvid>2200</srvid>
             <sysopt>-e ${NDRX_ULOG}/orabin3.${NDRX_SVSRVID}.log</sysopt>
+            <envs><env name="NDRX_THREADSTACKSIZE">6347</env></envs>
         </server>
     </servers>
     <defaults>

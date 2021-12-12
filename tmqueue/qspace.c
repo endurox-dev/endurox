@@ -74,7 +74,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_TOKEN_SIZE          64 /**< max key=value buffer size of qdef element */
-#define WORKERS_DEFAULT         2   /**< by default we have 2 workers for autoqs */
+#define WORKERS_DEFAULT         1   /**< by default we have 1 workers for autoqs */
 
 #define TMQ_QC_NAME             "name"
 #define TMQ_QC_SVCNM            "svcnm"
