@@ -302,7 +302,10 @@ NLSADDR="server3"
 
 *Enduro/X Configuration:*
 
-TODO: Picture with link strategy...
+
+Enduro/X to have equivalent network setup, following connections needs to be defined:
+
+image:migration_tuxedo_network.png[caption="Figure 2: ", title="Network connections between nodes"]
 
 
 *Note:* Port numbers shall be assigned manually for each of the links. *ubb2ex* uses
@@ -341,6 +344,65 @@ which would prepare listening socket ports as number of 21000 + NDRX_NODEID(remo
 
 --------------------------------------------------------------------------------
 
+*NOTE:* Each connection either server or client fined by *tpbridge(8)*, contains 
+other node id in parameter *-n*.
+
+*NOTE:* These examples assumes that machine architectures are the same, if different
+architecture machines are being clusters (e.g. x86, PowerPC), then between these
+machines protocol mode must be enabled by *-f* cli flag for *tpbridge*.
+
+*ndrxconfig.site2.xml*
+
+--------------------------------------------------------------------------------
+<endurox>
+...
+    <servers>
+...
+        <!-- This is listening socket, for node1 to connect to us -->
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>5</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n1 -r -i 0.0.0.0 -p 21201 -tP -z30</appopt>
+        </server>
+        <!-- This is client socket connecting to node 3 -->
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>7</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n3 -r -i 127.0.0.1 -p 21302 -tA -z30</appopt>
+        </server>
+
+--------------------------------------------------------------------------------
+
+*ndrxconfig.site3.xml*
+
+--------------------------------------------------------------------------------
+<endurox>
+...
+    <servers>
+...
+        <!-- incoming socket for node1 -->
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>5</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n1 -r -i 0.0.0.0 -p 21301 -tP -z30</appopt>
+        </server>
+        <!-- incoming socket for node2 -->
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>6</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.${NDRX_SVSRVID}.log</sysopt>
+            <appopt>-n2 -r -i 0.0.0.0 -p 21302 -tP -z30</appopt>
+        </server>
+
+
+--------------------------------------------------------------------------------
 
 
 === Converting "*GROUPS" section
