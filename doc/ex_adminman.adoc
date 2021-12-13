@@ -233,8 +233,10 @@ $ sudo -s
 
 # cat << EOF >> /etc/sysctl.conf
 
-# max queues system wide, 40K should be fine
-kernel.msgmni=40000
+# max queues system wide, 32K should be fine
+# If more is required, then for some Linux distributions such as Ubuntu 20.04
+# kernel boot parameter ipcmni_extend shall be set.
+kernel.msgmni=32768
 
 # max size of message (bytes), ~1M should be fine
 kernel.msgmax=1049600
