@@ -44,13 +44,16 @@ parameters. This section lists some (but not all) known differences:
 of any context association.
 
 
+== Enduro/X installation process
+...
+
 == Migration process
 ...
 
-=== Automatic configuration migration
+== Automatic migration process
 ...
 
-=== Manual configuration migration
+== Manual configuration migration
 
 Even if configuration is being migrated by automatic approach, it is worth to
 read this section. This allows get solid understand of the Enduro/X concepts by using
@@ -1071,7 +1074,16 @@ Sample configuration:
 
 --------------------------------------------------------------------------------
 
-TODO:
+[@restin]
+defaults={"errors":"json2ubf", "conv":"json2ubf"}
+
+# Instance 1, see restincl manpage for the web service formats
+[@restin/RIN1]
+port=8080
+ip=0.0.0.0
+# invoke by: http://this.host:8080/SOME_SERVICE1
+/SOME_SERVICE1={"svc":"SOME_SERVICE1"}
+/SOME_SERVICE2={"svc":"SOME_SERVICE2"}
 
 --------------------------------------------------------------------------------
 
@@ -1079,9 +1091,24 @@ TODO:
 
 --------------------------------------------------------------------------------
 
-TODO:
+<endurox>
+...
+        <server name="cpmsrv">
+            <srvid>7</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv.${NDRX_SVSRVID}.log -r</sysopt>
+            <appopt>-k3 -i1</appopt>
+        </server>
+    </servers>
+    <clients>
+            <client cmdline="restincl">
+                <exec tag="RESTIN" autostart="Y" subsect="RIN1" cctag="RIN1" log="${NDRX_ULOG}/restincl.rin1.log"/>
+            </client>
+    </clients>
+...
 
 --------------------------------------------------------------------------------
+
+This section
 
 === Converting "*SERVICES" section
 
