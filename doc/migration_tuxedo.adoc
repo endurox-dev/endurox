@@ -85,7 +85,7 @@ cannot be configured per cctag.
 |=========================================================
 |Tuxedo binary|Enduro/X equivalent|Comments
 |tmadmin|xadmin|There are set of common commands, like psc, start, etc.
-|BBL, DBBBL|ndrxd|
+|BBL, DBBL|ndrxd|
 |tlisten|tpbridge|Enduro/X binary is booted as a normal XATMI binary, i.e.
 it is not required to start it before application boots
 |TMSYSEVT,TMUSEREV|tpevsrv|Also Enduro/X event server is booted as a normal
