@@ -129,7 +129,7 @@ XML configuration file (*ndrxconfig.xml(5)* typically) which describes the XATMI
 server and client processes, services and DDR info. The other file is standard 
 *ini* file (typically *app.ini*) which include per binary configuration.
 
-Typically Enduro/X application are configure with third environment file
+Typically, Enduro/X application are configured with third environment file
 which loads the env variables in the shell session. File name typically
 starts with *set*.
 
@@ -154,15 +154,15 @@ variable, set in seconds. Can be converted as NDRX_TOUT=(Tux SCANUNIT) * (Tux BL
 |SCANUNIT| NDRX_SCANUNIT| In case if using *SystemV* release (AIX pre 7.3, Solaris),
 Enduro/X binaries internally by additional thread scan for timeouts in the local
 process. The scanning is done by *NDRX_SCANUNIT* setting (in milliseconds), which
-by default is *1000*. For Linux, FreeBSD, MacOS release these is not applicable.
+by default is *1000*. For Linux, FreeBSD, MacOS release this is not applicable.
 |MAXRTDATA|NDRX_RTCRTMAX|Number of bytes available for routing criterion storage.
 |=========================================================
 
 === Converting "*MACHINES" section
 
 In Enduro/X normally it each configuration set applies only to one machine/instance.
-So in Enduro/X there is no such direct equivalent to this section. However some
-useful information is encoded in Tuxedo counter part.
+So in Enduro/X there is no such direct equivalent to this section. However, some
+useful information is encoded in Tuxedo counterpart.
 
 When converting multi-server UBBConfig file, it is needed to split all the resources
 in UBBConfig by *LMID*. For following UBB sections that could be done via *GROUP*
@@ -244,7 +244,7 @@ export PATH=$PATH:${NDRX_APPHOME}/bin
 
 --------------------------------------------------------------------------------
 
-Additionally *app.ini* would get:
+Additionally, *app.ini* would get:
 
 --------------------------------------------------------------------------------
 
@@ -604,7 +604,7 @@ QGRP1_2=autoq=y,txtout=60
 
 --------------------------------------------------------------------------------
 
-Section *[@queue]* shall be reviewed according to *q.conf(5)* instructions. Non automatic
+Section *[@queue]* shall be reviewed according to *q.conf(5)* instructions. Non-automatic
 queues Enduro/X will instantiate automatically. The queue defaults are encoded in line
 starting with *@*. If *svcnm* is set to *@*, this means that automatic queue will send
 message to service whose name matches the queue name.
