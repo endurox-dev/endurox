@@ -32,7 +32,7 @@ Enduro/X uses different configuration file formats than Tuxedo, however majority
 of the configuration concepts are the same.
 
 Enduro/X provides tool *ubb2ex(8)* which allows to automatically convert Tuxedo
-UBB configuration.
+UBB configuration to Enduro/X configuration files.
 
 
 == API compatibility aspects
