@@ -1108,7 +1108,15 @@ ip=0.0.0.0
 
 --------------------------------------------------------------------------------
 
-This section
+As *restincl* purely is stand-alone XATMI client, Enduro/X offer such process monitoring
+via Client Process Monitor server - *cpmsrv(8)* this server starts any programs registered
+in the *<clients>* section. Basic management of the clients includes following commands:
+
+. $ xadmin pc - print client processes and their statuses
+
+. $ xadmin bc - boot client
+
+. $ xadmin sc - stop client
 
 === Converting "*SERVICES" section
 
@@ -1165,12 +1173,16 @@ are different. Key aspects are mentioned here:
 
 == Tuxedo connectivity and bindings
 
-
-
 - *endurox-java* package serves as direct counterpart of the *Oracle Tuxedo Java*. Some
 of the APIs are different, but majority conforms to the *TJATMI*. Enduro/X implementation
 is based on JNI binding code. Each java instance is started as separate binary.
 
+
+== System administration
+
+Following key command mappings applies between Tuxedo and Enduro/X
+
+TODO:
 
 ////////////////////////////////////////////////////////////////
 The index is normally left completely empty, it's contents being
