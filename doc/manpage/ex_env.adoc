@@ -430,6 +430,14 @@ Mandatory Env. Variables
     *DEBIT@G5*. Afterwards with *<service/>* and *<route/>* settings can be used
     to route the traffic between default service and service in group.
 
+*NDRX_APIFLAGS*='APIFLAGS'::
+    This is comma seperated list of specific API configuration used by Enduro/X
+    libraries. Currently defined flags: *json_escape* - escape non printable
+    characters during the UBF 2 JSON conversation and vice versa. 
+    Escape is done on non printable charaters i.e. !(*isprint()* && *!iscntrl()*),
+    and these are escaped with "\" + xx, where xx is hex number of the ASCII char.
+    e.g. ASCII "space" would become "\20". The back-slash by becomes "\\". 
+
 EXAMPLE
 -------
 Sample configuration:
