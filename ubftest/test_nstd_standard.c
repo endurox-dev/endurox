@@ -440,6 +440,26 @@ Ensure(test_nstd_strtokblk)
 }
 
 /**
+ * Check format string escaping function
+ */
+Ensure(test_nstd_str_fmtesc)
+{
+    char buf[16+1];
+    
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), ""), "");
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), "%"), "%%");
+    
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), "%ABC"), "%%ABC");
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), "ABC%"), "ABC%%");
+    
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), "0123456789123456"), "0123456789123456");
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), "012345678912345%"), "012345678912345");
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), "%123456789123456"), "%%12345678912345");
+    assert_string_equal(ndrx_str_fmtesc(buf, sizeof(buf), "%123456789123%%"), "%%123456789123%%");
+    
+}
+
+/**
  * Standard header tests
  * @return
  */
@@ -456,6 +476,7 @@ TestSuite *ubf_nstd_standard(void)
     add_test(suite, test_nstd_NDRX_STRNCPY_SRC);
     add_test(suite, test_nstd_NDRX_STRCPY_LAST_SAFE);
     add_test(suite, test_nstd_strtokblk);
+    add_test(suite, test_nstd_str_fmtesc);
     
     return suite;
 }

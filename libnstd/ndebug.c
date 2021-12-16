@@ -651,18 +651,31 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         int len2;
         char *p;
         
-        len = strlen(tmp_ptr->filename_th_template);
         len2 = 3; /* len of .%u */
-
-        /* needs space for EOS! */
-        if (len+len2 < tmpfnamesz)
+        
+        /* 
+         * Escape any %
+         */
+        if (strchr(tmpfname, '%'))
         {
-            /* Use the name */
+            /*
+             * escape any %, if buffer len is reached, the trailing % shall be
+             * stripped... as 1x there could be left and then processed by
+             * printf engine.
+             */
+            ndrx_str_fmtesc(tmp_ptr->filename_th_template,
+                    sizeof(tmp_ptr->filename_th_template), tmpfname);
+        }
+        else
+        {
             NDRX_STRCPY_SAFE(tmp_ptr->filename_th_template, tmpfname);
-            
-            ndrx_str_env_subs_len(tmp_ptr->filename_th_template, 
-                    sizeof(tmp_ptr->filename_th_template));
-            
+        }
+        
+        len = strlen(tmp_ptr->filename_th_template);
+        
+        /* needs space for EOS! If not space left, just use without the numbering. */
+        if (len+len2+1 <= tmpfnamesz)
+        {
             /* Thread based logfile name... */
             if (NULL!=(p = strrchr(tmp_ptr->filename_th_template, '.')))
             {
@@ -687,7 +700,6 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                 NDRX_STRCPY_SAFE(G_tp_debug.filename_th_template, 
                         G_ndrx_debug.filename_th_template);
             }
-            
         }
     }
 

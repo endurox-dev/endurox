@@ -50,12 +50,15 @@ fi;
 
 export NDRX_ULOG=`pwd`
 rm *.log 2>/dev/null
-rm *.log_loger_extension  2>/dev/null
 rm ULOG*  2>/dev/null
 
 # Clean up log dir
-rm -rf ./logs
+rm -rf ./logs 2>/dev/null
 mkdir ./logs
+
+rm -rf ./logs_cfg 2>/dev/null
+mkdir ./logs_cfg
+
 rm -rf ./non_exist
 rm -rf ./non_write
 mkdir non_write
@@ -201,18 +204,65 @@ fi
 
 # start the benchmark in threads...
 (NDRX_DEBUG_CONF="debug_threaded_y.conf" exbenchcl -n5 -P -t20 -b "{}" -f EX_DATA -S1024 -R5 2>&1) > ./exbenchcl.log
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "exbenchcl 1 failed"
+    RET=$XRET
+fi
 
-RET=$?
+# start the benchmark in threads...
+(NDRX_DEBUG_CONF="debug_threaded_perc.conf" exbenchcl -n5 -P -t20 -b "{}" -f EX_DATA -S1024 -R5 2>&1) > ./exbenchcl.log
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "exbenchcl 2 failed"
+    RET=$XRET
+fi
+
+export SOME_TEST="THIS_IS_ENV"
+(NDRX_DEBUG_CONF="debug_env_sub.conf" exbenchcl -n5 -P -t20 -b "{}" -f EX_DATA -S1024 -R5 2>&1) > ./exbenchcl.log
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "exbenchcl 3 failed"
+    RET=$XRET
+fi
+
+export SOME_TEST="THIS_IS_ENV2"
+(NDRX_DEBUG_CONF="debug_env_sub_th.conf" exbenchcl -n5 -P -t20 -b "{}" -f EX_DATA -S1024 -R5 2>&1) > ./exbenchcl.log
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "exbenchcl 4 failed"
+    RET=$XRET
+fi
 
 #
 # Validate log files..., with context id
 # 
-if [ ! -f "exbenchcl.0.log_loger_extension" ]; then
+if [ ! -f "logs_cfg/exbenchcl.0.log_loger_extension" ]; then
     echo "Missing [exbenchcl.0.log_loger_extension]"
     RET=-2
 fi
 
-if [ ! -f "exbenchsv.0.log" ]; then
+if [ ! -f "logs_cfg/exbenchcl%d.0.log_perc" ]; then
+    echo "Missing [exbenchcl%d.0.log_perc]"
+    RET=-2
+fi
+
+if [ ! -f "logs_cfg/exbenchcl%d.0.log_perc" ]; then
+    echo "Missing [exbenchcl%d.0.log_perc]"
+    RET=-2
+fi
+
+if [ ! -f "logs_cfg/exbenchcl.log_THIS_IS_ENV" ]; then
+    echo "Missing [exbenchcl.log_THIS_IS_ENV]"
+    RET=-2
+fi
+
+if [ ! -f "logs_cfg/exbenchcl.0.log_THIS_IS_ENV2" ]; then
+    echo "Missing [exbenchcl.0.log_THIS_IS_ENV2]"
+    RET=-2
+fi
+
+if [ ! -f "logs_cfg/exbenchsv.0.log" ]; then
     echo "Missing [exbenchsv.0.log]"
     RET=-2
 fi
