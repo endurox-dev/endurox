@@ -301,6 +301,7 @@ extern NDRX_API double ndrx_num_time_parsecfg(char * str);
 extern NDRX_API char *ndrx_str_strip(char *haystack, char *needle);
 extern NDRX_API char* ndrx_str_rstrip(char* s, char *needle);
 extern NDRX_API char* ndrx_str_lstrip_ptr(char* s, char *needle);
+extern NDRX_API char *ndrx_str_fmtesc(char *dst, size_t dstsz, char *src);
 
 extern NDRX_API int ndrx_isint(char *str);
 extern NDRX_API int ndrx_nr_chars(char *str, char chkchar);
