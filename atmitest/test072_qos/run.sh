@@ -48,6 +48,11 @@ fi;
 
 . ../testenv.sh
 
+
+# 
+ulimit -c unlimited
+export ASAN_OPTIONS=abort_on_error=1:disable_coredump=0:unmap_shadow_on_exit=1
+
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
@@ -85,20 +90,41 @@ set_dom2() {
 function go_out {
     echo "Test exiting with: $1"
     
+    # Check only if pq shows something on tpbridge...
+    if [ $1 -ne 0 ]; then
+
+        echo "Collecting stats..."
+        set_dom1;
+        xadmin pq
+        xadmin pqa
+        
+        set_dom2;
+        xadmin pq
+        xadmin pqa
+
+        echo "Sleep 5..."
+        sleep 5
+
+        set_dom1;
+        xadmin pq
+        xadmin pqa
+
+        set_dom2;
+        xadmin pq
+        xadmin pqa
+
+        # TODO: might want to generate only if we have unclear Qs
+        echo "Generating cores..."
+        xadmin ps -p -a tpbridge  | xargs kill -11
+    fi
+
     set_dom1;
     echo "Domain 1 stats"
-    xadmin pq
-    xadmin pqa
-
     xadmin stop -y
     xadmin down -y
 
-
     set_dom2;
     echo "Domain 2 stats"
-    xadmin pq
-    xadmin pqa
-
     xadmin stop -y
     xadmin down -y
 

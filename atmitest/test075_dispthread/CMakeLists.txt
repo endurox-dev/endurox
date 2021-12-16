@@ -58,6 +58,7 @@ add_executable (atmi.sv75_dmn atmisv75_dmn.c)
 add_executable (atmi.sv75_conv atmisv75_conv.c)
 add_executable (atmiclt75 atmiclt75.c)
 add_executable (atmiclt75_conv atmiclt75_conv.c)
+add_executable (atmi.sv75_fail atmisv75_fail.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
@@ -66,12 +67,14 @@ target_link_libraries (atmi.sv75_dmn atmisrvinteg atmi ubf nstd m pthread ${RT_L
 target_link_libraries (atmi.sv75_conv atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt75 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt75_conv atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv75_fail atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv75 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmi.sv75_dmn PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmi.sv75_conv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt75 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt75_conv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmi.sv75_fail PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 # vim: set ts=4 sw=4 et smartindent:

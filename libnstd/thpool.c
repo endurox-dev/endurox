@@ -577,6 +577,8 @@ static void* poolthread_do(struct poolthread* thread_p)
     else
     {
         thpool_p->thread_status = EXFAIL;
+        pthread_cond_signal(&thpool_p->threads_one_idle);
+        MUTEX_UNLOCK_V(thpool_p->thcount_lock);
         return NULL;
     }
     
