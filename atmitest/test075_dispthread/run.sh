@@ -88,6 +88,7 @@ function go_out {
 }
 
 rm *.log
+rm ULOG*
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
@@ -283,6 +284,12 @@ PSC_OUT=`xadmin psc | grep DMNSV2 | grep BUSY`
 if [ "X$PSC_OUT" == "X" ]; then
     echo "DMNSV2 / BUSY not found!"
     go_out -10
+fi
+
+# validate that _fail server have detected tpsvrthrinit error
+if [ "X`grep "atmi.sv75_fa:tpsvrthrinit() failed -1" ULOG*`" == "X" ]; then
+	echo "ERROR: No tpsvrthrinit() failure by atmi.sv75_fail"
+	go_out -11
 fi
 
 # Catch is there is test error!!!

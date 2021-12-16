@@ -79,6 +79,15 @@
             <srvid>120</srvid>
             <sysopt>-e ${TESTDIR}/atmisv_conv.log -r</sysopt>
         </server>
+
+        <server name="atmi.sv75_fail">
+            <min>1</min>
+            <max>1</max>
+            <mindispatchthreads>5</mindispatchthreads>
+            <maxdispatchthreads>5</maxdispatchthreads>
+            <srvid>220</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv_fail.log -r</sysopt>
+        </server>
         
     </servers>
 </endurox>
