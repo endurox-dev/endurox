@@ -2469,4 +2469,41 @@ expublic int ndrx_chk_confirm(char *message, short is_confirmed)
 }
 
     
+/**
+ * C format escape in dest buffer, ensure that in case of full buffer, trailing
+ * percent is stripped.
+ * @param dst where to unload
+ * @param dstsz dest size
+ * @param src source to escape
+ * @return dest string
+ */
+expublic char *ndrx_str_fmtesc(char *dst, size_t dstsz, char *src)
+{
+    int i, j=0, len = strlen(src);
+    /* include eos... */
+    for (i=0; i<=len; i++)
+    {
+        if (src[i]!='%' && j<dstsz-1)
+        {
+            dst[j]=src[i];
+            j++;
+        }
+        else if (src[i]=='%' && j<dstsz-2)
+        {
+            dst[j]='%';
+            j++;
+            dst[j]='%';
+            j++;
+        }
+        else
+        {
+            /* dest buffer exceeded */
+            dst[j]=EXEOS;
+            break;
+        }
+    }
+    
+    return dst;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
