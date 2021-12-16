@@ -49,7 +49,9 @@ fi;
 . ../testenv.sh
 
 export NDRX_ULOG=`pwd`
-rm *.log
+rm *.log 2>/dev/null
+rm *.log_loger_extension  2>/dev/null
+rm ULOG*  2>/dev/null
 
 # Clean up log dir
 rm -rf ./logs
@@ -76,6 +78,9 @@ fi
 
 xadmin killall atmisv31FIRST 2>/dev/null
 xadmin killall atmisv31SECOND 2>/dev/null
+xadmin killall exbenchsv 2>/dev/null
+xadmin killall exbenchcl 2>/dev/null
+xadmin killall atmiclt31 2>/dev/null
 
 #killall atmiclt1
 
@@ -190,6 +195,33 @@ if [ "X`grep 'Finishing off' ./clt-tp.log`" == "X" ]; then
         echo "Missing 'Finishing off'"
         RET=-2
 fi
+
+# start the exbenchsv to 
+(NDRX_DEBUG_CONF="debug_threaded_y.conf" exbenchsv -i 100 2>&1) > ./exbenchsv.log &
+
+# start the benchmark in threads...
+(NDRX_DEBUG_CONF="debug_threaded_y.conf" exbenchcl -n5 -P -t20 -b "{}" -f EX_DATA -S1024 -R5 2>&1) > ./exbenchcl.log
+
+RET=$?
+
+#
+# Validate log files..., with context id
+# 
+if [ ! -f "exbenchcl.0.log_loger_extension" ]; then
+    echo "Missing [exbenchcl.0.log_loger_extension]"
+    RET=-2
+fi
+
+if [ ! -f "exbenchsv.0.log" ]; then
+    echo "Missing [exbenchsv.0.log]"
+    RET=-2
+fi
+
+xadmin killall atmisv31FIRST 2>/dev/null
+xadmin killall atmisv31SECOND 2>/dev/null
+xadmin killall exbenchsv 2>/dev/null
+xadmin killall exbenchcl 2>/dev/null
+xadmin killall atmiclt31 2>/dev/null
 
 popd 2>/dev/null
 

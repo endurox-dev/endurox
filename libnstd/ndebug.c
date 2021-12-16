@@ -654,7 +654,8 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         len = strlen(tmp_ptr->filename_th_template);
         len2 = 3; /* len of .%u */
 
-        if (len+len2 <= tmpfnamesz)
+        /* needs space for EOS! */
+        if (len+len2 < tmpfnamesz)
         {
             /* Use the name */
             NDRX_STRCPY_SAFE(tmp_ptr->filename_th_template, tmpfname);
@@ -666,7 +667,8 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             if (NULL!=(p = strrchr(tmp_ptr->filename_th_template, '.')))
             {
                 /* insert the" .%u", move other part to the back..*/
-                memmove(p+len2, p, 4);
+		/* + include EOS... */
+                memmove(p+len2, p, strlen(p)+1);
                 NDRX_STRNCPY(p, ".%u", len2);
             }
             else
