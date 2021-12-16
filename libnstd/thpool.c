@@ -220,6 +220,8 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
             if (NULL!=p_ret)
             {
                 *p_ret=EXFAIL;
+		/* no need to init those others... */
+		break;
             }
         }
         
