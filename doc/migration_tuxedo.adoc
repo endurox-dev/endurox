@@ -44,6 +44,13 @@ parameters. This section lists some (but not all) known differences:
 of any context association.
 
 
+=== Tuxedo API bindings
+
+- *endurox-java* package serves as direct counterpart of the *Oracle Tuxedo Java*. Some
+of the APIs are different, but majority conforms to the *TJATMI*. Enduro/X implementation
+is based on JNI binding code. Each java instance is started as separate binary.
+
+
 == Enduro/X installation process
 ...
 
@@ -838,12 +845,13 @@ forward. Following section summarizes the server entry mapping
 .Tuxedo - Enduro/X Server mapping
 [options="header"]
 |=========================================================
-|Tuxedo setting|Enduro/X equivalent in <server>|Comments
+|Tuxedo setting|Enduro/X equivalent in <server> or <defaults> tags|Comments
 |SRVGRP|<cctag>|
 |SRVID|<srvid>|In Enduro/X must be unique across the instance configuration.
 |CLOPT|<sysopt>, <appopt>|In Enduro/X clopt may split by the -- in two parts
 server options goes to *<sysopt>* and all other options to *<appopt>*,
-but it is possible to leave all to the *<sysopt>*.
+but it is possible to leave all to the *<sysopt>*. Setting is not available for
+<defaults>.
 |MIN|<min>|
 |MAX|<max>|
 |ENVFILE|<env>|
@@ -1078,7 +1086,6 @@ incoming web service calls.
 
 Sample configuration:
 
-
 *app.ini:*
 
 --------------------------------------------------------------------------------
@@ -1179,71 +1186,132 @@ translated to new configuration, and other same service entries are ignored.
 .Tuxedo - Enduro/X SERVICES mapping
 [options="header"]
 |=========================================================
-|Tuxedo setting|Enduro/X equivalent|Comments
-|...|...
+|Tuxedo setting|Enduro/X equivalent in <services>/<service> and <services>/<defaults>|Comments
+|__SVCNM__|xml attr "svcnm"|Not available for <defaults>
+|PRIO|xml attr "prio"|
+|ROUTING|xml attr "routing"|
+|AUTOTRAN|xml attr "autotran"|
+|TRANTIME|xml attr "trantime"|
 |=========================================================
+
+==== Converting SERVICES, by example
+
+*UBB configuration:*
+
+--------------------------------------------------------------------------------
+
+*SERVICES
+
+DEFAULT:            AUTOTRAN=Y
+                    TRANTIME=60
+                    ROUTING=ROUT1
+                    PRIO=15
+
+TESTSV_DDR ROUTING=ROUT1
+EXBENCH         AUTOTRAN=Y ROUTING=ROUT2 PRIO=10 TRANTIME=40
+
+--------------------------------------------------------------------------------
+
+*ndrxconfig.xml:*
+
+Enduro/X event server does not use control file, so when converting *-f* flag for
+these servers may be ignored. For performance reasons it is recommended to set
+thread dispatch threads to larger number than default *1*.
+
+--------------------------------------------------------------------------------
+<endurox>
+...
+    <services>
+        <defaults prio="15" routing="ROUT1" autotran="Y" trantime="60"/>
+        <service svcnm="TESTSV_DDR" routing="ROUT1"/>
+        <service svcnm="EXBENCH" prio="10" routing="ROUT2" autotran="Y" trantime="40"/>
+    </services>
+
+--------------------------------------------------------------------------------
+
 
 === Converting "*ROUTING" section
 
-TODO:
-
-=== Service dispatching
-
-By default in Tuxedo, if *RQADDR* setting is not configured, each server have
-it's own request queue, where then in round-robin or similar fashion requests
-from ATMI clients are dispatched. If *RQADDR* is configured, then 
-services may work in Multiple Servers, Single Queue (*MSSQ*) model. However,
-here requirement is that these servers listening one queue have all the same
-services.
-
-In Enduro/X when working in Linux (and FreeBSD), by default all 
-services operate in *MSSQ* mode. Basically in Enduro/X each service 
-is queue were several executables perform epoll() + EPOLLEXCLUSIVE 
-listing on messages. Result is that different servers may have
-different sets of services (including shared set of services) and on these shared
-services effectively *MSSQ* mode will work out-of-the-box.
-
-On IBM AIX and Oracle Solaris *<rqaddr />* principle may be used in the same way
-as Tuxedo does. For MacOS *<rqaddr />* is not available and request dispatching
-is done in round-robin fashion only.
-
-=== Clustering
-
-In Enduro/X applications each instance works as "master" node, forming
-a peer to peer cluster. This means that each cluster node needs to be started
-separately in opposite to Tuxedo, where cluster application is started from
-master node, and secondary nodes are started by the master.
-
-Enduro/X cluster works in similar fashion as Tuxedo Gateway, except that
-*tpforward(3)* and all other APIs work in the same mode as Tuxedo's multi-machine
-configuration (i.e. MODEL=MP).
+.Tuxedo - Enduro/X ROUTING mapping
+[options="header"]
+|=========================================================
+|Tuxedo setting|Enduro/X equivalent in <routing>/<route>|Comments
+|__CRITERION_NAME__|xml attr "routing"|
+|FIELD|<field>|
+|FIELDTYPE|<fieldtype>|
+|RANGES|<ranges>|
+|BUFTYPE|<buftype>|Only supported routing type is *UBF*. This means
+that if in Tuxedo configuration constants *FML* or *FML32* are used,
+in Enduro/X equivalent is *UBF*.
+|=========================================================
 
 
-=== Transaction management
+*UBB configuration:*
 
-While both platforms provide distributed transaction processing APIs and both
-perform according to X/Open XA protocol, internally architecture for both products
-are different. Key aspects are mentioned here:
+--------------------------------------------------------------------------------
 
-- Log format
+*ROUTING
 
-- Transaction managers
+ROUT1   FIELD=T_STRING_10_FLD   BUFTYPE="FML32"  FIELDTYPE=STRING
+                RANGES="'0':DDR1,'2':DDR2,*:*"
 
-- Recovery
+ROUT2   FIELD=T_STRING_10_FLD   BUFTYPE="FML32"  FIELDTYPE=STRING
+                RANGES="'0':DDR1,'2':DDR2,*:*"
 
+--------------------------------------------------------------------------------
 
-== Tuxedo connectivity and bindings
+*ndrxconfig.xml:*
 
-- *endurox-java* package serves as direct counterpart of the *Oracle Tuxedo Java*. Some
-of the APIs are different, but majority conforms to the *TJATMI*. Enduro/X implementation
-is based on JNI binding code. Each java instance is started as separate binary.
+Enduro/X event server does not use control file, so when converting *-f* flag for
+these servers may be ignored. For performance reasons it is recommended to set
+thread dispatch threads to larger number than default *1*.
 
+--------------------------------------------------------------------------------
+
+<endurox>
+...
+    <routing>
+        <route routing="ROUT1">
+            <field>T_STRING_10_FLD</field>
+            <ranges>'0':DDR1,'2':DDR2,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+        <route routing="ROUT2">
+            <field>T_STRING_10_FLD</field>
+            <ranges>'0':DDR1,'2':DDR2,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+    </routing>
+
+--------------------------------------------------------------------------------
 
 == System administration
 
-Following key command mappings applies between Tuxedo and Enduro/X
+This section lists common tasks that administrator needs to performed with the system
+and maps the similarities between the two middlewares.
 
-TODO:
+.Tuxedo - Enduro/X Administrative tasks.
+[options="header"]
+|=========================================================
+|Task|Tuxedo command|Enduro/X command|Comments
+|Load configuration|$ tmloadcf|N/A|Enduro/X does not require configuration loading.
+Enduro/X uses actual text configuration to perform the system boot.
+|Starting the application instance|$ tmboot|$ xadmin start|For Enduro/X 
+arguments *-y*, *-i* and *-s* works in the same way as in Tuxedo.
+Enduro/X provides wrapper  *tmboot* over the *xadmin start*.
+|Stopping the application instance|$ tmshutdown|$ xadmin stop|For Enduro/X 
+arguments *-y*, *-i* and *-s* works in the same way as in Tuxedo. 
+Enduro/X provides  wrapper *tmshutdown* over the *xadmin stop*. 
+|Administrative CLI utility|tmadmin|xadmin|Enduro/X *xadmin* accepts commands
+from *stdin*, *as cli arguments* and *interactive shell mode*. Enduro/X ships
+with wrapper script named *tmadmin*.
+|List services|$ echo psc \| tmadmin|$ xadmin psc|
+|Print queues|$ echo pq \| tmadmin|$ xadmin pq|
+|List transactions| $ echo printtrans \| tmadmin|$ xadmin printtrans|
+|Dynamic configuration update|$ tmconfig|$ xadmin reload|Enduro/X command requests
+*ndrxd* to reload the configuration files from the disk, this does not require any
+interactive editing.
+|=========================================================
 
 ////////////////////////////////////////////////////////////////
 The index is normally left completely empty, it's contents being
