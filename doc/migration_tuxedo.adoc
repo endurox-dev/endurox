@@ -224,7 +224,7 @@ processes in <servers> section|-|Approximate mapping
 cannot be configured per cctag.
 |*SERVICES service|<endurox>/<services>/<service svcnm="service">|-|-
 |*SERVICES DEFAULT:|<endurox>/<services>/<defaults>|-|-
-|*ROUTING|<endurox>/<routing>|-|Defaults not supported at this section.
+|*ROUTING|<endurox>/<routing>|-|Defaults are not supported for this section.
 |*ROUTING route|<endurox>/<routing>/<route routing="route">|-|-
 |=========================================================
 
@@ -1461,8 +1461,8 @@ the questions may be asked in:
 . In case if some APIs are missing or other functionality of the Enduro/X shall be
 amended, change request may be ordered from Mavimax SIA.
 
-. In case if providing patches by your self, prior submitting the changes to Github
-https://github.com/endurox-dev/endurox project, do not forget to Sign and send us
+. In case if providing patches by your self, prior making pull request to Github
+https://github.com/endurox-dev/endurox repository, do not forget to Sign and send us
 a Mavimax Contribution Agreement, found at 
 https://www.endurox.org/attachments/download/1211/MCA-20210513.pdf
 
