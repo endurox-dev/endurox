@@ -59,6 +59,15 @@ Even if configuration is being migrated by automatic approach, it is worth to
 read this section. This allows get solid understand of the Enduro/X concepts by using
 existing Tuxedo knowledge.
 
+=== How to read this manual
+
+The following section lists only similar Oracle Tuxedo items which
+can be mapped to Enduro/X configuration files. Any Tuxedo configuration sections
+or settings that are not mentioned in bellow sections, does not map directly to
+Enduro/X or Enduro/X have different concepts or approach for the functionality.
+
+=== High level configuration and binaries mappings
+
 If looking on Tuxedo UBBCONFIG and Enduro/X ndrxconfig.xml/app.ini, then following
 similarities projects:
 
@@ -1118,9 +1127,61 @@ in the *<clients>* section. Basic management of the clients includes following c
 
 . $ xadmin sc - stop client
 
+
+Once *restincl* is booted, check by:
+
+--------------------------------------------------------------------------------
+
+$ xadmin pc
+...
+RESTIN/RIN1 - running pid 27014 (Fri Dec 17 11:46:52 2021)
+
+--------------------------------------------------------------------------------
+
+In case if process is not string, check the *${NDRX_ULOG}/restincl.rin1.log* log file,
+the port *8080* maybe busy already on host where migration is done.
+
+The *FML/UBF* service may be called in following way:
+
+--------------------------------------------------------------------------------
+
+$ curl -s -i -H "Content-Type: application/json" -X POST \
+    -d "{\"T_STRING_FLD\":\"HELLO POST\"}" http://localhost:8080/SOME_SERVICE2
+    
+HTTP/1.1 200 OK
+Content-Length: 238
+Content-Type: application/json
+Date: Fri, 17 Dec 2021 09:46:54 GMT
+
+{
+    "EX_IF_ECODE":0
+    ,"T_LONG_FLD":9991
+    ,"EX_IF_EMSG":"SUCCEED"
+    ,"T_STRING_FLD":"HELLO POST"
+    ,"T_STRING_2_FLD":["Hello World from XATMI server","Hello World from XATMI server, other"]
+    ,"T_UBF_FLD":{
+        "T_SHORT_FLD":[9991,9991]
+        "T_CARRAY_FLD":"AAECAQAABAUGQUI="
+    }
+}
+
+--------------------------------------------------------------------------------
+
 === Converting "*SERVICES" section
 
-TODO:
+Enduro/X services settings applies to whole application instance. Enduro/X does
+not support different services settings according to different groups. Automatic
+configuration translation tool *ubb2exp* uses SRVGRP only to decide to which
+configuration set service shall be added. If for the same LMID the same service
+is used for several groups, only first service entry and it's settings are
+translated to new configuration, and other same service entries are ignored.
+
+.Tuxedo - Enduro/X SERVICES mapping
+[options="header"]
+|=========================================================
+|Tuxedo setting|Enduro/X equivalent|Comments
+|...|...
+|=========================================================
 
 === Converting "*ROUTING" section
 
