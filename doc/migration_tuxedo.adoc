@@ -99,7 +99,7 @@ documentation.
 let the compiler to analyze the source code compatibility. Enduro/X has the 
 same build tools as Tuxedo: *buildserver(8)*,
 *buildclient(8)* and *buildtms(8)*. In case if some of the APIs are missing, 
-developer needs to figure out how, it can be convert the code to avoid such API
+developer needs to figure out how user code can be changed to avoid such API
 use. Or the other option is to contact Mavimax SIA company for change request
 to introduce such new API.
 
@@ -205,7 +205,7 @@ Enduro/X or Enduro/X have different concepts or approach for the functionality.
 === High level configuration and binaries mappings
 
 If looking on Tuxedo UBBCONFIG and Enduro/X ndrxconfig.xml/app.ini, then following
-similarities projects:
+similarities can be found:
 
 .UBBConfig - Enduro/X section mapping
 [width="80%", options="header"]
@@ -272,22 +272,22 @@ For further document we assume that system code "test1" is used.
 *Tuxedo* use UBB configuration file, which is kind of extended ini file. This
 describes majority of information used for Tuxedo application instance.
 
-Other hand *Enduro/X* uses two separate files for the configuration. One is
+On the other hand *Enduro/X* uses two separate files for the configuration. One is
 XML configuration file (*ndrxconfig.xml(5)* typically) which describes the XATMI
 server and client processes, services and DDR info. The other file is standard 
 *ini* file (typically *app.ini*) which include per binary configuration.
 
-Typically, Enduro/X application are configured with third environment file
+Typically, Enduro/X application are configured with third configuration file
 which loads the env variables in the shell session. File name typically
 starts with *set*.
 
 === Converting "*RESOURCES" section
 
-Enduro/X resources shall be configured according to the *ex_env(5)* manpage. This
+Enduro/X resources shall be configured according to the *ex_env(5)* manpage. ThisF
 section lists elements with the same or close meaning. Enduro/X setting
 is written in *app.ini* in *[@global]* or *[@global/<CCTAG>]* section.
 
-.Tuxedo - Enduro/X resources mapping
+.Tuxedo - Enduro/X RESOURCES mapping
 [options="header"]
 |=========================================================
 |Tuxedo setting|Enduro/X equivalent|Comments
@@ -317,7 +317,7 @@ in UBBConfig by *LMID*. For following UBB sections that could be done via *GROUP
 setting.
 
 If converting single machine (or multiple machines and working in different directories
-for each set of the files), then output files may be named as
+for each set of the files), then output files may be named as:
 
 . set<lmid_lowercase>
 
@@ -347,18 +347,18 @@ Following information from "*MACHINES" section projects to Enduro/X:
 
 # update to correspond actual Enduro/X installation path
 export NDRX_HOME=/usr
-export NDRX_APPHOME=<Common part between APPDIR and TUXCONFIG, if not common part, just use APPDIR >
+export NDRX_APPHOME=<Common part between APPDIR and TUXCONFIG, if no common part found, just use APPDIR >
 export NDRX_CCONFIG=<Directory name of TUXCONFIG>/app.ini
 export CDPATH=$CDPATH:.:${NDRX_APPHOME}
 export PATH=$PATH:<APPDIR>
 
 --------------------------------------------------------------------------------
 
-Additionally dirname of UBB *ULOGPFX* can be used as [@global]/NDRX_ULOG. Where
+Additionally dirname of UBB *ULOGPFX* can be used as *[@global]/NDRX_ULOG*. Where
 later *NDRX_ULOG* by it self means a directory where ULOG files are written by
 mask 'ULOG.YYYYMMDD' and process debug logging is written.
 
-Data from UBB *ENVFILE* may be copied to *app.ini* [@global] section.
+Data from UBB *ENVFILE* setting may be copied to *app.ini* [@global] section.
 
 The above is just recommended way how to setup runtime environment. Other
 approaches may be used too, according to *ex_env(5)* and 
@@ -411,18 +411,21 @@ any other node to connect. In Tuxedo this binary must be started before Tuxedo
 is booted.
 
 In Enduro/X each cluster link (between this and other node) must be defined in 
-*<servers />* as a normal ATMI server. The XATMI server process is *tpbridge(8)*. 
-In one of the nodes listening/binding address/port must be set, 
-in other node socket client mode shall be configured to connect to first node.
+*<servers>* section as a normal XATMI server. The XATMI server process name 
+for link establishment between two nodes is *tpbridge(8)*.
+On one of the nodes listening/binding address/port must be configured together
+with passive mode, and on other node socket client mode shall be configured 
+to connect to first node.
 
 For example, if node *1* shall be connected to nodes *2* and *3*, then on node *1*, two 
 *tpbridge* process shall be configured, to establish links to nodes *2* and *3*.
 
 In Enduro/X cluster each server is identified with unique number in range for
 1..32, set in *NDRX_NODEID* parameter. This similar to Tuxedo's *LMID*, but
-value is strictly limited to numbers only. (during conversion *LMID* keyword
-by *ubb2ex(8)* is used for resource prefixing for each instance).
-
+value is strictly limited to numbers only. (Actually during automatic 
+conversion by *ubb2ex(8)*, UBB keyword *LMID* is used for each instance, 
+and tool assigns *NDRX_NODEID* just by counting from *1* upwards
+for each of the machines).
 
 ==== Establishing links between nodes, by example
 
@@ -496,8 +499,8 @@ which would prepare listening socket ports as number of 21000 + NDRX_NODEID(remo
 other node id in parameter *-n*.
 
 *NOTE:* These examples assumes that machine architectures are the same, if different
-architecture machines are being clusters (e.g. x86, PowerPC), then between these
-machines protocol mode must be enabled by *-f* cli flag for *tpbridge*.
+architecture machines are being clustered (e.g. x86, PowerPC), then between these
+machines protocol mode must be enabled by *-f* cli flag for *tpbridge* on both ends.
 
 *ndrxconfig.site2.xml*
 
@@ -576,7 +579,7 @@ tool when processing such groups, only first identifier value for *LMID* is used
 is not needed to be assigned to the process. The process may be removed from
 CCTAG (if default was used) the empty *<cctag />* setting may be used under the *<server />* tag.
 
-.Tuxedo - Enduro/X group mapping
+.Tuxedo - Enduro/X GROUPS mapping
 [options="header"]
 |=========================================================
 |Tuxedo setting|Enduro/X equivalent|Comments
@@ -607,7 +610,10 @@ copied to app.ini.
 Tuxedo, the XA vendors interface name with colon (:) must be stripped from the value
 copied to app.ini. If not info is required by XA switch vendor, value "-" shall be used.
 
-|ENVFILE|ndrxconfig.xml: <endurox>/<servers>/<server>/<env>__ENVFILE__</env> |
+|ENVFILE|Copy the data from __ENVFILE__ file to the [@global/<CCTAG>] ini sub-section |As basically
+[@globa] section loads the environment variables for the process, to match environment
+setup for each of the groups, the contents from the __ENVFILE__ file may be
+copied to the *app.ini*.
 
 |Group participates in DDR|app.ini: [@global/<CCTAG>]/NDRX_RTGRP=_GROUP_NAME_|
 *Note:* The routing group name with any service name in the grouting group, must not
@@ -971,7 +977,7 @@ for further commands from transaction managers.
 Servers and their defaults migrates to Enduro/X XML configuration relatively straight
 forward. Following section summarizes the server entry mapping
 
-.Tuxedo - Enduro/X Server mapping
+.Tuxedo - Enduro/X SERVERS mapping
 [options="header"]
 |=========================================================
 |Tuxedo setting|Enduro/X equivalent in <server> or <defaults> tags|Comments
@@ -1020,9 +1026,6 @@ effectively *ndrxd(8)*.
 output will be sent to parent process, *stderr*, effectively *ndrxd(8)*.
 |-r|-r|Enduro/X ignores this flag.
 |=========================================================
-
-Also the *<sysopt>* and *<appopt>* tags are not available for default value by
-*<endurox>/<defaults>*.
 
 ==== Converting server, by example
 
@@ -1087,15 +1090,11 @@ orabin3            SRVID=2200 SRVGRP=ORAGRP3 THREADSTACKSIZE=6500000
 
 --------------------------------------------------------------------------------
 
-
-==== Converting event server
+==== Converting Event servers: TMSYSEVT, TMUSREVT, by example
 
 In case if application uses eventing (i.e. *tppost(3)* or *tpsubscribe(3)*, etc.)
 event server needs to be configured. Existing *TMSYSEVT* or *TMUSREVT* servers shall be replaced
-with single instance of *tpevsrv(8)*.
-
-
-==== Converting TMSYSEVT, TMUSREVT, by example
+with single (*min/max=1*) instance of *tpevsrv(8)*.
 
 *UBB configuration:*
 
