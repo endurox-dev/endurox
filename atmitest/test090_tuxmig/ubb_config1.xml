@@ -254,7 +254,7 @@
             </client>
     </clients>
     <services>
-        <defaults autotran="Y" trantime="60"/>
+        <defaults prio="15" routing="ROUT1" autotran="Y" trantime="60"/>
         <service svcnm="TESTSV_DDR" routing="ROUT1"/>
         <service svcnm="EXBENCH" prio="10" routing="ROUT2" autotran="Y" trantime="40"/>
     </services>

@@ -15,29 +15,30 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This is special ATMI server which is used for distributed transaction coordination.
-For new transactions started with 'tpbegin()', 'tmsrv' generates new XID and passed
-it back to transaction initiator. At the same time transaction is remembered by 'tmsrv'
-as active transaction and time-out counter is checked by background thread.
+This is a special ATMI server which is used for distributed transaction coordination.
+For transactions started with *tpbegin()*, *tmsrv* generates new XID and passes
+XID back to transaction initiator. At the same time transaction is remembered by *tmsrv*
+as active transaction, transaction time-out expiry is checked by background thread.
 
 In Enduro/X XA Resource Managers are numeric identifiers, which are allowed to
-be in range of 1..32. Enduro/X's Resource Manager ID (RMID) is same identifier as 
-Group Number or grpno known in other ATMI systems.
+be in range of 1..255. Enduro/X's Resource Manager ID (RMID) is same identifier as 
+Group Number or grpno known in other ATMI systems. In one global transaction, maximum
+*32* number of different resources may participate. 
 
 If during distributed transaction processing new resource manager is associated
 with transaction, then process notifies initial transaction manager that new
-association must be made. In active phase this too is stored in process memory.
+association must be made.
 
-When transaction comes to commit() phase, then it is logged to disk. Every 
-transaction is logged to separate file.  File name contains resource manager ID and 
-transaction XID. During the prepare phase status of every Resource Manager is logged.
-The same is with commit phase. Once all resources are
-completed, transaction file is removed. If 'tmsrv' crashed for in-progress transaction,
-then transaction files are read from disk, and appropriate actions according to 
-state machine are performed (aborted or rolled back).
+Every transaction is logged to the separate file on the disk. File name contains 
+resource manager ID and transaction XID. All involved resource manager statuses are logged
+to this particular machine readable log file. Once transaction is
+completed, file is removed. If *tmsrv* has crashed having in-progress transactions,
+transaction log files are read from the disk at the next *tmsrv* startup, 
+and appropriate actions according to two phase commit state machine 
+are performed (aborted or rolled back).
 
 If running transaction did time-out, then background thread will abort it automatically,
-and for caller process commit() will fail with abort-only message.
+and for caller process commit() will fail with *TPEABORT* error code.
 
 In cluster environment, other transaction manager of corresponding resource managers
 are involved for prepare/abort/commit actions. Also as every service doing as part
@@ -52,7 +53,7 @@ of the transaction. Other resource managers for this transaction will help for
 prepare/commit/aborts of other RMs. These other TMs will be selected in load balanced
 mode.
 
-Every instance of 'tmsrv' will advertise following list of services
+Every instance of *tmsrv* will advertise following list of services
 
 1. @TM-<Resource Manager ID>
 
@@ -168,7 +169,7 @@ This is periodic timer for doing active transactions time-out checks. Default is
 [*-m* 'MAX_TRIES']::
 Max tries to complete whole transaction by background thread. If the counter is reached,
 then no more attempts to complete the transaction are done. The counter is restarted at
-'tmsrv' reboot. Default is set to '100'.
+*tmsrv* reboot. Default is set to '100'.
 
 [*-r* 'XA_RETRIES']::
 This is number of attempts on resource manager when it returns *XA_RETRY* or *XAER_RMFAIL* 
@@ -186,7 +187,7 @@ This is the number of threads processing incoming requests. If all threads are b
 job is internally queued. It is known that some databases slowly process some of 
 the XA operations, for example 'xa_rollback'. Thus multiple threads can handle this
 more efficiently. *Default threadpool size is set to 10*. For more load balancing it
-is recommended to start multiple 'tmsrv' processes for same RMID.
+is recommended to start multiple *tmsrv* processes for same RMID.
 Note that *tmsrv* run with multiple threads, thus for Oracle DB flag '+Threads=true' 
 *MUST* be set in *NDRX_XA_OPEN_STR*. 
 Otherwise unexpected core dumps can be received from *tmsrv*.
@@ -298,7 +299,7 @@ global transaction.
 EXIT STATUS
 -----------
 *0*::
-SuccessG
+Success
 
 *1*::
 Failure
