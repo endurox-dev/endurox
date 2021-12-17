@@ -1203,9 +1203,9 @@ Enduro/X does not have *WebLogic Tuxedo Connector* or *Jolt* libraries
 for Java. But Enduro/X provides Web Services interface module *endurox-connect*,
 particularly *restincl(8)* from which XATMI services can be exposed as JSONS 
 web services. With this Enduro/X services may be called from any language which supports web
-services. Web services API provides includes capability for managing global transactions
-and associating the calls with the global transactions (this applies only for *restin* incoming
-service layer).
+services. Web services API provides capability for managing global transactions
+and associating the calls with the global transactions (this applies only for *restincl* incoming
+web service call layer).
 
 If your software uses any of these following Tuxedo binaries: *WSL/WSH*, *JSL/JSH*, *WSH*, *GWWS*
 then consider to use *endurox-connect* package. If using *ubb2ex(8)* tool, when it sees any
@@ -1438,7 +1438,14 @@ with wrapper script named *tmadmin*.
 |List transactions| $ echo printtrans \| tmadmin|$ xadmin printtrans|
 |Dynamic configuration update|$ tmconfig|$ xadmin reload|Enduro/X command requests
 *ndrxd* to reload the configuration files from the disk, this does not require any
-interactive editing.
+interactive editing. In case if remove any server processes or making the <srvid>
+tags to be different for running XATMI servers, these servers must be stopped before
+executing *reload* command. In case if *ndrxconfig.xml* is invalid, the error
+is printed and existing configuration for the processes not changed.
+|Cleanup IPC resources|$ tmipcrm|$ xadmin down|Enduro/X xadmin's down command cleans
+all the IPC resources and also it kills all the server processes and as much
+as possible client processes.
+|Server process reloading (start/stop) one by one for high availability|N/A, manually write script for sequence of tmshutdown -i/tmboot -i|$ xadmin sreload -s <servernm>|
 |=========================================================
 
 == Conclusions
