@@ -43,6 +43,10 @@ parameters. This section lists some (but not all) known differences:
 - *tpgetctxt(3)* Enduro/X version after the call puts current thread outside
 of any context association.
 
+- When using *tpnotify(3)* or *tpbroadcast(3)* in multi-machine mode, to
+allow remote nodes to process the notifications, *tpbrdcstsv(8)* process
+shall be started on the remote nodes. 
+
 
 === Tuxedo API bindings
 
@@ -52,13 +56,138 @@ is based on JNI binding code. Each java instance is started as separate binary.
 
 
 == Enduro/X installation process
-...
+
+Before starting the migration, necessary package shall be installed. The binary
+versions can be downloaded from https://www.mavimax.com/downloads where installers
+for desired platforms can be found. For example, if installing for 
+Red-Hat Enterprise Linux 8, following procedure applies:
+
+--------------------------------------------------------------------------------
+
+$ wget https://www.endurox.org/attachments/download/1393/endurox-7.5.34-5.oracleserver8_0_GNU_epoll.x86_64.rpm
+$ wget https://www.endurox.org/attachments/download/1089/endurox-connect-2.5.0-1.oracleserver8_0.x86_64.rpm
+
+$ su - root
+
+# rpm -i endurox-7.5.34-5.oracleserver8_0_GNU_epoll.x86_64.rpm
+# rpm -i endurox-connect-2.5.0-1.oracleserver8_0.x86_64.rpm
+
+--------------------------------------------------------------------------------
+
+Once packages are installed, system limits must be configured 
+see ex_adminman(guides)(Enduro/X Administration Manual, Setup System) section,
+particularly:
+
+. 2.2. Linux setup / Increase OS limits
+
+. 2.2. Linux setup / Setting Posix queue limits
+
+For other Operating systems, other chapters applies from the administration manual.
+
 
 == Migration process
-...
 
-== Automatic migration process
+Migration from Oracle Tuxedo to Enduro/X typically is accomplished by following steps:
+
+image:migration_tuxedo_process.png[caption="Figure 1: ", title="Migration from Tuxedo to Enduro/X steps"]
+
+. *Code analysis:* User application source code analysis for API compatibility. This can be done by
+manually checking each of the Tuxedo calls and their counterparts in the Enduro/X
+documentation. 
+
+. *Build:* The first step may be skipped, and migration may be started with the build, to
+let the compiler to analyze the source code compatibility. Enduro/X has the 
+same build tools as Tuxedo: *buildserver(8)*,
+*buildclient(8)* and *buildtms(8)*. In case if some of the APIs are missing, 
+developer needs to figure out how, it can be convert the code to avoid such API
+use. Or the other option is to contact Mavimax SIA company for change request
+to introduce such new API.
+
+. *Configuration migration:* Migrate the configuration either by 
+automatic tool *ubb2ex(8)* or convert configuration manually according to next chapters.
+
+. *Testing:* Perform extensive system testing.
+
+. *Go live*.
+
+
+== Automatic configuration migration
+
+Enduro/X ships with the configuration migration tool *ubbex(8)*. Tool accepts valid
+Tuxedo UBBConfig text format file. It is able to process multi-machine configuration
+and it produces following set of configuration files for each of the *LMID* found
+in UBBconfig:
+
+. set<lmid_lowercase> - environment source bash script
+
+. ndrxconfig.<lmid_lowercase>.xml - *ndrxd(8)* and *cpmsrv(8)* configuration file.
+
+. app.<lmid_lowercase>.ini - per binary configuration file.
+
+
+==== Automatic configuration migration, by example
+
+In the following example prefix directory -P ./test_dir is used. This basically
+adds prefix to all paths found in the *ubb_config1*.
+
+--------------------------------------------------------------------------------
+
+$ ubb2ex ubb_config1 -P ./test_dir
+UBB2EX Tool
+
+Enduro/X 7.5.36, build Dec 17 2021 22:33:46, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017-2021 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.
+
+
+$ cd test_dir/user90/conf
+
+$ ls -1
+
+app.test1.ini
+ndrxconfig.test1.xml
+settest1
+
+$ source settest1
+
+$ xadmin start -y
+Enduro/X 7.5.36, build Dec 17 2021 22:33:46, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017-2021 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.
+
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 57479
+* ndrxd idle instance started.
+exec cconfsrv -k C4Lwt7G4 -i 1 -e /tmp/test_dir/user90/log/cconfsrv.1.log -r --  :
+	process id=57481 ... Started.
+exec cconfsrv -k C4Lwt7G4 -i 2 -e /tmp/test_dir/user90/log/cconfsrv.2.log -r --  :
+	process id=57482 ... Started.
+exec tpadmsv -k C4Lwt7G4 -i 3 -e /tmp/test_dir/user90/log/tpadmsv.3.log -r --  :
+	process id=57483 ... Started.
+exec tpadmsv -k C4Lwt7G4 -i 4 -e /tmp/test_dir/user90/log/tpadmsv.4.log -r --  :
+	process id=57484 ... Started.
+exec tpevsrv -k C4Lwt7G4 -i 5 -e /tmp/test_dir/user90/log/tpevsrv.5.log -r --  :
+	process id=57485 ... Started.
+exec tmsrv -k C4Lwt7G4 -i 8 -e /tmp/test_dir/user90/log/tmsrv.8.log -r -- -t1 -l /tmp/test_dir/user90/tmlogs/rm8 :
+	process id=57491 ... Started.
+exec tmsrv -k C4Lwt7G4 -i 9 -e /tmp/test_dir/user90/log/tmsrv.9.log -r -- -t1 -l /tmp/test_dir/user90/tmlogs/rm8 :
+	process id=57503 ... Started.
+exec tmqueue -k C4Lwt7G4 -i 40 -e /tmp/test_dir/user90/log/tmqueue.40.log -r -- -s1 -p10 -f10 :
+
 ...
+--------------------------------------------------------------------------------
+
 
 == Manual configuration migration
 
@@ -1312,6 +1441,26 @@ with wrapper script named *tmadmin*.
 *ndrxd* to reload the configuration files from the disk, this does not require any
 interactive editing.
 |=========================================================
+
+== Conclusions
+
+This document shall provide enough information to successfully complete the migration
+from Oracle Tuxedo to Mavimax Enduro/X middleware. In case if support is necessary,
+the questions may be asked in:
+
+. Forums: https://www.endurox.org/projects/endurox/boards 
+
+. Contact support@mavimax.com
+
+. In case if some APIs are missing or other functionality of the Enduro/X shall be
+amended, change request may be ordered from Mavimax SIA.
+
+. In case if providing patches by your self, prior submitting the changes to Github
+https://github.com/endurox-dev/endurox project, do not forget to Sign and send us
+a Mavimax Contribution Agreement, found at 
+https://www.endurox.org/attachments/download/1211/MCA-20210513.pdf
+
+
 
 ////////////////////////////////////////////////////////////////
 The index is normally left completely empty, it's contents being

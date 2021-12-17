@@ -310,7 +310,9 @@ Following asciidoc rules applies to certain document parts:
 
 - Constants, UBF field names (e.g. *EX_NETOURIP*).
 
-- Command line arguments
+- Command line arguments.
+
+- Configuration parameter names.
 
 'Underline applies to (in asciidoc single quotes)' applies to things that user
 is expected to fill in:
@@ -320,8 +322,6 @@ is expected to fill in:
 - parameter value labels.
 
 - Variables and field names in the structure.
-
-- Configuration parameter names referenced in text.
 
 === Reserved identifier prefixes
 
