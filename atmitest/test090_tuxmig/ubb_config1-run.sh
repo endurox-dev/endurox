@@ -222,6 +222,28 @@ if [ "X$OUT" != "X" ]; then
     go_out -1
 fi
 
+################################################################################
+#echo ">>> Compare outputs of the INI" - TODO figrue out 
+################################################################################
+
+#OUT=`diff $TESTDIR/ubb_config1.ini $TESTDIR/runtime/user90/conf/app.test1.ini \
+#    | grep -v NDRX_QPATH \
+#    | grep -v NDRX_LIBEXT \
+#    | grep -v NDRX_RNDK \
+#    | grep -v FIELDTBLS \
+#    | grep -v FLDTBLDIR `
+
+#echo $OUT
+
+#RET=$?
+#if [ "X$RET" != "X0" ]; then
+#    go_out $RET
+#fi
+
+#if [ "X$OUT" != "X" ]; then
+#    echo "ubb_config1.ini!=runtime/user90/conf/app.test1.ini"
+#    go_out -1
+#fi
 
 go_out $RET
 

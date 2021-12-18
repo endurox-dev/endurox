@@ -52,6 +52,7 @@ ORAGRP3	LMID=TEST1
 		TMSCOUNT=2
 		OPENINFO="Oracle_XA:ORACLE_XA+DB=ROCKY+SqlNet=SID1+ACC=P/username/password+SesTM=10+LogDir=/user90/xalog+Threads=true"
 		CLOSEINFO="Oracle_XA:CLOSE_STR"		
+		ENVFILE="./env_cctag.txt"
 
 # all stuff on the same line
 QGRP1	LMID=TEST1 GRPNO=8 TMSNAME=TMS_QM TMSCOUNT=2 OPENINFO="TUXEDO/QM:/user90/conf/QUEUEA:QSPA"
