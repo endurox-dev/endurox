@@ -811,6 +811,7 @@ exprivate void ndrx_call_tpsvrthrdone(void)
 exprivate int ndrx_call_tpsvrthrinit(int argc, char ** argv)
 {
     int ret = EXSUCCEED;
+    int init_ok = EXFALSE;
     
     /* start the session... */
     NDRX_LOG(log_info, "Starting new server dispatched thread");
@@ -820,6 +821,8 @@ exprivate int ndrx_call_tpsvrthrinit(int argc, char ** argv)
     {
         EXFAIL_OUT(ret);
     }
+
+    init_ok = EXTRUE;
     
     G_atmi_tls->pf_tpacall_noservice_hook = &ndrx_tpacall_noservice_hook_defer;
     
@@ -832,6 +835,12 @@ exprivate int ndrx_call_tpsvrthrinit(int argc, char ** argv)
     /* remove handler.. */
     G_atmi_tls->pf_tpacall_noservice_hook = NULL;
 out:
+
+    if (EXSUCCEED!=ret && init_ok)
+    {
+        tpterm();
+    }
+
     return ret;
 }
 
