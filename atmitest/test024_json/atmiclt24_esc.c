@@ -54,7 +54,6 @@
 int main(int argc, char **argv)
 {
         int ret = EXSUCCEED;
-        char buf[1024];
         UBFH *p_fb;
         int i;
         

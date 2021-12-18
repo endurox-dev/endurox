@@ -174,6 +174,20 @@ expublic int ndrx_Bread  (UBFH * p_ub, FILE * inf,
                 p_ub, hdr->bytes_used);
     }
     
+    /* wipe out any BFLD_PTR fields, if not enabled... */
+    if (!(ndrx_G_apiflags & NDRX_APIFLAGS_UBFPTRPARSE))
+    {
+        /* TODO: strip off BFLD_PTR in recursive way from the imported data...
+         * New func: Find if any BFLD_PTR is used, remove the off.
+         *  - return flag that buffer is changed
+         * Search for any BFLD_UBF, if any found, read the buffer (to temp space)
+         *  (one by one as sizes may change)
+         * - call the new func.
+         * - If changes has been detected, perform Bchg() over the current occurrence,
+         * -- how about to loop next? Count the fields processed?
+         */
+    }
+    
 out:
     UBF_LOG(log_debug, "%s: return %d", __func__, ret);
     
