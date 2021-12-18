@@ -48,18 +48,32 @@ fi;
 
 . ../testenv.sh
 
+rm *.log 2>/dev/null
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 xadmin killall atmiclt24 2>/dev/null
 
+echo "Testing standard JSON..."
 (./atmiclt24 2>&1) > ./atmiclt24.log
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "atmiclt24 failed!"
+    RET=-2
+fi
 
-RET=$?
+echo "Testing custom escaping..."
+(NDRX_APIFLAGS=json_escape ./atmiclt24_esc 2>&1) > ./atmiclt24_esc.log
+XRET=$?
+
+if [ "X$XRET" != "X0" ]; then
+    echo "atmiclt24_esc failed!"
+    RET=-2
+fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-	echo "Test error detected!"
-	RET=-2
+    echo "Test error detected!"
+    RET=-2
 fi
 
 xadmin killall atmiclt24 2>/dev/null

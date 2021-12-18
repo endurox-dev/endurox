@@ -460,6 +460,78 @@ Ensure(test_nstd_str_fmtesc)
 }
 
 /**
+ * Check standard settings string parser
+ */
+Ensure(test_nstd_stdcfgstr)
+{
+    ndrx_stdcfgstr_t *parsed;
+    ndrx_stdcfgstr_t *cur;
+    
+    assert_equal(ndrx_stdcfgstr_parse("HELLO,WORLD,,,,  THIS=VALUE", &parsed), EXSUCCEED);
+    
+    cur = parsed;
+    
+    assert_string_equal(cur->key, "HELLO");
+    assert_equal(cur->value, NULL);
+    
+    cur=cur->next;
+    
+    assert_string_equal(cur->key, "WORLD");
+    assert_equal(cur->value, NULL);
+
+    cur=cur->next;
+    
+    assert_string_equal(cur->key, "THIS");
+    assert_string_equal(cur->value, "VALUE");
+
+    cur=cur->next;
+    assert_equal(cur, NULL);
+    
+    ndrx_stdcfgstr_free(parsed);
+    
+    
+    assert_equal(ndrx_stdcfgstr_parse(",,,\nIS\tANOTHER=SETTING", &parsed), EXSUCCEED);
+    
+    cur = parsed;
+    
+    assert_string_equal(cur->key, "IS");
+    assert_equal(cur->value, NULL);
+    
+    cur=cur->next;
+    
+    assert_string_equal(cur->key, "ANOTHER");
+    assert_string_equal(cur->value, "SETTING");
+    
+    cur=cur->next;
+    assert_equal(cur, NULL);
+    
+    ndrx_stdcfgstr_free(parsed);
+    
+    
+    assert_equal(ndrx_stdcfgstr_parse("X='=HELLO WORLD INSIDE\"' Y=\"HELO\\\" EHLO\" ndrx=5", &parsed), EXSUCCEED);
+    
+    cur = parsed;
+    
+    assert_string_equal(cur->key, "X");
+    assert_string_equal(cur->value, "=HELLO WORLD INSIDE\"");
+    
+    cur=cur->next;
+    
+    assert_string_equal(cur->key, "Y");
+    assert_string_equal(cur->value, "HELO\" EHLO");
+    
+    cur=cur->next;
+    
+    assert_string_equal(cur->key, "ndrx");
+    assert_string_equal(cur->value, "5");
+    
+    cur=cur->next;
+    assert_equal(cur, NULL);
+    
+    ndrx_stdcfgstr_free(parsed);
+}
+
+/**
  * Standard header tests
  * @return
  */
@@ -477,6 +549,7 @@ TestSuite *ubf_nstd_standard(void)
     add_test(suite, test_nstd_NDRX_STRCPY_LAST_SAFE);
     add_test(suite, test_nstd_strtokblk);
     add_test(suite, test_nstd_str_fmtesc);
+    add_test(suite, test_nstd_stdcfgstr);
     
     return suite;
 }

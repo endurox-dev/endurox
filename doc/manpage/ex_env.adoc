@@ -431,12 +431,17 @@ Mandatory Env. Variables
     to route the traffic between default service and service in group.
 
 *NDRX_APIFLAGS*='APIFLAGS'::
-    This is comma seperated list of specific API configuration used by Enduro/X
-    libraries. Currently defined flags: *json_escape* - escape non printable
+    This is Enduro/X standard configuration string (e.g. comma separated) 
+    list of specific API configuration flages used by Enduro/X. 
+    Currently defined flags are: *json_escape* and *ubf_ptrparse*
+    *json_escape* flag enables to escape non printable
     characters during the UBF 2 JSON conversation and vice versa. 
     Escape is done on non printable charaters i.e. !(*isprint()* && *!iscntrl()*),
     and these are escaped with "\" + xx, where xx is hex number of the ASCII char.
     e.g. ASCII "space" would become "\20". The back-slash by becomes "\\". 
+    *ubf_ptrparse* enables *Bextread(3)* and *Bextreadcb(3)* functions to read
+    *BFLD_PTR* pointers from input. By default buffer pointers for security
+    reasons are not read.
 
 EXAMPLE
 -------

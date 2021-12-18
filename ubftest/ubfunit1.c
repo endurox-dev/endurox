@@ -125,6 +125,8 @@ void std_basic_setup(void)
 {
     /* set view env... */
     load_field_table();
+
+    setenv("NDRX_APIFLAGS", "ubf_ptrparse", 1);
 }
 
 /**

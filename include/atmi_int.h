@@ -198,10 +198,6 @@ extern "C" {
 #define NDRX_XA_FLAG_FDATASYNC      "FDATASYNC"   /**< Perform Fdatasync               */
 #define NDRX_XA_FLAG_DSYNC          "DSYNC"       /**< Perform directory sync          */
 #define NDRX_XA_FLAG_BTIGHT         "BTIGHT"      /**< Tight branches                  */
-    
-/**< Escape JSON strings to handler invalid UTF-8 */
-#define NDRX_APIFLAGS_JSONESCAPE        0x00000001
-#define NDRX_APIFLAGS_JSONESCAPE_CODE   "json_escape" /**< config flag code   */
 
 /**
  * Internal system flags
@@ -505,7 +501,6 @@ struct atmi_lib_env
     char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!)               */
     char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
     ndrx_env_priv_t integpriv;    /**< integration  private data                */
-    long     apiflags;            /**< API mode flags, see NDRX_APIFLAGS_*      */
     char    rtgrp[NDRX_DDR_GRP_MAX+1]; /**< routing grup setting                */
     /**
      * Special flags needed for QA
