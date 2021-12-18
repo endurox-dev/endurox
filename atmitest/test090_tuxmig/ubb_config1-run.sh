@@ -70,7 +70,7 @@ xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
 xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
 
 export NDRX_SILENT=Y
-rm -rf ./runtime 2>/dev/null
+rm -rf ./runtime tmp1 tmp2 2>/dev/null
 ubb2ex ubb_config1 -P ./runtime
 
 RET=$?
@@ -226,24 +226,27 @@ fi
 #echo ">>> Compare outputs of the INI" - TODO figrue out 
 ################################################################################
 
-#OUT=`diff $TESTDIR/ubb_config1.ini $TESTDIR/runtime/user90/conf/app.test1.ini \
-#    | grep -v NDRX_QPATH \
-#    | grep -v NDRX_LIBEXT \
-#    | grep -v NDRX_RNDK \
-#    | grep -v FIELDTBLS \
-#    | grep -v FLDTBLDIR `
+# prepare ini files, strip the dynamic parts
+cat $TESTDIR/ubb_config1.ini        | \
+    grep -v NDRX_XA_DRIVERLIB       | \
+    grep -v NDRX_XA_RMLIB           | \
+    grep -v NDRX_RNDK               | \
+    grep -v NDRX_QPATH > tmp1
 
-#echo $OUT
+cat $TESTDIR/runtime/user90/conf/app.test1.ini  | \
+    grep -v NDRX_XA_DRIVERLIB                   | \
+    grep -v NDRX_XA_RMLIB                       | \
+    grep -v NDRX_RNDK                           | \
+    grep -v NDRX_QPATH  > tmp2
 
-#RET=$?
-#if [ "X$RET" != "X0" ]; then
-#    go_out $RET
-#fi
+OUT=`diff tmp1 tmp2`
 
-#if [ "X$OUT" != "X" ]; then
-#    echo "ubb_config1.ini!=runtime/user90/conf/app.test1.ini"
-#    go_out -1
-#fi
+echo $OUT
+
+if [ "X$OUT" != "X" ]; then
+    echo "ubb_config1.ini!=runtime/user90/conf/app.test1.ini"
+    go_out -1
+fi
 
 go_out $RET
 
