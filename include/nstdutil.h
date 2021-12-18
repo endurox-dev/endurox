@@ -156,7 +156,8 @@ extern NDRX_API long ndrx_G_apiflags;
 #define NDRX_APIFLAGS_JSONESCAPE        0x00000001
 #define NDRX_APIFLAGS_JSONESCAPE_CODE   "json_escape" /**< config flag code   */
 
-/** Shall UBF pointers be parsed by Bextread() and Bread()*
+/** 
+ * Shall UBF pointers be parsed by Bextread() and Bread()
  * for safety reasons, by default this is off
  */
 #define NDRX_APIFLAGS_UBFPTRPARSE        0x00000002
