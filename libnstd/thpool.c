@@ -93,6 +93,7 @@ typedef struct thpool_
     pthread_cond_t  proc_one;               /**< One job is processed       */
     int threads_keepalive;
     int num_threads;                        /**< total number of threads    */
+    int num_threads_allocd;                 /**< total number of threads    */
     int thread_status;                      /**< if EXTRUE, init OK         */
     jobqueue  jobqueue;                     /**< job queue                  */
     ndrx_thpool_tpsvrthrinit_t pf_init;    /**< init function, if any      */
@@ -153,6 +154,7 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
         return NULL;
     }
     thpool_p->num_threads   = 0;
+    thpool_p->num_threads_allocd   = 0;
     thpool_p->threads_keepalive = 1;
     thpool_p->num_threads_alive   = 0;
     thpool_p->num_threads_working = 0;
@@ -471,7 +473,7 @@ void ndrx_thpool_destroy(thpool_* thpool_p)
     jobqueue_destroy(&thpool_p->jobqueue);
     
     /* avoid mem leak #250 */
-    for (n=0; n < threads_total; n++)
+    for (n=0; n < thpool_p->num_threads_allocd; n++)
     {
         poolthread_destroy(thpool_p->threads[n]);
     }
@@ -505,7 +507,8 @@ static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int
 
     (*thread_p)->thpool_p = thpool_p;
     (*thread_p)->id       = id;
-
+    thpool_p->num_threads_allocd++;
+    
     /* have some stack space... */
     ndrx_platf_stack_set(&pthread_custom_attr);
 
