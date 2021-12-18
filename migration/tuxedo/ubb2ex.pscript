@@ -693,6 +693,9 @@ function prep_groups(instance)
 
             }
 
+            //Load envfile, if any...
+            prep_envfile(group, group);
+
         }
     }
 }
@@ -1637,14 +1640,18 @@ function prep_networking()
 
 /**
  * Function parses envfile and performs few transformations
+ * @param obj object to add envfile data
+ * @param object onto which to resolve the data
  */
-function prep_envfile(instance)
+function prep_envfile(obj, resolv_obj)
 {
-
     //Key is env name, value is value
-    instance.envfile <-{};
+    obj.envfile <-{};
 
-    local envfile = get_val(instance.machine, "ENVFILE", [""])[0];
+    //local envfile = get_val(instance.machine, "ENVFILE", [""])[0];
+
+    local envfile = get_val(resolv_obj, "ENVFILE", [""])[0];
+
     if (envfile!="")
     {
         print("Parsing env file ["+envfile+"]");
@@ -1726,7 +1733,7 @@ function prep_envfile(instance)
             }
 
             print(format("Adding env from envfile [%s] = [%s]", envname, envvalue));
-            instance.envfile[envname]<-envvalue;
+            obj.envfile[envname]<-envvalue;
         }
 
         myfile.close();
@@ -1884,9 +1891,14 @@ NDRX_XA_FLAGS=RECON:*:3:100";
             {
                 group_text+="\nNDRX_RTGRP="+group.name;
             }
-            
-            instance.ini_text+="\n"+group_text+"\n";
-            
+
+            //Plot any envfile imports...
+            foreach(env, val in group.envfile)
+            {
+                group_text+=format("\n%s=%s", env, val);
+            }
+
+            instance.ini_text+="\n"+group_text+"\n";            
         }
     }
 
@@ -2822,7 +2834,7 @@ function ex_generate(arg)
         prep_servers(instance);
 
         //Load the instance environment
-        prep_envfile(instance);
+        prep_envfile(instance, instance.machine);
 
         //Generate file contents:
         gen_set_file(instance);
