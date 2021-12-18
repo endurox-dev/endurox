@@ -242,7 +242,7 @@ exprivate int ndrx_load_string(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
         s_ptr = bin_buf;
         NDRX_LOG(log_debug, "got binary len [%d]", str_len);
     }
-    else if (G_atmi_env.apiflags & NDRX_APIFLAGS_JSONESCAPE)
+    else if (ndrx_G_apiflags & NDRX_APIFLAGS_JSONESCAPE)
     {
         /* convert string from C escape... */
         if (EXSUCCEED!=ndrx_normalize_string(str_val, &str_len))
@@ -780,7 +780,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                 s_ptr = b64_buf;
 
             }
-            else if (G_atmi_env.apiflags & NDRX_APIFLAGS_JSONESCAPE)
+            else if (ndrx_G_apiflags & NDRX_APIFLAGS_JSONESCAPE)
             {
                 int tmp_len = ndrx_get_nonprintable_char_tmpspace(strval, flen);
                 

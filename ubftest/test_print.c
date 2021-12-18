@@ -1096,6 +1096,48 @@ Ensure(test_bextread_eq_err)
     remove_test_temp();
 }
 
+/**
+ * Check that by default, pointers are not read
+ */
+Ensure(test_bextread_no_ptr)
+{
+    char fb[2048];
+    UBFH *p_ub = (UBFH *)fb;
+    char buf[128];
+    BFLDLEN len;
+    
+    char *test_ptr[]= {
+        "T_STRING_FLD\tABC\n",
+        "T_PTR_FLD\t111\n",
+        NULL
+    };
+    
+    /* remove settings... */
+    unsetenv("NDRX_APIFLAGS");
+    
+    /* load field table */
+    load_field_table();
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    open_test_temp("w");
+    write_to_temp(test_ptr);
+    close_test_temp();
+
+    open_test_temp_for_read("r");
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXSUCCEED);
+    
+    /* check buffer... */
+    len = sizeof(buf);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, buf, &len), EXSUCCEED);
+    assert_string_equal(buf, "ABC");
+    
+    assert_equal(CBget(p_ub, T_PTR_FLD, 0, buf, &len, BFLD_STRING), EXFAIL);
+    assert_equal(Berror, BNOTPRES);
+    
+    close_test_temp();
+    /* now open the file */
+    remove_test_temp();
+}
+
 TestSuite *ubf_print_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -1116,6 +1158,7 @@ TestSuite *ubf_print_tests(void)
     add_test(suite, test_bextread_eq);
     add_test(suite, test_bextread_eq_err);
     add_test(suite, test_bextreadcb);
+    add_test(suite, test_bextread_no_ptr);
 
     return suite;
 }

@@ -26,6 +26,9 @@ or *Bprintfcb(3)*.
 The read format is "[COMMAND]<FIELD><TAB><VALUE><NEW_LINE>". Input also support 
 fields by id, then format for <FIELD> is "((BFLDID32)<FIELD_ID>)".
 
+To enable processing of *BFLD_PTR* fields, *ex_env(5)* configuration parameter
+*NDRX_APIFLAGS* shall contain flag *ubf_ptrparse*.
+
 Sample buffer:
 
 --------------------------------------------------------------------------------
@@ -114,7 +117,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bextread(3)* *Bfprint(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)* *ud(8)*
+*Bextread(3)* *Bfprint(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)* *ud(8)* *ex_env(5)*
 
 COPYING
 -------

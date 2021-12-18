@@ -607,7 +607,11 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         }
         
         /* Check field type */
-        if ((BFLD_STRING == fldtype || 
+        if (BFLD_PTR==fldtype && !(ndrx_G_apiflags & NDRX_APIFLAGS_UBFPTRPARSE))
+        {
+            flag='N';   /* Ignore field... */
+        }
+        else if ((BFLD_STRING == fldtype || 
                 BFLD_CARRAY == fldtype || BFLD_CHAR == fldtype) && '='!=flag)
         {
             if (EXFAIL==ndrx_normalize_string(value, &len))
@@ -796,6 +800,10 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                 }
             }
         } /* '='==flag */
+        else if ('N'==flag)
+        {
+            UBF_LOG(log_error, "Ignoring field %d", bfldid);
+        }
     } /* while */
     
 out:

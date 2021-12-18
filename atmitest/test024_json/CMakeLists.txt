@@ -51,12 +51,15 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Test - executables ###############################
 add_executable (atmiclt24 atmiclt24.c)
+add_executable (atmiclt24_esc atmiclt24_esc.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
 target_link_libraries (atmiclt24 atmiclt atmi ubf nstd m ${RT_LIB} pthread)
+target_link_libraries (atmiclt24_esc atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 
 set_target_properties(atmiclt24 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt24_esc PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 ################################################################################
 # vim: set ts=4 sw=4 et smartindent:

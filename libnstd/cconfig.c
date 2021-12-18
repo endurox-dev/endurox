@@ -63,6 +63,10 @@
 ndrx_inicfg_t *G_cconfig = NULL; /* Common-config handler */
 char *G_cctag = NULL;
 int G_tried_to_load = EXFALSE; /* did we try to load the config? */
+
+/** API specifc flags */
+expublic long ndrx_G_apiflags = 0;
+
 /*---------------------------Statics------------------------------------*/
 
 exprivate char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL, 
@@ -398,6 +402,54 @@ out:
 
     return ret;
 }
+
+/**
+ * Load API flags
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_apiflags_load(void)
+{
+    int ret = EXSUCCEED;
+    char *p = getenv(CONF_NDRX_APIFLAGS);
+    ndrx_stdcfgstr_t* parsed=NULL, *el;
+    
+    if (NULL!=p)
+    {
+        if (EXSUCCEED!=ndrx_stdcfgstr_parse(p, &parsed))
+        {
+            NDRX_LOG_EARLY(log_error, "Failed to parse %s=[%s]",
+                    CONF_NDRX_APIFLAGS, p);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* loop over the settings list... */
+        DL_FOREACH(parsed, el)
+        {
+            if (0==strcmp(el->key, NDRX_APIFLAGS_JSONESCAPE_CODE))
+            {
+                NDRX_LOG_EARLY(log_debug, "%s found - C escape json strings",
+                        NDRX_APIFLAGS_JSONESCAPE_CODE);
+                ndrx_G_apiflags|=NDRX_APIFLAGS_JSONESCAPE;
+            }
+            else if (0==strcmp(el->key, NDRX_APIFLAGS_UBFPTRPARSE_CODE))
+            {
+                NDRX_LOG_EARLY(log_info, "%s found - parse BFLD_PTR addresses on import",
+                        NDRX_APIFLAGS_UBFPTRPARSE_CODE);
+                ndrx_G_apiflags|=NDRX_APIFLAGS_UBFPTRPARSE;
+            }
+        }
+    }
+    
+out:
+    
+    if (NULL!=parsed)
+    {
+        ndrx_stdcfgstr_free(parsed);
+    }
+
+    return ret;
+}
+
 /**
  * Internal for Enduro/X - load the config
  * @return 
@@ -431,8 +483,13 @@ expublic int ndrx_cconfig_load(void)
             }
 
             first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
-
             first = EXFALSE;
+            
+            
+            /* Load after the ini have been processed, so that
+             * these can be set in [@global] section
+             */
+            ndrx_apiflags_load();
         }
         
         /* Do this outside the lock... */

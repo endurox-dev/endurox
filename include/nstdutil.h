@@ -45,6 +45,12 @@ extern "C" {
 #include <exhash.h>
 #include <arpa/inet.h>
 /*---------------------------Externs------------------------------------*/
+    
+/**
+ * Low level API configuration flags
+ */
+extern NDRX_API long ndrx_G_apiflags;
+
 /*---------------------------Macros-------------------------------------*/
     
 /**
@@ -138,6 +144,26 @@ extern "C" {
 #define NDRX_FSYNC_DSYNC_STR        "dsync"     /**< config keyword      */
 /** @} */ /* end of fsync */
 
+    
+/**
+ * Enduro/X base system API flags
+ * Maybe used ATMI/UBF and standard library configuration.
+ * @defgroup apiflags
+ * @{
+ */    
+    
+/** Escape JSON strings to handler invalid UTF-8 */
+#define NDRX_APIFLAGS_JSONESCAPE        0x00000001
+#define NDRX_APIFLAGS_JSONESCAPE_CODE   "json_escape" /**< config flag code   */
+
+/** Shall UBF pointers be parsed by Bextread() and Bread()*
+ * for safety reasons, by default this is off
+ */
+#define NDRX_APIFLAGS_UBFPTRPARSE        0x00000002
+#define NDRX_APIFLAGS_UBFPTRPARSE_CODE   "ubf_ptrparse" /**< parse BFLD_PTR */
+ 
+/** @} */ /* end of apiflags */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -257,6 +283,18 @@ struct ndrx_lh_config
     
     /** Compare value at index, ret 0 if equals */
     int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
+};
+
+/**
+ * Handler of parsed standard settings
+ */
+typedef struct ndrx_stdcfgstr ndrx_stdcfgstr_t;
+struct ndrx_stdcfgstr
+{
+    char key[128];  /**< shall not we defined larger keys... */
+    char *value;
+    /* DL with the settings loaded... */
+    ndrx_stdcfgstr_t *next, *prev;
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -395,6 +433,9 @@ extern NDRX_API int ndrx_str_ends_with(char *str, char *needle);
 extern NDRX_API long ndrx_file_age(char *fname);
 extern NDRX_API char *ndrx_file_read(char *fname, size_t *bytes_loaded);
 extern NDRX_API int ndrx_chk_confirm(char *message, short is_confirmed);
+
+extern NDRX_API void ndrx_stdcfgstr_free(ndrx_stdcfgstr_t* stdcfg);
+extern NDRX_API int ndrx_stdcfgstr_parse(char *input, ndrx_stdcfgstr_t** parsed);
 
 /* String handling, where macros does not work: */
 
