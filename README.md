@@ -144,9 +144,6 @@ https://www.mavimax.com/downloads
 
 - Source corss reference: http://www.silodev.com/lxr/source
 
-PS, feel free to contact me at madars@mavimax.com. I will gladly help you
- to get EnduroX running ;)
-
 # Call/message forwarding
 
 ## Instead of doing calls to each server separately...
