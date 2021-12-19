@@ -39,6 +39,8 @@
 #include <string.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
+#include <ndebug.h>
+#include <ubfutil.h>
 
 
 /**
@@ -53,7 +55,7 @@ Ensure(test_readwrite)
 
     /* needs to set padding to some known value */
     memset(fb, 7, sizeof(fb));
-    memset(fb, 7, sizeof(fb2));
+    memset(fb2, 7, sizeof(fb2));
 
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
@@ -89,7 +91,7 @@ Ensure(test_readwrite_err_space)
     UBFH *p_ub2 = (UBFH *)fb2;
 
     memset(fb, 7, sizeof(fb));
-    memset(fb, 7, sizeof(fb2));
+    memset(fb2, 7, sizeof(fb2));
 
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
@@ -121,7 +123,7 @@ Ensure(test_readwrite_invalid_descr)
     UBFH *p_ub2 = (UBFH *)fb2;
 
     memset(fb, 7, sizeof(fb));
-    memset(fb, 7, sizeof(fb2));
+    memset(fb2, 7, sizeof(fb2));
 
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
@@ -210,6 +212,72 @@ Ensure(test_readwrite_callbacked)
     do_dummy_data_test(p_ub);
 }
 
+/**
+ * Test that BFLD_PTR is stripped in recursive way
+ */
+Ensure(test_readwrite_no_ptr)
+{
+    char fb[2048];
+    UBFH *p_ub = (UBFH *)fb;
+    
+    char fb2[2048];
+    UBFH *p_ub2 = (UBFH *)fb2;
+    
+    char fb3[2048];
+    UBFH *p_ub3 = (UBFH *)fb3;
+    
+    char fb4[2048];
+    UBFH *p_ub4 = (UBFH *)fb4;
+
+    unsetenv("NDRX_APIFLAGS");
+
+    memset(fb, 0, sizeof(fb));
+    memset(fb2, 0, sizeof(fb2));
+
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
+    
+    assert_equal(Binit(p_ub3, sizeof(fb3)), EXSUCCEED);
+    assert_equal(Binit(p_ub4, sizeof(fb4)), EXSUCCEED);
+    
+    assert_equal(Bchg(p_ub4, T_STRING_9_FLD, 0, "HELLO1", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub4, T_STRING_10_FLD, 0, "HELLO2", 0), EXSUCCEED);
+    assert_equal(CBchg(p_ub4, T_PTR_FLD, 3, "999", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(Bchg(p_ub3, T_UBF_FLD, 2, (char *)p_ub4, 0), EXSUCCEED);
+    assert_equal(CBchg(p_ub3, T_PTR_FLD, 1, "888", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bchg(p_ub3, T_STRING_8_FLD, 2, "HELLO3", 0), EXSUCCEED);
+    
+    assert_equal(Bchg(p_ub, T_UBF_FLD, 4, (char *)p_ub3, 0), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 5, "1231", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_7_FLD, 2, "HELLO4", 0), EXSUCCEED);
+    
+    open_test_temp("wb");
+
+    assert_equal(Bwrite(p_ub, M_test_temp_file), EXSUCCEED);
+    close_test_temp();
+
+    /* Now read the stuff in second buffer */
+    open_test_temp_for_read("rb");
+    assert_equal(Bread(p_ub2, M_test_temp_file), EXSUCCEED);
+
+    close_test_temp();
+    remove_test_temp();
+
+    /* Now compare the buffers 
+    
+    Bprint(p_ub);
+    printf("**************\n");
+    Bprint(p_ub2);
+    */
+    
+    
+    assert_not_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
+    
+    /* TODO: Check that we have stripped it all! */
+    
+}
+
 TestSuite *ubf_readwrite_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -218,7 +286,10 @@ TestSuite *ubf_readwrite_tests(void)
     add_test(suite, test_readwrite_err_space);
     add_test(suite, test_readwrite_invalid_descr);
     add_test(suite, test_readwrite_callbacked);
-
+    
+    /* Test PTR stripping... unsetenv("NDRX_APIFLAGS"); */
+    add_test(suite, test_readwrite_no_ptr);
+    
     return suite;
 }
 
