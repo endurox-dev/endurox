@@ -1430,7 +1430,7 @@ Enduro/X provides wrapper  *tmboot* over the *xadmin start*.
 |Stopping the application instance|$ tmshutdown|$ xadmin stop|For Enduro/X 
 arguments *-y*, *-i* and *-s* works in the same way as in Tuxedo. 
 Enduro/X provides  wrapper *tmshutdown* over the *xadmin stop*. 
-|Administrative CLI utility|tmadmin|xadmin|Enduro/X *xadmin* accepts commands
+|Administrative CLI utility|$ tmadmin| $ xadmin|Enduro/X *xadmin* accepts commands
 from *stdin*, *as cli arguments* and *interactive shell mode*. Enduro/X ships
 with wrapper script named *tmadmin*.
 |List services|$ echo psc \| tmadmin|$ xadmin psc|
