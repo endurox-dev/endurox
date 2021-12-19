@@ -135,12 +135,19 @@ extern NDRX_API int OBvopt(TPCONTEXT_T *p_ctxt, char *cname, int option, char *v
 extern NDRX_API int OBvftos(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *cstruct, char *view);
 extern NDRX_API int OBvstof(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *cstruct, int mode, char *view);
 extern NDRX_API int OCBvget(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC occ, char *buf, BFLDLEN *len, int usrtype, long flags);
+extern NDRX_API char * OCBvgetalloc(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC occ, int usrtype, long flags, BFLDLEN *extralen);
 extern NDRX_API int OCBvchg(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC occ, char *buf, BFLDLEN len, int usrtype);
 extern NDRX_API long OBvsizeof(TPCONTEXT_T *p_ctxt, char *view);
 extern NDRX_API long OBvcpy(TPCONTEXT_T *p_ctxt, char *cstruct_dst, char *cstruct_src, char *view);
 extern NDRX_API BFLDOCC OBvoccur(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC *maxocc, BFLDOCC *realocc, long *dim_size, int* fldtype);
 extern NDRX_API int OBvsetoccur(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *cname, BFLDOCC occ);
 extern NDRX_API int OBvnext(TPCONTEXT_T *p_ctxt, Bvnext_state_t *state, char *view, char *cname, int *fldtype, BFLDOCC *maxocc, long *dim_size);
+extern NDRX_API int OBvcmp(TPCONTEXT_T *p_ctxt, char *cstruct1, char *view1, char *cstruct2, char *view2);
+extern NDRX_API int OBvprint(TPCONTEXT_T *p_ctxt, char *cstruct, char *view);
+extern NDRX_API int OBvfprint(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, FILE * outf);
+extern NDRX_API int OBvfprintcb(TPCONTEXT_T *p_ctxt, char *cstruct, char *view,ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1);
+extern NDRX_API int OBvextread(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, FILE *inf);
+extern NDRX_API int OBvextreadcb(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
 extern NDRX_API void * Ondrx_ubf_tls_get(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data);
 extern NDRX_API void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data);
@@ -157,5 +164,25 @@ extern NDRX_API int OBflddbdel(TPCONTEXT_T *p_ctxt, EDB_txn *txn, BFLDID bfldid)
 extern NDRX_API int OBflddbadd(TPCONTEXT_T *p_ctxt, EDB_txn *txn, short fldtype, BFLDID bfldno, char *fldname);
 extern NDRX_API int OB32to16(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
 extern NDRX_API int OB16to32(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
+extern NDRX_API int OBgetr(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen);
+extern NDRX_API int OBgetrv(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char * buf, BFLDLEN * buflen, ...);
+extern NDRX_API int OCBgetr(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID *fldidocc,char * buf, BFLDLEN * buflen, int usrtype);
+extern NDRX_API int OCBgetrv(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char * buf, BFLDLEN * buflen, int usrtype, ...);
+extern NDRX_API char * OCBgetallocr(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldidocc, int usrtype, BFLDLEN *extralen);
+extern NDRX_API char * OCBgetallocrv(TPCONTEXT_T *p_ctxt, UBFH *p_ub, int usrtype, BFLDLEN *extralen, ...);
+extern NDRX_API char* OBfindr(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
+extern NDRX_API char* OBfindrv(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDLEN *p_len, ...);
+extern NDRX_API char * OCBfindr(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *len, int usrtype);
+extern NDRX_API char * OCBfindrv(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDLEN *len, int usrtype, ...);
+extern NDRX_API int OBpresr(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldidocc);
+extern NDRX_API int OBpresrv(TPCONTEXT_T *p_ctxt, UBFH *p_ub, ...);
+extern NDRX_API int OCBvgetr(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, char *buf, BFLDLEN *len, int usrtype, long flags);
+extern NDRX_API int OCBvgetrv(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *cname, BFLDOCC occ,char *buf, BFLDLEN *len, int usrtype, long flags, ...);
+extern NDRX_API int OBvnullr(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
+extern NDRX_API int OBvnullrv(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *cname, BFLDOCC occ, ...);
+extern NDRX_API char * OCBvgetallocr(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, int usrtype, long flags, BFLDLEN *extralen);
+extern NDRX_API char* OCBvgetallocrv(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *cname, BFLDOCC occ,int usrtype, long flags, BFLDLEN *extralen, ...);
+extern NDRX_API int Ondrx_Fchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len);
+extern NDRX_API int Ondrx_Fadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
 #endif  /* __OUBF_H */
 

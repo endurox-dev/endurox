@@ -16,7 +16,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This is a special ATMI server which is used for distributed transaction coordination.
-For transactions started with *tpbegin()*, *tmsrv* generates new XID and passes
+For transactions started with *tpbegin(3)*, *tmsrv* generates new XID and passes
 XID back to transaction initiator. At the same time transaction is remembered by *tmsrv*
 as active transaction, transaction time-out expiry is checked by background thread.
 
@@ -40,28 +40,30 @@ are performed (aborted or rolled back).
 If running transaction did time-out, then background thread will abort it automatically,
 and for caller process commit() will fail with *TPEABORT* error code.
 
-In cluster environment, other transaction manager of corresponding resource managers
-are involved for prepare/abort/commit actions. Also as every service doing as part
-of single transaction, must have a cluster link to initial transaction manager (for
-registration purposes). Thus means that all involved nodes, must have direct cluster
-visibility, otherwise transactions will fail.
+If several resource managers are used in the single transaction,
+other transaction managers for corresponding resource managers are used as workers 
+for executing prepare/abort/commit actions on the enlisted resource managers. These
+other transaction managers may be located on other cluster nodes, depending on the
+system setup. Cluster setup must be done correctly, because an initiator 
+transaction manager must have direct access (i.e. direct *tpbridge(8)* link) to 
+all enlisted resource manager associated transaction managers (workers).
 
-Transaction managers can be load balanced with 'ndrxconfig.xml' with min/max attributes.
-In load balance manner at tpbegin() corresponding free transaction manager will be
-selected. Later at transaction process this manager is responsible for full cycle
-of the transaction. Other resource managers for this transaction will help for 
+Transaction managers can be load balanced with *ndrxconfig.xml(5)* with min/max attributes.
+In load balanced mode at *tpbegin()* corresponding free transaction manager will be
+selected. Later at transaction processing selected manager is responsible for full life cycle
+of the transaction. Other enlisted transaction/resource managers for this transaction will help for 
 prepare/commit/aborts of other RMs. These other TMs will be selected in load balanced
 mode.
 
 Every instance of *tmsrv* will advertise following list of services
 
-1. @TM-<Resource Manager ID>
+1. '@TM-<Resource Manager ID>'
 
-2. @TM-<Cluster Node ID>-<Resource Manager ID>
+2. '@TM-<Cluster Node ID>-<Resource Manager ID>'
 
-3. @TM-<Cluster Node ID>-<Resource Manager ID>-<EnduroX Server ID>
+3. '@TM-<Cluster Node ID>-<Resource Manager ID>-<EnduroX Server ID>'
 
-For example for Resource Manager ID '1', Cluster Node ID '6', Enduro/X Server ID '10'
+For example for Resource Manager ID 1, Cluster Node ID 6, Enduro/X Server ID 10
 services will look like:
 
 1. @TM-1
@@ -70,18 +72,21 @@ services will look like:
 
 3. @TM-6-1-10
 
-Currently 1. format is used for starting the transaction, and accepting prepare/commit/abort
-calls from master TM of the transaction. Service Nr 3. is used by transaction initiator for
-subsequent calls of the 'tpcommit()'/'tpabort()'. Also 3. is used by services involved in transaction
+Currently service format 1. is used for starting new transaction, 
+and accepting prepare/commit/abort calls from the transaction initiator TM. 
+Service Nr 3. is used by transaction initiator for subsequent calls 
+of the *tpcommit(3)*/*tpabort(3)*. Also 3. is used by services involved in transaction
 to register new Resource Manager ID as part of the transaction.
 
 For XA processing, resource manager drivers are loaded via dynamic loadable shared libs.
-Resource manager should expose 'xa_switch' in shared lib. For every different resource manager,
-there is different Enduro/X server running. Enduro/X process gets associated with
-corresponding RMDI via 'NDRX_XA_RES_ID' environment variable.
+Resource manager should expose xa_switch in shared lib. For every different resource manager,
+there is different Enduro/X *tmsrv* running. Enduro/X process gets associated with
+corresponding RMID via *NDRX_XA_RES_ID* environment variable.
 
-To configure different RMID's for different processes or 'tmsrvs'. Use the Enduro/X build in
-facility of environment variable override. See the manpage of 'ex_env(5)'.
+To configure different RMID's for different processes or tmsrvs, use the Enduro/X built in
+facility of environment variable override or associate processes with *<cctag>* setting
+which corresponds to *[@global/<cctag>]* sub-section where the XA settings can be placed. 
+See the manpage of *ex_env(5)* for more details.
 
 Enduro/X support static and dynamic XA registration.
 
