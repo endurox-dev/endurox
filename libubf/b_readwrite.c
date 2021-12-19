@@ -58,6 +58,168 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Remove PTR from UBF, in recursive way
+ * @param p_ub UBF buffer
+ * @param maxlen max buffer size to be used for sub-buffers
+ * @param did_mod did we modify something?
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int strip_ptr(UBFH *p_ub, BFLDLEN maxlen, int *did_mod)
+{
+    int ret = EXSUCCEED;
+    int restart;
+    int did_local_mod;
+    UBFH *p_ub_tmp = NULL;
+    int cnt, i;
+    
+    UBF_LOG(log_debug, "strip_ptr enter p_ub=%p maxlen=%d did_mode=%d",
+            p_ub, maxlen, *did_mod);
+    do
+    {
+        Bnext_state_t state;
+        BFLDID bfldid=BBADFLDOCC;
+        BFLDOCC occ;
+        char *d_ptr;
+        UBF_header_t *hdr = (UBF_header_t *)p_ub;
+        BFLDID   *p_bfldid_start = &hdr->bfldid;
+        int ftyp;
+        
+        restart=EXFALSE;
+        state.p_cur_bfldid = (BFLDID *)(((char *)p_bfldid_start) + hdr->cache_ptr_off);
+        state.cur_occ = 0;
+        state.p_ub = p_ub;
+        state.size = hdr->bytes_used;
+
+        if (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr)))
+        {
+            ftyp = bfldid >> EFFECTIVE_BITS;
+            
+            if (BFLD_PTR==ftyp)
+            {
+                /* remove field... */
+                *did_mod=EXTRUE;
+                
+                UBF_LOG(log_debug, "Removing fldid=%d as ptr", bfldid);
+                if (EXSUCCEED!=Bdel(p_ub, bfldid, occ))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                restart=EXTRUE;
+            }
+            else 
+            {
+                /* we are done */
+                ret=EXSUCCEED;
+            }
+        }
+        
+    } while (restart);
+    
+    /* If we have UBF buffer... fetch &  */
+    cnt = 0;
+    i = 0;
+    do
+    {
+        Bnext_state_t state;
+        BFLDID bfldid=BBADFLDOCC;
+        BFLDOCC occ;
+        char *d_ptr;
+        UBF_header_t *hdr = (UBF_header_t *)p_ub;
+        BFLDID   *p_bfldid_start = &hdr->bfldid;
+        int ftyp;
+        BFLDLEN blen;
+        
+        restart=EXFALSE;
+        state.p_cur_bfldid = (BFLDID *)(((char *)p_bfldid_start) + hdr->cache_ubf_off);
+        state.cur_occ = 0;
+        state.p_ub = p_ub;
+        state.size = hdr->bytes_used;
+
+        NDRX_LOG(log_debug, "Searching for sub-buffers, cnt=%d", cnt);
+        for(i=0; (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr))); i++)
+        {
+            ftyp = bfldid >> EFFECTIVE_BITS;
+            
+            if (BFLD_UBF==ftyp && i==cnt)
+            {
+                UBF_LOG(log_debug, "YOPT!! Processing sub-ubf %d occ %d for ptr removal", 
+                        bfldid, occ);
+                
+                if (NULL==p_ub_tmp)
+                {
+                    p_ub_tmp = (UBFH *)NDRX_FPMALLOC(maxlen, 0);
+                    
+                    if (NULL==p_ub_tmp)
+                    {
+                        ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to malloc %d bytes",
+                                __func__, maxlen);
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                
+                if (EXSUCCEED!=Binit(p_ub_tmp, maxlen))
+                {
+                    UBF_LOG(log_error, "Failed to init temp buffer!");
+                    EXFAIL_OUT(ret);
+                }
+                
+                blen = maxlen;
+                        
+                if (EXSUCCEED!=Bget(p_ub, bfldid, occ, (char *)p_ub_tmp, &blen))
+                {
+                    UBF_LOG(log_error, "Failed to read sub-buffer %d occ %d",
+                            bfldid, occ);
+                    EXFAIL_OUT(ret);
+                }
+                
+                did_local_mod=EXFALSE;
+                
+                if (EXSUCCEED!=strip_ptr(p_ub_tmp, maxlen, &did_local_mod))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (did_local_mod)
+                {
+                    *did_mod=EXTRUE;
+                    
+                    /* Overwrite the field */
+                    
+                    if (EXSUCCEED!=Bchg(p_ub, bfldid, occ, (char *)p_ub_tmp, 0))
+                    {
+                        UBF_LOG(log_error, "Failed to update sub-buffer %d occ %d",
+                                bfldid, occ);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                }
+                /* next time continue with cnt pos */
+                restart=EXTRUE;
+                cnt++;
+                break;
+            }
+            else if (BFLD_UBF!=ftyp)
+            {
+                /* we are done */
+                ret=EXSUCCEED;
+                break;
+            }
+        }
+        
+    } while (restart);
+
+out:
+    
+    if (NULL!=p_ub_tmp)
+    {
+        NDRX_FPFREE(p_ub_tmp);
+    }
+    
+    return ret;
+}
+
 /**
  * Internal version of buffer reader from stream. If \p p_readf is not present
  * then uses read from input file. If ptr is present, then data read is made
@@ -177,7 +339,7 @@ expublic int ndrx_Bread  (UBFH * p_ub, FILE * inf,
     /* wipe out any BFLD_PTR fields, if not enabled... */
     if (!(ndrx_G_apiflags & NDRX_APIFLAGS_UBFPTRPARSE))
     {
-        /* TODO: strip off BFLD_PTR in recursive way from the imported data...
+        /* strip off BFLD_PTR in recursive way from the imported data...
          * New func: Find if any BFLD_PTR is used, remove the off.
          *  - return flag that buffer is changed
          * Search for any BFLD_UBF, if any found, read the buffer (to temp space)
@@ -186,6 +348,16 @@ expublic int ndrx_Bread  (UBFH * p_ub, FILE * inf,
          * - If changes has been detected, perform Bchg() over the current occurrence,
          * -- how about to loop next? Count the fields processed?
          */
+        int did_mod = EXFALSE;
+        if (EXSUCCEED!=strip_ptr(p_ub, Bused(p_ub), &did_mod))
+        {
+            EXFAIL_OUT(ret);
+        }
+        
+        if (did_mod)
+        {
+            UBF_LOG(log_debug, "PTRs removed.");
+        }
     }
     
 out:

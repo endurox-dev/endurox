@@ -212,8 +212,23 @@ extern "C" {
 
 /** @} */ /* xa_flags_sys */
     
-#define NDRX_BANNER(X) \
-    if (NULL==getenv(CONF_NDRX_SILENT))\
+/**
+ * use silent debug for some tools
+ */
+#define NDRX_EMPTY_DEBUG do {\
+        /* Empty debug */\
+        if (NULL==getenv("NDRX_DEBUG_CONF"))\
+        {\
+            setenv("NDRX_DEBUG_CONF", "", 1);\
+        }\
+    }\
+    while (0)
+
+/**
+ * Use silent logging...
+ */
+#define NDRX_BANNER(X)                      \
+    if (NULL==getenv(CONF_NDRX_SILENT))     \
     {\
         if (X[0])\
         {\

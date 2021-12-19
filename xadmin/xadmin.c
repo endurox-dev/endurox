@@ -1218,6 +1218,8 @@ int main(int argc, char** argv) {
     M_argc = argc;
     M_argv = argv;
 
+    /* NDRX_EMPTY_DEBUG; ?*/
+    
     if (argc>1)
     {
         int i = 0;
