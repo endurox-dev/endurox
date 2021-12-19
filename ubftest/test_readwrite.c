@@ -229,6 +229,7 @@ Ensure(test_readwrite_no_ptr)
     char fb4[2048];
     UBFH *p_ub4 = (UBFH *)fb4;
 
+    BFLDLEN len;
     unsetenv("NDRX_APIFLAGS");
 
     memset(fb, 0, sizeof(fb));
@@ -271,10 +272,31 @@ Ensure(test_readwrite_no_ptr)
     Bprint(p_ub2);
     */
     
-    
     assert_not_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
     
-    /* TODO: Check that we have stripped it all! */
+    /* buffer 1 */
+    assert_string_equal(Bfindrv (p_ub2, &len, 
+            T_STRING_7_FLD, 2, BBADFLDOCC), "HELLO4");
+    assert_equal(Bfindrv (p_ub2, &len,
+            T_PTR_FLD, 0, BBADFLDOCC), NULL);
+    assert_equal(Berror, BNOTPRES);
+    
+    assert_string_equal(Bfindrv (p_ub2, &len, 
+            T_UBF_FLD, 4, T_STRING_8_FLD, 2, BBADFLDOCC), "HELLO3");
+    assert_equal(Bfindrv (p_ub2, &len,
+            T_UBF_FLD, 4, T_PTR_FLD, 0, BBADFLDOCC), NULL);
+    assert_equal(Berror, BNOTPRES);
+    
+    
+    assert_string_equal(Bfindrv (p_ub2, &len, 
+            T_UBF_FLD, 4, T_UBF_FLD, 2, T_STRING_10_FLD, 0, BBADFLDOCC), "HELLO2");
+    
+    assert_string_equal(Bfindrv (p_ub2, &len, 
+            T_UBF_FLD, 4, T_UBF_FLD, 2, T_STRING_9_FLD, 0, BBADFLDOCC), "HELLO1");
+    
+    assert_equal(Bfindrv (p_ub2, &len,
+            T_UBF_FLD, 4, T_UBF_FLD, 2, T_PTR_FLD, 0, BBADFLDOCC), NULL);
+    assert_equal(Berror, BNOTPRES);
     
 }
 

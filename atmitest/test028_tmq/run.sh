@@ -49,6 +49,7 @@ else
     cd $TESTNAME
 fi;
 
+rm ULOG* 2>/dev/null
 #
 # Dynamic tests
 #

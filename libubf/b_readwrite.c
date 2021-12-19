@@ -144,9 +144,6 @@ exprivate int strip_ptr(UBFH *p_ub, BFLDLEN maxlen, int *did_mod)
             
             if (BFLD_UBF==ftyp && i==cnt)
             {
-                UBF_LOG(log_debug, "YOPT!! Processing sub-ubf %d occ %d for ptr removal", 
-                        bfldid, occ);
-                
                 if (NULL==p_ub_tmp)
                 {
                     p_ub_tmp = (UBFH *)NDRX_FPMALLOC(maxlen, 0);

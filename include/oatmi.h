@@ -96,8 +96,8 @@ extern NDRX_API int Otpimport(TPCONTEXT_T *p_ctxt, char *istr, long ilen, char *
 extern NDRX_API int Otpexport(TPCONTEXT_T *p_ctxt, char *ibuf, long ilen, char *ostr, long *olen, long flags);
 extern NDRX_API void* Otpgetconn(TPCONTEXT_T *p_ctxt);
 extern NDRX_API char * Otuxgetenv(TPCONTEXT_T *p_ctxt, char *envname);
-extern NDRX_API int Otpgetcallinfo(TPCONTEXT_T *p_ctxt, const char *msg, UBFH **obuf, long flags);
-extern NDRX_API int Otpsetcallinfo(TPCONTEXT_T *p_ctxt, const char *msg, UBFH *obuf, long flags);
+extern NDRX_API int Otpgetcallinfo(TPCONTEXT_T *p_ctxt, const char *msg, UBFH **cibuf, long flags);
+extern NDRX_API int Otpsetcallinfo(TPCONTEXT_T *p_ctxt, const char *msg, UBFH *cibuf, long flags);
 extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpappthrterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
@@ -125,5 +125,7 @@ extern NDRX_API int Otpencrypt(TPCONTEXT_T *p_ctxt, char *input, long ilen, char
 extern NDRX_API int Otpdecrypt(TPCONTEXT_T *p_ctxt, char *input, long ilen, char *output, long *olen, long flags);
 extern NDRX_API int Otpsprio(TPCONTEXT_T *p_ctxt, int prio, long flags);
 extern NDRX_API int Otpgprio(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpsblktime(TPCONTEXT_T *p_ctxt, int tout,long flags);
+extern NDRX_API int Otpgblktime(TPCONTEXT_T *p_ctxt, long flags);
 #endif  /* __OATMI_H */
 
