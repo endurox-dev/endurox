@@ -247,7 +247,7 @@ This benchmark shows the performance of cached XATMI service calls.
 
 ![Alt text](doc/benchmark/06_tpcache.png?raw=true "tpcall() cache performance")
 
-# Migrating from Oracle Tuxedo to Enduro/X
+# Migration from Oracle Tuxedo to Enduro/X
 
 The migration is as simple as this (ideal scenario):
 
