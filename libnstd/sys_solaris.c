@@ -69,6 +69,7 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+#ifdef EX_USE_POLL
 /**
  * Return the list of queues (build the list according to /tmp/.MQD files.
  * e.g ".MQPn00b,srv,admin,atmi.sv1,123,2229" translates as
@@ -345,6 +346,8 @@ expublic inline  ssize_t sol_mq_timedreceive(mqd_t mqdes, char *msg_ptr,
     return ret;
 }
 
+#endif /* EX_USE_POLL */
+
 /**
  * Test the pid to contain regexp 
  * @param pid process id to test
@@ -355,7 +358,5 @@ expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
 {
     return ndrx_sys_cmdout_test("pargs -ae %d 2>/dev/null", pid, p_re);
 }
-
-/* vim: set ts=4 sw=4 et cindent: */
 
 /* vim: set ts=4 sw=4 et smartindent: */

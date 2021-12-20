@@ -33,6 +33,7 @@
  */
 #define __USE_POSIX_IMPLICITLY
 #include <ndrstandard.h>
+#include <unistd.h>
 #include <pscript.h>
 #include <time.h>
 #include <stdlib.h>
@@ -284,40 +285,6 @@ static PSInteger _exutil_dirname(HPSCRIPTVM v)
     
     ps_pushstring(v,dirname(stemp),-1);
     
-    return 1;
-}
-
-
-/**
- * netdb entry, resolve service by name
- * Not thread safe version (but at least c is cross platform)
- * @param [script] name 
- * @param [script] proto
- * @return [script] port number, or -1
- */
-static PSInteger _exutil_getservbyname(HPSCRIPTVM v)
-{
-    const PSChar *name, *proto;
-    PSInteger ret=EXFAIL;
-    struct servent	*sptr;
-    
-    ps_getstring(v,2,&name);
-    ps_getstring(v,3,&proto);
-    
-    if (NULL==(sptr = getservbyname(name, proto)))
-    {
-        NDRX_LOG(log_error, "Failed to lookup port %s/%s: %s", 
-                name, proto, strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    
-    /* results are in network order */
-    ret = ntohs(sptr->s_port);
-    
-out:
-    
-    ps_pushinteger(v, ret);
-
     return 1;
 }
 
@@ -616,7 +583,6 @@ static PSRegFunction exutillib_funcs[]={
         _DECL_FUNC(rands,2,_SC(".n")),
         _DECL_FUNC(parseclopt1,3,_SC(".ss")),
         _DECL_FUNC(parseclopt2,4,_SC(".sss")),
-        _DECL_FUNC(getservbyname,3,_SC(".sss")),
         _DECL_FUNC(hex2int,2,_SC(".s")),
         _DECL_FUNC(chk_confirm,2,_SC(".s")),
         _DECL_FUNC(print_stdout,2,_SC(".s")),

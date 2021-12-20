@@ -153,7 +153,7 @@ typedef SSIZE_T	ssize_t;
 #define HAVE_MEMALIGN	1
 #include <malloc.h>
 /* On Solaris, we need the POSIX sigwait function */
-#if defined (__sun)
+#if defined (__sun) && !defined(_POSIX_PTHREAD_SEMANTICS)
 # define _POSIX_PTHREAD_SEMANTICS	1
 #endif
 #endif

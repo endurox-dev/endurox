@@ -71,7 +71,7 @@ xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
 
 export NDRX_SILENT=Y
 rm -rf ./runtime tmp1 tmp2 2>/dev/null
-ubb2ex ubb_config1 -P ./runtime
+ubb2ex -P ./runtime ubb_config1
 
 RET=$?
 

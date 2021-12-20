@@ -21,6 +21,8 @@ struct PSStream {
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 #define PS_SEEK_CUR 0
 #define PS_SEEK_END 1
 #define PS_SEEK_SET 2
