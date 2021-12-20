@@ -231,12 +231,14 @@ cat $TESTDIR/ubb_config1.ini        | \
     grep -v NDRX_XA_DRIVERLIB       | \
     grep -v NDRX_XA_RMLIB           | \
     grep -v NDRX_RNDK               | \
+    grep -v FLDTBLDIR               | \
     grep -v NDRX_QPATH > tmp1
 
 cat $TESTDIR/runtime/user90/conf/app.test1.ini  | \
     grep -v NDRX_XA_DRIVERLIB                   | \
     grep -v NDRX_XA_RMLIB                       | \
     grep -v NDRX_RNDK                           | \
+    grep -v FLDTBLDIR                           | \
     grep -v NDRX_QPATH  > tmp2
 
 OUT=`diff tmp1 tmp2`

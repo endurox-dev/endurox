@@ -856,7 +856,7 @@ function prep_servers(instance)
                             
                         //server opt string + tmqforward optstring
                         local clopt_parsed = parseclopt2(fwd_clopt, 
-                                server_optstring, "q:t:ib:ednf:");
+                                server_optstring, "q:t:i:b:ednf:");
 
                         //assume -1 no special timeout used.
                         local trantime = "-1";
