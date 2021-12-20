@@ -30,7 +30,7 @@ the equivalent Enduro/X configuration. Additionally converter script deferences
 
 *ubb2ex* produces following files *TUXCONFIG* directory:
 
-. *set.<lmid_lower_case>* - provides initial environment.
+. *set<lmid_lower_case>* - provides initial environment.
 
 . *app.<lmid_lower_case>.ini* - per process based configuration, mainly global
 resource settings, cctag subsections (close equivalent) to Tuxedo groups,
