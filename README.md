@@ -247,6 +247,76 @@ This benchmark shows the performance of cached XATMI service calls.
 
 ![Alt text](doc/benchmark/06_tpcache.png?raw=true "tpcall() cache performance")
 
+# Migrating from Oracle Tuxedo to Enduro/X
+
+The migration is as simple as this (ideal scenario):
+
+* Re-build the source code against Enduro/X.
+* Migrate the configuration manually or with [ubb2ex](doc/manpage/ubb2ex.adoc) tool.
+* Test.
+* Go live.
+* See full [migration_tuxedo](doc/migration_tuxedo.adoc) guide.
+
+Configuration migration example (ubb_config1 is Tuxedo UBB configuration file):
+
+```
+$ ubb2ex ubb_config1 -P ./test_dir
+UBB2EX Tool
+
+Enduro/X 7.5.36, build Dec 17 2021 22:33:46, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017-2021 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.
+
+
+$ cd test_dir/user90/conf
+
+$ ls -1
+
+app.test1.ini
+ndrxconfig.test1.xml
+settest1
+
+$ source settest1
+
+$ xadmin start -y
+Enduro/X 7.5.36, build Dec 17 2021 22:33:46, using epoll for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017-2021 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.
+
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 57479
+* ndrxd idle instance started.
+exec cconfsrv -k C4Lwt7G4 -i 1 -e /tmp/test_dir/user90/log/cconfsrv.1.log -r --  :
+	process id=57481 ... Started.
+exec cconfsrv -k C4Lwt7G4 -i 2 -e /tmp/test_dir/user90/log/cconfsrv.2.log -r --  :
+	process id=57482 ... Started.
+exec tpadmsv -k C4Lwt7G4 -i 3 -e /tmp/test_dir/user90/log/tpadmsv.3.log -r --  :
+	process id=57483 ... Started.
+exec tpadmsv -k C4Lwt7G4 -i 4 -e /tmp/test_dir/user90/log/tpadmsv.4.log -r --  :
+	process id=57484 ... Started.
+exec tpevsrv -k C4Lwt7G4 -i 5 -e /tmp/test_dir/user90/log/tpevsrv.5.log -r --  :
+	process id=57485 ... Started.
+exec tmsrv -k C4Lwt7G4 -i 8 -e /tmp/test_dir/user90/log/tmsrv.8.log -r -- -t1 -l /tmp/test_dir/user90/tmlogs/rm8 :
+	process id=57491 ... Started.
+exec tmsrv -k C4Lwt7G4 -i 9 -e /tmp/test_dir/user90/log/tmsrv.9.log -r -- -t1 -l /tmp/test_dir/user90/tmlogs/rm8 :
+	process id=57503 ... Started.
+exec tmqueue -k C4Lwt7G4 -i 40 -e /tmp/test_dir/user90/log/tmqueue.40.log -r -- -s1 -p10 -f10 :
+
+...
+```
+
+
 # Releases
 
 - Version 2.5.1 released on 18/05/2016. Support for transactional 
