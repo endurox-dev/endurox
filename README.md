@@ -61,7 +61,7 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
         format. UBF if high performance binary protocol buffer format. Buffer is 
         indexed by binary search on fixed data types. Types supported include BFLD_CHAR,
         BFLD_SHORT, BFLD_LONG, BFLD_FLOAT, BFLD_DOUBLE, BFLD_STRING, BFLD_CARRAY,
-        BFLD_PTR, BFLD_UBF (recusrive buffers), BFLD_VIEW
+        BFLD_PTR, BFLD_UBF (recursive buffers), BFLD_VIEW
   * STRING buffer format.
   * CARRAY (byte array) buffer format.
   * JSON buffer format, automatic conversion between JSON and UBF available.
@@ -121,7 +121,7 @@ plugin interface can publish CLI commands in xadmin tool, while any Enduro/X rel
 program can receive such commands via callback and perform custom action.
 * Has tpsetcallinfo() and tpgetcallinfo() APIs.
 * Product is extensively documented.
-* Tool for automatic configuration migration from Oracle Tuxedo to Enduro/X (ubb2ex).
+* Tool for automatic configuration migration from Oracle Tuxedo to Enduro/X.
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
