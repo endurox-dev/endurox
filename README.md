@@ -121,8 +121,7 @@ plugin interface can publish CLI commands in xadmin tool, while any Enduro/X rel
 program can receive such commands via callback and perform custom action.
 * Has tpsetcallinfo() and tpgetcallinfo() APIs.
 * Product is extensively documented.
-* Provides migration tool - ubb2ex, for automatic configuration migration
-from Oracle Tuxedo to Enduro/X.
+* Tool for automatic configuration migration from Oracle Tuxedo to Enduro/X (ubb2ex).
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
