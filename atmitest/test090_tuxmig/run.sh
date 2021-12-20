@@ -70,7 +70,7 @@ function syntax_chk {
 
     rm -rf ./runtime 2>/dev/null
     # must be in path:
-    ubb2ex $1 -P ./runtime
+    ubb2ex -P ./runtime $1
     RET=$?
     if [ "X$RET" == "X0" ]; then
         echo "$1 must fail, but converted OK"
