@@ -1462,7 +1462,7 @@ the questions may be asked in:
 amended, change request may be ordered from Mavimax SIA.
 
 . In case if providing patches by your self, prior making pull request to Github
-https://github.com/endurox-dev/endurox repository, do not forget to Sign and send us
+https://github.com/endurox-dev/endurox repository, do not forget to sign and send us
 a Mavimax Contribution Agreement, found at 
 https://www.endurox.org/attachments/download/1211/MCA-20210513.pdf
 
