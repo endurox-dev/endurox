@@ -18,7 +18,7 @@ Processing
 It is modern, micro-services based middleware for writing distributed, open
 systems (program consists of several executables) based applications. Thus 
 by using Enduro/X programmers do not have to worry about threads and concurrency 
-anymore, the load balacing and multi-CPU loading is done by Enduro/X middleware by it self,
+anymore, the load balancing and multi-CPU loading is done by Enduro/X middleware by it self,
 administrator only have to determine how many copies of particular services should
 be started. Of-course Enduro/X supports multi-threaded applications too, but now
 system architects have a choice either to design multi-threaded executables or
@@ -51,8 +51,6 @@ EnduroX have bindings for:
 - Java (client & server)
 - PHP (client)
 - Perl (client & server)
-- Python (client & server)
-- Node.js (client)
 
 Enduro/X provides following features:
 
@@ -61,7 +59,9 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
 * Typed buffers
   * UBF (Unified Buffer Format) which provides emulation of Tuxedo's FML/FML32 
         format. UBF if high performance binary protocol buffer format. Buffer is 
-        indexed by binary search on fixed data types.
+        indexed by binary search on fixed data types. Types supported include BFLD_CHAR,
+        BFLD_SHORT, BFLD_LONG, BFLD_FLOAT, BFLD_DOUBLE, BFLD_STRING, BFLD_CARRAY,
+        BFLD_PTR, BFLD_UBF (recusrive buffers), BFLD_VIEW
   * STRING buffer format.
   * CARRAY (byte array) buffer format.
   * JSON buffer format, automatic conversion between JSON and UBF available.
@@ -119,6 +119,10 @@ related process.
 * Enduro/X provides Latent Command Framework (LCF), where developers via 
 plugin interface can publish CLI commands in xadmin tool, while any Enduro/X related
 program can receive such commands via callback and perform custom action.
+* Has tpsetcallinfo() and tpgetcallinfo() APIs.
+* Product is extensively documented.
+* Provides migration tool - ubb2ex, for automatic configuration migration
+from Oracle Tuxedo to Enduro/X.
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
