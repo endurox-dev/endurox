@@ -277,9 +277,9 @@ XML configuration file (*ndrxconfig.xml(5)* typically) which describes the XATMI
 server and client processes, services and DDR info. The other file is standard 
 *ini* file (typically *app.ini*) which include per binary configuration.
 
-Typically, Enduro/X application are configured with third configuration file
+Usually, Enduro/X applications are configured with third configuration file
 which loads the env variables in the shell session. File name typically
-starts with *set*.
+starts with *set* prefix.
 
 === Converting "*RESOURCES" section
 
