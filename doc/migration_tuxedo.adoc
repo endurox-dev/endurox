@@ -570,10 +570,10 @@ must be unique at instance level.
 
 . In Enduro/X CCTAGs cannot be used to encode two or more instances in one configuration
 file. If several cluster instances must be configured, then configuration must
-be split and separate set/ini/xml files shall be produced according to *LMID* setting.
+be split and separate set/ini/xml files according to *LMIDs* used in Tuxedo configuration.
 
 . Enduro/X CCTAGs may not be used to put processes in backup groups. The migration
-tool when processing such groups, only first identifier value for *LMID* is used.
+tool when processing such groups uses only first *LMID* value specified for the group.
 
 . In case if XA processing and DDR is not performed by the group, the CCTAG
 is not needed to be assigned to the process. The process may be removed from
