@@ -252,8 +252,8 @@ This benchmark shows the performance of cached XATMI service calls.
 The migration is as simple as this (ideal scenario):
 
 * Re-build the source code against Enduro/X.
-* Migrate the configuration manually or with [ubb2ex](doc/manpage/ubb2ex.adoc) tool.
-* Test.
+* Migrate the configuration to Enduro/X format in seconds with [ubb2ex](doc/manpage/ubb2ex.adoc) tool.
+* Test migrated application.
 * Go live.
 * See full [migration_tuxedo](doc/migration_tuxedo.adoc) guide.
 
