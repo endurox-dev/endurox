@@ -113,7 +113,7 @@ automatic tool *ubb2ex(8)* or convert configuration manually according to next c
 
 == Automatic configuration migration
 
-Enduro/X ships with the configuration migration tool *ubbex(8)*. Tool accepts valid
+Enduro/X ships with the configuration migration tool *ubb2ex(8)*. Tool accepts valid
 Tuxedo UBBConfig text format file. It is able to process multi-machine configuration
 and it produces following set of configuration files for each of the *LMID* found
 in UBBconfig:
