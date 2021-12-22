@@ -56,7 +56,7 @@ export ASAN_OPTIONS=abort_on_error=1:disable_coredump=0:unmap_shadow_on_exit=1
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=350
+export NDRX_TOUT=1000
 export NDRX_SILENT=Y
 
 #
