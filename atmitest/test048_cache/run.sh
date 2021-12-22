@@ -17,7 +17,8 @@ else
     cd $TESTNAME
 fi;
 
-rm *.log
+rm *.log 2>/dev/null
+rm ULOG* 2>/dev/null
 
 > ./test.out
 # Have some terminal output...
