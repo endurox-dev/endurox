@@ -112,8 +112,8 @@ int main(int argc, char** argv)
     /* wait for leftover from queue, if service was unable to cope with the traffic */
     ndrx_stopwatch_reset(&w);
     
-    /* wait 500 sec... , tout is 340...*/
-    while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 500)
+    /* wait about 16 min, seems for some reason it gets too log to process all on some servers */
+    while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 1000)
     {
         NDRX_LOG(log_warn, "Waiting sent=%ld got=%ld for queues to flush at bridges... (spent: %lds)",
                 sent, sentread, t);
