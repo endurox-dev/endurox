@@ -107,7 +107,7 @@ extern "C" {
 #define CONV_ERROR_CODE(_ret, _err) \
             if (EINTR==_ret)\
             {\
-                _err=TPSIGRSTRT;\
+                _err=TPGOTSIG;\
             }\
             else if (ETIMEDOUT==_ret)\
             {\
