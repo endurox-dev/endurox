@@ -1,7 +1,7 @@
 /**
- * @brief Both sites max send, avoid deadlock of full sockets - client
+ * @brief Test of TPGOTSIG - client
  *
- * @file atmiclt72.c
+ * @file atmiclt91.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
+#include <signal.h>
 
 #include <atmi.h>
 #include <ubf.h>
@@ -46,7 +47,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
-#include "test72.h"
+#include "test91.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -55,101 +56,50 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+static void sigh(int sig) {};
+
 /**
  * Do the test call to the server
  */
 int main(int argc, char** argv)
 {
+
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
+    int i;
     int ret=EXSUCCEED;
-    long sent=0;
-    long sentread=0;
-    long t;
-    char *action = getenv("TEST_ACTION");
-    ndrx_stopwatch_t w;
     
-    /* send msg for 5 min.... */
-    
-    if (argc < 2)
-    {
-        fprintf(stderr, "Usage: %s <Service_name>\n", argv[0]);
-        EXFAIL_OUT(ret);
-    }
-    
-    if (NULL==action)
-    {
-        fprintf(stderr, "Missing env TEST_ACTION!");
-        EXFAIL_OUT(ret);
-    }
-    
-    ndrx_stopwatch_reset(&w);
-    
-    /* have shorter test on RPI/32bit sys */
-#if EX_SIZEOF_LONG==4
-    while (ndrx_stopwatch_get_delta_sec(&w) < 5)
-#else
-    while (ndrx_stopwatch_get_delta_sec(&w) < 200)
-#endif
-    {
-        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
-        {
-            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-            EXFAIL_OUT(ret);
-        }    
+    struct sigaction act;
 
-        /* do the sync call... */
-        if (EXFAIL == tpacall(argv[1], (char *)p_ub, 0L, TPNOREPLY|TPNOTIME))
-        {
-            NDRX_LOG(log_error, "%s failed: %s", argv[1], tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-        
-        sent++;
-    }
-    
-    
-    /* wait for leftover from queue, if service was unable to cope with the traffic */
-    ndrx_stopwatch_reset(&w);
-    
-    /* wait about 16 min, seems for some reason it gets too log to process all on some servers */
-    while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 1000)
-    {
-        NDRX_LOG(log_warn, "Waiting sent=%ld got=%ld for queues to flush at bridges... (spent: %lds)",
-                sent, sentread, t);
-        
-        /* maybe call different service ... 
-         * an few minutes to get the right number, before give up?
-         */
-        if (EXFAIL == tpcall(argv[2], (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
-        {
-            NDRX_LOG(log_error, "%s failed: %s", argv[2], tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
+    memset(&act, 0, sizeof(act));
+    sigemptyset(&act.sa_mask);
+    act.sa_handler = sigh;
+    act.sa_flags = SA_NODEFER;
+    sigaction(SIGTERM, &act, 0);
 
-        /* read the value */
-        if (EXSUCCEED!=Bget(p_ub, T_LONG_FLD, 0, (char *)&sentread, 0L))
-        {
-            NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD: %s", Bstrerror(Berror));
-            EXFAIL_OUT(ret);
-        }
-        
-        sleep(1);
-    }
-    
-    if (sentread!=sent)
+
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
     {
-        NDRX_LOG(log_error, "error: sent: %ld but server have seen: %ld", 
-                sent, sentread);
-        userlog("testcl finished - failed");
-        
-        if ('1' == action[0])
-        {
-            EXFAIL_OUT(ret);
-        }
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+
+    if (EXFAIL != tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: TESTSV expected falure");
+        ret=EXFAIL;
+        goto out;
     }
-    
-    userlog("testcl finished - OK");
+
+    if (TPGOTSIG!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: expected TPGOTSIG got %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    NDRX_LOG(log_debug, "SIGTERM_OK %s", tpstrerror(tperrno));
     
 out:
     tpterm();

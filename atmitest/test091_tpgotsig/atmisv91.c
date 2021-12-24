@@ -1,7 +1,7 @@
 /**
- * @brief Load db2 drivers, get handler..
+ * @brief Test of TPGOTSIG - server
  *
- * @file db2_d.c
+ * @file atmisv91.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,20 +31,17 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
-#include <atmi_int.h>
-#include <sys_mqueue.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include "test91.h"
 
-#include "atmi_shm.h"
-
-#include <xa.h>
-#include "db2_common.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -53,19 +50,69 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- * This is Db2 specific: the xa_switch_t struct supplied is named xaoswd
- * for XA dynamic registration
+/**
+ * Standard service entry
  */
+void TESTSV (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    sleep(45);
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
+            VALUE_EXPECTED, testbuf);
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
 
 /**
- * API entry of loading the driver
- * @param symbol
- * @param descr
- * @return XA switch or null
+ * Do initialisation
  */
-struct xa_switch_t *ndrx_get_xa_switch(void)
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    return ndrx_get_xa_switch_int("db2xa_switch_std", "Loading Db2 Dynamic Reg XA driver");
+    int ret = EXSUCCEED;
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
 }
+
+/**
+ * Do de-initialisation
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
