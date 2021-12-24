@@ -141,6 +141,11 @@ add_subdirectory (test086_tmqlimit)
 add_subdirectory (test087_tmsrv)
 add_subdirectory (test088_addlog)
 add_subdirectory (test090_tuxmig)
+
+IF (DEFINED EX_USE_EPOLL)
+add_subdirectory (test091_tpgotsig)
+ENDIF()
+
 ################################################################################
 # Master test case drivere
 add_executable (atmiunit1 atmiunit1.c)

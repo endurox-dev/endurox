@@ -501,6 +501,17 @@ Ensure(test_nstd_stopwatch)
 }
 
 /**
+ * Ensure  ndrx_strnlen() correct work
+ */
+Ensure(test_nstd_ndrx_strnlen)
+{
+    char buf[5];
+    
+    memset(buf, ' ', sizeof(buf));
+    assert_equal(ndrx_strnlen(buf, sizeof(buf)), sizeof(buf));
+}
+
+/**
  * Standard library tests
  * @return
  */
@@ -516,6 +527,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_file_exists);
     add_test(suite, test_nstd_ndrx_mkstemps);
     add_test(suite, test_nstd_stopwatch);
+    add_test(suite, test_nstd_ndrx_strnlen);
     
     return suite;
 }

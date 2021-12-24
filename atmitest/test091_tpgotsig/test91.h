@@ -1,7 +1,7 @@
 /**
- * @brief Load db2 drivers, get handler..
+ * @brief Test of TPGOTSIG - common header
  *
- * @file db2_d.c
+ * @file testtest091_tpgotsig.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,41 +31,20 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef TEST91_H
+#define TEST91_H
 
-#include <ndrstandard.h>
-#include <ndebug.h>
-#include <atmi.h>
-#include <atmi_int.h>
-#include <sys_mqueue.h>
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
-#include "atmi_shm.h"
 
-#include <xa.h>
-#include "db2_common.h"
-/*---------------------------Externs------------------------------------*/
-/*---------------------------Macros-------------------------------------*/
-/*---------------------------Enums--------------------------------------*/
-/*---------------------------Typedefs-----------------------------------*/
-/*---------------------------Globals------------------------------------*/
-/*---------------------------Statics------------------------------------*/
-/*---------------------------Prototypes---------------------------------*/
+#define VALUE_EXPECTED "Hello EnduroX"
 
-/*
- * This is Db2 specific: the xa_switch_t struct supplied is named xaoswd
- * for XA dynamic registration
- */
-
-/**
- * API entry of loading the driver
- * @param symbol
- * @param descr
- * @return XA switch or null
- */
-struct xa_switch_t *ndrx_get_xa_switch(void)
-{
-    return ndrx_get_xa_switch_int("db2xa_switch_std", "Loading Db2 Dynamic Reg XA driver");
+#ifdef  __cplusplus
 }
+#endif
+
+#endif  /* TEST91_H */
+
 /* vim: set ts=4 sw=4 et smartindent: */

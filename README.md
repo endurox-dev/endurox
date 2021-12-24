@@ -629,7 +629,7 @@ Feature #715
 
 - Version 8.0.1 released on 09/10/2021 (development) Support #63
 
-- Version 7.5.36 released on 16/12/2021 (stable) Support #742, Bug #745, Bug #747
+- Version 7.5.36 released on 16/12/2021 (stable) Support #742, Bug #745, Bug #747, Support #748, Bug #749, Bug #750
 
 # Build configurations
 

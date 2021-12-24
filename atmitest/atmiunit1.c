@@ -719,6 +719,12 @@ Ensure(test090_tuxmig)
 {
     int ret;
     ret=system_dbg("test090_tuxmig/run.sh");
+}
+
+Ensure(test091_tpgotsig)
+{
+    int ret;
+    ret=system_dbg("test091_tpgotsig/run.sh");
     assert_equal(ret, EXSUCCEED);
 }
 
@@ -879,6 +885,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
     add_test(suite, test090_tuxmig);
+#ifdef EX_USE_EPOLL
+    add_test(suite, test091_tpgotsig);
+#endif
     
     return suite;
 }
