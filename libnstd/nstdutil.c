@@ -1479,7 +1479,7 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
 {
     char *p;
     
-    for(p = str; *p && max; ++p)
+    for(p = str; max && *p; ++p)
     {
         max--;
     }
