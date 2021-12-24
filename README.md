@@ -554,7 +554,7 @@ Feature #715
 
 - Version 7.5.34 released on 10/09/2021 (stable) Feature #726, eature #447, Bug #730, Support #729, Bug #734, Support #737
 
-- Version 7.5.36 released on 16/12/2021 (stable) Support #742, Bug #745, Bug #747, Support #748, Bug #749
+- Version 7.5.36 released on 16/12/2021 (stable) Support #742, Bug #745, Bug #747, Support #748, Bug #749, Bug #750
 
 # Build configurations
 
