@@ -53,6 +53,8 @@ export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 xadmin killall atmiclt24 2>/dev/null
 
+RET=0
+
 echo "Testing standard JSON..."
 (./atmiclt24 2>&1) > ./atmiclt24.log
 XRET=$?
