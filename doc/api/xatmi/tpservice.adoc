@@ -32,7 +32,7 @@ initialised with following field:
 
 typedef struct
 {
-        char    name[XATMI_SERVICE_NAME_LENGTH];
+        char    name[XATMI_SERVICE_NAME_LENGTH+1];
         char    *data;
         long    len;
         long    flags;
