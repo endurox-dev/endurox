@@ -37,8 +37,8 @@ The *TPEVCTL* structure is following:
 struct tpevctl_t
 {
     long flags;
-    char name1[XATMI_SERVICE_NAME_LENGTH];
-    char name2[XATMI_SERVICE_NAME_LENGTH];
+    char name1[XATMI_SERVICE_NAME_LENGTH+1];
+    char name2[XATMI_SERVICE_NAME_LENGTH+1];
 };
 typedef struct tpevctl_t TPEVCTL;
 
