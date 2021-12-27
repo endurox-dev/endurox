@@ -251,6 +251,7 @@ exprivate int ndrx_load_string(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
                     fldnm, str_val);
             EXFAIL_OUT(ret);
         }
+        s_ptr = str_val;
     }
     else
     {
