@@ -103,8 +103,6 @@ see *atmitests/test028_tmq* folder.
 
 OPTIONS
 -------
-*-m* 'QUEUE_SPACE'::
-The name of the queue space.
 
 [*-q* 'QUEUE_CONFIG']::
 This either full or relative path to the queue definition file (see 'q.conf(5)' 
