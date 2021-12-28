@@ -126,7 +126,7 @@ char *ref_print[]= {
 "\ttfloat1\t5.00000\n",
 "\ttdouble1\t6.000000\n",
 "\ttstring1\tB\n",
-"\ttcarray1\tD\\00\\00\\00\\00\\00\\00\\00\\00\\00\n",
+"\ttcarray1\tD\\00\\09\\09\\09\\09\\09\\09\\09\\09\n",
 "T_VIEW_FLD\tUBTESTVIEW2\n",
 "\ttshort1\t3\n",
 "\ttlong1\t4\n",
@@ -134,7 +134,7 @@ char *ref_print[]= {
 "\ttfloat1\t6.00000\n",
 "\ttdouble1\t7.000000\n",
 "\ttstring1\tC\n",
-"\ttcarray1\tE\\00\\00\\00\\00\\00\\00\\00\\00\\00\n",
+"\ttcarray1\tE\\00\\09\\09\\09\\09\\09\\09\\09\\09\n",
 "T_VIEW_FLD\t\n",
 "T_VIEW_FLD\t\n",
 "T_VIEW_FLD\t\n",
@@ -149,7 +149,7 @@ char *ref_print[]= {
 "\ttfloat1\t7.00000\n",
 "\ttdouble1\t8.000000\n",
 "\ttstring1\tD\n",
-"\ttcarray1\tF\\00\\00\\00\\00\\00\\00\\00\\00\\00\n",
+"\ttcarray1\tF\\00\\09\\09\\09\\09\\09\\09\\09\\09\n",
 NULL
 };
 
@@ -930,7 +930,7 @@ Ensure(test_bextread_plus)
 	"\t+ tfloat1\t5.00000\n",
 	"\t+ tdouble1\t6.000000\n",
 	"\t+ tstring1\tB\n",
-	"\t+ tcarray1\tD\\00\\00\\00\\00\\00\\00\\00\\00\\00\n",
+	"\t+ tcarray1\tD\\00\\09\\09\\09\\09\\09\\09\\09\\09\n",
         NULL
     };
 
@@ -996,7 +996,7 @@ Ensure(test_bextread_eq)
         "\ttfloat1\t5.00000\n",
         "\ttdouble1\t6.000000\n",
         "\ttstring1\tB\n",
-        "\ttcarray1\tD\\00\\00\\00\\00\\00\\00\\00\\00\\00\n",
+        "\ttcarray1\tD\\00\\09\\09\\09\\09\\09\\09\\09\\09\n",
         /* Value will be copied to FLD2 */
         "= T_SHORT_2_FLD\tT_SHORT_FLD\n",
         "= T_LONG_2_FLD\tT_LONG_FLD\n",
