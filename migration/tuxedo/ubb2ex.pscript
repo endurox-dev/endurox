@@ -1074,6 +1074,45 @@ function prep_servers(instance)
                     if (opt.opt=="e")
                     {
                         have_e=true;
+
+                        //Detect the directory + schedule
+                        //I.e. part of $NDRX_ULOG
+                        //I.e. part of $NDRX_APPHOME
+                        //Not a part of anything. Also.. remember add prefix
+                        
+                        local e_val = opt.val;
+
+                        if (M_opt_P!="" && M_opt_P!="/")
+                        {
+                            e_val=M_opt_P+e_val;
+                        }
+                        local e_file = basename(e_val);
+                        local e_dir = dirname(e_val);
+
+                        if (e_dir==instance.log_full)
+                        {
+                            //OK this is ULOG folder, no schedule
+                            opt.val = instance.log_rel + "/" + e_file;
+                        }
+                        else
+                        {
+                            //schedule folder..?
+                            schedule_directory(e_val);
+
+                            //Is it common to apphome, if so try to use
+                            //relative path to the output.
+                            local common = dircommon(e_dir, instance.app_home);
+                            local diff = dirdiff(e_dir, instance.app_home);
+
+                            if (common==instance.app_home)
+                            {
+                                opt.val = "${NDRX_APPHOME}/"+diff+"/"+e_file;
+                            }
+                            else
+                            {
+                                opt.val=e_val;
+                            }
+                        }
                     }
                 }
                 
