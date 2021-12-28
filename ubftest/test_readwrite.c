@@ -195,6 +195,8 @@ Ensure(test_readwrite_callbacked)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
+
+    memset(fb, 1, sizeof(fb));
     
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
 
@@ -234,6 +236,8 @@ Ensure(test_readwrite_no_ptr)
 
     memset(fb, 0, sizeof(fb));
     memset(fb2, 0, sizeof(fb2));
+    memset(fb3, 0, sizeof(fb3));
+    memset(fb4, 0, sizeof(fb4));
 
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
