@@ -69,7 +69,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpgetcallinfo(3)* tpcall(3)* *tpacall(3)* *tpgetrply(3)* *tpforward(3)* 
+*tpgetcallinfo(3)* *tpcall(3)* *tpacall(3)* *tpgetrply(3)* *tpforward(3)* 
 *tpnotify(3)* *tpbroadcast(3)* *tpenqueue(3)* *tpdequeue(3)* *tpconnect(3)* 
 *tpsent(3)* *tprecv(3)* 
 
