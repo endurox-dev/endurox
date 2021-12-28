@@ -836,7 +836,8 @@ function prep_servers(instance)
                     server.keywords["MIN"]<-["1"];
                     server.keywords["MAX"]<-["1"];
                     //Match the forwarders at plotting, by group lookup...
-                    server.keywords["CLOPT"]<-["-A -e ${NDRX_ULOG}/tmqueue.${NDRX_SVSRVID}.log -r -- -s1 -p10"];
+                    //NOTE: -e will be generated afterwards
+                    server.keywords["CLOPT"]<-["-A -r -- -s1 -p10"];
                     
                     break;
                 case "TMQFORWARD":
@@ -1077,7 +1078,7 @@ function prep_servers(instance)
 
                         //Detect the directory + schedule
                         //I.e. part of $NDRX_ULOG
-                        //I.e. part of $NDRX_APPHOME
+                        //I.e. part of $NDRX_APPHOME with default under log
                         //Not a part of anything. Also.. remember add prefix
                         
                         local e_val = opt.val;
@@ -1092,7 +1093,7 @@ function prep_servers(instance)
                         if (e_dir==instance.log_full)
                         {
                             //OK this is ULOG folder, no schedule
-                            opt.val = instance.log_rel + "/" + e_file;
+                            opt.val = "${NDRX_ULOG}/" + e_file;
                         }
                         else
                         {
@@ -1106,7 +1107,15 @@ function prep_servers(instance)
 
                             if (common==instance.app_home)
                             {
-                                opt.val = "${NDRX_APPHOME}/"+diff+"/"+e_file;
+                                if (diff!="")
+                                {
+                                    opt.val = "${NDRX_APPHOME}/"+diff+"/"+e_file;
+                                }
+                                else
+                                {
+                                    //We go under default log folder...
+                                    opt.val = "${NDRX_APPHOME}/log/"+e_file;
+                                }
                             }
                             else
                             {
@@ -2742,7 +2751,7 @@ function ex_generate(arg)
             }
 
             //Just take dirname 
-            log_dir = dirname(log_dir);            
+            log_dir = dirname(log_dir);
 
             if (log_dir==instance.app_home)
             {
@@ -2764,8 +2773,16 @@ function ex_generate(arg)
                 else 
                 {
                     //Relative to app home with log suffix...
-                    instance.log_full <- instance.app_home+"/"+diff;
-                    instance.log_rel <- "${NDRX_APPHOME}/"+diff;
+                    if (diff!="")
+                    {
+                        instance.log_full <- instance.app_home+"/"+diff;
+                        instance.log_rel <- "${NDRX_APPHOME}/"+diff;
+                    }
+                    else
+                    {
+                        instance.log_full <- instance.app_home;
+                        instance.log_rel <- "${NDRX_APPHOME}";
+                    }
                 }
             }
         }
