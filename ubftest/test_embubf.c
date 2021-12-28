@@ -65,6 +65,7 @@ expublic void load_recursive_data(UBFH *p_ub)
     memset(buf1, 0, sizeof(buf1));
     memset(buf2, 0, sizeof(buf2));
     memset(buf4, 0, sizeof(buf4));
+    memset(&v, 11, sizeof(v));
     
     assert_equal(Binit(p_ub1, sizeof(buf1)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(buf2)), EXSUCCEED);

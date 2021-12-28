@@ -208,6 +208,7 @@ Ensure(test_Badd_ubf)
     BVIEWFLD vf;
     int i;
     
+    memset(&v, 18, sizeof(v));
     assert_equal(
             Badd(M_p_ub2, T_STRING_4_FLD, "HELLO4", 0),
             EXSUCCEED);

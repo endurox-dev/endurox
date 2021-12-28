@@ -176,6 +176,7 @@ void gen_set_view_dbg(char *file, int line, BVIEWFLD *vf, int offset)
     static struct UBTESTVIEW2 v;
     char str[2];
     
+    memset(&v, 9, sizeof(v));
     v.tshort1=1+offset;
     v.tlong1=2+offset;
     v.tchar1='3'+offset;
@@ -189,6 +190,7 @@ void gen_set_view_dbg(char *file, int line, BVIEWFLD *vf, int offset)
     str[1]=EXEOS;
     
     NDRX_STRCPY_SAFE(v.tcarray1, str);
+    memset(vf, 0, sizeof(BVIEWFLD));
     vf->data=(char *)&v;
     vf->vflags=0;
     NDRX_STRCPY_SAFE(vf->vname, "UBTESTVIEW2");
@@ -240,6 +242,7 @@ void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
 {
     char tmp[1024];
     UBFH* p_ub_tmp=(UBFH*)tmp;
+    memset(tmp, 17, sizeof(tmp));
     
     
     UBF_LOG(log_debug, "Loading UBF %s:%d, start", file, line);
@@ -281,6 +284,8 @@ void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset
     BVIEWFLD vf;
     BFLDLEN len;
     
+    memset(&v, 13, sizeof(v));
+
     UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
     
     /* View test */

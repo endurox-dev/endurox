@@ -395,6 +395,9 @@ Ensure(test_bextread_bfldid)
     FILE *f;
     char filename[]="/tmp/ubf-test-XXXXXX";
 
+    memset(fb, 6, sizeof(fb));
+    memset(fb2, 6, sizeof(fb2));
+
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
@@ -420,6 +423,8 @@ Ensure(test_bextread_bfldid)
     
     /* compare readed buffer */
     UBF_LOG(log_debug, "****** Bcmp ******");
+    assert_equal(Bcmp(p_ub2, p_ub2), 0);
+    assert_equal(Bcmp(p_ub, p_ub), 0);
     assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);

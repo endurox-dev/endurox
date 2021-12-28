@@ -285,6 +285,9 @@ void extest_ubf_set_up_dummy_data(UBFH *p_ub, long flags)
     long l;
     UBFH* p_ub_tmp=(UBFH *)tmp;
     
+    memset(&v, 14, sizeof(v));
+    memset(tmp, 15, sizeof(tmp));
+    
     assert_equal(CBadd(p_ub, T_STRING_9_FLD, "01", 0, BFLD_STRING), EXSUCCEED);
     
     assert_equal(CBget(p_ub, T_STRING_9_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);

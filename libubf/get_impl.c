@@ -231,7 +231,7 @@ expublic int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
     #endif
 /*******************************************************************************/
 
-    UBF_LOG(log_debug, "%s: bfldid: %x", fnname);
+    UBF_LOG(log_debug, "%s: bfldid: %x", fnname, bfldid);
     if (UBF_BINARY_SEARCH_OK(bfldid))
     {
         get_fld_loc_binary_search(p_ub, bfldid, EXFAIL, &dtype, 
