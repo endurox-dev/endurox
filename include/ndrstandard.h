@@ -44,42 +44,22 @@ extern "C" {
 #include <string.h>
     
 #if EX_SIZEOF_VOIDPTR == 4
+
 /* 32-bit */
 #define SYS32BIT
+typedef long ndrx_longptr_t;
+#define NDRX_LONGPTR_HEX    "%lx"
+
 #elif EX_SIZEOF_VOIDPTR == 8
+
 #define SYS64BIT
-#else
-#error Cannot detect word size
-#endif
-    
-/**
- * Detect pointer storage format
- */
-#ifdef SYS32BIT
-    
-typedef long long ndrx_longptr_t;
-#define NDRX_LONGPTR_HEX    "%llx"
-
-#else
-
-/* check the model LP or LLP */
-#if ULONG_MAX == 0xffffffff
-
-typedef long long ndrx_longptr_t;
-#define NDRX_LONGPTR_HEX    "%llx"
-
-#elif ULONG_MAX == 0xffffffffffffffff
-
 typedef long ndrx_longptr_t;
 #define NDRX_LONGPTR_HEX    "%lx"
 
 #else
-#error Cannot detect size of long
+#error Cannot detect word size
 #endif
-
-#endif
-
-
+    
 #ifndef EXFAIL
 #define EXFAIL		-1
 #endif
