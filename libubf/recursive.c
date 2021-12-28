@@ -130,7 +130,8 @@ else \
 {\
     rfldid->cname_occ=parsedocc;\
 }\
-j=0;
+j=0;\
+added=EXTRUE;
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -213,6 +214,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     int *rfldidseq;
     int nrflds=0;
     int is_view=EXFALSE;
+    int added;
     BFLDID *grow_fields;
     
     UBF_LOG(log_debug, "Parsing field id sequence: [%s]", rfldidstr);
@@ -242,12 +244,32 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     
     prev_state=state=STATE_NONE;
     j=0;
+    added=EXFALSE;
     for (i=0; i<len+1; i++)
     {
         if (STATE_NONE==state)
         {
-            /* error! sub-fields of view not supported */
-            if (tmp[j]==EXEOS)
+            /* terminal field comes first... */
+            if (0x0 ==rfldidstr[i])
+            {
+                if (j>0)
+                {
+                    /* finish field, got 0 occ */
+                    tmp[j]=EXEOS;
+                    RESOLVE_FIELD;
+                    parsedocc=0;
+                    RESOLVE_ADD;
+                }
+                
+                /* we are done... */
+                break;
+            }
+            
+            /* error! sub-fields of view not supported 
+             * this is some leading field and if added, check the types.
+             * TODO: might want in future support BFLD_PTR...
+             */
+            if (added)
             {
                 if (VIEW_FLD_CNAME_PARSED==is_view)
                 {
@@ -265,21 +287,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
                 {
                     EXFAIL_OUT(ret);
                 }
-            }
-            
-            if (0x0 ==rfldidstr[i])
-            {
-                if (j>0)
-                {
-                    /* finish field, got 0 occ */
-                    tmp[j]=EXEOS;
-                    RESOLVE_FIELD;
-                    parsedocc=0;
-                    RESOLVE_ADD;
-                }
-                
-                /* we are done... */
-                break;
+                added=EXFALSE;
             }
             
             if (IS_VALID_ID(rfldidstr[i]))
