@@ -580,7 +580,7 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
     ndrx_mbuf_tlv_t *tlv_hdr;
     unsigned int ptr_tag=0;
     
-    if (NULL==ndrx_find_buffer)
+    if (NULL==ibuf)
     {
         NDRX_LOG(log_error, "Input buffer %p not atmi allocated", idata);
         ndrx_TPset_error_fmt(TPEINVAL, "Input buffer %p not atmi allocated", idata);
