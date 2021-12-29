@@ -282,8 +282,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  * then we could run NDRX_UNLIKELY(NDRX_UNLIKELY).
  * This is useful for error handling, because mostly we do not have errors like
  * malloc fail etc..
+ * Seems on xlC,on C++ __builtin_expect does not work
  */
-#if HAVE_EXPECT
+#if (!defined(__cplusplus) && defined(HAVE_EXPECT)) || (defined(__cplusplus) && defined(HAVE_EXPECT_CXX))
 
 #define NDRX_LIKELY(x)      __builtin_expect(!!(x), 1)
 #define NDRX_UNLIKELY(x)    __builtin_expect(!!(x), 0)
