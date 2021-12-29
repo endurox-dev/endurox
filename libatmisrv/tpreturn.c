@@ -96,7 +96,6 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     tp_command_call_t *call;
     char fn[] = "_tpreturn";
     buffer_obj_t *buffer_info;
-    NDRX_LOG(log_debug, "%s enter", fn);
     long data_len;
     int return_status=0;
     char reply_to[NDRX_MAX_Q_SIZE+1] = {EXEOS};
@@ -105,6 +104,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     tp_command_call_t * last_call;
     int was_auto_buf = EXFALSE;
     
+    NDRX_LOG(log_debug, "%s enter data=%p", fn, data);
     last_call = ndrx_get_G_last_call();
     
     if (last_call->flags & TPNOREPLY)
