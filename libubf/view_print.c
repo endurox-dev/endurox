@@ -446,7 +446,7 @@ out:
         NDRX_SYSBUF_FREE(value);
     }
 
-    if (NULL!=ndrx_viewocc_free)
+    if (NULL!=occhash)
     {
         ndrx_viewocc_free(&occhash);
     }

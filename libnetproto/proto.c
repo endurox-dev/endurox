@@ -1174,9 +1174,9 @@ exprivate inline int exproto_cklen(cproto_t *fld, int net_len, char *data_start)
     }
     
     /* test the output... */
-    if (abstract_len < fld->min_len  || 
-            PMSGMAX == fld->max_len && abstract_len > NDRX_MSGSIZEMAX ||
-            PMSGMAX != fld->max_len && abstract_len > fld->max_len)
+    if ((abstract_len < fld->min_len)  || 
+            (PMSGMAX == fld->max_len && abstract_len > NDRX_MSGSIZEMAX) ||
+            (PMSGMAX != fld->max_len && abstract_len > fld->max_len))
     {
         NDRX_LOG(log_error, "WARNING! INVALID LEN! tag: 0x%x (%s) "
                 "min_len=%ld max_len=%ld but got: %d",

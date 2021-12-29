@@ -381,7 +381,7 @@ struct ast * newfld(ndrx_ubf_rfldid_t f)
     struct ast_fld *a;
     int typ = Bfldtype(f.bfldid);
     
-    if (BFLD_UBF==typ || BFLD_VIEW==typ && NULL==f.cname)
+    if ((BFLD_UBF==typ) || (BFLD_VIEW==typ && NULL==f.cname))
     {
         /* free up the rfield.. */
         ndrx_Bset_error_msg(BEBADOP, "Field types: BFLD_UBF and BFLD_VIEW "
@@ -1335,7 +1335,6 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
 
 
     re = &(rs->regex.re);
-    err;
     UBF_LOG(log_debug, "Regex left  [%s]", p_l);
     UBF_LOG(log_debug, "Regex right [%s]", p_r);
 
