@@ -344,6 +344,7 @@ INCLUDE (${CMAKE_ROOT}/Modules/CheckSymbolExists.cmake)
 
 
 CHECK_C_SOURCE_COMPILES("int main() {__builtin_expect(1, 1);}" HAVE_EXPECT)
+CHECK_CXX_SOURCE_COMPILES("int main() {__builtin_expect(1, 1);}" HAVE_EXPECT_CXX)
 CHECK_C_SOURCE_COMPILES("int main() { int X = 0; __sync_bool_compare_and_swap(&X, 0, 1); __sync_synchronize();}" HAVE_SYNC)
 CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t len; getline(buf, &len, stdin);}" HAVE_GETLINE)
 
