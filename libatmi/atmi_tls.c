@@ -342,6 +342,9 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->nullbuf.size=0;
     tls->nullbuf.subtype[0]=EXEOS;
     tls->nullbuf.type_id=BUF_TYPE_NULL;
+    tls->nullbuf.callinfobuf=NULL;
+    tls->nullbuf.callinfobuf_len=0;
+    memset(&tls->nullbuf.hh, 0, sizeof(tls->nullbuf.hh));
     
     memset(&tls->integpriv, 0, sizeof(tls->integpriv));
     
