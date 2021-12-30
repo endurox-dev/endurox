@@ -441,7 +441,8 @@ Mandatory Env. Variables
     e.g. ASCII "space" would become "\20". The back-slash by becomes "\\". 
     *ubf_ptrparse* enables *Bextread(3)* and *Bextreadcb(3)* functions to read
     *BFLD_PTR* pointers from input. By default buffer pointers for security
-    reasons are not read.
+    reasons are not read. Flag *ubf_dupfidok* enables accepting duplicate field
+    IDs during the *mkfldhdr(3)* processing (this is for Tuxedo compatibility).
 
 EXAMPLE
 -------

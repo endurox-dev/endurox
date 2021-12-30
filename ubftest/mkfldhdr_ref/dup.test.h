@@ -1,6 +1,7 @@
 /**
+ * @brief Dup.fid duplicate field ID tests
  *
- * @file test_mkfldhdr.c
+ * @file dup.test.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,62 +31,12 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <cgreen/cgreen.h>
-#include <ubf.h>
-#include <ndrstandard.h>
-#include <string.h>
-#include "test.fd.h"
-#include "ubfunit1.h"
-
-/**
- * Check duplicate field table resolve
- */
-Ensure(test_dup_tab_resolve)
-{
-    setenv("FLDTBLDIR", "./ubftab", 1);
-    setenv("FIELDTBLS", "dup.test", 1);
-    
-    /* resolves to first one: */
-    assert_equal(Bfldid("T_DUP_FLD"), 67112875);
-    
-    /* Resolves to same id */
-    assert_equal(Bfldid("T_HELLO_FLD"), 67112875);
-    
-    /* name resolves to first loaded. */
-    assert_string_equal(Bfname(67112875), "T_DUP_FLD");
-    
-}
-
-/**
- * Calls scripts for checing mkfldhdr. Return code says
- * was OK or not OK.
- */
-Ensure(test_mkfldhdr)
-{
-    load_field_table();
-    assert_equal(system("./test_mkfldhdr_cmd.sh"), EXSUCCEED);
-    assert_equal(system("./test_mkfldhdr_env.sh"), EXSUCCEED);
-    assert_equal(system("./test_mkfldhdr_env_multidir.sh"), EXSUCCEED);
-    assert_equal(system("./test_mkfldhdr_dup.sh"), EXSUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_err_output.sh"), EXSUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_no_FLDTBLDIR.sh"), EXSUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_no_FIELDTBLS.sh"), EXSUCCEED);
-    assert_not_equal(system("./test_mkfldhdr_syntax_err.sh"), EXSUCCEED);
-
-}
-
-TestSuite *ubf_mkfldhdr_tests(void)
-{
-    TestSuite *suite = create_test_suite();
-
-    add_test(suite, test_mkfldhdr);
-    add_test(suite, test_dup_tab_resolve);
-
-    return suite;
-}
-
-
+#ifndef __DUP_TEST
+#define __DUP_TEST
+/*	fname	bfldid            */
+/*	-----	-----            */
+#define	T_DUP_FLD	((BFLDID32)67112875)	/* number: 4011	 type: char */
+#define	T_DUP_FLD	((BFLDID32)67112876)	/* number: 4012	 type: char */
+#define	T_HELLO_FLD	((BFLDID32)67112875)	/* number: 4011	 type: char */
+#endif
 /* vim: set ts=4 sw=4 et smartindent: */

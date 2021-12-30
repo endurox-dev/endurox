@@ -162,6 +162,12 @@ extern NDRX_API long ndrx_G_apiflags;
  */
 #define NDRX_APIFLAGS_UBFPTRPARSE        0x00000002
 #define NDRX_APIFLAGS_UBFPTRPARSE_CODE   "ubf_ptrparse" /**< parse BFLD_PTR */
+
+/**
+ * Duplicate UBF field ID OK at build phase.
+ */
+#define NDRX_APIFLAGS_UBFDUPFIDOK        0x00000004
+#define NDRX_APIFLAGS_UBFDUPFIDOK_CODE   "ubf_dupfidok" /**< Check duplicat field id */
  
 /** @} */ /* end of apiflags */
     
