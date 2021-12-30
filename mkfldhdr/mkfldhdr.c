@@ -372,10 +372,11 @@ exprivate int generate_files(void)
             }
         }
 
-            /* This will also do the check for duplicates! */
+        /* This will also do the check for duplicates! */
         if (EXSUCCEED!=ndrx_ubf_load_def_file(inf, M_renderer->put_text_line,
                                 M_renderer->put_def_line, M_renderer->put_got_base_line,
-                                fname, EXTRUE))
+                                /* do not check duplicates if that's ok to have such */
+                                fname, !(ndrx_G_apiflags & NDRX_APIFLAGS_UBFDUPFIDOK) ))
         {
             EXFAIL_OUT(ret);
         }

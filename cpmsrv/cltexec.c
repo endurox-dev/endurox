@@ -563,6 +563,9 @@ expublic int cpm_exec(cpm_process_t *c)
          * this will be closed by ndrx_atfork handler
 	atmisrv_un_initialize(EXTRUE);*/
         
+        /* reset signal handler so that for new processes there is scratch start */
+        signal(SIGCHLD, SIG_DFL);
+
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
         

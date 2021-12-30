@@ -147,6 +147,14 @@ constants file. '2' for Java constant classes.
 Private data for language module. For GO and Java languages
 it is used for package name.
 
+NDRX_APIFLAGS
+-------------
+
+This section lists *NDRX_APIFLAGS* environment variable parameter special flags
+affecting work of the *mkfldhdr*:
+
+. API flag *ubf_dupfidok* configures *mkfldhdr* to accept the duplicate field IDs.
+This matches Oracle Tuxedo logic.
 
 EXIT STATUS
 -----------
