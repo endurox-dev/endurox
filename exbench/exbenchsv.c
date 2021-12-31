@@ -222,7 +222,8 @@ void thuninit(void)
 
 /* Auto generated system advertise table */
 expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
-    { NULL, NULL, NULL, 0, 0 }
+    { "", "EXBENCHSV", EXBENCHSV, 0, 0 }
+    , { NULL, NULL, NULL, 0, 0 }
 };
 
 /**

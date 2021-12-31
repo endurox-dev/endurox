@@ -54,6 +54,22 @@
 #include <ubfdb.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+
+/**
+ * Used for Tuxedo compatibility, reverse search
+ * Head is last element.
+ */
+#define DL_REV_SEARCH(head,out,elt,cmp)                                         \
+do {                                                                            \
+    if (head) {                                                                 \
+        for(out=head->NDRX_PREV;;out=out->NDRX_PREV) {                          \
+        if ((cmp(out,elt))==0) break;                                           \
+        if (out==head) {out=NULL; break;}                                       \
+        }                                                                       \
+    }                                                                           \
+} while(0) 
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -140,9 +156,9 @@ exprivate int init_hash_area(void)
             if (NULL!=M_bfldidhash2[i])
             {
                 head = M_bfldidhash2[i];
-                LL_FOREACH_SAFE(head,elt,tmp)
+                DL_FOREACH_SAFE(head,elt,tmp)
                 {
-                    LL_DELETE(head, elt);
+                    DL_DELETE(head, elt);
                 }
             } /* if */
         } /* for */
@@ -169,9 +185,9 @@ exprivate int init_hash_area(void)
             if (NULL!=M_fldnmhash2[i])
             {
                 head = M_fldnmhash2[i];
-                LL_FOREACH_SAFE(head,elt,tmp)
+                DL_FOREACH_SAFE(head,elt,tmp)
                 {
-                    LL_DELETE(head, elt);
+                    DL_DELETE(head, elt);
                 }
             } /* if */
         } /* for */
@@ -193,7 +209,7 @@ exprivate void _bfldidhash_add(UBF_field_def_t *p_fld)
 {
     int hash_key = p_fld->bfldid % M_hash2_size; /* Simple mod based hash */
     
-    LL_APPEND(M_bfldidhash2[hash_key], p_fld);
+    DL_APPEND(M_bfldidhash2[hash_key], p_fld);
 }
 
 /**
@@ -218,7 +234,8 @@ expublic UBF_field_def_t * _bfldidhash_get(BFLDID id)
     UBF_field_def_t tmp;
     
     tmp.bfldid=id;
-    LL_SEARCH(M_bfldidhash2[hash_key],ret,&tmp,UBF_field_def_id_cmp);
+    /* Use reverse search for correct duplicate field handling. */
+    DL_REV_SEARCH(M_bfldidhash2[hash_key],ret,&tmp,UBF_field_def_id_cmp);
     
     return ret;
 }
@@ -230,7 +247,7 @@ exprivate void _fldnmexhash_add(UBF_field_def_t *p_fld)
 {
     /* Get the linear array key */
     int hash_key = str_hash_from_key_fn(p_fld->fldname) % M_hash2_size;
-    LL_APPEND(M_fldnmhash2[hash_key], p_fld);
+    DL_APPEND(M_fldnmhash2[hash_key], p_fld);
 
 #ifdef EXTRA_FT_DEBUG
     printf("field [%s] key [%d] result [0%x] - [0%x] added\n", p_fld->fldname, hash_key, p_fld, M_fldnmhash2[hash_key]);
@@ -260,7 +277,7 @@ expublic UBF_field_def_t * ndrx_fldnmhash_get(char *key)
     UBF_field_def_t *ret=NULL;
     UBF_field_def_t tmp;
     NDRX_STRCPY_SAFE(tmp.fldname, key);
-    LL_SEARCH(M_fldnmhash2[hash_key],ret,&tmp,UBF_field_def_nm_cmp);
+    DL_REV_SEARCH(M_fldnmhash2[hash_key],ret,&tmp,UBF_field_def_nm_cmp);
 
 #ifdef EXTRA_FT_DEBUG
     printf("field [%s] key [%d] result [0%x] - [0%x]\n", key, hash_key, ret, M_bfldidhash2[hash_key]);

@@ -126,7 +126,7 @@
             <min>2</min>
             <max>4</max>
             <srvid>300</srvid>
-            <sysopt>-N -e ${NDRX_ULOG}/atmi.sv90_3.${NDRX_SVSRVID}.log</sysopt>
+            <sysopt>-B -e ${NDRX_ULOG}/atmi.sv90_3.${NDRX_SVSRVID}.log</sysopt>
         </server>
         <server name="tmsrv">
             <cctag>DDR1</cctag>
@@ -141,7 +141,7 @@
             <min>2</min>
             <max>4</max>
             <srvid>400</srvid>
-            <sysopt>-N -e ${NDRX_ULOG}/atmi.sv90_3.${NDRX_SVSRVID}.log -s TESTSV_DDR:TESTSV</sysopt>
+            <sysopt>-B -e ${NDRX_ULOG}/atmi.sv90_3.${NDRX_SVSRVID}.log -S TESTSV_DDR:TESTSV</sysopt>
         </server>
         <server name="tmsrv">
             <cctag>DDR2</cctag>
@@ -156,14 +156,14 @@
             <min>2</min>
             <max>4</max>
             <srvid>500</srvid>
-            <sysopt>-N -e ${NDRX_ULOG}/atmi.sv90_4.${NDRX_SVSRVID}.log -s TESTSV_DDR:TESTSV</sysopt>
+            <sysopt>-B -e ${NDRX_ULOG}/atmi.sv90_4.${NDRX_SVSRVID}.log -S TESTSV_DDR:TESTSV</sysopt>
         </server>
         <server name="exbenchsv">
             <cctag>DDR1</cctag>
             <min>1</min>
             <max>1</max>
             <srvid>600</srvid>
-            <sysopt>-e ${NDRX_ULOG}/exbenchsv.${NDRX_SVSRVID}.log -s QGRP1_2,QGRP2_2,QGRP3_2:EXBENCH</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/exbenchsv.${NDRX_SVSRVID}.log -S QGRP1_2,QGRP2_2,QGRP3_2:EXBENCHSV</sysopt>
             <appopt>-T</appopt>
         </server>
         <server name="exbenchsv">

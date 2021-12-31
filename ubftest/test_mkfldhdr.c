@@ -48,15 +48,11 @@ Ensure(test_dup_tab_resolve)
     setenv("FLDTBLDIR", "./ubftab", 1);
     setenv("FIELDTBLS", "dup.test", 1);
     
-    /* resolves to first one: */
-    assert_equal(Bfldid("T_DUP_FLD"), 67112875);
+    /* resolves to last loaded */
+    assert_equal(Bfldid("T_DUP_FLD"), 67112876);
     
-    /* Resolves to same id */
-    assert_equal(Bfldid("T_HELLO_FLD"), 67112875);
-    
-    /* name resolves to first loaded. */
-    assert_string_equal(Bfname(67112875), "T_DUP_FLD");
-    
+    /* resolves to last loaded. */
+    assert_string_equal(Bfname(67112875), "T_HELLO_FLD");
 }
 
 /**

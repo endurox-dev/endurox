@@ -146,6 +146,7 @@ IF (DEFINED EX_USE_EPOLL)
 add_subdirectory (test091_tpgotsig)
 ENDIF()
 
+add_subdirectory (test092_bflag)
 ################################################################################
 # Master test case drivere
 add_executable (atmiunit1 atmiunit1.c)

@@ -194,7 +194,7 @@ if [ "X`grep TESTERROR $TESTDIR/runtime/user90/log/*.log`" != "X" ]; then
 fi
 
 ################################################################################
-echo ">>> Checking missing -A -> -N..."
+echo ">>> Checking missing -A -> -B..."
 ################################################################################
 
 OUT=`xadmin psc | grep "TESTSV       TESTSV       atmi.sv9+   500"`

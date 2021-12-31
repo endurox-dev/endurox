@@ -1,7 +1,7 @@
 ##
-## @brief Tuxedo to Enduro/X migration tools - server
+## @brief Test -B flag for server opt - server
 ##
-## @file atmisv90.c
+## @file atmisv92.c
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -32,7 +32,7 @@
 ## -----------------------------------------------------------------------------
 ##
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
@@ -53,16 +53,13 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmi.sv90 atmisv90.c)
-add_executable (atmiclt90 atmiclt90.c)
+add_executable (atmi.sv92 atmisv92.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv90 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
-target_link_libraries (atmiclt90 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv92 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 
-set_target_properties(atmi.sv90 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(atmiclt90 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmi.sv92 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 # vim: set ts=4 sw=4 et smartindent:

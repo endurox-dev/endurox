@@ -153,6 +153,7 @@ struct srv_conf
     char err_output[FILENAME_MAX+1];
     int log_work;
     int advertise_all;
+    int no_built_advertise; /**< Do not advertise services provided by buildserver */
     svc_entry_t *svc_list;
     svc_entry_t *funcsvc_list;  /**< Function mappings to services -S */
     char q_prefix[FILENAME_MAX+1];

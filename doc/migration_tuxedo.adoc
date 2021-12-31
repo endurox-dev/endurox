@@ -47,6 +47,10 @@ of any context association.
 allow remote nodes to process the notifications, *tpbrdcstsv(8)* process
 shall be started on the remote nodes. 
 
+- In case if duplicate field IDs are used for UBF/FML, default logic
+of *mkfldhdr(8)* would generate error. In case if for some reason duplicate
+field IDs are OK, flag *ubf_dupfidok* shall be set in *NDRX_APIFLAGS* (see *ex_env(5)*).
+Note that for runtime this flag is not required i.e. only needed for build time.
 
 === Tuxedo API bindings
 
@@ -1014,12 +1018,13 @@ servers, with few exceptions. Following table lists the details:
 [options="header"]
 |=========================================================
 |Tuxedo CLOPT|Enduro/X <sysopt>|Comments
-|-A|-N|Cross mapping applies. In Enduro/X all servers are advertised by default.
-In case if in Tuxedo configuration *-A* is used, no flag must be set in Enduro/X.
-In case if *-A* is not used in Tuxedo configuration, in Enduro/X *-N* shall be used,
-to suppress advertise all.
-|-s|-s|Enduro/X does not support @filename syntax (advertise from file). All other
-work modes of the *-s* matches.
+|-A|-B|Cross mapping applies. In Enduro/X all servers are advertised by default.
+In case if in Tuxedo configuration *-A* is used, no flag must be used for Enduro/X.
+In case if *-A* is not used in Tuxedo configuration, in Enduro/X *-B* shall be used,
+to suppress advertise of built-in service advertise.
+|-s|-S|Enduro/X does not support @filename syntax (advertise from file). All other
+work modes matches. The lower case *-s* parameter in Enduro/X provides functionality
+to alias services to other services instead of functions.
 |-e|-e|If not configured, Enduro/X logs all *stderr* to the parent process *stderr*, 
 effectively *ndrxd(8)*.
 |-o|-e|Enduro/X redirect all *stdout* the the same *stderr* output. If not configured,
