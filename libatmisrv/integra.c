@@ -128,6 +128,7 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
         {
             /* advertise only if have service name */
             if (EXEOS!=tab->svcnm[0] &&
+                    !G_server_conf.no_built_advertise &&
                     EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
             {
                 if (tperrno!=TPEMATCH)

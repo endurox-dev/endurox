@@ -1,7 +1,7 @@
 /**
- * @brief Dup.fid duplicate field ID tests
+ * @brief Test -B flag for server opt - common header
  *
- * @file dup.test.h
+ * @file testtest092_bflag.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,13 +31,20 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef __DUP_TEST
-#define __DUP_TEST
-/*	fname	bfldid            */
-/*	-----	-----            */
-#define	T_DUP_FLD	((BFLDID32)67112875)	/* number: 4011	 type: char */
-#define	T_DUP_FLD	((BFLDID32)67112876)	/* number: 4012	 type: char */
-#define	T_HELLO_FLD	((BFLDID32)67112875)	/* number: 4011	 type: char */
-#define	T_HELLO_FLD	((BFLDID32)67112877)	/* number: 4013	 type: char */
+#ifndef TEST92_H
+#define TEST92_H
+
+#ifdef  __cplusplus
+extern "C" {
 #endif
+
+
+#define VALUE_EXPECTED "Hello EnduroX"
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif  /* TEST92_H */
+
 /* vim: set ts=4 sw=4 et smartindent: */

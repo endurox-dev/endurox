@@ -442,10 +442,15 @@ PARAMETERS
     by *-s* (service alias) or *-S* (function alias) flags will be advertised. 
     For example if server advertises *SERVICE1, SERVICE2, SERVICE3*, but *-N*
     is specified, and *-sSERVICE3* is specified, then only service *SERVICE3* will be 
-    advertised. The *-s* argument also can contain aliases for services, for example
-    *-sOTHERSVC:SERVICE2*, then new service *OTHERSVC* will be advertised which
-    basically is the same *SERVICE2* (same function used). *-s*, *-S* and *-N* can be mixed.
-    *-s* can appear multiple times in system options. With one *-s* multiple services
+    advertised. The *-s* argument also can contain aliases to other services, for example
+    *-sOTHERSVC:SERVICE2*, new service *OTHERSVC* will be advertised which
+    basically is the same *SERVICE2* (same function used). *-s*, *-S* and *-N*, *-B* can be mixed.
+    In case if services which are built-in by *buildserver(8)* shall not be advertised,
+    flag *-B* shall be used, but all other services provided in clopt or advertised by
+    *tpadvertise(3)* will be available. Difference between  *-N* and *-B* is that
+    *-N* supresses advertise of all services except ones provided in clopt, but 
+    *-B* supresses only built-in services provided by *buildserver(8)*.
+    Flag *-s* can appear multiple times in system options. With one *-s* multiple services
     can be aliased to single existing service.
     The format is: *-s*'<NEWSVC1>/<NEWSVC2>/../<NEWSVCN>:<EXISTINGSVC>'. The *,* can be
     used as separator too, but for certain platforms it does not work, thus */* is

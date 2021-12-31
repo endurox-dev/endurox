@@ -438,7 +438,7 @@ expublic int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:G--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:GB--")) != EXFAIL)
     {
         switch(c)
         {
@@ -508,6 +508,12 @@ expublic int ndrx_init(int argc, char** argv)
             case 'N':
                 /* Do not advertise all services */
                 G_server_conf.advertise_all = 0;
+                break;
+            case 'B':
+                /* Do not advertise services provided by buildserver...
+                 * basically this is opposite to -A of Tuxedo
+                 */
+                G_server_conf.no_built_advertise = EXTRUE;
                 break;
             case 'n':
                 /* Do not advertise single service */

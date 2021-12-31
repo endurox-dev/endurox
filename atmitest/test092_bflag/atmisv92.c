@@ -1,7 +1,7 @@
 /**
- * @brief Tuxedo to Enduro/X migration tools - server
+ * @brief Test -B flag for server opt - server
  *
- * @file atmisv90.c
+ * @file atmisv92.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -40,7 +40,7 @@
 #include <test.fd.h>
 #include <string.h>
 #include <unistd.h>
-#include "test90.h"
+#include "test92.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -55,34 +55,10 @@
  */
 void TESTSV (TPSVCINFO *p_svc)
 {
-    int ret=EXSUCCEED;
-    char testbuf[1024];
     UBFH *p_ub = (UBFH *)p_svc->data;
-
-    NDRX_LOG(log_debug, "%s got call", __func__);
-
-    /* Just print the buffer */
-    Bprint(p_ub);
-    
-    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
-                 Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (0!=strcmp(testbuf, VALUE_EXPECTED))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
-            VALUE_EXPECTED, testbuf);
-        ret=EXFAIL;
-        goto out;
-    }
-        
     
 out:
-    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+    tpreturn(  TPSUCCESS,
                 0L,
                 (char *)p_ub,
                 0L,
@@ -90,43 +66,25 @@ out:
 }
 
 /**
+ * Another service, only advertised from buildserver
+ */
+void TESTSVX (TPSVCINFO *p_svc)
+{
+    TESTSV(p_svc);
+}
+/**
  * Do initialisation
  */
 int tpsvrinit(int argc, char **argv)
 {
     int ret = EXSUCCEED;
-    /* Check arguments */
-    int c;
     NDRX_LOG(log_debug, "tpsvrinit called");
-    
-    /* Parse command line  */
-    while ((c = getopt(argc, argv, "c:")) != -1)
-    {
-        switch (c)
-        {
-            case 'c':
-                if (0==strcmp(optarg, "HELLO \"WORLD"))
-                {
-                    /* default debug generated is at level 3: */
-                    NDRX_LOG(log_error, "Arg c OK");
-                }
-                else
-                {
-                    NDRX_LOG(log_error, "TESTERROR: Expected [HELLO \"WORLD] got [%s])",
-                            optarg);
-                    EXFAIL_OUT(ret);
-                }
-                break;
-        }
-    }
 
-    /* moved to service tables
     if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
     {
         NDRX_LOG(log_error, "Failed to initialise TESTSV!");
         EXFAIL_OUT(ret);
     }
-    */
 out:
     return ret;
 }
@@ -142,7 +100,7 @@ void tpsvrdone(void)
 
 /* Auto generated system advertise table */
 expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
-    { "TESTSV", "TESTSV", TESTSV, 0, 0 }
+    { "BUILTSVC", "TESTSVX", TESTSVX, 0, 0 }
     , { NULL, NULL, NULL, 0, 0 }
 };
 

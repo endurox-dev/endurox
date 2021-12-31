@@ -1064,9 +1064,16 @@ function prep_servers(instance)
                 local sysopt = "";
                 local appopt = "";
 
-                //Check is -A not present, if so then we need to set -N
+                //Check is -A not present, if so then we need to set -B
                 foreach(idx,opt in clopt_parsed.args1)
                 {
+                    //opt -s in Enduro/X is opt -S
+                    
+                    if (opt.opt=="s")
+                    {
+                        opt.opt="S";
+                    }
+
                     if (opt.opt=="A")
                     {
                         have_A=true;
@@ -1127,7 +1134,8 @@ function prep_servers(instance)
                 
                 if (!have_A)
                 {
-                    sysopt = "-N";
+                    //Do not advertise built services
+                    sysopt = "-B";
                 }
 
                 //Add -e file to write the stderr to log files.

@@ -40,6 +40,7 @@ $#define __DUP_TEST
 T_DUP_FLD	        11	char	- 1 Chart test field 1
 T_DUP_FLD	        12	char	- 1 Chart test field 1
 T_HELLO_FLD	        11	char	- 1 Chart test field 1
+T_HELLO_FLD	        13	char	- 1 Chart test field 1
 
 $#endif
 

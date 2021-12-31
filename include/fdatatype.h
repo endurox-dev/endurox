@@ -321,7 +321,7 @@ struct UBF_field_def
     char fldname[UBFFLDMAX+1];
     
     EX_hash_handle hh; /* makes this structure hashable */
-    UBF_field_def_t *next; /* next with the same hash ID! */
+    UBF_field_def_t *next, *prev; /* next with the same hash ID! */
 };
 
 /*---------------------------Globals------------------------------------*/

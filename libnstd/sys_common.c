@@ -72,6 +72,16 @@
 /*#define SYSCOMMON_ENABLE_DEBUG - causes locks in case of invalid config,
  *      due to recursive debug init */
 #define MAX_ATFORKS         3
+
+/*
+ * For AIX and Solaris stock forking is working OK
+ * For Linux: cannot relay on internal forking
+ * as getting link error such as hidden symbol `pthread_atfork'
+ */
+#if defined(EX_OS_AIX) || defined(EX_OS_SUNOS)
+#define USE_STOCK_FORKING
+#endif
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -1081,6 +1091,8 @@ expublic void ndrx_sys_banner(void)
  */
 expublic void ndrx_atfork_prepare(void)
 {
+    
+#ifndef USE_STOCK_FORKING
     int i;
     
     for (i=MAX_ATFORKS-1; i>=0; i--)
@@ -1090,6 +1102,7 @@ expublic void ndrx_atfork_prepare(void)
             M_prepare[i]();
         }
     }
+#endif
 }
 
 /**
@@ -1097,6 +1110,7 @@ expublic void ndrx_atfork_prepare(void)
  */
 expublic void ndrx_atfork_parent(void)
 {
+#ifndef USE_STOCK_FORKING
     int i;
     for (i=0; i<MAX_ATFORKS; i++)
     {
@@ -1105,6 +1119,7 @@ expublic void ndrx_atfork_parent(void)
             M_parent[i]();
         }
     }
+#endif
 }
 
 /**
@@ -1112,6 +1127,7 @@ expublic void ndrx_atfork_parent(void)
  */
 expublic void ndrx_atfork_child(void)
 {
+#ifndef USE_STOCK_FORKING
     int i;
     
     /* well we shall update pid for logger... */
@@ -1124,6 +1140,7 @@ expublic void ndrx_atfork_child(void)
             M_child[i]();
         }
     }
+#endif
 }
 
 /**
@@ -1142,6 +1159,21 @@ expublic pid_t ndrx_fork(void)
     pid_t ret;
     int err;
     
+#if USE_STOCK_FORKING
+    
+    int ret = fork();
+    err = errno;
+    
+    /* update pids, used for internals... */
+    if (0==ret)
+    {
+        ndrx_dbg_pid_update();
+    }
+    
+    return ret;
+    
+#else
+    
     ndrx_atfork_prepare();
     
     ret = fork();
@@ -1159,6 +1191,7 @@ expublic pid_t ndrx_fork(void)
     errno = err;
     
     return ret;
+#endif
 }
 
 /**
@@ -1172,6 +1205,9 @@ expublic pid_t ndrx_fork(void)
 expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
        void (*child)(void))
 {
+#if USE_STOCK_FORKING
+    return pthread_atfork(prepare, parent, child);
+#else
     int i=0;
     int ret = EXSUCCEED;
 
@@ -1210,6 +1246,7 @@ expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
     
 out:
     return ret;
+#endif
 }
 
 /**
