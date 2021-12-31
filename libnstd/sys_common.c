@@ -1159,9 +1159,9 @@ expublic pid_t ndrx_fork(void)
     pid_t ret;
     int err;
     
-#if USE_STOCK_FORKING
+#ifdef USE_STOCK_FORKING
     
-    int ret = fork();
+    ret = fork();
     err = errno;
     
     /* update pids, used for internals... */
@@ -1205,7 +1205,7 @@ expublic pid_t ndrx_fork(void)
 expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
        void (*child)(void))
 {
-#if USE_STOCK_FORKING
+#ifdef USE_STOCK_FORKING
     return pthread_atfork(prepare, parent, child);
 #else
     int i=0;
