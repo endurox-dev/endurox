@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+<endurox>
+    <appconfig>
+        <sanity>1</sanity>
+        <brrefresh>5</brrefresh>
+        <restart_min>1</restart_min>
+        <restart_step>1</restart_step>
+        <restart_max>5</restart_max>
+        <restart_to_check>20</restart_to_check>
+        <gather_pq_stats>Y</gather_pq_stats>
+    </appconfig>
+    <defaults>
+        <autokill>1</autokill>
+        <start_max>10</start_max>
+        <pingtime>100</pingtime>
+        <ping_max>800</ping_max>
+        <end_max>10</end_max>
+        <killtime>1</killtime>
+        <min>1</min>
+        <max>1</max>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="cconfsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>1</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cconfsrv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+        <server name="tpadmsv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>3</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpadmsv.${NDRX_SVSRVID}.log -r</sysopt>
+        </server>
+    </servers>
+    <defaults>
+        <cctag>SITE1_GRP</cctag>
+        <respawn>Y</respawn>
+    </defaults>
+    <servers>
+        <server name="exbenchsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>100</srvid>
+            <sysopt>-e ${NDRX_ULOG}/a1.log</sysopt>
+            <appopt>-sSERVER1</appopt>
+        </server>
+        <server name="exbenchsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>200</srvid>
+            <sysopt>-e ${NDRX_ULOG}/sub/a2.log</sysopt>
+            <appopt>-sSERVER1</appopt>
+        </server>
+        <server name="exbenchsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>300</srvid>
+            <sysopt>-e ${NDRX_APPHOME}/log/third.log</sysopt>
+            <appopt>-sSERVER1</appopt>
+        </server>
+        <server name="exbenchsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>400</srvid>
+            <sysopt>-e ${NDRX_APPHOME}/dir/third2.log</sysopt>
+            <appopt>-sSERVER1</appopt>
+        </server>
+        <server name="exbenchsv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>500</srvid>
+	    <sysopt>-e /home/user1/endurox/atmitest/test090_tuxmig/runtime/other/app/dir/forth.log</sysopt>
+            <appopt>-sSERVER1</appopt>
+        </server>
+    </servers>
+</endurox>
