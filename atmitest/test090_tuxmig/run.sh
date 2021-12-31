@@ -84,6 +84,15 @@ echo "FLDTBLDIR32=${TESTDIR}/../../ubftest/ubftab" > env_common.txt
 echo "FIELDTBLS=test.fd" >> env_common.txt
 
 ################################################################################
+./ubb_logs-run.sh
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    go_out $RET
+fi
+
+################################################################################
 ./ubb_config1-run.sh
 
 RET=$?

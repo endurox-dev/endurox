@@ -1097,15 +1097,28 @@ function prep_servers(instance)
                         local e_file = basename(e_val);
                         local e_dir = dirname(e_val);
 
-                        if (e_dir==instance.log_full)
+                        local ulog_common = dircommon(e_dir, instance.log_full);
+                        local ulog_diff = dirdiff(e_dir, instance.log_full);
+
+                        if (ulog_common==instance.log_full)
                         {
-                            //OK this is ULOG folder, no schedule
-                            opt.val = "${NDRX_ULOG}/" + e_file;
+
+                            schedule_directory(e_dir);
+
+                            if (ulog_diff=="")
+                            {
+                                //OK this is ULOG folder, no schedule
+                                opt.val = "${NDRX_ULOG}/" + e_file;
+                            }
+                            else
+                            {
+                                //OK this is ULOG folder, no schedule
+                                opt.val = "${NDRX_ULOG}/" + ulog_diff + "/" + e_file;
+                            }
                         }
                         else
                         {
-                            //schedule folder..?
-                            schedule_directory(e_val);
+                            
 
                             //Is it common to apphome, if so try to use
                             //relative path to the output.
@@ -1116,16 +1129,19 @@ function prep_servers(instance)
                             {
                                 if (diff!="")
                                 {
+                                    schedule_directory(e_dir);
                                     opt.val = "${NDRX_APPHOME}/"+diff+"/"+e_file;
                                 }
                                 else
                                 {
                                     //We go under default log folder...
+                                    schedule_directory(instance.app_home+"/log");
                                     opt.val = "${NDRX_APPHOME}/log/"+e_file;
                                 }
                             }
                             else
                             {
+                                schedule_directory(e_dir);
                                 opt.val=e_val;
                             }
                         }

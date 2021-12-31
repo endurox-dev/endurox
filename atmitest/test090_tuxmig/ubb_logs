@@ -1,0 +1,49 @@
+#
+# Testing of log folders
+#
+*RESOURCES
+IPCKEY 46000
+DOMAINID HELLODOM
+UID 1196
+GID 11
+PERM 0660
+MAXSERVERS 20
+MAXSERVICES 40
+MAXGTT 20
+MASTER SITE1
+SCANUNIT 11
+SANITYSCAN 12
+BBLQUERY 170
+BLOCKTIME 31
+MODEL MP
+LDBAL Y
+
+#
+# Also check that we do not have any sort of shared 
+# config/bin/log folder
+#
+*MACHINES
+server1 LMID=SITE1 TUXDIR="/x1_app/bin"
+APPDIR="/appdir/app"
+ENVFILE="./env_common.txt" 
+TLOGDEVICE="/tlogdir/tlog/TLOG" TLOGNAME=TLOG
+TUXCONFIG="/appdir/app/conf/tuxconfig" TYPE="RHEL"
+ULOGPFX="/logs/log/ULOG"
+
+*GROUPS
+SITE1_GRP LMID=SITE1 GRPNO=1
+
+*SERVERS
+DEFAULT:
+RESTART=Y MAXGEN=5 REPLYQ=Y CLOPT="-A"
+
+# merge to NDRX_ULOG:
+exbenchsv SRVID=100 MIN=1 MAX=1 SRVGRP=SITE1_GRP CLOPT="-A -e /logs/log/a1.log -- -sSERVER1"
+# merge to NDRX_ULOG:
+exbenchsv SRVID=200 MIN=1 MAX=1 SRVGRP=SITE1_GRP CLOPT="-A -e /logs/log/sub/a2.log -- -sSERVER1"
+# merge to NDRX_APPHOME/log:
+exbenchsv SRVID=300 MIN=1 MAX=1 SRVGRP=SITE1_GRP CLOPT="-A -e /appdir/app/third.log -- -sSERVER1"
+# merge to NDRX_APPHOME/log/dir?:
+exbenchsv SRVID=400 MIN=1 MAX=1 SRVGRP=SITE1_GRP CLOPT="-A -e /appdir/app/dir/third2.log -- -sSERVER1"
+# no merge
+exbenchsv SRVID=500 MIN=1 MAX=1 SRVGRP=SITE1_GRP CLOPT="-A -e /other/app/dir/forth.log -- -sSERVER1"
