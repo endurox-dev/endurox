@@ -78,6 +78,8 @@ extern NDRX_API long ndrx_G_apiflags;
  */
 #define NDRX_ARGS_BOOL                  1     /**< boolean type               */
 #define NDRX_ARGS_INT                   2     /**< integer type               */
+#define NDRX_ARGS_STRING	        3     /**< string type                */
+#define NDRX_ARGS_CB	                4     /**< callback type              */
 /** @} */ /* end of argsgrp */
     
     
@@ -238,6 +240,11 @@ struct ndrx_intmap
     EX_hash_handle hh;
 };
 
+typedef struct ndrx_args_loader ndrx_args_loader_t;
+
+typedef int (*ndrx_args_cb_t)(ndrx_args_loader_t *arg, char *val, 
+        size_t valbufsz, void *obj, char *errbuf, size_t errbufsz);
+
 /**
  * This is arguments parser and loader for mapped structures
  */
@@ -251,9 +258,9 @@ struct ndrx_args_loader
     int     max_len;            /**< string max len                         */
     double  min_value;          /**< minimum value for field                */
     double  max_value;          /**< maximum value for the field            */
+    ndrx_args_cb_t cb_get;      /**< getter callback                        */
+    ndrx_args_cb_t cb_set;      /**< setter callback                        */
 };
-
-typedef struct ndrx_args_loader ndrx_args_loader_t;
 
 
 /**

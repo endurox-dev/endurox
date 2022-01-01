@@ -147,6 +147,7 @@ add_subdirectory (test091_tpgotsig)
 ENDIF()
 
 add_subdirectory (test092_bflag)
+add_subdirectory (test093_killseq)
 ################################################################################
 # Master test case drivere
 add_executable (atmiunit1 atmiunit1.c)

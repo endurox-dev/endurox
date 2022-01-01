@@ -54,12 +54,6 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-
-
-#define NDRX_ARGS_BOOL                  1     /**< boolean type               */
-#define NDRX_ARGS_INT                   2     /**< integer type               */
-#define NDRX_ARGS_STRING                3     /**< string type                */
-
 /**
  * Config field mappings
  */
