@@ -51,6 +51,8 @@
         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
         to process until it have been terminated. -->
         <killtime>20</killtime>
+	<!-- generate cores for invalid shutdowns... -->
+	<killseq>11</killseq>
     </defaults>
     <servers>
         <server name="atmi.sv75">
