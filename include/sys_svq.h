@@ -251,6 +251,10 @@ extern NDRX_API int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd);
 extern NDRX_API void ndrx_svq_event_exit(int detatch);
 
+extern NDRX_API void ndrx_svq_fork_prepare(void);
+extern NDRX_API void ndrx_svqadmin_fork_prepare(void);
+
+
 /* Direct API for setting timeout values... so that we register time-out 
  by worker thread. And the event thread will pick up any existing value there
  if timed out
