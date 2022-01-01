@@ -129,14 +129,22 @@ expublic int ndrx_svqshm_down(int force)
     INIT_ENTRY(ret);
     
 #ifdef EX_USE_SYSVQ
-    /* Terminate polling threads... if any... */
+    /* Terminate polling threads... if any... 
     ndrx_atfork_prepare();
+    - in case if using system pthread_atfork(), we shall call the
+    cleanup routines by our selves
+    */
+    ndrx_svqadmin_fork_prepare();
+    ndrx_svq_fork_prepare();
     
+#if 0
+    - currently nothing there...
     /* WARNING ! RESUME AS CHILD (FREE UP QUEUE DEL REF LOCKS) !!!! 
      * If in future we do some more with childs, then needs to think here
      * how to avoid that.
      */
     ndrx_atfork_child();
+#endif
 #endif
     
     if (force)

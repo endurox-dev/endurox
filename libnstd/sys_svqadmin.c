@@ -76,7 +76,7 @@ typedef struct
 
 exprivate mqd_t M_adminq = (mqd_t)EXFAIL;
 exprivate pthread_t M_evthread;
-
+exprivate int M_first = EXTRUE; /**< Did we have an init?               */
 /*---------------------------Prototypes---------------------------------*/
 
 exprivate void * ndrx_svqadmin_run(void* arg);
@@ -84,7 +84,7 @@ exprivate void * ndrx_svqadmin_run(void* arg);
 /**
  * Prepare for forking. this will stop the admin thread
  */
-exprivate void admin_fork_prepare(void)
+expublic void ndrx_svqadmin_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Terminating admin thread before forking...");
     if (EXSUCCEED!=ndrx_svqadmin_deinit())
@@ -96,7 +96,7 @@ exprivate void admin_fork_prepare(void)
 /**
  * Restart admin thread for 
  */
-exprivate void admin_fork_resume(void)
+exprivate void ndrx_svqadmin_fork_resume(void)
 {
     int ret;
     pthread_attr_t pthread_custom_attr;
@@ -134,12 +134,16 @@ expublic int ndrx_svqadmin_init(mqd_t adminq)
     }
     
     /* register fork handlers... */
-    if (EXSUCCEED!=(ret=ndrx_atfork(admin_fork_prepare, 
-            admin_fork_resume, NULL)))
+    if (M_first)
     {
-        NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
-        userlog("Failed to register fork handlers: %s", strerror(ret));
-        EXFAIL_OUT(ret);
+    	if (EXSUCCEED!=(ret=ndrx_atfork(ndrx_svqadmin_fork_prepare, 
+            ndrx_svqadmin_fork_resume, NULL)))
+    	{
+            NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
+            userlog("Failed to register fork handlers: %s", strerror(ret));
+            EXFAIL_OUT(ret);
+        }
+	M_first = EXFALSE;
     }
     
 out:
@@ -155,11 +159,18 @@ expublic int ndrx_svqadmin_deinit(void)
     int ret = EXSUCCEED;
     ndrx_thstop_command_call_t thstop;
     
+    if (M_first)
+    {
+        NDRX_LOG(log_debug, "Admin thread not initialized");
+        goto out;
+    }
+    
     thstop.mtype =1;
     thstop.command_id=NDRX_COM_SVQ_PRIV;
     
     NDRX_LOG(log_debug, "Requesting admin thread shutdown...");
-    if (EXSUCCEED!=msgsnd(M_adminq->qid, &thstop, NDRX_SVQ_INLEN(sizeof(ndrx_thstop_command_call_t)), 0))
+    if (EXSUCCEED!=msgsnd(M_adminq->qid, &thstop, 
+            NDRX_SVQ_INLEN(sizeof(ndrx_thstop_command_call_t)), 0))
     {
         int err = errno;
         NDRX_LOG(log_error, "Failed to send term msg: %s", strerror(err));

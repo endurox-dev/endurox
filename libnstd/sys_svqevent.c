@@ -129,7 +129,9 @@ typedef struct
 /* have a thread handler for tout monitoring thread! */
 
 exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=EXFAIL, 
-                                    .evpipe[1]=EXFAIL};
+                                    .evpipe[1]=EXFAIL,
+                                    .fdtab = NULL,
+                                    .fdtabmo = NULL};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
@@ -1191,7 +1193,7 @@ expublic void ndrx_svq_event_atexit(void)
  * Prepare event thread for forking
  * This will terminate the event thread
  */
-exprivate void event_fork_prepare(void)
+expublic void ndrx_svq_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
     
@@ -1237,7 +1239,7 @@ out:
 /**
  * Child resume after forking
  */
-exprivate void event_fork_resume_child(void)
+exprivate void ndrx_svq_fork_resume_child(void)
 {
     /* ndrx_svq_delref_unlock(); */
 }
@@ -1245,7 +1247,7 @@ exprivate void event_fork_resume_child(void)
 /**
  * Resume after fork 
  */
-exprivate void event_fork_resume(void)
+exprivate void ndrx_svq_fork_resume(void)
 {
     int err;
     int ret=EXSUCCEED;
@@ -1484,9 +1486,9 @@ expublic int ndrx_svq_event_init(void)
         }
 #endif
     
-        if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
+        if (EXSUCCEED!=(ret=ndrx_atfork(ndrx_svq_fork_prepare, 
                 /* no need for child resume! */
-                event_fork_resume, event_fork_resume_child)))
+                ndrx_svq_fork_resume, ndrx_svq_fork_resume_child)))
         {
             M_alive=EXFALSE;
             NDRX_LOG(log_error, "Failed to register fork handlers: %s", 
