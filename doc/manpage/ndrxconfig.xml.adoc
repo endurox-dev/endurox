@@ -38,6 +38,7 @@ SYNOPSIS
         <ping_max>MAX_PING_TIME_DEFAULT</ping_max>
         <end_max>MAX_SERVER_SHUTDOWN_TIME_DEFAULT</end_max>
         <killtime>KILL_TIME_DEFAULT</killtime>
+        <killseq>KILLSEQ_DEFAULT</killseq>
         <exportsvcs>EXPORT_SERVICES_DEFAULT</exportsvcs>
         <blacklistsvcs>BLACKLIST_SERVICES_DEFAULT</blacklistsvcs>
         <srvstartwait>NDRXD_SRV_START_WAIT_DEFAULT</srvstartwait>
@@ -73,6 +74,7 @@ SYNOPSIS
             <ping_max>MAX_PING_TIME_SRV</ping_max>
             <end_max>MAX_SERVER_SHUTDOWN_TIME_SRV</end_max>
             <killtime>KILL_TIME_SRV</killtime>
+            <killseq>KILLSEQ</killseq>
             <sleep_after>SECONDS_TO_SLEEP_AFTER_SRV_START</sleep_after>
             <srvid>SERVER_ID</srvid>
             <sysopt>ATMI_SERVER_SYSTEM_OPTIONS</sysopt>
@@ -350,6 +352,12 @@ PARAMETERS
     -15. And after -15 this time means when next -9 signal will be sent. This is used
     if forced restart of forced shutdown was initiated by 'ndrxd'. This
     can be overridden by 'KILL_TIME_SRV'.
+'KILL_TIME_DEFAULT'::
+    This is Enduro/X standard configuration string (e.g. comma separated values) 
+    which describes signal sequence used by ndrxd when process needs to be 
+    forcefully terminated. The default signal sequence is *2,15,9*. Only
+    3 signals can be defined. Absolute value is used for signal determination,
+    i.e. the minus sign is optional. Only numeric values signal values are supported.
 'COMMON_CONFIG_TAG_DEFAULT'::
     Common configuration tag. Loaded into *NDRX_CCTAG* environment variable before
     process is spawned. This can be overridden by *COMMON_CONFIG_TAG*.

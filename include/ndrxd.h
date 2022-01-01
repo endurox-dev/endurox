@@ -66,6 +66,8 @@ extern "C" {
 #define SANITY_CNT_START           0  /**< Reset value of cycle counter        */
     
 #define MAX_SERVICE_LIST         1024 /**< MAX list of exportsvcs */
+    
+#define NDRX_KILLSEQ_MAX            3   /**< Max number kill sequences          */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -94,6 +96,7 @@ struct conf_server_node
     int ping_max;   /**< max time in which server must respond, otherwise it will be killed */
     int end_max;    /**< Max time in which process should exit */
     int killtime;   /**< periodical time for signal sending */
+    int killseq[NDRX_KILLSEQ_MAX];  /**< Signals used for process killing      */
     /** list of services to export (for bridge, special). comma separated list */
     char exportsvcs[MAX_SERVICE_LIST]; 
     /** list of services that should not be exported over the bridge */
@@ -233,6 +236,7 @@ typedef struct
                              * otherwise it will be killed */
     int default_end_max;    /**< Max time in which process should exit */
     int default_killtime;   /**< periodical time for signal sending */
+    int default_killseq[NDRX_KILLSEQ_MAX];  /**< Signals used for process killing */
     /** Special config param for bridge services - which services to export */
     char default_exportsvcs[MAX_SERVICE_LIST];
     /** List of services that should not be exported over the bridge */

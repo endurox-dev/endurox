@@ -79,6 +79,7 @@ pm_node_t **G_process_model_hash = NULL;
 pm_pidhash_t **G_process_model_pid_hash = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+exprivate int ndrx_prase_killseq(int *killseq, char *seq, int last_line);
 
 /**
  * Validate request address, also strip down any un-needed chars
@@ -311,6 +312,10 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         config->ctl_had_defaults = EXTRUE;
         config->default_mindispatchthreads = 1; /**< assumed as 1 by atmisrv */
         config->default_maxdispatchthreads = 1; /**< assumed as 1 by atmisrv */
+        
+        config->default_killseq[0] = SIGINT;
+        config->default_killseq[1] = SIGTERM;
+        config->default_killseq[2] = SIGKILL;
     }
     
     if (NULL!=cur)
@@ -581,6 +586,18 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                         p, config->default_threadstacksize);
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "killseq"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                
+                if (EXSUCCEED!=ndrx_prase_killseq(config->default_killseq, p, last_line))
+                {
+                    xmlFree(p);
+                    EXFAIL_OUT(ret);
+                }
+                
+                xmlFree(p);
+            }
             
 #if 0
             else
@@ -653,6 +670,60 @@ out:
     return ret;
 }
 
+/**
+ * Parse kill sequence
+ * @param killseq config where to unload the results
+ * @param seq sequence in standard config string format
+ * @param last_line last parsing line
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_prase_killseq(int *killseq, char *seq, int last_line)
+{
+    int ret=EXSUCCEED;
+    ndrx_stdcfgstr_t* parsed=NULL, *el;
+    int i=0;
+    int sig;
+    
+    if (EXSUCCEED!=ndrx_stdcfgstr_parse(seq, &parsed))
+    {
+        NDRX_LOG(log_error, "Failed to killseq [%s]", seq);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* validate that only 3x numbers are used? */
+    DL_FOREACH(parsed, el)
+    {
+        /* validate that it is a number ... */
+        if (!ndrx_is_numberic(el->key))
+        {
+            NDRX_LOG(log_debug, "Invalid `killseq' not a number [%s]", el->key);
+            
+            NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `killseq' "
+                    "not a number [%s] near line %d!", 
+                    G_sys_config.config_file_short, el->key, last_line);
+            EXFAIL_OUT(ret);
+        }
+        
+        sig = abs(atoi(el->key));
+        
+        if (i>=NDRX_KILLSEQ_MAX)
+        {
+            NDRX_LOG(log_debug, "Invalid `killseq' expected %d arguments, but have more",
+                    NDRX_KILLSEQ_MAX);
+            NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `killseq' "
+                    "expected %d arguments, but have more near line %d!", 
+                    G_sys_config.config_file_short, NDRX_KILLSEQ_MAX, last_line);
+            EXFAIL_OUT(ret);
+        }
+        
+        killseq[i] = sig;
+        i++;
+        
+    }
+    
+out:
+    return ret;
+}
 
 /**
  * Parse sysconfig section in config file
@@ -840,7 +911,7 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         NDRX_LOG(log_debug, "`routereload' not set using "
                 "default %d sty!", config->ddrreload);
     }
-
+    
 out:
     return ret;
 }
@@ -886,6 +957,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->isprotected = EXFAIL;
     p_srvnode->reloadonchange = EXFAIL;
     p_srvnode->respawn = EXFAIL;
+    
+    memcpy(p_srvnode->killseq, config->default_killseq, sizeof(config->default_killseq));
     
     p_srvnode->rssmax = config->default_rssmax;
     p_srvnode->vszmax = config->default_vszmax;
@@ -1225,6 +1298,18 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->threadstacksize = atoi(p);
             NDRX_LOG(log_debug, "threadstacksize: [%s] - %d",
                                     p, p_srvnode->threadstacksize);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "killseq"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+
+            if (EXSUCCEED!=ndrx_prase_killseq(p_srvnode->killseq, p, last_line))
+            {
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+
             xmlFree(p);
         }
         

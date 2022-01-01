@@ -1729,6 +1729,14 @@ expublic int ndrx_args_loader_set(ndrx_args_loader_t *args, void *obj,
                     NDRX_LOG(log_warn, "[%s] set to [%d]", args->cname, *p_int);
 
                     break;
+                case NDRX_ARGS_CB:
+                    
+                    if (EXSUCCEED!=args->cb_set(args, value, 0, obj, errbuf, errbufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    break;
                 default:
                     snprintf(errbuf, errbufsz, "Type not supported: %d", 
                             args->fld_type);
@@ -1790,6 +1798,14 @@ expublic int ndrx_args_loader_get(ndrx_args_loader_t *args, void *obj, char *fld
 
                     snprintf(value, valuesz, "%d", *p_int);
 
+                    break;
+                case NDRX_ARGS_CB:
+                    
+                    if (EXSUCCEED!=args->cb_get(args, value, valuesz, obj, errbuf, errbufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                    
                     break;
                 default:
                     snprintf(errbuf, errbufsz, "Type not supported: %d", 

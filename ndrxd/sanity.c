@@ -683,7 +683,7 @@ exprivate int check_long_startup(void)
                 if (0==p_pm->num_term_sigs)
                 {
                     /* Send signal INT => -2 */
-                    send_kill(p_pm, SIGINT, 0);
+                    send_kill(p_pm, p_pm->conf->killseq[0], 0);
                     /* Reset the signal time counter */
                     p_pm->last_sig = SANITY_CNT_START;
                     p_pm->num_term_sigs++;
@@ -694,12 +694,12 @@ exprivate int check_long_startup(void)
                     if (1==p_pm->num_term_sigs)
                     {
                         /* Send signal TERM => -15 */
-                        send_kill(p_pm, SIGTERM, 0);
+                        send_kill(p_pm, p_pm->conf->killseq[1], 0);
                     }
                     else
                     {
                         /* Send signal KILL => -9 */
-                        send_kill(p_pm, SIGKILL, 0);
+                        send_kill(p_pm, p_pm->conf->killseq[2], 0);
                     }
                     
                     /* Send proper signal  */
