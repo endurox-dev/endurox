@@ -38,6 +38,7 @@
 #include <memory.h>
 #include <libxml/xmlreader.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <ndrstandard.h>
 #include <ndrxd.h>
