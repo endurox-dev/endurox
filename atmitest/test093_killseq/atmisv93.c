@@ -36,7 +36,7 @@
 #include <ndebug.h>
 #include <ndrstandard.h>
 #include <atmi.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <ubf.h>
 #include <test.fd.h>
 #include <string.h>
