@@ -304,7 +304,6 @@ function dirdiff(path1, path2)
  */
 function init()
 {
-    M_wizzard.qpath = "/dev/mqueue";
     if ("FREEBSD"==getosname())
     {
         M_wizzard.qpath = "/mnt/mqueue";
