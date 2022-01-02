@@ -723,6 +723,12 @@ exprivate int ndrx_prase_killseq(int *killseq, char *seq, int last_line)
     }
     
 out:
+
+    if (NULL!=parsed)
+    {
+        ndrx_stdcfgstr_free(parsed);
+    }
+
     return ret;
 }
 
