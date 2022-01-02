@@ -594,6 +594,9 @@ expublic int main( int argc, char** argv )
         setenv("NDRX_BENCH_CONFIGNAME", run_ver, EXTRUE);
     }
     
+    /* just in anty case... */
+    tpterm();
+
     if (M_fork)
     {
         signal(SIGCHLD, SIG_IGN); /* ignore childs, we will wait on pipe */
@@ -605,9 +608,6 @@ expublic int main( int argc, char** argv )
             NDRX_LOG(log_error, "Failed to pipe: %s", strerror(errno));
             EXFAIL_OUT(ret);
         }
-        
-        /* just in anty case... */
-        tpterm();
         
         for (i=0; i<M_nr_threads; i++)
         {

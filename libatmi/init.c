@@ -101,15 +101,27 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
         if (first)
         {
             /* Invalidate context slots */
-            memset(M_contexts, EXFAIL, sizeof(M_contexts));
+            /*memset(M_contexts, EXFAIL, sizeof(M_contexts));*/
+            for (i=0; i<MAX_CONTEXTS; i++)
+            {
+                M_contexts[i]=EXFAIL;
+            }
             first = EXFALSE;
         }
         
         /* TODO: Check for boundary!? */
         if (make_free)
         {
-            NDRX_LOG(log_debug, "Marking context %ld as free", ctxid);
-            M_contexts[ctxid-1] = EXFAIL;
+            if ((ctxid-1)<0 || (ctxid-1)>=MAX_CONTEXTS)
+            {
+                NDRX_LOG(log_error, "Invalid ctxid=%ld, cannot make_free", ctxid);
+                userlog("Invalid ctxid=%ld, cannot make_free", ctxid);
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Marking context %ld as free", ctxid);
+                M_contexts[ctxid-1] = EXFAIL;
+            }
         }
         else
         {
@@ -125,6 +137,7 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
             }
         }
         
+        /* so at return we get 0 in case of failure... */
         ret+=1;
 out:     
         NDRX_LOG(log_debug, "Returning context id=%ld", ret);
@@ -1013,6 +1026,12 @@ expublic int tpinit (TPINIT * init_data)
     
     /* Get new context id. Threading support only for clients... */
     conf.contextid = ndrx_ctxid_op(EXFALSE, EXFAIL);
+    if (!conf.contextid)
+    {
+        ndrx_TPset_error_msg(TPESYSTEM, "Cannot get ATMI context -> max exceeded?");
+        ret=EXFAIL;
+        goto out;
+    }
     NDRX_DBG_SETTHREAD(conf.contextid);
     
     /* Format my ID */

@@ -1021,7 +1021,7 @@ servers, with few exceptions. Following table lists the details:
 |-A|-B|Cross mapping applies. In Enduro/X all servers are advertised by default.
 In case if in Tuxedo configuration *-A* is used, no flag must be used for Enduro/X.
 In case if *-A* is not used in Tuxedo configuration, in Enduro/X *-B* shall be used,
-to suppress advertise of built-in service advertise.
+to suppress advertise of built-in services.
 |-s|-S|Enduro/X does not support @filename syntax (advertise from file). All other
 work modes matches. The lower case *-s* parameter in Enduro/X provides functionality
 to alias services to other services instead of functions.
