@@ -1849,6 +1849,17 @@ export PATH=$PATH:"+instance.ndrx_bin;
             instance.set_text+=":"+folder.path;
         }
     }
+
+    if (M_wizzard.mk_mq_dev)
+    {
+        instance.set_text+="\n";
+        instance.set_text=instance.set_text+@"
+if [ ! -d """+M_wizzard.qpath+@""" ]; then
+    mkdir   """+M_wizzard.qpath+@"""
+fi
+";
+    }
+
     instance.set_text+="\n";
 
     print("set_file: [\n"+instance.set_text+"]");
