@@ -397,11 +397,11 @@ use */boot/loader.conf*:
 --------------------------------------------------------------------------------
 $ sudo -s
 # cat << EOF >> /etc/sysctl.conf
-kern.sysv.shmmax=419430400
+kern.sysv.shmmax=838860800
 kern.sysv.shmmin=1
-kern.sysv.shmmni=32
-kern.sysv.shmseg=8
-kern.sysv.shmall=102400
+kern.sysv.shmmni=10000
+kern.sysv.shmseg=50
+kern.sysv.shmall=204800
 kern.maxfiles=524288
 kern.maxfilesperproc=262144
 
@@ -437,11 +437,11 @@ $ sudo -s
  <array>
  <string>/usr/sbin/sysctl</string>
  <string>-w</string>
- <string>kern.sysv.shmmax=419430400</string>
+ <string>kern.sysv.shmmax=838860800</string>
  <string>kern.sysv.shmmin=1</string>
- <string>kern.sysv.shmmni=32</string>
- <string>kern.sysv.shmseg=8</string>
- <string>kern.sysv.shmall=102400</string>
+ <string>kern.sysv.shmmni=10000</string>
+ <string>kern.sysv.shmseg=50</string>
+ <string>kern.sysv.shmall=204800</string>
  <string>kern.maxfiles=524288</string>
  <string>kern.maxfilesperproc=262144</string>
   </array>
