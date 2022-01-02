@@ -94,9 +94,9 @@ echo ">>> Testing ubb_network -> E/X convert"
 # Cleanup by rndkey, maybe random...
 #
 
-xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
-xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
-xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs kill -9
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs kill -9
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs kill -9
 
 export NDRX_SILENT=Y
 rm -rf ./runtime 2>/dev/null

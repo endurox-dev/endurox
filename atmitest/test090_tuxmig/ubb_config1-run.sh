@@ -65,9 +65,9 @@ echo ">>> Testing ubb_config1 -> E/X convert"
 # Cleanup by rndkey, maybe random...
 #
 
-xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
-xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
-xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs -i kill -9 {}
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs kill -9
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs kill -9
+xadmin ps -r "-k [a-zA-Z0-9]{8,8} -i" -p | xargs kill -9
 
 export NDRX_SILENT=Y
 rm -rf ./runtime tmp1 tmp2 2>/dev/null
@@ -232,6 +232,7 @@ cat $TESTDIR/ubb_config1.ini        | \
     grep -v NDRX_XA_RMLIB           | \
     grep -v NDRX_RNDK               | \
     grep -v FLDTBLDIR               | \
+    grep -v NDRX_LIBEXT             | \
     grep -v NDRX_QPATH > tmp1
 
 cat $TESTDIR/runtime/user90/conf/app.test1.ini  | \
@@ -239,6 +240,7 @@ cat $TESTDIR/runtime/user90/conf/app.test1.ini  | \
     grep -v NDRX_XA_RMLIB                       | \
     grep -v NDRX_RNDK                           | \
     grep -v FLDTBLDIR                           | \
+    grep -v NDRX_LIBEXT                         | \
     grep -v NDRX_QPATH  > tmp2
 
 OUT=`diff tmp1 tmp2`
