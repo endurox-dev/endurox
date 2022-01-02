@@ -25,7 +25,7 @@ in distribution).
 As input 'UBBCONFIG_file' or *stdin* is used. Enduro/X parses the structure of
 the UBB configuration file, loads it into platform script data structures, after which
 a script (built in in *ubb2ex* or provided from command line) starts to compose
-the equivalent Enduro/X configuration. Additionally converter script deferences 
+the equivalent Enduro/X configuration. Additionally converter script deference 
 *ENVFILE* from the UBB configuration and copies values to *app.ini* *[@global]* section.
 
 *ubb2ex* produces following files *TUXCONFIG* directory:
@@ -44,22 +44,25 @@ Enduro/X uses peer-to-peer clustering principles, thus for each of the peer serv
 different set of files are produced (and separated by lower-case LMID identifier from
 UBB configuration).
 
-Additionaly as the result directories are created (if not exist):
+Additionally as the result directories are created (if not exist):
 
 . *APPDIR* from UBBCONFIG. This may contain colon (:) separated directories - 
 all of them are produced.
 
 . *TUXCONFIG* from UBBCONFIG.
 
-. *ULOGPFX* from UBBCONFIG, directroy used as general Enduro/X directory for logs
+. *ULOGPFX* from UBBCONFIG, directory used as general Enduro/X directory for logs
 including ULOG by it self.
 
-. *${NDRX_APPHOME}/tmlogs/rm<RMID>* for resource manager logs, if distributed
-transactions are used.
+. *$\{NDRX_APPHOME\}/tmlogs/rm<RMID>* for resource manager logs, if distributed transactions are used.
 
-. *${NDRX_APPHOME}/qdata/<QSPACE>* for persistent queues, if used.
+. *$\{NDRX_APPHOME\}/qdata/<QSPACE>* for persistent queues, if used.
 
-. *${NDRX_APPHOME}/tmp* for storing PID files.
+. *$\{NDRX_APPHOME\}/tmp* for storing PID files.
+
+. Directories of *-e* arguments for servers are created. When servers are created, their
+*-e* file path is made relative to *$\{NDRX_ULOG\}* directory or *$\{NDRX_APPHOME\}*, if
+possible.
 
 Where *${NDRX_APPHOME}* is determined by following principles: It is common part 
 between Tuxedo's *APPDIR* and *TUXCONFIG*. If common part is not found 
