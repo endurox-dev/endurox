@@ -50,13 +50,13 @@ export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
-	# Do nothing 
-	echo > /dev/null
+    # Do nothing 
+    echo > /dev/null
 else
-	# started from parent folder
-	pushd .
-	echo "Doing cd"
-	cd $TESTNAME
+    # started from parent folder
+    pushd .
+    echo "Doing cd"
+    cd $TESTNAME
 fi;
 
 . ../testenv.sh
@@ -123,15 +123,15 @@ fi
 
 if [ "$(uname)" == "FreeBSD" ]; then
 
-	echo "******* PS ***************"
-	ps -auwwx
-	echo "******* PS Grep'ped*******"
-	ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'
-	echo "**************************"
+    echo "******* PS ***************"
+    ps -auwwx
+    echo "******* PS Grep'ped*******"
+    ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'
+    echo "**************************"
 
-	BAD_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
+    BAD_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
 else
-	BAD_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
+    BAD_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep "\-i 1341" | awk '{print $2}'`
 fi
 
 echo "BAD_PID=$BAD_PID"
@@ -142,8 +142,8 @@ xadmin stop -i 1341
 
 # Now we should not have removed queue with "SVCOK", as server is locked on bad server
 if [ "X`xadmin psc | grep SVCOK`" == "X" ]; then
-	echo "SVCOK must be advertised!!!"
-	go_out 2
+    echo "SVCOK must be advertised!!!"
+    go_out 2
 fi
 
 sleep 5 
@@ -158,8 +158,8 @@ fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-	echo "Test error detected!"
-	go_out 4
+    echo "Test error detected!"
+    go_out 4
 fi
 
 go_out 0

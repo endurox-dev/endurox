@@ -1856,8 +1856,7 @@ export PATH=$PATH:"+instance.ndrx_bin;
         instance.set_text=instance.set_text+@"
 if [ ! -d """+M_wizzard.qpath+@""" ]; then
     mkdir   """+M_wizzard.qpath+@"""
-fi
-";
+fi";
     }
 
     instance.set_text+="\n";
