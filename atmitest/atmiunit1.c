@@ -742,6 +742,13 @@ Ensure(test093_killseq)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test094_sigchld)
+{
+    int ret;
+    ret=system_dbg("test094_sigchld/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -905,6 +912,7 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test092_bflag);
     add_test(suite, test093_killseq);
+    add_test(suite, test094_sigchld);
     
     return suite;
 }

@@ -58,6 +58,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+expublic sigset_t ndrx_G_org_mask;
 /*---------------------------Statics------------------------------------*/
 sys_config_t        G_sys_config;           /**< Deamon configuration       */
 exprivate int       M_scanunit=250;         /**< Scan unit for SystemV poll */
@@ -487,7 +488,7 @@ int main(int argc, char** argv)
     /*
     if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
         */
-    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    if (sigprocmask(SIG_BLOCK, &blockMask, &ndrx_G_org_mask) == -1)
     {
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", __func__, 
                 strerror(errno));

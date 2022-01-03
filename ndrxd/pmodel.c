@@ -906,11 +906,12 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         char sysflags_str[30];
         long sysflags = 0;
         
-	/* reset signal handler so that for new processes there is scratch start */
-	signal(SIGCHLD, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
-	signal(SIGTERM, SIG_DFL);
-	signal(SIGHUP, SIG_DFL);
+        /* reset signal handler so that for new processes there is scratch start */
+        signal(SIGCHLD, SIG_DFL);
+        signal(SIGINT, SIG_DFL);
+        signal(SIGTERM, SIG_DFL);
+        signal(SIGHUP, SIG_DFL);
+        sigprocmask(SIG_SETMASK, &ndrx_G_org_mask, NULL);
 
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
