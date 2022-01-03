@@ -48,7 +48,9 @@ extern "C" {
 #include <exenv.h>
 #include <libxml/xmlreader.h>
 #include <ndrx_ddr.h>
+#include <signal.h>
 /*---------------------------Externs------------------------------------*/
+extern sigset_t ndrx_G_org_mask;    /**< original process mask          */
 /*---------------------------Macros-------------------------------------*/
 #define PARSE_SECTION_FAIL         EXFAIL
 #define PARSE_SECTION_CONFIG      0
