@@ -79,7 +79,7 @@ void TESTSV (TPSVCINFO *p_svc)
     Bprint(p_ub);
 
     /* test forking + sigchld... */
-    pid = fork();
+    pid = ndrx_fork();
     if (pid == 0)
     {
         NDRX_LOG(log_debug, "Child %d", getpid());
