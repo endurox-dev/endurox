@@ -655,7 +655,7 @@ expublic int sv_serve_connect(int *service, int *status,
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     
-    NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %hu, clttout",
+    NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %u, clttout",
                         call->cd, call->timestamp, call->callseq, call->clttout);
     
     call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
