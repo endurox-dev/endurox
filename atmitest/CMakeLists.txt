@@ -149,6 +149,11 @@ ENDIF()
 add_subdirectory (test092_bflag)
 add_subdirectory (test093_killseq)
 add_subdirectory (test094_sigchld)
+
+IF (DEFINED EX_USE_SYSVQ)
+	add_subdirectory (test095_rqaddrel)
+ENDIF()
+
 ################################################################################
 # Master test case drivere
 add_executable (atmiunit1 atmiunit1.c)
