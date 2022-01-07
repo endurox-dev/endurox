@@ -87,7 +87,7 @@ int M_had_open_con = EXFALSE;
 exprivate mqd_t open_conv_q(char *q,  struct mq_attr *q_attr);
 exprivate mqd_t open_reply_q(char *q, struct mq_attr *q_attr);
 exprivate void rcv_hash_delall(tp_conversation_control_t *conv);
-exprivate char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq);
+exprivate char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned msgseq);
 
 /**
  * Closes any connection made as client.
@@ -809,12 +809,12 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     ndrx_stopwatch_reset(&call->timer);
 
     /*
-    NDRX_LOG(log_debug, "Sending request to: %s, callseq: %hu", 
+    NDRX_LOG(log_debug, "Sending request to: %s, callseq: %u", 
       
      *       send_qstr, call->callseq, );
 */
     NDRX_LOG(log_debug, "Sending request to: [%s]: "
-                        "cd: %d, timestamp :%d, callseq: %hu, reply from [%s]",
+                        "cd: %d, timestamp :%d, callseq: %u, reply from [%s]",
                         send_qstr, call->cd, call->timestamp, call->callseq, call->reply_to);
     /* And then we call out the service. */
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, prio)))
@@ -935,7 +935,7 @@ out:
  * @return 
  */
 exprivate int rcv_hash_add(tp_conversation_control_t *conv,
-           unsigned short msgseq, char *buf)
+           unsigned msgseq, char *buf)
 {
     
     int ret = EXSUCCEED;
@@ -945,10 +945,10 @@ exprivate int rcv_hash_add(tp_conversation_control_t *conv,
     if (NULL!=(tmp=rcv_hash_ck(conv, msgseq)))
     {
         NDRX_LOG(log_error, "Dropping existing out of order conversation "
-                "msgseq: %hu, ptr: %p",
+                "msgseq: %u, ptr: %p",
                 msgseq, tmp);
         userlog("Dropping existing out of order conversation "
-                "msgseq: %hu, ptr: %p",
+                "msgseq: %u, ptr: %p",
                 msgseq, tmp);
         NDRX_FREE(tmp);
     }
@@ -960,7 +960,7 @@ exprivate int rcv_hash_add(tp_conversation_control_t *conv,
         EXFAIL_OUT(ret);
     }
     el->size=0;
-    el->msgseq = (int)msgseq;
+    el->msgseq = msgseq;
     el->buf = buf;
     
     EXHASH_ADD_INT( conv->out_of_order_msgs, msgseq, el );
@@ -976,11 +976,11 @@ out:
  * @param msgseq
  * @return NULL if item not found, buffer if found
  */
-exprivate char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msgseq)
+exprivate char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned msgseq)
 {
     char *ret = NULL;
     tpconv_buffer_t * el;
-    int seq =  (int)msgseq;
+    unsigned seq =  msgseq;
     
     EXHASH_FIND_INT( conv->out_of_order_msgs, &seq, el);
     
@@ -1081,7 +1081,7 @@ expublic int ndrx_tprecv (int cd, char **data,
     /* Check the message in hash?! */
     if (NULL!=(rply_buf = rcv_hash_ck(conv, conv->msgseqin)))
     {
-        NDRX_LOG(log_info, "Message with sequence already in memory: %hu - injecting",
+        NDRX_LOG(log_info, "Message with sequence already in memory: %u - injecting",
                 conv->msgseqin);
         rply = (tp_command_call_t *)rply_buf;
         goto inject_message;
@@ -1135,7 +1135,7 @@ expublic int ndrx_tprecv (int cd, char **data,
             if (conv->cd!=rply->cd)
             {
                 NDRX_LOG(log_warn, "Dropping incoming message (not expected): "
-                        "expected cd: %d, cd: %d, timestamp :%d, callseq: %hu, reply from [%s]",
+                        "expected cd: %d, cd: %d, timestamp :%d, callseq: %u, reply from [%s]",
                         conv->cd, rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
                 /* clear the attributes we got... 
                 memset(rply_buf, 0, sizeof(*rply_buf));
@@ -1150,7 +1150,7 @@ inject_message:
             if (rply->msgseq!=conv->msgseqin)
             {
                 answ_ok=EXFALSE;
-                NDRX_LOG(log_info, "Message out of sequence, expected: %hu, "
+                NDRX_LOG(log_info, "Message out of sequence, expected: %u, "
                         "got: %hu - suspending to hash",
                         conv->msgseqin, rply->msgseq);
                 
@@ -1171,7 +1171,7 @@ inject_message:
             {
                 answ_ok=EXTRUE;
                 conv->msgseqin++;
-                NDRX_LOG(log_info, "msgseq %hu received as expected", 
+                NDRX_LOG(log_info, "msgseq %u received as expected", 
                         rply->msgseq);
             }
 
@@ -1529,7 +1529,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
      * reply address, but pack in different my_listen_q_str
      */
     NDRX_LOG(log_debug, "Our address is: [%s], their reply address must be: [%s]. "
-            "Callseq: %hu, msgseq: %hu",
+            "Callseq: %u, msgseq: %u",
             conv->my_listen_q_str, conv->reply_q_str, 
             call->callseq, call->msgseq);
     
