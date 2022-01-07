@@ -778,8 +778,8 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
         int last;
         if (NULL==svcnm || 0==strcmp(elt->svc.svc_nm, svcnm))
         {
-            NDRX_LOG(log_warn, "Removing pid's %d service [%s]", p_pm->pid, 
-                    elt->svc.svc_nm);
+            NDRX_LOG(log_warn, "Removing pid's %d service [%s] resid %d", p_pm->pid, 
+                    elt->svc.svc_nm, p_pm->resid);
             /* Remove from shm */
             
             /* ###################### CRITICAL SECTION ###################### */

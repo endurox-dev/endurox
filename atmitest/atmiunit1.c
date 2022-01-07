@@ -749,6 +749,13 @@ Ensure(test094_sigchld)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test095_rqaddrel)
+{
+    int ret;
+    ret=system_dbg("test095_rqaddrel/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -913,7 +920,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test092_bflag);
     add_test(suite, test093_killseq);
     add_test(suite, test094_sigchld);
-    
+#ifdef EX_USE_SYSVQ
+    add_test(suite, test095_rqaddrel);
+#endif
     return suite;
 }
 
