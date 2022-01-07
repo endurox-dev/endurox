@@ -837,7 +837,7 @@ it is set to original request value.
 Field is used for matching request with reply.
 
 |0x11DB|callseq|UINT1..10|Mand|N/A|Any|Call sequence number (is incremented by calling process
-for each of the new requests, overlaps to 5). Field is used for request and reply matching. I.e. in
+for each of the new requests, overlapping). Field is used for request and reply matching. I.e. in
 requests it is set for *command_id* *1* (except if doing forward), *4*. In reply
 and related messages (*command_id* *2*, *5*, *6* and *7*) it set to to request value.
 Value must be in range of 0..4294967295.
