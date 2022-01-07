@@ -54,6 +54,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # We do not need timeout, we will kill procs...
 export NDRX_TOUT=9999
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -107,13 +108,15 @@ xadmin killall tpbridge
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
+xadmin psc
 
 set_dom2;
 xadmin down -y
 xadmin start -y || go_out 2
+xadmin psc
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 60
+sleep 30
 
 set_dom1;
 
@@ -132,11 +135,18 @@ sleep 60
 echo "Before ndrxd kill - dom2"
 echo "We should be ready back online"
 xadmin ppm
+echo ">>> Checking services..."
 xadmin psc
+
+num_lines=`xadmin psc 2>/dev/null | grep "2 SVC36" |wc -l | awk '{print $1}'`
+if [ "X$num_lines" != "X10" ]; then
+    echo "Expected 10 lines of [2 SVC36] in output, got $num_lines"
+    go_out -1
+fi
 
 OUT=`xadmin ppm | grep BrC`
 
-if [[ "X$OUT" == "X" ]]; then
+if [ "X$OUT" == "X" ]; then
     echo "TESTERROR, the domain2 does not contain connected bridge!"
     go_out 1
 fi
@@ -182,12 +192,12 @@ DPID2=`xadmin dpid`
 
 echo "before pid=$DPID after pid=$DPID2"
 
-if [[ "X$" == "X$DPID2" ]]; then
+if [ "X$" == "X$DPID2" ]; then
     echo "TESTERROR, ndrxd not started!"
     go_out 4
 fi
 
-if [[ "X$DPID" == "X$DPID2" ]]; then
+if [ "X$DPID" == "X$DPID2" ]; then
     echo "TESTERROR, PIDS not switched, before=$DPID, after=$DPID2"
     go_out 5
 fi
