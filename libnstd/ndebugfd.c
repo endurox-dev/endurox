@@ -79,6 +79,22 @@ exprivate ndrx_debug_file_sink_t *M_sink_hash = NULL; /** list of sinks */
 
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Close FP only if it is not system ptr, as we can reuse them
+ * if fails to open new file
+ * @param mysink sink to close fp
+ */
+exprivate void ndrx_debug_fclose( ndrx_debug_file_sink_t* mysink)
+{
+    if (! (mysink->flags & NDRX_LOG_FOSHSTDERR ||
+            mysink->flags & NDRX_LOG_FOSHSTDOUT)
+            )
+    {
+        NDRX_FCLOSE(mysink->fp);
+    }
+}
+
 /* Open logger
  * - get global lock
  * - Create new object or increment references
@@ -249,7 +265,8 @@ expublic int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, 
      */
     if ((mysink->refcount == 0 && ! (mysink->flags & NDRX_LOG_FPROC)) || force)
     {
-        NDRX_FCLOSE(mysink->fp);
+
+        ndrx_debug_fclose(mysink);
         
         /* un-init the resources */
         pthread_cond_destroy(&mysink->change_wait);
@@ -493,14 +510,7 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
         pthread_cond_wait(&mysink->change_wait, &mysink->change_lock);
     }
     
-
-    /* close handler, if it is not OS */
-    if (! (mysink->flags & NDRX_LOG_FOSHSTDERR ||
-            mysink->flags & NDRX_LOG_FOSHSTDOUT)
-            )
-    {
-        NDRX_FCLOSE(mysink->fp);
-    }
+    ndrx_debug_fclose(mysink);
 
     /* remove markings */
     mysink->flags&=(~NDRX_LOG_FOSHSTDERR);
