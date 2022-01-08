@@ -158,8 +158,8 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
         /* Bug #214 */
         if (NDRXD_PM_EXIT!=pm_status->srvinfo.state)
         {
-            userlog("Server process [%s], srvid %hd, pid %d died", 
-                pm_pid->p_pm->conf->binary_name, pm_status->srvinfo.srvid, pm_pid->pid);
+            userlog("Server process [%s], srvid %d, pid %d died", 
+                pm_pid->p_pm->conf->binary_name, pm_pid->p_pm->srvid, pm_pid->pid);
         }
                 
         /* If we wanted it to stop, but it died, then let it be in exit status
