@@ -133,8 +133,8 @@ exprivate void br_dump_tp_command_call(char *buf)
             extra_debug->timer.t.tv_nsec,
             ndrx_stopwatch_get_delta_sec(&extra_debug->timer) );
 
-    NDRX_LOG(log_debug, "callseq  %hu",   extra_debug->callseq);
-    NDRX_LOG(log_debug, "msgseq   %hu",   extra_debug->msgseq);
+    NDRX_LOG(log_debug, "callseq  %u",    extra_debug->callseq);
+    NDRX_LOG(log_debug, "msgseq   %u",    extra_debug->msgseq);
     NDRX_LOG(log_debug, "cd       %d",    extra_debug->cd);
     NDRX_LOG(log_debug, "my_id    [%s]",  extra_debug->my_id);
     NDRX_LOG(log_debug, "reply_to [%s]",  extra_debug->reply_to);
@@ -155,8 +155,8 @@ exprivate void br_dump_tp_notif_call(char *buf)
             extra_debug->timer.t.tv_nsec,
             ndrx_stopwatch_get_delta_sec(&extra_debug->timer) );
 
-    NDRX_LOG(log_debug, "callseq          %hu",   extra_debug->callseq);
-    NDRX_LOG(log_debug, "msgseq           %hu",   extra_debug->msgseq);
+    NDRX_LOG(log_debug, "callseq          %u" ,   extra_debug->callseq);
+    NDRX_LOG(log_debug, "msgseq           %u",    extra_debug->msgseq);
     NDRX_LOG(log_debug, "cd               %d",    extra_debug->cd);
     NDRX_LOG(log_debug, "my_id            [%s]",  extra_debug->my_id);
     NDRX_LOG(log_debug, "reply_to         [%s]",  extra_debug->reply_to);

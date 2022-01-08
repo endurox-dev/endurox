@@ -1888,6 +1888,7 @@ expublic int test_config(int reload, command_call_t * call,
             {
                 NDRX_LOG(log_debug, "Saving pid %d in new config", old->pid);
                 new->pid = old->pid;
+                new->resid = old->resid;
                 new->svpid = old->svpid;
                 NDRX_STRCPY_SAFE(new->binary_name_real, old->binary_name_real);
                 NDRX_STRCPY_SAFE(new->rqaddress, old->rqaddress);

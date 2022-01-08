@@ -107,7 +107,7 @@ expublic void ndrx_dump_call_struct(int lev, tp_command_call_t *call)
         NDRX_LOG(lev, "extradata=[%s]", call->extradata);
         NDRX_LOG(lev, "flags=[%p]", call->flags);
         NDRX_LOG(lev, "timestamp=[%lu]", call->timestamp);
-        NDRX_LOG(lev, "callseq=[%hu]", call->callseq);
+        NDRX_LOG(lev, "callseq=[%u]", call->callseq);
         NDRX_LOG(lev, "timer.tv_nsec=[%lu]", call->timer.t.tv_nsec);
         NDRX_LOG(lev, "timer.tv_sec=[%lu]", call->timer.t.tv_sec);
         NDRX_LOG(lev, "tmtxflags=[0x%x]", call->tmtxflags);
@@ -263,9 +263,9 @@ out:
  * @param p_callseq ptr to return next number into
  * @return 
  */
-expublic unsigned short ndrx_get_next_callseq_shared(void)
+expublic unsigned ndrx_get_next_callseq_shared(void)
 {
-    static volatile unsigned short shared_callseq=0;
+    static volatile unsigned shared_callseq=0;
             
     NDRX_SPIN_LOCK_V(M_callseq_lock);
     shared_callseq++;
@@ -279,12 +279,12 @@ expublic unsigned short ndrx_get_next_callseq_shared(void)
  * @param tout_eff effective timeout
  * @return >0 (ok), -1 = FAIL
  */
-exprivate int get_call_descriptor_and_lock(unsigned short *p_callseq,
+exprivate int get_call_descriptor_and_lock(unsigned *p_callseq,
         time_t timestamp, long flags, int tout_eff)
 {
     int start_cd = G_atmi_tls->tpcall_get_cd; /* mark where we began */
     int ret = EXFAIL;
-    unsigned short callseq=0;
+    unsigned callseq=0;
     
     /* ATMI_TLS_ENTRY; - already got from caller */
     /* Lock the call descriptor giver...! So that we have common CDs 
