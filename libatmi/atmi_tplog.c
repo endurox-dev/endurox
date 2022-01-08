@@ -110,7 +110,7 @@ expublic int ndrx_tplogsetreqfile(char **data, char *filename, char *filesvc)
      * - compare with filename (maybe need switch) and do update UBF
      * - compare with current filename, if different then do switch the file
      */
-    if (NULL!=*data)
+    if (NULL!=data && NULL!=*data)
     {
         if (EXFAIL==ndrx_tptypes(*data, btype, stype))
         {
