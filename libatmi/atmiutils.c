@@ -1076,7 +1076,7 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
     call->rcode = rcode;
     NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
     
-    NDRX_LOG(log_debug, "error reply cd %d callseq %hd timestamp %ld queue [%s] error %ld", 
+    NDRX_LOG(log_debug, "error reply cd %d callseq %u timestamp %ld queue [%s] error %ld", 
             call->cd, call->callseq, call->timestamp, call->reply_to, call->rcode);
     if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {

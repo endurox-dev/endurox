@@ -165,7 +165,7 @@ extern "C" {
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
-#define NDRX_CONF_MSGSEQ_START       65530   /* Have a high number for wrap test */    
+#define NDRX_CONF_MSGSEQ_START  4294967294   /**< Have a high number for wrap test */    
     
 /* Memory allocation helpers */
 
@@ -552,6 +552,8 @@ typedef struct tp_command_generic tp_command_generic_t;
  * Call handler.
  * For storing the tppost associated timestamp, we could allow data to be installed
  * in the rval/rcode for requests...
+ * NOTE: If changing something, check with $ pahole ./libatmi.so for alignment, and sort the 
+ * variable accordingly.
  */
 struct tp_command_call
 {
@@ -575,6 +577,7 @@ struct tp_command_call
     /* User2 field in request: */
     long rcode; /* should be preset on reply only */
     int user3;  /* user field 3, request */
+    unsigned callseq;
     long user4; /* user field 4, request */
     int clttout; /* client process timeout setting */
     /** Extended size for storing cache updates in format
@@ -586,15 +589,15 @@ struct tp_command_call
     char extradata[XATMI_EVENT_MAX+1]; /* Extra char data to be passed over the call */
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
-    unsigned short callseq;
     /** message sequence for conversational over multithreaded bridges*/
-    unsigned short msgseq;
-    /** call timer so that we do not operate with timed-out calls. */
-    ndrx_stopwatch_t timer;    
+    unsigned msgseq;
     
     /* <XA section begin> */
     ATMI_XA_TX_INFO_FIELDS;
     /* <XA section end> */
+    
+    /** call timer so that we do not operate with timed-out calls. */
+    ndrx_stopwatch_t timer;
     
     /* Have a ptr to auto-buffer: */
     buffer_obj_t * autobuf;
@@ -646,9 +649,9 @@ struct tp_notif_call
     long rcode; /**< should be preset on reply only, on request -> userfield2 */
     long flags; 
     time_t timestamp; /**< provide time stamp of the call */
-    unsigned short callseq;
+    unsigned callseq;
     /** message sequence for conversational over multithreaded bridges*/
-    unsigned short msgseq;
+    unsigned msgseq;
     /** call timer so that we do not operate with timed-out calls. */
     ndrx_stopwatch_t timer;    
     
@@ -674,7 +677,7 @@ typedef struct tp_notif_call tp_notif_call_t;
 typedef struct tpconv_buffer tpconv_buffer_t;
 struct tpconv_buffer
 {
-    int msgseq;
+    unsigned msgseq;
     char *buf;
     size_t size;        /**< Allocated size....                 */
     
@@ -699,15 +702,15 @@ struct tp_conversation_control
     mqd_t my_listen_q; /* Queue on which we are going to wait for msg */
     struct mq_attr my_q_attr; /* My listening queue attributes. */
     time_t timestamp;
-    unsigned short callseq; /* Call/conv sequence number */
+    unsigned callseq; /* Call/conv sequence number */
     
     /** 
      * message sequence number (from our side to their) 
      * Basically this is message number we are sending them
      * The other side will follow the incremental order of the messages.
      */
-    unsigned short msgseqout;  /* Next number to send */
-    unsigned short msgseqin;  /* incoming message sequence number, expecting num */
+    unsigned msgseqout;  /**< Next number to send */
+    unsigned msgseqin;  /**< incoming message sequence number, expecting num */
     int rval; /* when tpreturn took a place */
     long rcode; /* when tpreturn took a place */
     long revent; /* Last event occurred at channel */
@@ -907,7 +910,7 @@ extern NDRX_API int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str
 extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
 extern NDRX_API void ndrx_dump_call_struct(int lev, tp_command_call_t *call);
 extern NDRX_API int ndrx_tpcall_init_once(void);
-extern NDRX_API unsigned short ndrx_get_next_callseq_shared(void);
+extern NDRX_API unsigned ndrx_get_next_callseq_shared(void);
 
 extern NDRX_API int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent,
                             short command_id);
