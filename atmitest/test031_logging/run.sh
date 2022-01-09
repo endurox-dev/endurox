@@ -36,13 +36,13 @@ TESTNAME="test031_logging"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
-	# Do nothing 
-	echo > /dev/null
+    # Do nothing 
+    echo > /dev/null
 else
-	# started from parent folder
-	pushd .
-	echo "Doing cd"
-	cd $TESTNAME
+    # started from parent folder
+    pushd .
+    echo "Doing cd"
+    cd $TESTNAME
 fi;
 
 
@@ -73,10 +73,34 @@ sleep 2
 
 RET=$?
 
+if [ "X$RET" != "X0" ]; then
+    echo "atmiclt31 failed!"
+    RET=-2
+fi
+
+(./atmiclt31_inv 2>&1) > ./atmiclt31_inv.log
+XRET=$?
+
+if [ "X$XRET" != "X0" ]; then
+    echo "atmiclt31_inv failed!"
+    RET=-2
+fi
+
+# could lines of "HELLO" in ./atmiclt31_inv.log
+# shall be over 1000
+CNT = `grep HELLO ./atmiclt31_inv.log | wc -l | awk '{print $1}'`
+
+echo "CNT=$CNT"
+
+if [ "$CNT" -lt "1000" ]; then
+    echo "atmiclt31_inv expected at least 1000 HELLO, got $CNT!"
+    RET=-2
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-	echo "Test error detected!"
-	RET=-2
+    echo "Test error detected!"
+    RET=-2
 fi
 
 xadmin killall atmisv31FIRST 2>/dev/null

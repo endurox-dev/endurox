@@ -56,15 +56,25 @@
 /*---------------------------Prototypes---------------------------------*/
 
 
+/**
+ * Bug #755 the bug did close stderr,
+ * on Aix that caused segmentation fault.
+ */
 void do_thread_work ( void *ptr )
 {
-	while (1)
-	{
-		NDRX_LOG(log_error, "HELLO");
-		tplogsetreqfile(NULL, "/no/such/file/right", NULL);
-		NDRX_LOG(log_error, "HELLO2");
-		tplogclosereqfile();
-	}
+    int i;
+    
+    for (i=0; i<10000; i++)
+    {
+        NDRX_LOG(log_error, "HELLO");
+        tplogsetreqfile(NULL, "/no/such/file/right", NULL);
+        NDRX_LOG(log_error, "HELLO2");
+        tplogclosereqfile();
+    }
+    
+    /* tplogsetreqfile() does full client init */
+    tpterm();
+    
 }
 
 /*
