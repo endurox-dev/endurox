@@ -420,14 +420,14 @@ exprivate int ndrx_mbuf_tlv_do(char *idata, long ilen, char *obuf,
     
     /* prepare buffer for call */
     NDRX_LOG(log_debug, "Prep tag: %u (ttag %u, type %d). Src %p, "
-            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%d", 
+            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%ld", 
             tag, hdr->tag, buffer_info->type_id, idata, obuf, olen_max, new_used, pad, tmp_olen);
     
     if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, idata, ilen, hdr->data, 
             &tmp_olen, flags))
     {
         NDRX_LOG(log_error, "ERROR: pf_prepare_outgoing failed: %u (ttag %u, type %d). Src %p, "
-            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%d: %s", 
+            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%ld: %s", 
             tag, hdr->tag, buffer_info->type_id, idata, obuf, olen_max, new_used, pad, tmp_olen,
                 tpstrerror(tperrno));
         EXFAIL_OUT(ret);
