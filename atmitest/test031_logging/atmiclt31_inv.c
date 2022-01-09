@@ -1,7 +1,8 @@
 /**
- * @brief Basic test client
+ * @brief Test case verifies that failed tplogsetreqfile() redirects logger
+ *  to stderr, and that it can correctly use it.
  *
- * @file atmiclt31.c
+ * @file atmiclt31_inv.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
