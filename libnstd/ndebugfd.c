@@ -148,7 +148,7 @@ expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname,
                 userlog("Failed to to open [%s]: %d/%s - fallback to stderr", fname,
                                     errno, strerror(errno));
                 ret->fp=stderr;
-                ret->flags|=NDRX_LOG_FOSHSTDERR;
+                flags|=NDRX_LOG_FOSHSTDERR;
                 
                 /* save for logrotate */
                 NDRX_STRCPY_SAFE(ret->fname_org, fname);

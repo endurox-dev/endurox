@@ -267,12 +267,14 @@ out:
 expublic unsigned short ndrx_get_next_callseq_shared(void)
 {
     static volatile unsigned short shared_callseq=0;
-            
+    unsigned ret;
+    /* Bug #756: */
     NDRX_SPIN_LOCK_V(M_callseq_lock);
     shared_callseq++;
+    ret = shared_callseq;
     NDRX_SPIN_UNLOCK_V(M_callseq_lock);
     
-    return shared_callseq;
+    return ret;
 }
 
 /**
