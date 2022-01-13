@@ -864,7 +864,7 @@ Ensure(test_Bvcmp)
     v2.L_tcarray2 = 5;
     assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 0);
     
-    v2.tcarray2[0] = 255;
+    v2.tcarray2[0] = (char)255;
     assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
     
     init_MYVIEW1(&v2);
