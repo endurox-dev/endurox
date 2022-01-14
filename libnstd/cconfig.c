@@ -433,6 +433,8 @@ expublic int ndrx_cconfig_load(void)
             first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
 
             first = EXFALSE;
+            /* init UUID lib */
+            ndrx_uuid_init();
         }
         
         /* Do this outside the lock... */

@@ -56,7 +56,6 @@
 #include <sys/stat.h>
 #include <sys/ipc.h>
 #include <xa_cmn.h>
-#include <exuuid.h>
 
 #include <tperror.h>
 #include <Exfields.h>
