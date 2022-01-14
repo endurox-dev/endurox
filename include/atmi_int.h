@@ -53,6 +53,7 @@ extern "C" {
 #include <tperror.h>
 #include <exparson.h>
 #include <tmenv.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -994,7 +995,6 @@ extern NDRX_API struct xa_switch_t * ndrx_xa_builtin_get(void);
 /* tp encryption functions */
 extern NDRX_API int tpencrypt_int(char *input, long ilen, char *output, long *olen, long flags);
 extern NDRX_API int tpdecrypt_int(char *input, long ilen, char *output, long *olen, long flags);
-
 #ifdef	__cplusplus
 }
 #endif

@@ -114,6 +114,7 @@ extern TestSuite *ubf_nstd_util(void);
 extern TestSuite *ubf_nstd_lh(void);
 extern TestSuite *ubf_nstd_atomicadd(void);
 extern TestSuite *ubf_nstd_fsync(void);
+extern TestSuite *ubf_nstd_uuid(void);
 
 #ifdef	__cplusplus
 }

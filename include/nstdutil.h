@@ -259,6 +259,10 @@ struct ndrx_lh_config
     int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
 };
 
+
+/** For our uuid generator */
+typedef unsigned char exuuid_t[16];
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -410,6 +414,8 @@ extern NDRX_API int ndrx_fsync_dsync(char *dir, long flags);
 extern NDRX_API int ndrx_fsync_fsync(FILE *file, long flags);
 extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
 
+extern NDRX_API void ndrx_uuid_init(void);
+extern NDRX_API void ndrx_uuid_generate(unsigned char prefix, exuuid_t out);
 
 #ifdef	__cplusplus
 }

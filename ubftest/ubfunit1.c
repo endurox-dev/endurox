@@ -680,6 +680,7 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_nstd_mtest6());
     add_suite(suite, ubf_nstd_mtest7());
     add_suite(suite, ubf_nstd_fsync());
+    add_suite(suite, ubf_nstd_uuid());
     
     /*
      * UBF tests
