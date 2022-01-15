@@ -414,7 +414,6 @@ extern NDRX_API int ndrx_fsync_dsync(char *dir, long flags);
 extern NDRX_API int ndrx_fsync_fsync(FILE *file, long flags);
 extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
 
-extern NDRX_API void ndrx_cid_init(void);
 extern NDRX_API void ndrx_cid_generate(unsigned char prefix, exuuid_t out);
 
 #ifdef	__cplusplus

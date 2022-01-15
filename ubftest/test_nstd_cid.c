@@ -135,8 +135,6 @@ Ensure(test_nstd_cid_unq)
  
     int ret;
     
-    ndrx_cid_init();
-    
     ret=pthread_create(&th1, NULL, thread_start, NULL);
     assert_equal(ret, EXSUCCEED);
     
@@ -165,8 +163,6 @@ Ensure(test_nstd_cid_fmt)
     pid_t pid;
     struct timeval tv, tv2, tvt;
 
-    ndrx_cid_init();
-    
     memset(cid, 0, sizeof(exuuid_t));
     memset(cid2, 0, sizeof(exuuid_t));
     
@@ -248,12 +244,6 @@ Ensure(test_nstd_cid_fmt)
         fail_test("Time difference too large (from clock)");
     }
     
-    /* time: 
-    assert_not_equal(memcmp(0+9, 02+9, 5), 0);
-    */
-    /* random... might be random, might not... 
-    assert_not_equal(memcmp(0+14, 02+14, 2), 0);
-     * */
 }
 
 /**
