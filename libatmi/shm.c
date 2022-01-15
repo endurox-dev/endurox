@@ -1184,6 +1184,12 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
             
 #endif
             el->srvs--;
+            
+            if (el->csrvs==el->srvs)
+            {
+                /* only in cluster, thus locally this is last */
+                *last=EXTRUE;
+            }
         }
         else
         {

@@ -1,0 +1,12 @@
+#/bin/bash
+#
+# @(#) Load this script in environment before Enduro/X start
+#
+
+# update to correspond actual Enduro/X installation path
+export NDRX_HOME=/usr
+export NDRX_APPHOME=/home/user1/endurox/atmitest/test090_tuxmig/runtime/user90
+export NDRX_CCONFIG=${NDRX_APPHOME}/conf/app.test1.ini
+export CDPATH=$CDPATH:.:${NDRX_APPHOME}
+export PATH=$PATH:${NDRX_APPHOME}/bin
+export GODEBUG="asyncpreemptoff=1"

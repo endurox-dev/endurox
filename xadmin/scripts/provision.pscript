@@ -490,7 +490,20 @@ class Provision extends WizardBase {
 			<sysopt>"+usv1_sysopt+@"</sysopt>"+_appopt+@"
 		</server>";
 		}
-		
+                
+                //Install tmsrecoversv, in case if Q is used
+		if (installQ=="y")
+		{
+			ndrxconfigXmlVal=ndrxconfigXmlVal+
+		@"
+		<server name=""tmrecoversv"">
+			<min>1</min>
+			<max>1</max>
+			<srvid>9900</srvid>
+			<sysopt>-e ${NDRX_ULOG}/tmrecoversv.log -- </sysopt>
+		</server>";
+                }
+
 		//Install CPM srv
 		if (cpmSv=="y")
 		{
