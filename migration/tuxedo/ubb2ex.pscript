@@ -1850,6 +1850,13 @@ export PATH=$PATH:"+instance.ndrx_bin;
         }
     }
 
+    //To ensure that on newver version Go works correctly.
+    if (instance.restin)
+    {
+        instance.set_text+="\n";
+        instance.set_text+="export GODEBUG=\"asyncpreemptoff=1\"";
+    }
+
     if (M_wizzard.mk_mq_dev)
     {
         instance.set_text+="\n";
@@ -1858,6 +1865,8 @@ if [ ! -d """+M_wizzard.qpath+@""" ]; then
     mkdir   """+M_wizzard.qpath+@"""
 fi";
     }
+
+    
 
     instance.set_text+="\n";
 

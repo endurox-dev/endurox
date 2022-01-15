@@ -154,6 +154,8 @@ IF (DEFINED EX_USE_SYSVQ)
 	add_subdirectory (test095_rqaddrel)
 ENDIF()
 
+add_subdirectory (test096_svcrmnet)
+
 ################################################################################
 # Master test case drivere
 add_executable (atmiunit1 atmiunit1.c)

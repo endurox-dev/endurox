@@ -223,7 +223,7 @@ if [ "X$OUT" != "X" ]; then
 fi
 
 ################################################################################
-#echo ">>> Compare outputs of the INI" - TODO figrue out 
+echo ">>> Compare outputs of the INI"
 ################################################################################
 
 # prepare ini files, strip the dynamic parts
@@ -251,6 +251,27 @@ if [ "X$OUT" != "X" ]; then
     echo "ubb_config1.ini!=runtime/user90/conf/app.test1.ini"
     go_out -1
 fi
+
+################################################################################
+echo ">>> Compare outputs of the set file"
+################################################################################
+
+# prepare ini files, strip the dynamic parts
+cat $TESTDIR/ubb_config1.set                | \
+    grep -v NDRX_APPHOME       > tmp1
+
+cat $TESTDIR/runtime/user90/conf/settest1   | \
+    grep -v NDRX_APPHOME       > tmp2
+
+OUT=`diff tmp1 tmp2`
+
+echo $OUT
+
+if [ "X$OUT" != "X" ]; then
+    echo "ubb_config1.set !=runtime/user90/conf/settest1"
+    go_out -1
+fi
+
 
 go_out $RET
 

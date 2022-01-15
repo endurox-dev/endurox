@@ -756,6 +756,13 @@ Ensure(test095_rqaddrel)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test096_svcrmnet)
+{
+    int ret;
+    ret=system_dbg("test096_svcrmnet/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -913,6 +920,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
     add_test(suite, test090_tuxmig);
+    
 #ifdef EX_USE_EPOLL
     add_test(suite, test091_tpgotsig);
 #endif
@@ -922,6 +930,13 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test094_sigchld);
 #ifdef EX_USE_SYSVQ
     add_test(suite, test095_rqaddrel);
+#endif
+
+    /* for systemv each binary have request q, on mac cannot test as
+     * missing robust mutex might cause system lockup
+     */
+#if defined(EX_USE_EPOLL)|| defined(EX_USE_SVAPOLL) || defined(EX_USE_KQUEUE)
+    add_test(suite, test096_svcrmnet);
 #endif
     return suite;
 }
