@@ -53,6 +53,7 @@ extern "C" {
 #include <tperror.h>
 #include <exparson.h>
 #include <tmenv.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -1013,6 +1014,7 @@ extern NDRX_API int ndrx_tpsetcallinfo(const char *msg, UBFH *obuf, long flags);
 /* tp encryption functions */
 extern NDRX_API int tpencrypt_int(char *input, long ilen, char *output, long *olen, long flags);
 extern NDRX_API int tpdecrypt_int(char *input, long ilen, char *output, long *olen, long flags);
+<<<<<<< HEAD
 
 
 extern NDRX_API void ndrx_mbuf_tlv_debug (char *rcv_data, long rcv_len);
@@ -1021,6 +1023,8 @@ extern NDRX_API int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *ob
 extern NDRX_API int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **odata, 
         long *olen, long flags, long mflags);
 
+=======
+>>>>>>> 7.5-maint
 #ifdef	__cplusplus
 }
 #endif

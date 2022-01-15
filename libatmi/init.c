@@ -672,7 +672,7 @@ expublic int ndrx_load_common_env(void)
        NDRX_LOG(log_error, "ndrx_atmiutil_init() failed");
        EXFAIL_OUT(ret);
     }
-    
+
     /**
      * LIB ATMI must work with SHMCFG - thus ensures that it is open
      */

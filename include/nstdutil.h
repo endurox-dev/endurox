@@ -299,6 +299,7 @@ struct ndrx_lh_config
     int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
 };
 
+<<<<<<< HEAD
 /**
  * Handler of parsed standard settings
  */
@@ -310,6 +311,11 @@ struct ndrx_stdcfgstr
     /* DL with the settings loaded... */
     ndrx_stdcfgstr_t *next, *prev;
 };
+=======
+
+/** For our cluster-id generator */
+typedef unsigned char exuuid_t[16];
+>>>>>>> 7.5-maint
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
@@ -469,6 +475,8 @@ extern NDRX_API int ndrx_fsync_dsync(char *dir, long flags);
 extern NDRX_API int ndrx_fsync_fsync(FILE *file, long flags);
 extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
 
+extern NDRX_API void ndrx_cid_init(void);
+extern NDRX_API void ndrx_cid_generate(unsigned char prefix, exuuid_t out);
 
 #ifdef	__cplusplus
 }

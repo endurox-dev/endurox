@@ -54,7 +54,6 @@
 #include "../libatmisrv/srv_int.h"
 #include <xa_cmn.h>
 #include <atmi_int.h>
-#include <exuuid.h>
 #include <exbase64.h>
 #include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
