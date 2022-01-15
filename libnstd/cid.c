@@ -33,12 +33,17 @@
  */
 
 /*---------------------------Includes-----------------------------------*/
+
+
 #include <ndrstandard.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+
 #include <ndebug.h>
 #include <sys/time.h>
-#include <xatmi.h>
-#include <atmi_int.h>
-#include <inttypes.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -49,18 +54,95 @@
 exprivate MUTEX_LOCKDECL(M_uuid_lock); /**< Lock the random generator */
 exprivate volatile unsigned int M_seedp;
 exprivate volatile unsigned int M_counter;
+exprivate volatile unsigned int M_init_done=EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Get random bytes... (if available)
+ * @param output where to unload good random
+ * @param number bytes to unload
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_get_rnd_bytes(unsigned char *output, size_t len)
+{
+    int ret = EXSUCCEED;
+    int fd=EXFAIL, flags, i;
+
+    fd = open("/dev/urandom", O_RDONLY);
+    
+    if (fd == EXFAIL)
+    {
+        fd = open("/dev/random", O_RDONLY | O_NONBLOCK);
+    }
+    
+    if (fd >= 0)
+    {
+        flags = fcntl(fd, F_GETFD);
+        
+        if (flags >= 0)
+        {
+            fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+        }
+    }
+    else
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    for (i=0; i<len; i++)
+    {
+        output[i]=0;
+        if (EXSUCCEED!=read(fd, output+i, 1))
+        {
+            /* nothing todo... */
+        }
+        
+    }
+    
+out:
+    
+    if (EXFAIL!=fd)
+    {
+        close(fd);
+    }
+
+    return ret;
+}
+/**
  * Init UUID generator (once!)
  */
-expublic void ndrx_cid_init(void)
+exprivate void ndrx_cid_init(void)
 {
     unsigned int locl_seedp;
     struct timeval  tv;
+    unsigned char buf[sizeof(unsigned int)];
+    unsigned char *p;
+    int i;
+    
     gettimeofday(&tv, 0);
     locl_seedp = (getpid() << 16) ^ getuid() ^ (unsigned int)tv.tv_sec ^ (unsigned int)tv.tv_usec;
     M_counter = rand_r(&locl_seedp);
+    
+    /* Randomize counter.. */
+    if (EXSUCCEED==ndrx_get_rnd_bytes(buf, sizeof(unsigned int)))
+    {
+        p = (unsigned char *)&M_counter;
+        for (i=0; i<sizeof(unsigned int); i++)
+        {
+            p[i] = p[i] ^ buf[i];
+        }
+    }
+    
+    /* Randomize seed counter.. */
+    if (EXSUCCEED==ndrx_get_rnd_bytes(buf, sizeof(locl_seedp)))
+    {
+        p = (unsigned char *)&locl_seedp;
+        for (i=0; i<sizeof(locl_seedp); i++)
+        {
+            p[i] = p[i] ^ buf[i];
+        }
+    }
+    
     M_seedp = locl_seedp;
 }
 
@@ -71,12 +153,23 @@ expublic void ndrx_cid_init(void)
  */
 expublic void ndrx_cid_generate(unsigned char prefix, exuuid_t out)
 {
+    int i;
     unsigned int counter;
-    unsigned int rnd;
+    unsigned short rnd;
     char *out_p = (char *)out;
     unsigned pid = getpid();
     struct timeval tv;
     unsigned int locl_seedp;
+    
+    /* perform init... */
+    if (!M_init_done)
+    {
+        MUTEX_UNLOCK_V(M_uuid_lock);
+        ndrx_cid_init();
+        M_init_done = EXTRUE;
+        MUTEX_UNLOCK_V(M_uuid_lock);
+    }
+    
     /* So node ID 1 byte: */
     out_p[0] = prefix;
     
@@ -94,11 +187,18 @@ expublic void ndrx_cid_generate(unsigned char prefix, exuuid_t out)
     counter = M_counter;
 
     locl_seedp=M_seedp;
-    rnd=rand_r(&locl_seedp);
+    
+    rnd=0;
+    for (i=0; i<sizeof(rnd); i++)
+    {
+        rnd<<=8;
+        rnd|=rand_r(&locl_seedp) & 0xff;
+    }
+    
     M_seedp=locl_seedp;
     
     MUTEX_UNLOCK_V(M_uuid_lock);
-
+    
     /* counter section: */
     out_p[5] = (counter >>24) & 0xff;
     out_p[6] = (counter >>16) & 0xff;
