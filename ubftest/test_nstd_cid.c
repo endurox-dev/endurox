@@ -1,7 +1,7 @@
 /**
- * @brief Feedback Pool Allocator tests
+ * @brief Cluster Identifier tests
  *
- * @file test_nstd_fpa.c
+ * @file test_nstd_cid.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -48,25 +48,29 @@
 
 typedef struct
 {
-    exuuid_t uuid;
-    
+    exuuid_t cid;
     EX_hash_handle hh;         /* makes this structure hashable */    
-} uuid_hash_t;
+} cid_hash_t;
+
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate uuid_hash_t *M_hash = NULL;
+exprivate cid_hash_t *M_hash = NULL;
 exprivate MUTEX_LOCKDECL(M_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
  * Return true if found
  */
-exprivate uuid_hash_t * do_lookup(exuuid_t uuid)
+exprivate cid_hash_t * do_lookup(exuuid_t cid)
 {
-    uuid_hash_t *ent=NULL;
+    cid_hash_t *ent=NULL;
+    
     MUTEX_LOCK_V(M_lock);
-    EXHASH_FIND(hh, M_hash, uuid, sizeof(exuuid_t), ent);    
+    
+    EXHASH_FIND(hh, M_hash, cid, sizeof(exuuid_t), ent);
+
+    
     MUTEX_UNLOCK_V(M_lock);
     
     return ent;
@@ -74,18 +78,18 @@ exprivate uuid_hash_t * do_lookup(exuuid_t uuid)
 
 /**
  * Add entry
- * @param uuid
+ * @param 0
  */
-exprivate void do_add(exuuid_t uuid)
+exprivate void do_add(exuuid_t cid)
 {
-    uuid_hash_t *add=NDRX_MALLOC(sizeof(uuid_hash_t));
+    cid_hash_t *add=NDRX_MALLOC(sizeof(cid_hash_t));
     if (NULL==add)
     {
         abort();
     }
-    memcpy(add->uuid, uuid, sizeof(exuuid_t));
+    memcpy(add->cid, cid, sizeof(exuuid_t));
     MUTEX_LOCK_V(M_lock);
-    EXHASH_ADD(hh, M_hash, uuid, sizeof(exuuid_t), add);
+    EXHASH_ADD(hh, M_hash, cid, sizeof(exuuid_t), add);
     MUTEX_UNLOCK_V(M_lock);
 }
 
@@ -95,32 +99,32 @@ exprivate void do_add(exuuid_t uuid)
 static void * thread_start(void *arg)
 {
     int i, j;
-    exuuid_t uuid;
+    exuuid_t cid;
             
-    /* for 1 M UUIDs... ever 1x sec.. */
+    /* for 1 M CIDs... ever 1x sec.. */
     for (i=0; i<2; i++)
     {
         for (j=0; j<1000000; j++)
         {
-            ndrx_uuid_generate(129, uuid);
+            ndrx_cid_generate(129, cid);
             
             /* lookup */
-            if (NULL!=do_lookup(uuid))
+            if (NULL!=do_lookup(cid))
             {
-                fail_test("Geneate uuid exists!");
+                fail_test("Geneate 0 exists!");
                 break;
             }
             /* add */
-            do_add(uuid);
+            do_add(cid);
         }
         sleep(1);
     }
 }
 
 /**
- * Check that uuid is unique accorss the threads
+ * Check that 0 is unique accorss the threads
  */
-Ensure(test_nstd_uuid_unq)
+Ensure(test_nstd_cid_unq)
 {
     pthread_t th1;
     pthread_t th2;
@@ -129,7 +133,7 @@ Ensure(test_nstd_uuid_unq)
  
     int ret;
     
-    ndrx_uuid_init();
+    ndrx_cid_init();
     
     ret=pthread_create(&th1, NULL, thread_start, NULL);
     assert_equal(ret, EXSUCCEED);
@@ -150,50 +154,50 @@ Ensure(test_nstd_uuid_unq)
 }
 
 /**
- * Analyze the UUID format, shall match the desired one.
+ * Analyze the CID format, shall match the desired one.
  */
-Ensure(test_nstd_uuid_fmt)
+Ensure(test_nstd_cid_fmt)
 {
-    exuuid_t uuid, uuid2;
+    exuuid_t cid, cid2;
     unsigned seq1, seq2;
     pid_t pid;
     struct timeval tv, tv2, tvt;
 
-    ndrx_uuid_init();
+    ndrx_cid_init();
     
-    memset(uuid, 0, sizeof(exuuid_t));
-    memset(uuid2, 0, sizeof(exuuid_t));
+    memset(cid, 0, sizeof(exuuid_t));
+    memset(cid2, 0, sizeof(exuuid_t));
     
-    ndrx_uuid_generate(129, uuid);
+    ndrx_cid_generate(129, cid);
     sleep(2);
-    ndrx_uuid_generate(4, uuid2);
+    ndrx_cid_generate(4, cid2);
     
     /* node id: */
-    assert_equal((unsigned char)129, uuid[0]);
-    assert_equal((unsigned char)4, uuid2[0]);
+    assert_equal((unsigned char)129, cid[0]);
+    assert_equal((unsigned char)4, cid2[0]);
     
     pid=getpid();
     
-    assert_equal( (pid>>24 & 0xff), uuid[1]);
-    assert_equal( (pid>>16 & 0xff), uuid[2]);
-    assert_equal( (pid>>8 & 0xff), uuid[3]);
-    assert_equal( (pid & 0xff), uuid[4]);
+    assert_equal( (pid>>24 & 0xff), cid[1]);
+    assert_equal( (pid>>16 & 0xff), cid[2]);
+    assert_equal( (pid>>8 & 0xff), cid[3]);
+    assert_equal( (pid & 0xff), cid[4]);
         
-    seq1 |= uuid[5];
+    seq1 |= cid[5];
     seq1<<=8;
-    seq1 |= uuid[6];
+    seq1 |= cid[6];
     seq1<<=8;
-    seq1 |= uuid[7];
+    seq1 |= cid[7];
     seq1<<=8;
-    seq1 |= uuid[8];
+    seq1 |= cid[8];
     
-    seq2 |= uuid2[5];
+    seq2 |= cid2[5];
     seq2<<=8;
-    seq2 |= uuid2[6];
+    seq2 |= cid2[6];
     seq2<<=8;
-    seq2 |= uuid2[7];
+    seq2 |= cid2[7];
     seq2<<=8;
-    seq2 |= uuid2[8];
+    seq2 |= cid2[8];
     
     /* sequence counters: */
     assert_not_equal(seq1, seq2);
@@ -208,25 +212,25 @@ Ensure(test_nstd_uuid_fmt)
     memset(&tv, 0, sizeof(tv));
     memset(&tv2, 0, sizeof(tv2));
     
-    tv.tv_sec |= uuid[9];
+    tv.tv_sec |= cid[9];
     tv.tv_sec<<=8;
-    tv.tv_sec |= uuid[10];
+    tv.tv_sec |= cid[10];
     tv.tv_sec<<=8;
-    tv.tv_sec |= uuid[11];
+    tv.tv_sec |= cid[11];
     tv.tv_sec<<=8;
-    tv.tv_sec |= uuid[12];
+    tv.tv_sec |= cid[12];
     tv.tv_sec<<=8;
-    tv.tv_sec |= uuid[13];
+    tv.tv_sec |= cid[13];
     
-    tv2.tv_sec |= uuid2[9];
+    tv2.tv_sec |= cid2[9];
     tv2.tv_sec<<=8;
-    tv2.tv_sec |= uuid2[10];
+    tv2.tv_sec |= cid2[10];
     tv2.tv_sec<<=8;
-    tv2.tv_sec |= uuid2[11];
+    tv2.tv_sec |= cid2[11];
     tv2.tv_sec<<=8;
-    tv2.tv_sec |= uuid2[12];
+    tv2.tv_sec |= cid2[12];
     tv2.tv_sec<<=8;
-    tv2.tv_sec |= uuid2[13];
+    tv2.tv_sec |= cid2[13];
     
     assert_not_equal(tv.tv_sec, tv2.tv_sec);
     
@@ -243,10 +247,10 @@ Ensure(test_nstd_uuid_fmt)
     }
     
     /* time: 
-    assert_not_equal(memcmp(uuid+9, uuid2+9, 5), 0);
+    assert_not_equal(memcmp(0+9, 02+9, 5), 0);
     */
     /* random... might be random, might not... 
-    assert_not_equal(memcmp(uuid+14, uuid2+14, 2), 0);
+    assert_not_equal(memcmp(0+14, 02+14, 2), 0);
      * */
 }
 
@@ -254,12 +258,12 @@ Ensure(test_nstd_uuid_fmt)
  * Standard library tests
  * @return
  */
-TestSuite *ubf_nstd_uuid(void)
+TestSuite *ubf_nstd_cid(void)
 {
     TestSuite *suite = create_test_suite();
 
-    add_test(suite, test_nstd_uuid_unq);
-    add_test(suite, test_nstd_uuid_fmt);
+    add_test(suite, test_nstd_cid_unq);
+    add_test(suite, test_nstd_cid_fmt);
     
     return suite;
 }
