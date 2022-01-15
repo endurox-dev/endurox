@@ -328,7 +328,7 @@ expublic void tmq_msgid_gen(char *msgid)
     
     /* Do the locking, so that we get unique xids... */
     MUTEX_LOCK_V(M_msgid_gen_lock);
-    ndrx_uuid_generate((unsigned char)node_id, uuid_val);
+    ndrx_cid_generate((unsigned char)node_id, uuid_val);
     MUTEX_UNLOCK_V(M_msgid_gen_lock);
     
     memcpy(msgid, uuid_val, sizeof(exuuid_t));
