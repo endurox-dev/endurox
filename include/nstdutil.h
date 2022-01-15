@@ -299,7 +299,6 @@ struct ndrx_lh_config
     int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
 };
 
-<<<<<<< HEAD
 /**
  * Handler of parsed standard settings
  */
@@ -311,11 +310,9 @@ struct ndrx_stdcfgstr
     /* DL with the settings loaded... */
     ndrx_stdcfgstr_t *next, *prev;
 };
-=======
 
 /** For our cluster-id generator */
 typedef unsigned char exuuid_t[16];
->>>>>>> 7.5-maint
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

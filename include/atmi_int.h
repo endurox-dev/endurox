@@ -1023,8 +1023,6 @@ extern NDRX_API int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *ob
 extern NDRX_API int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **odata, 
         long *olen, long flags, long mflags);
 
-=======
->>>>>>> 7.5-maint
 #ifdef	__cplusplus
 }
 #endif
