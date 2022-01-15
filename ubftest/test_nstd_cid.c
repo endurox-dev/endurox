@@ -104,7 +104,7 @@ static void * thread_start(void *arg)
     /* for 1 M CIDs... ever 1x sec.. */
     for (i=0; i<2; i++)
     {
-        for (j=0; j<1000000; j++)
+        for (j=0; j<100000; j++)
         {
             ndrx_cid_generate(129, cid);
             
