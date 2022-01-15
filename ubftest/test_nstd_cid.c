@@ -162,6 +162,7 @@ Ensure(test_nstd_cid_fmt)
     unsigned seq1, seq2;
     pid_t pid;
     struct timeval tv, tv2, tvt;
+    int i, got_diff;
 
     ndrx_cid_init();
     
@@ -246,12 +247,20 @@ Ensure(test_nstd_cid_fmt)
         fail_test("Time difference too large (from clock)");
     }
     
-    /* time: 
-    assert_not_equal(memcmp(0+9, 02+9, 5), 0);
-    */
-    /* random... might be random, might not... 
-    assert_not_equal(memcmp(0+14, 02+14, 2), 0);
-     * */
+    got_diff=EXFALSE;
+    for (i=0; i<1000; i++)
+    {
+        ndrx_cid_generate(129, cid);
+        ndrx_cid_generate(4, cid2);
+        
+        if (0!=memcmp(cid+14, cid2+14, 2))
+        {
+            got_diff=EXTRUE;
+        }
+    }
+    
+    assert_equal(got_diff, EXTRUE);
+    
 }
 
 /**
