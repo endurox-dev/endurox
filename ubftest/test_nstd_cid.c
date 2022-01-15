@@ -119,6 +119,8 @@ static void * thread_start(void *arg)
         }
         sleep(1);
     }
+
+    return NULL;
 }
 
 /**
@@ -240,7 +242,7 @@ Ensure(test_nstd_cid_fmt)
         fail_test("Time difference too large");
     }
     
-    if (abs(tv.tv_sec - tvt.tv_sec) > 10)
+    if (labs(tv.tv_sec - tvt.tv_sec) > 10)
     {
         UBF_LOG(log_error, "Time difference too large (from clock): %ld vs %ld",
                 (long)tv.tv_sec, (long)tvt.tv_sec);
