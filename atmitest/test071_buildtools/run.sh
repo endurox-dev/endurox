@@ -199,7 +199,7 @@ export NDRX_SILENT=Y
 export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 export NDRX_HOME=.
 export PATH=$PATH:$PWD/../../buildtools
-export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd $COMPFLAGS"
+export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexthpool -L../../libnstd $COMPFLAGS"
 
 
 echo ""
