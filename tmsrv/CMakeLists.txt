@@ -75,9 +75,9 @@ add_library(tms SHARED $<TARGET_OBJECTS:objtms>)
 SET (TMSRV_ADD_DEP "")
 
 if(CMAKE_OS_NAME STREQUAL "CYGWIN")
-    target_link_libraries(tms atmisrvinteg atmi ubf exuuid nstd ${RT_LIB} pthread)
+    target_link_libraries(tms atmisrvinteg atmi ubf nstd ${RT_LIB} pthread)
 elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
-    target_link_libraries(tms atmisrvinteg atmi ubf exuuid nstd ${RT_LIB} pthread)
+    target_link_libraries(tms atmisrvinteg atmi ubf nstd ${RT_LIB} pthread)
 elseif(CMAKE_OS_NAME STREQUAL "AIX")
     # 
     # linking lib against pthread for XL C on aix, otherwise we get error like: 
@@ -95,7 +95,7 @@ endif()
 add_executable (tmsrv 
                 tmsrvmain.c
                 )
-target_link_libraries (tmsrv tms atmisrvinteg atmi ubf exuuid nstd ${RT_LIB} ${TMSRV_ADD_DEP} pthread)
+target_link_libraries (tmsrv tms atmisrvinteg atmi ubf nstd ${RT_LIB} ${TMSRV_ADD_DEP} pthread)
 set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 
@@ -103,7 +103,7 @@ add_executable (tmrecoversv
                 tmrecoversv.c
                 tmrecover.c
                 )
-target_link_libraries (tmrecoversv atmisrvinteg atmi ubf exuuid nstd ${RT_LIB} pthread)
+target_link_libraries (tmrecoversv atmisrvinteg atmi ubf nstd ${RT_LIB} pthread)
 set_target_properties(tmrecoversv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 add_executable (tmrecovercl 
