@@ -490,17 +490,12 @@ expublic int ndrx_cconfig_load(void)
 
             first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
             first = EXFALSE;
-<<<<<<< HEAD
-            
-            
             /* Load after the ini have been processed, so that
              * these can be set in [@global] section
              */
             ndrx_apiflags_load();
-=======
             /* init UUID lib */
             ndrx_cid_init();
->>>>>>> 7.5-maint
         }
         
         /* Do this outside the lock... */
