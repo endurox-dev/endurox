@@ -92,9 +92,9 @@ expublic void ndrx_cid_generate(unsigned char prefix, exuuid_t out)
     
     M_counter++;
     counter = M_counter;
+
+    locl_seedp=M_seedp;
     rnd=rand_r(&locl_seedp);
-    
-    /* put seed back to volatile */
     M_seedp=locl_seedp;
     
     MUTEX_UNLOCK_V(M_uuid_lock);
