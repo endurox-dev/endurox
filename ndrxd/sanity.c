@@ -572,7 +572,7 @@ out:
  */
 exprivate int send_kill(pm_node_t *p_pm, int sig, int delta)
 {
-    NDRX_LOG(log_warn, "Killing PID: %d (ppid: %d)/%s/%d with signal -%d", 
+    NDRX_LOG(log_error, "Killing PID: %d (ppid: %d)/%s/%d with signal -%d", 
             p_pm->svpid, p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
     userlog("Killing PID: %d (ppid: %d)/%s/%d with signal -%d", 
             p_pm->svpid, p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
