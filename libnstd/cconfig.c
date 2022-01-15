@@ -494,8 +494,6 @@ expublic int ndrx_cconfig_load(void)
              * these can be set in [@global] section
              */
             ndrx_apiflags_load();
-            /* init UUID lib */
-            ndrx_cid_init();
         }
         
         /* Do this outside the lock... */

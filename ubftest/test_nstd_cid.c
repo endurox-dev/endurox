@@ -135,8 +135,6 @@ Ensure(test_nstd_cid_unq)
  
     int ret;
     
-    ndrx_cid_init();
-    
     ret=pthread_create(&th1, NULL, thread_start, NULL);
     assert_equal(ret, EXSUCCEED);
     
@@ -166,8 +164,6 @@ Ensure(test_nstd_cid_fmt)
     struct timeval tv, tv2, tvt;
     int i, got_diff;
 
-    ndrx_cid_init();
-    
     memset(cid, 0, sizeof(exuuid_t));
     memset(cid2, 0, sizeof(exuuid_t));
     
