@@ -227,6 +227,7 @@ echo ">>> Compare outputs of the INI"
 ################################################################################
 
 # prepare ini files, strip the dynamic parts
+# check exports only, as for MacOS there is additional mkdir for qpath
 cat $TESTDIR/ubb_config1.ini        | \
     grep -v NDRX_XA_DRIVERLIB       | \
     grep -v NDRX_XA_RMLIB           | \
@@ -258,9 +259,11 @@ echo ">>> Compare outputs of the set file"
 
 # prepare ini files, strip the dynamic parts
 cat $TESTDIR/ubb_config1.set                | \
+    grep export                     	    | \
     grep -v NDRX_APPHOME       > tmp1
 
 cat $TESTDIR/runtime/user90/conf/settest1   | \
+    grep export                     	    | \
     grep -v NDRX_APPHOME       > tmp2
 
 OUT=`diff tmp1 tmp2`
