@@ -264,8 +264,7 @@ Mandatory Env. Variables
 
 *NDRX_SVPROCNAME*='SERVER_PROC_NAME'::
     Server process name exported by *ndrxd* at XATMI server process boot time.
-    The name is either server name extracted by "<server>" or extracted by sub
-    tag "<cmdline>".
+    The name is server name extracted from "<server>" tag attribute *name*.
 
 *NDRX_SVCLOPT*='SERVER_COMMAND_LINE'::
     Server process command line. Generated and exported at the moment of XATMI
