@@ -711,6 +711,10 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         {
             if (NULL==getenv(POLLEXCL_POLICY))
             {
+                /* well.. seems this does not work as of initial AIX 7.3 releases
+                 * even with ONE setting, we get several notifications for MQ ids
+                 * for single poll() call.
+                 */
                 setenv(POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT, EXTRUE);
                 NDRX_LOG(log_debug, "Apply [%s]=[%s]", POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT);
             }
