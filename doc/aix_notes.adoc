@@ -1,8 +1,5 @@
 Building Enduro/X On IBM AIX Platform
 =====================================
-Madars Vitolins
-v1.1, 2018-11:
-	Enduro/X 6.0 release
 :doctype: book
 
 About manual
@@ -18,6 +15,19 @@ include building of documentation.
 == Operating System Configuration
 
 For short installation process see ex_adminman(guides)(Enduro/X Administration Manual).
+
+Before running commands from the root shell, ensure that /opt/freeware/bin is in path:
+
+---------------------------------------------------------------------
+# export PATH=$PATH:/opt/freeware/bin
+---------------------------------------------------------------------
+
+Add user used for build processes:
+
+---------------------------------------------------------------------
+# useradd -m user1
+---------------------------------------------------------------------
+
 
 == Installation process
 
@@ -61,11 +71,20 @@ Ensure that install process does finish without any errors.
 # rpm -ivh *.rpm
 ---------------------------------------------------------------------
 
-Once yum is up and running, install following packages needed for build:
+On AIX 7.3, download dnf_bundle_aix_73.tar:
+
+---------------------------------------------------------------------
+# tar -xvf dnf_bundle_aix_73.tar
+# ./install_dnf.sh -y
+# /opt/freeware/bin/dnf update
+---------------------------------------------------------------------
+
+Once yum is up and running, install following packages needed for build
+(AIX 7.1, 7.2):
 
 ---------------------------------------------------------------------
 # yum install flex bison libiconv curl openldap openssl zlib \
-libxml2 mktemp gcc gcc-cpp g++ libxml2-devel git bash m4 gmake
+libxml2 mktemp gcc gcc-cpp g++ libxml2-devel git bash m4 gmake wget
 ---------------------------------------------------------------------
 
 For AIX 7.2 To install g++:
@@ -73,6 +92,14 @@ For AIX 7.2 To install g++:
 ---------------------------------------------------------------------
 # yum install gcc-c++
 ---------------------------------------------------------------------
+
+AIX 7.3:
+
+---------------------------------------------------------------------
+# yum install flex bison libiconv curl zlib \
+libxml2 gcc gcc-cpp libxml2-devel git bash m4 gcc-c++ wget
+---------------------------------------------------------------------
+
 
 ==== Fix the issue with m4 
 
@@ -91,7 +118,7 @@ It changes the way how shared libraries are built. For Enduro/X all libs are
 expected to be built as System V Shared Objects (.so), but toolbox version changes
 these rules. Thus keep third party builds or compile from Kitware CMake sources.
 
-===== Installing CMake from oss4aix.org
+===== Installing CMake from oss4aix.org (AIX 7.1)
 
 The following operations will be done from root user. This will download
 the all open source packages to local machine to /root/rpms folder.
@@ -142,7 +169,7 @@ install only two of them:
 ---------------------------------------------------------------------
 
 
-===== Building CMake manually from sources
+===== Building CMake manually from sources (AIX 7.2, AIX 7.3)
 
 This will use gcc compiler.
 
@@ -150,7 +177,15 @@ This will use gcc compiler.
 # su - user1
 $ mkdir tmp
 $ cd tmp
+
+-- FOr AIX 7.1, 7.2:
+
 $ wget https://github.com/Kitware/CMake/releases/download/v3.19.4/cmake-3.19.4.tar.gz
+
+-- For AIX 7.3:
+
+$ wget https://github.com/Kitware/CMake/releases/download/v3.22.1/cmake-3.22.1.tar.gz
+
 $ gzip -d cmake-3.19.4.tar.gz
 $ tar -xf cmake-3.19.4.tar.gz
 $ cd cmake-3.19.4
@@ -161,11 +196,18 @@ $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
 $ export LDFLAGS="-maix64 -Wl,-bbigtoc"
 $ ./configure --prefix=/opt/freeware
+
+-- On AIX 7.1, 7.2:
 $ gmake
+
+-- On AIX 7.3:
+$ make
+
 $ exit
 # cd /home/user1/tmp/cmake-3.19.4
 # make install
 ---------------------------------------------------------------------
+
 
 === Getting the source code
 
@@ -174,9 +216,7 @@ For test purposes we will prepare new user for which Enduro/X will built
 You may modify that of your needs.
 
 ---------------------------------------------------------------------
-# useradd -m user1
 # su - user1
-
 $ bash
 $ cat << EOF >> .profile
 PATH=/usr/bin:/etc:/usr/sbin:/usr/ucb:$HOME/bin:/usr/bin/X11:/sbin:.:/opt/freeware/bin:/opt/IBM/xlC/13.1.3/bin
@@ -188,6 +228,9 @@ $ GIT_SSL_NO_VERIFY=true git clone https://github.com/endurox-dev/endurox
 $ cd endurox 
 $ git config http.sslVerify "false"
 ---------------------------------------------------------------------
+
+The path */opt/IBM/xlC/13.1.3/bin* shall be updated to match th compiler install
+path. For example IBM IBM Open XL C/C++ would have */opt/IBM/openxlC/17.1.0/bin* path set.
 
 === Enduro/X basic Environment configuration for HOME directory
 
@@ -253,7 +296,6 @@ by using "yum" tool. It is assumed that it is configured for given OS.
 To install database on this system, use following commands:
 
 --------------------------------------------------------------------------------
-
 $ su - root
 # yum update
 # yum install postgresql postgresql-contrib postgresql-devel postgresql-libs postgresql-server
@@ -392,6 +434,24 @@ Enduro/X standard test set with PostgreSQL, the */opt/freeware/lib* must be
 present in *LD_LIBRARY_PATH*.
 
 
+=== Building the code with IBM Open XL C/C++
+
+It is assumed that xlC is default compiler on the system, thus following 
+shall make the building ok:
+
+---------------------------------------------------------------------
+# su - user1
+$ bash
+$ export OBJECT_MODE=64
+$ export CC=ibm-clang_r
+$ export CXX=ibm-clang++_r
+$ cd /home/user1/endurox
+$ cmake -DDEFINE_DISABLEDOC=ON\
+      -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
+$ make 
+$ make install
+---------------------------------------------------------------------
+
 === Building the code with GCC
 
 If you previously have installed gcc (C/C++) compiler open source package.
@@ -412,7 +472,7 @@ $ make
 $ make install
 ---------------------------------------------------------------------
 
-*/usr/bin/ar* seems to be required for AIX 7.2.
+*/usr/bin/ar* seems to be required for AIX 7.2, AIX 7.3.
 
 == Unit Testing
 

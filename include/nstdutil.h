@@ -171,6 +171,11 @@ extern NDRX_API long ndrx_G_apiflags;
 #define NDRX_APIFLAGS_UBFDUPFIDOK        0x00000004
 #define NDRX_APIFLAGS_UBFDUPFIDOK_CODE   "ubf_dupfidok" /**< Check duplicat field id */
  
+/**
+ * Do not use AIX 7.3 POLLEXCL for svapoll / poll.
+ */
+#define NDRX_APIFLAGS_NOPOLLEXLC        0x00000008
+#define NDRX_APIFLAGS_NOPOLLEXLC_CODE   "nopollexlc" /**< aix do not use pollexl*/
 /** @} */ /* end of apiflags */
     
 /*---------------------------Enums--------------------------------------*/
