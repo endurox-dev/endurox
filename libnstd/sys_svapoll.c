@@ -115,6 +115,10 @@
 #define NDRX_PMQ_GET(set, i) ((struct ndrx_pollmsg *)((char *)set->polltab + \
     sizeof(struct ndrx_pollfd)*set->nrfds + i*sizeof(struct ndrx_pollmsg)))
 
+
+#define POLLEXCL_POLICY "POLLEXCL_POLICY"   /**< POLLEXLC params            */
+#define POLLEXCL_POLICY_DEFAULT "LIFO:ONE"  /**< Default, match linux logic */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -481,6 +485,15 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         tmp->mqd = mqd;
         tmp->qid = mqd->qid;
         tmp->event = *event;
+        
+#ifdef POLLEXCL
+        /* avoid thundering herd issue, new feature in AIX 7.3 */
+        if (!(ndrx_G_apiflags & NDRX_APIFLAGS_NOPOLLEXLC))
+        {
+            tmp->event.events|=POLLEXCL;
+        }
+#endif
+        
         EXHASH_ADD_MQD(set->mqds, mqd, tmp);
         
         /* add QID */
@@ -685,11 +698,25 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     struct ndrx_pollfd *pfd;
     struct ndrx_pollmsg *pmq;
     unsigned long nfdmsgs;
+    static int first = EXTRUE;  /**< not E/X uses wait thread only single copy per bin */
     
     EX_EPOLL_API_ENTRY;
     
     /* not returning... */
     *buf_len = EXFAIL;
+    
+    if (first)
+    {
+        if (!(ndrx_G_apiflags & NDRX_APIFLAGS_NOPOLLEXLC))
+        {
+            if (NULL==getenv(POLLEXCL_POLICY)
+            {
+                setenv(POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT, EXTRUE);
+                NDRX_LOG(log_debug, "Apply [%s]=[%s]", POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT);
+            }
+        }
+        first = EXFALSE;
+    }
     
     if (NULL==(set = pset_find(epfd, EXTRUE)))
     {
@@ -697,19 +724,6 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         EXFAIL_OUT(ret);
     }
-    
-#if 0
-    /* reset revents... - seems not needed. */
-    for (i=0; i<set->nrfds; i++)
-    {
-        NDRX_PFD_GET(set, i)->revents = 0;
-    }
-    
-    for (i=0; i<set->nrfmqds; i++)
-    {
-        NDRX_PMQ_GET(set, i)->rtnevents = 0;
-    }
-#endif
     
     nfdmsgs=(set->nrfmqds<<16)|(set->nrfds);
     NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - "
