@@ -709,7 +709,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     {
         if (!(ndrx_G_apiflags & NDRX_APIFLAGS_NOPOLLEXLC))
         {
-            if (NULL==getenv(POLLEXCL_POLICY)
+            if (NULL==getenv(POLLEXCL_POLICY))
             {
                 setenv(POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT, EXTRUE);
                 NDRX_LOG(log_debug, "Apply [%s]=[%s]", POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT);
@@ -761,7 +761,6 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         }
     }
     
-    /* return queue events */
     for (i=0; NMSGS(retpoll) > 0 && i < set->nrfmqds && numevents < maxevents; i++)
     {
         pmq = NDRX_PMQ_GET(set, i);
