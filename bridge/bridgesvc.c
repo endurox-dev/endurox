@@ -587,7 +587,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==G_bridge_cfg.net.port[0])
+    if (EXEOS==G_bridge_cfg.net.port[0])
     {
         NDRX_LOG(log_error, "Flag -p not set!");
         EXFAIL_OUT(ret);
