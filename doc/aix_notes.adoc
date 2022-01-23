@@ -97,7 +97,7 @@ AIX 7.3:
 
 ---------------------------------------------------------------------
 # yum install flex bison libiconv curl zlib \
-libxml2 gcc gcc-cpp libxml2-devel git bash m4 gcc-c++ wget
+libxml2 gcc gcc-cpp libxml2-devel git bash m4 gcc-c++ wget coreutils
 ---------------------------------------------------------------------
 
 
