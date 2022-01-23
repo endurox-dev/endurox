@@ -119,6 +119,11 @@
 #define POLLEXCL_POLICY "POLLEXCL_POLICY"   /**< POLLEXLC params            */
 #define POLLEXCL_POLICY_DEFAULT "LIFO:ONE"  /**< Default, match linux logic */
 
+/*
+#define NDRX_POLLEXCL_DEBUG
+*/
+
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -698,6 +703,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     struct ndrx_pollfd *pfd;
     struct ndrx_pollmsg *pmq;
     unsigned long nfdmsgs;
+    int debug_nr=0;
     static int first = EXTRUE;  /**< not E/X uses wait thread only single copy per bin */
     
     EX_EPOLL_API_ENTRY;
@@ -735,6 +741,16 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     fn, epfd, events, maxevents, timeout, set->nrfds, set->nrfmqds,
                     set->polltab, nfdmsgs);
     
+    for (i=0; i<set->nrfds; i++)
+    {
+        NDRX_PFD_GET(set, i)->revents = 0;
+    }
+    
+    for (i=0; i<set->nrfmqds; i++)
+    {
+        NDRX_PMQ_GET(set, i)->rtnevents = 0;
+    }
+
     /* run the poll finally... */
     retpoll = poll( set->polltab, nfdmsgs, timeout);
     err=errno;
@@ -764,6 +780,18 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
             numevents++;
         }
     }
+
+#ifdef NDRX_POLLEXCL_DEBUG
+    for (i=0; NMSGS(retpoll) > 0 && i < set->nrfmqds; i++)
+    {
+        pmq = NDRX_PMQ_GET(set, i);
+        if (pmq->rtnevents & POLLIN)
+        {
+            debug_nr++;
+        }
+    }
+    userlog("debug_nr=%d", debug_nr);
+#endif
     
     for (i=0; NMSGS(retpoll) > 0 && i < set->nrfmqds && numevents < maxevents; i++)
     {
