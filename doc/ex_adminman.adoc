@@ -44,10 +44,24 @@ msgid. Queue string names are used internally by Enduro/X. In this mode operatio
 and configuration at the Enduro/X level is the same as with epoll mode. Each binary
 may advertise arbitrary number of services, where each service is shared queue,
 that may be shared between several other processes which advertise that service.
-As IBM AIX also does not have equivalent functionality of the Linux *EPOLLEXCLUSIVE* flag, 
-IBM AIX is prone to the same CPU wasting at specific workloads as with FreeBSD
-(described above). Mavimax have made change-request to IBM for adding Linux
-like poll-exclusive flags (https://www.ibm.com/developerworks/rfe/execute?use_case=viewRfe&CR_ID=144545).
+Prior IBM AIX 7.3 poll did not had equivalent functionality of the Linux *EPOLLEXCLUSIVE* flag, 
+so IBM AIX was prone to the CPU wasting (thundering herd problem) at specific 
+workloads as in FreeBSD (described above). Starting from AIX 7.3 IBM 
+in cooperation with Mavimax have implemented *POLLEXCL* flag in AIX. With this 
+new flag Enduro/X on IBM AIX works with the same performance benefits as on the Linux (having
+true one-queue/multiple-servers topology for all XATMI services). 
+*Additional administrative notice:* Enduro/X requires that *POLLEXCL_POLICY* environment
+variable is set to *LIFO:ONE* (or minimum to *ONE*. The *ndrxd(8)* sets
+*POLLEXCL_POLICY* automatically at XATMI server startup (after the fork before exec) 
+if value was not previously set. Global shell settings are not needed 
+(unless for some special reason, e.g. server started outside *ndrxd*, but note, 
+that setting *LIFO:ONE* at shell level, causes Enduro/X fail to boot, but *ONE* boots ok. 
+This seems to be some AIX kernel specific issue). If for some reason other value needs to
+be used for the XATMI server process, that can be set at *<envs>/<env>* tag 
+in *ndrxconfig.xml(5)*. The *POLLEXCL* usage can be disabled for particular 
+process by setting at *NDRX_NOPOLLEXCL* to *Y* at *<envs>/<env>* tag 
+(Thought this is not recommend, and it will introduce thunder herd issue, 
+if several same type binaries are started).
 
 -  System V message queues, this is generally second best transport available
 on Linux and Unix operating systems. One queue multiple servers mechanism is
