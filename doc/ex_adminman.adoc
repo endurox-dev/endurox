@@ -57,10 +57,11 @@ If for some reason other value needs to be used for the XATMI server process,
 that can be set at *<envs>/<env>* tag in *ndrxconfig.xml(5)*. But recommended
 way is to use *ONE* or (*ONE:RR* as *RR* is by default). The *LIFO* or *FIFO*
 settings seems currently on AIX causes only first/last polled process on Qs
-picks ups the messages. The *POLLEXCL* usage can be disabled for particular 
-process by setting at *NDRX_NOPOLLEXCL* to *Y* at *<envs>/<env>* tag 
-(Thought this is not recommend, and it will introduce thunder herd issue, 
-if several same type binaries are started).
+picks ups the messages, thus load balancing is lost when *LIF* or FIFO* flags
+are added (at least in early releases of AIX 7.3). The *POLLEXCL* usage 
+can be disabled for particular process by setting at *NDRX_NOPOLLEXCL* 
+to *Y* at *<envs>/<env>* tag (Thought this is not recommend, 
+and it will introduce thunder herd issue, if several same type binaries are started).
 
 -  System V message queues, this is generally second best transport available
 on Linux and Unix operating systems. One queue multiple servers mechanism is
