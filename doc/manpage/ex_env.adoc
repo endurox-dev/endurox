@@ -442,9 +442,12 @@ Mandatory Env. Variables
     *BFLD_PTR* pointers from input. By default buffer pointers for security
     reasons are not read. Flag *ubf_dupfidok* enables accepting duplicate field
     IDs during the *mkfldhdr(3)* processing (this is for Tuxedo compatibility).
-    Flag *nopollexlc* disable AIX 7.3 POLLEXCL mode for *svapoll* - might be useful
-    if *POLLEXCL_POLICY* shall be used by any linked libraries for different
-    purposes.
+*NDRX_NOPOLLEXCL*='ANY_VALUE'::
+    If flag is set to any value (i.e. *Y*), and Enduro/X runs under AIX 7.3 or
+    newer in *svapoll* mode, then this flag disables *POLLEXCL* flag usage for
+    solving thundering herd issue. Also this setting disables setup of the
+    *POLLEXCL_POLICY=LIFE:ONE* environment variable by *ndrxd* prior exec of
+    new binary.
 
 EXAMPLE
 -------

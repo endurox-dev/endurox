@@ -452,6 +452,12 @@ $ make
 $ make install
 ---------------------------------------------------------------------
 
+*WARNING:* IBM Open XL C/C++ compiler currently has some issues with thread local storage
+as of version 17.1.0 (libraries which are linked to binary and later loaded by dlopen() has
+some issues with thread local stroage objects, which are accessed by loaded library against
+the running executable). While this problem is not solved, IBM Open XL C/C++ cannot be used.
+Please use previous versions of xlC/C++ or GCC.
+
 === Building the code with GCC
 
 If you previously have installed gcc (C/C++) compiler open source package.

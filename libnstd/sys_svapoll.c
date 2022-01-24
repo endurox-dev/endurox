@@ -453,7 +453,8 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
     int ret = EXSUCCEED;
     ndrx_epoll_set_t* set = NULL;
     ndrx_epoll_mqds_t * tmp = NULL;
-    
+    static int first = EXFALSE;
+    static int use_excl = EXFALSE;
     EX_EPOLL_API_ENTRY;
     
     if (NULL==(set = pset_find(epfd, EXTRUE)))
@@ -462,6 +463,18 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         
         EXFAIL_OUT(ret);
+    }
+    
+    /* no problem with MT...
+     * several settings to 1 at the same time, result would be the same anyway
+     */
+    if (first)
+    {
+        if (NULL==getenv(CONF_NDRX_NOPOLLEXCL))
+        {
+            use_excl=EXTRUE;
+        }
+        first=EXFALSE;
     }
     
     if (EX_EPOLL_CTL_ADD == op)
@@ -493,7 +506,7 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         
 #ifdef POLLEXCL
         /* avoid thundering herd issue, new feature in AIX 7.3 */
-        if (!(ndrx_G_apiflags & NDRX_APIFLAGS_NOPOLLEXLC))
+        if (use_excl)
         {
             tmp->event.events|=POLLEXCL;
         }
@@ -704,29 +717,11 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     struct ndrx_pollmsg *pmq;
     unsigned long nfdmsgs;
     int debug_nr=0;
-    static int first = EXTRUE;  /**< not E/X uses wait thread only single copy per bin */
     
     EX_EPOLL_API_ENTRY;
     
     /* not returning... */
     *buf_len = EXFAIL;
-    
-    if (first)
-    {
-        if (!(ndrx_G_apiflags & NDRX_APIFLAGS_NOPOLLEXLC))
-        {
-            if (NULL==getenv(POLLEXCL_POLICY))
-            {
-                /* well.. seems this does not work as of initial AIX 7.3 releases
-                 * even with ONE setting, we get several notifications for MQ ids
-                 * for single poll() call.
-                 */
-                setenv(POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT, EXTRUE);
-                NDRX_LOG(log_debug, "Apply [%s]=[%s]", POLLEXCL_POLICY, POLLEXCL_POLICY_DEFAULT);
-            }
-        }
-        first = EXFALSE;
-    }
     
     if (NULL==(set = pset_find(epfd, EXTRUE)))
     {

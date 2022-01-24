@@ -1076,6 +1076,16 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             exit(1);
         }
         
+        /* special processing for svapoll
+         * if CONF_NDRX_NOPOLLEXCL is not set, then
+         * apply polling flags
+         */  
+#ifdef EX_USE_SVAPOLL
+        if (NULL==getenv(CONF_NDRX_NOPOLLEXCL) && NULL==getenv(NDRX_POLLEXCL_POLICY))
+        {
+            setenv(NDRX_POLLEXCL_POLICY, NDRX_POLLEXCL_POLICY_DFLT, EXTRUE);
+        }
+#endif
         /* free up the allocate resources */
         
         if (EXSUCCEED != execvp (cmd[0], cmd))
