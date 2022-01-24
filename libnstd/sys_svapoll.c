@@ -453,7 +453,7 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
     int ret = EXSUCCEED;
     ndrx_epoll_set_t* set = NULL;
     ndrx_epoll_mqds_t * tmp = NULL;
-    static int first = EXFALSE;
+    static int first = EXTRUE;
     static int use_excl = EXFALSE;
     EX_EPOLL_API_ENTRY;
     
