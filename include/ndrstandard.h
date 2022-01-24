@@ -380,6 +380,10 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #define CONF_NDRX_RTGRP          "NDRX_RTGRP"          /**< Routing group                                */
 
+/** 
+ * pre-process variable for not using POLLEXCL flag for svapoll
+ */
+#define CONF_NDRX_NOPOLLEXCL     "NDRX_NOPOLLEXCL"
 
 /** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
  * state required by command

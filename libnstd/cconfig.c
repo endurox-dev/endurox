@@ -443,12 +443,6 @@ exprivate int ndrx_apiflags_load(void)
                         NDRX_APIFLAGS_UBFDUPFIDOK_CODE);
                 ndrx_G_apiflags|=NDRX_APIFLAGS_UBFDUPFIDOK;
             }
-            else if (0==strcmp(el->key, NDRX_APIFLAGS_NOPOLLEXLC_CODE))
-            {
-                NDRX_LOG_EARLY(log_info, "%s not setting POLLEXCL",
-                        NDRX_APIFLAGS_NOPOLLEXLC_CODE);
-                ndrx_G_apiflags|=NDRX_APIFLAGS_NOPOLLEXLC;
-            }
         }
     }
     
