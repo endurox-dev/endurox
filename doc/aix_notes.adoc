@@ -246,7 +246,7 @@ $ cat << EOF > $HOME/ndrx_home
 # Where app domain lives
 export NDRX_APPHOME=/home/user1/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=/home/user1/endurox/dist/bin
+export NDRX_HOME=/home/user1/endurox/dist
 # Debug config too
 export NDRX_DEBUG_CONF=/home/user1/endurox/sampleconfig/debug.conf
 
@@ -470,8 +470,17 @@ $ cd /home/user1/endurox
 $ export OBJECT_MODE=64
 $ export CC=gcc
 $ export CXX=g++
+
+-- ON AIX 7.1, 7.2:
+
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
+
+-- On AIX 7.3, otherwise Golang builds fails:
+
+export CFLAGS="-maix64 -Wl,-brtl,-bexpall,-berok"
+export CXXFLAGS="-maix64 -Wl,-brtl,-bexpall,-berok"
+
 $ cmake -DDEFINE_DISABLEDOC=ON \
     -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib -DCMAKE_AR=/usr/bin/ar  .
 $ make
