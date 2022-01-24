@@ -61,7 +61,7 @@ picks ups the messages, thus load balancing is lost when *LIFO* or *FIFO* flags
 are added (at least in early releases of AIX 7.3). The poll() *POLLEXCL* usage 
 can be disabled for particular process by setting at *NDRX_NOPOLLEXCL* 
 to *Y* at *<envs>/<env>* tag (Thought this is not recommend, 
-and it will introduce thunder herd issue, if several same type binaries are started).
+and it will introduce thundering herd issue, if several same type binaries are started).
 
 -  System V message queues, this is generally second best transport available
 on Linux and Unix operating systems. One queue multiple servers mechanism is
