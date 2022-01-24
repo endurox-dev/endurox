@@ -74,7 +74,7 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 
 #define NDRX_POLLEXCL_POLICY    "POLLEXCL_POLICY"   /**< for aix svapoll, policy flag */
-#define NDRX_POLLEXCL_POLICY_DFLT    "LIFO:ONE"     /**< for aix svapoll, policy value */
+#define NDRX_POLLEXCL_POLICY_DFLT    "ONE"         /**< for aix svapoll, policy value */
 
 #if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
     
