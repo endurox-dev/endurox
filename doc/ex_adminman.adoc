@@ -51,17 +51,17 @@ in cooperation with Mavimax have implemented *POLLEXCL* flag in AIX. With this
 new flag Enduro/X on IBM AIX works with the same performance benefits as on the Linux (having
 true one-queue/multiple-servers topology for all XATMI services). 
 *Additional administrative notice:* Enduro/X requires that *POLLEXCL_POLICY* environment
-variable is set to *LIFO:ONE* (or minimum to *ONE*. The *ndrxd(8)* sets
-*POLLEXCL_POLICY* automatically at XATMI server startup (after the fork before exec) 
-if value was not previously set. Global shell settings are not needed 
-(unless for some special reason, e.g. server started outside *ndrxd*, but note, 
-that setting *LIFO:ONE* at shell level, causes Enduro/X fail to boot, but *ONE* boots ok. 
-This seems to be some AIX kernel specific issue). If for some reason other value needs to
-be used for the XATMI server process, that can be set at *<envs>/<env>* tag 
-in *ndrxconfig.xml(5)*. The *POLLEXCL* usage can be disabled for particular 
-process by setting at *NDRX_NOPOLLEXCL* to *Y* at *<envs>/<env>* tag 
-(Thought this is not recommend, and it will introduce thunder herd issue, 
-if several same type binaries are started).
+variable is set to *ONE*. Global shell settings are not needed 
+(unless for some special reason, e.g. server started outside *ndrxd*). 
+If for some reason other value needs to be used for the XATMI server process, 
+that can be set at *<envs>/<env>* tag in *ndrxconfig.xml(5)*. But recommended
+way is to use *ONE* or (*ONE:RR* as *RR* is by default). The *LIFO* or *FIFO*
+settings seems currently on AIX causes only first/last polled process on Qs
+picks ups the messages, thus load balancing is lost when *LIFO* or *FIFO* flags
+are added (at least in early releases of AIX 7.3). The poll() *POLLEXCL* usage 
+can be disabled for particular process by setting at *NDRX_NOPOLLEXCL* 
+to *Y* at *<envs>/<env>* tag (Thought this is not recommend, 
+and it will introduce thundering herd issue, if several same type binaries are started).
 
 -  System V message queues, this is generally second best transport available
 on Linux and Unix operating systems. One queue multiple servers mechanism is
