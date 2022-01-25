@@ -116,8 +116,7 @@
     sizeof(struct ndrx_pollfd)*set->nrfds + i*sizeof(struct ndrx_pollmsg)))
 
 
-#define POLLEXCL_POLICY "POLLEXCL_POLICY"   /**< POLLEXLC params            */
-#define POLLEXCL_POLICY_DEFAULT "LIFO:ONE"  /**< Default, match linux logic */
+
 
 /*
 #define NDRX_POLLEXCL_DEBUG
