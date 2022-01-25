@@ -742,6 +742,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
     int have_value_2;
     int pos_2;
     
+    int msgflag;
     int err = 0;
     
     ndrx_svq_map_t *svq;
@@ -875,9 +876,20 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
     
     /* open queue, install mappings in both tables */
     
+    msgflag=0;
+
+    if (oflag & O_CREAT)
+    {
+        msgflag|=IPC_CREAT;
+    }
+
+    if (oflag & O_EXCL)
+    {
+        msgflag|=IPC_EXCL;
+    }
+    
     /* extract only known flags.. */
-    if (EXFAIL==(qid = msgget(IPC_PRIVATE, mode | IPC_CREAT | 
-            ( (oflag & O_CREAT) | (oflag & O_EXCL)))))
+    if (EXFAIL==(qid = msgget(IPC_PRIVATE, IPC_CREAT|mode)))
     {
         int err = errno;
         ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
