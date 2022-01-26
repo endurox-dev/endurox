@@ -275,7 +275,7 @@ expublic int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  TPMYID *
     }
     
 out:
-    NDRX_LOG(log_error, "ndrx_parse_cnv_srv_q returns with %d", ret);
+    NDRX_LOG(log_debug, "ndrx_parse_cnv_srv_q returns with %d", ret);
     return ret;
 }
 
