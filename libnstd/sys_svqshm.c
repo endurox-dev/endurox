@@ -233,7 +233,7 @@ expublic int ndrx_svqshm_init(int attach_only)
     
     /* check mandatory config presence loaded by LCF! */
     
-    if (!ndrx_G_libnstd_cfg.qprefix[0])
+    if (NULL==ndrx_G_libnstd_cfg.qprefix || EXEOS==ndrx_G_libnstd_cfg.qprefix[0])
     {
         NDRX_LOG(log_error, "%s is not set!", CONF_NDRX_QPREFIX);
         EXFAIL_OUT(ret);
