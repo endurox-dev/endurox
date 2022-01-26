@@ -889,7 +889,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
     }
     
     /* extract only known flags.. */
-    if (EXFAIL==(qid = msgget(IPC_PRIVATE, IPC_CREAT|mode)))
+    if (EXFAIL==(qid = msgget(IPC_PRIVATE, msgflag|mode)))
     {
         int err = errno;
         ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
