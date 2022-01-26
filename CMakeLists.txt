@@ -34,7 +34,7 @@
 
 cmake_minimum_required (VERSION 3.1) 
 project (ENDUROX) 
-set(VERSION "8.0.1")
+set(VERSION "8.0.2")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)

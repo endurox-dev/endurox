@@ -634,6 +634,8 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 
 - Version 7.5.38 released on 10/01/2022 (stable) Bug #756, Bug #755, Support #758
 
+- Version 8.0.2 released on 26/01/2022 (stable) Marking initial release
+
 # Build configurations
 
 ## Configure make with: 
