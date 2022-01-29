@@ -636,6 +636,8 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 
 - Version 8.0.2 released on 26/01/2022 (stable) Marking initial release
 
+- Version 7.0.48 released on 29/01/2022 (stable) Support #761
+
 # Build configurations
 
 ## Configure make with: 
