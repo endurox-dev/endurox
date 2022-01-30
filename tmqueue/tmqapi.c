@@ -102,9 +102,9 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     int local_tx = EXFALSE;
     
     /* To guarentee unique order in same Q space...: */
-    static long t_sec = 0;
-    static long t_usec = 0;
-    static int t_cntr = 0;
+    static volatile long t_sec = 0;
+    static volatile long t_usec = 0;
+    static volatile int t_cntr = 0;
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
