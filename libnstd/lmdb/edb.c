@@ -110,6 +110,7 @@ static NtCloseFunc *NtClose;
 #include <fcntl.h>
 #endif
 
+#include <ndrx_config.h>
 #include <ndebug.h>
 #include <ndrxdiag.h>
 
@@ -181,7 +182,7 @@ typedef SSIZE_T	ssize_t;
 #elif defined(EDB_USE_SYSV_SEM)
 #include <sys/ipc.h>
 #include <sys/sem.h>
-#ifdef _SEM_SEMUN_UNDEFINED
+#ifndef EX_HAVE_SEMUN
 union semun {
 	int val;
 	struct semid_ds *buf;
