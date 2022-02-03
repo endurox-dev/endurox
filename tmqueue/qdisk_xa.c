@@ -425,8 +425,8 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
     
     int ret = EXSUCCEED;
     BFLDOCC occ;
-    char name1[PATH_MAX+1];
-    char name2[PATH_MAX+1];
+    char name1[PATH_MAX+1]="";
+    char name2[PATH_MAX+1]="";
     char *p;
     char *files[2];
     
@@ -503,7 +503,6 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
     }
     else if (TMQ_FILECMD_RENAME==fcmd)
     {
-       
         if (NULL==files[0] || NULL==files[1])
         {
             NDRX_LOG(log_error, "File 1 or 2 is NULL %p %p - cannot rename",

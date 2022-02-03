@@ -1780,7 +1780,7 @@ exprivate int basic_rndfail(void)
         }
         tpfree((char *)buf);
     }
-    sleep(360); /* should be enough */
+    sleep(30); /* should be enough */
     
     for (i=0; i<100; i++)
     {
