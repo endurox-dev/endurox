@@ -227,12 +227,17 @@ expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
 {
     int ret=EXSUCCEED;
     int err, i;
+
+#ifdef EX_HAVE_SEMUN
+    union semun arg;
+#else
     union semun 
     {
         int val;
         struct semid_ds *buf;
         ushort *array;
     } arg;
+#endif
     
     ushort arr[sem->nrsems];
     memset(&arg, 0, sizeof(arg));
