@@ -37,6 +37,8 @@
 
 #cmakedefine EX_HAVE_STRCAT_S @EX_HAVE_STRCAT_S@
 
+#cmakedefine EX_HAVE_SEMUN @EX_HAVE_SEMUN@
+
 #cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
 
 #cmakedefine EX_USE_SVAPOLL @EX_USE_SVAPOLL@
