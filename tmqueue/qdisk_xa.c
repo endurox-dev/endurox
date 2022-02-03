@@ -458,7 +458,6 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
      */
     if (TMQ_FILECMD_UNLINK==fcmd)
     {            
-        
         for (occ=0; occ<N_DIM(files) && NULL!=files[occ]; occ++)
         {
             NDRX_LOG(log_debug, "Unlinking file [%s]", files[occ]);
@@ -2070,6 +2069,7 @@ out:
         /* unlink if failed to write to the folder... */
         if (EXSUCCEED!=ret)
         {
+            NDRX_LOG(log_error, "Unlink: [%s]", G_atmi_tls->qdisk_tls->filename_active);
             unlink(G_atmi_tls->qdisk_tls->filename_active);
         }
         
