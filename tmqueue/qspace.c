@@ -116,8 +116,6 @@ exprivate MUTEX_LOCKDECL(M_q_lock);
 
 /* Configuration section */
 expublic tmq_qconfig_t *G_qconf = NULL; 
-
-exprivate MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
@@ -327,9 +325,7 @@ expublic void tmq_msgid_gen(char *msgid)
     memset(msgid, 0, TMMSGIDLEN);
     
     /* Do the locking, so that we get unique xids... */
-    MUTEX_LOCK_V(M_msgid_gen_lock);
     ndrx_cid_generate((unsigned char)node_id, uuid_val);
-    MUTEX_UNLOCK_V(M_msgid_gen_lock);
     
     memcpy(msgid, uuid_val, sizeof(exuuid_t));
     /* Have an additional infos for transaction id... */
