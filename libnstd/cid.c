@@ -165,8 +165,11 @@ expublic void ndrx_cid_generate(unsigned char prefix, exuuid_t out)
     if (!M_init_done)
     {
         MUTEX_LOCK_V(M_uuid_lock);
-        ndrx_cid_init();
-        M_init_done = EXTRUE;
+        if (!M_init_done)
+        {
+            ndrx_cid_init();
+            M_init_done = EXTRUE;
+        }
         MUTEX_UNLOCK_V(M_uuid_lock);
     }
     

@@ -105,6 +105,7 @@ expublic char * tmq_corrid_serialize(char *corrid_in, char *corrid_str_out)
     return corrid_str_out;
 }
 
+#if 0
 /**
  * Finalize file commands (before notifications unlock q space)
  * Also only one type of ops are supported either batch remove or batch rename
@@ -234,4 +235,5 @@ expublic int tmq_finalize_files(UBFH *p_ub)
 out:
     return ret;
 }
+#endif
 /* vim: set ts=4 sw=4 et smartindent: */

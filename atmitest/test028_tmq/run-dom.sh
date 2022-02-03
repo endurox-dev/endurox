@@ -102,12 +102,10 @@ function go_out {
 
 
 function clean_logs {
-
     # clean-up the logs for debbuging at the error.
     for f in `ls *.log`; do
          echo > $f
     done
-
 }
 #
 # Test Q space for empty condition
@@ -141,6 +139,8 @@ mkdir QSPACE1
 cp q.conf.tpl q.conf
 
 clean_logs;
+rm *.log >/dev/null
+
 set_dom1;
 # clean up anything left from prevoius tests...
 xadmin down -y
@@ -178,6 +178,10 @@ fi
 
 #find ./QSPACE1 -type f
 
+echo ">>> Listing b4"
+ls -l QSPACE1/committed
+ls -l QSPACE1/committed | wc
+
 xadmin stop -y
 # let ndrxd to finish
 sleep 2
@@ -185,6 +189,9 @@ xadmin start -y || go_out 1
 clean_logs;
 
 
+echo ">>> Listing after"
+ls -l QSPACE1/committed
+ls -l QSPACE1/committed | wc
 ################################################################################
 #
 # CLI TESTS
@@ -498,15 +505,40 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo ">>> Before restart:"
+xadmin mqlc
+xadmin mqlq
+
+echo ">>>> Listing"
+ls -l QSPACE1/committed
+ls -l QSPACE1/committed | wc
+
+echo ">>>> LTESTA"
+xadmin mqlm -s MYSPACE -q LTESTA
+echo ">>>> LTESTB"
+xadmin mqlm -s MYSPACE -q LTESTB
+echo ">>>> LTESTC"
+xadmin mqlm -s MYSPACE -q LTESTC
+
 xadmin stop -y
 sleep 2
 xadmin start -y || go_out 1
 clean_logs;
 
+echo ">>> After restart:"
 xadmin mqlc
 xadmin mqlq
 
+echo ">>>> Listing"
+ls -l QSPACE1/committed
+ls -l QSPACE1/committed | wc
+
+echo ">>>> LTESTA"
 xadmin mqlm -s MYSPACE -q LTESTA
+echo ">>>> LTESTB"
+xadmin mqlm -s MYSPACE -q LTESTB
+echo ">>>> LTESTC"
+xadmin mqlm -s MYSPACE -q LTESTC
 
 FIRST=`xadmin mqlm -s MYSPACE -q LTESTA  | head -1  | awk '{print($3)}'`
 
