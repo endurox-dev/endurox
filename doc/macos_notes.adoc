@@ -305,13 +305,20 @@ Completed "atmi_test_all": 28 passes, 0 failure, 0 exceptions.
 Completed "main": 28 passes, 0 failure, 0 exceptions.
 ---------------------------------------------------------------------
 
-
 == Limitations
+
 Due to fact that MacOS does not support System-V nor Posix queues, the queues
 are being emulated in Enduro/X based on shared memory. However, the implementation
 does not guarantee that processes can recover from crashes within the emulation
 library. Thus MacOS Enduro/X use is only recommended for development purposes.
 The commercial support for MacOS instances are not provided.
+
+If planning to use tmsrv or tmqueue with the MacOS, then please ensure that
+data folders are mounted on drivers which are case sensitive, as Enduro/X
+stores transactions logs and messages on disk identified by base64 encoding,
+which is case sensitive. Thus if using default MacOS settings (case insensitive),
+expect that transaction or message processing might randomly corrupt (e.g. lose
+messages, etc).
 
 == Conclusions
 At finish you have a configured system which is read to process the transactions
