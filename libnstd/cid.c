@@ -183,7 +183,6 @@ expublic void ndrx_cid_generate(unsigned char prefix, exuuid_t out)
     out_p[4] = (pid) & 0xff;
     
     /* Counter  */
-    
     MUTEX_LOCK_V(M_uuid_lock);
     
     M_counter++;
@@ -202,8 +201,15 @@ expublic void ndrx_cid_generate(unsigned char prefix, exuuid_t out)
     
     MUTEX_UNLOCK_V(M_uuid_lock);
     
-    /* counter section: */
+    /* UTC: time section: */
+    gettimeofday(&tv, 0);
+
+    /* 16M - counter section */
+/*
     out_p[5] = (counter >>24) & 0xff;
+*/
+    /* added usec randomization: */
+    out_p[5] = (tv.tv_usec >>7) & 0xff;
     out_p[6] = (counter >>16) & 0xff;
     out_p[7] = (counter >>8) & 0xff;
     out_p[8] = (counter) & 0xff;
@@ -211,12 +217,15 @@ expublic void ndrx_cid_generate(unsigned char prefix, exuuid_t out)
     /* UTC: time section: */
     gettimeofday(&tv, 0);
         
-    out_p[9] = (tv.tv_sec >>32) & 0xff;
+    /* Load usec in oldest 7bits with usec, as 1 bit is to solve 2038 problem, 
+     * so 136 years we guarantee that cid is unique
+     */
+    out_p[9] =  (tv.tv_usec & 0xfe) | ((tv.tv_sec >>32) & 0xff);
     out_p[10] = (tv.tv_sec >>24) & 0xff;
     out_p[11] = (tv.tv_sec >>16) & 0xff;
     out_p[12] = (tv.tv_sec >>8) & 0xff;
     out_p[13] = (tv.tv_sec) & 0xff;
-    
+
     /* random number section: */
     out_p[14] = (rnd >> 8) & 0xff;
     out_p[15] = (rnd) & 0xff;
