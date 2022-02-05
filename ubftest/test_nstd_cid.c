@@ -163,10 +163,11 @@ Ensure(test_nstd_cid_fmt)
     pid_t pid;
     struct timeval tv, tv2, tvt;
     int i, got_diff;
+char buf[104];
 
     memset(cid, 0, sizeof(exuuid_t));
     memset(cid2, 0, sizeof(exuuid_t));
-    
+  
     ndrx_cid_generate(129, cid);
     sleep(2);
     ndrx_cid_generate(4, cid2);
@@ -182,16 +183,20 @@ Ensure(test_nstd_cid_fmt)
     assert_equal( (pid>>8 & 0xff), cid[3]);
     assert_equal( (pid & 0xff), cid[4]);
         
+/*
     seq1 |= cid[5];
     seq1<<=8;
+*/
     seq1 |= cid[6];
     seq1<<=8;
     seq1 |= cid[7];
     seq1<<=8;
     seq1 |= cid[8];
     
+/*
     seq2 |= cid2[5];
     seq2<<=8;
+*/
     seq2 |= cid2[6];
     seq2<<=8;
     seq2 |= cid2[7];
@@ -211,7 +216,7 @@ Ensure(test_nstd_cid_fmt)
     memset(&tv, 0, sizeof(tv));
     memset(&tv2, 0, sizeof(tv2));
     
-    tv.tv_sec |= cid[9];
+    tv.tv_sec |= (cid[9] & 0x01);
     tv.tv_sec<<=8;
     tv.tv_sec |= cid[10];
     tv.tv_sec<<=8;
@@ -221,7 +226,8 @@ Ensure(test_nstd_cid_fmt)
     tv.tv_sec<<=8;
     tv.tv_sec |= cid[13];
     
-    tv2.tv_sec |= cid2[9];
+    /* strip off leading usec: */
+    tv2.tv_sec |= (cid2[9] & 0x01);
     tv2.tv_sec<<=8;
     tv2.tv_sec |= cid2[10];
     tv2.tv_sec<<=8;
