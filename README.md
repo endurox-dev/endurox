@@ -638,6 +638,8 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 
 - Version 7.0.48 released on 29/01/2022 (stable) Support #761
 
+- Version 8.0.4 released on 05/02/2022 (stable) Support #763
+
 # Build configurations
 
 ## Configure make with: 

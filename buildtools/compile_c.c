@@ -96,13 +96,18 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     {
         snprintf(ndrx_inc, sizeof(ndrx_inc), "-I%s/include", env_ndrx_home);
         
+#ifdef SYS64BIT
         /* check the lib64... */
         snprintf(ndrx_lib, sizeof(ndrx_lib), "-L%s/lib64", env_ndrx_home);
         
-        if (!ndrx_file_exists(ndrx_lib))
+        /* fix the chk path... */
+        if (!ndrx_file_exists(ndrx_lib+2))
         {
             snprintf(ndrx_lib, sizeof(ndrx_lib), "-L%s/lib", env_ndrx_home);
         }
+#else
+        snprintf(ndrx_lib, sizeof(ndrx_lib), "-L%s/lib", env_ndrx_home);
+#endif
     }
     
     NDRX_LOG(log_debug, "Build command set to: [%s]", build_final_cmd);
