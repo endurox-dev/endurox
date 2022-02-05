@@ -8,4 +8,4 @@ nullsw:tmnull_switch:
 #
 # Oracle static registration switch:
 #
-Oracle_XA:xaosw:-L$(ORACLE_HOME)/lib -lclntsh
+Oracle_XA:xaosw:-L${ORACLE_HOME}/lib -lclntsh
