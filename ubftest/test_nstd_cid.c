@@ -163,7 +163,6 @@ Ensure(test_nstd_cid_fmt)
     pid_t pid;
     struct timeval tv, tv2, tvt;
     int i, got_diff;
-char buf[104];
 
     memset(cid, 0, sizeof(exuuid_t));
     memset(cid2, 0, sizeof(exuuid_t));
