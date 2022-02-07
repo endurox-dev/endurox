@@ -92,6 +92,39 @@ void sign_chld_handler(int sig)
 }
 
 /**
+ * Quick probe for ndrxd (for faster startups)
+ * Just monitors when ndrxd is ready and we can do a full probe.
+ * @param pid pid to monitor
+ */
+exprivate void ndrx_ndrxd_quick_probe(pid_t pid)
+{
+    int i;
+    
+    /* nothing todo: */
+    if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
+    {
+        goto out;
+    }
+    
+    /* probe while pid exists ... */
+    for (i=0; i<6 && EXSUCCEED==kill(pid, 0); i++)
+    {
+        usleep(50000*i);
+        
+        G_config.ndrxd_q = ndrx_mq_open_at_wrp (G_config.ndrxd_q_str, O_WRONLY);
+        
+        /* in case if open OK, or error other than ENOENT, we do fail. */
+        if((mqd_t)EXFAIL!=G_config.ndrxd_q || ENOENT!=errno)
+        {
+            break;
+        }   
+    }
+    
+    out:
+    return;
+}
+
+/**
  * Check whether idle instance running?
  * @param p_pid PID to return
  * @return FALSE - not running
@@ -320,8 +353,10 @@ expublic int start_daemon_idle(void)
     {
         int i;
         int started=EXFALSE;
-        /* this is parent for child, wait 1 sec  */
+        /* this is parent for child, wait 1 sec  
         sleep(1);
+        */
+        ndrx_ndrxd_quick_probe(pid);
         started=is_ndrxd_running(NULL);
 
 #define MAX_WSLEEP	5
