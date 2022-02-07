@@ -1943,8 +1943,7 @@ NDRX_XA_OPEN_STR="+group.openinfo+@"
 NDRX_XA_CLOSE_STR="+group.closeinfo+@"
 NDRX_XA_DRIVERLIB="+group.driverlib+@"
 NDRX_XA_RMLIB="+group.rmlib+@"
-NDRX_XA_LAZY_INIT=0
-NDRX_XA_FLAGS=FDATASYNC;DSYNC";
+NDRX_XA_LAZY_INIT=0";
 /******************************************************************************/
             }
             else if ("xaswitchname" in group && "TUXEDO/QM"==group.xaswitchname)
@@ -1956,8 +1955,7 @@ NDRX_XA_OPEN_STR="+group.openinfo+@"
 NDRX_XA_CLOSE_STR="+group.closeinfo+@"
 NDRX_XA_DRIVERLIB=libndrxxaqdisks."+M_wizzard.shared_lib_pfx+@"
 NDRX_XA_RMLIB=libndrxxaqdisk."+M_wizzard.shared_lib_pfx+@"
-NDRX_XA_LAZY_INIT=0
-NDRX_XA_FLAGS=FDATASYNC;DSYNC";
+NDRX_XA_LAZY_INIT=0";
 /******************************************************************************/
             }
             else if ("xaswitchname" in group)
@@ -1972,7 +1970,7 @@ NDRX_XA_CLOSE_STR="+group.closeinfo+@"
 NDRX_XA_DRIVERLIB=libndrxxatmsx."+M_wizzard.shared_lib_pfx+@"
 NDRX_XA_RMLIB=-
 NDRX_XA_LAZY_INIT=1
-NDRX_XA_FLAGS=RECON:*:3:100;FDATASYNC;DSYNC";
+NDRX_XA_FLAGS=RECON:*:3:100";
 /******************************************************************************/
             }
 

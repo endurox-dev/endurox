@@ -656,7 +656,7 @@ NDRX_XA_CLOSE_STR=-
 NDRX_XA_DRIVERLIB=libndrxxanulls.so
 NDRX_XA_RMLIB=-
 NDRX_XA_LAZY_INIT=0
-NDRX_XA_FLAGS=FDATASYNC;DSYNC
+#NDRX_XA_FLAGS=FDATASYNC;DSYNC
 NDRX_RTGRP=DDR1
 
 --------------------------------------------------------------------------------
