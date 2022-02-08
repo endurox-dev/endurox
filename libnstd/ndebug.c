@@ -906,13 +906,13 @@ expublic void ndrx_init_debug(void)
     /* static coinf */
     G_stdout_debug.buf_lines = 1;
     G_stdout_debug.buffer_size = 1;
-    G_stdout_debug.level = log_debug;
+    G_stdout_debug.level = log_error;
     
     /* default bufsz  */
     G_tp_debug.buffer_size = G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
 
     G_tp_debug.buf_lines = G_ubf_debug.buf_lines = G_ndrx_debug.buf_lines = 1;
-    G_tp_debug.level = G_ubf_debug.level = G_ndrx_debug.level = log_debug;
+    G_tp_debug.level = G_ubf_debug.level = G_ndrx_debug.level = log_error;
 
     if (NULL==cconfig)
     {
@@ -954,12 +954,14 @@ expublic void ndrx_init_debug(void)
             fprintf(stderr, "Failed to to open [%s]: %d/%s\n", cfg_file,
                                 errno, strerror(errno));
         }
+#if 0
         else
         {
             /* no debug configuration set! */
             fprintf(stderr, "To control debug output, set debug"
                             "config file path in $NDRX_DEBUG_CONF\n");            
         }
+#endif
     }
     else
     {
