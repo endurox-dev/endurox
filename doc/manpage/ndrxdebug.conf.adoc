@@ -31,13 +31,13 @@ DEBUG CONFIGURATION FILE SYNTAX
     binary afterwards in file will override defaults.
 *NDRX_DEBUG_LEVEL*::
     ATMI debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
-    5=Program detail.
+    5=Program detail. Default is 2.
 *UBF_DEBUG_LEVEL*::
     UBF debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
-    5=Program detail.
+    5=Program detail. Default is 2.
 *TP_DEBUG_LEVEL*::
     This is tplog(3) user logging level. 0..5. 0=No logging.
-    1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail.
+    1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail. Default is 2.
 *DEBUG_BUFFER_SIZE*::
     Number of lines to buffer before writing out to disk.
 *THREADED*::
