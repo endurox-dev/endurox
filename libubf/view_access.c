@@ -151,7 +151,7 @@ expublic char * ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
     {
         if (ndrx_Bvnull_int(v, f, occ, cstruct))
         {
-            NDRX_LOG(log_debug, "Field is NULL");
+            UBF_LOG(log_debug, "Field is NULL");
             ndrx_Bset_error_fmt(BNOTPRES, "%s.%s occ=%d is NULL", 
                              v->vname, f->cname, occ);
             EXFAIL_OUT(ret);
@@ -159,7 +159,7 @@ expublic char * ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
 
         if (*C_count<occ+1)
         {
-            NDRX_LOG(log_debug, "%s.%s count field is set to %hu, "
+            UBF_LOG(log_debug, "%s.%s count field is set to %hu, "
                     "but requesting occ=%d (zero based) - NOT PRES",
                      v->vname, f->cname, *C_count, occ);
             ndrx_Bset_error_fmt(BNOTPRES, "%s.%s count field is set to %hu, "
@@ -268,7 +268,7 @@ expublic int ndrx_CBvget(char *cstruct, char *view, char *cname, BFLDOCC occ,
                                      usrtype, flags, CB_MODE_DEFAULT, NULL))
     {
         /* error must be set */
-        NDRX_LOG(log_error, "ndrx_CBvget_int failed");
+        UBF_LOG(log_error, "ndrx_CBvget_int failed");
         EXFAIL_OUT(ret);
     }
 	
@@ -322,7 +322,7 @@ expublic char *ndrx_CBvgetalloc(char *cstruct, char *view, char *cname, BFLDOCC 
             flags, CB_MODE_ALLOC, extralen)))
     {
         /* error must be set */
-        NDRX_LOG(log_error, "ndrx_CBvget_int failed");
+        UBF_LOG(log_error, "ndrx_CBvget_int failed");
         goto out;
     }
 	
@@ -449,7 +449,7 @@ expublic int ndrx_CBvchg(char *cstruct, char *view, char *cname, BFLDOCC occ,
     if (EXFAIL==(ret=ndrx_CBvchg_int(cstruct, v, f, occ, buf, len, usrtype)))
     {
         /* error must be set */
-        NDRX_LOG(log_error, "ndrx_CBvchg_int failed");
+       UBF_LOG(log_error, "ndrx_CBvchg_int failed");
         EXFAIL_OUT(ret);
     }
 	
@@ -574,7 +574,7 @@ expublic BFLDOCC ndrx_Bvoccur_int(char *cstruct, ndrx_typedview_t *v,
     }
     
 out:
-    NDRX_LOG(log_debug, "%s returns %d maxocc=%d dim_size=%d realocc=%d", __func__, 
+    UBF_LOG(log_debug, "%s returns %d maxocc=%d dim_size=%d realocc=%d", __func__, 
 	     ret, maxocc?*maxocc:-1, dim_size?*dim_size:-1, realocc?*realocc:-1);
     return ret;
 }
@@ -612,7 +612,7 @@ expublic BFLDOCC ndrx_Bvoccur(char *cstruct, char *view, char *cname,
     if (EXFAIL==(ret = ndrx_Bvoccur_int(cstruct, v, f, maxocc, realocc, 
             dim_size, fldtype)))
     {
-        NDRX_LOG(log_error, "ndrx_Bvoccur_int failed");
+        UBF_LOG(log_error, "ndrx_Bvoccur_int failed");
     }
     
 out:
