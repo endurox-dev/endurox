@@ -82,7 +82,7 @@ expublic int ndrx_viewocc_get(ndrx_viewocc_t **hhandle, char *fld)
         if (NULL==(el = NDRX_FPMALLOC(sizeof(ndrx_viewocc_t), 0)))
         {
             int err = errno;
-            NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+            UBF_LOG(log_error, "Failed to alloc: %s", strerror(err));
             userlog("Failed to alloc: %s", strerror(err));
             goto out;
         }
