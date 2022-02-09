@@ -249,6 +249,7 @@ expublic void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
     ndrx_debug_t * dbg = debug_get_ndrx_ptr();
     if (dbg->level>=lev)
     {
+        /* This is as is it is meant ndrx topic: */
         NDRX_LOG(lev, "%s", title);
         
         ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);

@@ -137,7 +137,7 @@ exprivate int strip_ptr(UBFH *p_ub, BFLDLEN maxlen, int *did_mod)
         state.p_ub = p_ub;
         state.size = hdr->bytes_used;
 
-        NDRX_LOG(log_debug, "Searching for sub-buffers, cnt=%d", cnt);
+        UBF_LOG(log_debug, "Searching for sub-buffers, cnt=%d", cnt);
         for(i=0; (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr))); i++)
         {
             ftyp = bfldid >> EFFECTIVE_BITS;

@@ -254,7 +254,7 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
     if (NULL==temp_ub)
     {
         int err = errno;
-        NDRX_LOG(log_error, "Failed to allocate %ld bytes in temporary UBF buffer: %s", 
+        UBF_LOG(log_error, "Failed to allocate %ld bytes in temporary UBF buffer: %s", 
                 bsize, strerror(errno));
         ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate %ld bytes in temporary UBF buffer: %s", 
                 bsize, strerror(errno));
@@ -263,7 +263,7 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
     
     if (EXSUCCEED!=Binit(temp_ub, bsize))
     {
-        NDRX_LOG(log_error, "Failed to init UBF buffer: %s", Bstrerror(Berror));
+        UBF_LOG(log_error, "Failed to init UBF buffer: %s", Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
@@ -285,7 +285,7 @@ expublic int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstruct, int
             {
                 C_count = (short *)(cstruct+f->count_fld_offset);
 
-                NDRX_LOG(log_dump, "%s.C_%s=%hd", 
+                UBF_LOG(log_dump, "%s.C_%s=%hd", 
                         v->vname, f->cname, *C_count);
             }
             else

@@ -175,7 +175,7 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
     
     DL_FOREACH(v->fields, f)
     {        
-        NDRX_LOG(log_dump, "Processing field: [%s]", f->cname);
+        UBF_LOG(log_dump, "Processing field: [%s]", f->cname);
         /* Check do we have length indicator? */
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
