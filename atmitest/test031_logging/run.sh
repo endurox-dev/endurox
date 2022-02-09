@@ -66,6 +66,9 @@ mkdir non_write
 # no write for others..
 chmod 555 non_write
 
+# default ndrx=5
+#export NDRX_DEBUG_CONF="debug.conf"
+
 (./atmisv31FIRST -t 4 -i 1 2>&1) > ./atmisv31FIRST.log &
 (./atmisv31SECOND -i 1 2>&1) > ./atmisv31SECOND.log &
 sleep 2
@@ -88,9 +91,9 @@ fi
 
 # could lines of "HELLO" in ./atmiclt31_inv.log
 # shall be over 1000
-CNT = `grep HELLO ./atmiclt31_inv.log | wc -l | awk '{print $1}'`
+CNT=`grep HELLO ./atmiclt31_inv.log | wc -l | awk '{print $1}'`
 
-echo "CNT=$CNT"
+echo "CNT=[$CNT]"
 
 if [ "$CNT" -lt "1000" ]; then
     echo "atmiclt31_inv expected at least 1000 HELLO, got $CNT!"

@@ -906,13 +906,15 @@ expublic void ndrx_init_debug(void)
     /* static coinf */
     G_stdout_debug.buf_lines = 1;
     G_stdout_debug.buffer_size = 1;
-    G_stdout_debug.level = log_error;
+    G_stdout_debug.level = log_debug;
     
     /* default bufsz  */
     G_tp_debug.buffer_size = G_ubf_debug.buffer_size = G_ndrx_debug.buffer_size = 50000;
 
     G_tp_debug.buf_lines = G_ubf_debug.buf_lines = G_ndrx_debug.buf_lines = 1;
-    G_tp_debug.level = G_ubf_debug.level = G_ndrx_debug.level = log_error;
+    G_ubf_debug.level = G_ndrx_debug.level = log_error;
+    /* leave user logging as is */
+    G_tp_debug.level = log_debug;
 
     if (NULL==cconfig)
     {
