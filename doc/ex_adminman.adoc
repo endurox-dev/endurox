@@ -1969,6 +1969,54 @@ Also here for performance reasons (as cluster FS might be slow) Enduro/X could
 be modified to use database storage (and also assuming that DB is HA aware).
 
 
+== Trouble shooting
+
+This section lists common issues and their resolutions for runtime operations.
+
+=== EDB_READERS_FULL: Environment maxreaders limit reached errors
+
+Error *EDB_READERS_FULL* may appear, if processes using LMDB data access 
+(as part of UBFDB or Enduro/X Smart Cache), reaches readers limit (which is 
+default is 1000). If more than this number of processes accesses the LMDB database, 
+the error *EDB_READERS_FULL* is generated.
+
+To solve this issue, parameter *max_readers* must be adjusted in Enduro/X ini files.
+
+In case if error is related to UBF DB  (dynamic UBF field table):
+
+--------------------------------------------------------------------------------
+[@ubfdb[/CCTAG]]
+...
+# Increase the MAX_READERS, for example 5000
+max_readers=5000
+resource=DATABASE_DIRECTORY
+...
+--------------------------------------------------------------------------------
+
+In case if error is related to Enduro/X Smart Cache:
+
+--------------------------------------------------------------------------------
+[@cachedb/DBNAME_SECTION]
+
+# Increase the MAX_READERS, for example 5000
+max_readers=5000
+resource=DATABASE_DIRECTORY
+--------------------------------------------------------------------------------
+
+The target number of *max_readers* depends on number of processes actually
+using that resource, so some estimation must be made, to set the value correctly.
+
+To activate the parameter:
+
+. Update the configuration (as previously written).
+
+. Stop Enduro/X application.
+
+. Contents of the resource directory 'DATABASE_DIRECTORY' (path pointed by *resource*)
+shall be removed.
+
+. Start Enduro/X application. New readers count shall be effective.
+
 [bibliography]
 
 == Additional documentation 
