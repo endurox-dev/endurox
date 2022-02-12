@@ -93,7 +93,7 @@ For other Operating systems, other chapters applies from the administration manu
 
 Migration from Oracle Tuxedo to Enduro/X typically is accomplished by following steps:
 
-image:migration_tuxedo_process.png[caption="Figure 1: ", title="Migration from Tuxedo to Enduro/X steps"]
+image:migration_tuxedo_process.png[caption="Figure 1: ", title="Migration from Tuxedo to Enduro/X steps",width=440]
 
 . *Code analysis:* User application source code analysis for API compatibility. This can be done by
 manually checking each of the Tuxedo calls and their counterparts in the Enduro/X
