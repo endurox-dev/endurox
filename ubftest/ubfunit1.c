@@ -866,7 +866,7 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_cfget_tests());
     add_suite(suite, ubf_fdel_tests());
     add_suite(suite, ubf_expr_tests());
-    add_suite(suite, ubf_fnext_tests());
+    add_suite(suite, ubf_bnext_tests());
     add_suite(suite, ubf_fproj_tests());
     add_suite(suite, ubf_mem_tests());
     add_suite(suite, ubf_fupdate_tests());

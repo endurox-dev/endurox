@@ -56,6 +56,7 @@ set(MAN3_NAMES
     Bcpy
     Binit
     Bnext
+    Bnext2
     Bboolco
     Bboolpr
     Bboolprcb

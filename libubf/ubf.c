@@ -1000,16 +1000,19 @@ expublic void Btreefree (char *tree)
  * So this should not be used recursively or by multiple threads.
  * Also check against buffer sizes is done. Buffer shall not be modified during
  * the enumeration!
- * @param p_ub
- * @param bfldid
- * @param occ
- * @param buf
- * @param len
+ * @param bnext_state state to be passed, in start of the searc this is reset
+ * @param p_ub UBF buffer to work on
+ * @param bfldid field next
+ * @param occ occurrence next
+ * @param buf if not NULL, returns value
+ * @param len if not NULL, on intput buf len, on output number of bytes read
+ * @param d_ptr raw data pointer, may be left NULL
  * @return -1 (FAIL)/0 (End of Buffer)/1 (Found)
  */
-expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len)
+exprivate int  Bnext_int(Bnext_state_t *bnext_state, UBFH *p_ub, BFLDID *bfldid, 
+    BFLDOCC *occ, char *buf, BFLDLEN *len, char **d_ptr)
 {
-    char fn[] = "Bnext";
+    char fn[] = "Bnext_int";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     /* Seems this caused tricks for multi threading.*/
 
@@ -1021,34 +1024,51 @@ expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN
         UBF_LOG(log_warn, "%s: arguments fail!", fn);
         return EXFAIL;
     }
-    else if (NULL==bfldid || NULL==occ)
+    else if (NULL==bfldid || NULL==occ || NULL==bnext_state)
     {
-        ndrx_Bset_error_msg(BEINVAL, "Bnext: ptr of bfldid or occ is NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Bnext: ptr of bfldid, occ or bnext_state is NULL!");
         return EXFAIL;
     }
-    else if (*bfldid != BFIRSTFLDID && G_ubf_tls->bnext_state.p_ub != p_ub)
+    else if (*bfldid != BFIRSTFLDID && bnext_state->p_ub != p_ub)
     {
         ndrx_Bset_error_fmt(BEINVAL, "%s: Different buffer [state: %p used: %p] "
                                     "used for different state", fn,
-                                    G_ubf_tls->bnext_state.p_ub, p_ub);
+                                    bnext_state->p_ub, p_ub);
         return EXFAIL;
     }
-    else if (*bfldid != BFIRSTFLDID && G_ubf_tls->bnext_state.size!=hdr->bytes_used)
+    else if (*bfldid != BFIRSTFLDID && bnext_state->size!=hdr->bytes_used)
     {
         ndrx_Bset_error_fmt(BEINVAL, "%s: Buffer size changed [state: %d used: %d] "
                                     "from last search", fn,
-                                    G_ubf_tls->bnext_state.size, hdr->bytes_used);
+                                    bnext_state->size, hdr->bytes_used);
         return EXFAIL;
     }
     else
     {
         if (*bfldid == BFIRSTFLDID)
         {
-            memset(&G_ubf_tls->bnext_state, 0, sizeof(G_ubf_tls->bnext_state));
+            memset(bnext_state, 0, sizeof(Bnext_state_t));
         }
 
-        return ndrx_Bnext(&G_ubf_tls->bnext_state, p_ub, bfldid, occ, buf, len, NULL);
+        return ndrx_Bnext(bnext_state, p_ub, bfldid, occ, buf, len, d_ptr);
     }
+}
+
+/**
+ * Wrapper for Bnext_int
+ */
+expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len)
+{
+    return Bnext_int(&G_ubf_tls->bnext_state, p_ub, bfldid, occ, buf, len, NULL);
+}
+
+/**
+ * Wrapper for Bnext_int
+ */
+expublic int Bnext2(Bnext_state_t *bnext_state, UBFH *p_ub, BFLDID *bfldid, 
+    BFLDOCC *occ, char *buf, BFLDLEN *len, char **d_ptr)
+{
+    return Bnext_int(bnext_state, p_ub, bfldid, occ, buf, len, d_ptr);
 }
 
 /**

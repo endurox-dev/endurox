@@ -218,6 +218,7 @@ extern NDRX_API int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src);
 extern NDRX_API int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len);
 extern NDRX_API int Binit (UBFH * p_ub, BFLDLEN len);
 extern NDRX_API int Bnext (UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len);
+extern NDRX_API int Bnext2(Bnext_state_t *bnext_state, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len, char **d_ptr);
 extern NDRX_API int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN * buflen);
 extern NDRX_API char * Bboolco (char * expr);
 extern NDRX_API char * Bfind (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * p_len);

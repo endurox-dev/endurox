@@ -1653,7 +1653,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
     int type;
     dtype_str_t *dtype;
     char *p;
-    char fn[] = "_Bnext";
+    char fn[] = "ndrx_Bnext";
     #ifdef UBF_API_DEBUG
     dtype_ext1_t *__dbg_dtype_ext1;
     #endif
