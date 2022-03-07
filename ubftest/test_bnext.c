@@ -107,7 +107,7 @@ void load_fdel_test_data(UBFH *p_ub)
 /**
  * This simply reads all field and adds them to another buffer, then do compare
  */
-Ensure(test_fnext_simple)
+Ensure(test_Bnext_simple)
 {
     char fb[1400];
     char fb_2[1400];
@@ -150,8 +150,76 @@ Ensure(test_fnext_simple)
 
 /**
  * This simply reads all field and adds them to another buffer, then do compare
+ * operate with two buffer sets at the same time
+ * also compare the values of dptr
  */
-Ensure(test_fnext_chk_errors)
+Ensure(test_Bnext2_simple)
+{
+    char fb[1400];
+    char fb_2[1400];
+    UBFH *p_ub = (UBFH *)fb;
+    UBFH *p_ub_2 = (UBFH *)fb_2;
+
+    char fb_3[1400];
+    char fb_4[1400];
+    UBFH *p_ub_3 = (UBFH *)fb_3;
+    UBFH *p_ub_4 = (UBFH *)fb_4;
+
+    BFLDID bfldid;
+    BFLDID bfldid3;
+    BFLDOCC occ;
+    BFLDOCC occ3;
+    char data_buf[200];
+    BVIEWFLD *vf;
+    BFLDLEN  len;
+    char *dptr;
+    int fldcount=0;
+
+    Bnext_state_t s1, s2;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    load_fdel_test_data(p_ub);
+
+    assert_equal(Binit(p_ub_3, sizeof(fb_3)), EXSUCCEED);
+    assert_equal(Binit(p_ub_4, sizeof(fb_4)), EXSUCCEED);
+    load_fdel_test_data(p_ub_3);
+    
+    len = sizeof(data_buf);
+    bfldid = BFIRSTFLDID;
+    bfldid3 = BFIRSTFLDID;
+
+    while(1==Bnext2(&s1, p_ub, &bfldid, &occ, data_buf, &len, NULL) &&
+            1==Bnext2(&s2, p_ub_3, &bfldid3, &occ3, NULL, NULL, &dptr))
+    {
+        assert_equal(Bchg(p_ub_2, bfldid, occ, data_buf, len), EXSUCCEED);
+
+        /* load from returned ptr: */
+        assert_equal(Bchg(p_ub_4, bfldid3, occ3, dptr, len), EXSUCCEED);
+
+        /* Got the value? */
+        len = sizeof(data_buf);
+    }
+    
+    /* Now do the mem compare (this is not the best way to test,
+     * but will be OK for now */
+    assert_equal(Bcmp(p_ub, p_ub_2),0);
+    assert_equal(Bcmp(p_ub, p_ub_4),0);
+
+    /* Now test the count because buffer is NULL */
+    bfldid = BFIRSTFLDID;
+    while(1==Bnext(p_ub_2, &bfldid, &occ, NULL, NULL))
+    {
+        fldcount++;
+    }
+
+    assert_equal(fldcount, 30);
+}
+
+/**
+ * This simply reads all field and adds them to another buffer, then do compare
+ */
+Ensure(test_Bnext_chk_errors)
 {
     char fb[1400];
     UBFH *p_ub = (UBFH *)fb;
@@ -189,7 +257,7 @@ Ensure(test_fnext_chk_errors)
  * Ensure that we return length even if output buffer is not present
  * Bug #341
  */
-Ensure(test_fnext_len)
+Ensure(test_Bnext_len)
 {
     char fb[1400];
     UBFH *p_ub = (UBFH *)fb;
@@ -263,13 +331,14 @@ Ensure(test_fnext_len)
     
 }
 
-TestSuite *ubf_fnext_tests(void)
+TestSuite *ubf_bnext_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
-    add_test(suite, test_fnext_simple);
-    add_test(suite, test_fnext_chk_errors);
-    add_test(suite, test_fnext_len);
+    add_test(suite, test_Bnext_simple);
+    add_test(suite, test_Bnext2_simple);
+    add_test(suite, test_Bnext_chk_errors);
+    add_test(suite, test_Bnext_len);
 
     return suite;
 }

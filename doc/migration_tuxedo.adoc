@@ -52,6 +52,14 @@ of *mkfldhdr(8)* would generate error. In case if for some reason duplicate
 field IDs are OK, flag *ubf_dupfidok* shall be set in *NDRX_APIFLAGS* (see *ex_env(5)*).
 Note that for runtime this flag is not required i.e. only needed for build time.
 
+- *Bnext(3)* / Fnext() / Fnext32() Enduro/X version keeps the iteration state
+within thread local storage, however Tuxedo stores the state in the FML buffer
+(or uses some other mapped association of the iteration states of multiple buffers).
+This means that if iterating multiple buffers at the same time by the same thread,
+Enduro/X version will corrupt the iteration state for previous buffer iterations.
+However Enduro/X offers *Bnext2(3)* API call which allow to store the iteration
+state in reentrant way.
+
 === Tuxedo API bindings
 
 - *endurox-java* package serves as direct counterpart of the *Oracle Tuxedo Java*. Some

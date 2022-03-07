@@ -104,7 +104,7 @@ extern TestSuite *ubf_cfchg_tests(void);
 extern TestSuite *ubf_cfget_tests(void);
 extern TestSuite *ubf_expr_tests(void);
 extern TestSuite *ubf_fdel_tests(void);
-extern TestSuite *ubf_fnext_tests(void);
+extern TestSuite *ubf_bnext_tests(void);
 extern TestSuite *ubf_fproj_tests(void);
 extern TestSuite *ubf_mem_tests(void);
 extern TestSuite *ubf_fupdate_tests(void);

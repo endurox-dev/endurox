@@ -65,6 +65,7 @@ extern NDRX_API int OBcpy(TPCONTEXT_T *p_ctxt, UBFH * p_ub_dst, UBFH * p_ub_src)
 extern NDRX_API int OBchg(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN len);
 extern NDRX_API int OBinit(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDLEN len);
 extern NDRX_API int OBnext(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len);
+extern NDRX_API int OBnext2(TPCONTEXT_T *p_ctxt, Bnext_state_t *bnext_state, UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN *len, char **d_ptr);
 extern NDRX_API int OBget(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, char * buf, BFLDLEN * buflen);
 extern NDRX_API char * OBboolco(TPCONTEXT_T *p_ctxt, char * expr);
 extern NDRX_API char * OBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN * p_len);
