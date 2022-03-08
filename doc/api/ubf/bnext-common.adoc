@@ -25,20 +25,24 @@ with trailing data. Thus the BVIEWFLD.data is set to memory address of
 reduced by sizeof(BVIEWFLD).
 
 *Bnext()* is not reentrant, meaning that iteration state is kept in the thread local storage
-and while iterating one buffer, the attempt to iterate on another buffer is done,
+and while iterating one buffer, if attempt to iterate another buffer is done,
 the first buffer iteration state is lost.
 
 To operate with two or more buffers at the same time, use *Bnext2()* version of the function,
-where the iteration state is stored at 'bnext_state' parameter. 'bnext_state' variable is
+where the iteration state is stored at 'bnext_state' parameter. 'bnext_state' parameter is
 automatically initialized when iteration is stated by *BFIRSTFLDID*. This version of the
-function additionally returns pointer to the raw filed data in 'd_ptr' parameter.
-The use of 'd_ptr' may give some performance boost to avoid extra data copy when transfering
-data from the given UBF buffer.
+function additionally returns pointer to the raw field data in 'd_ptr' parameter.
+The use of 'd_ptr' may give some performance boost as extra data copy is avoided during the 
+data access.
 In case if current field is *BFLD_VIEW*, returned 'd_ptr' will return pointer to the
 initialized *BVIEWFLD* field. The *BVIEWFLD* initialization data is stored in thread
 local storage, meaning that if iterating two or more buffers with *BFLD_VIEW* fields, then
-'d_ptr' would be valid only for last result. For all other field types, returned pointer
-is valid until the UBF buffer is not modified (including parent of the embedded buffer).
+'d_ptr' would be valid only for last result. If data shell be kept while accessing other
+UBF buffer with view fields, the copy of 'd_ptr' to local variable according to type
+*BVIEWFLD* may be done.
+
+For all other field types, returned pointer is valid while the UBF buffer is not
+modified (including no modifications to parent of the embedded buffer).
 
 Functions are thread safe.
 
