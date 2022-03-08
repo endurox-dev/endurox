@@ -1809,7 +1809,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         }
         else
         {
-            UBF_LOG(log_warn, "%s: Buffer null - not returning value", fn);
+            UBF_LOG(log_info, "%s: Buffer null - not returning value", fn);
         }
     }
     else
