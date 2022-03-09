@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpgetcallinfo(const char *'msg', UBFH **'cibuf', long 'flags');
+int tpgetcallinfo(const char \*'msg', UBFH **'cibuf', long 'flags');
 
 Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 
