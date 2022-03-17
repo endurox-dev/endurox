@@ -70,13 +70,21 @@ The caller's state with respect to the transaction is not changed.
 time-out time. The state of transaction is unknown.
 
 *TPEABORT* Global transaction was marked for abort and was aborted, or prepare 
-state failed for some of the resource managers and transaction was aborted.
+state failed for some of the resource managers and transaction was aborted or
+abort decision is logged at transaction manager and transaction will be 
+aborted in the background.
 
-*TPEHAZARD* The state of transaction is not fully know. It can be that it is 
-partially committed and partially aborted.
+*TPEHAZARD* Transaction is staged to commit phase, when error occurred. 
+Some of the transaction branch resources are not available for transaction 
+to be completed and transaction will be completed in background by transaction manager.
+Or some of the transaction branch resources have executed commit operation, 
+but have reported status that transaction might be partially committed 
+or partially aborted.
 
-*TPEHEURISTIC* The state of transaction is not full known. The transaction 
-heuristically completed.
+*TPEHEURISTIC* Transaction is staged to commit phase, when error occurred. 
+Some of the transaction branch resources have executed commit operation, 
+but have reported status that transaction might be partially committed 
+or partially aborted.
 
 *TPESVCERR* Failed to call transaction manager, with service error. 
 The state of transaction is unknown.
