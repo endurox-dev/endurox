@@ -1262,9 +1262,9 @@ exprivate int basic_commit_shut(int maxmsg)
     }
     
     /* we shall get abort error... */
-    if (TPEHAZARD!=tperrno)
+    if (TPEABORT!=tperrno)
     {
-        NDRX_LOG(log_error, "TESTERROR: invalid error, expected TPEHAZARD got %d",
+        NDRX_LOG(log_error, "TESTERROR: invalid error, expected TPEABORT got %d",
                 tperrno);
         EXFAIL_OUT(ret);
     }
