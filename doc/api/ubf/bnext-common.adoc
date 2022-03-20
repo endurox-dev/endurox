@@ -38,10 +38,8 @@ In case if current field is *BFLD_VIEW*, returned 'd_ptr' will return pointer to
 initialized *BVIEWFLD* field. The *BVIEWFLD* initialization data is stored in thread
 local storage, meaning that if iterating two or more buffers with *BFLD_VIEW* fields, then
 'd_ptr' would be valid only for last result. If data shell be kept while accessing other
-UBF buffer with view fields, the copy of 'd_ptr' to local variable according to type
-*BVIEWFLD* may be done.
-
-For all other field types, returned pointer is valid while the UBF buffer is not
+UBF buffer with view fields, copy of 'd_ptr' to local variable of *BVIEWFLD* type 
+may be done. Returned 'd_ptr' pointer is valid only while the UBF buffer is not
 modified (including no modifications to parent of the embedded buffer).
 
 Functions are thread safe.
