@@ -323,15 +323,8 @@ static PSInteger _exutil_rands(HPSCRIPTVM v)
 {
     PSChar *stemp;
     PSInteger len;
-    static int first = EXTRUE;
     char table[]="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     int i, tablen;
-    
-    if (first)
-    {
-        srand(time(NULL));
-        first=EXFALSE;
-    }
     
     ps_getinteger(v,2,&len);
     
@@ -343,7 +336,7 @@ static PSInteger _exutil_rands(HPSCRIPTVM v)
     tablen = strlen(table);
     for (i=0; i<len; i++)
     {
-        stemp[i]= table[rand() % tablen];
+        stemp[i]= table[ndrx_rand() % tablen];
     }
     
     ps_pushstring(v,stemp,-1);

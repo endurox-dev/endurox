@@ -446,15 +446,6 @@ Ensure(test_proto_rndparse)
         assert_equal(ndrx_shm_open(&M_testmem, EXTRUE), EXSUCCEED);
     }
             
-    /*
-    srand(time(NULL));
-    
-    for (i=0; i<LEVEL_MAX; i++)
-    {
-        M_msg[i] = (char)(rand() % 255);
-    }*/
-    
-    
     assert_equal(brute_force_protocol(0), EXSUCCEED);
 }
 

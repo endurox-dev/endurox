@@ -2073,8 +2073,6 @@ expublic FILE* ndrx_mkstemps(char *filetempl, int suffixlen, long flags)
     char letters[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     int chk_size = sizeof(letters) -1; /* strip off EOS */
     
-    srand(time(NULL)); /* randomize seed */
-    
     /*
     fd = open(tmpname, O_EXCL | O_CREAT, 0600);
     */
@@ -2093,7 +2091,7 @@ expublic FILE* ndrx_mkstemps(char *filetempl, int suffixlen, long flags)
         {
             for (j=len-suffixlen-TEMP_MAKS_LEN; j<len-suffixlen; j++)
             {
-                filetempl[j] = letters[rand() % chk_size];
+                filetempl[j] = letters[ndrx_rand() % chk_size];
             }
         }
         
@@ -2520,6 +2518,23 @@ expublic char *ndrx_str_fmtesc(char *dst, size_t dstsz, char *src)
     }
     
     return dst;
+}
+
+/**
+ * Thread safe pseudo random function, per standard library TLS context
+ * @return random value
+ */
+expublic int ndrx_rand(void)
+{
+    NSTD_TLS_ENTRY;
+    
+    if (!G_nstd_tls->rand_init)
+    {
+        G_nstd_tls->rand_seed = (unsigned int)time(NULL);
+        G_nstd_tls->rand_init=EXTRUE;
+    }
+    
+    return rand_r(&G_nstd_tls->rand_seed);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -1028,16 +1028,8 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     }
     else if (2==G_atmi_env.test_tmsrv_write_fail)
     {
-        static int first = EXTRUE;
-        
-        if (first)
-        {
-            srand ( time(NULL) );
-            first=EXFALSE;
-        }
-        
         /* generate 25% random errors */
-        if (rand() % 4 == 0)
+        if (ndrx_rand() % 4 == 0)
         {
             make_error = EXTRUE;
         }

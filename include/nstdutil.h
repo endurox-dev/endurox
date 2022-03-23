@@ -454,6 +454,9 @@ extern NDRX_API int ndrx_chk_confirm(char *message, short is_confirmed);
 extern NDRX_API void ndrx_stdcfgstr_free(ndrx_stdcfgstr_t* stdcfg);
 extern NDRX_API int ndrx_stdcfgstr_parse(char *input, ndrx_stdcfgstr_t** parsed);
 
+
+extern NDRX_API int ndrx_rand(void);
+
 /* String handling, where macros does not work: */
 
 /**

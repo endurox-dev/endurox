@@ -317,7 +317,6 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     int pos=EXFAIL;
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     int use_cluster = EXFAIL;
-    static int first = EXTRUE;
     shm_svcinfo_t *psvcinfo = NULL;
     int chosen_node = EXFAIL;
     ATMI_TLS_ENTRY;
@@ -375,13 +374,6 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     
     if (EXFAIL==use_cluster)
     {
-        /* So we will randomize as we have services in local & in cluster */
-        if (first)
-        {
-            first=EXFALSE;
-            srandom(time(NULL));
-        }
-        
         if (0==G_atmi_env.ldbal)
         {
             /* Run locally */
@@ -395,7 +387,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         else
         {
             /* Use random */
-            int n = rand()%100+1;
+            int n = ndrx_rand()%100+1;
             if (n<=G_atmi_env.ldbal)
             {
                 use_cluster = EXTRUE;
@@ -431,7 +423,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
             csrvs=1;
         }
         
-        cluster_node = rand()%csrvs+1;
+        cluster_node = ndrx_rand()%csrvs+1;
         NDRX_LOG(log_debug, "rnd: cluster_node=%d, cnode_max_id=%d", 
                 cluster_node, psvcinfo->cnodes_max_id);
         

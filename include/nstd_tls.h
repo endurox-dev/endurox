@@ -101,6 +101,9 @@ typedef struct
     
     int user_field_1; /* used for testing where TLS is needed... */
     
+    unsigned int rand_seed; /**< Random seed used by thread             */
+    int rand_init;  /**< Has random initialized?                        */
+    
 } nstd_tls_t;
 
 /*---------------------------Globals------------------------------------*/

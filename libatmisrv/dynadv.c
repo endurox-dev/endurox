@@ -77,16 +77,9 @@ expublic int dynamic_readvertise(char *svcname)
     svc_entry_fn_t *entry=NULL;
     char *fn="dynamic_readvertise";
     int found = EXFALSE;
-    static int first = EXTRUE;
     int mod;
     
     NDRX_LOG(log_warn, "%s: enter, svcname = [%s]", fn, svcname);
-    
-    if (first)
-    {
-        first = EXFALSE;
-        srand ( time(NULL) );
-    }
     
     if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
     {
@@ -109,7 +102,7 @@ expublic int dynamic_readvertise(char *svcname)
     /* So that we do not get infinite loop, in case 
      * if many servers does restarts at the same time! 
      */
-    mod = rand() % 4;
+    mod = ndrx_rand() % 4;
     /* Have some sleep, as limit */
     NDRX_LOG(log_warn, "Sleeping %d seconds for re-advertise!", 
             READVERTISE_SLEEP_SRV+mod);

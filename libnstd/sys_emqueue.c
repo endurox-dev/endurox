@@ -88,7 +88,6 @@ typedef struct qd_hash qd_hash_t;
 exprivate  struct mq_attr defattr = { 0, 128, 1024, 0 };
 exprivate MUTEX_LOCKDECL(M_lock);
 exprivate qd_hash_t *M_qd_hash = NULL;
-exprivate  int M_first = EXTRUE; /**< Had random init? */
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -135,13 +134,8 @@ expublic int ndrx_pthread_cond_timedwait(pthread_cond_t *restrict cond,
     {
         if (attempt > 0)
         {
-            if (M_first)
-            {
-                srand(time(NULL));
-                M_first = EXFALSE;
-            }
             /* max sleep 0.001 sec... */
-            usleep(rand() % 1000);
+            usleep(ndrx_rand() % 1000);
         }
         
         p->busy = NULL;
@@ -169,13 +163,8 @@ expublic int ndrx_pthread_cond_wait(pthread_cond_t *restrict cond,
     {
         if (attempt > 0)
         {
-            if (M_first)
-            {
-                srand(time(NULL));
-                M_first = EXFALSE;
-            }
             /* max sleep 0.001 sec... */
-            usleep(rand() % 1000);
+            usleep(ndrx_rand() % 1000);
         }
         
         p->busy = NULL;

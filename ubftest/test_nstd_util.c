@@ -512,6 +512,31 @@ Ensure(test_nstd_ndrx_strnlen)
 }
 
 /**
+ * Test Enduro/X random generator
+ */
+Ensure(test_nstd_ndrx_rand)
+{
+    ndrx_stopwatch_t w;
+    int rand1, ok=EXFALSE;
+    ndrx_stopwatch_reset(&w);
+    
+    rand1 = ndrx_rand();
+    
+    /* during 1 sec, there must be different values */
+    while (ndrx_stopwatch_get_delta_sec(&w)<1)
+    {
+        if (rand1!=ndrx_rand())
+        {
+            ok=EXTRUE;
+            break;
+        }
+    }
+    
+    assert_equal(ok, EXTRUE);
+    
+}
+    
+/**
  * Standard library tests
  * @return
  */
@@ -528,6 +553,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_ndrx_mkstemps);
     add_test(suite, test_nstd_stopwatch);
     add_test(suite, test_nstd_ndrx_strnlen);
+    add_test(suite, test_nstd_ndrx_rand);
     
     return suite;
 }
