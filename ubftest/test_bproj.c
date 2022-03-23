@@ -50,11 +50,10 @@
 void randomize_test_data(char *ptr, int size)
 {
     int i;
-    srand(time(NULL)); /* randomize seed */
 
     for (i=0; i<size; i++)
     {
-        ptr[i]=(char)(rand() % 255);
+        ptr[i]=(char)(ndrx_rand() % 255);
     }
 }
 void test_proj_data_1(UBFH *p_ub)
