@@ -128,10 +128,9 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         int i;
         char *buf = (char *)p_ub;
 
-        srand ( time(NULL) );
         for (i=0; i<len; i++)
         {
-            buf[i] = (char)(rand() % 255);
+            buf[i] = (char)(ndrx_rand() % 255);
         }
 
 #endif
