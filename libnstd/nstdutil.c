@@ -2530,7 +2530,7 @@ expublic int ndrx_rand(void)
     
     if (!G_nstd_tls->rand_init)
     {
-        G_nstd_tls->rand_seed = (unsigned int)time(NULL);
+        ndrx_rand_seedset(&G_nstd_tls->rand_seed);
         G_nstd_tls->rand_init=EXTRUE;
     }
     
