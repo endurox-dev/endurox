@@ -63,7 +63,7 @@ exprivate volatile unsigned int M_init_done=EXFALSE;
  * @param number bytes to unload
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_get_rnd_bytes(unsigned char *output, size_t len)
+exprivate int ndrx_get_rnd_bytes(unsigned char *output, size_t len)
 {
     int ret = EXSUCCEED;
     int fd=EXFAIL, flags, i;
@@ -108,19 +108,42 @@ out:
 
     return ret;
 }
+
+/**
+ * Initialize random seed
+ */
+expublic void ndrx_rand_seedset(unsigned int *seed)
+{
+    struct timeval  tv;
+    unsigned char buf[sizeof(*seed)];
+    int i;
+    char *p;
+
+    gettimeofday(&tv, 0);
+    *seed = (getpid() << 16) ^ getuid() ^ (unsigned int)tv.tv_sec ^ (unsigned int)tv.tv_usec;
+
+    /* Randomize seed counter.. */
+    if (EXSUCCEED==ndrx_get_rnd_bytes(buf, sizeof(*seed)))
+    {
+        p = (unsigned char *)seed;
+        for (i=0; i<sizeof(*seed); i++)
+        {
+            p[i] = p[i] ^ buf[i];
+        }
+    }
+}
+
 /**
  * Init UUID generator (once!)
  */
 exprivate void ndrx_cid_init(void)
 {
     unsigned int locl_seedp;
-    struct timeval  tv;
     unsigned char buf[sizeof(unsigned int)];
     unsigned char *p;
     int i;
     
-    gettimeofday(&tv, 0);
-    locl_seedp = (getpid() << 16) ^ getuid() ^ (unsigned int)tv.tv_sec ^ (unsigned int)tv.tv_usec;
+    ndrx_rand_seedset(&locl_seedp);
     M_counter = rand_r(&locl_seedp);
     
     /* Randomize counter.. */
@@ -132,17 +155,6 @@ exprivate void ndrx_cid_init(void)
             p[i] = p[i] ^ buf[i];
         }
     }
-    
-    /* Randomize seed counter.. */
-    if (EXSUCCEED==ndrx_get_rnd_bytes(buf, sizeof(locl_seedp)))
-    {
-        p = (unsigned char *)&locl_seedp;
-        for (i=0; i<sizeof(locl_seedp); i++)
-        {
-            p[i] = p[i] ^ buf[i];
-        }
-    }
-    
     M_seedp = locl_seedp;
 }
 
