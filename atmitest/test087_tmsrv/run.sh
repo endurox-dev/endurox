@@ -890,7 +890,7 @@ verify_logfiles "log2" "0"
 
 echo ""
 echo "************************************************************************"
-echo "Commit PREP XAER_RMERR, ABORT XAER_RMFAIL, exceeded (TPEABORT)  ..."
+echo "Commit PREP XAER_RMERR, ABORT XAER_RMFAIL, tries exceeded (TPEABORT)  ..."
 echo "************************************************************************"
 
 cat << EOF > lib1.rets
@@ -914,7 +914,7 @@ xa_open_entry:0:1:0
 xa_close_entry:0:1:0
 xa_start_entry:0:1:0
 xa_end_entry:0:1:0
-xa_rollback_entry:-7:5:0
+xa_rollback_entry:-7:3:0
 xa_prepare_entry:-3:1:0
 xa_commit_entry:0:1:0
 xa_recover_entry:0:1:0
@@ -943,21 +943,22 @@ if [[ $ERR != *"TPEABORT"* ]]; then
     go_out 1
 fi
 
+# let background to complete.
+sleep 10
+
 #verify results ops...
 verify_ulog "RM1" "xa_prepare" "1";
 verify_ulog "RM1" "xa_commit" "0";
 verify_ulog "RM1" "xa_rollback" "1";
 verify_ulog "RM1" "xa_forget" "0";
-verify_logfiles "log1" "1"
+verify_logfiles "log1" "0"
 
 verify_ulog "RM2" "xa_prepare" "1";
 verify_ulog "RM2" "xa_commit" "0";
-verify_ulog "RM2" "xa_rollback" "3";
+# 3x attempts + final
+verify_ulog "RM2" "xa_rollback" "4";
 verify_ulog "RM2" "xa_forget" "0";
 verify_logfiles "log2" "0"
-
-# let background to complete.
-sleep 10
 
 echo ""
 echo "************************************************************************"
