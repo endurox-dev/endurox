@@ -149,12 +149,12 @@ exprivate void lcf_print_cmds(ndrx_lcf_reg_xadminh_t *xcmd)
 
     if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ARGA)
     {
-        fprintf(stdout, "\t\t\t-A parameters is mandatory\n");
+        fprintf(stdout, "\t\t\t-A parameter is mandatory\n");
     }
     
     if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ARGB)
     {
-        fprintf(stdout, "\t\t\t-B parameters is mandatory\n");
+        fprintf(stdout, "\t\t\t-B parameter is mandatory\n");
     }
     
     if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ALL)
