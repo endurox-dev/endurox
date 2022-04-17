@@ -1021,6 +1021,8 @@ extern NDRX_API int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *ob
 extern NDRX_API int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **odata, 
         long *olen, long flags, long mflags);
 
+extern NDRX_API void ndrx_mbuf_Bnext_ptr_first(UBFH *p_ub, Bnext_state_t *state);
+
 #ifdef	__cplusplus
 }
 #endif

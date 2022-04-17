@@ -442,6 +442,23 @@ out:
 }
 
 /**
+ * Set Bnext state to first BFLD_PTR type
+ * used for recursive ubf/ptr buffer processing
+ * Note endurox-python module does extern to this
+ * @param p_ub UBF buffer to process
+ * @param state state to intialize
+ */
+expublic void ndrx_mbuf_Bnext_ptr_first(UBFH *p_ub, Bnext_state_t *state)
+{
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
+    BFLDID   *p_bfldid_start = &hdr->bfldid;
+    state->p_cur_bfldid = (BFLDID *)(((char *)p_bfldid_start) + hdr->cache_ptr_off);
+    state->cur_occ = 0;
+    state->p_ub = p_ub;
+    state->size = hdr->bytes_used;
+}
+
+/**
  * Loop the UBF buffer and add any ptr to output memory block.
  * This may go in recursion if we find any sub-UBF buffer of particular
  * UBF.
@@ -465,14 +482,9 @@ exprivate int ndrx_mbuf_ptrs_map_out(ndrx_mbuf_ptrs_t **ptrs, UBFH *p_ub,
     char **lptr;
     ndrx_longptr_t tmp_ptr;
     ndrx_mbuf_ptrs_t *hptr; /* hash pointer */
-    UBF_header_t *hdr = (UBF_header_t *)p_ub;
     int ftyp;
-    BFLDID   *p_bfldid_start = &hdr->bfldid;
     
-    state.p_cur_bfldid = (BFLDID *)(((char *)p_bfldid_start) + hdr->cache_ptr_off);
-    state.cur_occ = 0;
-    state.p_ub = p_ub;
-    state.size = hdr->bytes_used;
+    ndrx_mbuf_Bnext_ptr_first(p_ub, &state);
 
     while (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr)))
     {
