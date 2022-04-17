@@ -233,6 +233,7 @@ typedef struct
     int qdisk_is_open;
     int qdisk_rmid;
 
+    long atmisrv_reply_type;  /**< libatmisrv flags                             */
     
     ndrx_qdisk_tls_t *qdisk_tls;
     
