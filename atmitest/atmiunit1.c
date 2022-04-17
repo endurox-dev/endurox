@@ -715,6 +715,13 @@ Ensure(test091_tpgotsig)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test097_mtnojump)
+{
+    int ret;
+    ret=system_dbg("test097_mtnojump/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -873,6 +880,8 @@ TestSuite *atmi_test_all(void)
 #ifdef EX_USE_EPOLL
     add_test(suite, test091_tpgotsig);
 #endif
+    
+    add_test(suite, test097_mtnojump);
     
     return suite;
 }
