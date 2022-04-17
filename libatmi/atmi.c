@@ -1411,10 +1411,9 @@ expublic int tpgetcallinfo(const char *msg, UBFH **cibuf, long flags)
         EXFAIL_OUT(ret);   
     }
     
-    
-    if (0!=flags)
+    if (0!=flags && flags!=TPCI_NOEOFERR)
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "Flags (%ld) must be 0", flags);
+        ndrx_TPset_error_fmt(TPEINVAL, "Flags (%ld) must be 0 or TPCI_NOEOFERR", flags);
         EXFAIL_OUT(ret);
     }
     

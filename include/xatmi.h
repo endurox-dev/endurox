@@ -145,10 +145,22 @@ extern "C" {
 #define TPU_DIP		0x00000002
 #define TPU_IGN		0x00000004  /* Ignore unsol messages */
     
-/* for compatiblity with Tuxedo */
-#define TPSA_FASTPATH	0x00000008	
+/* for compatibility with Tuxedo */
+#define TPSA_FASTPATH	0x00000008
 #define TPSA_PROTECTED	0x00000010
     
+/**
+ * @defgroup callinfoflags Flags for callinfo handling
+ * @{
+ */
+
+/** Do not raise TPESYSTEM in case if no call info associated, when doing tpgetcallinfo()
+ * instead return: 0 if data no data found, 1 if data is found, -1 other error
+ */
+#define TPCI_NOEOFERR   0x00000001
+
+/** @} */ /* end of callinfoflags */
+
 /* 
  * used by tpconvert()
  */

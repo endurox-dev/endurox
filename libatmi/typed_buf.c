@@ -554,7 +554,7 @@ out:
  * Retrieve meta data
  * @param msg call buffer
  * @param cibuf metadata
- * @param flags
+ * @param flags 0 or TPCI_NOEOFERR
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **cibuf, long flags)
@@ -576,8 +576,16 @@ expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **cibuf, long flags)
     
     if (NULL==node_msg->callinfobuf)
     {
-        ndrx_TPset_error_fmt(TPESYSTEM, "No call info buffer is associated with message");
-        EXFAIL_OUT(ret);
+        if (flags & TPCI_NOEOFERR)
+        {
+            NDRX_LOG(log_debug, "No call infos associated with buffer %p", msg);
+            goto out;
+        }
+        else
+        {
+            ndrx_TPset_error_fmt(TPESYSTEM, "No call info buffer is associated with message");
+            EXFAIL_OUT(ret);
+        }
     }
     
     /* now try to receive -> setup data from incoming UBF... */
@@ -586,6 +594,12 @@ expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **cibuf, long flags)
     {
         NDRX_LOG(log_error, "Failed to retrieve call infos: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
+    }
+    
+    /* alternate return flag */
+    if (flags & TPCI_NOEOFERR)
+    {
+        ret=EXTRUE;
     }
     
 out:
