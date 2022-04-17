@@ -368,6 +368,8 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->qdisk_rmid=EXFAIL;
     tls->qdisk_tls=NULL;
     
+    tls->atmisrv_reply_type=0;
+    
     /* set callback, when thread dies, we need to get the destructor 
      * to be called
      */

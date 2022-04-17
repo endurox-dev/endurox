@@ -81,14 +81,6 @@ expublic int G_shutdown_req = 0;
 /* Only for poll() mode: */
 expublic int G_shutdown_nr_wait = 0;   /* Number of self shutdown messages to wait */
 expublic int G_shutdown_nr_got = 0;    /* Number of self shutdown messages got  */
-
-/* Used no-long-jump systems, this should be thread object based.
- * Here we will not use context as the one thread that start the processing
- * will finish it.
- * Also maybe not so actual here, as we expect that main poller will run only
- * in one thread.
- */
-expublic int G_atmisrv_reply_type = 0; 
 /*---------------------------Statics------------------------------------*/
 exprivate int M_autojoin = EXTRUE;      /**< perform autmatic tx join */
 /*---------------------------Prototypes---------------------------------*/
@@ -335,7 +327,7 @@ expublic int sv_serve_call(int *service, int *status,
     tp_command_call_t * last_call=NULL;
     long error_code = TPESVCERR; /**< Default error in case if cannot process */
     *status=EXSUCCEED;
-    G_atmisrv_reply_type = 0;
+    G_atmi_tls->atmisrv_reply_type = 0;
     
     call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
 
@@ -547,22 +539,22 @@ expublic int sv_serve_call(int *service, int *status,
         
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
                 /* Server did return:  */
-                (G_atmisrv_reply_type & RETURN_TYPE_TPRETURN || 
-                 G_atmisrv_reply_type & RETURN_TYPE_TPFORWARD
+                (G_atmi_tls->atmisrv_reply_type & RETURN_TYPE_TPRETURN || 
+                 G_atmi_tls->atmisrv_reply_type & RETURN_TYPE_TPFORWARD
                 )
             )
         {
             /* System does normal function return... */
             NDRX_LOG(log_debug, "Got back from reply/forward (%d) w/o long jump",
-                                        G_atmisrv_reply_type);
-            if (G_atmisrv_reply_type & RETURN_FAILED || 
-                    G_atmisrv_reply_type & RETURN_SVC_FAIL)
+                                        G_atmi_tls->atmisrv_reply_type);
+            if (G_atmi_tls->atmisrv_reply_type & RETURN_FAILED || 
+                    G_atmi_tls->atmisrv_reply_type & RETURN_SVC_FAIL)
             {
                 *status=EXFAIL;
             }
         }
         else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
-                G_atmisrv_reply_type & RETURN_TYPE_THREAD)
+                G_atmi_tls->atmisrv_reply_type & RETURN_TYPE_THREAD)
         {
             NDRX_LOG(log_info, "tpcontinue() issued from integra (no longjmp)!");
         }
@@ -653,7 +645,8 @@ expublic int sv_serve_connect(int *service, int *status,
     int generate_rply = EXFALSE;
     int error_code = TPESVCERR; /**< Default error in case if cannot process */
     *status=EXSUCCEED;
-    G_atmisrv_reply_type = 0;
+    
+    G_atmi_tls->atmisrv_reply_type = 0;
     
     NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %u, clttout",
                         call->cd, call->timestamp, call->callseq, call->clttout);
@@ -829,22 +822,22 @@ expublic int sv_serve_connect(int *service, int *status,
          */
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
                 /* Server did return:  */
-                (G_atmisrv_reply_type & RETURN_TYPE_TPRETURN || 
-                 G_atmisrv_reply_type & RETURN_TYPE_TPFORWARD
+                (G_atmi_tls->atmisrv_reply_type & RETURN_TYPE_TPRETURN || 
+                 G_atmi_tls->atmisrv_reply_type & RETURN_TYPE_TPFORWARD
                 )
             )
         {
             NDRX_LOG(log_debug, "Got back from reply/forward (%d) (no longjmp)",
-                                        G_atmisrv_reply_type);
+                                        G_atmi_tls->atmisrv_reply_type);
         
-            if (G_atmisrv_reply_type & RETURN_FAILED || 
-                    G_atmisrv_reply_type & RETURN_SVC_FAIL)
+            if (G_atmi_tls->atmisrv_reply_type & RETURN_FAILED || 
+                    G_atmi_tls->atmisrv_reply_type & RETURN_SVC_FAIL)
             {
                 *status=EXFAIL;
             }
         }
         else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
-                G_atmisrv_reply_type & RETURN_TYPE_THREAD)
+                G_atmi_tls->atmisrv_reply_type & RETURN_TYPE_THREAD)
         {
             NDRX_LOG(log_warn, "tpcontinue() issued from integra (no longjmp)!");
         }
