@@ -155,6 +155,7 @@ IF (DEFINED EX_USE_SYSVQ)
 ENDIF()
 
 add_subdirectory (test096_svcrmnet)
+add_subdirectory (test097_mtnojump)
 
 ################################################################################
 # Master test case drivere

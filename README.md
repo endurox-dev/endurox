@@ -636,11 +636,11 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 
 - Version 8.0.2 released on 26/01/2022 (stable) Marking initial release
 
-- Version 7.0.48 released on 29/01/2022 (stable) Support #761
+- Version 7.0.48 released on 29/01/2022 (stable) Support #761, Bug #771
 
 - Version 8.0.4 released on 05/02/2022 (stable) Support #763, Feature #764, Support #765
 
-- Version 8.0.6 prepared on 07/03/2022 (stable) Feature #767, Support #768, Support #769
+- Version 8.0.6 prepared on 07/03/2022 (stable) Feature #767, Support #768, Support #769, Bug #771
 
 # Build configurations
 

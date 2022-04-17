@@ -763,6 +763,13 @@ Ensure(test096_svcrmnet)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test097_mtnojump)
+{
+    int ret;
+    ret=system_dbg("test097_mtnojump/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -938,6 +945,8 @@ TestSuite *atmi_test_all(void)
 #if defined(EX_USE_EPOLL)|| defined(EX_USE_SVAPOLL) || defined(EX_USE_KQUEUE)
     add_test(suite, test096_svcrmnet);
 #endif
+    add_test(suite, test097_mtnojump);
+    
     return suite;
 }
 

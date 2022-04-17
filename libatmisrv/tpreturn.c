@@ -498,7 +498,7 @@ out:
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
         {
             NDRX_LOG(log_debug, "%s normal return to main - no longjmp", fn);
-            G_atmisrv_reply_type = return_status;
+            G_atmi_tls->atmisrv_reply_type = return_status;
         }
         else
         {
@@ -816,7 +816,7 @@ out:
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
         {
             NDRX_LOG(log_debug, "%s normal return to main - no longjmp", fn);
-            G_atmisrv_reply_type = return_status;
+            G_atmi_tls->atmisrv_reply_type = return_status;
         }
         else 
         {
@@ -847,8 +847,7 @@ expublic void _tpcontinue (void)
     if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP)
     {
        NDRX_LOG(log_debug, "Not jumping - as integra mode!");
-       G_atmisrv_reply_type|=RETURN_TYPE_THREAD;
-
+       G_atmi_tls->atmisrv_reply_type|=RETURN_TYPE_THREAD;
     }
     else 
     {
