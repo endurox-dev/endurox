@@ -90,11 +90,22 @@ Ensure(test_tpcallinfo)
     assert_equal(Bchg(p_meta_ubf, T_STRING_FLD, 0, "HELLO", 0), EXSUCCEED);
     assert_equal(Bchg(p_meta_ubf, T_STRING_FLD, 5, "WORLD", 0), EXSUCCEED);
     
+    assert_equal(tpgetcallinfo(call_buf, &p_other_buf, 0), EXFAIL);
+    assert_equal(tperrno, TPESYSTEM);
+
+    /* no error, if no association */
+    assert_equal(tpgetcallinfo(call_buf, &p_other_buf, TPCI_NOEOFERR), 0);
+    assert_equal(tperrno, 0);
+
     assert_equal(tpsetcallinfo(call_buf, p_meta_ubf, 0), EXSUCCEED);
     
     /* the output buffer shall be realloc'd to UBF and data filled */
     assert_equal(tpgetcallinfo(call_buf, &p_other_buf, 0), EXSUCCEED);
-    
+    len=sizeof(tmp);
+    assert_equal(Bget(p_other_buf, T_STRING_FLD, 0, tmp, &len), EXSUCCEED);
+    assert_string_equal(tmp, "HELLO");
+
+    assert_equal(tpgetcallinfo(call_buf, &p_other_buf, TPCI_NOEOFERR), EXTRUE);
     len=sizeof(tmp);
     assert_equal(Bget(p_other_buf, T_STRING_FLD, 0, tmp, &len), EXSUCCEED);
     assert_string_equal(tmp, "HELLO");
@@ -149,7 +160,7 @@ Ensure(test_tpcallinfo)
     /* this shall fail -> unknown buffer */
     assert_equal(tpgetcallinfo(call_buf, &p_other_buf, 0), EXFAIL);
     assert_equal(tperrno, TPEINVAL);
-    
+
     /* try to get to null / new */
     p_other_buf=NULL;
     assert_equal(tpgetcallinfo(call_buf, &p_other_buf, 0), EXSUCCEED);
@@ -169,10 +180,13 @@ Ensure(test_tpcallinfo)
     assert_equal(tperrno, TPEINVAL);
     
     /* flags no 0 */
-    assert_equal(tpsetcallinfo(call_buf, p_meta_ubf, 1), EXFAIL);
+    assert_equal(tpsetcallinfo(call_buf, p_meta_ubf, 999), EXFAIL);
     assert_equal(tperrno, TPEINVAL);
     
-    assert_equal(tpgetcallinfo(call_buf, &p_meta_ubf, 1), EXFAIL);
+    assert_equal(tpgetcallinfo(call_buf, &p_meta_ubf, 999), EXFAIL);
+    assert_equal(tperrno, TPEINVAL);
+
+    assert_equal(tpgetcallinfo(call_buf, &p_meta_ubf, 999|TPCI_NOEOFERR), EXFAIL);
     assert_equal(tperrno, TPEINVAL);
     
     /* check output buffer is NULL */

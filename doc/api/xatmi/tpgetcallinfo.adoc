@@ -24,7 +24,11 @@ calls. The 'msg' cannot be NULL buffer (null). 'cibuf' most point to XATMI buffe
 or *NULL*. Once function called, any call infos are copied to 'cibuf' (with
 type reallocation, if there is not enough space in 'cibuf' or not a UBF buffer).
 
-'flags' is reserved for future use, and shall be set to *0*.
+*Valid flags*
+
+*TPCI_NOEOFERR* Do not generate *TPESYSTEM* error in case if no call info buffer
+is associated with the 'msg'. Instead return *0*. In case if buffer found, return
+value is *1*.
 
 Call information to XATMI buffer is set by *tpsetcallinfo(3)* call, and is associated
 with 'msg' buffer through the call path, i.e. IPC between processes, such as
@@ -32,8 +36,12 @@ with 'msg' buffer through the call path, i.e. IPC between processes, such as
 
 RETURN VALUE
 ------------
-On success, *tpgetcallinfo()* return zero; on error, -1 is returned, with 
-*tperrno* set to indicate the error.
+If flag *TPCI_NOEOFERR* is not used: On success, *tpgetcallinfo()* returns zero; 
+on error, *-1* is returned, with *tperrno* set to indicate the error.
+
+If flag *TPCI_NOEOFERR* is used: On success *tpgetcallinfo()* returns *1*; If no
+call information is associated with the 'msg' buffer, returns *0*; on other error, 
+*-1* is returned, with *tperrno* set to indicate the error.
 
 ERRORS
 ------
