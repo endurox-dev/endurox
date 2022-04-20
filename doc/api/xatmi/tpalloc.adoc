@@ -80,7 +80,7 @@ debug info from last function call.
 error also can be generated in case if the environment is not configured for 
 Enduro/X properly.
 
-*TPEOTYPE* Invalid type specified to function. VIEW sub-type not found or
+*TPENOENT* Invalid type specified to function. VIEW sub-type not found or
 environment is not configured.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
