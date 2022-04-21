@@ -62,7 +62,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tsgblktime(3)* *tptoutget(3)* *tptoutset(3)* *ex_env(5)*
+*tpsblktime(3)* *tptoutget(3)* *tptoutset(3)* *ex_env(5)*
 
 COPYING
 -------
