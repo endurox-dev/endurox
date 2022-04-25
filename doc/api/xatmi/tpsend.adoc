@@ -46,7 +46,7 @@ on queue to send msg.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* 
+On success, *tpsend()* return zero; on error, -1 is returned, with *tperrno* 
 set to indicate the error.
 
 *'revent' return values:*
