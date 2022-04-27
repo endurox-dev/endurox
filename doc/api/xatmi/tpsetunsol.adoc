@@ -65,6 +65,8 @@ callback can do return.
 Enduro/X does not strictly control what API is used within the callback. It is up
 to user to follow these rules, otherwise unexpected behavior might occur.
 
+Callback handler is stored in thread local storage.
+
 RETURN VALUE
 ------------
 On success, *tpsetunsol()* return previous function pointer, might be NULL too; 
