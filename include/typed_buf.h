@@ -39,7 +39,8 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <atmi_int.h> /* include ATMI internal structures */
+#include <atmi_int.h> /* include ATMI internal structures       */
+#include <multibuf.h> /**< hash handling of pointers            */
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -75,6 +76,16 @@ extern "C" {
 #define BUF_IS_TYPEID_VALID(X) (BUF_TYPE_MIN<=X && X <= BUF_TYPE_MAX)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Free list used by recursive buffer free
+ */
+typedef struct
+{
+    ndrx_mbuf_ptrs_t *ptrs_hash;    /**< hash of pointer already freed */
+    char *mainbuf;                  /**< ptr to main buf doing the whole free thing */
+} ndrx_buf_free_lists_t;
+
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API buffer_obj_t *ndrx_G_buffers;
 extern NDRX_API typed_buffer_descr_t G_buf_descr[];

@@ -111,6 +111,12 @@ Mandatory Env. Variables
 *NDRX_DEBUG_CONF*='FULL_PATH_TO_DEBUG_CONFIG_FILE'::
     This sets full path to debug configuration file.
 
+*NDRX_DEBUG_STR*='DEBUG_STRING'::
+    Debug configuration for binary according to *ndrxdebug.conf(5)* syntax,
+    binary name is not required e.g. "ndrx=5 tp=5 file=/tmp/log". This overrides
+    any other configuration settings specified in configuration files for the
+    process.
+
 *NDRX_UBFMAXFLDS*='MAX_NUMBER_OF_UBFFIELDS'::
     Max number of UBF fields. Used for hashing. Bigger number is better. 
     The max number is number is 33554432 (25 bit).
