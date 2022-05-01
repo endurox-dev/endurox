@@ -372,10 +372,66 @@ out_nolock:
 }
 
 /**
- * Remove the buffer
- * @param buf
+ * Scan buffer in recurs
+ * @param p_ub
+ * @param flist free list (ptrs to be freed)
  */
-expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
+exprivate void scan_ptrs(UBFH *p_ub, ndrx_buf_free_lists_t *flist)
+{
+    int ret = EXSUCCEED;
+    Bnext_state_t state;
+    BFLDID bfldid=BBADFLDOCC;
+    BFLDOCC occ;
+    char *d_ptr;
+    char **lptr;
+    int ftyp;
+
+    ndrx_mbuf_Bnext_ptr_first(p_ub, &state);
+
+    while (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr)))
+    {
+        ftyp = bfldid >> EFFECTIVE_BITS;
+        
+        if (BFLD_PTR==ftyp)
+        {
+            /* add ptr, if dest is UBF... scan it too...
+             */
+            lptr=(char **)d_ptr;
+            
+            if (NULL!=*lptr)
+            {
+                buffer_obj_t *buf = ndrx_find_buffer(*lptr);
+                
+                if (NULL!=buf && BUF_TYPE_UBF==buf->type_id)
+                {
+                    /* go into... */
+                    scan_ptrs((UBFH *)*lptr, flist);
+                }
+            }
+            
+            /* add to free list if not main & not already in the list... */
+            if (NULL!=*lptr && 
+                    *lptr!=flist->mainbuf && 
+                    NULL==ndrx_mbuf_ptr_find(&flist->ptrs_hash, *lptr))
+            {
+                /* nothing if fails... might leak something at worst */
+                ndrx_mbuf_ptr_add(&flist->ptrs_hash, *lptr, EXFAIL);
+            }
+        }
+        else if (BFLD_UBF==ftyp)
+        {
+            scan_ptrs((UBFH *)d_ptr, flist);
+        }
+    }
+}
+
+/**
+ * Inner free called by recursive operations
+ * @param buf buffer to free up
+ * @param known_buffer ?
+ * @param flist infos about master buffer and already free'd ptrs...
+ */
+expublic void ndrx_tpfree_inner (char *buf, buffer_obj_t *known_buffer, ndrx_buf_free_lists_t *flist)
 {
     buffer_obj_t *elt;
     typed_buffer_descr_t *buf_type = NULL;
@@ -412,11 +468,21 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
              
         buf_type = &G_buf_descr[elt->type_id];
         
-        /* remove any call infos */
-        
+        /* we cannot have ptr to call infos */
         if (NULL!=elt->callinfobuf)
         {
             NDRX_LOG(log_debug, "Removing call info buffer %p", elt->callinfobuf);
+            
+            /* Do recursive gather as this UBF
+             */
+            if (NULL!=flist)
+            {
+                scan_ptrs((UBFH *)elt->callinfobuf,  flist);
+            }
+            
+            /* OK free up the callinfo (it must not be in the list anyway
+             * as user have no access to call-info buffer ptr
+             */
             ndrx_tpfree(elt->callinfobuf, NULL);
         }
         
@@ -425,14 +491,56 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
         MUTEX_LOCK_V(M_lock);
         EXHASH_DEL(ndrx_G_buffers, elt);
         MUTEX_UNLOCK_V(M_lock);
+        
+        /* if buffer is UBF... gather recursive... */
+        if (BUF_TYPE_UBF==buf_type->type_id && NULL!=flist)
+        {
+            scan_ptrs((UBFH *)buf,  flist);
+        }
 
         /* Remove it here, avoid address reuse and re-adding to hash! */
         buf_type->pf_free(buf_type, elt->buf);
         
         /* delete elt by it self */
         NDRX_FPFREE(elt);
+        
+        if (NULL!=flist)
+        {
+            /* free up the inner buffers... */
+            ndrx_mbuf_ptrs_t *el, *elt;
+            
+            EXHASH_ITER(hh, flist->ptrs_hash, el, elt)
+            {
+                ndrx_tpfree_inner(el->ptr, NULL, NULL);
+                
+                EXHASH_DEL(flist->ptrs_hash, el);
+                NDRX_FPFREE(el);
+            }
+        }
     }
     
+out:            
+    return;
+}
+
+/**
+ * Remove the buffer
+ * This will traverse all sub-buffers of the UBF and
+ * and all PTRs buffer to UBF to find BFLD_PTR linked to this UBF (if this is one)
+ * and will free all them up...
+ * @param buf
+ */
+expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
+{
+    ndrx_buf_free_lists_t flist;
+    
+    memset(&flist, 0, sizeof(flist));
+    
+    /* struct of:
+     * - ptr to main buffer
+     * - list of pointer to free
+     */
+    ndrx_tpfree_inner (buf, known_buffer, &flist);
 }
 
 /**

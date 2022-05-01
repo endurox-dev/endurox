@@ -362,6 +362,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_MAXSVCSRVS_DFLT 30                /**< default for NDRX_MAXSVCSRVS param */
 #define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG" /**< Xadmin config file          */
 #define CONF_NDRX_DEBUG_CONF     "NDRX_DEBUG_CONF"  /**< debug config file              */
+#define CONF_NDRX_DEBUG_STR      "NDRX_DEBUG_STR"   /**< Inline debug setting, prio 1   */
 #define CONF_NDRX_PLUGINS        "NDRX_PLUGINS"     /**< list of plugins, ';' seperated */
 #define CONF_NDRX_SYSFLAGS       "NDRX_SYSFLAGS"    /**< Additional flags to process    */
 #define CONF_NDRX_SILENT         "NDRX_SILENT"      /**< Make xadmin silent             */

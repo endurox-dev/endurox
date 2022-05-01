@@ -36,6 +36,12 @@ which are returned to *tpreturn(3)* or *tpforward(3)*. At service ending,
 tpreturn or tpforward makes free auto-allocated buffer and return buffer (if it
 is different than auto-alloc buffer).
 
+tpfree() traverses any embedded *BFLD_UBF* or *BFLD_PTR* fields in case if doing
+free on *UBF* buffer. It collects any XATMI buffer pointers and performs on the tpfree().
+If some of the *BFLD_PTR* fields shall be left in the system after the free 
+(or free of automatic buffer), the value shall be set to NULL ptr prior the tpfree()
+takes place.
+
 RETURN VALUE
 ------------
 Function is void and no error is returned.

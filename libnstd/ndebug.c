@@ -847,6 +847,7 @@ out:
 expublic void ndrx_init_debug(void)
 {
     char *cfg_file = getenv(CONF_NDRX_DEBUG_CONF);
+    char *inline_setting = getenv(CONF_NDRX_DEBUG_STR);
     FILE *f;
     int finish_off = EXFALSE;
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
@@ -918,8 +919,12 @@ expublic void ndrx_init_debug(void)
 
     if (NULL==cconfig)
     {
-
-        if (NULL!=cfg_file && EXEOS==cfg_file[0])
+        if (NULL!=inline_setting)
+        {
+            ndrx_init_parse_line((char *)EX_PROGNAME, inline_setting, &finish_off, NULL,
+                            tmpname, sizeof(tmpname));
+        }
+        else if (NULL!=cfg_file && EXEOS==cfg_file[0])
         {
             /* allow zero config -> no debug intially. */
             G_tp_debug.level = G_ubf_debug.level = G_ndrx_debug.level = log_error;
@@ -971,19 +976,29 @@ expublic void ndrx_init_debug(void)
         ndrx_cconfig_load(); /* load the global section... */
         if (EXSUCCEED==ndrx_cconfig_get(NDRX_CONF_SECTION_DEBUG, &conf))
         {
-            /* 1. get he line by common & process */
-            if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
-            {
-                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
-                        tmpname, sizeof(tmpname));
-            }
             
-            /* 2. get the line by binary name  */
-            if (NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)))
+            /* Load the env variable */
+            if (NULL!=inline_setting)
             {
-                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
-                        tmpname, sizeof(tmpname));
-            }   
+                ndrx_init_parse_line((char *)EX_PROGNAME, inline_setting, &finish_off, NULL,
+                            tmpname, sizeof(tmpname));
+            }
+            /* 1. get he line by common & process */
+            else 
+            {
+                if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
+                {
+                    ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
+                            tmpname, sizeof(tmpname));
+                }
+            
+                /* 2. get the line by binary name  */
+                if (NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)))
+                {
+                    ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
+                            tmpname, sizeof(tmpname));
+                }   
+            }
         }
     }
     

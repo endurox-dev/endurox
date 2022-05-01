@@ -65,7 +65,7 @@
  * @param ptr real pointer to check for multi buf descriptor
  * @return NULL (not found), ptr to MB if found 
  */
-exprivate ndrx_mbuf_ptrs_t* ndrx_mbuf_ptr_find(ndrx_mbuf_ptrs_t **ptrs, char *ptr)
+expublic ndrx_mbuf_ptrs_t* ndrx_mbuf_ptr_find(ndrx_mbuf_ptrs_t **ptrs, char *ptr)
 {
     ndrx_mbuf_ptrs_t *ret=NULL;
     
@@ -81,7 +81,7 @@ exprivate ndrx_mbuf_ptrs_t* ndrx_mbuf_ptr_find(ndrx_mbuf_ptrs_t **ptrs, char *pt
  * @param tag tag to add
  * @return ptr descr / NULL (OOM)
  */
-exprivate ndrx_mbuf_ptrs_t * ndrx_mbuf_ptr_add(ndrx_mbuf_ptrs_t **ptrs, char *ptr, int tag)
+expublic ndrx_mbuf_ptrs_t * ndrx_mbuf_ptr_add(ndrx_mbuf_ptrs_t **ptrs, char *ptr, int tag)
 {
     ndrx_mbuf_ptrs_t *ret = NULL;
     
@@ -95,7 +95,11 @@ exprivate ndrx_mbuf_ptrs_t * ndrx_mbuf_ptr_add(ndrx_mbuf_ptrs_t **ptrs, char *pt
     ret->ptr = ptr;
     ret->tag = tag;
     
-    NDRX_LOG(log_debug, "pointer %p mapped to tag %d", ptr, tag);
+    /* only if used by mbuf */
+    if (EXFAIL!=tag)
+    {
+        NDRX_LOG(log_debug, "pointer %p mapped to tag %d", ptr, tag);
+    }
     
     EXHASH_ADD_PTR((*ptrs), ptr, ret);
     
@@ -107,7 +111,7 @@ out:
  * Free up the hash list of pointers
  * @param ptrs pointer hashmap
  */
-exprivate void ndrx_mbuf_ptr_free(ndrx_mbuf_ptrs_t **ptrs)
+expublic void ndrx_mbuf_ptr_free(ndrx_mbuf_ptrs_t **ptrs)
 {
     ndrx_mbuf_ptrs_t * el, *elt;
     
@@ -117,6 +121,7 @@ exprivate void ndrx_mbuf_ptr_free(ndrx_mbuf_ptrs_t **ptrs)
         NDRX_FPFREE(el);
     }
 }
+
 /**
  * Remap the buffer back to real pointers
  * @param list list of ptrs by index
@@ -533,7 +538,7 @@ exprivate int ndrx_mbuf_ptrs_map_out(ndrx_mbuf_ptrs_t **ptrs, UBFH *p_ub,
             if (EXSUCCEED!=ndrx_mbuf_ptrs_map_out(ptrs, (UBFH *)d_ptr,
                 obuf, olen_max, olen_used, p_tag, flags))
             {
-                NDRX_LOG(log_error, "Sub-buffer for fld %d failed to map");
+                NDRX_LOG(log_error, "Sub-buffer (ubf) for fld %d failed to map");
                 EXFAIL_OUT(ret);
             }
         }
@@ -553,12 +558,6 @@ exprivate int ndrx_mbuf_ptrs_map_out(ndrx_mbuf_ptrs_t **ptrs, UBFH *p_ub,
     }
             
 out:
-
-    if (NULL!=ptrs)
-    {
-        ndrx_mbuf_ptr_free(ptrs);
-    }
-
     return ret;
 }
 
@@ -650,6 +649,12 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
     
 out:
     
+    /* TODO: Shouldn't this be done from the outside?  */
+    if (NULL!=ptrs)
+    {
+        ndrx_mbuf_ptr_free(&ptrs);
+    }
+
     NDRX_LOG(log_debug, "%ld data bytes ret=%d", *olen, ret);
 
     return ret;

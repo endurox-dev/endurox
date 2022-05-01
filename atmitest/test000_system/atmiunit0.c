@@ -44,7 +44,7 @@
 #include "ndebug.h"
 #include "xatmi.h"
 #include <fdatatype.h>
-
+#include <typed_buf.h>
 
 extern TestSuite *atmiunit0_mbuf(void);
 extern TestSuite *atmiunit0_exproto(void);
@@ -62,6 +62,54 @@ exprivate void basic_teardown(void)
     
 }
 
+/**
+ * Ensure that we free up buffer recursively
+ */
+Ensure(test_recursfree)
+{
+    UBFH *p_ub1;
+    UBFH *p_ub2;
+    UBFH *p_ub3;
+    UBFH *p_ub4;
+    ndrx_growlist_t list;
+    
+    ndrx_buffer_list(&list);
+    
+    assert_equal(list.maxindexused, -1);
+    
+    p_ub1=(UBFH *)tpalloc("UBF", NULL, 1024);
+    assert_not_equal(p_ub1, NULL);
+    
+    p_ub2=(UBFH *)tpalloc("UBF", NULL, 1024);
+    assert_not_equal(p_ub2, NULL);
+    
+    p_ub3=(UBFH *)tpalloc("UBF", NULL, 1024);
+    assert_not_equal(p_ub3, NULL);
+    
+    p_ub4=(UBFH *)tpalloc("UBF", NULL, 1024);
+    assert_not_equal(p_ub4, NULL);
+    
+    
+    assert_equal(Bchg(p_ub2, T_PTR_FLD, 0, (char *)&p_ub4, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub2, T_STRING_FLD, 0, "HELLO WORLD", 0), EXSUCCEED);
+    assert_equal(tpsetcallinfo((char *)p_ub1, p_ub2, 0), 0);
+    
+    assert_equal(Bchg(p_ub2, T_PTR_FLD, 0, (char *)&p_ub3, 0), EXSUCCEED);
+    
+    assert_equal(Bchg(p_ub3, T_STRING_FLD, 0, "HELLO WORLD 2", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub1, T_PTR_FLD, 0, (char *)&p_ub2, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub1, T_PTR_FLD, 1, (char *)&p_ub2, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub1, T_UBF_FLD, 1, (char *)p_ub2, 0), EXSUCCEED);
+    
+    ndrx_buffer_list(&list);
+    /* includes callinfo buffer... ptr */
+    assert_equal(list.maxindexused, 4);
+    
+    tpfree((char *)p_ub1);
+    
+    ndrx_buffer_list(&list);
+    assert_equal(list.maxindexused, -1);
+}
 /**
  * Test call info buffer processing routines
  * Check different extended modes.
@@ -211,6 +259,7 @@ TestSuite *atmiunit0_base(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_tpcallinfo);
+    add_test(suite, test_recursfree);
     
     return suite;
 }

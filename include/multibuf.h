@@ -31,8 +31,8 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef __EXREGEX_H
-#define	__EXREGEX_H
+#ifndef __MULTIBUF_H
+#define	__MULTIBUF_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -112,11 +112,14 @@ typedef struct
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern NDRX_API ndrx_mbuf_ptrs_t* ndrx_mbuf_ptr_find(ndrx_mbuf_ptrs_t **ptrs, char *ptr);
+extern NDRX_API ndrx_mbuf_ptrs_t * ndrx_mbuf_ptr_add(ndrx_mbuf_ptrs_t **ptrs, char *ptr, int tag);
+extern NDRX_API void ndrx_mbuf_ptr_free(ndrx_mbuf_ptrs_t **ptrs);
     
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* UBF_CONTEXT_H */
+#endif	/* __MULTIBUF_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
