@@ -155,14 +155,13 @@ expublic void ndrx_init_fail_banner(void)
  * Reply the cached log to the real/initilaized logger
  * @param dbg logger (after init)
  */
-expublic void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
+exprivate void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
 {
     ndrx_memlogger_t *line, *tmp;
     
     /* This shall be done by one thread only...
      * Thus we need a lock.
      */
-    MUTEX_LOCK_V(M_memlog_lock);
     DL_FOREACH_SAFE(dbg->memlog, line, tmp)
     {
         /* Bug #321 */
@@ -173,6 +172,32 @@ expublic void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
         
         DL_DELETE(dbg->memlog, line);
         NDRX_FREE(line);
+    }
+}
+
+/**
+ * Reply all logs..
+ */
+expublic void ndrx_dbg_reply_memlog_all(void)
+{
+    /* Check that logs are initialized (in case of call from 
+     * other bootstrap sources, with out call  */
+    NDRX_DBG_INIT_ENTRY;
+    MUTEX_LOCK_V(M_memlog_lock);
+
+    if (NULL!=G_ubf_debug.memlog)
+    {
+        ndrx_dbg_reply_memlog(&G_ubf_debug);
+    }
+
+    if (NULL!=G_ndrx_debug.memlog)
+    {
+        ndrx_dbg_reply_memlog(&G_ndrx_debug);
+    }
+
+    if (NULL!=G_tp_debug.memlog)
+    {
+        ndrx_dbg_reply_memlog(&G_tp_debug);
     }
     MUTEX_UNLOCK_V(M_memlog_lock);
 }
@@ -196,8 +221,9 @@ expublic void ndrx_dbg_intlock_set(void)
 
 /**
  * Unset (decrement) lock & reply logs if we are at the end.
+ * @param do_reply reply logs if becoming 0 owner
  */
-expublic void ndrx_dbg_intlock_unset(void)
+expublic void ndrx_dbg_intlock_unset(int *do_reply)
 {   
     M_is_initlock_owner--;
     
@@ -214,24 +240,7 @@ expublic void ndrx_dbg_intlock_unset(void)
      */
     if (0==M_is_initlock_owner)
     {  
-        /* Check that logs are initialized (in case of call from 
-         * other bootstrap sources, with out call  */
-        NDRX_DBG_INIT_ENTRY;
-
-        if (NULL!=G_ubf_debug.memlog)
-        {
-            ndrx_dbg_reply_memlog(&G_ubf_debug);
-        }
-
-        if (NULL!=G_ndrx_debug.memlog)
-        {
-            ndrx_dbg_reply_memlog(&G_ndrx_debug);
-        }
-
-        if (NULL!=G_tp_debug.memlog)
-        {
-            ndrx_dbg_reply_memlog(&G_tp_debug);
-        }
+        *do_reply=EXTRUE;
     }
 }
 
@@ -857,7 +866,7 @@ expublic void ndrx_init_debug(void)
     char *tmp;
     char tmpname[PATH_MAX+1]={EXEOS};
     int lcf_status=EXFAIL;
-    
+    int do_reply=EXFALSE;
     ndrx_dbg_intlock_set();
     
     /*
@@ -1058,7 +1067,13 @@ expublic void ndrx_init_debug(void)
     
     G_ndrx_debug_first = EXFALSE;
     
-    ndrx_dbg_intlock_unset();
+    ndrx_dbg_intlock_unset(&do_reply);
+    
+    /* to avoid deadlocks, do this ouside any load locking */
+    if (do_reply)
+    {
+        ndrx_dbg_reply_memlog_all();
+    }
     
     /* print the standard errors */
     if (EXSUCCEED!=lcf_status)

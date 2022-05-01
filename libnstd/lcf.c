@@ -870,7 +870,7 @@ out:
  */
 expublic void ndrx_lcf_remove(key_t ipckeybase, char *q_prefix)
 {
-    
+    int do_reply = EXFALSE;
     NDRX_LOG(log_debug, "Removing LCF memory");
     /* Let other threads to lave the lcf runn */
     MUTEX_LOCK_V(M_lcf_run);
@@ -910,7 +910,13 @@ expublic void ndrx_lcf_remove(key_t ipckeybase, char *q_prefix)
     ndrx_dbg_unlock();
     
     /* reply the logs finally... */
-    ndrx_dbg_intlock_unset();
+    ndrx_dbg_intlock_unset(&do_reply);
+    
+    /* to avoid deadlocks, do this ouside any load locking */
+    if (do_reply)
+    {
+        ndrx_dbg_reply_memlog_all();
+    }
     
 out:
     MUTEX_UNLOCK_V(M_lcf_run);

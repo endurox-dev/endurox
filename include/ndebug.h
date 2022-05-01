@@ -490,8 +490,8 @@ extern NDRX_API char *ndrx_strdup_dbg(char *ptr, long line, const char *file, co
 /* Bootstrapping: */
 extern NDRX_API int ndrx_dbg_intlock_isset(void);
 extern NDRX_API void ndrx_dbg_intlock_set(void);
-extern NDRX_API void ndrx_dbg_intlock_unset(void);
-
+extern NDRX_API void ndrx_dbg_intlock_unset(int *do_reply);
+extern NDRX_API void ndrx_dbg_reply_memlog_all(void);
 extern NDRX_API int ndrx_lcf_run(void);
 
 #ifdef	__cplusplus
