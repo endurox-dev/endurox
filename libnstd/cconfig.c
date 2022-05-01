@@ -465,7 +465,7 @@ expublic int ndrx_cconfig_load(void)
     /* this might be called from debug... */
     static int first = EXTRUE;
     static int first_ret = EXSUCCEED;
-    
+    int do_reply = EXFALSE;
     if (first)
     {
         /* protect against multi-threading */
@@ -497,10 +497,16 @@ expublic int ndrx_cconfig_load(void)
         }
         
         /* Do this outside the lock... */
-        ndrx_dbg_intlock_unset();
+        ndrx_dbg_intlock_unset(&do_reply);
         
         MUTEX_UNLOCK_V(M_load_lock);
         
+    }
+    
+    /* to avoid deadlocks, do this ouside any load locking */
+    if (do_reply)
+    {
+        ndrx_dbg_reply_memlog_all();
     }
     
     return first_ret;
