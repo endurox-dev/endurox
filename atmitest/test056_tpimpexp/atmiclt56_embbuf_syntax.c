@@ -56,6 +56,7 @@
 #include "odebug.h"
 #include <exbase64.h>
 #include <exassert.h>
+#include <typed_buf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -112,6 +113,7 @@ expublic int test_impexp_testemb_syntax(void)
     UBFH *p1_ubf=NULL;
     UBFH *p2_ubf=NULL;
     UBFH *p3_ubf=NULL;
+    ndrx_growlist_t list;
     char *json_ubf_in = 
         "{"
             "\"buftype\":\"UBF\","
@@ -290,15 +292,25 @@ expublic int test_impexp_testemb_syntax(void)
         
         /* delete the buffer */
         tpfree((char *)obuf);
-        
+    
+
+/*
+        recurive free takes care of this
         tpfree((char *)p1_ubf);
         tpfree((char *)p2_ubf);
         tpfree((char *)p3_ubf);
+*/
         
         obuf=NULL;
     }
     
 out:
+
+/*
+seems like causes core dumps !!!!!
+    ndrx_buffer_list(&list);
+    NDRX_ASSERT_VAL_OUT(-1==list.maxindexused, "Not all buffers are deallocated %d", list.maxindexused);
+*/
 
     return ret;
 }
