@@ -304,13 +304,13 @@ expublic int test_impexp_testemb_syntax(void)
         obuf=NULL;
     }
     
-out:
-
-/*
-seems like causes core dumps !!!!!
+    
     ndrx_buffer_list(&list);
+        
+    /* print ptrs... */
     NDRX_ASSERT_VAL_OUT(-1==list.maxindexused, "Not all buffers are deallocated %d", list.maxindexused);
-*/
+    
+out:
 
     return ret;
 }
