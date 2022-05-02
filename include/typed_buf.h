@@ -133,6 +133,7 @@ extern NDRX_API int typed_xcvt_ubf2json(buffer_obj_t **buffer);
 
 extern NDRX_API int typed_xcvt_json2view(buffer_obj_t **buffer);
 extern NDRX_API int typed_xcvt_view2json(buffer_obj_t **buffer, long flags);
+extern NDRX_API void ndrx_tpfree_inner (char *buf, buffer_obj_t *known_buffer, ndrx_buf_free_lists_t *flist);
 
     
 #ifdef	__cplusplus

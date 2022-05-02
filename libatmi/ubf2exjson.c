@@ -180,7 +180,8 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
             EXFAIL_OUT(ret);
         }
 
-        NDRX_FREE(vdata.data);
+        /* avoid object leak! */
+        tpfree(vdata.data);
 
         NDRX_LOG(log_debug, "Added sub-view[%s] [%s] fldid=%d to UBF buffer %p",
                 vdata.vname, fldnm, fldid, p_ub);
@@ -1002,7 +1003,7 @@ expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
     if (EXSUCCEED!=Bcpy(newbuf_out, tmp))
     {
         tpfree((char *)tmp);
-        tpfree((char *)newbuf_out);
+        ndrx_tpfree_inner((char *)newbuf_out, NULL, NULL);
 
         NDRX_LOG(log_error, "Failed to copy tmp UBF to output: %s !", Bstrerror(Berror));
         EXFAIL_OUT(ret);
@@ -1014,7 +1015,8 @@ expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
 
     /* Kill the buffers */
     tpfree((*buffer)->buf);
-    tpfree((char *)tmp);
+    /* keep any BFLD_PTRs.. as they are copied.. */
+    ndrx_tpfree_inner((char *)tmp, NULL, NULL);
 
     /* finally return the buffer */
     NDRX_LOG(log_info, "Returning new buffer %p", tmp_b);

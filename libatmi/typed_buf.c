@@ -127,6 +127,7 @@ expublic int ndrx_buffer_list(ndrx_growlist_t *list)
     MUTEX_LOCK_V(M_lock);
     EXHASH_ITER(hh,ndrx_G_buffers,elt,tmp) 
     {
+        NDRX_LOG(log_error, "YOPT %p", elt->buf);
         ndrx_growlist_add(list, elt->buf, i);
         i++;
     }
