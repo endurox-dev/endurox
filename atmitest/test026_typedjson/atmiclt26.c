@@ -109,7 +109,15 @@ int main(int argc, char** argv) {
     for (i=0; i<10000; i++)
     {
         UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+        UBFH *p_ub2=NULL;
 
+        if (NULL==p_ub)
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to alloc UBF buffer!");
+            EXFAIL_OUT(ret);
+        }
+
+        p_ub2 = (UBFH *)tpalloc("UBF", NULL, 1024);
         if (NULL==p_ub)
         {
             NDRX_LOG(log_error, "TESTERROR: failed to alloc UBF buffer!");
@@ -119,6 +127,20 @@ int main(int argc, char** argv) {
         if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, "HELLO FROM UBF", 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD");
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXSUCCEED!=Bchg(p_ub2, T_STRING_FLD, 0, "HELLO FROM INNER", 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD");
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXSUCCEED!=Bchg(p_ub, T_PTR_FLD, 0, (char *)&p_ub2, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to set T_PTR_FLD");
             ret=EXFAIL;
             goto out;
         }
@@ -142,6 +164,27 @@ int main(int argc, char** argv) {
         }
 
         if (0!=strcmp(tmp, "HELLO FROM JSON!"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid response [%s]!", tmp);
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXSUCCEED!=Bget(p_ub, T_PTR_FLD, 0, (char *)&p_ub2, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get T_PTR_FLD");
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXSUCCEED!=Bget(p_ub2, T_STRING_FLD, 0, tmp, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD");
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (0!=strcmp(tmp, "HELLO FROM INNER"))
         {
             NDRX_LOG(log_error, "TESTERROR: Invalid response [%s]!", tmp);
             ret=EXFAIL;

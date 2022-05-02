@@ -64,7 +64,7 @@ void TEST26_UBF2JSON(TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
     
-    if (0!=strcmp(buf, "{\"T_STRING_FLD\":\"HELLO FROM UBF\"}"))
+    if (0!=strcmp(buf, "{\"T_STRING_FLD\":\"HELLO FROM UBF\",\"T_PTR_FLD\":{\"buftype\":\"UBF\",\"version\":1,\"data\":{\"T_STRING_FLD\":\"HELLO FROM INNER\"}}}"))
     {
         NDRX_LOG(log_error, "TESTERROR: Invalid request!");
         EXFAIL_OUT(ret);
@@ -77,7 +77,8 @@ void TEST26_UBF2JSON(TPSVCINFO *p_svc)
     }
     
     strcpy(buf, "{\"T_STRING_FLD\":[\"HELLO FROM UBF\", \"HELLO FROM JSON!\"], "
-            "\"T_LONG_FLD\":1001}");
+            "\"T_LONG_FLD\":1001,"
+            "\"T_PTR_FLD\":{\"buftype\":\"UBF\",\"version\":1,\"data\":{\"T_STRING_FLD\":\"HELLO FROM INNER\"}}}");
     
     NDRX_LOG(log_debug, "Sending buffer: [%s]", buf);
     
