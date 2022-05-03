@@ -469,8 +469,8 @@ extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
 extern NDRX_API void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls);
 
-extern NDRX_API void * tplogfplock(void);
-extern NDRX_API FILE *tplogfpget(void *dbg);
+extern NDRX_API void * tplogfplock(int lev, long flags);
+extern NDRX_API FILE *tplogfpget(void *dbg, long flags);
 extern NDRX_API void tplogfpunlock(void *dbg);
 
 /** get access to file pointer */
