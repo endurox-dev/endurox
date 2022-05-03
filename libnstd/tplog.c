@@ -785,22 +785,31 @@ out:
 
 /**
  * Lock current TPLOG handler for given thread.
- * @return debug handle
+ * @param lev log level request (or -1 return fd anyway)
+ * @param flags RFU
+ * @return debug handle or NULL in case if no logging is required
  */
-expublic void * tplogfplock(void)
+expublic void * tplogfplock(int lev, long flags)
 {
     ndrx_debug_t * ret = debug_get_tp_ptr();
 
-    ndrx_debug_lock((ndrx_debug_file_sink_t*)ret->dbg_f_ptr);
+    if (ret->level>=lev || EXFAIL==lev)
+    {
+        ndrx_debug_lock((ndrx_debug_file_sink_t*)ret->dbg_f_ptr);
+        return (void *)ret;
+    }
 
-    return (void *)ret;
+    /* no handle as level not passed */
+    return NULL;
 }
 
 /**
  * Get debug handle
+ * @param flags RFU
  * @param dbg handle returned from tplogfplock()
+ * @return file handle
  */
-expublic FILE *tplogfpget(void *dbg)
+expublic FILE *tplogfpget(void *dbg, long flags)
 {
     if (NULL==dbg)
     {
