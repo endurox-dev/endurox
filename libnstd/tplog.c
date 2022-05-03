@@ -782,4 +782,46 @@ out:
             
     return ret;
 }
+
+/**
+ * Lock current TPLOG handler for given thread.
+ * @return debug handle
+ */
+expublic void * tplogfplock(void)
+{
+    ndrx_debug_t * ret = debug_get_tp_ptr();
+
+    ndrx_debug_lock((ndrx_debug_file_sink_t*)ret->dbg_f_ptr);
+
+    return (void *)ret;
+}
+
+/**
+ * Get debug handle
+ * @param dbg handle returned from tplogfplock()
+ */
+expublic FILE *tplogfpget(void *dbg)
+{
+    if (NULL==dbg)
+    {
+        return NULL;
+    }
+
+    return ((ndrx_debug_file_sink_t*)((ndrx_debug_t *)dbg)->dbg_f_ptr)->fp;
+}
+
+/**
+ * Unlock the debug handle
+ * @param dbg debug handle returned by tplogfplock()
+ */
+expublic void tplogfpunlock(void *dbg)
+{
+    if (NULL==dbg)
+    {
+        return;
+    }
+
+    ndrx_debug_unlock((ndrx_debug_file_sink_t*)((ndrx_debug_t *)dbg)->dbg_f_ptr);    
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
