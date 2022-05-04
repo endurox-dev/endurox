@@ -1655,26 +1655,4 @@ expublic char *ndrx_strdup_dbg(char *ptr, long line, const char *file, const cha
     return ret;
 }
 
-/**
- * Get file ptr and lock the handle for write
- * @param dbg_ptr current logger
- * @return EXSUCCEED/EXFAIL
- */
-expublic FILE *ndrx_debug_fp_lock(ndrx_debug_t *dbg_ptr)
-{
-    ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr);
-    
-    return ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp;
-}
-
-/**
- * Release the logger lock
- * @param dbg_ptr current logger
- * @return EXSUCCEED/EXFAIL
- */
-expublic void ndrx_debug_fp_unlock(ndrx_debug_t *dbg_ptr)
-{
-    ndrx_debug_unlock((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr);
-}
-
 /* vim: set ts=4 sw=4 et smartindent: */
