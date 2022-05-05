@@ -146,8 +146,11 @@ set(MAN3_NAMES
         ndrx_lcf_publish
         tpsprio
         tpgprio
-	tpsblktime
-	tpgblktime
+        tpsblktime
+        tpgblktime
+        tplogfplock
+        tplogfpunlock
+        tplogfpget
 )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

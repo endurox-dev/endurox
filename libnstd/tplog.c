@@ -782,4 +782,55 @@ out:
             
     return ret;
 }
+
+/**
+ * Lock current TPLOG handler for given thread.
+ * @param lev log level request (or -1 return fd anyway)
+ * @param flags RFU
+ * @return debug handle or NULL in case if no logging is required
+ */
+expublic ndrx_debug_t * tplogfplock(int lev, long flags)
+{
+    ndrx_debug_t * ret = debug_get_tp_ptr();
+
+    if (ret->level>=lev || EXFAIL==lev)
+    {
+        ndrx_debug_lock((ndrx_debug_file_sink_t*)ret->dbg_f_ptr);
+        return (void *)ret;
+    }
+
+    /* no handle as level not passed */
+    return NULL;
+}
+
+/**
+ * Get debug handle
+ * @param flags RFU
+ * @param dbg handle returned from tplogfplock()
+ * @return file handle
+ */
+expublic FILE *tplogfpget(ndrx_debug_t *dbg, long flags)
+{
+    if (NULL==dbg)
+    {
+        return NULL;
+    }
+
+    return ((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr)->fp;
+}
+
+/**
+ * Unlock the debug handle
+ * @param dbg debug handle returned by tplogfplock()
+ */
+expublic void tplogfpunlock(ndrx_debug_t *dbg)
+{
+    if (NULL==dbg)
+    {
+        return;
+    }
+
+    ndrx_debug_unlock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);    
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

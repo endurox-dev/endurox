@@ -235,6 +235,7 @@ int main(int argc, char** argv)
     int ret = EXSUCCEED;
     int i;
     int sinks, refs;
+    ndrx_debug_t *dbg = NULL;
     pthread_t thread1, thread2;  /* thread variables */
     
 #if 0
@@ -265,7 +266,19 @@ int main(int argc, char** argv)
     
     /* write some stuff in user log */
     tplog(log_error, "Hello from tp!");
+
+    dbg = tplogfplock(-1, 0);
+    fprintf(tplogfpget(dbg, 0), "Hello from fprintf\n");
+    fflush(tplogfpget(dbg, 0));
+    tplogfpunlock(dbg);
+
+    dbg = tplogfplock(7, 0);
+    NDRX_ASSERT_TP_OUT(NULL==dbg, "Got dbg, expected NULL");
     
+    dbg = tplogfplock(2, 0);
+    NDRX_ASSERT_TP_OUT(NULL!=dbg, "Got null dbg");
+    tplogfpunlock(dbg);
+
 #if 0
     /* write some stuff in user Enduro/X log */
     NDRX_LOG(log_error, "Hello from NDRX!");

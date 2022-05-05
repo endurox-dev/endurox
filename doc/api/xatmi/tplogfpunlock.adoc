@@ -1,0 +1,48 @@
+TPLOGFPUNLOCK(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+tplogfpunlock - Release file pointer
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+void tplogfpunlock(ndrx_debug_t *'dbg');
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Release locked debug file pointer where 'dbg' is value returned by *tplogfplock(3)*. 
+After the release, any queued log rotates or output log-file reconfiguration is
+performed.
+
+RETURN VALUE
+------------
+N/A
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tplogfplock(3)* *tplogfpget(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
