@@ -19,7 +19,7 @@ Link with '-lnstd -lpthread -lrt -lm'
 DESCRIPTION
 -----------
 Return the *FILE* pointer for locked logger acquired by *tplogfplock(3)*.
-
+File pointer is valid until lock is released by *tplogfpunlock(3)*.
 
 RETURN VALUE
 ------------
