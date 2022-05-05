@@ -469,6 +469,10 @@ extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
 extern NDRX_API void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls);
 
+extern NDRX_API ndrx_debug_t * tplogfplock(int lev, long flags);
+extern NDRX_API FILE *tplogfpget(ndrx_debug_t *dbg, long flags);
+extern NDRX_API void tplogfpunlock(ndrx_debug_t *dbg);
+
 /* memory debugging */
 extern NDRX_API void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func);
 extern NDRX_API void ndrx_free_dbg(void *ptr, long line, const char *file, const char *func);

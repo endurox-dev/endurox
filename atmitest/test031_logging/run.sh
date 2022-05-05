@@ -147,6 +147,11 @@ if [ "X`grep 'Hello from tp' clt-tp.log`" == "X" ]; then
 	RET=-2
 fi
 
+if [ "X`grep 'Hello from fprintf' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log (Hello from fprintf not found)!"
+	RET=-2
+fi
+
 if [ "X`grep 'hello from thread 1' clt-tp-th1.log`" == "X" ]; then
         echo "error in clt-tp-th1.log!"
 	RET=-2

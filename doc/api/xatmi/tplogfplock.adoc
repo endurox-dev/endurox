@@ -1,0 +1,58 @@
+TPLOGFPLOCK(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tplogfplock - Lock log file FILE pointer
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+ndrx_debug_t * tplogfplock(int 'lev', long 'flags');
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function locks the current FILE pointer for *tp* logging topic. When lock is acquired,
+any log rotate or log file changing manipulations by other threads would be delayed.
+
+This function typically must be called prior reading getting the FILE pointer by
+*tplogfpget(3)* function. The locked file pointer shall be released by *tplogfpunlock(3)*
+after it is no more in use.
+
+'lev' argument shall be set to log level planning to write the data to FILE pointer.
+If current log level is lower then 'lev' set, function returns *NULL*, meaning it is not
+locked and no logging needed. However if no log level check is needed, the 'lev' argument
+shall be passed as *-1*.
+
+'flags' is reserved for future use.
+
+RETURN VALUE
+------------
+Pointer to debug descriptor or *NULL* if no logging is required.
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tplogfpget(3)* *tplogfpunlock(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -1,0 +1,47 @@
+TPLOGFPGET(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tplogfpget - Get the file pointer for locked logger
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+
+FILE *tplogfpget(ndrx_debug_t *'dbg', long 'flags');
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Return the *FILE* pointer for locked logger acquired by *tplogfplock(3)*.
+
+
+RETURN VALUE
+------------
+File pointer.
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tplogfpget(3)* *tplogfpunlock(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
