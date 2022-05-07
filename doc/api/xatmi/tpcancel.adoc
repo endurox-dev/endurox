@@ -20,16 +20,25 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Cancel the asynchronous call done by *tpacall()*. Basically this marks the call descriptor as un-used in internal call descriptor registry. If answer is received for such descriptor, the answer is discarded. Note that this does not abort the transaction (if started) by previous tpacall. Thus if transaction needs to be aborted, use *tpabort()*.
+Cancel the asynchronous call done by *tpacall()*. Basically this marks the call descriptor as unused in 
+internal call descriptor registry. If answer is received for such descriptor, the answer is discarded. 
+Note that this does not abort the transaction (if started) by previous tpacall.
+Thus if transaction needs to be aborted, use *tpabort()*.
+
+Prior canceling the call descriptor, function attempts to perform non blocked read of the client reply
+queue until the given 'cd' is found or EOF of queue is reached. If other call replies are downloaded
+from the queue, they are buffered in processes memory.
 
 RETURN VALUE
 ------------
-On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
+with *tperrno* set to indicate the error.
 
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message with
+debug info from last function call.
 
 *TPEBADDESC* Invalid call descriptor (out of range).
 
