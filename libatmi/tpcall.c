@@ -1245,6 +1245,8 @@ expublic int ndrx_tpcancel (int cd)
 {
     int ret=EXSUCCEED;
     tpmemq_t *el, *elt;
+    char *data = NULL;
+    long len;
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "tpcancel issued for %d", cd);
@@ -1255,6 +1257,18 @@ expublic int ndrx_tpcancel (int cd)
                                          __func__, cd, MAX_ASYNC_CALLS);
         ret=EXFAIL;
         goto out;
+    }
+
+    
+    /* just receive something from the Q
+     * so that if we do the cancel always and never tpgetrply
+     * that might block the responsers to us
+     * ignore any error...
+     */
+    ndrx_tpgetrply(&cd, cd, &data, &len, TPNOBLOCK|TPNOABORT, NULL);
+    if (NULL!=data)
+    {
+        tpfree(data);
     }
     
     /* search for matched cd and clean any queued messages... */

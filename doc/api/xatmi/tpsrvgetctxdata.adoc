@@ -237,7 +237,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpsetctxdata(3)* *tpsrvfreectxdata(3)* *tpcontinue(3)* *tpinit(3)*
+*tpsrvsetctxdata(3)* *tpsrvfreectxdata(3)* *tpcontinue(3)* *tpinit(3)*
 
 COPYING
 -------
