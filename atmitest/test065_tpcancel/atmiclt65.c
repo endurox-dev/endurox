@@ -46,6 +46,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
+#include <exassert.h>
 #include "test65.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -66,6 +67,15 @@ int main(int argc, char** argv)
     int ret=EXSUCCEED;
     int err;
     
+    /* attempt to cancel only */
+    for (i=0; i<10000; i++)
+    {
+        cd = tpacall("TESTSV", NULL, 0L, 0);
+        NDRX_ASSERT_TP_OUT(EXFAIL!=cd, "failed to tpacall");
+        NDRX_ASSERT_TP_OUT(EXFAIL!=tpcancel(cd), "failed to cancel");
+
+    }
+
     for (i=0; i<10000; i++)
     {
         //the reply queue to client might fill up
