@@ -43,8 +43,8 @@ In the result of function 'olen' is set to number bytes written to 'output' buff
 
 *Valid flags*
 
-*TPEX_STRING* In this mode expected input is EOS terminated string. On success
-output will contain Base64 encoded binary data.
+*TPEX_STRING* In this mode expected input is EOS terminated string (base64 string). 
+On success output will contain zero byte terminated string data.
 
 RETURN VALUE
 ------------
