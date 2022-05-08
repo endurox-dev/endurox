@@ -449,7 +449,15 @@ expublic void tpexit(void)
     
     memset(&call, 0, sizeof(call));
     
-    userlog("tpexit requested");
+    if (NULL==G_server_conf.service_array)
+    {
+        userlog("tpexit() - not a server");
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        userlog("tpexit requested");
+    }
     
     G_shutdown_req=EXTRUE;
     
@@ -474,7 +482,10 @@ expublic void tpexit(void)
     
 out:
     
-    NDRX_LOG(log_warn, "tpexit - shutdown enqueued...");
+    if (EXSUCCEED==ret)
+    {
+        NDRX_LOG(log_warn, "tpexit - shutdown enqueued...");
+    }
 }
 
 
