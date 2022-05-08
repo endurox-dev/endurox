@@ -76,7 +76,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-srv_conf_t G_server_conf;
+srv_conf_t G_server_conf={.service_array=NULL};
 
 /**
  * Do not advertise these particular services
@@ -423,6 +423,7 @@ expublic int ndrx_init(int argc, char** argv)
 
     /* set pre-check values */
     memset(&G_server_conf, 0, sizeof(G_server_conf));
+    G_shutdown_req=EXFALSE;
     /* Set default advertise all */
     G_server_conf.advertise_all = 1;
     G_server_conf.time_out = EXFAIL;
@@ -437,6 +438,12 @@ expublic int ndrx_init(int argc, char** argv)
         goto out;
     }
     
+#ifdef __GNU_LIBRARY__
+    optind=0; /* reset lib, so that we can scan again. */
+#else
+    optind=1; /* reset lib, so that we can scan again. */
+#endif
+
     /* Parse command line, will use simple getopt */
     while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:GB--")) != EXFAIL)
     {
