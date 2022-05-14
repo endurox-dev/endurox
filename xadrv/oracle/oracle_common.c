@@ -53,11 +53,34 @@
 #include "oracle_common.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define NDRX_ORA_TPGETCONN_VERSION              1   /**< have xaoSvcCtx */
+#define NDRX_ORA_XAOSVCCTX_SYMBOL "xaoSvcCtx"
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * tpgetconn() struct values
+ */
+typedef struct
+{
+    long version;    /**< record version                                */
+    void *xaoSvcCtx;    /**< xaoSvcCtx handle,                          */
+    
+} ndrx_ora_tpgetconn_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate ndrx_ora_tpgetconn_t M_details;
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Get connection detail
+ * @return ptr to ndrx_ora_tpgetconn_t;
+ */
+void *xa_getconn_detail(void)
+{
+    return (void *)&M_details;
+}
 
 /*
  * The function is exported and dynamically retrieved after the module was
@@ -70,6 +93,10 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
     int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "%s", descr);
     
+    memset(&M_details, 0, sizeof(M_details));
+    
+    M_details.version = NDRX_ORA_TPGETCONN_VERSION;
+            
     sw = (struct xa_switch_t * )dlsym( RTLD_DEFAULT, symbol );
     if( sw == NULL )
     {
@@ -85,14 +112,27 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
             EXFAIL_OUT(ret);
         }
         
-        /* reslove symbol now... */
+        /* resolve symbol now... */
         if (NULL==(sw = (struct xa_switch_t * )dlsym( handle, symbol )))
         {
             NDRX_LOG(log_error, "Oracle XA switch `%s' handler "
                     "not found!", symbol);
             EXFAIL_OUT(ret);
         }
+        
+        M_details.xaoSvcCtx = dlsym( handle, NDRX_ORA_XAOSVCCTX_SYMBOL );
+        
     }
+    else
+    {
+        /* try to load */
+        M_details.xaoSvcCtx = dlsym( RTLD_DEFAULT, NDRX_ORA_XAOSVCCTX_SYMBOL );
+    }
+    
+    NDRX_LOG(log_debug, "xaoSvcCtx=%p", M_details.xaoSvcCtx);
+    
+    /* set callback handle */
+    ndrx_xa_setgetconnn(xa_getconn_detail);
     
 out:
     if (EXSUCCEED!=ret && NULL!=handle)
