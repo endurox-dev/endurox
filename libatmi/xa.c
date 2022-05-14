@@ -2361,5 +2361,13 @@ expublic void ndrx_xa_btight(int val)
     }
 }
 
+/**
+ * Get current XA switch
+ * @return currently loaded XA switch
+ */
+expublic struct xa_switch_t* ndrx_xa_sw_get(void)
+{
+    return G_atmi_env.xa_sw;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
