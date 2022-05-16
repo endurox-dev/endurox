@@ -131,7 +131,7 @@ int call_tests(void)
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     int cd;
-    int ret=EXSUCCEED;
+    int ret=EXSUCCEED, tret;
     int err;
     
     if (EXSUCCEED!=tpsblktime(1, TPBLK_NEXT))
@@ -164,6 +164,9 @@ int call_tests(void)
         ret=EXFAIL;
         goto out;
     }
+
+    /* value form ALL */
+    NDRX_ASSERT_TP_OUT(99==(tret=tpgblktime(0)), "Failed to get 0 timeout %d", tret);
 
     /* invoke now with full wait first 2 sec + 3 sec, we get 6-7 sec 
      * thus receive normal response...
