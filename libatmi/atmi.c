@@ -62,7 +62,7 @@
 #define TIMEOUT_ENTRY   do { G_atmi_tls->tout_next_eff=G_atmi_tls->tout_next;} while (0)
 
 /** Reset the next timeout. TLS is must have */
-#define TIMEOUT_EXIT    do { G_atmi_tls->tout_next=0; G_atmi_tls->tout_next_eff=0;} while (0)
+#define TIMEOUT_EXIT    do { G_atmi_tls->tout_next=EXFAIL; G_atmi_tls->tout_next_eff=EXFAIL;} while (0)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
