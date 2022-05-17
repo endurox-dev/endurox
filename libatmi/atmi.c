@@ -181,6 +181,11 @@ expublic char * tpalloc (char *type, char *subtype, long len)
         goto out;
     }
  */   
+    /* clear previous errors */
+    if (NULL!=G_atmi_tls)
+    {
+        ndrx_TPunset_error();
+    }
     ret=ndrx_tpalloc(NULL, type, subtype, len);
 
 out:
