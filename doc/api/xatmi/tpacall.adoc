@@ -74,11 +74,6 @@ transaction and *TPNOREPLY* flag is used.
 for sending was exceeded (see *NDRX_TOUT* env setting in *ex_env(5)*, *tptoutset(3)* or 
 *tpsblktime(3)*). 
 
-*TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
-
-*TPESVCERR* System level service failure. Server died during the message 
-presence in service queue.
-
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
 or debugs for more info. DDR route not found or failed.
 
