@@ -70,6 +70,7 @@ int main(int argc, char** argv)
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char tmp[1024];
     int do_conv=EXFALSE;
+    int do_null=EXFALSE;
     
     /* We shall parse cli, so field with will either:
      * -l (long)
@@ -80,10 +81,13 @@ int main(int argc, char** argv)
      * -e <error code expected>
      * -g <group value expected in return>
      */
-    while ((c = getopt(argc, argv, "S:s:l:d:e:g:Cc:")) != -1) {
+    while ((c = getopt(argc, argv, "S:s:l:d:e:g:Cc:N")) != -1) {
         
         switch (c)
         {
+            case 'N':
+                do_null=EXTRUE;
+                break;
             case 'C':
                 NDRX_LOG(log_debug, "Doing conv");
                 do_conv=EXTRUE;
@@ -131,7 +135,7 @@ int main(int argc, char** argv)
                 }
                 break;
             default: /* '?' */
-                fprintf(stderr, "Usage: %s -S <service_name> -e <errcode_expt> -g <proc_service> -l <long_val>|-s <string_val>|-d <double_val> \n",
+                fprintf(stderr, "Usage: %s -S <service_name> -e <errcode_expt> -g <proc_service> -l <long_val>|-s <string_val>|-d <double_val> [-N]\n",
                         argv[0]);
                 exit(EXIT_FAILURE);
         }
@@ -174,7 +178,7 @@ int main(int argc, char** argv)
             }
         }
     }
-    else if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    else if (EXFAIL == tpcall(svcnm, do_null?NULL:((char *)p_ub), 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
         

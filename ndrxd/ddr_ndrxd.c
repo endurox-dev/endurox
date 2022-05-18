@@ -1092,6 +1092,7 @@ expublic int ndrx_ddr_criterion_put(char *mem, long size, ndrx_routcrit_hash_t *
     long size_left = size;
     int org_len;
     int ret = EXSUCCEED;
+    ndrx_routcrit_t *p_crit;
     
     EXHASH_ITER(hh, routes, el, elt)
     {
@@ -1100,7 +1101,7 @@ expublic int ndrx_ddr_criterion_put(char *mem, long size, ndrx_routcrit_hash_t *
         
         /* this is where criterion starts, for quick lookup  */
         el->offset = pos;
-        
+    
         EXHASH_ITER(hh, el->btypes, t, tt)
         {
             t->routcrit.criterionid=critid;
@@ -1123,6 +1124,9 @@ expublic int ndrx_ddr_criterion_put(char *mem, long size, ndrx_routcrit_hash_t *
             
             memcpy(mem+pos, &t->routcrit, block_size);
             
+            p_crit = (ndrx_routcrit_t *)(mem+pos);
+            p_crit->len = sizeof(ndrx_routcrit_t);
+            
             pos+=block_size;
             size_left-=block_size;
             
@@ -1132,6 +1136,8 @@ expublic int ndrx_ddr_criterion_put(char *mem, long size, ndrx_routcrit_hash_t *
                 org_len=dl->cseq.len;
                 dl->cseq.len = DDR_ALIGNED_GEN(dl->cseq.len);
                 block_size = dl->cseq.len;
+                
+                p_crit->len+=block_size;
                 
                 NDRX_LOG(log_debug, "Range Block size %ld", block_size);
                 
