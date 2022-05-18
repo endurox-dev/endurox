@@ -39,6 +39,7 @@
 #include <math.h>
 #include <ndrx_ddr.h>
 #include <fcntl.h>
+#include <assert.h>
 
 #include "atmi_int.h"
 #include <lcfint.h>
@@ -219,7 +220,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     int page;
     ndrx_routcrit_t *ccrit;
     ndrx_routcritseq_t *range;
-    int offset_step=0;
+    int offset_step=0, chk_step=0;
     int i;
     double floatval;
     long longval;
@@ -392,7 +393,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
             }
             
             offset_step+=sizeof(ndrx_routcrit_t);
-            
+
             for (i=0; i < ccrit->rangesnr; i++)
             {
                 /* check that memory is not changed... */
@@ -519,7 +520,23 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                     
                 /* step to next..., this is aligned step */
                 offset_step+=range->len;
+                NDRX_LOG(log_error, "YOPT add %d", range->len);
             }
+            /* validate offsets... */
+            chk_step+=ccrit->len;
+            
+            /* loop is over, validate the blocks... */
+            if (EXTRUE!=ret)
+            {
+                assert(chk_step==offset_step);
+            }
+        }
+        else
+        {
+            /* step over as not ours.. 
+             * not sure about checks...?
+             */
+            offset_step+=ccrit->len;
         }
         
         /* check for next... */
