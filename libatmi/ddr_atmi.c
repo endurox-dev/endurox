@@ -520,7 +520,6 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                     
                 /* step to next..., this is aligned step */
                 offset_step+=range->len;
-                NDRX_LOG(log_error, "YOPT add %d", range->len);
             }
             /* validate offsets... */
             chk_step+=ccrit->len;
