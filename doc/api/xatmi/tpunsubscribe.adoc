@@ -18,39 +18,46 @@ Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthrea
 
 DESCRIPTION
 -----------
-Unsubscribe from event. The 'subscription' value is return value from original *tpsubscribe()* call. If 'subscription' is set to '-1', then it will affect all events to which subscription was made by given process.
+Unsubscribe from event. The 'subscription' value is return value from 
+original *tpsubscribe()* call. If 'subscription' is set to *-1*, then 
+it will affect all events to which subscription was made by given process.
 
 *Valid flags*
 
-*TPNOTRAN* Do not call service in transaction mode. This is effective in case if caller process is running in transaction mode, but destination process shall not run in the same global transaction
+*TPSIGRSTRT* Restart the system call in progress if interrupted 
+by signal handler. This affects only underlaying mq_* function calls.
 
-*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
-
-*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable).
+Wait for reply for infinitely.
 
 This function is available only for XATMI servers.
 
 RETURN VALUE
 ------------
-On success, *tpunsubscribe()* return number of subscriptions removed; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpunsubscribe()* return number of subscriptions removed; 
+on error, -1 is returned, with *tperrno* set to indicate the error.
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus 
+custom message with debug info from last function call.
 
-*TPEINVAL* Invalid parameter is given to function. 'subscription' < -1.
+*TPEINVAL* Invalid parameter is given to function. 'subscription' < *-1*.
 
 *TPENOENT* Event server is not available.
 
-*TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
+*TPETIME* Service did not reply in given time *NDRX_TOUT*). 
 
-*TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
+*TPESVCFAIL* Service returned *TPFAIL*. This is application level failure.
 
-*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+*TPESVCERR* System level service failure. Server died during the
+message presence in service queue.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e.
+user log, or debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e.
+user log, or debugs for more info.
 
 EXAMPLE
 -------

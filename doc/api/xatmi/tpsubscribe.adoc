@@ -27,7 +27,7 @@ is matched then event is posted to service, written in 'ctl->name1' field.
 Note that many servers with the same service can subscribe to same event. 
 All server's services will receive the event. 'filter' is boolean expression 
 for *UBF* or regular expression for *STRING* buffer which are extra expression 
-to be tested, when event name matched. If 'filter' is true or *NULL*, 
+to be tested on the event data buffer prior event deliver. If 'filter' is true or *NULL*, 
 then event is posted to service.
 
 The *TPEVCTL* structure is following:
@@ -92,10 +92,6 @@ out:
 
 
 *Valid flags*
-
-*TPNOTRAN* Do not call service in transaction mode. This is effective in 
-case if caller process is running in transaction mode, but 
-destination process shall not run in the same global transaction
 
 *TPSIGRSTRT* Restart the system call in progress if interrupted by signal 
 handler. This affects only underlying mq_* function calls.
