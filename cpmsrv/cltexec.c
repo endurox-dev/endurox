@@ -375,10 +375,11 @@ expublic int cpm_killall(void)
 
         if (i<2) /*no wait for kill... */
         {
-            is_any_running = EXFALSE;
+            /* is_any_running = EXFALSE;*/
             ndrx_stopwatch_reset(&t);
             do
             {
+                is_any_running = EXFALSE;
                 EXHASH_ITER(hh, G_clt_config, c, ct)
                 {
                     if (CLT_STATE_STARTED==c->dyn.cur_state)
