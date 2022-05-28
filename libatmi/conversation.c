@@ -1043,8 +1043,10 @@ expublic int ndrx_tprecv (int cd, char **data,
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
-    /* reset return code ...*/
+    /* reset return code ...
     G_atmi_tls->M_svc_return_code=0;
+    ?
+    */
 
     /* Enduro/X allows len to be NULL */
     if (NULL==len)
@@ -1408,8 +1410,10 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     
     ATMI_TLS_ENTRY;
 
-    /* reset return code ...*/
+    /* reset return code ...
+     * ?
     G_atmi_tls->M_svc_return_code=0;
+    */
 
     NDRX_LOG(log_debug, "%s: called", __func__);
     *revent = 0;
