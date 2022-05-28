@@ -1043,6 +1043,9 @@ expublic int ndrx_tprecv (int cd, char **data,
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
+    /* reset return code ...*/
+    G_atmi_tls->M_svc_return_code=0;
+
     /* Enduro/X allows len to be NULL */
     if (NULL==len)
     {
@@ -1120,6 +1123,7 @@ expublic int ndrx_tprecv (int cd, char **data,
         if (GEN_QUEUE_ERR_NO_DATA==rply_len)
         {
             /* there is no data in reply, nothing to do & nothing to return */
+            /* how about TPEBLOCK ? */
             EXFAIL_OUT(ret);
         }
         else if (EXFAIL==rply_len)
@@ -1352,7 +1356,10 @@ exprivate int process_unsolicited_messages(int cd, long *p_revent)
     long revent=0;
     int ret = EXSUCCEED;
     
-    /* Flush down all messages */
+    /* Flush down all messages 
+     * here we ignore TPEBLOCK error
+     * not sure is it worth to set it up.
+     */
     while (EXSUCCEED==ndrx_tprecv (cd, &data, &len, TPNOBLOCK, &revent, &command_id))
     {
         NDRX_LOG(log_debug, "Ignoring unsolicited message!");
@@ -1400,6 +1407,9 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     tp_conversation_control_t *conv;
     
     ATMI_TLS_ENTRY;
+
+    /* reset return code ...*/
+    G_atmi_tls->M_svc_return_code=0;
 
     NDRX_LOG(log_debug, "%s: called", __func__);
     *revent = 0;

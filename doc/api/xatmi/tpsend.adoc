@@ -55,9 +55,6 @@ set to indicate the error.
 by issuing *tpdiscon()*. The global transaction in progress is aborted in this case.
 Connection descriptor 'cd' is closed.
 
-*TPEV_SENDONLY* The sender program issued *tpsend()* with 
-flag *TPEV_SENDONLY*, meaning that we become senders.
-
 *TPEV_SVCERR* Server died or *tpreturn(3)* failed. Connection descriptor 'cd' is closed.
 
 *TPEV_SVCFAIL* Server returned *TPFAIL* with *tpreturn(3)* Connection descriptor 'cd' is closed.
