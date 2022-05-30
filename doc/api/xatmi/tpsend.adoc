@@ -65,8 +65,6 @@ flag *TPEV_SENDONLY*, meaning that we become senders.
 *TPEV_SVCSUCC* Server did *tpreturn()* with *TPSUCCESS*, connection is closed
 automatically after this event. Connection descriptor 'cd' is closed.
 
-
-
 ERRORS
 ------
 Note that *tpstrerror()* returns generic error message plus custom message 
@@ -84,6 +82,9 @@ or debugs for more info.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log,
  or debugs for more info.
+
+*TPEPROTO* Protocol error is generated if given process is in receiver (*TPRECVONLY*)
+mode.
 
 EXAMPLE
 -------
