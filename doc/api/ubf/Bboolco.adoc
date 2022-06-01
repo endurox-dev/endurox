@@ -98,18 +98,16 @@ with debug info from last function call.
 
 *BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
 
-*BBADFLD* Invalid field id passed.
+*BBADNAME* Field name not found in field tables.
 
-*BNOTPRES* Field not present.
-
-*FMALLOC* Malloc failed.
+*BMALLOC* Malloc failed.
 
 *BSYNTAX* Syntax error in script.
 
 *BBADNAME* Bad field name specified.
 
-*BEBADOP* Direct field types (i.e with out sub-fields) *BFLD_UBF* and 
-*BFLD_VIEW* are not supported in expressions.
+*BEBADOP* Direct field types (i.e with out sub-fields) *BFLD_UBF* 
+and *BFLD_VIEW* are not supported in expressions.
 
 EXAMPLE
 -------

@@ -53,6 +53,7 @@
 #include "oracle_common.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define NDRX_ORA_TPGETCONN_MAGIC                0x1fca8e4c /**< magic   */
 #define NDRX_ORA_TPGETCONN_VERSION              1   /**< have xaoSvcCtx */
 #define NDRX_ORA_XAOSVCCTX_SYMBOL "xaoSvcCtx"
 /*---------------------------Enums--------------------------------------*/
@@ -63,7 +64,8 @@
  */
 typedef struct
 {
-    long version;    /**< record version                                */
+    unsigned int magic; /**< Magic number                               */
+    long version;       /**< record version                             */
     void *xaoSvcCtx;    /**< xaoSvcCtx handle,                          */
     
 } ndrx_ora_tpgetconn_t;
@@ -95,6 +97,7 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr)
     
     memset(&M_details, 0, sizeof(M_details));
     
+    M_details.magic = NDRX_ORA_TPGETCONN_MAGIC;
     M_details.version = NDRX_ORA_TPGETCONN_VERSION;
             
     sw = (struct xa_switch_t * )dlsym( RTLD_DEFAULT, symbol );

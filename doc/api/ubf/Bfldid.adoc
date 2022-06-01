@@ -30,7 +30,12 @@ On success, *Bfldid()* returns compiled file id; on error,
 
 ERRORS
 ------
-No errors are returned by this function.
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BFTOPEN* Failed to open field definition files.
+
+*BBADNAME* Field not found.
 
 EXAMPLE
 -------

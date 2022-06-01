@@ -926,6 +926,13 @@ expublic int Bfldtype (BFLDID bfldid)
 expublic char * Bboolco (char * expr)
 {
     API_ENTRY;
+
+    if (NULL==expr)
+    {
+         ndrx_Bset_error_fmt(BEINVAL, "expr is NULL");
+         return NULL;
+    }
+
     {
     /* Lock the region */
     MUTEX_LOCK;
