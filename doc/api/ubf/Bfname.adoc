@@ -31,6 +31,8 @@ ERRORS
 In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
 generic error message plus custom message with  debug info from last function call.
 
+*BFTOPEN* Failed to open field definition files.
+
 *BBADFLD* field not found in field tables.
 
 EXAMPLE
