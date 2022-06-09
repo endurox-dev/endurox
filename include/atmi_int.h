@@ -962,7 +962,7 @@ extern NDRX_API int ndrx_tpterm (void);
 extern NDRX_API int ndrx_tpconnect (char *svc, char *data, long len, long flags);
 extern NDRX_API int ndrx_tprecv (int cd, char * *data, 
                         long *len, long flags, long *revent,
-                        short *command_id);
+                        short *command_id, int ign_blkerr);
 extern NDRX_API int ndrx_tpdiscon (int cd);
 extern NDRX_API int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags);

@@ -72,6 +72,15 @@ if [ "X$RET" !=  "X0" ]; then
     go_out -2
 fi
 
+(./atmiclt3 noblk 2>&1) >> ./atmiclt3.log
+RET=$?
+
+if [ "X$RET" !=  "X0" ]; then
+    echo "Noblk case failed"
+    go_out -6
+fi
+
+# ?
 xadmin killall atmisv3 2>/dev/null
 
 (./atmiclt3 timeout 2>&1) >> ./atmiclt3.log

@@ -726,7 +726,7 @@ expublic int tprecv (int cd, char **data,
     }
 */
 
-    ret=ndrx_tprecv (cd, data, len, flags, revent, &command_id);
+    ret=ndrx_tprecv (cd, data, len, flags, revent, &command_id, EXFALSE);
 
 out:
     return ret;

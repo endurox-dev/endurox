@@ -852,7 +852,8 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     /* So now, we shall receive back handshake, by receiving private queue 
      * id on which we can reach the server!
      */
-    if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&queuebuf, &data_len, 0L, &revent, &command_id))
+    if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&queuebuf, &data_len, 0L, &revent, 
+            &command_id, EXFALSE))
     {
         /* should' error be already set? */
         EXFAIL_OUT(ret);
@@ -1024,11 +1025,12 @@ exprivate void rcv_hash_delall(tp_conversation_control_t *conv)
  * @param len
  * @param flags
  * @param revent
+ * @param ign_blkerr Ignore blocking error (do not add to logs)
  * @return
  */
 expublic int ndrx_tprecv (int cd, char **data, 
                         long *len, long flags, long *revent,
-                        short *command_id)
+                        short *command_id, int ign_blkerr)
 {
     int ret=EXSUCCEED;
     ssize_t rply_len;
@@ -1126,6 +1128,16 @@ expublic int ndrx_tprecv (int cd, char **data,
         {
             /* there is no data in reply, nothing to do & nothing to return */
             /* how about TPEBLOCK ? */
+            
+            if (!ign_blkerr)
+            {
+                /* Generate blocking error */
+                NDRX_LOG(log_info, "TPENOBLOCK was specified in flags and "
+                    "no message is in queue");
+                ndrx_TPset_error_msg(TPEBLOCK, "TPENOBLOCK was specified in flags and "
+                    "no message is in queue");
+            }
+            
             EXFAIL_OUT(ret);
         }
         else if (EXFAIL==rply_len)
@@ -1362,7 +1374,8 @@ exprivate int process_unsolicited_messages(int cd, long *p_revent)
      * here we ignore TPEBLOCK error
      * not sure is it worth to set it up.
      */
-    while (EXSUCCEED==ndrx_tprecv (cd, &data, &len, TPNOBLOCK, &revent, &command_id))
+    while (EXSUCCEED==ndrx_tprecv (cd, &data, &len, TPNOBLOCK, 
+            &revent, &command_id, EXTRUE))
     {
         NDRX_LOG(log_debug, "Ignoring unsolicited message!");
         /* Free up data */
