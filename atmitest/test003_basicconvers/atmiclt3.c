@@ -41,6 +41,8 @@
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
+
+#include "exassert.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -179,6 +181,29 @@ int main(int argc, char** argv) {
                     TPETIME, tperrno);
             EXFAIL_OUT(ret);
         }
+    }
+    else if (0==strcmp(argv[1], "noblk"))
+    {
+        if (EXFAIL==(cd=tpconnect("NOBLK", (char *)p_ub, 0L, TPRECVONLY)))
+        {
+            NDRX_LOG(log_error, "NOBLK failed: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        NDRX_ASSERT_TP_OUT( (EXFAIL==tprecv(cd, (char **)&p_ub, &len, TPNOBLOCK, &revent) 
+                && TPEBLOCK==tperrno), "Invalid blocking condition");
+  
+#ifdef EX_USE_EPOLL
+        /* let the server to overfill the queues. */
+        sleep(15);
+#endif
+      
+       /* dump the msgs, used for send blk testing  */
+       while (EXSUCCEED==tprecv(cd, (char **)&p_ub, &len, 0, &revent));
+       
+       NDRX_ASSERT_TP_OUT((TPEEVENT==tperrno && TPEV_SVCSUCC==revent),
+               "Invalid term event %ld", revent);
     }
     else
     {

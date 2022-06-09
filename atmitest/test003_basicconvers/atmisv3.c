@@ -132,6 +132,39 @@ out:
                 0L);
 }
 
+/**
+ * Test non blocking error reporting Support #781
+ * @param p_svc
+ */
+void NOBLK (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    long revent;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    sleep(5);
+    
+#ifdef EX_USE_EPOLL
+    /* send till we get full Q */
+    while (EXSUCCEED==tpsend(p_svc->cd, (char *)p_ub, 0L, TPNOBLOCK, &revent));
+    
+    if (TPEBLOCK!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected TPEBLOCK got %s %ld", tpstrerror(tperrno),
+                revent);
+        EXFAIL_OUT(ret);
+    }
+#endif
+    
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+} 
+
 /*
  * Do initialization
  */
@@ -149,6 +182,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise("TOUTSV", TOUTSV))
     {
         NDRX_LOG(log_error, "Failed to initialize TOUTSV!");
+        ret=EXFAIL;
+    }
+    
+    /* No blocking tests Support #781 */
+    if (EXSUCCEED!=tpadvertise("NOBLK", NOBLK))
+    {
+        NDRX_LOG(log_error, "Failed to initialize NOBLK!");
         ret=EXFAIL;
     }
     
