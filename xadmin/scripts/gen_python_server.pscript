@@ -1,0 +1,147 @@
+#!/usr/bin/pscript
+
+userlog("Generate python server");
+
+//Include wizard base.
+compilestring(getwizardbase())();
+
+//Provision class
+class PyServer extends WizardBase
+{
+    constructor()
+    {
+        base.constructor();
+    }
+
+    //Configure it:
+    </ order=0, name = "XATMI Server Name (script)", type = "string", min=1, max=512 /> 
+    svname = "testsv";
+
+    </ order=1, name = "Service name", type = "string", min=1, max=30 /> 
+    svcname = "TESTSV";
+
+    </ order=2, name = "Use UBF?", type = "yn"/> 
+    useubf = "y";
+
+    </ order=3, name = "INI File section (optional, will read config if set)", 
+            type = "string", depend="(::prov.useubf==\"y\")", min=0/> 
+    config = "";
+
+    pyServerFile = "";
+
+    function getOutputFiles()
+    {
+        pyServerFile=appHome+"/"+svname+".py";
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    //Build Python Server code
+    ////////////////////////////////////////////////////////////////////////
+    pyServerVal = "";
+    function buildServer()
+    {
+
+        pyServerVal = 
+@"#!/usr/bin/env python3
+
+import sys
+import endurox as e
+"+(config==""?"":@"
+PROGSECTION="""+config+@"""
+")+@"
+class Server:
+
+    def tpsvrinit(self, args):
+        e.tplog_info(""Doing server init..."");"+(config!=""?@"
+        # Read configuration
+        buf = dict()
+        buf[""data""]=dict()
+        buf[""data""][""EX_CC_CMD""]=""g""
+        buf[""data""][""EX_CC_LOOKUPSECTION""]=""%s/%s"" % (PROGSECTION, e.tuxgetenv(""NDRX_CCTAG""))
+
+        tperrno, tpurcode, buf = e.tpcall(""@CCONF"", buf)
+
+        if 0!=tperrno: 
+            e.tplog_error(""Failed to get configuration: %d"" % tperrno)
+            return e.EXFAIL
+
+        e.tplogprintubf(e.log_info, ""Got configuration"", buf)
+
+        if ""EX_CC_KEY"" in buf[""data""]:
+            for idx, key in enumerate(buf[""data""][""EX_CC_KEY""]):
+                e.tplog_info(""Got config key [%s] at index %d""% (key, idx));
+                if key==""mykey1"":
+                    e.tplog_info(""Got mykey1 key... [%s]"" % buf[""data""][""EX_CC_VALUE""][idx])
+                elif key==""someparam2"":
+                    e.tplog_info(""Got someparam2 key... [%s]"" % buf[""data""][""EX_CC_VALUE""][idx])
+                else:
+                    e.tplog_debug(""Unknown parameter [%s]"" % key);
+":@"")+@"
+        e.tpadvertise("""+svcname+@""", """+svcname+@""", self."+svcname+@")
+        return 0
+
+    def tpsvrdone(self):
+        e.log_info(""Server shutdown"")
+
+    def "+svcname+@"(self, args):"+(useubf=="y"?@"
+        e.tplogprintubf(e.log_info, ""Incoming request:"", args.data)
+        args.data[""data""][""T_STRING_2_FLD""]=""Hello World from XATMI server""":"")+@"
+        return e.tpreturn(e.TPSUCCESS, 0, args.data)
+
+if __name__ == ""__main__"":
+    e.run(Server(), sys.argv)
+";
+	}
+}
+    ////////////////////////////////////////////////////////////////////////
+    //Server END
+    ////////////////////////////////////////////////////////////////////////
+
+//Run the mater installer
+function install() 
+{
+    local root = getroottable();
+
+    //Create a provision object
+    root["prov"] <- PyServer();
+
+    if (!::prov.isDefaulted)
+    {
+        ::prov.runInteractive();
+    }
+
+    if (::prov.validatAndPrintConfig())
+    {
+        ::prov.getOutputFiles();
+        ::prov.buildServer();
+
+        if (!::prov.writeFile(::prov.pyServerFile, ::prov.pyServerVal))
+        {
+            return false;
+        }
+
+        if (!::prov.setExec(::prov.pyServerFile))
+        {
+            return false;
+        }
+
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+if (::install())
+{
+    print("Python server gen ok!\n");
+
+    return 0;
+}
+else
+{
+    print("Python server gen failed!\n");
+    return -1;
+}

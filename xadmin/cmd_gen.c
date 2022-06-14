@@ -93,6 +93,9 @@ extern const size_t ndrx_G_resource_gen_java_client_len;
 extern const char ndrx_G_resource_gen_python_client[];
 extern const size_t ndrx_G_resource_gen_python_client_len;
 
+extern const char ndrx_G_resource_gen_python_server[];
+extern const size_t ndrx_G_resource_gen_python_server_len;
+
 /*---------------------------Macros-------------------------------------*/
 /* #define GEN_DEBUG 1 */
 /*---------------------------Enums--------------------------------------*/
@@ -223,10 +226,11 @@ expublic int cmd_gen_load_scripts(void)
         || EXSUCCEED!=reg_cmd("c server", EMB_RES(ndrx_G_resource_gen_c_server), NULL)
         || EXSUCCEED!=reg_cmd("c client", EMB_RES(ndrx_G_resource_gen_c_client), NULL)
         || EXSUCCEED!=reg_cmd("java server", EMB_RES(ndrx_G_resource_gen_java_server), NULL)
-        || EXSUCCEED!=reg_cmd("java client", EMB_RES(ndrx_G_resource_gen_java_client), NULL)    
+        || EXSUCCEED!=reg_cmd("java client", EMB_RES(ndrx_G_resource_gen_java_client), NULL)
+        || EXSUCCEED!=reg_cmd("python client", EMB_RES(ndrx_G_resource_gen_python_client), NULL)
+        || EXSUCCEED!=reg_cmd("python server", EMB_RES(ndrx_G_resource_gen_python_server), NULL)
         || EXSUCCEED!=reg_cmd("ubf tab", EMB_RES(ndrx_G_resource_gen_ubf_tab), NULL)
         || EXSUCCEED!=reg_cmd("test local", EMB_RES(ndrx_G_resource_gen_test_local), NULL)
-        || EXSUCCEED!=reg_cmd("python client", EMB_RES(ndrx_G_resource_gen_python_client), NULL)
        )
     {
         EXFAIL_OUT(ret);
