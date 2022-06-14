@@ -44,7 +44,7 @@ class PyClient extends WizardBase
 import sys
 import endurox as e
 "+(config==""?"":@"
-PROGSECTION             """+config+@"""
+PROGSECTION="""+config+@"""
 ")+@"
 def run():
 
@@ -89,7 +89,8 @@ def appinit():
             elif key==""someparam2"":
                 e.tplog_info(""Got someparam2 key... [%s]"" % buf[""data""][""EX_CC_VALUE""][idx])
             else:
-                e.tplog_debug(""Unknown parameter [%s]"" % key);":@"")+@"
+                e.tplog_debug(""Unknown parameter [%s]"" % key);
+":@"")+@"
 def unInit():
     e.tpterm()
 
