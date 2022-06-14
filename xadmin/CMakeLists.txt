@@ -86,6 +86,9 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
     pscript_embed(scripts/gen_python_client.pscript gen_python_client)
     list(APPEND SCRIPTS gen_python_client.c)
 
+    pscript_embed(scripts/gen_python_server.pscript gen_python_server)
+    list(APPEND SCRIPTS gen_python_server.c)
+
 ENDIF()
 
 add_custom_command(
