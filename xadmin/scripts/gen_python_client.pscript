@@ -43,9 +43,9 @@ class PyClient extends WizardBase
 
 import sys
 import endurox as e
-
-PROGSECTION = """+cltname+@"""
-
+"+(config==""?"":@"
+PROGSECTION             """+config+@"""
+")+@"
 def run():
 
     # Do some work here
