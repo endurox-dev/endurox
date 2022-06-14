@@ -83,6 +83,9 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
     pscript_embed(scripts/gen_test_local.pscript gen_test_local)
     list(APPEND SCRIPTS gen_test_local.c)
 
+    pscript_embed(scripts/gen_python_client.pscript gen_python_client)
+    list(APPEND SCRIPTS gen_python_client.c)
+
 ENDIF()
 
 add_custom_command(
@@ -102,17 +105,17 @@ endif()
   
 # Exectuables
 add_executable (xadmin xadmin.c exec.c config.c
-		cmd_config.c utils.c cmd_startstop.c cmd_psc.c cmd_fdown.c
-		cmd_at.c cmd_reload.c cmd_unadv.c cmd_ppm.c
-                cmd_shm_psvc.c cmd_shm_psrv.c cmd_readv.c cmd_pq.c cmd_pqa.c
-                cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
-                cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
-                cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
-		${SCRIPTS} Exfields.c cmd_provision.c cmd_gen.c
-                cmd_cs.c cmd_cd.c cmd_ci.c
-                cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c cmd_util.c
-                cmd_appconfig.c cmd_dping.c linenoise.c cmd_tranlocal.c
-                cmd_tmib.c taboutput.c cmd_lcf.c cmd_prtsvc.c)
+    cmd_config.c utils.c cmd_startstop.c cmd_psc.c cmd_fdown.c
+    cmd_at.c cmd_reload.c cmd_unadv.c cmd_ppm.c
+    cmd_shm_psvc.c cmd_shm_psrv.c cmd_readv.c cmd_pq.c cmd_pqa.c
+    cmd_pt.c cmd_abort.c cmd_commit.c cmd_env.c cmd_pc.c
+    cmd_mqlq.c cmd_mqlc.c cmd_mqlm.c cmd_mqdm.c cmd_mqrc.c
+    cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
+    ${SCRIPTS} Exfields.c cmd_provision.c cmd_gen.c
+    cmd_cs.c cmd_cd.c cmd_ci.c
+    cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c cmd_util.c
+    cmd_appconfig.c cmd_dping.c linenoise.c cmd_tranlocal.c
+    cmd_tmib.c taboutput.c cmd_lcf.c cmd_prtsvc.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

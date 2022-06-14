@@ -1,0 +1,157 @@
+#!/usr/bin/pscript
+
+userlog("Generate python client");
+
+//Include wizard base.
+compilestring(getwizardbase())();
+
+//Provision class
+class PyClient extends WizardBase
+{
+    constructor()
+    {
+        base.constructor();
+    }
+
+    //Configure it:
+    </ order=0, name = "XATMI Client Name (script)", type = "string", min=1, max=512 /> 
+    cltname = "testcl";
+
+    </ order=1, name = "Use UBF?", type = "yn"/> 
+    useubf = "y";
+
+    </ order=2, name = "INI File section (optional, will read config if set)", 
+            type = "string", depend="(::prov.useubf==\"y\")", min=0/> 
+    config = "";
+
+    pyClientFile = "";
+
+    function getOutputFiles()
+    {
+        pyClientFile=appHome+"/"+cltname+".py";
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    //Build Python Client code
+    ////////////////////////////////////////////////////////////////////////
+    pyClientVal = "";
+    function buildClient()
+    {
+
+        pyClientVal = 
+@"#!/usr/bin/env python3
+
+import sys
+import endurox as e
+
+PROGSECTION = """+cltname+@"""
+
+def run():
+
+    # Do some work here
+"+(useubf=="y"?@"
+    buf = dict()
+    buf[""data""] = dict()
+    buf[""data""][""T_STRING_FLD""] = ""Hello world!""
+    
+    tperrno, tpurcode, buf = e.tpcall(""TESTSV"", buf)
+    
+    if 0!=tperrno: 
+        e.tplog_error(""Failed to get configuration: %d"" % tperrno)
+        raise AtmiExcept(e.TPESVCFAIL, ""Failed to call TESTSV"")
+
+    e.tplogprintubf(e.log_info, ""Got server reply"", buf);
+"
+:@"    None
+")+@"
+def appinit():
+    e.tplog_info(""Doing client init..."");
+    e.tpinit()
+"+(config!=""?@"    # Read configuration
+    buf = dict()
+    buf[""data""]=dict()
+    buf[""data""][""EX_CC_CMD""]=""g""
+    buf[""data""][""EX_CC_LOOKUPSECTION""]=""%s/%s"" % (PROGSECTION, e.tuxgetenv(""NDRX_CCTAG""))
+    
+    tperrno, tpurcode, buf = e.tpcall(""@CCONF"", buf)
+    
+    if 0!=tperrno: 
+        e.tplog_error(""Failed to get configuration: %d"" % tperrno)
+        return e.EXFAIL
+        
+    e.tplogprintubf(e.log_info, ""Got configuration"", buf)
+    
+    if ""EX_CC_KEY"" in buf[""data""]:
+        for idx, key in enumerate(buf[""data""][""EX_CC_KEY""]):
+            e.tplog_info(""Got config key [%s] at index %d""% (key, idx));
+            if key==""mykey1"":
+                e.tplog_info(""Got mykey1 key... [%s]"" % buf[""data""][""EX_CC_VALUE""][idx])
+            elif key==""someparam2"":
+                e.tplog_info(""Got someparam2 key... [%s]"" % buf[""data""][""EX_CC_VALUE""][idx])
+            else:
+                e.tplog_debug(""Unknown parameter [%s]"" % key);":@"")+@"
+def unInit():
+    e.tpterm()
+
+if __name__ == '__main__':
+    try:
+        appinit()
+        run()
+        unInit()
+    except Exception as ee:
+        e.tplog_error(""Exception: %s occurred: %s"" % (ee.__class__, str(ee)))
+";	
+	}
+}
+	////////////////////////////////////////////////////////////////////////
+	//Client END
+	////////////////////////////////////////////////////////////////////////
+
+//Run the mater installer
+function install() 
+{
+	local root = getroottable();
+
+	//Create a provision object
+	root["prov"] <- PyClient();
+
+	if (!::prov.isDefaulted)
+	{
+            ::prov.runInteractive();
+	}
+
+	if (::prov.validatAndPrintConfig())
+	{
+            ::prov.getOutputFiles();
+            ::prov.buildClient();
+
+            if (!::prov.writeFile(::prov.pyClientFile, ::prov.pyClientVal))
+            {
+                return false;
+            }
+
+            if (!::prov.setExec(::prov.pyClientFile))
+            {
+                return false;
+            }
+
+	}
+	else
+	{
+            return false;
+	}
+
+	return true;
+}
+
+if (::install())
+{
+    print("Python client gen ok!\n");
+
+    return 0;
+}
+else
+{
+    print("Python client gen failed!\n");
+    return -1;
+}
