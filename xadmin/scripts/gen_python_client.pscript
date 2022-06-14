@@ -103,45 +103,45 @@ if __name__ == '__main__':
 ";	
 	}
 }
-	////////////////////////////////////////////////////////////////////////
-	//Client END
-	////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    //Client END
+    ////////////////////////////////////////////////////////////////////////
 
 //Run the mater installer
 function install() 
 {
-	local root = getroottable();
+    local root = getroottable();
 
-	//Create a provision object
-	root["prov"] <- PyClient();
+    //Create a provision object
+    root["prov"] <- PyClient();
 
-	if (!::prov.isDefaulted)
-	{
-            ::prov.runInteractive();
-	}
+    if (!::prov.isDefaulted)
+    {
+        ::prov.runInteractive();
+    }
 
-	if (::prov.validatAndPrintConfig())
-	{
-            ::prov.getOutputFiles();
-            ::prov.buildClient();
+    if (::prov.validatAndPrintConfig())
+    {
+        ::prov.getOutputFiles();
+        ::prov.buildClient();
 
-            if (!::prov.writeFile(::prov.pyClientFile, ::prov.pyClientVal))
-            {
-                return false;
-            }
-
-            if (!::prov.setExec(::prov.pyClientFile))
-            {
-                return false;
-            }
-
-	}
-	else
-	{
+        if (!::prov.writeFile(::prov.pyClientFile, ::prov.pyClientVal))
+        {
             return false;
-	}
+        }
 
-	return true;
+        if (!::prov.setExec(::prov.pyClientFile))
+        {
+            return false;
+        }
+
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
 }
 
 if (::install())
