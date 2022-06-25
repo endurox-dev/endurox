@@ -126,6 +126,8 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
  * transaction (ether abort, or new register branch, etc...) and some stalled
  * PG process wants to finish the work off. Thus we need to waited lock for
  * foreground operations.
+ * TODO: In future release lock could be based on real mutex within the
+ * transaction object, so that we do not have to employ the sleep
  * @param tmxid - serialized XID
  * @param[in] dowait milliseconds to wait for lock, before give up
  * @param[out] locke lock error
