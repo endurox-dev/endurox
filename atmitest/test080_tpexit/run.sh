@@ -117,7 +117,7 @@ sleep 5
 
 (./atmiclt80 TESTSV2 2>&1) >> ./atmiclt-dom1.log
 
-echo "Wait for respawn...."
+echo "Wait for respawn..."
 sleep 5
 
 echo "Checking for shutdowns..."
