@@ -1692,6 +1692,13 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     {
         /* one FD is used by internal pipe, thus we are interested in
          * polled fds added by Enduro/X API
+         * TODO: Might consider to move syncfd after existing event Q is processed
+         * otherwise if some FD triggered events, they might be in Q, but
+         * with this syncfd call we activate generations of the events again (thus
+         * we get duplication...).
+         * Can consider to process the event Q twice, before syncfd
+         * and after the syncfd (anyway those are mem ops only). This
+         * can reduce the possiblity of twice processing.
          */
         if (syncfd)
         {
