@@ -18,29 +18,72 @@ Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthrea
 
 DESCRIPTION
 -----------
-This is XATMI Enduro/X extension function, which allows to add custom file descriptor ('fd') for monitoring events in Enudor/X main poll routine. The 'events' are corresponding events for *epoll()* if running on Linux and configured for epoll, or events for *poll()* if running on non Linux or configured to use poll. If for example you want to monitor socket file descriptor for incoming events, then for epoll this would be "*EPOLLET* | *EPOLLIN* | *EPOLLHUP*", for poll this would be "*POLLIN*". Then 'ptr1' is custom pointer that will be passed to callback function. 'p_pollevent' is callback function which is called by Enduro/X main loop in case if for 'fd' specified events are received. 'events' in 'p_pollevent' contains the received events. The 'ptr1' for 'p_pollevent' contains the original pointer passed to *tpext_addpollerfd()*.
+This is XATMI Enduro/X extension function, which allows to add custom file 
+descriptor ('fd') for monitoring events in Enduro/X main poll routine. 
+The 'events' are corresponding events for *epoll()* if running on Linux 
+and configured for epoll, or events for *poll()* if running on non Linux or
+configured to use poll. If for example you want to monitor socket file descriptor for
+incoming events, then for epoll this would be "*EPOLLET* | *EPOLLIN* | *EPOLLHUP*", 
+for poll this would be "*POLLIN*". Then 'ptr1' is custom pointer that will be passed
+to callback function. 'p_pollevent' is callback function which is called by Enduro/X main
+loop in case if for 'fd' specified events are received. 'events' in 'p_pollevent'
+contains the received events. The 'ptr1' for 'p_pollevent' contains the original
+pointer passed to *tpext_addpollerfd()*.
 
-When 'p_pollevent' callback is called, then return value for success must be 0, otherwise it is assumed as failure. In case of callback failure, XATMI server program is terminated with failure.
+When 'p_pollevent' callback is called, then return value for success must be 0,
+otherwise it is assumed as failure. In case of callback failure, XATMI server 
+program is terminated with failure.
 
-The custom poller can be added only after the init stage. I.e. it cannot be done at *tpsvrinit()* function. Normally application registers periodic callback function with *tpext_addperiodcb()*, where into this callback *tpext_addpollerfd()* is called.
+The custom poller can be added only after the init stage. I.e. it cannot be done
+at *tpsvrinit()* function. Normally application registers periodic callback
+function with *tpext_addperiodcb()*, where into this callback *tpext_addpollerfd()* is called.
 
 This function is available only for XATMI servers.
 
+LIMITATIONS
+-----------
+
+In SystemV mode if client code for example emits event on monitored 'fd'
+and only then calls a service advertised by the same binary, there is no
+guarantee that monitored 'fd' callback would be called first and only then
+service routine. This is due to fact these receive tasks are executed
+in different threads. The XATMI server's main thread is monitoring
+service queue, while the SystemV mode auxiliary thread is monitoring
+the file descriptors, thus race condition is possible.
+
+Additionally, in SystemV mode internal queue of events exists between auxiliary thread
+and the main server thread. When auxiliary sees 'fd' event, it emits corresponding
+event to server's main thread (via internal queue) and aux thread stops
+to monitor file descriptors until file-descriptor synchronization message
+is received from server's main thread (usually when server goes to wait for events to dispatch).
+In case if XATMI server was processing service routine, and concurrently some 'fd'
+event was triggered, the event is sent to main thread, while the return from service
+routine will again active the aux thread to monitor the file descriptors
+which can generate duplicate poll events on monitored FDs. Programmer
+shall consider normal condition if operations on file descriptors return errors such
+as *EAGAIN* or *EWOULDBLOCK*. In such case just return *0* from the 'p_pollevent' callback.
+
+
 RETURN VALUE
 ------------
-On success, *tpext_addpollerfd()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpext_addpollerfd()* return zero; on error, -1 is returned,
+with *tperrno* set to indicate the error.
 
 ERRORS
 ------
-Note that *tpstrerror()* for returns generic error message plus custom message with debug info from last call.
+Note that *tpstrerror()* for returns generic error message plus
+custom message with debug info from last call.
 
 *TPEMATCH* File descriptor ('fd') already registered for callback function.
 
-*TPEPROTO* Function called in invalid XATMI server stage. I.e. it cannot be called from *tpsvrinit()*.
+*TPEPROTO* Function called in invalid XATMI server stage.
+I.e. it cannot be called from *tpsvrinit()*.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e.
+user log, or debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info. That could insufficient memory or other error.
+*TPEOS* System failure occurred during serving. See logs i.e. user log,
+or debugs for more info. That could insufficient memory or other error.
 
 EXAMPLE
 -------

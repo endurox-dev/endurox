@@ -439,7 +439,7 @@ expublic int ndrx_tpchkunsol(long flags)
         /* If not blocking, then on first applied msg we stop.
          * In the middle we can get memq messages for which we-reloop to next.
          */
-        if (num_applied && ! (flags & TPEBLOCK) )
+        if (num_applied && ! (flags & TPNOBLOCK) )
         {
             break;
         }
