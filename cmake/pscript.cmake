@@ -52,3 +52,4 @@ add_custom_command(
 
 endmacro(pscript_embed source_file)
 
+# vim: set ts=4 sw=4 et smartindent:

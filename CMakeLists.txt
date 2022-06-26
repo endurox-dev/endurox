@@ -33,7 +33,10 @@
 ##
 
 cmake_minimum_required (VERSION 3.1) 
-project (ENDUROX) 
+project (ENDUROX)
+
+include(cmake/ex_osver.cmake)
+
 set(VERSION "8.0.6")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
@@ -50,9 +53,9 @@ MATH (EXPR NDRX_VERSION_NUM "${NDRX_VERSION_MAJOR} * 10000 + ${NDRX_VERSION_MINO
 ################################################################################
 
 if(DEFINED ENV{NDRX_BLD_VERSION})
-	IF(NOT ENV{NDRX_BLD_VERSION} MATCHES VERSION)
-		message( FATAL_ERROR "Invalid versions: ENV: [$ENV{NDRX_BLD_VERSION}] Code: [${VERSION}]" )
-	endif()
+    IF(NOT ENV{NDRX_BLD_VERSION} MATCHES VERSION)
+        message( FATAL_ERROR "Invalid versions: ENV: [$ENV{NDRX_BLD_VERSION}] Code: [${VERSION}]" )
+    endif()
 endif()
 
 if(DEFINED ENV{NDRX_BLD_RELEASE})
@@ -76,19 +79,19 @@ SET (NDRX_BLD_FLAGS 	$ENV{NDRX_BLD_FLAGS})
 # Get the git version (the version which is
 #
 execute_process(
-	COMMAND
-		git rev-parse HEAD
-	RESULT_VARIABLE
-		gitres
-	OUTPUT_VARIABLE
-		NDRX_BLD_HASH
-	)
+    COMMAND
+        git rev-parse HEAD
+    RESULT_VARIABLE
+        gitres
+    OUTPUT_VARIABLE
+        NDRX_BLD_HASH
+    )
 
 string(REGEX REPLACE "\n$" "" NDRX_BLD_HASH "${NDRX_BLD_HASH}")
 
 
 if (NOT gitres EQUAL 0)
-		SET (NDRX_BLD_HASH 	"unknown")
+    SET (NDRX_BLD_HASH 	"unknown")
 endif ()
 
 ################################################################################
@@ -140,13 +143,13 @@ endif()
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF (DEFINE_RELEASEBUILD)
-	MESSAGE( RELEASE_BUILD )
-	SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_C_FLAGS}")
-        SET(CMAKE_CXX_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_CXX_FLAGS}")
+    MESSAGE( RELEASE_BUILD )
+    SET(CMAKE_BUILD_TYPE release)
+    SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_C_FLAGS}")
+    SET(CMAKE_CXX_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_CXX_FLAGS}")
 ELSE ()
-	MESSAGE( DEBUG_BUILD )
-	SET(CMAKE_BUILD_TYPE debug)
+    MESSAGE( DEBUG_BUILD )
+    SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
 #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
 
@@ -340,8 +343,11 @@ message("ALIGNMENT_FORCE  = ${EX_ALIGNMENT_FORCE}")
 
 # In this file we are doing all of our 'configure' checks. Things like checking
 # for headers, functions, libraries, types and size of types.
+
+# Includes from osver package
+ex_osver_include()
+
 INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
-INCLUDE (${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckCSourceCompiles.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckCXXSourceCompiles.cmake)
@@ -356,16 +362,16 @@ CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t
 CHECK_C_SOURCE_COMPILES("#include <sys/sem.h> \n int main(int argc, char **argv) {union semun u; return 0;}" EX_HAVE_SEMUN)
 
 if(CMAKE_OS_NAME STREQUAL "AIX")
-	# it compiles OK, but we have no header where it is defined
-	# thus we get lots of warnings
-	message("No strlcpy/strcat_s/asprintf/__progname test for AIX")
-	set(HAVE_STRLCPY "0")
-        set(EX_HAVE_STRCAT_S "0")
+    # it compiles OK, but we have no header where it is defined
+    # thus we get lots of warnings
+    message("No strlcpy/strcat_s/asprintf/__progname test for AIX")
+    set(HAVE_STRLCPY "0")
+    set(EX_HAVE_STRCAT_S "0")
 else()
-	CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
-        CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" EX_HAVE_STRCAT_S)
-        CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" EX_HAVE_ASPRINTF)
-        CHECK_C_SOURCE_COMPILES("extern const char * __progname; int main() {return __progname[0];}" HAVE_PROGNAME)
+    CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
+    CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" EX_HAVE_STRCAT_S)
+    CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" EX_HAVE_ASPRINTF)
+    CHECK_C_SOURCE_COMPILES("extern const char * __progname; int main() {return __progname[0];}" HAVE_PROGNAME)
 endif()
 
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
@@ -469,8 +475,8 @@ add_subdirectory (libexmemck)
 add_subdirectory (libndrxconf)
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
-	add_subdirectory (libps) # Platform script
-	add_subdirectory (libpsstdlib) # Platform script standard library
+    add_subdirectory (libps) # Platform script
+    add_subdirectory (libpsstdlib) # Platform script standard library
 ENDIF()
 
 add_subdirectory (tpevsrv)
@@ -482,7 +488,7 @@ add_subdirectory (ud)
 
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
-	add_subdirectory (pscript) # Platform script interpreter
+    add_subdirectory (pscript) # Platform script interpreter
 ENDIF()
 
 add_subdirectory (viewc) # View compiler
@@ -514,6 +520,7 @@ ENDIF (DEFINE_DISABLEDOC)
 
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
+add_subdirectory (cmake) #  For install
 
 #
 # Install license files
@@ -551,82 +558,8 @@ add_custom_target(uninstall
 # Packages
 ################################################################################
 
-find_program(LSB_RELEASE_EXECUTABLE lsb_release)
-if(LSB_RELEASE_EXECUTABLE)
-        execute_process(COMMAND ${LSB_RELEASE_EXECUTABLE} -si
-                OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_OS
-                ERROR_QUIET
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-        string(TOLOWER 
-                ${_TMP_LSB_RELEASE_OUTPUT_OS}
-        LSB_RELEASE_OUTPUT_OS)
-        string(REPLACE " " "_" LSB_RELEASE_OUTPUT_OS ${LSB_RELEASE_OUTPUT_OS})
-
-        execute_process(COMMAND ${LSB_RELEASE_EXECUTABLE} -sr
-                OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER
-                ERROR_QUIET
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-        string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
-        #string(REGEX MATCH "^[0-9]+" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
-elseif (EXISTS /etc/os-release)
-
-	execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^NAME=' | cut -d '\"' -f2"
-                OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_OS
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-        string(TOLOWER 
-                ${_TMP_LSB_RELEASE_OUTPUT_OS}
-        LSB_RELEASE_OUTPUT_OS)
-        string(REPLACE " " "_" LSB_RELEASE_OUTPUT_OS ${LSB_RELEASE_OUTPUT_OS})
-
-        # fixes for CentOs 7.1810, having something like "7 (Core)" in output.
-        execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^VERSION=' | cut -d '=' -f2 | cut -d ' ' -f1 | cut -d '\"' -f2"
-                OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-        string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
-        #string(REGEX MATCH "^[0-9]+" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
-else ()
-        set(LSB_RELEASE_OUTPUT_OS ${CMAKE_OS_NAME})
-
-        string(REPLACE "." "_" _TMP_LSB_RELEASE_OUTPUT_VER ${CMAKE_SYSTEM_VERSION})
-        string(REPLACE "-" "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
-	
-	# If it is AIX, then we can extract version from uname
-	if(${CMAKE_OS_NAME} STREQUAL "AIX")
-		execute_process(COMMAND uname -v
-			OUTPUT_VARIABLE _TMP_OS_MAJOR_VER OUTPUT_STRIP_TRAILING_WHITESPACE)
-		execute_process(COMMAND uname -r
-			OUTPUT_VARIABLE _TMP_OS_MINOR_VER OUTPUT_STRIP_TRAILING_WHITESPACE)
-		set(LSB_RELEASE_OUTPUT_VER ${_TMP_OS_MAJOR_VER}_${_TMP_OS_MINOR_VER})
-	endif()
-	
-endif()
-
-message("LSB_RELEASE OS  = ${LSB_RELEASE_OUTPUT_OS}")
-message("LSB_RELEASE VER = ${LSB_RELEASE_OUTPUT_VER}")
-set(EX_LSB_RELEASE_VER ${LSB_RELEASE_OUTPUT_VER})
-
-string(REPLACE "_" ";" LSB_VERSION_LIST ${LSB_RELEASE_OUTPUT_VER})
-
-list( LENGTH LSB_VERSION_LIST TMP_LIST_LEN ) 
-
-if (TMP_LIST_LEN LESS 1)
-        # No version at all!!
-        set(EX_LSB_RELEASE_VER_MAJOR "0")
-        set(EX_LSB_RELEASE_VER_MINOR "0")
-elseif (TMP_LIST_LEN LESS 2)
-        # Bug #198 - FedoraCore do not have minor version numbers
-        list(GET LSB_VERSION_LIST 0 EX_LSB_RELEASE_VER_MAJOR)
-        set(EX_LSB_RELEASE_VER_MINOR "0")
-
-else ()
-        list(GET LSB_VERSION_LIST 0 EX_LSB_RELEASE_VER_MAJOR)
-        list(GET LSB_VERSION_LIST 1 EX_LSB_RELEASE_VER_MINOR)
-endif()
-
-MESSAGE( "EX_LSB_RELEASE_VER_MAJOR = " ${EX_LSB_RELEASE_VER_MAJOR} )
-MESSAGE( "EX_LSB_RELEASE_VER_MINOR = " ${EX_LSB_RELEASE_VER_MINOR} )
+# Resolve OS versions...
+ex_osver()
 
 # Support only for Linux
 MESSAGE( "CPack:Debug: CMAKE_SYSTEM_NAME = " ${CMAKE_SYSTEM_NAME} )
@@ -655,32 +588,17 @@ message("Excl: ${CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION}")
 
 set(CPACK_GENERATOR "TGZ")
 if(RPMPROG)
-        message("Outputting RPM")
-	set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
+    message("Outputting RPM")
+    set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
 endif()
 
 if(APTPROG)
-        message("Outputting DEB")
-	set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
+    message("Outputting DEB")
+    set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
 endif()
 
-#
-# Fix arch for AIX
-#
-IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^powerpc")
-	set(CPACK_RPM_PACKAGE_ARCHITECTURE "ppc")
-ENDIF()
+ex_cpuarch()
 
-set(EX_CPU_ARCH "${CMAKE_SYSTEM_PROCESSOR}_${EX_PLATFORM_BITS}")
-
-#
-# MAP the CPU name
-#
-if( (${EX_CPU_ARCH} STREQUAL "x86_64_64") OR (${EX_CPU_ARCH} STREQUAL "amd64_64") OR
-      (${EX_CPU_ARCH} STREQUAL "386_64") OR (${EX_CPU_ARCH} STREQUAL "amd64")
-      OR (${EX_CPU_ARCH} STREQUAL "i386_64") )
-    set(EX_CPU_ARCH "x86_64")
-endif()
 
 set(CPACK_PACKAGE_CONTACT "contact@mavimax.com")
 set(CPACK_PACKAGE_VERSION ${VERSION})
