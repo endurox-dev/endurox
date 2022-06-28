@@ -556,7 +556,7 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
     {
         /* Setup regexp matches (if any) */
         
-        if (NULL!=nodeid)
+        if (NULL!=nodeid && EXEOS!=nodeid[0])
         {
             if (EXSUCCEED!=ndrx_regcomp(&regexp_nodeid, nodeid))
             {
@@ -571,7 +571,7 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
             }
         }
         
-        if (NULL!=usrname)
+        if (NULL!=usrname && EXEOS!=usrname[0])
         {
             if (EXSUCCEED!=ndrx_regcomp(&regexp_usrname, usrname))
             {
@@ -586,7 +586,7 @@ expublic int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
             }
         }
         
-        if (NULL!=cltname)
+        if (NULL!=cltname && EXEOS!=cltname[0])
         {
             if (EXSUCCEED!=ndrx_regcomp(&regexp_cltname, cltname))
             {
