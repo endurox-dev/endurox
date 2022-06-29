@@ -71,7 +71,7 @@ macro(ex_osver)
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
             # extract the os name by regex
-            if (_TMP_LSB_RELEASE_OUTPUT_OS MATCHES "^NAME=[\'\"]*(.*)[\'\"]*")
+            if (_TMP_LSB_RELEASE_OUTPUT_OS MATCHES "^NAME=[\'\"]*([^\'\"]+)")
                 set(_TMP_LSB_RELEASE_OUTPUT_OS ${CMAKE_MATCH_1})
             else()
                 message(FATAL_ERROR "Failed to extract OS version from /etc/os-release")
