@@ -66,12 +66,12 @@ macro(ex_osver)
             #string(REGEX MATCH "^[0-9]+" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
     elseif (EXISTS /etc/os-release)
 
-            execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^NAME="
+            execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^NAME='"
                     OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_OS
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
             # extract the os name by regex
-            if (_TMP_LSB_RELEASE_OUTPUT_OS MATCHES "^NAME=['\"]*(.*)['\"]*")
+            if (_TMP_LSB_RELEASE_OUTPUT_OS MATCHES "^NAME=[\'\"]*(.*)[\'\"]*")
                 set(_TMP_LSB_RELEASE_OUTPUT_OS ${CMAKE_MATCH_1})
             else()
                 message(FATAL_ERROR "Failed to extract OS version from /etc/os-release")
@@ -87,6 +87,7 @@ macro(ex_osver)
                     OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
             string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
+            string(REPLACE "-" "_" LSB_RELEASE_OUTPUT_VER ${LSB_RELEASE_OUTPUT_VER})
             #string(REGEX MATCH "^[0-9]+" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
     else ()
             set(LSB_RELEASE_OUTPUT_OS ${CMAKE_OS_NAME})

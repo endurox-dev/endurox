@@ -125,7 +125,7 @@ expublic void ndrx_rand_seedset(unsigned int *seed)
     /* Randomize seed counter.. */
     if (EXSUCCEED==ndrx_get_rnd_bytes(buf, sizeof(*seed)))
     {
-        p = (unsigned char *)seed;
+        p = (char *)seed;
         for (i=0; i<sizeof(*seed); i++)
         {
             p[i] = p[i] ^ buf[i];
