@@ -132,6 +132,8 @@ static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static int history_len = 0;
 static char **history = NULL;
 
+int ndrx_G_ctrl_d = 0;    /**< Is ctrl+d EOF ? */
+
 /* The linenoiseState structure represents the state during line editing.
  * We pass this state to functions implementing specific editing
  * functionalities. */
@@ -841,6 +843,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             } else {
                 history_len--;
                 free(history[history_len]);
+                ndrx_G_ctrl_d=1; /**< This is Mavimax extension */
                 return -1;
             }
             break;

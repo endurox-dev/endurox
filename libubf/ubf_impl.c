@@ -979,6 +979,39 @@ out:
 }
 
 /**
+ * Internal version of Baddfast
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, 
+	Bfld_loc_info_t *next_fld)
+{
+    int ret = EXSUCCEED;
+    
+    if (NULL==next_fld)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "next_fld must not be NULL!");
+        return EXFAIL;
+    }
+    
+    /* check that rules are OK */
+    if (BBADFLDID!=next_fld->last_Baddfast &&
+            bfldid < next_fld->last_Baddfast)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "bfldid (%u) < next_fld->last_Baddfast (%u)!",
+                bfldid, next_fld->last_Baddfast);
+        return EXFAIL;
+    }
+    
+    if (EXSUCCEED==(ret=ndrx_Badd (p_ub, bfldid, buf, len, NULL, next_fld)))
+    {
+        /* Support #622 save the result */
+        next_fld->last_Baddfast = bfldid;
+    }
+    
+    return ret;
+}
+
+/**
  * Add value to FB...
  * TODO: Move to binary search.
  * If adding the first value, the buffer should be large enought and last

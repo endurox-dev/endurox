@@ -53,6 +53,8 @@
 #include <linenoise.h>
 /*---------------------------Externs------------------------------------*/
 extern const char ndrx_G_resource_ndrx_config[];
+extern int ndrx_G_ctrl_d; /* feedback from linenoise, ctrl+d EOF pressed */
+
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -886,6 +888,12 @@ exprivate int get_cmd(int *p_have_next)
             }
             
             NDRX_FREE(line);
+            
+            /* Feature #782 */
+            if (ndrx_G_ctrl_d)
+            {
+                M_quit_requested=EXTRUE;
+            }
         }
         else
         {
@@ -930,7 +938,13 @@ exprivate int get_cmd(int *p_have_next)
         }
         /* We have next from stdin, if not quit command executed last */
         if (!M_quit_requested)
-            *p_have_next = EXTRUE;        
+        {
+            *p_have_next = EXTRUE;
+        }
+        else
+        {
+            *p_have_next = EXFALSE;
+        }
     }
 out:
     return ret;
