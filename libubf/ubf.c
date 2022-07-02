@@ -187,9 +187,46 @@ expublic int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
     int ret = EXSUCCEED;
     
     API_ENTRY;
+    
     if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
         UBF_LOG(log_warn, "Badd: arguments fail!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Baddfast (p_ub, bfldid, buf, len, next_fld);
+}
+
+/**
+ * Fast adding to UBF buffer with user data type convert if necessary
+ * @param p_ub UBF buffer
+ * @param bfldid field to add
+ * @param buf value to add
+ * @param len len of value (if needed)
+ * @param usrtype user data 
+ * @param next_fld saved from previous call. Initially memset to 0
+ * @return EXSUCCEED/EXFAIL 
+ */
+expublic int CBaddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
+        int usrtype, Bfld_loc_info_t *next_fld)
+{
+    int ret=EXSUCCEED;
+    int cvn_len=0;
+    char *cvn_buf;
+
+    char tmp_buf[CF_TEMP_BUF_MAX];
+    int to_type = (bfldid>>EFFECTIVE_BITS);
+    /* Buffer management */
+    char *alloc_buf = NULL;
+    char *p;
+    char *fn = "CBaddfast";
+    
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
+    {
+        UBF_LOG(log_warn, "CBaddfast: arguments fail!");
         return EXFAIL;
     }
     
@@ -207,13 +244,69 @@ expublic int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
                 bfldid, next_fld->last_Baddfast);
         return EXFAIL;
     }
-    
-    if (EXSUCCEED==(ret=ndrx_Badd (p_ub, bfldid, buf, len, NULL, next_fld)))
+
+    /* validate user specified type */
+    VALIDATE_USER_TYPE(usrtype, return EXFAIL);
+
+    /* if types are the same then do direct call */
+    if (usrtype==to_type)
     {
-        /* Support #622 save the result */
-        next_fld->last_Baddfast = bfldid;
+        UBF_LOG(log_debug, "CBaddfast: the same types - direct call!");
+        
+        ret=ndrx_Baddfast(p_ub, bfldid, buf, len, next_fld);
+        
+        if (EXSUCCEED==ret)
+        {
+            /* Support #622 save the result */
+            next_fld->last_Baddfast = bfldid;
+        }
+        
+        return ret; /* <<<< RETURN!!! */
     }
+    /* if types are not the same then go the long way... */
     
+    /* validate that type is not complex */
+    if (IS_TYPE_COMPLEX(to_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported bfldid type %d", to_type);
+        return EXFAIL;
+    }
+
+    /* Allocate the buffer dynamically */
+    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf, buf, len, &alloc_buf, 
+                                &cvn_len, CB_MODE_DEFAULT, 0)))
+    {
+        UBF_LOG(log_error, "%s: Malloc failed!", fn);
+        return EXFAIL; /* <<<< RETURN!!!! */
+    }
+
+    cvn_buf = ndrx_ubf_convert(usrtype, CNV_DIR_IN, buf, len,
+                        to_type, p, &cvn_len);
+
+    if (NULL!=cvn_buf)
+    {
+        ret=ndrx_Baddfast (p_ub, bfldid, cvn_buf, cvn_len, next_fld);
+        
+        if (EXSUCCEED==ret)
+        {
+            /* Support #622 save the result */
+            next_fld->last_Baddfast = bfldid;
+        }
+    }
+    else
+    {
+        UBF_LOG(log_error, "%s: failed to convert data!", fn);
+        /* Error should be provided by conversation function */
+        ret=EXFAIL;
+    }
+
+    /* Free up buffer */
+    if (NULL!=alloc_buf)
+    {
+        UBF_LOG(log_debug, "%s: free alloc_buf", fn);
+        NDRX_FREE(alloc_buf);
+    }
+
     return ret;
 }
 

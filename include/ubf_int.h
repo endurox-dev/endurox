@@ -240,6 +240,8 @@ extern int ndrx_Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 extern int ndrx_Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
                                 Bfld_loc_info_t *last_start, 
 				Bfld_loc_info_t *next_fld);
+extern int ndrx_Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, 
+	Bfld_loc_info_t *next_fld);
 extern int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len, Bfld_loc_info_t *last_start, 
                             int upd_only);
