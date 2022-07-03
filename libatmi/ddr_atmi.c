@@ -237,6 +237,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     unsigned char ver1_ok;
     unsigned char ver2_ok;
     int is_default = EXFALSE;
+    int had_type_match = EXFALSE;
     
     /* not attached, nothing to return */
     if (!ndrx_shm_is_attached(&ndrx_G_routsvc))
@@ -323,6 +324,8 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
         
         if (buf->type_id == ccrit->buffer_type_id)
         {
+            had_type_match = EXTRUE;
+            
             /*  OK this is ours to check... */
             if (BUF_TYPE_UBF==buf->type_id)
             {
@@ -548,7 +551,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
      * Though one issue is that in cluster if sending the default
      * the bridge will attempt to route again...?
      */
-    if (EXTRUE==ret && !is_default)
+    if (EXTRUE==ret && (!is_default))
     {
         /* add the group suffx, also check the buffer space 
          * If there is not enough space, return the error.
@@ -575,8 +578,11 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     
 out_rej:
     
-    /* terminate the request, if was routing, but route  or group / not found */
-    if (EXSUCCEED==ret)
+    /* terminate the request, if was routing, but route  or group / not found 
+     * For non routed buffer types, we just bypass the routing, use default
+     * service (Bug #779).
+     */
+    if (EXSUCCEED==ret && had_type_match)
     {
         NDRX_LOG(log_error, "Routing criterion for service [%s] buffer type [%s] is not found",
                 svcnm, G_buf_descr[buf->type_id].type);
@@ -586,7 +592,6 @@ out_rej:
                 svcnm, G_buf_descr[buf->type_id].type);
         ret=EXFAIL;
     }
-    
     
 out:
     
