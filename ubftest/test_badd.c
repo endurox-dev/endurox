@@ -458,6 +458,51 @@ Ensure(test_Baddfast3)
     
 }
 
+Ensure(test_CBaddfast)
+{
+    Bfld_loc_info_t state;
+    char buf1[56000];
+    short s;
+    UBFH *p_ub1 = (UBFH *)buf1;
+    char *tree = NULL;
+    
+    memset(buf1, 0, sizeof(buf1));
+    memset(&state, 0, sizeof(state));
+    assert_equal(Binit(p_ub1, sizeof(buf1)), EXSUCCEED);
+    
+    
+    assert_equal(CBaddfast(p_ub1, T_SHORT_FLD, "1", 0, BFLD_STRING, &state), EXSUCCEED);
+    assert_equal(CBaddfast(p_ub1, T_SHORT_FLD, "2", 0, BFLD_STRING, &state), EXSUCCEED);
+    
+    /* continues next: */
+    assert_equal(CBaddfast(p_ub1, T_LONG_FLD, "3", 0, BFLD_STRING, &state), EXSUCCEED);
+    assert_equal(CBaddfast(p_ub1, T_LONG_FLD, "4", 0, BFLD_STRING, &state), EXSUCCEED);
+    
+    s=5;
+    assert_equal(CBaddfast(p_ub1, T_STRING_FLD, (char *)&s, 0, BFLD_SHORT, &state), EXSUCCEED);
+    s=6;
+    assert_equal(CBaddfast(p_ub1, T_STRING_FLD, (char *)&s, 0, BFLD_SHORT, &state), EXSUCCEED);
+    
+    assert_equal(CBaddfast(p_ub1, T_CARRAY_FLD, "HELLO", 0, BFLD_STRING, &state), EXSUCCEED);
+    assert_equal(CBaddfast(p_ub1, T_CARRAY_FLD, "WORLD", 0, BFLD_STRING, &state), EXSUCCEED);
+    
+    /* test some errors */
+    assert_equal(CBaddfast(p_ub1, T_UBF_FLD, "1", 0, BFLD_UBF, &state), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBaddfast(p_ub1, T_UBF_FLD, "2", 0, BFLD_UBF, &state), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    
+    /* validate the buffer */
+    tree=Bboolco ("T_SHORT_FLD[0]==1 && T_SHORT_FLD[1]==2 && T_LONG_FLD[0]==3 && T_LONG_FLD[1]==4 &&"
+                "T_STRING_FLD[0]=='5' && T_STRING_FLD[1]=='6' && T_CARRAY_FLD[0]=='HELLO' &&"
+                " T_CARRAY_FLD[1]=='WORLD'");
+    assert_not_equal(tree, NULL);
+    assert_equal(Bboolev(p_ub1, tree), EXTRUE);
+    Btreefree(tree);
+}
+
+
+
 /**
  * Test FML wrapper
  * i.e. FLD_PTR logic is different for FML.
@@ -534,6 +579,7 @@ TestSuite *ubf_Badd_tests(void)
     add_test(suite, test_Baddfast1);
     add_test(suite, test_Baddfast2);
     add_test(suite, test_Baddfast3);
+    add_test(suite, test_CBaddfast);
     
     add_test(suite, test_Badd_ubf);
     add_test(suite, test_Fadd);
