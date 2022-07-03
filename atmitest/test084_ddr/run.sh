@@ -198,7 +198,7 @@ xadmin stop -i 40
 ./atmiclt84 -ST2 -l201 -gT2 -e0 || go_out 9
 
 # Check null buffer no hang
-./atmiclt84 -STESTSV -l7 -gTESTSV@DOM2 -N -e12 || go_out 5
+./atmiclt84 -STESTSV -gTESTSV -N -e0 || go_out 5
 
 ################################################################################
 echo "*** Check routes... (double type)"

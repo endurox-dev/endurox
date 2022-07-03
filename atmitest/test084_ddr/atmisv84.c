@@ -59,6 +59,12 @@ void TESTSV (TPSVCINFO *p_svc)
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
+    if (NULL==p_ub)
+    {
+        /* it's OK */
+        goto out;
+    }
+    
     /* ensure the size */
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 1024)))
     {
