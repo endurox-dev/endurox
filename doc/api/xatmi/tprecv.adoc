@@ -66,6 +66,8 @@ ERRORS
 Note that *tpstrerror()* returns generic error message plus 
 custom message with debug info from last function call.
 
+*TPEBLOCK* *TPENOBLOCK* was specified in flags and no message is in queue.
+
 *TPEINVAL* Invalid call descriptor 'cd' passed in. 'data' or 'len' is NULL.
 
 *TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
