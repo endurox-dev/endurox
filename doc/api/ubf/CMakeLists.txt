@@ -122,6 +122,7 @@ set(MAN3_NAMES
     Bvnext
     Bvcmp
     Baddfast
+    CBaddfast
     Bcmp
     Bsubset
     Bfldddbgetenv

@@ -1,0 +1,9 @@
+CBADDFAST(3)
+============
+:doctype: manpage
+
+NAME
+----
+CBaddfast - Fast adding to buffer with type convert
+
+include::baddfast-common.adoc[]
