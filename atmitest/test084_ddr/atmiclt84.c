@@ -191,18 +191,21 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, tmp, 0L))
+    if (!do_null)
     {
-        NDRX_LOG(log_debug, "Failed to get T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (0!=strcmp(tmp, svcnm_proc))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Expected service [%s] to process request, but got [%s]",
-                svcnm_proc, tmp);
-        EXFAIL_OUT(ret);
+        if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, tmp, 0L))
+        {
+            NDRX_LOG(log_debug, "Failed to get T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (0!=strcmp(tmp, svcnm_proc))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected service [%s] to process request, but got [%s]",
+                    svcnm_proc, tmp);
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
