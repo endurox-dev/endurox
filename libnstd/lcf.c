@@ -712,8 +712,6 @@ expublic void ndrx_lcf_detach(void)
 exprivate int ndrx_lcf_logrotate(ndrx_lcf_command_t *cmd, long *p_flags)
 {
     return ndrx_debug_reopen_all();
-    
-    return EXSUCCEED;
 }
 
 /**
@@ -729,9 +727,6 @@ exprivate int ndrx_lcf_logchg(ndrx_lcf_command_t *cmd, long *p_flags)
      */
     return tplogconfig_int(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP, 
             EXFAIL, (char *)cmd->arg_a, NULL, NULL, NDRX_TPLOGCONFIG_VERSION_INC);
-    
-    
-    return EXSUCCEED;
 }
 
 /**

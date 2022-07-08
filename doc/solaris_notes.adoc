@@ -192,7 +192,7 @@ export NDRX_CONFIG=\$HOME/endurox/sampleconfig/ndrxconfig.xml
 export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 
 export PATH=/usr/bin:/usr/sbin:/opt/csw/bin:/opt/solarisstudio12.4/bin:/opt/csw/bin:\$HOME/endurox/dist/bin
-export LD_LIBRARY_PATH=/usr/lib/sparcv9:\$HOME/endurox/dist/lib64:/opt/solarisstudio12.4/lib:/usr/lib64:/opt/csw/lib/64
+export LD_LIBRARY_PATH=/usr/lib/sparcv9:\$HOME/endurox/dist/lib64:/opt/solarisstudio12.4/lib:/usr/lib64:/usr/lib/64:/opt/csw/lib/64
 
 ################################################################################
 # In case if building with Postgresql DB database testing support
