@@ -138,14 +138,14 @@ SET(ATMISRV_INTEG_LIBS "-lndrxaix -lrt -ldl")
 else()
 
 SET(ATMISRV_INTEG_LIBS "-latmisrvinteg -latmi -lubf -lnstd -lpthread -lm")
-foreach(LIB ${RT_LIB})
 
+foreach(LIB ${RT_LIB})
     # skip lCrun for solaris
-    if(NOT ${LIB} EQUAL "Crun")
+    if(NOT ${LIB} MATCHES "Crun")
         list(APPEND ATMISRV_INTEG_LIBS "-l${LIB}")
     endif()
-
 endforeach()
+
 string(REPLACE ";" " " ATMISRV_INTEG_LIBS "${ATMISRV_INTEG_LIBS}")
 
 endif()
