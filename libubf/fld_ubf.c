@@ -254,3 +254,4 @@ expublic int ndrx_cmp_ubf (struct dtype_ext1 *t, char *val1, BFLDLEN len1,
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
+
