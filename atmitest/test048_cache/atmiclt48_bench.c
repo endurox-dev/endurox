@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     tpinit(NULL);
     
     /*start with 1 byte, then with 1 kb, then +4 kb up till 56... */
-    for (j=0; j<56; j=(j==0?j=1:j+4))
+    for (j=0; j<56; j+=(j==0?1:4))
     {
         int callsz = j*1024;
         if (0==j)

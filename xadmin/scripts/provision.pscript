@@ -19,8 +19,6 @@ compilestring(getwizardbase())();
 //Provision class
 class Provision extends WizardBase {
 
-
-
 	constructor()
 	{
 		base.constructor();
