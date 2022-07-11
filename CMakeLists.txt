@@ -98,10 +98,6 @@ endif ()
 # OS Configuration
 ################################################################################
 
-EXEC_PROGRAM(uname ARGS -a OUTPUT_VARIABLE _TMP_CMAKE_OS_NAME)
-string(REGEX MATCH "^[a-zA-Z0-9-]*" _TMP_CMAKE_OS_NAME_EXTR ${_TMP_CMAKE_OS_NAME})
-string(TOUPPER ${_TMP_CMAKE_OS_NAME_EXTR} CMAKE_OS_NAME)
-
 # Force C++ for C
 #SET(CMAKE_C_COMPILER ${CMAKE_CXX_COMPILER})
 

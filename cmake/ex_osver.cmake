@@ -41,6 +41,11 @@ macro(ex_osver_include)
     INCLUDE (${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
 endmacro(ex_osver_include)
 
+# for all
+EXEC_PROGRAM(uname ARGS -a OUTPUT_VARIABLE _TMP_CMAKE_OS_NAME)
+string(REGEX MATCH "^[a-zA-Z0-9-]*" _TMP_CMAKE_OS_NAME_EXTR ${_TMP_CMAKE_OS_NAME})
+string(TOUPPER ${_TMP_CMAKE_OS_NAME_EXTR} CMAKE_OS_NAME)
+
 #
 # Set operating system version flags
 # 
