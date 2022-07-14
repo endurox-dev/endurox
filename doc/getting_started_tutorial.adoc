@@ -1,8 +1,5 @@
 Getting Started Tutorial
 ========================
-Madars Vitolins
-v1.1, 2018-11:
-	Updates for release 6.0 - move to provision script
 :doctype: book
 
 == About the guide
@@ -371,7 +368,7 @@ processes to start (which previosly did not start because we didn't have
 
 ---------------------------------------------------------------------
 
-$ xadmin tart -y
+$ xadmin start -y
 Enduro/X 5.4.1, build Nov 12 2018 08:11:50, using SystemV for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
