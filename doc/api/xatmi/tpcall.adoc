@@ -29,8 +29,8 @@ buffer which must be also allocated by *tpcalloc()*. If the allocated buffer
 size is shorter then received one, then Enduro/X will automatically realloc the 
 buffer to new size. 'olen' is mandatory field, where the received buffer length 
 is stored. If *TPNOTRAN* is not specified and current thread is in global 
-transaction, then system will make destination process run in 
-same destination process. In case of error, global transaction (if associated 
+transaction, then system will make destination process to run in 
+same global transaction. In case of error, global transaction (if associated 
 with current thread) is marked for abort, except if *TPNOABORT* flag was 
 specified or particular error code indicates that global transaction is not aborted.
 

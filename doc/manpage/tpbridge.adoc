@@ -21,35 +21,28 @@ Enduro/X cluster.
 
 Bridge process is used to exchange service lists between two nodes,
 calculate monotonic clock diff (so that later for messages time can
-be adjusted) between nodes.
+be adjusted) between nodes and send XATMI IPC traffic between the machines.
 
-To establish network connection, on one machine it must be in passive mode
-and on other machine it must be in active mode. Active 'tpbridge' periodically
-tries to connect to the other machine. To one passive bridge only one
-connection can be made.
-
-If connection is dropped, active node will re-try to connect.
+To establish network connection, on one machine bridge must be in 
+passive mode (socket server) and on other machine it must be configured 
+in active mode (socket client). Active 'tpbridge' periodically tries to connect 
+to the passive Enduro/X instance. If connection is dropped, active node
+will re-try to connect. Single 'tpbridge' process accepts only single
+TCP connection. Between two Enduro/X instances only one link can be defined
+where on each Enduro/X node there is 'tpbridge' process configured accordingly.
+Enduro/X node may have several 'tpbridge' process definitions defined,
+but each of these processes must define links for different Enduro/X
+cluster nodes.
 
 All data messages are prefixed with 4 byte message length indicator.
 Meaning that the logical message can be split over the multiple packets or
-within one packed can be carried multiple logical messages - 'tpbridge' will
-solve that.
+within one packed multiple logical messages can be carried.
 
-When connection is established, clock diff and service lists are exchanged,
-then 'bridge' is used to serve ATMI actions over the machines. I.e. 'tpcall()',
-'tpforward()', conversations, etc. At connection established clocks are send
-in asynchronous fashion and time spent during the message in network is ignored,
-as connection is fresh and no data flows. But it might happen that over the time
-the monotonic clocks of connected hosts drift away, the difference measured at
-startup is not actual, and the messages receive or sent from one node might look
-like expired on other node. To solve this issue tpbridge periodically sends
-dynamic clock exchange between nodes, in synchronous fashion. The round trip time
-is measured (just like a ping time) and if it is within acceptable boundaries, the
-time from other host is accepted and time correction value is updated. The max
-rountrip time is set by '-k' flag (default 200ms), and interval is set by '-K' flag
-(600 sec). To monitor the clock status, TM_MIB class *T_BRCON* can be used
-for this purpose, e.g. "$ xadmin -c T_BRCON" call.
-
+When connection is established, sequence of actions happens: 1)
+clock difference between nodes and advertised service lists are exchanged. 2)
+After initial data exchange (clock & tables) 'tpbridge' is used to send 
+XATMI IPC over the network. I.e. 'tpcall()', 'tpforward()', 
+conversations, etc.
 
 When connection is stopped. This is reported to 'ndrxd' daemon which
 removes services from shared memory accordingly.
@@ -58,9 +51,8 @@ tpbridge supports two network message formats. First format is native format
 which sends over the network directly internal (C lang) structures. This format
 will work faster, but cannot be used between different type of computers.
 I.e. in this case it is not possible to mix for example x86_64 with x86. Or
-x86 with RISC/ARM 32bit.
-If mixing is necessary, then use Enduro/X Network Protocol option, activated by
-flag '-f' on both nodes. In this case standard common TLV data format is used
+x86 with RISC/ARM 32bit. If mixing is necessary, then use Enduro/X Network Protocol option,
+activated by flag '-f' on both nodes. In this case standard common TLV data format is used
 for data exchange between nodes. This might be slower than native format.
 
 When using host name (*-h*) for resolving binding host or connection address,
@@ -91,7 +83,6 @@ In case of connecting to address (*client*):
 select next IP, continue with 3.
 
 5. If list of IP addresses are exhausted, start with 1.
-
 
 tpbridge to-network and from-network streams are separated by different threads.
 Thus reading from XATMI queues is doing server main thread. And reading from
@@ -171,6 +162,27 @@ logs.
 
 ULOG contains entry "Discarding message" for every discarded message.
 
+CLOCK SYNC
+----------
+
+As Enduro/X mostly all time elements (timeouts, etc) accounts in local Monotonic
+time, the time correction (adjustment from remote Monotonic clock to local) is
+required when XATMI IPC message is received from remote node. Bridge process
+uses special messages to exchange the clock information between the nodes.
+
+When connection is established clocks each node sends other node it's
+local Monotonic time. And this used initially for time correction between the nodes.
+
+But it might happen that over the time the monotonic clocks of connected hosts drift away,
+the difference measured at connection startup is not actual, and the messages
+receive or sent from one node might look like expired on other node.
+To solve this issue tpbridge periodically sends dynamic clock exchange messages 
+between nodes, in synchronous fashion. The round trip time is measured (just like a ping time)
+and if it is within acceptable boundaries, the time from other host is accepted
+and time correction value is updated. The max rountrip time is set by '-k'
+flag (default 200ms), and interval is set by '-K' flag (600 sec).
+To monitor the clock status, TM_MIB class *T_BRCON* can be used 
+for this purpose, e.g. "$ xadmin -c T_BRCON" call.
 
 OPTIONS
 -------
@@ -323,7 +335,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ex_env(5)* *ndrxconfig.xml(5)* *xadmin(8)* *ndrxd(8)*
+*ex_env(5)* *ndrxconfig.xml(5)* *xadmin(8)* *ndrxd(8)* *ex_netproto(guides)*
 
 COPYING
 -------

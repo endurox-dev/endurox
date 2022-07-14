@@ -28,7 +28,7 @@ buffer length is not described by type. If call succeeds, the function return
 the call descriptor. With call descriptor it is possible later to receive the 
 response by using *tpgetrply()* If *TPNOTRAN* is not specified and current 
 process is in global transaction, then system will make destination process 
-run in same destination process.
+run in same global transaction.
 
 tpacall() current does not suspend the global transaction before sending
 the data. If such logic is reuqired, the *tpsuspend(3)* shall be used
