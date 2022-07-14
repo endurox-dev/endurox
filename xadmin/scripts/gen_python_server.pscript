@@ -81,7 +81,7 @@ class Server:
         return 0
 
     def tpsvrdone(self):
-        e.log_info(""Server shutdown"")
+        e.tplog_info(""Server shutdown"")
 
     def "+svcname+@"(self, args):"+(useubf=="y"?@"
         e.tplogprintubf(e.log_info, ""Incoming request:"", args.data)
