@@ -77,7 +77,7 @@ class Server:
                 else:
                     e.tplog_debug(""Unknown parameter [%s]"" % key);
 ":@"")+@"
-        e.tpadvertise("""+svcname+@""", """+svcname+@""", self."+svcname+@")
+        e.tpadvertise("""+svcname+@""", """+svcname+@""", Server."+svcname+@")
         return 0
 
     def tpsvrdone(self):
