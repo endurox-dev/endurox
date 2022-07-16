@@ -49,6 +49,7 @@ Source project or Commercial license Acquired from Mavimax Ltd
 EnduroX have bindings for:
 - Golang (client & server)
 - Java (client & server)
+- Python 3 (client & server)
 - PHP (client)
 - Perl (client & server)
 
