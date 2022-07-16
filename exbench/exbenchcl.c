@@ -611,7 +611,7 @@ expublic int main( int argc, char** argv )
         
         for (i=0; i<M_nr_threads; i++)
         {
-            if ( fork () == 0 ) /* Child Writer */
+            if ( ndrx_fork () == 0 ) /* Child Writer */
             {
                 int finish=EXFALSE;
                 parent=EXFALSE;
