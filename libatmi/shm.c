@@ -1205,7 +1205,6 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
             el->resnr = 0;
             el->resrr = 0;
-            el->resrr = 0;
 #endif
             
             *last=EXTRUE;

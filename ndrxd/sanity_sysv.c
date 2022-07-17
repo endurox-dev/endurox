@@ -128,7 +128,7 @@ out:
  * belongs to request address, then queue is unlinked. This will protect us from
  * unlinking queues to which working zero service servers are located, like
  * tpbridge...
- * @param nottl do not use TTL for non service linked request address removal
+ * @param finalchk do not use TTL for non service linked request address removal
  * 
  * @return SUCCEED/FAIL
  */
@@ -144,6 +144,7 @@ expublic int do_sanity_check_sysv(int finalchk)
     bridgedef_svcs_t *cur, *tmp;
     ndrx_shm_resid_t *srvlist = NULL;
     pm_node_t *p_pm;
+    int last;
     
     NDRX_LOG(log_debug, "Into System V sanity checks, finalchk: %d", finalchk);
     
@@ -194,6 +195,12 @@ expublic int do_sanity_check_sysv(int finalchk)
                 {
                     NDRX_LOG(log_error, "!!! Service [%s] have NO resource %d at idx %d", 
                             cur->svc_nm, srvlist[i].resid, i);
+                    
+                    /* Shouldn't we housekeep the service as no Qs are available
+                     * for serving...
+                     */
+                    ndrxd_shm_uninstall_svc(cur->svc_nm, &last, srvlist[i].resid);
+                    
                 }
             }         
         } /* local servs */

@@ -618,7 +618,8 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
                 ret=SHM_ENT_OLD;
             }
             
-            ret=EXTRUE;
+            /* Bug #784  
+            ret=EXTRUE;*/
             break;  /* <<< Break! */
         }
         
@@ -1265,7 +1266,7 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
         pm = NDRX_SVQ_INDEX(svq, i);
         block[i].flags = pm->flags;
         block[i].qid = pm->qid;
-        
+     
         if (block[i].flags & NDRX_SVQ_MAP_ISUSED &&
                 ndrx_stopwatch_get_delta_sec( &(pm->ctime)) > ttl)
         {
