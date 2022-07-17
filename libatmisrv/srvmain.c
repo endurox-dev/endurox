@@ -1206,13 +1206,19 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    if (G_atmi_env.test_advertise_crash)
+    {
+        NDRX_LOG(log_error, "Crash is happening...!");
+        exit(1);
+    }
+    
     /* As we can run even without ndrxd, then we ignore the result of send op */
     report_to_ndrxd();
     
     if (EXSUCCEED!=ndrx_atfork(NULL, NULL, childsrvuninit))
     {
-        NDRX_LOG(log_error, "Failed to add atfork hanlder!");
-        userlog("Failed to add atfork hanlder!");
+        NDRX_LOG(log_error, "Failed to add atfork handler!");
+        userlog("Failed to add atfork handler!");
         EXFAIL_OUT(ret);
     }
     

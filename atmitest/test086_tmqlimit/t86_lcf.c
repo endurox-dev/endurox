@@ -97,6 +97,21 @@ exprivate int custom_twriterr(ndrx_lcf_command_t *cmd, long *p_flags)
 }
 
 /**
+ * Advertise crashing mark
+ */
+exprivate int custom_advcrash(ndrx_lcf_command_t *cmd, long *p_flags)
+{
+    /* Assuming that init have finished... (sending to servers...) */
+    G_atmi_env.test_advertise_crash = atoi(cmd->arg_a);
+    NDRX_LOG(log_error, "G_atmi_env.test_advertise_crash=%d", 
+            G_atmi_env.test_advertise_crash);
+
+    /* seems having some issues with ASAN */
+    sleep(1);
+    return 0;
+}
+
+/**
  * Initialize the plugin
  * @param provider_name plugin name/provider string
  * @param provider_name_bufsz provider string buffer size
@@ -190,6 +205,35 @@ expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
         NDRX_LOG_EARLY(log_error, "TESTERROR: Failed to add func: %s", Nstrerror(Nerror));
         EXFAIL_OUT(ret);
     }
+    
+    /* xatmi advertise failure */
+    
+    memset(&cfunc, 0, sizeof(cfunc));
+    NDRX_STRCPY_SAFE(cfunc.cmdstr, "advcrash");
+    cfunc.command=1004;
+    cfunc.version=NDRX_LCF_CCMD_VERSION;
+    cfunc.pf_callback=custom_advcrash;
+    
+    if (EXSUCCEED!=ndrx_lcf_func_add(&cfunc))
+    {
+        NDRX_LOG_EARLY(log_error, "TESTERROR: Failed to add func: %s", Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+    
+    memset(&xfunc, 0, sizeof(xfunc));
+    NDRX_STRCPY_SAFE(xfunc.cmdstr, "advcrash");
+    xfunc.command=1004;
+    xfunc.version = cfunc.version=NDRX_LCF_XCMD_VERSION;
+    NDRX_STRCPY_SAFE(xfunc.helpstr, "XATMI advertise error simulation");
+    xfunc.dfltflags=(NDRX_LCF_FLAG_ARGA);
+    xfunc.dfltslot=6;
+    
+    if (EXSUCCEED!=ndrx_lcf_xadmin_add(&xfunc))
+    {
+        NDRX_LOG_EARLY(log_error, "TESTERROR: Failed to add func: %s", Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+    
     
 out:
     /* No functions provided */

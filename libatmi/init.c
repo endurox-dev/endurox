@@ -75,6 +75,7 @@ expublic atmi_lib_env_t G_atmi_env={
     /* must follow first otherwise we override lcf commands at startup */
     .test_qdisk_write_fail=EXFALSE, 
     .test_tmsrv_write_fail=EXFALSE,
+    .test_advertise_crash=EXFALSE,
     .test_tmsrv_commit_crash=EXFALSE,
     .xa_sw = NULL,
     .time_out=EXFAIL}; /* ATMI library environmental configuration */
