@@ -82,6 +82,8 @@ function go_out {
     exit $1
 }
 
+UNAME=`uname`
+
 #
 # Get the crash lib...
 #
