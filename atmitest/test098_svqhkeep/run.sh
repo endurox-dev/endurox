@@ -52,6 +52,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -117,12 +118,20 @@ echo "Let housekeep to fix SHM"
 # let housekeep to proceed.
 xadmin lcf advcrash -A 0 -a -n
 sleep 20
-
 xadmin start -y
 
 RET=0
-
 xadmin psvc -r
+if [ `xadmin poller` == "emq" ] || [ `xadmin poller` == "SystemV" ] || [ `xadmin poller` == "poll" ]; then
+    # do this for systemv/poll/emq only
+    # Check that count of services is 1
+    RES=`xadmin psvc -r | grep -v '00000000000' | egrep "[ ]*[0-9]+[ ]*[0-9]+[ ]*1"`
+    if [ "X$RES" == "X" ]; then
+        echo "Expected 1x resource, not matching"
+        go_out -1
+    fi
+fi
+
 echo "Running off client"
 
 set_dom1;

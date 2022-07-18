@@ -900,10 +900,18 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                     if (el->resids[i].resid==resid)
                     {
                         idx = i;
+#ifdef EX_USE_POLL
+                        /* this may happen in case if housekeep did
+                         * not remove the process and new was started...
+                         */
+                        NDRX_LOG(log_debug, "resource resid/srvid %d at %d "
+                                "already exists", resid, idx);
+#else
                         el->resids[i].cnt++;
                         NDRX_LOG(log_debug, "installed resid/srvid %d at %d "
                                 "increased to %hd", 
                                 resid, idx, el->resids[i].cnt);
+#endif
                     }
                 }
                 
