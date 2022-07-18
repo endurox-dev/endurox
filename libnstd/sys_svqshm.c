@@ -1093,7 +1093,7 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
             
             if (!have_value)
             {
-                NDRX_LOG(log_warn, "Queue not found [%s]/%d", 
+                NDRX_LOG(log_info, "Queue not found [%s]/%d", 
                         qstr?qstr:"NULL", qid);
                 err = ENOENT;
                 EXFAIL_OUT(ret);

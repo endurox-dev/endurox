@@ -198,6 +198,19 @@ expublic int do_sanity_check_sysv(int finalchk)
                     
                     /* Shouldn't we housekeep the service as no Qs are available
                      * for serving...
+                     * Thing #2: Seems like linux does not randomize msgid identifiers
+                     * thus it is possible here, that if server for whom we are removing
+                     * the identifier is booting in background and at this moment is installing
+                     * the service queues + services, then there is race condition on this
+                     * that here we actually remove the service.
+                     * Probably we could lock the queues and check status again?
+                     * and if that finds out that Q is missing, then with locked queues
+                     * we continue to remove the service. We can use read locks here on SystemV
+                     * but still needs to think about the locking, as then all the
+                     * else were of the SystemV queues any removal and decision
+                     * must be made in the locks otherwise we can remove something
+                     * created in racy manner.
+                     * Also... it look like on Linux msgid are reused very quickly.
                      */
                     ndrxd_shm_uninstall_svc(cur->svc_nm, &last, srvlist[i].resid);
                     
