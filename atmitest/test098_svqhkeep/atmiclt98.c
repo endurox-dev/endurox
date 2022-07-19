@@ -74,28 +74,11 @@ int main(int argc, char** argv)
         goto out;
     }    
 
-    NDRX_ASSERT_TP_OUT(EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)
-            && TPETIME==tperrno, "Expected TPETIME");
+    NDRX_ASSERT_TP_OUT(EXSUCCEED == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)
+            , "Expected OK");
 
-    /*due to rr: */
-    NDRX_ASSERT_TP_OUT(EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)
-            && TPETIME==tperrno, "Expected TPETIME");
-    
-#if 0
-    /* let system to housekeep ... */
-    sleep(20);
-
-    NDRX_ASSERT_TP_OUT(EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)
-            && TPETIME==tperrno, "Expected TPETIME");
-
-    /* let system to housekeep ... */
-    sleep(20);
-
-    NDRX_ASSERT_TP_OUT(EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)
-            && TPETIME==tperrno, "Expected TPETIME");
-    
-#endif
-
+    NDRX_ASSERT_TP_OUT(EXSUCCEED == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)
+            , "Expected OK");
 out:
 
     if (NULL!=p_ub)
