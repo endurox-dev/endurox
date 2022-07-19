@@ -64,9 +64,6 @@ void TESTSV (TPSVCINFO *p_svc)
     /* Just print the buffer */
     Bprint(p_ub);
     
-    /* we have crashed ! */
-    exit(0);
-    
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
