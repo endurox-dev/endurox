@@ -22,7 +22,7 @@ DESCRIPTION
 Add field to UBF buffer. The UBF buffer pointer is passed by 'p_ub', 
 field id in 'bfldid'. The user value is passed in 'buf'. The 'len' is used 
 only if filed type is *BFLD_CARRAY*, for which length cannot be detected from 
-passed data. The data type for 'buf' must batch with 'bfldid' type.
+passed data. The data type for 'buf' must match with 'bfldid' type.
 
 Badd() requires double pointer in 'buf' if setting the *BFLD_PTR* field, i.e.
 pointer to pointer of XATMI buffer needs to be passed to the function. 
