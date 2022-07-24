@@ -526,7 +526,7 @@ struct atmi_lib_env
     int    test_qdisk_write_fail;   /**< Simulate disk write failure, queue    */
     int    test_tmsrv_write_fail;   /**< Simulate disk write failure, tmsrv    */
     int    test_tmsrv_commit_crash; /**< Simualte commit crash                 */
-    int    test_advertise_crash;    /**< XATMI server crash before reaching ndrxd */
+    void (*test_advertise_crash)(void); /**< XATMI server crash before reaching ndrxd */
     
     /**@}*/
     

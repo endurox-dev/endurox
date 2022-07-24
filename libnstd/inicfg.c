@@ -642,7 +642,7 @@ exprivate int _ndrx_inicfg_add(ndrx_inicfg_t *cfg, char *resource, char **sectio
 #ifdef INICFG_ENABLE_DEBUG  
         fprintf(stderr, "Registering resource [%s]\n", resource);
 #endif
-        if (EXSUCCEED!=ndrx_string_hash_add(&(cfg->resource_hash), resource))
+        if (NULL==ndrx_string_hash_add(&(cfg->resource_hash), resource))
         {
             _Nset_error_fmt(NEMALLOC, "%s: ndrx_string_hash_add - malloc failed", fn);
             EXFAIL_OUT(ret);

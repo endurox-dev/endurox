@@ -100,12 +100,44 @@ exprivate void (*M_child[MAX_ATFORKS])(void) = {NULL, NULL, NULL};
 
 
 /**
+ * Counted add
+ * @param h string hash
+ * @param str string to add
+ * @return entry added/updated
+ */
+expublic  string_hash_t * ndrx_string_hash_add_cnt(string_hash_t **h, char *str)
+{
+
+    string_hash_t *el=NULL;
+    
+    if (NULL!=h)
+    {
+        el = ndrx_string_hash_get(*h, str);
+    }
+    
+    if (NULL!=el)
+    {
+        el->cnt++;
+    }
+    else
+    {
+        el = ndrx_string_hash_add(h, str);
+        if (NULL!=el)
+        {
+            el->cnt=1;
+        }
+    }
+    
+    return el;
+}
+
+/**
  * Add item to string hash
  * @param h
  * @param str
  * @return SUCCEED/FAIL
  */
-expublic int ndrx_string_hash_add(string_hash_t **h, char *str)
+expublic string_hash_t * ndrx_string_hash_add(string_hash_t **h, char *str)
 {
     int ret = EXSUCCEED;
     string_hash_t * tmp = NDRX_CALLOC(1, sizeof(string_hash_t));
@@ -130,8 +162,16 @@ expublic int ndrx_string_hash_add(string_hash_t **h, char *str)
     /* Add stuff to hash finaly */
     EXHASH_ADD_KEYPTR( hh, (*h), tmp->str, strlen(tmp->str), tmp );
     
+    
 out:
-    return ret;
+    if (EXSUCCEED==ret)
+    {
+        return tmp;
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 /**

@@ -1206,11 +1206,12 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    if (G_atmi_env.test_advertise_crash)
+    /* <Test point...> */
+    if (NULL!=G_atmi_env.test_advertise_crash)
     {
-        NDRX_LOG(log_error, "Crash is happening...!");
-        exit(1);
+        G_atmi_env.test_advertise_crash();
     }
+    /* </Test point...> */
     
     /* As we can run even without ndrxd, then we ignore the result of send op */
     report_to_ndrxd();

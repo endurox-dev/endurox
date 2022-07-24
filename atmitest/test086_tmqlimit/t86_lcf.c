@@ -97,14 +97,38 @@ exprivate int custom_twriterr(ndrx_lcf_command_t *cmd, long *p_flags)
 }
 
 /**
+ * Crash the app
+ */
+exprivate void test_advertise_crash_exit(void)
+{
+    NDRX_LOG(log_error, "TEST: Crash is happening");
+    exit(1);
+}
+
+/**
+ * Sleeping on startup...
+ */
+exprivate void test_advertise_crash_sleep(void)
+{
+    NDRX_LOG(log_error, "TEST: Seep 20 is happening");
+    sleep(20);
+}
+
+/**
  * Advertise crashing mark
  */
 exprivate int custom_advcrash(ndrx_lcf_command_t *cmd, long *p_flags)
 {
-    /* Assuming that init have finished... (sending to servers...) */
-    G_atmi_env.test_advertise_crash = atoi(cmd->arg_a);
-    NDRX_LOG(log_error, "G_atmi_env.test_advertise_crash=%d", 
-            G_atmi_env.test_advertise_crash);
+
+    switch (atoi(cmd->arg_a))
+    {
+        case 1:
+            G_atmi_env.test_advertise_crash = test_advertise_crash_exit;
+            break;
+        case 2:
+            G_atmi_env.test_advertise_crash = test_advertise_crash_sleep;
+            break;
+    }
 
     /* seems having some issues with ASAN */
     sleep(1);

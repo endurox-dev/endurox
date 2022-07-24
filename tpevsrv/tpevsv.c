@@ -243,7 +243,7 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     else
                     {
                         /* Add to hash */
-                        if (EXSUCCEED!=ndrx_string_hash_add(&dup_chk, elt->name1))
+                        if (NULL==ndrx_string_hash_add(&dup_chk, elt->name1))
                         {
                             NDRX_LOG(log_error, "Failed to add service [%s] to "
                                     "dup hash list!", elt->name1);
