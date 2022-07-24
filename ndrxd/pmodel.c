@@ -835,6 +835,70 @@ out:
 }
 
 /**
+ * Wait for startup status of the program
+ * @param p_pm PM node
+ * @param p_processes_started number of processes started
+ * @param doabort abort requested by command
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int wait_for_status(pm_node_t *p_pm, long *p_processes_started, int *doabort)
+{
+    int ret = EXSUCCEED;
+    ndrx_stopwatch_t timer;
+    int finished = EXFALSE;
+    
+    /* this is parent for child - sleep some seconds, then check for PID... */
+    /* TODO: Replace sleep with wait call from service - wait for message? */
+    /*usleep(250000);  250 milli seconds */
+    ndrx_stopwatch_reset(&timer);
+
+    do
+    {
+        NDRX_LOG(log_debug, "Waiting for response from srv...");
+        /* do command processing for now */
+        command_wait_and_run(&finished, doabort);
+        /* check the status? */
+    } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstartwait && 
+                    NDRXD_PM_STARTING==p_pm->state && !(*doabort));
+
+    if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
+    {
+        ndrx_stopwatch_t sleep_timer;
+        ndrx_stopwatch_reset(&sleep_timer);
+
+        do
+        {
+            NDRX_LOG(log_debug, "In process after start sleep...");
+            command_wait_and_run(&finished, doabort);
+        } while (ndrx_stopwatch_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
+
+    }
+
+    /* Check for process name & pid */
+    if (ndrx_sys_is_process_running(p_pm->svpid, p_pm->binary_name_real))
+    {
+        /*Should be set at info: p_pm->state = NDRXD_PM_RUNNING;*/
+        NDRX_LOG(log_debug, "binary %s/%s, srvid %d started with pid %d/%d",
+                    p_pm->binary_name,p_pm->binary_name_real, p_pm->srvid, 
+                p_pm->pid, p_pm->svpid);
+        (*p_processes_started)++;
+    }
+    else if (NDRXD_PM_NOT_STARTED==p_pm->state)
+    {
+        /* Assume died? 
+         * we should normally get self notification...
+         */
+        p_pm->state = NDRXD_PM_DIED;
+        p_pm->state_changed = SANITY_CNT_START;
+        NDRX_LOG(log_debug, "binary %s, srvid %d failed to start",
+                    p_pm->binary_name, p_pm->srvid, p_pm->pid);
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Start single process...
  * TODO: Add SIGCHLD handler here!
  * @param pm
@@ -848,35 +912,60 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 {
     int ret=EXSUCCEED;
     pid_t pid;
-
     /* prepare args for execution... */
     char cmd_str[PATH_MAX];
     char **cmd = NULL; /* split pointers.. */
-    char separators[]   = " \t\n";
     char *token;
     int numargs;
+    int was_starting=EXFALSE;
     int alloc_args;
     char tmp[256];
     shm_srvinfo_t* srv;
 
-    NDRX_LOG(log_warn, "*********processing for startup %s/%d*********",
-                                    p_pm->binary_name, p_pm->srvid);
+    NDRX_LOG(log_warn, "*********processing for startup %s/%d (state: %ld)*********",
+                                    p_pm->binary_name, p_pm->srvid, p_pm->state);
     
     if (NDRXD_PM_RUNNING_OK==p_pm->state)
     {
 
         NDRX_LOG(log_warn, "Not starting %s/%d, already in "
-                                      "running state!",
+                                      "running/starting state!",
                                       p_pm->binary_name, p_pm->srvid);
         goto out;
     }
 
    /* Send notification, that we are about to start? */
-    p_pm->state = NDRXD_PM_STARTING;
+    
+    if (NDRXD_PM_STARTING==p_pm->state)
+    {
+        /* background did respawn the process, but yet no results,
+         * so just sync on this for CLI...
+         */
+        was_starting=EXTRUE;
+    }
+    else
+    {
+        p_pm->state = NDRXD_PM_STARTING;
+    }
+    
     p_pm->state_changed = SANITY_CNT_START;
 
+    
     if (NULL!=p_startup_progress)
         p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTING);
+    
+    if (was_starting)
+    {
+        NDRX_LOG(log_info, "Binary was restarted and startup was requested, sync");
+        
+        if (!no_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
+        {
+            EXFAIL_OUT(ret);
+        }
+        goto progress_out;
+    }
+    
+    /* continue normal startup here... */
     
     /* calculate the checksum of the process */
     if (p_pm->conf->reloadonchange && EXEOS!=p_pm->binary_path[0])
@@ -1144,9 +1233,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     else if (EXFAIL!=pid)
     {
-        ndrx_stopwatch_t timer;
-        int finished = EXFALSE;
-        
         /* parent unlock */
         MUTEX_UNLOCK_V(M_forklock);
         
@@ -1171,51 +1257,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* Do bellow stuff only if we can wait! */
         if (!no_wait)
         {
-            /* this is parent for child - sleep some seconds, then check for PID... */
-            /* TODO: Replace sleep with wait call from service - wait for message? */
-            /*usleep(250000);  250 milli seconds */
-            ndrx_stopwatch_reset(&timer);
-
-            do
+            if (EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
             {
-                NDRX_LOG(log_debug, "Waiting for response from srv...");
-                /* do command processing for now */
-                command_wait_and_run(&finished, doabort);
-                /* check the status? */
-            } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstartwait && 
-                            NDRXD_PM_STARTING==p_pm->state && !(*doabort));
-            
-            if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
-            {
-                ndrx_stopwatch_t sleep_timer;
-                ndrx_stopwatch_reset(&sleep_timer);
-                
-                do
-                {
-                    NDRX_LOG(log_debug, "In process after start sleep...");
-                    command_wait_and_run(&finished, doabort);
-                } while (ndrx_stopwatch_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
-                
-            }
-            
-            /* Check for process name & pid */
-            if (ndrx_sys_is_process_running(p_pm->svpid, p_pm->binary_name_real))
-            {
-                /*Should be set at info: p_pm->state = NDRXD_PM_RUNNING;*/
-                NDRX_LOG(log_debug, "binary %s/%s, srvid %d started with pid %d/%d",
-                            p_pm->binary_name,p_pm->binary_name_real, p_pm->srvid, 
-                        pid, p_pm->svpid);
-                (*p_processes_started)++;
-            }
-            else if (NDRXD_PM_NOT_STARTED==p_pm->state)
-            {
-                /* Assume died? 
-                 * we should normally get self notification...
-                 */
-                p_pm->state = NDRXD_PM_DIED;
-                p_pm->state_changed = SANITY_CNT_START;
-                NDRX_LOG(log_debug, "binary %s, srvid %d failed to start",
-                            p_pm->binary_name, p_pm->srvid, pid);
+                EXFAIL_OUT(ret);
             }
         }
     }
@@ -1233,8 +1277,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
 
     NDRX_LOG(log_debug, "PID of started process is %d", p_pm->pid);
-            if (NULL!=p_startup_progress)
-                p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTED);
+
+progress_out:    
+    if (NULL!=p_startup_progress)
+        p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTED);
 
 out:
     return ret;
@@ -1275,7 +1321,7 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             NDRXD_PM_STOPPING!=p_pm->state &&
             NDRXD_PM_STARTING!=p_pm->state)
     {
-        NDRX_LOG(log_debug, "Process already in non-runabled "
+        NDRX_LOG(log_debug, "Process already in non-runnable "
                                     "state: %d", p_pm->state);
         /* set the state to shutdown! */
         p_pm->state = NDRXD_PM_EXIT;
@@ -1401,7 +1447,7 @@ expublic int app_startup(command_startstop_t *call,
         goto out;
     }
 
-    /* OK, now loop throught the stuff */
+    /* OK, now loop through the stuff */
     G_sys_config.stat_flags |= NDRXD_STATE_DOMSTART;
 
     if (EXFAIL!=call->srvid)

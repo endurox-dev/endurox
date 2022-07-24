@@ -226,6 +226,7 @@ typedef struct string_hash string_hash_t;
 struct string_hash
 {
     char *str;
+    int cnt;    /**< count the number of times added */
     EX_hash_handle hh;
 };
 

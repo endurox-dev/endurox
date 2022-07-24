@@ -787,8 +787,6 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
         {
             if (oflag & (O_CREAT | O_EXCL))
             {
-                /* ###################### CRITICAL SECTION, END ########################## */
-                ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
                 NDRX_LOG(log_error, "Queue [%s] was requested with O_CREAT | O_EXCL, but "
                         "it already exists at position with qid %d", qstr, ret);
                 err = EEXIST;
@@ -1087,6 +1085,17 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
                     (short)arg1, pm->qstr, pm->qid);
             pm->flags |= (short)arg1;
             sm->flags |= (short)arg1;
+            
+            if (NDRX_SVQ_MAP_RQADDR & arg1)
+            {
+                /* set change time, as for housekeeping we need to check
+                 * all running servers to match the cnt service shm,
+                 * and do this in case if TTL is expired (i.e. all server infos
+                 * are processed and system is stable)
+                 */
+                ndrx_stopwatch_reset(&(pm->ctime));
+                sm->ctime = pm->ctime;
+            }
             
             break;
         case IPC_RMID:

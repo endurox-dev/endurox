@@ -368,7 +368,8 @@ extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exit
 /* string generics: */
 
 extern NDRX_API void ndrx_string_hash_free(string_hash_t *h);
-extern NDRX_API int ndrx_string_hash_add(string_hash_t **h, char *str);
+extern NDRX_API string_hash_t * ndrx_string_hash_add(string_hash_t **h, char *str);
+extern NDRX_API string_hash_t * ndrx_string_hash_add_cnt(string_hash_t **h, char *str);
 extern NDRX_API string_hash_t * ndrx_string_hash_get(string_hash_t *h, char *str);
 
 extern NDRX_API char *ndrx_sys_get_cur_username(void);

@@ -138,13 +138,14 @@ expublic int do_sanity_check_sysv(int finalchk)
     ndrx_svq_status_t *svq = NULL;
     int len;
     int reslen;
-    int i;
+    int i, j;
     int have_value_3;
     int pos_3;
     bridgedef_svcs_t *cur, *tmp;
     ndrx_shm_resid_t *srvlist = NULL;
     pm_node_t *p_pm;
     int last;
+    string_hash_t *strh=NULL, *strh_el = NULL;
     
     NDRX_LOG(log_debug, "Into System V sanity checks, finalchk: %d", finalchk);
     
@@ -161,6 +162,22 @@ expublic int do_sanity_check_sysv(int finalchk)
         EXFAIL_OUT(ret);
     }
     
+    DL_FOREACH(G_process_model, p_pm)
+    {
+        /* Find live count of p_pm by resid... 
+         * maybe do this once?
+         */
+        if (NDRXD_PM_RUNNING_OK==p_pm->state)
+        {
+            if (NULL==ndrx_string_hash_add_cnt(&strh, p_pm->rqaddress))
+            {
+                NDRX_LOG(log_error, "Failed to add rqaddr [%s] to hashmap",
+                        p_pm->rqaddress);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    
     /* Now scan the used services shared memory and updated the 
      * status copy accordingly
      * WELL! We must loop over the local NDRXD list of the services
@@ -172,6 +189,7 @@ expublic int do_sanity_check_sysv(int finalchk)
     
     NDRX_LOG(log_debug, "Marking resources against services, reslen: %d", 
             reslen);
+    
     EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
@@ -187,9 +205,44 @@ expublic int do_sanity_check_sysv(int finalchk)
                 
                 if (have_value_3)
                 {
+                    int used_cnt = 0;
+                    
                     NDRX_LOG(log_debug, "Service [%s] have resource %d at idx %d", 
                             cur->svc_nm, srvlist[i].resid, i);
                     svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
+                    
+                    
+                    if (svq[pos_3].flags & NDRX_SVQ_MAP_SCHEDRM)
+                    {
+                        /* validate the count against the live servers processes,
+                         * if we found the real count of RQADDR is too short,
+                         * we must uninstall that number of services.
+                         * Note that Q has TTL already expired, thus all srvinfos
+                         * shall be already seen by ndrxd.
+                         * So can the PM...
+                         */
+
+                        strh_el = ndrx_string_hash_get(strh, svq[pos_3].qstr);
+
+                        if (NULL!=strh_el)
+                        {
+                            used_cnt = strh_el->cnt;
+                        }
+
+                        if (srvlist[i].cnt!=used_cnt)
+                        {
+                            NDRX_LOG(log_error, "Service [%s] rqaddr [%s] resource [%d] cnt=%d actual=%d",
+                                    cur->svc_nm, svq[pos_3].qstr, srvlist[i].resid, srvlist[i].cnt, used_cnt);
+                            userlog("Service [%s] rqaddr [%s] resource [%d] cnt=%d actual=%d",
+                                    cur->svc_nm, svq[pos_3].qstr, srvlist[i].resid, srvlist[i].cnt, used_cnt);
+                        }
+
+                        for (j=0; j<(srvlist[i].cnt-used_cnt); j++)
+                        {
+                            ndrxd_shm_uninstall_svc(cur->svc_nm, &last, srvlist[i].resid);
+                        }
+                    }
+                   
                 }
                 else
                 {
@@ -212,9 +265,12 @@ expublic int do_sanity_check_sysv(int finalchk)
                      * created in racy manner.
                      * Also... it look like on Linux msgid are reused very quickly.
                      */
-                    ndrxd_shm_uninstall_svc(cur->svc_nm, &last, srvlist[i].resid);
-                    
+                    for (j=0; j<srvlist[i].cnt; j++)
+                    {
+                        ndrxd_shm_uninstall_svc(cur->svc_nm, &last, srvlist[i].resid);
+                    }
                 }
+                
             }         
         } /* local servs */
         
@@ -230,7 +286,7 @@ expublic int do_sanity_check_sysv(int finalchk)
      * are subject for unlinking...
      * perform that in sync way...
      */
-    NDRX_LOG(log_debug, "Flush RQADDR queues with out services and TTL expired.");
+    NDRX_LOG(log_debug, "Flush RQADDR queues without services and TTL expired.");
     for (i=0; i<reslen; i++)
     {
         int cont = EXFALSE;
@@ -322,6 +378,8 @@ out:
     {
         NDRX_FREE(srvlist);
     }
+
+    ndrx_string_hash_free(strh);
 
     return ret;
 }

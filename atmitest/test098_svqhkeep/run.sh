@@ -107,6 +107,7 @@ case $UNAME in
 esac
 
 rm *.log
+rm ULOG*
 
 set_dom1;
 xadmin down -y
@@ -144,12 +145,36 @@ if [ "X$RET" != "X0" ]; then
     go_out $RET
 fi
 
+echo "Testing startup sync on background process restart..."
+
+xadmin lcf advcrash -A 2 -a -n
+xadmin killall atmi.sv98
+
+# let background to recover, but advcrash -A 2 freezes the startup for 20 sec...
+sleep 10;
+
+# this shall now sync ON:
+xadmin start -y || go_out 1
+
+# There should be 1x atmisv running
+echo "**************************************"
+xadmin ps -a atmi.sv98
+echo "**************************************"
+
+CNT=`xadmin ps -a atmi.sv98 | wc | awk '{print($1)}'`
+
+if [ "X$CNT" != "X1" ]; then
+
+    echo "Got atmi.sv98 $CNT but must be 1"
+    go_out -1
+
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"
     RET=-2
 fi
-
 
 go_out $RET
 

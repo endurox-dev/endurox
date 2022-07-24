@@ -177,7 +177,7 @@
 	<service svcnm="SERVICE2" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
 	<service svcnm="SERVICE3" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
 	<service svcnm="SERVICE4" prio="50" 	autotran="Y" trantime="600" />
-	<service svcnm=".TMIB"    prio="50" routing="MIB"/>
+	<service svcnm=".TMIB"    prio="50" />
 </services>
 
 <routing>
