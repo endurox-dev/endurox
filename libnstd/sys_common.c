@@ -110,10 +110,7 @@ expublic  string_hash_t * ndrx_string_hash_add_cnt(string_hash_t **h, char *str)
 
     string_hash_t *el=NULL;
     
-    if (NULL!=h)
-    {
-        el = ndrx_string_hash_get(*h, str);
-    }
+    el = ndrx_string_hash_get(*h, str);
     
     if (NULL!=el)
     {
@@ -159,7 +156,7 @@ expublic string_hash_t * ndrx_string_hash_add(string_hash_t **h, char *str)
         EXFAIL_OUT(ret);
     }
     
-    /* Add stuff to hash finaly */
+    /* Add stuff to hash finally */
     EXHASH_ADD_KEYPTR( hh, (*h), tmp->str, strlen(tmp->str), tmp );
     
     

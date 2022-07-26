@@ -45,6 +45,7 @@
 #include "ubfunit1.h"
 #include "xatmi.h"
 #include "nstopwatch.h"
+#include "sys_unix.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -535,6 +536,22 @@ Ensure(test_nstd_ndrx_rand)
     assert_equal(ok, EXTRUE);
     
 }
+
+/**
+ * check standard string hash
+ */
+Ensure(test_nstd_ndrx_string_hash)
+{
+    string_hash_t *h = NULL;
+    
+    assert_equal(ndrx_string_hash_get(h, "ABC"), NULL);
+    assert_not_equal(ndrx_string_hash_add_cnt(&h, "ABC"), NULL);
+    assert_equal(ndrx_string_hash_get(h, "ABC")->cnt, 1);
+    assert_not_equal(ndrx_string_hash_add_cnt(&h, "ABC"), NULL);
+    assert_equal(ndrx_string_hash_get(h, "ABC")->cnt, 2);
+    
+    ndrx_string_hash_free(h);
+}
     
 /**
  * Standard library tests
@@ -554,6 +571,8 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_stopwatch);
     add_test(suite, test_nstd_ndrx_strnlen);
     add_test(suite, test_nstd_ndrx_rand);
+    
+    add_test(suite, test_nstd_ndrx_string_hash);
     
     return suite;
 }
