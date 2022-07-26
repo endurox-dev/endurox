@@ -79,7 +79,7 @@
         <server name="atmi.sv82_2">
             <min>1</min>
             <max>1</max>
-            <srvid>510</srvid>
+            <srvid>530</srvid>
             <sysopt>-e ${TESTDIR}/atmisv2d2.log -r -gGRP2</sysopt>
             
             <envs>
