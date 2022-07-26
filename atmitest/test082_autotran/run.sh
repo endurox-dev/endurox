@@ -115,12 +115,12 @@ mkdir ${TESTDIR}/RM2
 rm -rf ${TESTDIR}/QSPACE1 2>/dev/null
 mkdir ${TESTDIR}/QSPACE1
 
-rm *.log
-rm ULOG*
-
-
 for TEST_MODE in 2 1
 do
+
+# have a fresh start...
+rm *.log
+rm ULOG*
 
 # Clean up the stuff
 xadmin killall tpbridge
