@@ -166,8 +166,10 @@ expublic int do_sanity_check_sysv(int finalchk)
     {
         /* Find live count of p_pm by resid... 
          * maybe do this once?
+         * if we are stopping... assume the RQ addr is still ok to avoid false
+         * warnings.
          */
-        if (NDRXD_PM_RUNNING_OK==p_pm->state)
+        if (NDRXD_PM_RUNNING_OK==p_pm->state || NDRXD_PM_STOPPING == p_pm->state)
         {
             if (NULL==ndrx_string_hash_add_cnt(&strh, p_pm->rqaddress))
             {
