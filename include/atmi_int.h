@@ -241,7 +241,7 @@ extern "C" {
         fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
         fprintf(stderr, "Copyright (C) 2017-2022 Mavimax Ltd. All Rights Reserved.\n\n");\
         fprintf(stderr, "This software is released under one of the following licenses:\n");\
-        fprintf(stderr, "AGPLv3 (exceptions for Java, Go, Python) or Mavimax license for commercial use.\n\n");\
+        fprintf(stderr, "AGPLv3 (exceptions for Java, Go) or Mavimax license for commercial use.\n\n");\
     }
 
 /** Used by NDRX_SYSFLAGS env variable, Full application start */
