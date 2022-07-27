@@ -664,8 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 
 As a special exception, if files written in following programming languages:
 Java as defined by Sun Microsystems (or current owners), Go as defined by Google
-(or current owners) or Python as designed by Guido van Rossum (or later authors)
-instantiate generics from this unit, are being used as a script,
+(or current owners) instantiate generics from this unit, are being used as a script,
 or you link this unit with other object files produced by Go compiler or
 Java compiler to produce an executable, this unit does not by itself
 cause the resulting executable or script to be covered by the
