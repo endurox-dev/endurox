@@ -50,7 +50,7 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-
+export NDRX_SILENT=Y
 export NDRX_TOUT=20
 
 #
