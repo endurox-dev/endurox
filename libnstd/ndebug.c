@@ -126,6 +126,21 @@ exprivate int __thread M_is_initlock_owner = 0; /* for recursive logging calls *
 exprivate MUTEX_LOCKDECL(M_dbglock);
 exprivate MUTEX_LOCKDECL(M_thread_nr_lock);
 exprivate MUTEX_LOCKDECL(M_memlog_lock);
+
+
+/** Binary names for which regexp match shall be done
+ * Initially this is populated with parsed * = rebins="bin1,bin2, 'some bin 3'"
+ * with empty config strings.
+ * 
+ * - then for CC tag mode, all bins are resolved, & debug lines copied + regex compiled
+ * - for debug.conf mode, the file is scanned twice, firstly to fill up the regex match structure.
+ * 
+ * Then when binary is tried to resolve:
+ * - Process the list normally
+ * - If exact binary is not found, check the regexp list.
+ */
+exprivate ndrx_debug_rexmatch_t *M_rexbins = NULL;
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -382,63 +397,26 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
  * User update mode: tok1 == NULL, tok2 config string
  * CConfig mode: tok1 != NULL, tok2 != NULL
  * ndrxdebug.conf mode: tok1 !=NULL tok2 == NULL
- * @param tok1 (full string for ndrxdebug.conf, for CConfig binary name
- * @param tok2 (config string for CConfig or update mode)
+ * @param name (full string for ndrxdebug.conf, for CConfig binary name
+ * @param dbgstr (config string for CConfig or update mode)
  * @param tmpfname file name if not using dbg_ptr
  * @param tmpfnamesz buffer size for file
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2, 
+expublic int ndrx_init_parse_line(char *name, char *dbgstr, 
         int *p_finish_off, ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz)
 {
     int ret = EXSUCCEED;
-    char *saveptr=NULL;
-    char *name;
-    char *tok;
-    int ccmode = EXFALSE;
     int upd_mode = EXFALSE; /* user update mode */
-    char *p;
     /* have a own copies of params as we do the token over them... */
-    char *tok1 = NULL;
-    char *tok2 = NULL;
+    ndrx_stdcfgstr_t* parsed=NULL, *el;
+    
     ndrx_debug_t *tmp_ptr;
     
-    if (NULL!=in_tok1)
-    {
-        if (NULL==(tok1 = strdup(in_tok1)))
-        {
-            userlog("Failed to strdup(): %s", strerror(errno));
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    if (NULL!=in_tok2)
-    {
-        if (NULL==(tok2 = strdup(in_tok2)))
-        {
-            userlog("Failed to strdup(): %s", strerror(errno));
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    if (NULL==tok1 && tok2!=NULL)
+    if (NULL==name && dbgstr!=NULL)
     {
         upd_mode = EXTRUE;
     } 
-    else if (NULL!=tok2)
-    {
-        ccmode = EXTRUE;
-    }
-    
-    if (ccmode)
-    {
-        name = tok1;
-    }
-    else if (!upd_mode)
-    {
-        name=strtok_r (tok1,"\t ", &saveptr);
-        tok=strtok_r (NULL,"\t ", &saveptr);
-    }
     
     /**
      * In update mode we do not have name
@@ -450,22 +428,23 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             *p_finish_off = ('*'!=name[0]);
         }
         
-        /* for non-cc mode we have already tokenised tok */
-        if (ccmode || upd_mode)
+        /* parse standard configuration string */
+        if (EXSUCCEED!=ndrx_stdcfgstr_parse(dbgstr, &parsed))
         {
-            tok=strtok_r (tok2,"\t ", &saveptr);
+            userlog("Failed to parse debug string [%s]", dbgstr);
+            EXFAIL_OUT(ret);
         }
         
-        while( tok != NULL ) 
+        DL_FOREACH(parsed, el)
         {
-            int cmplen;
-            /* get the setting... */
-            p = strchr(tok, '=');
-            cmplen = p-tok;
-
-            if (0==strncmp("ndrx", tok, cmplen))
+            if (NULL==el->value)
             {
-                int lev = atoi(p+1);
+                userlog("Invalid debug string [%s] missing value for key [%s]", 
+                        dbgstr, el->key);
+            }
+            else if (0==strcmp("ndrx", el->key))
+            {
+                int lev = atoi(el->value);
             
                 if (NULL!=dbg_ptr)
                 {
@@ -481,9 +460,9 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_ndrx_debug.level = lev;
                 }
             }
-            else if (0==strncmp("ubf", tok, cmplen))
+            else if (0==strcmp("ubf", el->key))
             {
-                int lev = atoi(p+1);
+                int lev = atoi(el->value);
             
                 if (NULL!=dbg_ptr)
                 {
@@ -500,9 +479,9 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                 }
                 
             }
-            else if (0==strncmp("tp", tok, cmplen))
+            else if (0==strcmp("tp", el->key))
             {
-                int lev = atoi(p+1);
+                int lev = atoi(el->value);
             
                 if (NULL!=dbg_ptr)
                 {
@@ -518,19 +497,19 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_tp_debug.level = lev;
                 }
             }
-            else if (0==strncmp("iflags", tok, cmplen))
+            else if (0==strcmp("iflags", el->key))
             {
                 /* Setup integration flags */
                 
                 /* Feature #312 apply to all facilities, as during integration
                  * these might be used too */
-                NDRX_STRCPY_SAFE(G_ndrx_debug.iflags, p+1);
-                NDRX_STRCPY_SAFE(G_ubf_debug.iflags, p+1);
-                NDRX_STRCPY_SAFE(G_tp_debug.iflags, p+1);
+                NDRX_STRCPY_SAFE(G_ndrx_debug.iflags, el->value);
+                NDRX_STRCPY_SAFE(G_ubf_debug.iflags, el->value);
+                NDRX_STRCPY_SAFE(G_tp_debug.iflags, el->value);
             }
-            else if (0==strncmp("lines", tok, cmplen))
+            else if (0==strcmp("lines", el->key))
             {
-                int lines = atoi(p+1);
+                int lines = atoi(el->value);
                 
                 if (lines < 0)
                 {
@@ -548,11 +527,9 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                             G_ubf_debug.buf_lines = lines;
                 }
             }
-            else if (0==strncmp("bufsz", tok, cmplen))
+            else if (0==strcmp("bufsz", el->key))
             {
-                int bufsz = atoi(p+1);
-                
-                bufsz = atoi(p+1);
+                int bufsz = atoi(el->value);
                 
                 if (bufsz<=0)
                 {
@@ -570,19 +547,19 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                             G_ubf_debug.buffer_size = bufsz;
                 }
             }
-            else if (0==strncmp("file", tok, cmplen))
+            else if (0==strcmp("file", el->key))
             {
-                NDRX_STRCPY_SAFE_DST(tmpfname, (p+1), tmpfnamesz);
+                NDRX_STRCPY_SAFE_DST(tmpfname, el->value, tmpfnamesz);
             } /* Feature #167 */
-            else if (0==strncmp("threaded", tok, cmplen))
+            else if (0==strcmp("threaded", el->key))
             {
                 int val = 0;
                 
-                if (*(p+1) == 'Y' || *(p+1) == 'y')
+                if (el->value[0] == 'Y' || el->value[0] == 'y')
                 {
                     val = LOG_THREADED_TEMPL;
                 }
-                else if (*(p+1) == 'L' || *(p+1) == 'l')
+                else if (el->value[0] == 'L' || el->value[0] == 'l')
                 {
                     val = LOG_THREADED_LINEL;
                 }
@@ -598,11 +575,11 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_ndrx_debug.is_threaded = val;
                 }
             }
-            else if (0==strncmp("mkdir", tok, cmplen))
+            else if (0==strcmp("mkdir", el->key))
             {
                 int val = EXFALSE;
                 
-                if (*(p+1) == 'Y' || *(p+1) == 'y')
+                if (el->value[0] == 'Y' || el->value[0] == 'y')
                 {
                     val = EXTRUE;
                 }
@@ -618,24 +595,6 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_ndrx_debug.is_mkdir = val;
                 }
             }
-            /*
-            else if (0==strncmp("swait", tok, cmplen))
-            {
-                int val = atoi(p+1);
-                
-                if (NULL!=dbg_ptr)
-                {
-                    dbg_ptr->swait = atoi(p+1);
-                }
-                else
-                {
-                    G_tp_debug.swait = val;
-                    G_ubf_debug.swait = val;
-                    G_ndrx_debug.swait = val;
-                }
-            }*/
-            
-            tok=strtok_r (NULL,"\t ", &saveptr);
         }
     }
     
@@ -713,14 +672,9 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
     }
 
 out:
-    if (NULL!=tok1)
+    if (NULL!=parsed)
     {
-        free(tok1);
-    }
-
-    if (NULL!=tok2)
-    {
-        free(tok2);
+        ndrx_stdcfgstr_free(parsed);
     }
     
     return ret;
@@ -867,6 +821,7 @@ expublic void ndrx_init_debug(void)
     char tmpname[PATH_MAX+1]={EXEOS};
     int lcf_status=EXFAIL;
     int do_reply=EXFALSE;
+    char *p;
     ndrx_dbg_intlock_set();
     
     /*
@@ -945,6 +900,8 @@ expublic void ndrx_init_debug(void)
             /* process line by line */
             while (NULL!=fgets(buf, sizeof(buf), f))
             {
+                int offs;
+                
                 if ('#'==buf[0] || '\n'==buf[0])
                 {
                     /* skip comments */
@@ -954,12 +911,22 @@ expublic void ndrx_init_debug(void)
                 {
                     buf[strlen(buf)-1]=EXEOS;
                 }
-
-                ndrx_init_parse_line(buf, NULL, &finish_off, NULL, tmpname, sizeof(tmpname));
-
-                if (finish_off)
+                
+                
+                offs = strcspn(buf, "\t ");
+                
+                /* if string is valid... (have separator) */
+                if (offs > 0)
                 {
-                    break;
+                    *(buf + offs)=EXEOS;
+
+                    ndrx_init_parse_line(buf, (buf+offs+1), &finish_off, NULL, 
+                            tmpname, sizeof(tmpname));
+
+                    if (finish_off)
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -995,14 +962,23 @@ expublic void ndrx_init_debug(void)
             /* 1. get he line by common & process */
             else 
             {
+                char *svname = getenv(CONF_NDRX_SVPROCNAME);
+                
                 if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
                 {
                     ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
                             tmpname, sizeof(tmpname));
                 }
             
-                /* 2. get the line by binary name  */
-                if (NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)))
+                /* 2. get the line by binary name 
+                 * - For servers lookup by logical server name.
+                 * - For clients only program name
+                 */
+                if (
+                    NULL!=svname && NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)svname)) 
+                    ||
+                    NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)) 
+                    )
                 {
                     ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
                             tmpname, sizeof(tmpname));
