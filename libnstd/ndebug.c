@@ -127,20 +127,6 @@ exprivate MUTEX_LOCKDECL(M_dbglock);
 exprivate MUTEX_LOCKDECL(M_thread_nr_lock);
 exprivate MUTEX_LOCKDECL(M_memlog_lock);
 
-
-/** Binary names for which regexp match shall be done
- * Initially this is populated with parsed * = rebins="bin1,bin2, 'some bin 3'"
- * with empty config strings.
- * 
- * - then for CC tag mode, all bins are resolved, & debug lines copied + regex compiled
- * - for debug.conf mode, the file is scanned twice, firstly to fill up the regex match structure.
- * 
- * Then when binary is tried to resolve:
- * - Process the list normally
- * - If exact binary is not found, check the regexp list.
- */
-exprivate ndrx_debug_rexmatch_t *M_rexbins = NULL;
-
 /*---------------------------Prototypes---------------------------------*/
 
 /**
