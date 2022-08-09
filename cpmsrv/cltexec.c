@@ -570,6 +570,14 @@ expublic int cpm_exec(cpm_process_t *c)
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
         
+        
+        /* unset server specific env variables... */
+        
+        unsetenv(CONF_NDRX_SVPROCNAME);
+        unsetenv(CONF_NDRX_SVCLOPT);
+        unsetenv(CONF_NDRX_SVPPID);
+        unsetenv(CONF_NDRX_SVSRVID);
+                
         /* Add env variables for NDRX_CLTTAG / NDRX_CLTSUBSECT */
         
         /* Fixes for #367 */
