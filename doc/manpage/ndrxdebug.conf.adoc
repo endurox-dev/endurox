@@ -1,4 +1,4 @@
-NDRXDEBUG.CONF(5)G
+NDRXDEBUG.CONF(5)
 =================
 :doctype: manpage
 
@@ -29,12 +29,13 @@ DEBUG CONFIGURATION FILE SYNTAX
 -------------------------------
 
 *BINARY_NAME*::
-    Binary name is either executable name or In case of \* it is applied to
+    Binary name is either executable name or In case of * it is applied to
     default configuration. It is recommended to put it in start of the file. Any
     binary afterwards in file will override defaults.
     When binary name matching is performed, firstly value from *NDRX_SVPROCNAME* env
     variable is used (if present), if variable is not present, matching is done against
-    the process name.
+    the process name. Such matching is performed even if *BINARY_NAME* is found in
+    *REGEX_BINS* list.
 *NDRX_DEBUG_LEVEL*::
     ATMI debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
     5=Program detail. Default is 2.
@@ -77,11 +78,12 @@ DEBUG CONFIGURATION FILE SYNTAX
     Go source file name and the code line instead of fixed C function file/line.
 *REGEX_BINS*::
     List of *BINARY_NAME* (encoded in standard configuration string, e.g. comma separated),
-    for which additionally regexp matching shall be done by *REGEX*.
-    *REGEX_BINS* typically is used only for default section (i.e. \*), where the default
+    for which additionally regexp matching (against *REGEX*) shall be done.
+    *REGEX_BINS* typically is used only for default section (i.e. *), where the default
     section follows first.
 *REGEX*::
-    Regular expression to be processed when binary did not match of the *BINARY_NAME* setting.
+    Regular expression to be processed when *NDRX_SVPROCNAME* and binary name did not
+    match any of the *BINARY_NAME* entries.
 
 EXAMPLE
 -------
@@ -89,13 +91,15 @@ Sample configuration:
 
 ---------------------------------------------------------------------
 # Global config:
-* ndrx=5 ubf=1 lines=1 bufsz=1000 tp=5 file=
+* ndrx=5 ubf=1 lines=1 bufsz=1000 tp=5 file= rebins="regexp1, regexp2"
 # Per binary config:
 xadmin 		file=${NDRX_APPHOME}/tmp/XADMIN
 ndrxd 		file=${NDRX_APPHOME}/tmp/NDRXD
 myclient	file=${NDRX_APPHOME}/tmp/MYCLIENT
 myserver	file=${NDRX_APPHOME}/tmp/MYSERVER threaded=y
 ud		file=${NDRX_APPHOME}/tmp/NDRX
+regexp1 file=${NDRX_APPHOME}/tmp/ALL match="^ALL.*"
+regexp2 file=${NDRX_APPHOME}/tmp/OTHER match="^other.*"
 ---------------------------------------------------------------------
 
 COMMON CONFIGURATION INI SECTION
@@ -107,13 +111,15 @@ extra equation mark between the binary and debug string, see example:
 ---------------------------------------------------------------------
 [@debug]
 # Global config:
-*=ndrx=5 ubf=1 lines=1 bufsz=1000 tp=5 file=
+*=ndrx=5 ubf=1 lines=1 bufsz=1000 tp=5 file=  rebins="regexp1, regexp2"
 # Per binary config:
 xadmin=file=${NDRX_APPHOME}/tmp/XADMIN
 ndrxd=file=${NDRX_APPHOME}/tmp/NDRXD
 myclient=file=${NDRX_APPHOME}/tmp/MYCLIENT
 myserver=file=${NDRX_APPHOME}/tmp/MYSERVER threaded=y
 ud=file=${NDRX_APPHOME}/tmp/NDRX
+regexp1= file=${NDRX_APPHOME}/tmp/ALL match="^ALL.*"
+regexp2 file=${NDRX_APPHOME}/tmp/OTHER match="^other.*"
 ---------------------------------------------------------------------
 
 BUGS

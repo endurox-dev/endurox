@@ -442,8 +442,9 @@ expublic int tplogconfig_int(int logger, int lev, char *debug_string, char *modu
              * close the old file & open newone...
              */
             NDRX_STRCPY_SAFE(tmp_filename, l->filename);
-            if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, 
-                    NULL, l, l->filename, sizeof(l->filename))))
+            
+            if (EXSUCCEED!= (ret = ndrx_init_parse_line(debug_string, l, 
+                    l->filename, sizeof(l->filename), NULL, NULL )))
             {
                 
                 /* unlock process lev */
