@@ -1,4 +1,4 @@
-NDRXDEBUG.CONF(5)
+NDRXDEBUG.CONF(5)G
 =================
 :doctype: manpage
 
@@ -10,7 +10,7 @@ ndrxdebug.conf - Enduro/X Runtime Debug configuration
 
 SYNOPSIS
 --------
-BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL]  [bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] [mkdir=MKDIR] file=[LOG_FILE] [iflags=INTEGRATION_FLAGS]
+BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL]  [bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] [mkdir=MKDIR] file=[LOG_FILE] [iflags=INTEGRATION_FLAGS] [rebins=REGEX_BINS] [match=REGEX]
 
 
 DESCRIPTION
@@ -21,14 +21,20 @@ done from two sources. One source is UBF and another is ATMI (ndrx). For each
 of the sources debug level can be set for each separate binary. Debug file
 or stderr also can be specified for each of the separate binaries.
 
+Key/value configuration is encoded in standard configuration string,
+see ex_adminman(guides)(Enduro/X Administration Manual, Standard configuration string) section.
+
 
 DEBUG CONFIGURATION FILE SYNTAX
 -------------------------------
 
 *BINARY_NAME*::
-    Binary name is either executable name or *. In case of * it is applied to
+    Binary name is either executable name or In case of \* it is applied to
     default configuration. It is recommended to put it in start of the file. Any
     binary afterwards in file will override defaults.
+    When binary name matching is performed, firstly value from *NDRX_SVPROCNAME* env
+    variable is used (if present), if variable is not present, matching is done against
+    the process name.
 *NDRX_DEBUG_LEVEL*::
     ATMI debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
     5=Program detail. Default is 2.
@@ -69,6 +75,13 @@ DEBUG CONFIGURATION FILE SYNTAX
     Integration specific flags. These specific for binding environments. For example
     *endurox-go* package have defined flag 'detailed' which will print the
     Go source file name and the code line instead of fixed C function file/line.
+*REGEX_BINS*::
+    List of *BINARY_NAME* (encoded in standard configuration string, e.g. comma separated),
+    for which additionally regexp matching shall be done by *REGEX*.
+    *REGEX_BINS* typically is used only for default section (i.e. \*), where the default
+    section follows first.
+*REGEX*::
+    Regular expression to be processed when binary did not match of the *BINARY_NAME* setting.
 
 EXAMPLE
 -------
