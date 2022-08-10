@@ -1968,6 +1968,45 @@ messages are loaded, as currently tmqueue would skip such messages.
 Also here for performance reasons (as cluster FS might be slow) Enduro/X could
 be modified to use database storage (and also assuming that DB is HA aware).
 
+== Standard configuration strings
+
+Enduro/X in several places uses standard configuration string format. This
+configuration string may encode *key=value* data, as well only *key* (keywords)
+may appear in the string. The separator between keywords/keyword+value pairs
+is any of <space>, <tab>, <comma> which may be combined. The value may be quoted
+string with single or double quotes. Value may contain the quotes which shall
+be escaped with backslash, in case if using other quotes, than for value opening
+the escape is not need. The backslash shall can be escaped too.
+
+Examples:
+
+--------------------------------------------------------------------------------
+
+# key/value based:
+
+- somekey1='value1, "other value"', somekey2=some_value somekey3="some value \" \\3"
+
+which will have: 
+
+- [somekey1] with value [value1, "other value"]
+- [somekey2] with value [some_value]
+- [somekey3] with value [some value " \3]
+
+# key based:
+
+- keyword1, keyword2,,,, keyword3       keyword4
+
+which will have: 
+
+- [keyword1]
+- [keyword2]
+- [keyword3]
+- [keyword4]
+
+--------------------------------------------------------------------------------
+
+This format is not used in all places in Enduro/X, but where the use is made, the
+documentation refers to this as "standard configuration string".
 
 == Trouble shooting
 
