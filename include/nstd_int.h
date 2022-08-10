@@ -145,8 +145,8 @@ extern NDRX_API void ndrx_debug_proc_link_ndrx(void);
 
 extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode, 
         ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink);
-extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, 
-        ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz);
+extern NDRX_API int ndrx_init_parse_line(char *dbgstr, ndrx_debug_t *dbg_ptr, 
+        char *tmpfname, size_t tmpfnamesz, int *do_match, char *match_nm);
 
 extern NDRX_API void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink);
 extern NDRX_API void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink);

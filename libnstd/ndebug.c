@@ -66,6 +66,7 @@
 #include <expluginbase.h>
 #include <sys_test.h>
 #include <lcfint.h>
+#include <exregex.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -113,6 +114,18 @@
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Holds the regex match strings
+ */
+typedef struct
+{
+    char *binname;  /**< logical binary name, hashed by */
+    char *dbgstr;  /**< configuration string           */
+    EX_hash_handle hh; /**< hash handle                 */
+
+} ndrx_debug_rebins_t;
+
 /*---------------------------Globals------------------------------------*/
 ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER(LOG_CODE_UBF, "UBF ", (LOG_FACILITY_UBF|LOG_FACILITY_PROCESS));
 ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER(LOG_CODE_NDRX, "NDRX", (LOG_FACILITY_NDRX|LOG_FACILITY_PROCESS));
@@ -127,6 +140,8 @@ exprivate MUTEX_LOCKDECL(M_dbglock);
 exprivate MUTEX_LOCKDECL(M_thread_nr_lock);
 exprivate MUTEX_LOCKDECL(M_memlog_lock);
 
+
+exprivate ndrx_debug_rebins_t *M_rebins = NULL; /**< regular expression based bins */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -379,212 +394,406 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
 }
 
 /**
- * Parser sharing the functionality with common config & old style debug.conf
- * User update mode: tok1 == NULL, tok2 config string
- * CConfig mode: tok1 != NULL, tok2 != NULL
- * ndrxdebug.conf mode: tok1 !=NULL tok2 == NULL
- * @param name (full string for ndrxdebug.conf, for CConfig binary name
- * @param dbgstr (config string for CConfig or update mode)
- * @param tmpfname file name if not using dbg_ptr
- * @param tmpfnamesz buffer size for file
+ * Parse & load binlist of rebins
+ * @param binlist value of rebins keyword
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_init_parse_line(char *name, char *dbgstr, 
-        int *p_finish_off, ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz)
+exprivate int ndrx_dbg_rebins_load(char *binlist)
 {
     int ret = EXSUCCEED;
-    int upd_mode = EXFALSE; /* user update mode */
-    /* have a own copies of params as we do the token over them... */
-    ndrx_stdcfgstr_t* parsed=NULL, *el;
+    ndrx_stdcfgstr_t* parsed2=NULL, *el2;
     
-    ndrx_debug_t *tmp_ptr;
-    
-    if (NULL==name && dbgstr!=NULL)
-    {
-        upd_mode = EXTRUE;
-    } 
-    
-    /**
-     * In update mode we do not have name
+    /* initial load of regex bins 
+     * Firstly parse the value
      */
-    if (upd_mode || ('*'==name[0] || 0==strcmp(name, EX_PROGNAME)))
+    if (EXSUCCEED!=ndrx_stdcfgstr_parse(binlist, &parsed2))
     {
-        if (!upd_mode)
-        {
-            *p_finish_off = ('*'!=name[0]);
-        }
-        
-        /* parse standard configuration string */
-        if (EXSUCCEED!=ndrx_stdcfgstr_parse(dbgstr, &parsed))
-        {
-            userlog("Failed to parse debug string [%s]", dbgstr);
-            EXFAIL_OUT(ret);
-        }
-        
-        DL_FOREACH(parsed, el)
-        {
-            if (NULL==el->value)
-            {
-                userlog("Invalid debug string [%s] missing value for key [%s]", 
-                        dbgstr, el->key);
-            }
-            else if (0==strcmp("ndrx", el->key))
-            {
-                int lev = atoi(el->value);
-            
-                if (NULL!=dbg_ptr)
-                {
-                    if ( (dbg_ptr->flags & LOG_FACILITY_NDRX) ||
-                            (dbg_ptr->flags & LOG_FACILITY_NDRX_THREAD) ||
-                            (dbg_ptr->flags & LOG_FACILITY_NDRX_REQUEST) )
-                    {
-                        dbg_ptr->level = lev;
-                    }
-                }
-                else
-                {
-                    G_ndrx_debug.level = lev;
-                }
-            }
-            else if (0==strcmp("ubf", el->key))
-            {
-                int lev = atoi(el->value);
-            
-                if (NULL!=dbg_ptr)
-                {
-                    if ( (dbg_ptr->flags & LOG_FACILITY_UBF) ||
-                            (dbg_ptr->flags & LOG_FACILITY_UBF_THREAD) ||
-                            (dbg_ptr->flags & LOG_FACILITY_UBF_REQUEST) )
-                    {
-                        dbg_ptr->level = lev;
-                    }
-                }
-                else
-                {
-                    G_ubf_debug.level = lev;
-                }
-                
-            }
-            else if (0==strcmp("tp", el->key))
-            {
-                int lev = atoi(el->value);
-            
-                if (NULL!=dbg_ptr)
-                {
-                    if ( (dbg_ptr->flags & LOG_FACILITY_TP) ||
-                            (dbg_ptr->flags & LOG_FACILITY_TP_THREAD) ||
-                            (dbg_ptr->flags & LOG_FACILITY_TP_REQUEST) )
-                    {
-                        dbg_ptr->level = lev;
-                    }
-                }
-                else
-                {
-                    G_tp_debug.level = lev;
-                }
-            }
-            else if (0==strcmp("iflags", el->key))
-            {
-                /* Setup integration flags */
-                
-                /* Feature #312 apply to all facilities, as during integration
-                 * these might be used too */
-                NDRX_STRCPY_SAFE(G_ndrx_debug.iflags, el->value);
-                NDRX_STRCPY_SAFE(G_ubf_debug.iflags, el->value);
-                NDRX_STRCPY_SAFE(G_tp_debug.iflags, el->value);
-            }
-            else if (0==strcmp("lines", el->key))
-            {
-                int lines = atoi(el->value);
-                
-                if (lines < 0)
-                {
-                    lines = 0;
-                }
-                
-                if (NULL!=dbg_ptr)
-                {
-                    dbg_ptr->buf_lines = lines;
-                }
-                else
-                {
-                    G_tp_debug.buf_lines = 
-                            G_ndrx_debug.buf_lines = 
-                            G_ubf_debug.buf_lines = lines;
-                }
-            }
-            else if (0==strcmp("bufsz", el->key))
-            {
-                int bufsz = atoi(el->value);
-                
-                if (bufsz<=0)
-                {
-                    bufsz = DEFAULT_BUFFER_SIZE;
-                }
+        userlog("Failed to parse rebins [%s]", binlist);
+        EXFAIL_OUT(ret);
+    }
 
-                if (NULL!=dbg_ptr)
-                {
-                    dbg_ptr->buffer_size = bufsz;
-                }
-                else
-                {
-                    G_tp_debug.buffer_size = 
-                            G_ndrx_debug.buffer_size = 
-                            G_ubf_debug.buffer_size = bufsz;
-                }
+    DL_FOREACH(parsed2, el2)
+    {
+        ndrx_debug_rebins_t *tmp=NULL;
+
+        /* check that key is not already hashed... 
+         * ignore if found already...
+         */
+        EXHASH_FIND_STR(M_rebins, el2->key, tmp);
+        if (NULL==tmp)
+        {
+            ndrx_debug_rebins_t *tmp = NDRX_FPMALLOC(sizeof(ndrx_debug_rebins_t), 0);
+            
+            if (NULL==tmp)
+            {
+                userlog("Failed to malloc ndrx_debug_rebins_t: %s", strerror(errno));
+                EXFAIL_OUT(ret);
             }
-            else if (0==strcmp("file", el->key))
-            {
-                NDRX_STRCPY_SAFE_DST(tmpfname, el->value, tmpfnamesz);
-            } /* Feature #167 */
-            else if (0==strcmp("threaded", el->key))
-            {
-                int val = 0;
                 
-                if (el->value[0] == 'Y' || el->value[0] == 'y')
-                {
-                    val = LOG_THREADED_TEMPL;
-                }
-                else if (el->value[0] == 'L' || el->value[0] == 'l')
-                {
-                    val = LOG_THREADED_LINEL;
-                }
-                
-                if (NULL!=dbg_ptr)
-                {
-                    dbg_ptr->is_threaded = val;
-                }
-                else
-                {
-                    G_tp_debug.is_threaded = val;
-                    G_ubf_debug.is_threaded = val;
-                    G_ndrx_debug.is_threaded = val;
-                }
+            memset(tmp, 0, sizeof(*tmp));
+
+            if (NULL==(tmp->binname = NDRX_STRDUP(el2->key)))
+            {
+                userlog("Failed to malloc binname for rebins: %s", strerror(errno));
+                EXFAIL_OUT(ret);
             }
-            else if (0==strcmp("mkdir", el->key))
+
+            /* hash the key.. */
+            EXHASH_ADD_KEYPTR(hh, M_rebins, tmp->binname, 
+                    strlen(tmp->binname), tmp);
+        }
+    }
+out:
+    
+    if (NULL!=parsed2)
+    {
+        ndrx_stdcfgstr_free(parsed2);
+    }
+
+    return ret;
+}
+
+
+/**
+ * Check name & add to rebins if required
+ * Used for ndrxdebug.conf file handling
+ * @param name name of the binary
+ * @param dbgstr debug string to load if matched
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_dbg_rebins_chkaddcfg(char *name, char *dbgstr)
+{
+    int ret = EXSUCCEED;
+    ndrx_debug_rebins_t *re_tmp=NULL;
+    
+    /* check that key is not already hashed... 
+    * ignore if found already...
+    */
+    EXHASH_FIND_STR(M_rebins, name, re_tmp);
+
+    if (NULL!=re_tmp)
+    {
+       /* copy the debug line */
+       re_tmp->dbgstr = NDRX_STRDUP(dbgstr);
+
+       if (NULL==re_tmp->dbgstr)
+       {
+           userlog("Failed to strdup: %s", strerror(errno));
+           EXFAIL_OUT(ret);
+       }
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * scan the hashmap and resolve debug strings.
+ * @param conf CCconfig section to lookup for rebins
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_dbg_rebins_scancfg(ndrx_inicfg_section_keyval_t *conf)
+{
+    int ret = EXSUCCEED;
+    ndrx_inicfg_section_keyval_t *cc;
+    ndrx_debug_rebins_t *el, *elt;
+    
+    EXHASH_ITER(hh, M_rebins, el, elt)
+    {
+        if (NULL!=(cc=ndrx_keyval_hash_get(conf, el->binname)))
+        {
+            el->dbgstr = NDRX_STRDUP(cc->val);
+
+            if (NULL==el->dbgstr)
             {
-                int val = EXFALSE;
-                
-                if (el->value[0] == 'Y' || el->value[0] == 'y')
-                {
-                    val = EXTRUE;
-                }
-                
-                if (NULL!=dbg_ptr)
-                {
-                    dbg_ptr->is_mkdir = val;
-                }
-                else
-                {
-                    G_tp_debug.is_mkdir = val;
-                    G_ubf_debug.is_mkdir = val;
-                    G_ndrx_debug.is_mkdir = val;
-                }
+                userlog("Failed to strdup: %s", strerror(errno));
+                EXFAIL_OUT(ret);
             }
         }
     }
     
+out:
+    return ret;
+}
+
+/**
+ * Apply regexp match...
+ * @param name our binary name to match on...
+ * @param tmpfname output filename
+ * @param tmpfnamesz filename size
+ * @return EXTRUE (if applied), EXFALSE (not applied)
+ */
+exprivate int ndrx_dbg_rebins_apply(char *name, char *tmpfname, size_t tmpfnamesz)
+{
+    ndrx_debug_rebins_t *el, *elt;
     
+    EXHASH_ITER(hh, M_rebins, el, elt)
+    {
+        int do_match;
+        
+        /* might be null as user may add stuff to rebins, but not declare the line */
+        if (NULL!=el->dbgstr && EXSUCCEED==ndrx_init_parse_line(el->dbgstr, NULL,  
+                tmpfname, tmpfnamesz, &do_match, name))
+        {
+            if (EXTRUE==do_match)
+            {
+                return EXTRUE;
+            }
+        }
+    }
+    
+    return EXFALSE;
+}
+
+/**
+ * Free up the rebins list
+ */
+exprivate void ndrx_dbg_rebins_free(void)
+{
+    ndrx_debug_rebins_t *el, *elt;
+    
+    EXHASH_ITER(hh, M_rebins, el, elt)
+    {
+        EXHASH_DEL(M_rebins, el);
+        
+        if (NULL!=el->binname)
+        {
+            NDRX_FREE(el->binname);
+        }
+        
+        if (NULL!=el->dbgstr)
+        {
+            NDRX_FREE(el->dbgstr);
+        }
+        
+        NDRX_FPFREE(el);
+    }
+}
+
+
+/**
+ * Parser sharing the functionality with common config & old style debug.conf
+ * User update mode: tok1 == NULL, tok2 config string
+ * CConfig mode: tok1 != NULL, tok2 != NULL
+ * ndrxdebug.conf mode: tok1 !=NULL tok2 == NULL
+ * @param dbgstr (config string for CConfig or update mode)
+ * @param tmpfname file name if not using dbg_ptr
+ * @param tmpfnamesz buffer size for file
+ * @param upd_mode not config parse mode.
+ * @param do_match process regexp match (if NULL, no regex matching required)
+ * @param match_nm match name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_init_parse_line(char *dbgstr, ndrx_debug_t *dbg_ptr, 
+        char *tmpfname, size_t tmpfnamesz, int *do_match, char *match_nm)
+{
+    int ret = EXSUCCEED;
+    /* have a own copies of params as we do the token over them... */
+    ndrx_stdcfgstr_t* parsed=NULL, *el;    
+    ndrx_debug_t *tmp_ptr;
+
+    /* parse standard configuration string */
+    if (EXSUCCEED!=ndrx_stdcfgstr_parse(dbgstr, &parsed))
+    {
+        userlog("Failed to parse debug string [%s]", dbgstr);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL!=do_match)
+    {
+        *do_match=EXFALSE;
+        /* scan the list & do match if found "match" keyword */
+        
+        DL_FOREACH(parsed, el)
+        {
+            if (0==strcmp(el->key, "match"))
+            {
+                if (NULL==el->value)
+                {
+                    userlog("Invalid debug string [%s] missing value for key [%s]", 
+                            dbgstr, el->key);
+                }
+                else if (EXSUCCEED==ndrx_regqexec(el->value, match_nm))
+                {
+                    /* check regex match */
+                    *do_match=EXTRUE;
+                    break;
+                }
+                /* invalid str or no match.. */
+                goto out;
+            }
+        }
+    } /* regexp match used. */
+
+    DL_FOREACH(parsed, el)
+    {
+        if (NULL==el->value)
+        {
+            userlog("Invalid debug string [%s] missing value for key [%s]", 
+                    dbgstr, el->key);
+        }
+        else if (0==strcmp("ndrx", el->key))
+        {
+            int lev = atoi(el->value);
+
+            if (NULL!=dbg_ptr)
+            {
+                if ( (dbg_ptr->flags & LOG_FACILITY_NDRX) ||
+                        (dbg_ptr->flags & LOG_FACILITY_NDRX_THREAD) ||
+                        (dbg_ptr->flags & LOG_FACILITY_NDRX_REQUEST) )
+                {
+                    dbg_ptr->level = lev;
+                }
+            }
+            else
+            {
+                G_ndrx_debug.level = lev;
+            }
+        }
+        else if (0==strcmp("ubf", el->key))
+        {
+            int lev = atoi(el->value);
+
+            if (NULL!=dbg_ptr)
+            {
+                if ( (dbg_ptr->flags & LOG_FACILITY_UBF) ||
+                        (dbg_ptr->flags & LOG_FACILITY_UBF_THREAD) ||
+                        (dbg_ptr->flags & LOG_FACILITY_UBF_REQUEST) )
+                {
+                    dbg_ptr->level = lev;
+                }
+            }
+            else
+            {
+                G_ubf_debug.level = lev;
+            }
+
+        }
+        else if (0==strcmp("tp", el->key))
+        {
+            int lev = atoi(el->value);
+
+            if (NULL!=dbg_ptr)
+            {
+                if ( (dbg_ptr->flags & LOG_FACILITY_TP) ||
+                        (dbg_ptr->flags & LOG_FACILITY_TP_THREAD) ||
+                        (dbg_ptr->flags & LOG_FACILITY_TP_REQUEST) )
+                {
+                    dbg_ptr->level = lev;
+                }
+            }
+            else
+            {
+                G_tp_debug.level = lev;
+            }
+        }
+        else if (0==strcmp("iflags", el->key))
+        {
+            /* Setup integration flags */
+
+            /* Feature #312 apply to all facilities, as during integration
+             * these might be used too */
+            NDRX_STRCPY_SAFE(G_ndrx_debug.iflags, el->value);
+            NDRX_STRCPY_SAFE(G_ubf_debug.iflags, el->value);
+            NDRX_STRCPY_SAFE(G_tp_debug.iflags, el->value);
+        }
+        else if (0==strcmp("lines", el->key))
+        {
+            int lines = atoi(el->value);
+
+            if (lines < 0)
+            {
+                lines = 0;
+            }
+
+            if (NULL!=dbg_ptr)
+            {
+                dbg_ptr->buf_lines = lines;
+            }
+            else
+            {
+                G_tp_debug.buf_lines = 
+                        G_ndrx_debug.buf_lines = 
+                        G_ubf_debug.buf_lines = lines;
+            }
+        }
+        else if (0==strcmp("bufsz", el->key))
+        {
+            int bufsz = atoi(el->value);
+
+            if (bufsz<=0)
+            {
+                bufsz = DEFAULT_BUFFER_SIZE;
+            }
+
+            if (NULL!=dbg_ptr)
+            {
+                dbg_ptr->buffer_size = bufsz;
+            }
+            else
+            {
+                G_tp_debug.buffer_size = 
+                        G_ndrx_debug.buffer_size = 
+                        G_ubf_debug.buffer_size = bufsz;
+            }
+        }
+        else if (0==strcmp("file", el->key))
+        {
+            NDRX_STRCPY_SAFE_DST(tmpfname, el->value, tmpfnamesz);
+        } /* Feature #167 */
+        else if (0==strcmp("threaded", el->key))
+        {
+            int val = 0;
+
+            if (el->value[0] == 'Y' || el->value[0] == 'y')
+            {
+                val = LOG_THREADED_TEMPL;
+            }
+            else if (el->value[0] == 'L' || el->value[0] == 'l')
+            {
+                val = LOG_THREADED_LINEL;
+            }
+
+            if (NULL!=dbg_ptr)
+            {
+                dbg_ptr->is_threaded = val;
+            }
+            else
+            {
+                G_tp_debug.is_threaded = val;
+                G_ubf_debug.is_threaded = val;
+                G_ndrx_debug.is_threaded = val;
+            }
+        }
+        else if (0==strcmp("mkdir", el->key))
+        {
+            int val = EXFALSE;
+
+            if (el->value[0] == 'Y' || el->value[0] == 'y')
+            {
+                val = EXTRUE;
+            }
+
+            if (NULL!=dbg_ptr)
+            {
+                dbg_ptr->is_mkdir = val;
+            }
+            else
+            {
+                G_tp_debug.is_mkdir = val;
+                G_ubf_debug.is_mkdir = val;
+                G_ndrx_debug.is_mkdir = val;
+            }
+        }
+        else if (0==strcmp("rebins", el->key))
+        {
+            if (EXSUCCEED!=ndrx_dbg_rebins_load(el->value))
+            {
+                EXFAIL_OUT(ret);
+            }
+        } /* rebins */
+    } /* for each conf string keyword */
+
     ndrx_str_env_subs_len(tmpfname, tmpfnamesz);
     
     if (NULL!=dbg_ptr)
@@ -798,7 +1007,6 @@ expublic void ndrx_init_debug(void)
     char *cfg_file = getenv(CONF_NDRX_DEBUG_CONF);
     char *inline_setting = getenv(CONF_NDRX_DEBUG_STR);
     FILE *f;
-    int finish_off = EXFALSE;
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
     ndrx_inicfg_t *cconfig = NULL;
     char hostname[PATH_MAX];
@@ -807,7 +1015,9 @@ expublic void ndrx_init_debug(void)
     char tmpname[PATH_MAX+1]={EXEOS};
     int lcf_status=EXFAIL;
     int do_reply=EXFALSE;
-    char *p;
+    int did_match = EXFALSE; /**< do we have exact binary name match? */
+    char *svname = getenv(CONF_NDRX_SVPROCNAME);
+    
     ndrx_dbg_intlock_set();
     
     /*
@@ -871,8 +1081,8 @@ expublic void ndrx_init_debug(void)
     {
         if (NULL!=inline_setting)
         {
-            ndrx_init_parse_line((char *)EX_PROGNAME, inline_setting, &finish_off, NULL,
-                            tmpname, sizeof(tmpname));
+            ndrx_init_parse_line(inline_setting, NULL, tmpname, sizeof(tmpname),
+                    NULL, NULL);
         }
         else if (NULL!=cfg_file && EXEOS==cfg_file[0])
         {
@@ -898,22 +1108,36 @@ expublic void ndrx_init_debug(void)
                     buf[strlen(buf)-1]=EXEOS;
                 }
                 
-                
                 offs = strcspn(buf, "\t ");
                 
                 /* if string is valid... (have separator) */
                 if (offs > 0)
                 {
                     *(buf + offs)=EXEOS;
-
-                    ndrx_init_parse_line(buf, (buf+offs+1), &finish_off, NULL, 
-                            tmpname, sizeof(tmpname));
-
-                    if (finish_off)
+                    
+                    if (0==strcmp(buf, (char *)EX_PROGNAME) || 
+                            NULL!=svname && 0==strcmp(buf, svname) ||
+                            0==strcmp(buf, "*"))
                     {
-                        break;
+                        ndrx_init_parse_line((buf+offs+1), NULL, 
+                                tmpname, sizeof(tmpname),
+                                NULL, NULL);
+                        
+                        /* got exact match... */
+                        if (0!=strcmp(buf, "*"))
+                        {
+                            did_match=EXTRUE;
+                            break;
+                        }
+                    }
+                
+                    /* if regexp, copy the debug string... */
+                    if (M_rebins)
+                    {
+                        ndrx_dbg_rebins_chkaddcfg(buf, (buf+offs+1));
                     }
                 }
+                
             }
 
             fclose(f);
@@ -923,14 +1147,6 @@ expublic void ndrx_init_debug(void)
             fprintf(stderr, "Failed to to open [%s]: %d/%s\n", cfg_file,
                                 errno, strerror(errno));
         }
-#if 0
-        else
-        {
-            /* no debug configuration set! */
-            fprintf(stderr, "To control debug output, set debug"
-                            "config file path in $NDRX_DEBUG_CONF\n");            
-        }
-#endif
     }
     else
     {
@@ -942,18 +1158,17 @@ expublic void ndrx_init_debug(void)
             /* Load the env variable */
             if (NULL!=inline_setting)
             {
-                ndrx_init_parse_line((char *)EX_PROGNAME, inline_setting, &finish_off, NULL,
-                            tmpname, sizeof(tmpname));
+                ndrx_init_parse_line(inline_setting, NULL, tmpname, sizeof(tmpname),
+                        NULL, NULL);
             }
             /* 1. get he line by common & process */
             else 
             {
-                char *svname = getenv(CONF_NDRX_SVPROCNAME);
                 
                 if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
                 {
-                    ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
-                            tmpname, sizeof(tmpname));
+                    ndrx_init_parse_line(cc->val, NULL, tmpname, sizeof(tmpname),
+                            NULL, NULL);
                 }
             
                 /* 2. get the line by binary name 
@@ -966,12 +1181,40 @@ expublic void ndrx_init_debug(void)
                     NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)) 
                     )
                 {
-                    ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
-                            tmpname, sizeof(tmpname));
-                }   
-            }
+                    ndrx_init_parse_line(cc->val, NULL, tmpname, sizeof(tmpname),
+                            NULL, NULL);
+                    
+                    did_match=EXTRUE;
+                }
+                
+                if (!did_match && M_rebins)
+                {
+                    /* Scan the regexp list & load configs */
+                    ndrx_dbg_rebins_scancfg(conf);
+                    
+                }
+            } /* not inline */
+        } /* debug section found of the cc */
+    } /* using cc */
+    
+    
+    /* do regex match if have configuration of */
+    if (!did_match && M_rebins)
+    {
+        /* Scan the regexp list & load configs */
+        if (NULL!=svname && EXTRUE==ndrx_dbg_rebins_apply(svname, tmpname, sizeof(tmpname)))
+        {
+            did_match = EXTRUE;
+        }
+        
+        if (!did_match)
+        {
+            ndrx_dbg_rebins_apply((char *)EX_PROGNAME, tmpname, sizeof(tmpname));
         }
     }
+    
+    ndrx_dbg_rebins_free();
+    M_rebins=NULL;
     
     /* open debug file.. */
     if (EXEOS==tmpname[0])

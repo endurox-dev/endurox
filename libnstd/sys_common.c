@@ -639,7 +639,7 @@ expublic string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
 {
     string_list_t* ret = NULL;
     struct dirent **namelist;
-    int n;
+    int n, i;
     string_list_t* tmp;
     int len;
     
@@ -657,16 +657,17 @@ expublic string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
     }
     else 
     {
-        while (n--)
+        for (i=0; i<n; i++)
         {
-            if (0==strcmp(namelist[n]->d_name, ".") || 
-                        0==strcmp(namelist[n]->d_name, ".."))
+            
+            if (0==strcmp(namelist[i]->d_name, ".") || 
+                        0==strcmp(namelist[i]->d_name, ".."))
             {
-                NDRX_FREE(namelist[n]);
+                NDRX_FREE(namelist[i]);
                 continue;
             }
             
-            len = 1 /* / */ + strlen(namelist[n]->d_name) + 1 /* EOS */;
+            len = 1 /* / */ + strlen(namelist[i]->d_name) + 1 /* EOS */;
             
             if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
             {
@@ -691,12 +692,12 @@ expublic string_list_t* ndrx_sys_folder_list(char *path, int *return_status)
             
             
             strcpy(tmp->qname, "/");
-            strcat(tmp->qname, namelist[n]->d_name);
+            strcat(tmp->qname, namelist[i]->d_name);
             
             /* Add to LL */
             LL_APPEND(ret, tmp);
             
-            NDRX_FREE(namelist[n]);
+            NDRX_FREE(namelist[i]);
         }
         NDRX_FREE(namelist);
     }

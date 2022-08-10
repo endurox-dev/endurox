@@ -79,14 +79,14 @@ expublic int ndrx_regcomp(regex_t *p_re, char *expr)
         errmsg = (char *) NDRX_MALLOC(errlen*sizeof(char));
         regerror(ret, p_re, errmsg, errlen);
 
-        NDRX_LOG(log_error, "Failed to eventexpr [%s]: %s", expr, errbuf);
+        NDRX_LOG_EARLY(log_error, "Failed to eventexpr [%s]: %s", expr, errbuf);
 
         NDRX_FREE(errmsg);
         ret=EXFAIL;
     }
     else
     {
-        NDRX_LOG(log_debug, "eventexpr [%s] compiled OK", expr);
+        NDRX_LOG_EARLY(log_debug, "eventexpr [%s] compiled OK", expr);
     }
     
     return ret;

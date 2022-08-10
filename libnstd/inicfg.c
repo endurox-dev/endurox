@@ -270,9 +270,7 @@ exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr,
     int ret = 1;
     int value_len;
     ndrx_inicfg_file_t *cf = (ndrx_inicfg_file_t*)cf_ptr;
-    ndrx_inicfg_t *cfg = (ndrx_inicfg_t *)cfg_ptr;
     char **section_start_with = (char **)vsection_start_with;
-    char *p;
     int needed = EXTRUE;
     
     ndrx_inicfg_section_t *mem_section = NULL;
