@@ -48,6 +48,7 @@ fi;
 
 . ../testenv.sh
 
+export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export NDRX_ULOG=`pwd`
 rm *.log 2>/dev/null
 rm ULOG*  2>/dev/null
@@ -117,64 +118,64 @@ xadmin killall atmiclt31 2>/dev/null
 
 # Check the log files
 if [ "X`grep 'Hello from NDRX' clt-endurox.log`" == "X" ]; then
-        echo "error in clt-endurox.log!"
-	RET=-2
+    echo "error in clt-endurox.log!"
+    RET=-2
 fi
 
 #if [ "X`grep 'THIS IS NDRX IN PROCLOG' clt-endurox.log`" == "X" ]; then
 #        echo "error in clt-endurox.log missing 'THIS IS NDRX IN PROCLOG'!"
 
 if [ "X`grep 'THIS IS NDRX IN PROCLOG' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log missing 'THIS IS NDRX IN PROCLOG'!"
-	RET=-2
+    echo "error in clt-tp.log missing 'THIS IS NDRX IN PROCLOG'!"
+    RET=-2
 fi
 
 #if [ "X`grep 'THIS IS UBF IN PROCLOG' clt-endurox.log`" == "X" ]; then
 #        echo "error in clt-endurox.log missing 'THIS IS UBF IN PROCLOG'!"
 if [ "X`grep 'THIS IS UBF IN PROCLOG' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log missing 'THIS IS UBF IN PROCLOG'!"
-	RET=-2
+    echo "error in clt-tp.log missing 'THIS IS UBF IN PROCLOG'!"
+    RET=-2
 fi
 
 # Feature #470
 if [ "X`grep 'THIS IS TP IN PROCLOG' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log missing 'THIS IS TP IN PROCLOG'!"
-	RET=-2
+    echo "error in clt-tp.log missing 'THIS IS TP IN PROCLOG'!"
+    RET=-2
 fi
 
 if [ "X`grep 'Hello from tp' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log (Hello from tp not found)!"
-	RET=-2
+    echo "error in clt-tp.log (Hello from tp not found)!"
+    RET=-2
 fi
 
 if [ "X`grep 'Hello from fprintf' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log (Hello from fprintf not found)!"
-	RET=-2
+    echo "error in clt-tp.log (Hello from fprintf not found)!"
+    RET=-2
 fi
 
 if [ "X`grep 'hello from thread 1' clt-tp-th1.log`" == "X" ]; then
-        echo "error in clt-tp-th1.log!"
-	RET=-2
+    echo "error in clt-tp-th1.log!"
+    RET=-2
 fi
 
 if [ "X`grep 'hello from thread 2' clt-tp-th2.log`" == "X" ]; then
-        echo "error in clt-tp-th2.log!"
-	RET=-2
+    echo "error in clt-tp-th2.log!"
+    RET=-2
 fi
 
 if [ "X`grep 'hello from main thread' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log (hello from main thread not found)!"
-	RET=-2
+    echo "error in clt-tp.log (hello from main thread not found)!"
+    RET=-2
 fi
 
 if [ "X`grep 'Thread 1 logs to main' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log (missing Thread 1 logs to main in main)!"
-	RET=-2
+    echo "error in clt-tp.log (missing Thread 1 logs to main in main)!"
+    RET=-2
 fi
 
 if [ "X`grep 'Thread 2 logs to main' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log (missing Thread 2 logs to main in main)!"
-	RET=-2
+    echo "error in clt-tp.log (missing Thread 2 logs to main in main)!"
+    RET=-2
 fi
 
 # There shall be 1000 files in log directory
@@ -182,8 +183,8 @@ FILES=` ls -1 ./logs/*.log | wc | awk '{print $1}'`
 
 echo "Got request files: [$FILES]"
 if [ "X$FILES" != "X1000" ]; then
-        echo "Invalid files count [$FILES] should be 1000!"
-	RET=-2
+    echo "Invalid files count [$FILES] should be 1000!"
+    RET=-2
 fi
 
 ################################################################################
@@ -199,36 +200,36 @@ for ((i=1;i<=100;i++)); do
 echo "Testing sequence: $i"
 
     if [ "X`grep 'Hello from SETREQFILE' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'Hello from SETREQFILE' file $i"
-            RET=-2
+        echo "Missing 'Hello from SETREQFILE' file $i"
+        RET=-2
     fi
 
     if [ "X`grep 'Hello from atmicl31' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'Hello from atmicl31' file $i"
-            RET=-2
+        echo "Missing 'Hello from atmicl31' file $i"
+        RET=-2
     fi
 
     if [ "X`grep 'Hello from TEST31_2ND' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'Hello from TEST31_2ND' file $i"
-            RET=-2
+        echo "Missing 'Hello from TEST31_2ND' file $i"
+        RET=-2
     fi
 
     # Feature #470
     if [ "X`grep 'THIS IS NDRX IN REQLOG' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'THIS IS NDRX IN REQLOG' file $i"
-            RET=-2
+        echo "Missing 'THIS IS NDRX IN REQLOG' file $i"
+        RET=-2
     fi
 
     if [ "X`grep 'THIS IS UBF IN REQLOG' ./logs/request_$i.log`" == "X" ]; then
-            echo "Missing 'THIS IS UBF IN REQLOG' file $i"
-            RET=-2
+        echo "Missing 'THIS IS UBF IN REQLOG' file $i"
+        RET=-2
     fi
 
 done
 
 if [ "X`grep 'Finishing off' ./clt-tp.log`" == "X" ]; then
-        echo "Missing 'Finishing off'"
-        RET=-2
+    echo "Missing 'Finishing off'"
+    RET=-2
 fi
 
 # start the exbenchsv to 
@@ -296,6 +297,33 @@ fi
 
 if [ ! -f "logs_cfg/exbenchsv.0.log" ]; then
     echo "Missing [exbenchsv.0.log]"
+    RET=-2
+fi
+
+################################################################################
+# Test common configuration parsing order, and regexp binaries
+################################################################################
+
+unset NDRX_DEBUG_CONF
+export NDRX_CCONFIG=$TESTDIR/cconf
+
+echo ">>> Checking match by regexp"
+if [[ "`./atmiclt31_cc 2>&1`" != *"This is TP_LOG 5"* ]]; then
+    echo "Missing message from atmiclt31_cc (1)"
+    RET=-2
+fi
+
+echo ">>> Check no match according to the NDRX_SVPROCNAME"
+export NDRX_SVPROCNAME="hello_test"
+if [[ "`./atmiclt31_cc 2>&1`" == *"This is TP_LOG"* ]]; then
+    echo "Expected no output from atmiclt31_cc (2)"
+    RET=-2
+fi
+
+echo ">>> Checking match by proc name, missing regexp, still works..."
+export NDRX_SVPROCNAME="bin2"
+if [[ "`./atmiclt31_cc 2>&1`" != *"This is TP_LOG 4"* ]]; then
+    echo "Missing message from atmiclt31_cc (3)"
     RET=-2
 fi
 
