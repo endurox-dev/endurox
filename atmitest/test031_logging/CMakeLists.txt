@@ -56,6 +56,7 @@ add_executable (atmisv31FIRST atmisv31FIRST.c ../../libatmisrv/rawmain_integra.c
 add_executable (atmisv31SECOND atmisv31SECOND.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt31 atmiclt31.c)
 add_executable (atmiclt31_inv atmiclt31_inv.c)
+add_executable (atmiclt31_cc atmiclt31_cc.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
@@ -63,10 +64,12 @@ target_link_libraries (atmisv31FIRST atmisrvinteg atmi ubf nstd ${RT_LIB} pthrea
 target_link_libraries (atmisv31SECOND atmisrvinteg atmi ubf nstd ${RT_LIB} pthread)
 target_link_libraries (atmiclt31 atmiclt atmi ubf nstd ${RT_LIB} pthread)
 target_link_libraries (atmiclt31_inv atmiclt atmi ubf nstd ${RT_LIB} pthread)
+target_link_libraries (atmiclt31_cc atmiclt atmi ubf nstd ${RT_LIB} pthread)
 
 set_target_properties(atmisv31FIRST PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmisv31SECOND PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt31 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt31_inv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt31_cc PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 # vim: set ts=4 sw=4 et smartindent:
