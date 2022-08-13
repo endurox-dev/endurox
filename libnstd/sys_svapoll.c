@@ -417,6 +417,8 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *e
         EXHASH_DEL(set->fds, tmp);
         NDRX_FREE((char *)tmp);
         
+        set->nrfds--;
+        
         /* Rebuild mem block.. */
         if (EXSUCCEED!=ndrx_polltab_sync(set))
         {
