@@ -127,10 +127,11 @@ exprivate void ndrx_ndrxd_quick_probe(pid_t pid)
 /**
  * Check whether idle instance running?
  * @param p_pid PID to return
+ * @param silent Do not print "not running" message
  * @return FALSE - not running
  *         TRUE - running or malfunction.
  */
-expublic int is_ndrxd_running(pid_t *p_pid)
+expublic int is_ndrxd_running(pid_t *p_pid, int silent)
 {
     int ret = EXFALSE;
     FILE *f = NULL;
@@ -228,7 +229,11 @@ out:
 
     if (!ret)
     {
-        fprintf(stderr, "* Enduro/X back-end (ndrxd) is not running\n");
+        if (!silent)
+        {
+            fprintf(stderr, "* Enduro/X back-end (ndrxd) is not running\n");
+        }
+
         if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
         {
             ndrx_mq_close(G_config.ndrxd_q);
@@ -357,7 +362,7 @@ expublic int start_daemon_idle(void)
         sleep(1);
         */
         ndrx_ndrxd_quick_probe(pid);
-        started=is_ndrxd_running(NULL);
+        started=is_ndrxd_running(NULL, EXTRUE);
 
 #define MAX_WSLEEP	5
 	/* give another 5 seconds... to start ndrxd */
@@ -365,10 +370,10 @@ expublic int start_daemon_idle(void)
 	{
             for (i=0; i<MAX_WSLEEP; i++)
             {
-                fprintf(stderr, "* still not started, waiting %d/%d\n",
-                            i, MAX_WSLEEP);
+                fprintf(stderr, "* still not started, attempt %d of %d\n",
+                            i+2, MAX_WSLEEP+1);
                 sleep(1);
-                started=is_ndrxd_running(NULL);
+                started=is_ndrxd_running(NULL, EXTRUE);
                 if (started)
                         break;
             }
