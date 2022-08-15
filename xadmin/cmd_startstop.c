@@ -349,7 +349,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         call.complete_shutdown = EXTRUE;
     }
     
-    if (call.complete_shutdown && !is_ndrxd_running(&pid) && !force_off)
+    if (call.complete_shutdown && !is_ndrxd_running(&pid, EXFALSE) && !force_off)
     {
         fprintf(stderr, "WARNING ! `ndrxd' daemon is in `%s', use -f "
                 "to force shutdown!\n",
@@ -486,37 +486,6 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     if (EXFAIL!=srvid || EXEOS!=srvnm[0])
     {
         keep_running_ndrxd = EXTRUE;
-    }
-#endif
-    
-    /* run stop command first... via procesor */
-    
-#if 0   
-    memset(&cmd, 0, sizeof(cmd));
-    
-    cmd.ndrxd_cmd = NDRXD_COM_STOP_RQ;
-    if (EXSUCCEED==(ret=cmd_stop(&cmd, argc, argv, p_have_next)))
-    {
-        if (!keep_running_ndrxd && EXEOS==srvnm[0] && EXFAIL==srvid)
-        {
-            /* let daemon to finish the exit process (unlink pid file/queues) */
-            sleep(2); /* this will be interrupted when we got sig child */
-            
-            /* well we shall emit the start command via command processor
-             * so that it opens the proper env...
-             *
-             */
-
-            if (!is_ndrxd_running() && EXFAIL==ndrx_start_idle())
-            {
-                fprintf(stderr, "Failed to start idle instance of ndrxd!");
-                EXFAIL_OUT(ret);
-            }
-
-        }
-        
-        cmd.ndrxd_cmd = NDRXD_COM_START_RQ;
-        ret = cmd_start(&cmd, argc, argv, p_have_next);
     }
 #endif
     
