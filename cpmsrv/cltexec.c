@@ -544,6 +544,7 @@ expublic int cpm_exec(cpm_process_t *c)
     int numargs = 0;
     int fd_stdout;
     int fd_stderr;
+    int fd;
     int ret = EXSUCCEED;
 
     NDRX_LOG(log_warn, "*********processing for startup %s *********", 
@@ -669,6 +670,13 @@ expublic int cpm_exec(cpm_process_t *c)
         {
             dup2(fd_stderr, 2);   /* make stderr go to file */
             close(fd_stderr);
+        }
+
+        /* close stdin... */
+        if (EXFAIL!=(fd = open("/dev/null", O_RDWR)))
+        {
+            dup2(fd, 0);
+            close(fd);
         }
 
         if (EXEOS!=c->stat.log_stderr[0] && EXSUCCEED!=setenv(CONF_NDRX_DFLTLOG, 
