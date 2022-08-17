@@ -994,6 +994,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     {
         char sysflags_str[30];
         long sysflags = 0;
+        int fd;
         
         /* reset signal handler so that for new processes there is scratch start */
         signal(SIGCHLD, SIG_DFL);
@@ -1176,7 +1177,13 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         }
 #endif
         /* free up the allocate resources */
-        
+        /* close stdin... */
+        if (EXFAIL!=(fd = open("/dev/null", O_RDWR)))
+        {
+            dup2(fd, 0);
+            close(fd);
+        }
+
         if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;

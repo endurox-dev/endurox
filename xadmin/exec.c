@@ -281,6 +281,7 @@ expublic int start_daemon_idle(void)
     if( pid == 0)
     {
         FILE *f;
+        int fd;
 
         /* TODO: For System V actually we do not need to close the queues
          * as these are not linked to system resources
@@ -340,6 +341,13 @@ expublic int start_daemon_idle(void)
             {
                 userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
             }
+        }
+
+        /* close stdin... */
+        if (EXFAIL!=(fd = open("/dev/null", O_RDWR)))
+        {
+            dup2(fd, 0);
+           close(fd);
         }
 
         /* Set new file permissions */
