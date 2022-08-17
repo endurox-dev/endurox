@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <libgen.h>
+#include <fcntl.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
