@@ -52,7 +52,7 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 export NDRX_ULOG=$TESTDIR
 
 xadmin qrmall test000
-rm *.log 2>/dev/null
+rm *.log ULOG* 2>/dev/null
 
 # cleanup any running clients...
 xadmin killall atmisv0 atmiunit0 2>/dev/null
