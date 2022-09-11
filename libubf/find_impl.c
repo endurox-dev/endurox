@@ -138,7 +138,7 @@ expublic char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,
     }
     else
     {
-        UBF_LOG(log_error, "%s: Field not present!", fn);
+        UBF_LOG(log_debug, "%s: Field not present!", fn);
         ndrx_Bset_error(BNOTPRES);
     }
 
