@@ -46,6 +46,8 @@ with debug info from last function call.
 
 *BNOTPRES* Field not present.
 
+*BBADFLD* Invalid field id passed.
+
 EXAMPLE
 -------
 See *ubftest/test_find.c* for sample code.

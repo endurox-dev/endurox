@@ -251,6 +251,10 @@ Ensure(test_bfind)
     p=Bfind(p_ub, T_UBF_FLD, 0, &len);
     assert_not_equal(p, NULL);
     gen_test_ubf_val_dbg(__FILE__, __LINE__, (UBFH *)p, 0, &len);
+
+    p=Bfind(p_ub, BBADFLDID, 0, &len);
+    assert_equal(p, NULL);
+    assert_equal(Berror, BBADFLD);
     
 }
 
@@ -730,6 +734,8 @@ Ensure(test_cbfind)
     /* now match the string */
     assert_string_equal((str=CBfind(p_ub, T_CARRAY_2_FLD, 4, 0, BFLD_STRING)), BIG_TEST_STRING);
 
+    assert_equal(CBfind(p_ub, BBADFLDID, 0, 0, BFLD_LONG), NULL);
+    assert_equal(Berror,BBADFLD);
 }
 
 /**
@@ -818,6 +824,10 @@ Ensure(test_bfindocc)
     assert_equal(Bfindocc(p_ub, T_STRING_FLD, "A.C", 1), 11);
     assert_equal(Bfindocc(p_ub, T_STRING_FLD, "TESTEST(|\\(|", 1), -1);
     assert_equal(Bfindocc(p_ub, T_STRING_FLD, "TES....", 1), 20);
+
+    assert_equal(Bfindocc(p_ub, BBADFLDID, (char*) carr, 24),-1);
+    assert_equal(Berror, BBADFLD);
+
 }
 
 /**
