@@ -57,6 +57,8 @@ debug info from last function call.
 *BEBADOP* Operation not supported (e.g. work with *BFLD_UBF* 
 or *BFLD_VIEW* type fields).
 
+*BBADFLD* Invalid field id passed.
+
 EXAMPLE
 -------
 See *ubftest/test_find.c* for sample code.
