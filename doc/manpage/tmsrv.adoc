@@ -313,6 +313,12 @@ BUGS
 ----
 Report bugs to support@mavimax.com
 
+If logs directory (*-l*) is located on Linux *ext4* file system
+and FSYNC/FDATASYNC/DSYNC flags are used, the transaction manager
+might perform much slower than physical hard disk is capable of.
+Instead, it is recommended to use *xfs* file system for Linux,
+which performs better.
+
 SEE ALSO
 --------
 *ex_env(5)* *buildtms(8)* *xadmin(8)* *tmrecoversv(8)* *tmrecovercl(8)*

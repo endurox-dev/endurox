@@ -136,7 +136,7 @@ Afterwards command block of delete message is removed from *prepared* directory.
 
 ASSUMPTIONS
 -----------
-To ensure transactionality of the message files, following assumptions are used:
+To ensure transaction of the message files, following assumptions are used:
 
 - File system file rename operation is atomic.
 
@@ -145,6 +145,11 @@ To ensure transactionality of the message files, following assumptions are used:
 BUGS
 ----
 Report bugs to support@mavimax.com
+
+If data directory is located on Linux *ext4* file system
+and FSYNC/FDATASYNC/DSYNC flags are used, the queue might perform much slower
+than physical hard disk is capable of. Instead, it is recommended to
+use *xfs* file system for Linux data partitions, which performs better.
 
 SEE ALSO
 --------
