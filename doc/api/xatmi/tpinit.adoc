@@ -43,7 +43,7 @@ If 'tpinfo->cltname' is set, then it is using for client process identification.
 If it is not set, then client process is identified as executable name. 
 Other fields of 'tpinfo' are reserved for future use. 'tpinfo' can bet set to *NULL*. 
 Function can be used also by ATMI server's worker threads, to initialize them. 
-How ever call of *tpinit()* is optional, as it is automaitcally issued, then 
+How ever call of *tpinit()* is optional, as it is automatically issued, then
 any of tp\* commands are invoked. At current Enduro/X version it is 
 recommended to use *tpinit()* with NULL parameter. Also when client process 
 does threading, then each thread needs to call *tpinit()* or it will be 
