@@ -65,7 +65,6 @@ if (v->dyn_alloc && NULL!=v->strval)\
 {\
 free(v->strval);\
 v->strval=NULL;\
-v->strval_bufsz=0;\
 v->dyn_alloc=0;\
 }
 
@@ -751,17 +750,16 @@ exprivate int conv_to_string(char *buf, size_t bufsz, value_block_t *v)
     int ret=EXSUCCEED;
 
     v->strval = buf;
-    v->strval_bufsz = bufsz;
     
     if (VALUE_TYPE_LONG==v->value_type)
     {
         v->value_type = VALUE_TYPE_STRING;
-        snprintf(v->strval, v->strval_bufsz, "%ld", v->longval);
+        snprintf(v->strval, bufsz, "%ld", v->longval);
     }
     else if (VALUE_TYPE_FLOAT==v->value_type)
     {
         v->value_type = VALUE_TYPE_STRING;
-        snprintf(v->strval, v->strval_bufsz, "%.13lf", v->floatval);
+        snprintf(v->strval, bufsz, "%.13lf", v->floatval);
     }
     else
     {
@@ -1446,7 +1444,6 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
     struct ast_fld *fld = (struct ast_fld *)a;
     BFLDID bfldid;
     BFLDOCC occ;
-    BFLDLEN len;
     int fld_type;
     char fn[] = "read_unary_fb()";
     /* Must be already found! */
@@ -1507,8 +1504,6 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
             v->value_type = VALUE_TYPE_FLD_STR;
             v->boolval=EXTRUE;
             v->dyn_alloc = EXTRUE;
-            /* for dynamic alloc not used. */
-            v->strval_bufsz = 0;
         }
 
     }
@@ -1910,7 +1905,6 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 /* Make pointer to point to the AST str value. */
                 /* strcpy(v->strval, s->str); */
                 v->strval = s->str;
-                v->strval_bufsz = s->str_bufsz;
             }
             /* dump the final value */
             DUMP_VALUE_BLOCK("NODE_TYPE_STR", v);
