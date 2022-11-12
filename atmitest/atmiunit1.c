@@ -785,6 +785,13 @@ Ensure(test099_callbuflen)
 }
 
 
+Ensure(test100_svstdout)
+{
+    int ret;
+    ret=system_dbg("test100_svstdout/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -964,6 +971,7 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test098_svqhkeep);
     add_test(suite, test099_callbuflen);
+    add_test(suite, test100_svstdout);
     
     return suite;
 }

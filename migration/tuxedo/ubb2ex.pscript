@@ -1078,9 +1078,13 @@ function prep_servers(instance)
                         have_A=true;
                     }
                     
-                    if (opt.opt=="e")
+                    // works for both error and stdout
+                    if (opt.opt=="e" || opt.opt=="o")
                     {
-                        have_e=true;
+                        if (opt.opt=="e")
+                        {
+                            have_e=true;
+                        }
 
                         //Detect the directory + schedule
                         //I.e. part of $NDRX_ULOG
@@ -1101,7 +1105,6 @@ function prep_servers(instance)
 
                         if (ulog_common==instance.log_full)
                         {
-
                             schedule_directory(e_dir);
 
                             if (ulog_diff=="")
@@ -1117,8 +1120,6 @@ function prep_servers(instance)
                         }
                         else
                         {
-                            
-
                             //Is it common to apphome, if so try to use
                             //relative path to the output.
                             local common = dircommon(e_dir, instance.app_home);

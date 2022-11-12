@@ -158,6 +158,7 @@ add_subdirectory (test096_svcrmnet)
 add_subdirectory (test097_mtnojump)
 add_subdirectory (test098_svqhkeep)
 add_subdirectory (test099_callbuflen)
+add_subdirectory (test100_svstdout)
 
 ################################################################################
 # Master test case drivere

@@ -151,6 +151,7 @@ struct srv_conf
     char binary_name[MAXTIDENT+1];
     int srv_id;
     char err_output[FILENAME_MAX+1];
+    char std_output[FILENAME_MAX+1];
     int log_work;
     int advertise_all;
     int no_built_advertise; /**< Do not advertise services provided by buildserver */
