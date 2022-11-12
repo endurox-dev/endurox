@@ -422,8 +422,8 @@ exprivate void configure_outputs(void)
     }
     else if (EXEOS!=G_server_conf.std_output[0])
     {
-        userlog("Failed to open stdout file: [%s]",
-                G_server_conf.std_output);
+        userlog("Failed to open stdout file [%s]: %s",
+                G_server_conf.std_output, strerror(errno));
     }
 
     /* Open error log, OK? */
@@ -471,7 +471,7 @@ exprivate void configure_outputs(void)
     }
     else if (EXEOS!=G_server_conf.err_output[0])
     {
-        userlog("Failed to open error file: [%s]", G_server_conf.err_output);
+        userlog("Failed to open error file [%s]: %s", G_server_conf.err_output, strerror(errno));
     }
 
     if (NULL!=f_stderr)
