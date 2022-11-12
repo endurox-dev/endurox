@@ -65,7 +65,6 @@ if (v->dyn_alloc && NULL!=v->strval)\
 {\
 free(v->strval);\
 v->strval=NULL;\
-v->strval_bufsz=0;\
 v->dyn_alloc=0;\
 }
 
@@ -723,17 +722,16 @@ exprivate int conv_to_string(char *buf, size_t bufsz, value_block_t *v)
     int ret=EXSUCCEED;
 
     v->strval = buf;
-    v->strval_bufsz = bufsz;
     
     if (VALUE_TYPE_LONG==v->value_type)
     {
         v->value_type = VALUE_TYPE_STRING;
-        snprintf(v->strval, v->strval_bufsz, "%ld", v->longval);
+        snprintf(v->strval, bufsz, "%ld", v->longval);
     }
     else if (VALUE_TYPE_FLOAT==v->value_type)
     {
         v->value_type = VALUE_TYPE_STRING;
-        snprintf(v->strval, v->strval_bufsz, "%.13lf", v->floatval);
+        snprintf(v->strval, bufsz, "%.13lf", v->floatval);
     }
     else
     {
@@ -1345,7 +1343,6 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 else
                 {
                     v->dyn_alloc = 1; /* ensure that FREE_UP_UB_BUF can capture these */
-                    v->strval_bufsz = len;
                 }
 
                 if (EXSUCCEED==ret && EXSUCCEED!=CBget(p_ub, bfldid, occ,
@@ -1372,7 +1369,6 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                     NDRX_FREE(v->strval);
                     v->dyn_alloc = 0;
                     v->strval = NULL;
-                    v->strval_bufsz = 0;
                 }
                 else if (EXSUCCEED==ret)
                 {
@@ -1779,7 +1775,6 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 /* Make pointer to point to the AST str value. */
                 /* strcpy(v->strval, s->str); */
                 v->strval = s->str;
-                v->strval_bufsz = s->str_bufsz;
             }
             /* dump the final value */
             DUMP_VALUE_BLOCK("NODE_TYPE_STR", v);

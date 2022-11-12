@@ -204,8 +204,6 @@ typedef struct {
     double floatval;
     /* char strval[MAX_TEXT+1]; */
     char *strval;
-    /** strval buffer size */
-    size_t strval_bufsz;
 } value_block_t;
 
 /*************** Dynamic list for allocated resources ***********************/
