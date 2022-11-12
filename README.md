@@ -645,12 +645,13 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 
 - Version 8.0.2 released on 26/01/2022 (stable) Marking initial release
 
-- Version 7.0.48 released on 29/01/2022 (stable) Support #761, Bug #771
+- Version 7.0.48 released on 29/01/2022 (stable) Support #761
 
 - Version 8.0.4 released on 05/02/2022 (stable) Support #763, Feature #764, Support #765
 
 - Version 8.0.6 prepared on 07/03/2022 (stable) Feature #767, Support #768, Support #769, Bug #771, Feature #772, Bug #774, Bug #775,
-Feature #776, Support #777, Bug #778, Bug #779, Support #781, Feature #782, Feature #783, Bug #784, Bug #785, Support #788
+
+- Version 8.0.8 prepared on 07/03/2022 (stable) Bug #789, Bug #794
 
 # Build configurations
 
