@@ -333,7 +333,7 @@ Ensure(test_Bchg_double_org)
     assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, 244.31234);
     do_dummy_data_test(p_ub);
-    /* string-to-float */
+    /* string-to-double */
     len=sizeof(test_val);
     assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
     assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, &len), EXSUCCEED);
@@ -361,6 +361,8 @@ Ensure(test_Bchg_string_org)
     char char_val = '4';
     float float_val=211233.41;
     double double_val=244.31234;
+    double double_val2=1223234232342324323423423423423423434342343454353453243245343453243452343453243243425343453425523423423423423234234234234234234234234234234234234234234234234243234234324343.65;
+    double double_tmp;
     char string[514+1]="2125.511";
     char carray[514];
     int i;
@@ -388,6 +390,7 @@ Ensure(test_Bchg_string_org)
     /* short-to-string */
 
     assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    Bprint(p_ub);
     assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_string_equal(test_val, "22321");
     assert_equal(len, 6);
@@ -417,6 +420,11 @@ Ensure(test_Bchg_string_org)
     assert_equal(strncmp(test_val, "244.31234",9),0);
     assert_true(len>9);
     do_dummy_data_test(p_ub);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 1, (char *)&double_val2, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_FLD, 1, (char *)&double_tmp, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_double_equal(double_val2, double_tmp);
+    Bdel(p_ub, T_STRING_FLD, 1);
+
     /* string-to-string */
     assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
     assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)test_val, 0), EXSUCCEED);
@@ -456,6 +464,7 @@ Ensure(test_Bchg_carray_org)
     char char_val = '4';
     float float_val=211233.41;
     double double_val=244.31234;
+    double double_val2=1223234232342324323423423423423423434342343454353453243245343453243452343453243243425343453425523423423423423234234234234234234234234234234234234234234234234243234234324343.65;
     char string[514+1]="2125.511";
     char carray[514];
     int i;
@@ -481,6 +490,7 @@ Ensure(test_Bchg_carray_org)
 
     /* short-to-carray */
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    Bprint(p_ub);
     len=sizeof(carray);
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val,  "22321", 5), 0);
@@ -519,6 +529,10 @@ Ensure(test_Bchg_carray_org)
     assert_equal(strncmp(test_val, "244.31234",9),0);
     assert_true(len>=9);
     do_dummy_data_test(p_ub);
+
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 1, (char *)&double_val2, 0, BFLD_DOUBLE), EXSUCCEED);
+    Bdel(p_ub, T_CARRAY_FLD, 1);
+
     /* string-to-carray */
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
     len=sizeof(carray);
