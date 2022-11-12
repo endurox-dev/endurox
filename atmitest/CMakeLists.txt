@@ -157,6 +157,7 @@ ENDIF()
 add_subdirectory (test096_svcrmnet)
 add_subdirectory (test097_mtnojump)
 add_subdirectory (test098_svqhkeep)
+add_subdirectory (test097_mtnojump)
 
 ################################################################################
 # Master test case drivere
