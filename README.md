@@ -651,7 +651,7 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 
 - Version 8.0.6 prepared on 07/03/2022 (stable) Feature #767, Support #768, Support #769, Bug #771, Feature #772, Bug #774, Bug #775,
 
-- Version 8.0.8 prepared on 07/03/2022 (stable) Bug #789, Bug #794
+- Version 8.0.8 prepared on 07/03/2022 (stable) Bug #789, Feature #792, Bug #794
 
 # Build configurations
 

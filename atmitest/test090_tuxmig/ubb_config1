@@ -143,11 +143,11 @@ DEFAULT:	SRVGRP=DFLTGRP
 
 "atmi.sv90"	SRVID=100 MIN=2 MAX=4 CLOPT="-A --"
 
-"atmi.sv90_2"	SRVID=200 MIN=1 MAX=4 CLOPT="-A -e /user90/log/err.out -- -c \"HELLO \\\"WORLD\""
+"atmi.sv90_2"	SRVID=200 MIN=1 MAX=4 CLOPT="-A -e /user90/log/err.out -o /user90/log/std.out -- -c \"HELLO \\\"WORLD\""
 "atmi.sv90_3"	SRVID=300 MIN=2 MAX=4 CLOPT="--"
 
 "atmi.sv90_3"	SRVID=400 MIN=2 MAX=4 SRVGRP=DDR1 CLOPT="-sTESTSV_DDR:TESTSV -- "
-"atmi.sv90_4"	SRVID=500 MIN=2 MAX=4 SRVGRP=DDR2 CLOPT="-sTESTSV_DDR:TESTSV -- "
+"atmi.sv90_4"	SRVID=500 MIN=2 MAX=4 SRVGRP=DDR2 CLOPT="-sTESTSV_DDR:TESTSV -o /user90/unknown/path -- "
 #
 # Use As Q responder
 #

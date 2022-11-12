@@ -474,8 +474,9 @@ PARAMETERS
     afterwards *-s*' flags are processed, meaning that it works as 
     usual including to function aliased services by *-S* services. 
     Server binaries output is controlled via *-e*'LOG_FILE', which means
-    that stdout & stderr of server is dumped to 'LOG_FILE'.
-    There are few internal parameters: parameter *-k* is just a random key
+    that stdout & stderr of server is dumped to 'LOG_FILE'. *-o* specifies *stdout*
+    output file. Note that if *stdout* is configured, it is not managed by Enduro/X
+    logger. There are few internal parameters: parameter *-k* is just a random key
     for shell scripts. Another internal parameter is Server ID which is automatically passed
     to binary via *-i* 'SERVER_ID'.
     Enduro/X supports automatic buffer conversion for ATMI servers. 

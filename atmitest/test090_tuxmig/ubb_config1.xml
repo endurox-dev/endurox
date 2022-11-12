@@ -119,7 +119,7 @@
             <min>1</min>
             <max>4</max>
             <srvid>200</srvid>
-            <sysopt>-e ${NDRX_ULOG}/err.out</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/err.out -o ${NDRX_ULOG}/std.out</sysopt>
             <appopt>-c "HELLO \"WORLD"</appopt>
         </server>
         <server name="atmi.sv90_3">
@@ -156,7 +156,7 @@
             <min>2</min>
             <max>4</max>
             <srvid>500</srvid>
-            <sysopt>-B -e ${NDRX_ULOG}/atmi.sv90_4.${NDRX_SVSRVID}.log -S TESTSV_DDR:TESTSV</sysopt>
+            <sysopt>-B -e ${NDRX_ULOG}/atmi.sv90_4.${NDRX_SVSRVID}.log -S TESTSV_DDR:TESTSV -o ${NDRX_APPHOME}/unknown/path</sysopt>
         </server>
         <server name="exbenchsv">
             <cctag>DDR1</cctag>

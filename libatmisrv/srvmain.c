@@ -393,6 +393,99 @@ out:
 
 
 /**
+ * Configure server stderr / stdout and initial logging
+ */
+exprivate void configure_outputs(void)
+{
+    FILE *f_stderr = NULL;
+    FILE *f_stdout = NULL;
+    int stdout_ok = EXFALSE;
+
+    /* open stdout, if any set... */
+    if (EXEOS!=G_server_conf.std_output[0] && 
+        NULL!=(f_stdout=NDRX_FOPEN(G_server_conf.std_output, "a")))
+    {
+        if (EXSUCCEED!=fcntl(fileno(f_stdout), F_SETFD, FD_CLOEXEC))
+        {
+            userlog("WARNING: Failed to set FD_CLOEXEC (1): %s", 
+                strerror(errno));
+        }
+
+        if (EXFAIL==dup2(fileno(f_stdout), STDOUT_FILENO))
+        {
+            userlog("%s: Failed to dup2(1): %s", __func__, strerror(errno));
+        }
+        else
+        {
+            stdout_ok=EXTRUE;
+        }
+    }
+    else if (EXEOS!=G_server_conf.std_output[0])
+    {
+        userlog("Failed to open stdout file: [%s]",
+                G_server_conf.std_output);
+    }
+
+    /* Open error log, OK? */
+    /* Do we need to close this on exec? */
+    if (EXEOS!=G_server_conf.err_output[0] && 
+        NULL!=(f_stderr=NDRX_FOPEN(G_server_conf.err_output, "a")))
+    {
+        /* Bug #176 */
+        if (EXSUCCEED!=fcntl(fileno(f_stderr), F_SETFD, FD_CLOEXEC))
+        {
+            userlog("WARNING: Failed to set FD_CLOEXEC (2): %s", 
+                strerror(errno));
+        }
+
+        if (!stdout_ok && EXFAIL==dup2(fileno(f_stderr), STDOUT_FILENO))
+        {
+            userlog("%s: Failed to dup2(1): %s", __func__, strerror(errno));
+        }
+
+        if (EXFAIL==dup2(fileno(f_stderr), STDERR_FILENO))
+        {
+            userlog("%s: Failed to dup2(2): %s", __func__, strerror(errno));
+        }
+            
+        /* ALSO! reconfigure ndrx/tp/ubf to user this log! 
+            * if stderr currently is used...
+            * However not sure what we could do with threads?
+            * MQ or others if they have chosen to work with stderr
+            * then those will not rotate...
+            * Anyway we will do the best.
+            */
+        if (ndrx_debug_is_proc_stderr())
+        {
+            /* if we do logrotate, we should re-open stdout/stderr */
+            if (EXSUCCEED!=tplogconfig(LOG_CODE_UBF|LOG_CODE_NDRX|LOG_CODE_TP, EXFAIL, 
+                    NULL, NULL, G_server_conf.err_output))
+            {
+                NDRX_LOG(log_debug, "Failed to re-open logger");
+            }
+            else
+            {
+                ndrx_debug_proc_link_ndrx();
+            }
+        }
+    }
+    else if (EXEOS!=G_server_conf.err_output[0])
+    {
+        userlog("Failed to open error file: [%s]", G_server_conf.err_output);
+    }
+
+    if (NULL!=f_stderr)
+    {
+        NDRX_FCLOSE(f_stderr);
+    }
+
+    if (NULL!=f_stdout)
+    {
+        NDRX_FCLOSE(f_stdout);
+    }
+}
+
+/**
  * Internal initialization.
  * Here we will:
  * - Determine server name (binary)
@@ -445,7 +538,7 @@ expublic int ndrx_init(int argc, char** argv)
 #endif
 
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:GB--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:g:GBo:--")) != EXFAIL)
     {
         switch(c)
         {
@@ -535,62 +628,10 @@ expublic int ndrx_init(int argc, char** argv)
                 G_server_conf.log_work = 1;
                 break;
             case 'e':
-            {
-                FILE *f;
                 NDRX_STRCPY_SAFE(G_server_conf.err_output, optarg);
-
-                /* Open error log, OK? */
-		/* Do we need to close this on exec? */
-                if (NULL!=(f=NDRX_FOPEN(G_server_conf.err_output, "a")))
-                {
-                     /* Bug #176 */
-                     if (EXSUCCEED!=fcntl(fileno(f), F_SETFD, FD_CLOEXEC))
-                     {
-                         userlog("WARNING: Failed to set FD_CLOEXEC: %s", 
-                            strerror(errno));
-                     }
-
-                    /* Redirect stdout & stderr to error file */
-                    close(1);
-                    close(2);
-
-                    if (EXFAIL==dup(fileno(f)))
-                    {
-                        userlog("%s: Failed to dup(1): %s", __func__, strerror(errno));
-                    }
-
-                    if (EXFAIL==dup(fileno(f)))
-                    {
-                        userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
-                    }
-                        
-                    /* ALSO! reconfigure ndrx/tp/ubf to user this log! 
-                     * if stderr currently is used...
-                     * However not sure what we could do with threads?
-                     * MQ or others if they have chosen to work with stderr
-                     * then those will not rotate...
-                     * Anyway we will do the best.
-                     */
-                    if (ndrx_debug_is_proc_stderr())
-                    {
-                        /* if we do logrotate, we should re-open stdout/stderr */
-                        if (EXSUCCEED!=tplogconfig(LOG_CODE_UBF|LOG_CODE_NDRX|LOG_CODE_TP, EXFAIL, 
-                                NULL, NULL, G_server_conf.err_output))
-                        {
-                            NDRX_LOG(log_debug, "Failed to re-open logger");
-                        }
-                        else
-                        {
-                            ndrx_debug_proc_link_ndrx();
-                        }
-                    }
-                }
-                else
-                {
-                    NDRX_LOG(log_error, "Failed to open error file: [%s]",
-                            G_server_conf.err_output);
-                }
-            }
+                break;
+            case 'o':
+                NDRX_STRCPY_SAFE(G_server_conf.std_output, optarg);
                 break;
             case 't':
                 /* Override timeout settings for communications with ndrxd
@@ -608,6 +649,8 @@ expublic int ndrx_init(int argc, char** argv)
             /* add support for s */
         }
     }
+
+    configure_outputs();
     
     /* reply the aliases as we have now groups set ... */
     LL_FOREACH(svcalias, svciter)

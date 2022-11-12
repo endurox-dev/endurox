@@ -1033,10 +1033,11 @@ to suppress advertise of built-in services.
 |-s|-S|Enduro/X does not support @filename syntax (advertise from file). All other
 work modes matches. The lower case *-s* parameter in Enduro/X provides functionality
 to alias services to other services instead of functions.
-|-e|-e|If not configured, Enduro/X logs all *stderr* to the parent process *stderr*, 
+|-e|-e|If not configured, Enduro/X logs all *stderr* and *stdout* to the parent process *stderr*, 
 effectively *ndrxd(8)*.
-|-o|-e|Enduro/X redirect all *stdout* the the same *stderr* output. If not configured,
-output will be sent to parent process, *stderr*, effectively *ndrxd(8)*.
+|-o|-o|Enduro/X redirect all *stdout* to specified file output. If not configured,
+output will be sent to configured *stderr* (set by *-e*) or
+parent process *stderr* (if *-e* is not configured), effectively *ndrxd(8)*.
 |-r|-r|Enduro/X ignores this flag.
 |=========================================================
 
