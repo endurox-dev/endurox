@@ -65,6 +65,7 @@ if (v->dyn_alloc && NULL!=v->strval)\
 {\
 free(v->strval);\
 v->strval=NULL;\
+v->strval_bufsz=0;\
 v->dyn_alloc=0;\
 }
 
@@ -303,7 +304,10 @@ expublic void _Btreefree_no_recurse (char *tree)
         case NODE_TYPE_STR:
             /* Free up internal resources (if have such)? */
             if (NULL!=a_string->str)
+            {
                 NDRX_FREE(a_string->str);
+                a_string->str_bufsz=0;
+            }
 
             /* check regexp, maybe needs to clean up? */
             if (a_string->regex.compiled)
@@ -541,7 +545,9 @@ struct ast * newstring(char *str)
     struct ast_string *a = NDRX_MALLOC(sizeof(struct ast_string));
     memset(a, 0, sizeof(struct ast_string));
 
-    a->str = NDRX_MALLOC (strlen(str)+1);
+    a->str_bufsz = strlen(str)+1;
+
+    a->str = NDRX_MALLOC (a->str_bufsz);
 
     if(!a || !a->str) {
         yyerror("out of space");
@@ -708,24 +714,26 @@ void dump_val(char *text, value_block_t *v)
 /**
  * Convert value block to string.
  * @param buf - pointer to buffer space where to put string value.
+ * @param bufsz - buffer size of the buf
  * @param v
  * @return SUCCEED
  */
-int conv_to_string(char *buf, value_block_t *v)
+exprivate int conv_to_string(char *buf, size_t bufsz, value_block_t *v)
 {
     int ret=EXSUCCEED;
 
     v->strval = buf;
+    v->strval_bufsz = bufsz;
     
     if (VALUE_TYPE_LONG==v->value_type)
     {
         v->value_type = VALUE_TYPE_STRING;
-                sprintf(v->strval, "%ld", v->longval);
+        snprintf(v->strval, v->strval_bufsz, "%ld", v->longval);
     }
     else if (VALUE_TYPE_FLOAT==v->value_type)
     {
         v->value_type = VALUE_TYPE_STRING;
-                sprintf(v->strval, "%.13lf", v->floatval);
+        snprintf(v->strval, v->strval_bufsz, "%.13lf", v->floatval);
     }
     else
     {
@@ -966,20 +974,20 @@ int op_equal_str_cmp(int type, int sub_type, value_block_t *lval,
 {
     int ret=EXSUCCEED;
     int result;
-    char lval_buf[64]; /* should be enough for all data types */
-    char rval_buf[64]; /* should be enough for all data types */
+    char lval_buf[CF_TEMP_BUF_MAX]; /* should be enough for all data types */
+    char rval_buf[CF_TEMP_BUF_MAX]; /* should be enough for all data types */
     v->value_type = VALUE_TYPE_LONG;
 
     if (VALUE_TYPE_FLD_STR!=lval->value_type &&
             VALUE_TYPE_STRING!=lval->value_type &&
-            EXSUCCEED!=conv_to_string(lval_buf, lval))
+            EXSUCCEED!=conv_to_string(lval_buf, CF_TEMP_BUF_MAX, lval))
     {
         ret=EXFAIL;
     }
 
     if (EXSUCCEED==ret && VALUE_TYPE_FLD_STR!=rval->value_type &&
             VALUE_TYPE_STRING!=rval->value_type &&
-            EXSUCCEED!=conv_to_string(rval_buf, rval))
+            EXSUCCEED!=conv_to_string(rval_buf, CF_TEMP_BUF_MAX, rval))
     {
         ret=EXFAIL;
     }
@@ -1337,6 +1345,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                 else
                 {
                     v->dyn_alloc = 1; /* ensure that FREE_UP_UB_BUF can capture these */
+                    v->strval_bufsz = len;
                 }
 
                 if (EXSUCCEED==ret && EXSUCCEED!=CBget(p_ub, bfldid, occ,
@@ -1363,6 +1372,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                     NDRX_FREE(v->strval);
                     v->dyn_alloc = 0;
                     v->strval = NULL;
+                    v->strval_bufsz = 0;
                 }
                 else if (EXSUCCEED==ret)
                 {
@@ -1769,6 +1779,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 /* Make pointer to point to the AST str value. */
                 /* strcpy(v->strval, s->str); */
                 v->strval = s->str;
+                v->strval_bufsz = s->str_bufsz;
             }
             /* dump the final value */
             DUMP_VALUE_BLOCK("NODE_TYPE_STR", v);
@@ -1964,7 +1975,10 @@ expublic void ndrx_Btreefree (char *tree)
         case NODE_TYPE_STR:
             /* Free up internal resources (if have such)? */
             if (NULL!=a_string->str)
+            {
                 NDRX_FREE(a_string->str);
+                a_string->str_bufsz=0;
+            }
 
             /* check regexp, maybe needs to clean up? */
             if (a_string->regex.compiled)
