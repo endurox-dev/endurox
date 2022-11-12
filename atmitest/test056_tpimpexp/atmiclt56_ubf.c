@@ -89,6 +89,7 @@ expublic int test_impexp_ubf(void)
     char json_ubf_out[1024];
     char *istrtemp=NULL;
     size_t bufsz;
+    long blen;
 
     NDRX_LOG(log_info, "JSON UBF IN: [%s]", json_ubf_in);
 
@@ -113,7 +114,18 @@ expublic int test_impexp_ubf(void)
         }
         ndrx_debug_dump_UBF(log_debug, "JSON UBF imported. Return obuf", (UBFH *)obuf);
 
-        /* TODO Check imported field values */
+        if (EXFAIL==(blen=tptypes(obuf, NULL, NULL)))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tptypes failed: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        if (rsplen!=blen)
+        {
+            NDRX_LOG(log_error, "TESTERROR: buffer imported len=%ld tptypes=%ld",
+                rsplen, blen);
+            EXFAIL_OUT(ret);
+        }
 
         memset(json_ubf_out, 0, sizeof(json_ubf_out));
         olen = sizeof(json_ubf_out);
