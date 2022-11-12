@@ -291,8 +291,17 @@ Ensure(test_bprint)
     UBFH *p_ub2 = (UBFH *)fb2;
     BFLDLEN len=0;
     FILE *f;
+    double double_val=1223234232342324323423423423423423434342343454353453243245343453243452343453243243425343453425523423423423423234234234234234234234234234234234234234234234234243234234324343.65;
+    float float_val=1223234232342324323423423423423423434342343454353453243245343453243452343453243243425343453425523423423423423234234234234234234234234234234234234234234234234243234234324343.65;
     int fstdout;
     char filename[]="/tmp/ubf-test-XXXXXX";
+
+    /* Test float & double overflow */
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&float_val, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&double_val, 0), EXSUCCEED);
+    assert_equal(Bprint(p_ub), 0);
+
 
     assert_not_equal(mkstemp(filename), EXFAIL);
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
@@ -303,7 +312,7 @@ Ensure(test_bprint)
     close(1); /* close stdout */
     assert_not_equal((f=fopen(filename, "w")), NULL);
     fstdout = dup2(fileno(f), 1); /* make file appear as stdout */
-    assert_equal(Bprint(p_ub), NULL);
+    assert_equal(Bprint(p_ub), 0);
     fclose(f);
 
     /* OK, if we have that output, try to extread it! */
@@ -314,6 +323,7 @@ Ensure(test_bprint)
     assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
+
 }
 
 /**

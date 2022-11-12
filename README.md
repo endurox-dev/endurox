@@ -491,6 +491,8 @@ Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
 
 - Version 7.0.46 released on 17/01/2021 (stable) Support #623
 
+- Version 7.0.48 released on 12/11/2022 (stable) Bug #794
+
 # Build configurations
 
 ## Configure make with: 

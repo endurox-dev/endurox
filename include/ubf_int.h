@@ -61,7 +61,8 @@ extern "C" {
 
 #define UBF_MAGIC   "UBF1"
 #define UBF_MAGIC_SIZE   4
-#define CF_TEMP_BUF_MAX 64
+/** Bug #794 shall be large enough for large floating point values */
+#define CF_TEMP_BUF_MAX 1078
 #define EXTREAD_BUFFSIZE    16384
 
 /* #define UBF_16 */
