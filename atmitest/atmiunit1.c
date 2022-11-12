@@ -777,6 +777,14 @@ Ensure(test098_svqhkeep)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test099_callbuflen)
+{
+    int ret;
+    ret=system_dbg("test099_callbuflen/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -955,6 +963,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test097_mtnojump);
     
     add_test(suite, test098_svqhkeep);
+    add_test(suite, test099_callbuflen);
     
     return suite;
 }

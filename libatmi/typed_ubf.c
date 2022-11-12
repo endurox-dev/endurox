@@ -116,6 +116,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     UBFH *p_ub_out;
     char fn[]="UBF_prepare_incoming";
     buffer_obj_t *outbufobj=NULL;
+    UBF_header_t *hdr;
 
     NDRX_LOG(log_debug, "Entering %s", fn);
     if (EXFAIL==(rcv_buf_size=Bused(p_ub)))
@@ -227,6 +228,14 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         NDRX_LOG(log_error, "Bcpy failed!: %s", Bstrerror(Berror));
         ndrx_TPset_error_msg(TPEOS, Bstrerror(Berror));
         goto out;
+    }
+
+    /* Bug #789 */
+    if (NULL!=olen)
+    {
+        /* header buffer size is in sync with XATMI tpalloc registry. */
+        hdr = (UBF_header_t *) p_ub_out;
+        *olen = hdr->buf_len;
     }
 
 out:

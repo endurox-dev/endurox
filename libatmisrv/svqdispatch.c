@@ -389,7 +389,7 @@ expublic int sv_serve_call(int *service, int *status,
 
         svcinfo.data = request_buffer;
         svcinfo.len = req_len;
-        
+
         CPY_SERVICE_NAME;
         
         svcinfo.flags = call->flags;
@@ -644,6 +644,8 @@ expublic int sv_serve_connect(int *service, int *status,
     tp_command_call_t * last_call = ndrx_get_G_last_call();
     int generate_rply = EXFALSE;
     int error_code = TPESVCERR; /**< Default error in case if cannot process */
+    buffer_obj_t *outbufobj=NULL; /* Have a reference to allocated buffer */
+
     *status=EXSUCCEED;
     
     G_atmi_tls->atmisrv_reply_type = 0;
@@ -675,11 +677,21 @@ expublic int sv_serve_connect(int *service, int *status,
                     &request_buffer, &req_len, 0, 0);
     
     if (EXSUCCEED!=ret)
-    {       
-            /* Reply with failure - TPEITYPE - type not supported! */
-            generate_rply = EXTRUE;
-            error_code = TPEITYPE; /**< Default error in case if cannot process */
-            goto out;
+    {
+        *status=EXFAIL;
+        error_code = TPEITYPE;
+        generate_rply = EXTRUE;
+        goto out;
+    }
+    else
+    {
+        /* this must succeed */
+        outbufobj=ndrx_find_buffer(request_buffer);
+        
+        /* how about NULL buffer? */
+        outbufobj->autoalloc = 1; /* We have stuff autoallocated! */
+        NDRX_LOG(log_debug, "Buffer=%p autoalloc=%hd", 
+                outbufobj->buf, outbufobj->autoalloc);
     }
 
     /* Now we should call the service by it self, also we should check was reply back or not */
@@ -690,18 +702,10 @@ expublic int sv_serve_connect(int *service, int *status,
         TPSVCINFO svcinfo;
         memset(&svcinfo, 0, sizeof(TPSVCINFO));
 
-        if (call->data_len>0)
-        {
-            svcinfo.data = request_buffer;
-            svcinfo.len = req_len;
-        }
-        else
-        {
-            NDRX_LOG(log_warn, "Connection W/O data");
-            /* no data available */
-            svcinfo.data = NULL;
-            svcinfo.len = 0;
-        }
+        svcinfo.data = request_buffer;
+        /* Bug #789 */
+        svcinfo.len = req_len;
+
         CPY_SERVICE_NAME;        
         svcinfo.flags = call->flags;
         svcinfo.cd = call->cd;
@@ -711,16 +715,6 @@ expublic int sv_serve_connect(int *service, int *status,
         
         *last_call = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
-        
-        if (NULL!=request_buffer)
-        {
-            last_call->autobuf=ndrx_find_buffer(request_buffer);
-            last_call->autobuf->autoalloc = 1; 
-        }
-        else
-        {
-            last_call->autobuf = NULL;
-        }
 
         /* Because we are in conversation, we should make a special cd
          * for case when we are as server

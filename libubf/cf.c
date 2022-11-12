@@ -77,7 +77,7 @@
     if (CNV_DIR_OUT==cnv_dir && NULL!=out_len)\
     {\
         char tmp[CF_TEMP_BUF_MAX];\
-        snprintf(tmp, sizeof(tmp), X, *ptr);\
+        snprintf(tmp, sizeof(tmp), X, (C)*ptr);\
         len = strlen(tmp)+1; /* Including EOS! */\
         if (*out_len<len)\
         {\
@@ -94,11 +94,11 @@
         /* In case if converting in, we have space for trailing EOS! */\
         if (NULL!=out_len) /* In case if we really need it! */\
         {\
-            snprintf(output_buf, *out_len, X, *ptr);\
+            snprintf(output_buf, *out_len, X, (C)*ptr);\
             len = strlen(output_buf)+1;\
         }\
         else\
-            sprintf(output_buf, X, *ptr);\
+            sprintf(output_buf, X, (C)*ptr);\
     }\
     if (NULL!=out_len)\
         *out_len = len;\
@@ -111,7 +111,7 @@
 if (CNV_DIR_OUT==cnv_dir)\
     {\
         char tmp[CF_TEMP_BUF_MAX];\
-        snprintf(tmp, sizeof(tmp), X, *ptr);\
+        snprintf(tmp, sizeof(tmp), X, (C)*ptr);\
         len = strlen(tmp); /* NOT Including EOS! */\
         if (NULL!=out_len && *out_len < len)\
         {\
@@ -128,12 +128,12 @@ if (CNV_DIR_OUT==cnv_dir)\
         /* In case if converting in, we have space for trailing EOS! */\
         if (NULL!=out_len) /* In case if we really need it! */\
         {\
-            snprintf(output_buf, *out_len, X, *ptr);\
+            snprintf(output_buf, *out_len, X, (C)*ptr);\
             len = strlen(output_buf);\
         }\
         else\
         {\
-            sprintf(output_buf, X, *ptr);\
+            sprintf(output_buf, X, (C)*ptr);\
         }\
     }\
     if (NULL!=out_len)\
