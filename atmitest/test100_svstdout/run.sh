@@ -99,12 +99,53 @@ fi
 
 if [ "X`grep 'Hello world from stderr' stderr.log`" == "X" ]; then
     echo "Missing stderr entry!"
-    go_out -1
+    go_out -2
 fi
 
 if [ "X`grep 'tpsvrinit called' atmisv-dom1.log`" == "X" ]; then
     echo "Missing atmisv-dom1.log entry!"
-    go_out -1
+    go_out -3
+fi
+
+if [ "X`grep 'Hello world from stdout' stderr2.log`" == "X" ]; then
+    echo "Missing stdout entry!"
+    go_out -4
+fi
+
+if [ "X`grep 'Hello world from stderr' stderr2.log`" == "X" ]; then
+    echo "Missing stderr entry!"
+    go_out -5
+fi
+
+if [ "X`grep 'Hello world from stdout' stderr3.log`" == "X" ]; then
+    echo "Missing stdout entry!"
+    go_out -6
+fi
+
+if [ "X`grep 'Hello world from stderr' stderr3.log`" == "X" ]; then
+    echo "Missing stderr entry!"
+    go_out -7
+fi
+
+if [ "X`grep 'Hello world from stdout' stdout4.log`" == "X" ]; then
+    echo "Missing stdout entry!"
+    go_out -8
+fi
+
+if [ "X`grep 'Hello world from stdout' stdout4.log`" == "X" ]; then
+    echo "Missing stdout entry!"
+    go_out -8
+fi
+
+# stuff goes to ndrxd.log
+if [ "X`grep 'Hello world from stderr' stderr4.log`" != "X" ]; then
+    echo "Stderr shall not be set!"
+    go_out -9
+fi
+
+if [ "X`grep 'Hello world from stderr' ndrxd-dom1.log`" == "X" ]; then
+    echo "ndrxd-dom1.log does not contain stderr output"
+    go_out -10
 fi
 
 # Catch is there is test error!!!
@@ -112,7 +153,6 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"
     go_out -1
 fi
-
 
 go_out $RET
 

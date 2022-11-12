@@ -59,6 +59,30 @@
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/stderr.log -o ${TESTDIR}/stdout.log </sysopt>
         </server>
+
+        <!-- all shall be streamed to stderr2 -->
+        <server name="atmi.sv100">
+            <min>1</min>
+            <max>1</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${TESTDIR}/stderr2.log -o /really/there/is/no/such/directory/stdout.log </sysopt>
+        </server>
+
+        <!-- Verify the default -->
+        <server name="atmi.sv100">
+            <min>1</min>
+            <max>1</max>
+            <srvid>30</srvid>
+            <sysopt>-e ${TESTDIR}/stderr3.log </sysopt>
+        </server>
+
+        <server name="atmi.sv100">
+            <min>1</min>
+            <max>1</max>
+            <srvid>40</srvid>
+            <sysopt>-e /no/such/error/directory/stderr4.log -o ${TESTDIR}/stdout4.log</sysopt>
+        </server>
+
     </servers>
 </endurox>
 
