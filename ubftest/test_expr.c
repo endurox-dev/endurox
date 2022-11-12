@@ -208,6 +208,8 @@ Ensure(test_expr_basic_logic)
     char *tree = NULL;
     double f;
     short s;
+    double d_large=1223234232342324323423423423423423434342343454353453243245343453243452343453243243425343453425523423423423423234234234234234234234234234234234234234234234234243234234324343.65;
+    float f_large=1223234232342324323423423423423423434342343454353453243245343453243452343453243243425343453425523423423423423234234234234234234234234234234234234234234234234243234234324343.65;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_field_table(); /* set field table environment variable */
 
@@ -340,6 +342,22 @@ Ensure(test_expr_basic_logic)
         assert_not_equal(tree, NULL);
         assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);       
+    /*----------------------------------------------------------*/
+     /* Test large float & double => was Overflow. */
+        assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f_large, 0), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d_large, 0), EXSUCCEED);
+
+        tree=Bboolco ("T_FLOAT_FLD=='abc'"); /* false */
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
+        Btreefree(tree);
+
+        tree=Bboolco ("T_DOUBLE_FLD=='abc'"); /* false */
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
+        Btreefree(tree);
+
+
 }
 /**
  * Tests ==, !=, %%, !%

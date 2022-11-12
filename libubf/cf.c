@@ -50,7 +50,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CARR_TEMP_BUF \
-        char tmp[CF_TEMP_BUF_MAX+1]; \
+        char tmp[CF_TEMP_BUF_MAX]; \
         int cpy_len = in_len > CF_TEMP_BUF_MAX?CF_TEMP_BUF_MAX: in_len;\
         UBF_LOG(log_debug, "[%10.10s]", input_buf);\
         memcpy(tmp, input_buf, cpy_len); \
@@ -76,8 +76,8 @@
 #define CONV_TO_STRING(X, C) \
     if (CNV_DIR_OUT==cnv_dir && NULL!=out_len)\
     {\
-        char tmp[CF_TEMP_BUF_MAX+1];\
-        sprintf(tmp, X, (C)*ptr);\
+        char tmp[CF_TEMP_BUF_MAX];\
+        snprintf(tmp, sizeof(tmp), X, *ptr);\
         len = strlen(tmp)+1; /* Including EOS! */\
         if (*out_len<len)\
         {\
@@ -92,9 +92,13 @@
     else\
     {\
         /* In case if converting in, we have space for trailing EOS! */\
-        sprintf(output_buf, X, (C)*ptr);\
         if (NULL!=out_len) /* In case if we really need it! */\
+        {\
+            snprintf(output_buf, *out_len, X, *ptr);\
             len = strlen(output_buf)+1;\
+        }\
+        else\
+            sprintf(output_buf, X, *ptr);\
     }\
     if (NULL!=out_len)\
         *out_len = len;\
@@ -106,8 +110,8 @@
 #define CONV_TO_CARRAY(X, C)\
 if (CNV_DIR_OUT==cnv_dir)\
     {\
-        char tmp[CF_TEMP_BUF_MAX+1];\
-        sprintf(tmp, X, (C)*ptr);\
+        char tmp[CF_TEMP_BUF_MAX];\
+        snprintf(tmp, sizeof(tmp), X, *ptr);\
         len = strlen(tmp); /* NOT Including EOS! */\
         if (NULL!=out_len && *out_len < len)\
         {\
@@ -122,9 +126,15 @@ if (CNV_DIR_OUT==cnv_dir)\
     else\
     {\
         /* In case if converting in, we have space for trailing EOS! */\
-        sprintf(output_buf, X, (C)*ptr);\
         if (NULL!=out_len) /* In case if we really need it! */\
+        {\
+            snprintf(output_buf, *out_len, X, *ptr);\
             len = strlen(output_buf);\
+        }\
+        else\
+        {\
+            sprintf(output_buf, X, *ptr);\
+        }\
     }\
     if (NULL!=out_len)\
         *out_len = len;
@@ -437,7 +447,7 @@ expublic char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,
         {
             /* Not sure do we need to return alloc_size here? */
             ret=in_temp_buf;
-            *alloc_size=CB_MODE_TEMPSPACE;
+            *alloc_size=CF_TEMP_BUF_MAX;
         }
         else if (CB_MODE_TEMPSPACE==mode)
         {

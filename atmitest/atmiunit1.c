@@ -728,6 +728,7 @@ Ensure(test091_tpgotsig)
     assert_equal(ret, EXSUCCEED);
 }
 
+<<<<<<< HEAD
 Ensure(test092_bflag)
 {
     int ret;
@@ -939,6 +940,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test091_tpgotsig);
 #endif
     
+<<<<<<< HEAD
     add_test(suite, test092_bflag);
     add_test(suite, test093_killseq);
     add_test(suite, test094_sigchld);
