@@ -148,6 +148,65 @@ if [ "X`grep 'Hello world from stderr' ndrxd-dom1.log`" == "X" ]; then
     go_out -10
 fi
 
+################################################################################
+# Check the output logfile after rotate..
+# default works together with -e thus managed by log sub-system
+################################################################################
+rm stderr3.log
+xadmin lcf logrotate 
+cat << EOF | ud32 
+SRVCNM	WRITELOG_30
+T_STRING_FLD	Hello world from stdout3
+T_STRING_2_FLD	Hello world from stderr3
+EOF
+
+if [ "X`grep 'Hello world from stdout3' stderr3.log`" == "X" ]; then
+    echo "Missing stdout entry!"
+    go_out -11
+fi
+
+if [ "X`grep 'Hello world from stderr3' stderr3.log`" == "X" ]; then
+    echo "Missing stderr entry!"
+    go_out -12
+fi
+
+################################################################################
+# Same name check
+################################################################################
+rm std50.log
+xadmin lcf logrotate 
+cat << EOF | ud32 
+SRVCNM	WRITELOG_50
+T_STRING_FLD	Hello world from stdout5
+T_STRING_2_FLD	Hello world from stderr5
+EOF
+
+if [ "X`grep 'Hello world from stdout5' std50.log`" == "X" ]; then
+    echo "Missing stdout entry!"
+    go_out -13
+fi
+
+if [ "X`grep 'Hello world from stderr5' std50.log`" == "X" ]; then
+    echo "Missing stderr entry!"
+    go_out -14
+fi
+
+################################################################################
+# Not managed by lcf (stdout)
+################################################################################
+rm stdout6.log
+xadmin lcf logrotate 
+cat << EOF | ud32 
+SRVCNM	WRITELOG_60
+T_STRING_FLD	Hello world from stdout6
+T_STRING_2_FLD	Hello world from stderr6
+EOF
+
+if [ "X`grep 'Hello world from stdout6' stdout6.log`" != "X" ]; then
+    echo "STDOUT shall not be restored!"
+    go_out -15
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"

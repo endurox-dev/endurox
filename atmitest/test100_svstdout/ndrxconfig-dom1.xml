@@ -73,7 +73,10 @@
             <min>1</min>
             <max>1</max>
             <srvid>30</srvid>
-            <sysopt>-e ${TESTDIR}/stderr3.log </sysopt>
+            <sysopt>-e ${TESTDIR}/stderr3.log</sysopt>
+            <envs>
+                <env name="NDRX_DEBUG_STR">file= ndrx=5 bufsz=1</env>
+            </envs>
         </server>
 
         <server name="atmi.sv100">
@@ -83,6 +86,27 @@
             <sysopt>-e /no/such/error/directory/stderr4.log -o ${TESTDIR}/stdout4.log</sysopt>
         </server>
 
+        <!-- same name, manage by logger -->
+        <server name="atmi.sv100">
+            <min>1</min>
+            <max>1</max>
+            <srvid>50</srvid>
+            <sysopt>-e ${TESTDIR}/std50.log -o ${TESTDIR}/std50.log </sysopt>
+            <envs>
+                <env name="NDRX_DEBUG_STR">file= ndrx=5</env>
+            </envs>
+        </server>
+
+        <!-- stdout not managed by lcf... -->
+        <server name="atmi.sv100">
+            <min>1</min>
+            <max>1</max>
+            <srvid>60</srvid>
+            <sysopt>-e ${TESTDIR}/stderr6.log -o ${TESTDIR}/stdout6.log </sysopt>
+            <envs>
+                <env name="NDRX_DEBUG_STR">file= ndrx=5</env>
+            </envs>
+        </server>
     </servers>
 </endurox>
 
