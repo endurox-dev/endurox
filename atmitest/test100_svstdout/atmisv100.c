@@ -49,12 +49,46 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Adervice service 
+ */
+void WRITELOG(TPSVCINFO *svcinfo)
+{
+    int ret=EXSUCCEED;
+    char stdoutbuf[100]="";
+    char stderrbuf[100]="";
+    UBFH *p_ub = (UBFH *)svcinfo->data;
+    
+    if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, stdoutbuf, 0L)||
+        EXSUCCEED!=Bget(p_ub, T_STRING_2_FLD, 0, stderrbuf, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Faild to get T_STRING_FLD or T_STRING_2_FLD");
+        EXFAIL_OUT(ret);
+    }
+
+    fprintf(stdout, "%s\n", stdoutbuf);
+    fflush(stdout);
+
+    fprintf(stderr, "%s\n", stderrbuf);
+    fflush(stderr);
+
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                svcinfo->data,
+                0L,
+                0L);
+
+}
+
 /**
  * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret = EXSUCCEED;
+    char svc[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
 
     fprintf(stdout, "Hello world from stdout\n");
@@ -62,6 +96,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     fprintf(stderr, "Hello world from stderr\n");
     fflush(stderr);
+
+    snprintf(svc, sizeof(svc), "WRITELOG_%d", tpgetsrvid());
+
+    if (EXSUCCEED!=tpadvertise(svc, WRITELOG))
+    {
+        NDRX_LOG(log_error, "failed to advertise [%s]: %s",
+            svc, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
 
 out:
     return ret;

@@ -473,10 +473,14 @@ PARAMETERS
     name is matched against function name. Firstly *-S* flags are processed,
     afterwards *-s*' flags are processed, meaning that it works as 
     usual including to function aliased services by *-S* services. 
-    Server binaries output is controlled via *-e*'LOG_FILE', which means
-    that stdout & stderr of server is dumped to 'LOG_FILE'. *-o* specifies *stdout*
-    output file. Note that if *stdout* is configured, it is not managed by Enduro/X
-    logger. There are few internal parameters: parameter *-k* is just a random key
+    Server binaries output is controlled via *-e* 'LOG_FILE', which means
+    that *stdout* & *stderr* of server is dumped to 'LOG_FILE'. If *ndrxdebug.conf(5)*
+    (or env config) did not specify the logfile for the process, then
+    *-e* value is selected as output logfile and this make *stdout* and *stderr* to
+    be managed by Enduro/X logger (i.e. lcf logrotate will reopen handles). *-o*
+    specifies *stdout* output file. In case if *-e* is managed by Enduro/X logger and
+    having *-o* different file name, standard output handle will not be managed by Enduro/X logger.
+    There are few internal parameters: parameter *-k* is just a random key
     for shell scripts. Another internal parameter is Server ID which is automatically passed
     to binary via *-i* 'SERVER_ID'.
     Enduro/X supports automatic buffer conversion for ATMI servers. 

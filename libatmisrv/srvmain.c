@@ -400,6 +400,7 @@ exprivate void configure_outputs(void)
     FILE *f_stderr = NULL;
     FILE *f_stdout = NULL;
     int stdout_ok = EXFALSE;
+    long sync_flags = NDRX_LOG_FSYNCSTDERR;
 
     /* open stdout, if any set... */
     if (EXEOS!=G_server_conf.std_output[0] && 
@@ -419,6 +420,11 @@ exprivate void configure_outputs(void)
         {
             stdout_ok=EXTRUE;
         }
+        
+        if (0==strcmp(G_server_conf.std_output, G_server_conf.err_output))
+        {
+            sync_flags |= NDRX_LOG_FSYNCSTDOUT;
+        }
     }
     else if (EXEOS!=G_server_conf.std_output[0])
     {
@@ -437,10 +443,17 @@ exprivate void configure_outputs(void)
             userlog("WARNING: Failed to set FD_CLOEXEC (2): %s", 
                 strerror(errno));
         }
-
-        if (!stdout_ok && EXFAIL==dup2(fileno(f_stderr), STDOUT_FILENO))
+        
+        if (!stdout_ok)
         {
-            userlog("%s: Failed to dup2(1): %s", __func__, strerror(errno));
+            if (EXFAIL==dup2(fileno(f_stderr), STDOUT_FILENO))
+            {
+                userlog("%s: Failed to dup2(1): %s", __func__, strerror(errno));
+            }
+            else
+            {
+                sync_flags |= NDRX_LOG_FSYNCSTDOUT;
+            }
         }
 
         if (EXFAIL==dup2(fileno(f_stderr), STDERR_FILENO))
@@ -449,12 +462,12 @@ exprivate void configure_outputs(void)
         }
             
         /* ALSO! reconfigure ndrx/tp/ubf to user this log! 
-            * if stderr currently is used...
-            * However not sure what we could do with threads?
-            * MQ or others if they have chosen to work with stderr
-            * then those will not rotate...
-            * Anyway we will do the best.
-            */
+         * if stderr currently is used...
+         * However not sure what we could do with threads?
+         * MQ or others if they have chosen to work with stderr
+         * then those will not rotate...
+         * Anyway we will do the best.
+         */
         if (ndrx_debug_is_proc_stderr())
         {
             /* if we do logrotate, we should re-open stdout/stderr */
@@ -465,7 +478,7 @@ exprivate void configure_outputs(void)
             }
             else
             {
-                ndrx_debug_proc_link_ndrx();
+                ndrx_debug_proc_link_ndrx(sync_flags);
             }
         }
     }

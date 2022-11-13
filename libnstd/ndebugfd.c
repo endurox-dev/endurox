@@ -573,12 +573,22 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
                 NDRX_STRCPY_SAFE(mysink->fname, toname);
             }
             
-            if (mysink->flags & NDRX_LOG_FSYNCSTD)
+            if (mysink->flags & NDRX_LOG_FSYNCSTDOUT)
             {
-                /* update stdout/stderr */
-                dup2(fd, STDOUT_FILENO);
-                dup2(fd, STDERR_FILENO);
+                if (EXFAIL==dup2(fd, STDOUT_FILENO))
+                {
+                    userlog("%s: Failed to dup2(1): %s", __func__, strerror(errno));
+                }
             }
+
+            if (mysink->flags & NDRX_LOG_FSYNCSTDERR)
+            {
+                if (EXFAIL==dup2(fd, STDERR_FILENO))
+                {
+                    userlog("%s: Failed to dup2(2): %s", __func__, strerror(errno));
+                }
+            }
+
         }
     }
 
@@ -678,11 +688,12 @@ expublic int ndrx_debug_is_proc_stderr(void)
 /**
  * Link stderr / stdout to ndrx logger file
  * if so logrotate shall dup2 on stdout and stderr loggers
+ * @param flags NDRX_LOG_FSYNCSTDERR, NDRX_LOG_FSYNCSTDOUT
  */
-expublic void ndrx_debug_proc_link_ndrx(void)
+expublic void ndrx_debug_proc_link_ndrx(long flags)
 {
     MUTEX_LOCK_V(M_sink_lock);
-    ((ndrx_debug_file_sink_t*)G_ndrx_debug.dbg_f_ptr)->flags|=NDRX_LOG_FSYNCSTD;
+    ((ndrx_debug_file_sink_t*)G_ndrx_debug.dbg_f_ptr)->flags|=flags;
     MUTEX_UNLOCK_V(M_sink_lock);
 }
 
