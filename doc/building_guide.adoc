@@ -293,10 +293,10 @@ it will be user from Fedora Core OS:
 
 ---------------------------------------------------------------------
 
-# wget https://www.mavimax.com/sites/default/files/libart_lgpl-2.3.21-20.fc29.x86_64.rpm
-# rpm libart_lgpl-2.3.21-20.fc29.x86_64.rpm
-# wget https://www.mavimax.com/sites/default/files/dia-0.97.3-10.fc29.x86_64.rpm
-# rpm -nodeps dia-0.97.3-10.fc29.x86_64.rpm
+# wget https://www.mavimax.com/sites/default/files/libart_lgpl-2.3.21-25.el9.x86_64.rpm
+# rpm -i libart_lgpl-2.3.21-25.el9.x86_64.rpm
+# wget https://www.mavimax.com/sites/default/files/dia-0.97.3-19.el9.x86_64.rpm
+# rpm -i dia-0.97.3-19.el9.x86_64.rpm
 
 ---------------------------------------------------------------------
 
