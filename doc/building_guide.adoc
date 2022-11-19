@@ -249,7 +249,6 @@ $ su - root
 # yum install yum-utils
 # yum groupinstall 'Development Tools'
 # yum install git cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel
-
 ---------------------------------------------------------------------
 
 The "dia" package is not available on this system, thus
@@ -275,14 +274,52 @@ $ su - root
 # systemctl enable postgresql
 ---------------------------------------------------------------------
 
+
+==== System level dependencies - for Centos/RHEL/Oracle Linux 9.x
+
+To install Enduro/X build dependencies.
+
+---------------------------------------------------------------------
+
+$ su - root
+# yum install yum-utils
+# yum groupinstall 'Development Tools'
+# yum install git cmake asciidoc openssl openssl-devel libxml2-devel
+
+---------------------------------------------------------------------
+
+The "dia" package is not available on this system, thus
+it will be user from Fedora Core OS:
+
+---------------------------------------------------------------------
+
+# wget https://www.mavimax.com/sites/default/files/libart_lgpl-2.3.21-20.fc29.x86_64.rpm
+# rpm libart_lgpl-2.3.21-20.fc29.x86_64.rpm
+# wget https://www.mavimax.com/sites/default/files/dia-0.97.3-10.fc29.x86_64.rpm
+# rpm -nodeps dia-0.97.3-10.fc29.x86_64.rpm
+
+---------------------------------------------------------------------
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ su - root
+# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# postgresql-setup initdb
+# systemctl start postgresql
+# systemctl enable postgresql
+---------------------------------------------------------------------
+
+
 ==== AsciiDoc Integration with Dia
 
 Also Enduro/X includes documentation in sources, thus additional config is needed
 so that `Dia` package can build illustrations needed for manuals.
 
 ---------------------------------------------------------------------
-$ sudo mkdir /etc/asciidoc/filters/dia
 $ sudo -s
+# mkdir /etc/asciidoc/filters/dia
 # cat << EOF > /etc/asciidoc/filters/dia/dia-filter.conf
 #
 # AsciiDoc Dia filter configuration file.
@@ -390,8 +427,8 @@ will be given at configure.
 
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
-# If you want to have install folder to /home/user1/endurox/dist
-# if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .
+-- If you want to have install folder to /home/user1/endurox/dist
+-- if you want system level install then run just $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
