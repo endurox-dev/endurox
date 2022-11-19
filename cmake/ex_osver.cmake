@@ -93,7 +93,6 @@ macro(ex_osver)
             OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
         string(REPLACE "-" "_" LSB_RELEASE_OUTPUT_VER ${LSB_RELEASE_OUTPUT_VER})
-        #string(REGEX MATCH "^[0-9]+" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})
     else ()
         set(LSB_RELEASE_OUTPUT_OS ${CMAKE_OS_NAME})
 
@@ -132,8 +131,16 @@ macro(ex_osver)
         list(GET LSB_VERSION_LIST 1 EX_LSB_RELEASE_VER_MINOR)
     endif()
 
-    MESSAGE( "EX_LSB_RELEASE_VER_MAJOR = " ${EX_LSB_RELEASE_VER_MAJOR} )
-    MESSAGE( "EX_LSB_RELEASE_VER_MINOR = " ${EX_LSB_RELEASE_VER_MINOR} )
+    # map the OS version, more friendly version
+    if(${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_linux_server")
+        set(LSB_RELEASE_OUTPUT_OS "el")
+        set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
+    endif()
+
+    message("LSB_RELEASE OS  = ${LSB_RELEASE_OUTPUT_OS}")
+    message("LSB_RELEASE VER = ${LSB_RELEASE_OUTPUT_VER}")
+    message( "EX_LSB_RELEASE_VER_MAJOR = " ${EX_LSB_RELEASE_VER_MAJOR} )
+    message( "EX_LSB_RELEASE_VER_MINOR = " ${EX_LSB_RELEASE_VER_MINOR} )
 
 endmacro(ex_osver)
 
