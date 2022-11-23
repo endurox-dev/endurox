@@ -284,9 +284,10 @@ Object fields returned for *T_SVCGRP* class are following:
 
 - Field *TA_LMID* (string..30): Cluster node ID.
 
-- Field *TA_SERVICENAME* (string..30): Service name as defined in shared memory.
+- Field *TA_SERVICENAME* (string..30): *This is key of the object (component 2)*
+Service name as defined in shared memory.
 
-- Field *TA_SRVGRP* (string..30): *This is key of the object*. Format 
+- Field *TA_SRVGRP* (string..30): *This is key of the object (component 1)*. Format
 *<Cluster node id>/Server id* which provides the service.
 
 - Field *TA_STATE* (string..3): *ACT* - service is available.
