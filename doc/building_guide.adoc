@@ -311,6 +311,23 @@ $ su - root
 # systemctl enable postgresql
 ---------------------------------------------------------------------
 
+Additionally for PostgreSQL embedded SQL C preprocessor libraries shall be installed
+(unless configuring with -DDISABLE_ECPG).
+
+For some of the RHEL flavors, this packages is not available in vendor provided
+installations, thus, for example, other vendor provided packages may be used.
+
+---------------------------------------------------------------------
+-- Try:
+
+# yum install libecpg-devel
+
+-- If above does not work out:
+
+# wget https://www.mavimax.com/sites/default/files/libecpg-devel-13.5-1.el9.x86_64.rpm
+# rpm -i libecpg-devel-13.5-1.el9.x86_64.rpm
+---------------------------------------------------------------------
+
 
 ==== AsciiDoc Integration with Dia
 
@@ -442,6 +459,7 @@ Enduro/X basically consists of two parts:
 Each of these two sub-systems have own units tests.
 
 === UBF/FML Unit testing
+
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/ubftest
 $ ./ubfunit1 2>/dev/null
