@@ -87,5 +87,13 @@ extern int java_put_def_line (UBF_field_def_t *def);
 extern int java_file_open (char *fname);
 extern int java_file_close (char *fname);
 
+/* Python lang: */
+extern void python_get_fullname(char *data);
+extern int python_put_text_line (char *text);
+extern int python_put_got_base_line(char *base);
+extern int python_put_def_line (UBF_field_def_t *def);
+extern int python_file_open (char *fname);
+extern int python_file_close (char *fname);
+
 #endif /* MKFLDHDR_H_ */
 /* vim: set ts=4 sw=4 et smartindent: */

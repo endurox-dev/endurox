@@ -65,8 +65,9 @@
  */
 typedef struct 
 {
-    char service[MAXTIDENT+1];    /**< Service name                     */
-    char state[3+1];        /**< Service state ACT only                 */
+    char lmid[MAXTIDENT+1];     /**< Service / cluster node id (reported from) */
+    char service[MAXTIDENT+1];  /**< Service name                              */
+    char state[3+1];            /**< Service state ACT only                    */
 } ndrx_adm_service_t;
 
 /**
@@ -75,7 +76,8 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_service_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_SERVICENAME,             TPADM_EL(ndrx_adm_service_t, service)}
+     {TA_LMID,                   TPADM_EL(ndrx_adm_service_t, lmid)}
+    ,{TA_SERVICENAME,            TPADM_EL(ndrx_adm_service_t, service)}
     ,{TA_STATE,                  TPADM_EL(ndrx_adm_service_t, state)}
     ,{BBADFLDID}
 };
@@ -133,7 +135,8 @@ expublic int ndrx_adm_service_get(char *clazz, ndrx_adm_cursors_t *cursnew, long
             {
                 NDRX_STRCPY_SAFE(svc.state, "INA");
             }
-            
+            snprintf(svc.lmid, sizeof(svc.lmid), "%ld", tpgetnodeid());
+
             if (EXSUCCEED!=ndrx_growlist_add(&cursnew->list, (void *)&svc, idx))
             {
                 NDRX_LOG(log_error, "Growlist failed - out of memory?");

@@ -1013,6 +1013,22 @@ expublic int ndrx_isint(char *str)
 }
 
 /**
+ * check is string empty or whitespace
+ * @param s string to check
+ * @return EXTRUE / EXFALSE
+ */
+expublic int ndrx_isempty(const char *s)
+{
+
+    while ( isspace( (unsigned char)*s) )
+    {
+        s++;
+    }
+
+    return *s == EXEOS ? EXTRUE : EXFALSE;
+}
+
+/**
  * Count the number of specified chars in string
  * @param str
  * @param chkchar chart to count

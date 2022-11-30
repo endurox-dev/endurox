@@ -362,6 +362,7 @@ extern NDRX_API char* ndrx_str_lstrip_ptr(char* s, char *needle);
 extern NDRX_API char *ndrx_str_fmtesc(char *dst, size_t dstsz, char *src);
 
 extern NDRX_API int ndrx_isint(char *str);
+extern NDRX_API int ndrx_isempty(const char *s);
 extern NDRX_API int ndrx_nr_chars(char *str, char chkchar);
 
 extern NDRX_API int ndrx_file_exists(char *filename);
