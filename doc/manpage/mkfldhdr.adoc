@@ -141,7 +141,7 @@ Directory where to dump the generated header files.
 
 *-m* 'LANGUAGE_MODE'::
 Language mode. Value '0' (default) for C language header. '1' for GO language
-constants file. '2' for Java constant classes.
+constants file. '2' for Java constant classes. '3' for Python constants file.
 
 *-p* 'LANG_PRIVATE_DATA'::
 Private data for language module. For GO and Java languages

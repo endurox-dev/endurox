@@ -79,6 +79,8 @@ expublic renderer_descr_t M_renderer_tab[] =
                  go_put_got_base_line, go_file_open, go_file_close},
     {HDR_JAVA_LANG, java_get_fullname, java_put_text_line, java_put_def_line, 
                  java_put_got_base_line, java_file_open, java_file_close},
+    {HDR_PYTHON_LANG, python_get_fullname, python_put_text_line, python_put_def_line, 
+                 python_put_got_base_line, python_file_open, python_file_close},
     {EXFAIL}
 };
 
@@ -240,6 +242,7 @@ int main(int argc, char **argv)
                 printf("\t\t0 - C (default)\n");
                 printf("\t\t1 - Go\n");
                 printf("\t\t2 - Java\n");
+                printf("\t\t3 - Python\n");
                 printf("\tpriv_data:\n");
                 printf("\t\tFor Go - package name\n");
                 printf("\t\tFor Java - package name\n");

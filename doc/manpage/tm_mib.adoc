@@ -266,6 +266,8 @@ without dynamic information.
 
 Object fields returned for *T_SERVICE* class are following:
 
+- Field *TA_LMID* (string..30): Cluster node id.
+
 - Field *TA_SERVICENAME* (string..30): Service name as defined in shared memory.
 *This is object key*.
 

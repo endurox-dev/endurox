@@ -261,21 +261,21 @@ xadmin mibget -c T_SERVICE -m
 
 # Test services:
 
-FAILSVC=`xadmin mibget -c T_SERVICE -m | egrep 'FAILSV\|ACT\|'`
+FAILSVC=`xadmin mibget -c T_SERVICE -m | egrep '2\|FAILSV\|ACT\|'`
 
 if [ "X$FAILSVC" == "X" ]; then
     echo "FAILSVC not found!"
     go_out -21
 fi
 
-MIBSVC=`xadmin mibget -c T_SERVICE -m | egrep '\.TMIB\|ACT\|'`
+MIBSVC=`xadmin mibget -c T_SERVICE -m | egrep '2\|\.TMIB\|ACT\|'`
 
 if [ "X$MIBSVC" == "X" ]; then
     echo "MIBSVC not found!"
     go_out -22
 fi
 
-MIBSVC2=`xadmin mibget -c T_SERVICE -m | egrep '\.TMIB-2-401\|ACT\|'`
+MIBSVC2=`xadmin mibget -c T_SERVICE -m | egrep '2\|\.TMIB-2-401\|ACT\|'`
 
 if [ "X$MIBSVC2" == "X" ]; then
     echo "MIBSVC2 not found!"
