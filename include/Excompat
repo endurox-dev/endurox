@@ -815,7 +815,7 @@ TA_EX_UVNAME                     1700   string  -     User value name
 TA_EX_UVSTR                      1701   string  -     User value string value
 TA_EX_UVINT32                    1702   long    -     Integer32 user value
 TA_EX_UVG32                      1703   long    -     Gauge32 user value
-TA_EX_UVC62                      1704   long    -     Counter64 user value
+TA_EX_UVC64                      1704   long    -     Counter64 user value
 
 
 $#endif
