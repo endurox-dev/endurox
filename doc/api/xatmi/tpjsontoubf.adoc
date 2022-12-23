@@ -94,7 +94,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxdebug.conf(5)*, *tpubftojson(3)* *tpjsontoview(3)* tpviewtojson(3)*
+*ndrxdebug.conf(5)*, *tpubftojson(3)* *tpjsontoview(3)* *tpviewtojson(3)*
 
 COPYING
 -------
