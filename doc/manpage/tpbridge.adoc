@@ -170,13 +170,12 @@ time, the time correction (adjustment from remote Monotonic clock to local) is
 required when XATMI IPC message is received from remote node. Bridge process
 uses special messages to exchange the clock information between the nodes.
 
-When connection is established clocks each node sends other node it's
-local Monotonic time. And this used initially for time correction between the nodes.
-
-But it might happen that over the time the monotonic clocks of connected hosts drift away,
-the difference measured at connection startup is not actual, and the messages
-receive or sent from one node might look like expired on other node.
-To solve this issue tpbridge periodically sends dynamic clock exchange messages 
+When connection is established, each node sends to other node it's
+local Monotonic time. This information is used for time correction between the nodes.
+However over the time the Monotonic clocks of connected hosts may drift away from
+the difference measured at connection startup. The messages
+received or sent from one node might look like expired on other node.
+To solve this issue, tpbridge periodically sends dynamic clock exchange messages 
 between nodes, in synchronous fashion. The round trip time is measured (just like a ping time)
 and if it is within acceptable boundaries, the time from other host is accepted
 and time correction value is updated. The max rountrip time is set by '-k'
