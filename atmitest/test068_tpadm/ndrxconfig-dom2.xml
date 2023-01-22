@@ -115,6 +115,11 @@
             <exec tag="CONV" subsect="1" autostart="N" />
         </client>
         
+        <client cmdline="./non_existant_bin">
+            <exec tag="bad1" subsect="1" autostart="Y" />
+            <exec tag="bad2" subsect="2" autostart="Y" />
+        </client>
+
     </clients>
     
     

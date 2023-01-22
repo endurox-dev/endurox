@@ -387,7 +387,7 @@ expublic int ndrx_cltshm_setpos(char *key, pid_t pid, short flags, char *procnam
         ret = EXSUCCEED;
     }
     
-    ndrx_cltshm_get_key(key, oflag, &pos, &have_value);
+    /* ndrx_cltshm_get_key(key, oflag, &pos, &have_value); - why? */
     
     /* unlock */
     ndrx_sem_rwunlock(&M_clt_sem, 0, NDRX_SEM_TYP_WRITE);

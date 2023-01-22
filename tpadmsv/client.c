@@ -52,6 +52,7 @@
 #include <Excompat.h>
 #include <ubfutil.h>
 #include <sys_unix.h>
+#include <utlist.h>
 
 #include <tpadmsv.h>
 #include "expr.h"
@@ -64,7 +65,8 @@
 /**
  * Image of the client information
  */
-typedef struct 
+typedef struct ndrx_adm_client ndrx_adm_client_t;
+struct ndrx_adm_client
 {
     char clientid[128+1];     /**< myid                                 */
     char name[MAXTIDENT+1];   /**< process name                         */
@@ -77,9 +79,10 @@ typedef struct
     long curtime;             /**< Current time when process started    */
     int cursor_loaded;        /**< Is loaded into cursor?               */
     
-    EX_hash_handle hh;         /**< makes this structure hashable   */
-    
-} ndrx_adm_client_t;
+    EX_hash_handle hh;         /**< makes this structure hashable       */
+    ndrx_adm_client_t *next;   /**< Add entries to LL, in case of DEA   */
+
+};
 
 /**
  * Client class infos mapping table
@@ -104,7 +107,8 @@ expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
 /**
  * Pre hash of the results to merge the queue and CPM/SHM infos
  */
-exprivate ndrx_adm_client_t *M_prehash = NULL;
+exprivate ndrx_adm_client_t *M_prehash_act = NULL;
+exprivate ndrx_adm_client_t *M_ll_dea = NULL;   /**< List of dead SHM/CPM */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -266,8 +270,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         {
             el = NDRX_CPM_INDEX(shm->mem, i);
             
-            if (el->flags & NDRX_CPM_MAP_ISUSED && 
-                        ndrx_sys_is_process_running_by_pid(el->pid))
+            if (el->flags & NDRX_CPM_MAP_WASUSED)
             {
                 int err;
                 p_clt = NDRX_CALLOC(1, sizeof(ndrx_adm_client_t));
@@ -306,11 +309,19 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                 
                 /* set binary name */
                 NDRX_STRCPY_SAFE(p_clt->name, el->procname);
-                NDRX_STRCPY_SAFE(p_clt->state, "ACT");
-                
-                EXHASH_ADD_LONG(M_prehash, pid, p_clt);
-                
-                NDRX_LOG(log_debug, "Hashed pid=%d - %s", p_clt->pid, p_clt->clientid);
+
+                if (el->flags & NDRX_CPM_MAP_ISUSED && ndrx_sys_is_process_running_by_pid(el->pid))
+                {
+                    NDRX_STRCPY_SAFE(p_clt->state, "ACT");
+                    EXHASH_ADD_LONG(M_prehash_act, pid, p_clt);
+                    NDRX_LOG(log_debug, "Hashed pid=%d - %s", p_clt->pid, p_clt->clientid);
+                }
+                else
+                {
+                    /* as cannot merge by PID: */
+                    NDRX_STRCPY_SAFE(p_clt->state, "DEA");
+                    LL_APPEND(M_ll_dea, p_clt);
+                }
                 
             } /* if used */
         }
@@ -327,7 +338,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         /* check the hash, update */
         p_clt = (ndrx_adm_client_t *) (cursnew->list.mem + i*sizeof(ndrx_adm_client_t));
         
-        EXHASH_FIND_LONG(M_prehash, &(p_clt->pid), p_clt2);
+        EXHASH_FIND_LONG(M_prehash_act, &(p_clt->pid), p_clt2);
         
         if (NULL!=p_clt2)
         {
@@ -344,7 +355,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     
     /* load the hash elems with out other data to cursor */
     NDRX_LOG(log_debug, "Add HASH/SHM data");
-    EXHASH_ITER(hh, M_prehash, cel, clet)
+    EXHASH_ITER(hh, M_prehash_act, cel, clet)
     {
         if (!cel->cursor_loaded)
         {
@@ -360,7 +371,19 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
             idx++;
         }
     }
-    
+
+    LL_FOREACH(M_ll_dea, cel)
+    {
+        memcpy(&clt, cel, sizeof(clt));
+        if (EXSUCCEED!=ndrx_growlist_add(&cursnew->list, (void *)&clt, idx))
+        {
+            NDRX_LOG(log_error, "Growlist failed - out of memory?");
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, "client [%s] state %s added (SHM)", clt.clientid, clt.state);
+        idx++;
+    }
     
 out:
     
@@ -380,9 +403,16 @@ out:
     }
 
     /* clean up the hash list */
-    EXHASH_ITER(hh, M_prehash, cel, clet)
+    EXHASH_ITER(hh, M_prehash_act, cel, clet)
     {
-        EXHASH_DEL(M_prehash, cel);
+        EXHASH_DEL(M_prehash_act, cel);
+        NDRX_FREE(cel);
+    }
+
+    /* clean up the hash list */
+    LL_FOREACH_SAFE(M_ll_dea, cel, clet)
+    {
+        LL_DELETE(M_ll_dea, cel);
         NDRX_FREE(cel);
     }
 

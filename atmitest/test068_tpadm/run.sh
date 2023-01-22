@@ -169,6 +169,25 @@ if [ "X$ATMICLT68" == "X" ]; then
     go_out -11
 fi
 
+# check dead processes
+DEAPROC=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad1\/1\|\.\/non_existant_bin\|DEA\|'`
+if [ "X$ATMICLT68" == "X" ]; then
+    echo "bad1/1 shall be reported as dead!"
+    go_out -11
+fi
+
+DEAPROC=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad2\/2\|\.\/non_existant_bin\|DEA\|'`
+if [ "X$ATMICLT68" == "X" ]; then
+    echo "bad1/2 shall be reported as dead!"
+    go_out -11
+fi
+
+DEAPROC=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/BINARY2\/2\|\.\/test\.sh\|DEA\|'`
+if [ "X$ATMICLT68" == "X" ]; then
+    echo "BINARY2/2 shall be reported as dead!"
+    go_out -11
+fi
+
 echo "*** T_DOMAIN ***"
 xadmin mibget -c T_DOMAIN
 xadmin mibget -c T_DOMAIN -m
