@@ -255,12 +255,16 @@ xadmin mibget -c T_SERVER
 xadmin mibget -c T_SERVER -m
 
 SV68=`xadmin mibget -c T_SERVER -m | egrep '2\|10\|.*\|ACT\|[[0-9]*\|[1-9][0-9]*\|atmi.sv68\|atmi.sv68\|1\|'`
-
 if [ "X$SV68" == "X" ]; then
-    echo "SV68 not found!"
+    echo "SV68 not found (ACT)!"
     go_out -18
 fi
 
+SV68=`xadmin mibget -c T_SERVER -m | egrep '2\|11\|.*\|INA\|[[0-9]*\|0|atmi.sv68\|atmi.sv68\|1\|'`
+if [ "X$SV68" == "X" ]; then
+    echo "SV68 not found (INA)!"
+    go_out -18
+fi
 
 CPM=`xadmin mibget -c T_SERVER -m | egrep '2\|9999\|.*\|ACT\|[0-9]*\\|[1-9][0-9]*\\|cpmsrv\|cpmsrv\|1\|'`
 
