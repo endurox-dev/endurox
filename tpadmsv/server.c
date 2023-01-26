@@ -141,6 +141,10 @@ exprivate int ndrx_adm_server_proc_list(command_reply_t *reply, size_t reply_len
     {
         NDRX_STRCPY_SAFE(srv.state, "CLE");
     }
+    else if (NDRXD_PM_NOT_STARTED==ppm_info->state || NDRXD_PM_EXIT==ppm_info->state)
+    {
+        NDRX_STRCPY_SAFE(srv.state, "INA");
+    }
     else
     {
         NDRX_STRCPY_SAFE(srv.state, "DEA");
