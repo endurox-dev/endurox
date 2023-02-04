@@ -52,69 +52,6 @@ cursor is deleted in particular process. Cursor is valid for configured period o
 time, which is configured for *tpadmsv*. The page size also is configured in *tpadmsv*
 server configuration parameters.
 
-
-SNMP AGENTX
------------
-
-Enduro/X Enterprise Edition provides SNMP AgentX sub-agent, which provides TM MIB
-data over the SNMP channel. However due to data type differences between SNMP
-and Enduro/X UBF, there are some specifics or limitations for SNMP which are
-denoted for each of the class fields.
-
-Class *T_USERDATA* is exclusively used by Enduro/X AgentX, which gives option
-for applications to expose data over SNMP channel without doing any specific
-SNMP coding. Additionally every SNMP table includes in it's index field which
-denote the Enduro/X cluster node id on which AgentX by it self runs. This gives
-possibility to separate several Enduro/X runtimes operating on the same server.
-
-Enterprise Edition provides the SNMP MIB file at */usr/share/endurox/snmp/mibs/ENDUROX-MIB.txt*.
-
-following naming convention is used in the ENDUROX-MIB.txt:
-
-- Table names and field names follow the camel-case notation.
-
-- Table names are produced as: "endurox<Class name without leading T_>Table".
-
-- Field names are built as:
-"ex<Class name without leading T_><field name where TA_XXX is converted to TaXxx>".
-
-- Agent node id field used in index: "ex<Class name without leading T_>AgNodeid".
-
-*OID structure:*
-
-- Mavimax company is registered under the OID: *1.3.6.1.4.1.55065*.
-
-- Mavimax products: *1.3.6.1.4.1.55065.10*.
-
-- Enduro/X product: *1.3.6.1.4.1.55065.10.2*.
-
-- *T_CLIENT* data table (SNMP *enduroxClientTable*): *1.3.6.1.4.1.55065.10.2.2.1*.
-
-- *T_DOMAIN* data table (SNMP *enduroxDomainTable*): *1.3.6.1.4.1.55065.10.2.2.2*.
-
-- *T_MACHINE* data table (SNMP *enduroxMachineTable*): *1.3.6.1.4.1.55065.10.2.2.3*.
-
-- *T_QUEUE* data table (SNMP *enduroxQueueTable*): *1.3.6.1.4.1.55065.10.2.2.4*.
-
-- *T_SERVER* data table (SNMP *enduroxServerTable*): *1.3.6.1.4.1.55065.10.2.2.5*.
-
-- *T_SERVICE* data table (SNMP *enduroxServiceTable*): *1.3.6.1.4.1.55065.10.2.2.6*.
-
-- *T_SVCGRP* data table (SNMP *enduroxSvcgrpTable*): *1.3.6.1.4.1.55065.10.2.2.7*.
-
-- *T_BRCON* data table (SNMP *enduroxBrconTable*): *1.3.6.1.4.1.55065.10.2.2.8*.
-
-- *T_USERDATA* data table (SNMP *enduroxUserdataTable*): *1.3.6.1.4.1.55065.10.2.2.100*.
-
-For configuration of the *T_USERDATA* user service invocation, see *eesnmpagx(8)*
-process description.
-
-*Common notes:*
-
-- *TA_LMID* and *TA_DOMAINID* fields equivalents in SNMP MIB are encoded
-as Integer32(1..255) instead of the string.
-
-
 REQUEST BUFFERS
 ---------------
 
@@ -223,16 +160,6 @@ processes, the value is set to *-1*.
 when process was started. This information is available only for CPMSRV booted
 processes.
 
-*SNMP version notes:*
-
-- Table name: *enduroxClientTable*
-
-- Table index is composed of: *exClientAgNodeid*, *exClientTaClientid*.
-
-- *TA_CLIENTID* / *exClientTaClientid* is trimmed down to *113* symbols, due to
-SNMP index length limitations.
-
-
 T_DOMAIN CLASS
 --------------
 Class of these object describes general information about current domain, that
@@ -253,9 +180,6 @@ Object fields returned for *T_DOMAIN* class are following:
 
 *SNMP version notes:*
 
-- Table name: *enduroxDomainTable*
-
-- Table index is composed of: exDomainAgNodeid, exDomainTaDomainid.
 
 T_MACHINE CLASS
 ---------------
@@ -277,12 +201,6 @@ is only present for local machine, for remote machines *-1* is returned.
 - Filed *TA_STATE* (string..3): Cluster node state. *ACT* - active, *INA* - 
 tpbridge connector is not running, *PEN* - tpbridge connector is running, but
 connection is not established yet.
-
-*SNMP version notes:*
-
-- Table name: *enduroxMachineTable*
-
-- Table index is composed of: exMachineAgNodeid, exMachineTaLmid.
 
 
 T_QUEUE CLASS
@@ -306,7 +224,6 @@ name. For other approaches, this is Enduro/X representation of the queue.
 
 - Field *TA_RQID* (long): System V msqid, as from ipcs -q output.
 
-
 T_SERVER CLASS
 --------------
 This class describes XATMI servers currently defined on current cluster node.
@@ -323,7 +240,7 @@ mode.
 
 - Field *TA_STATE* (string..3): *ACT* - Server process is working. *RES* - 
 Server process is starting. *CLE* - Server process is stopping. *DEA* - Server
-process is dead / stopped.
+process is dead / stopped. *INA* - Not started or normal shutdown of the server.
 
 - Field *TA_TIMERESTART* (long): *ndrxd(8)* sanity cycles from last state change.
 Thus if server *DEA*, it will be sanity cycles since *CLE* state change.
@@ -341,7 +258,6 @@ is extracted from "<cmdline>" tag.
 - Field *TA_GENERATION* (long): This is number of consecutive restarts performed
 of the process. I.e. if processes is in dead stat, then number of attempts was
 made to boot it up till the current moment.
-
 
 T_SERVICE CLASS
 ---------------
@@ -399,7 +315,6 @@ service instance call.
 - Field *TA_MINEXECTIMEUSEC* (long): Minimum microseconds spent for particular 
 service instance call.
 
-
 T_BRCON CLASS
 -------------
 This class returns information about active *tpbridge(8)* connections. Cursor
@@ -432,6 +347,25 @@ remote node (i.e. our time minus remote time), milliseconds fraction
 
 - Field *TA_EX_ROUNDTRIP* (long): Time sync message round trip in milliseconds. Present
 only if dynamic clock exchange has happened over the connection.
+
+T_USERDATA CLASS
+----------------
+This class name is used as an interface from Enduro/X SNMP AgentX to the
+user service which provides data to be exposed on the SNMP channel.
+
+Object fields returned for *T_USERDATA* class shall be following:
+
+- Field *TA_LMID* (string..30): Cluster node ID.
+
+- Field *TA_EX_UVNAME* (string..112):
+
+- Field *TA_EX_UVSTR* (string): String value.
+
+- Field *TA_EX_UVINT32* (string): Integer32 value.
+
+- Field *TA_EX_UVG32* (string): Gauge32 value.
+
+- Field *TA_EX_UVC64* (string): Counter64 value.
 
 
 EXAMPLE SESSION OF INFORMATION FETCHING
