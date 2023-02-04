@@ -131,7 +131,19 @@ macro(ex_osver)
         list(GET LSB_VERSION_LIST 1 EX_LSB_RELEASE_VER_MINOR)
     endif()
 
-    # map the OS version, more friendly version
+    #
+    # This matches the standard releases made by Mavimax:
+    # TODO: use more friendly versions of the OSes.
+    # mapping table:
+    # -------------------------------------------------------------------------
+    # oracle_solaris11_4        -> solaris11
+    # SUNOS5_10                 -> solaris10
+    # sles                      -> sl
+    # aix7_3                    -> aix72, also powerpc -> ppc
+    # freebsd13_0_RELEASE_p7    -> freebsd13
+    # -------------------------------------------------------------------------
+    # additionally: use  lower case for binary names, for all components of the filename
+    # 
     if(${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_linux_server")
         set(LSB_RELEASE_OUTPUT_OS "el")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
@@ -156,9 +168,9 @@ macro(ex_cpuarch)
     #
     # Fix arch for AIX
     #
-    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^powerpc")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^powerpc")
         set(CPACK_RPM_PACKAGE_ARCHITECTURE "ppc")
-    ENDIF()
+    endif()
 
     set(EX_CPU_ARCH "${CMAKE_SYSTEM_PROCESSOR}_${EX_OSVER_PLATFORM_BITS}")
 
