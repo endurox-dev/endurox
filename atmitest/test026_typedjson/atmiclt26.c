@@ -87,6 +87,107 @@ int test_tpjsontoubf(void)
     
     
 out:
+    tpfree((char *)p_ub);
+    return ret;
+}
+
+/**
+ * test case for Bug #796, tpubftojson() damages the log files
+*/
+int test_tpjsontoubf_long(void)
+{
+    int ret = EXSUCCEED;
+    long lmax = LONG_MAX;
+    long lmin = LONG_MIN;
+
+#ifdef SYS64BIT
+    long lmax2 = 109832567849012365;
+#endif
+    char tmp[1024];
+
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+    UBFH *p_ub2 = (UBFH *)tpalloc("UBF", NULL, 1024);
+    
+    if (NULL==p_ub || NULL==p_ub2)
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to allocate p_ub or p_ub2: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=Bchg(p_ub, T_LONG_FLD, 0, (char *)&lmax, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to set T_LONG_FLD: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&lmin, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to set T_LONG_2_FLD: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+#ifdef SYS64BIT
+    if (EXSUCCEED!=Bchg(p_ub, T_LONG_3_FLD, 0, (char *)&lmax2, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to set T_LONG_3_FLD: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    /* test array */
+    if (EXSUCCEED!=Bchg(p_ub, T_LONG_3_FLD, 1, (char *)&lmax2, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to set T_LONG_3_FLD[1]: %s",
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+#endif
+
+    if (EXSUCCEED!=Bchg(p_ub, T_CHAR_FLD, 0, (char *)"B", 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to set T_CHAR_FLD: %s",
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=tpubftojson(p_ub, tmp, sizeof(tmp)))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to convert to json: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_debug, "Got json: [%s]", tmp);
+
+    if (EXSUCCEED!=tpjsontoubf(p_ub2, tmp))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to parse [%s]: %s", 
+                tmp, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=Bcmp(p_ub, p_ub2))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Values are not equal!");
+        
+        ndrx_debug_dump_UBF(log_debug, "Org buffer", p_ub);
+        ndrx_debug_dump_UBF(log_debug, "Parsed buffer", p_ub2);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    if (NULL!=p_ub2)
+    {
+        tpfree((char *)p_ub2);
+    }
+    
     return ret;
 }
 /*
@@ -101,6 +202,11 @@ int main(int argc, char** argv) {
     char tmp[128];
     
     if (EXSUCCEED!=test_tpjsontoubf())
+    {
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=test_tpjsontoubf_long())
     {
         EXFAIL_OUT(ret);
     }
