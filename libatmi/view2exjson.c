@@ -349,7 +349,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                                 if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
-                                        bin_buf))
+                                        =bin_buf))
                                 {
                                     NDRX_LOG(log_debug, "Failed to "
                                             "decode base64!");
@@ -388,7 +388,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                             if (IS_INT(cnametyp))
                             {
                                 l = exjson_array_get_intnumber(array, j);
-                                NDRX_LOG(log_debug, "Array j=%d, Integer Value: [%lf]", j, l);
+                                NDRX_LOG(log_debug, "Array j=%d, Integer Value: [%ld]", j, l);
 
                                 if (EXSUCCEED!=CBvchg(cstruct, view, name, j, 
                                         (char *)&l, 0L, BFLD_LONG))
