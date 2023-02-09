@@ -335,7 +335,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                                 if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
-                                        bin_buf))
+                                        =bin_buf))
                                 {
                                     NDRX_LOG(log_debug, "Failed to "
                                             "decode base64!");
@@ -374,7 +374,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                             if (IS_INT(cnametyp))
                             {
                                 l = exjson_array_get_intnumber(array, j);
-                                NDRX_LOG(log_debug, "Array j=%d, Integer Value: [%lf]", j, l);
+                                NDRX_LOG(log_debug, "Array j=%d, Integer Value: [%ld]", j, l);
 
                                 if (EXSUCCEED!=CBvchg(cstruct, view, name, j, 
                                         (char *)&l, 0L, BFLD_LONG))
@@ -723,8 +723,6 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 /* Add normal element */
                 if (is_int)
                 {
-
-                    NDRX_LOG(log_error, "2YOPT %lf", d_val);
                     if (EXJSONSuccess!=exjson_object_set_intnumber(view_object, cname, l_val))
                     {
                         NDRX_LOG(log_error, "Failed to set [%s] value to [%ld]!",
@@ -738,7 +736,6 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 }
                 else if (is_num)
                 {
-                    NDRX_LOG(log_error, "YOPT %lf", d_val);
                     if (EXJSONSuccess!=exjson_object_set_number(view_object, cname, d_val))
                     {
                         NDRX_LOG(log_error, "Failed to set [%s] value to [%lf]!",
