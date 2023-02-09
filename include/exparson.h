@@ -44,7 +44,8 @@ enum exjson_value_type {
     EXJSONNumber  = 3,
     EXJSONObject  = 4,
     EXJSONArray   = 5,
-    EXJSONBoolean = 6
+    EXJSONBoolean = 6,
+    EXJSONIntnumber = 7
 };
 typedef int EXJSON_Value_Type;
 
@@ -112,6 +113,7 @@ const char  * exjson_object_get_string (const EXJSON_Object *object, const char 
 EXJSON_Object * exjson_object_get_object (const EXJSON_Object *object, const char *name);
 EXJSON_Array  * exjson_object_get_array  (const EXJSON_Object *object, const char *name);
 double        exjson_object_get_number (const EXJSON_Object *object, const char *name); /* returns 0 on fail */
+long        exjson_object_get_intnumber (const EXJSON_Object *object, const char *name); /* returns 0 on fail */
 int           exjson_object_get_boolean(const EXJSON_Object *object, const char *name); /* returns -1 on fail */
 
 /* dotget functions enable addressing values with dot notation in nested objects,
@@ -123,6 +125,7 @@ const char  * exjson_object_dotget_string (const EXJSON_Object *object, const ch
 EXJSON_Object * exjson_object_dotget_object (const EXJSON_Object *object, const char *name);
 EXJSON_Array  * exjson_object_dotget_array  (const EXJSON_Object *object, const char *name);
 double        exjson_object_dotget_number (const EXJSON_Object *object, const char *name); /* returns 0 on fail */
+long        exjson_object_dotget_intnumber (const EXJSON_Object *object, const char *name); /* returns 0 on fail */
 int           exjson_object_dotget_boolean(const EXJSON_Object *object, const char *name); /* returns -1 on fail */
 
 /* Functions to get available names */
@@ -144,6 +147,7 @@ int exjson_object_dothas_value_of_type(const EXJSON_Object *object, const char *
 EXJSON_Status exjson_object_set_value(EXJSON_Object *object, const char *name, EXJSON_Value *value);
 EXJSON_Status exjson_object_set_string(EXJSON_Object *object, const char *name, const char *string);
 EXJSON_Status exjson_object_set_number(EXJSON_Object *object, const char *name, double number);
+EXJSON_Status exjson_object_set_intnumber(EXJSON_Object *object, const char *name, long number);
 EXJSON_Status exjson_object_set_boolean(EXJSON_Object *object, const char *name, int boolean);
 EXJSON_Status exjson_object_set_null(EXJSON_Object *object, const char *name);
 
@@ -152,6 +156,7 @@ EXJSON_Status exjson_object_set_null(EXJSON_Object *object, const char *name);
 EXJSON_Status exjson_object_dotset_value(EXJSON_Object *object, const char *name, EXJSON_Value *value);
 EXJSON_Status exjson_object_dotset_string(EXJSON_Object *object, const char *name, const char *string);
 EXJSON_Status exjson_object_dotset_number(EXJSON_Object *object, const char *name, double number);
+EXJSON_Status exjson_object_dotset_intnumber(EXJSON_Object *object, const char *name, long number);
 EXJSON_Status exjson_object_dotset_boolean(EXJSON_Object *object, const char *name, int boolean);
 EXJSON_Status exjson_object_dotset_null(EXJSON_Object *object, const char *name);
 
@@ -172,6 +177,9 @@ const char  * exjson_array_get_string (const EXJSON_Array *array, size_t index);
 EXJSON_Object * exjson_array_get_object (const EXJSON_Array *array, size_t index);
 EXJSON_Array  * exjson_array_get_array  (const EXJSON_Array *array, size_t index);
 double        exjson_array_get_number (const EXJSON_Array *array, size_t index); /* returns 0 on fail */
+
+long        exjson_array_get_intnumber (const EXJSON_Array *array, size_t index); /* returns 0 on fail */
+
 int           exjson_array_get_boolean(const EXJSON_Array *array, size_t index); /* returns -1 on fail */
 size_t        exjson_array_get_count  (const EXJSON_Array *array);
 EXJSON_Value  * exjson_array_get_wrapping_value(const EXJSON_Array *array);
@@ -186,6 +194,7 @@ EXJSON_Status exjson_array_remove(EXJSON_Array *array, size_t i);
 EXJSON_Status exjson_array_replace_value(EXJSON_Array *array, size_t i, EXJSON_Value *value);
 EXJSON_Status exjson_array_replace_string(EXJSON_Array *array, size_t i, const char* string);
 EXJSON_Status exjson_array_replace_number(EXJSON_Array *array, size_t i, double number);
+EXJSON_Status exjson_array_replace_intnumber(EXJSON_Array *array, size_t i, long number);
 EXJSON_Status exjson_array_replace_boolean(EXJSON_Array *array, size_t i, int boolean);
 EXJSON_Status exjson_array_replace_null(EXJSON_Array *array, size_t i);
 
@@ -197,6 +206,7 @@ EXJSON_Status exjson_array_clear(EXJSON_Array *array);
 EXJSON_Status exjson_array_append_value(EXJSON_Array *array, EXJSON_Value *value);
 EXJSON_Status exjson_array_append_string(EXJSON_Array *array, const char *string);
 EXJSON_Status exjson_array_append_number(EXJSON_Array *array, double number);
+EXJSON_Status exjson_array_append_intnumber(EXJSON_Array *array, long number);
 EXJSON_Status exjson_array_append_boolean(EXJSON_Array *array, int boolean);
 EXJSON_Status exjson_array_append_null(EXJSON_Array *array);
 
@@ -207,6 +217,7 @@ EXJSON_Value * exjson_value_init_object (void);
 EXJSON_Value * exjson_value_init_array  (void);
 EXJSON_Value * exjson_value_init_string (const char *string); /* copies passed string */
 EXJSON_Value * exjson_value_init_number (double number);
+EXJSON_Value * exjson_value_init_intnumber (long number);
 EXJSON_Value * exjson_value_init_boolean(int boolean);
 EXJSON_Value * exjson_value_init_null   (void);
 EXJSON_Value * exjson_value_deep_copy   (const EXJSON_Value *value);
@@ -217,6 +228,7 @@ EXJSON_Object *   exjson_value_get_object (const EXJSON_Value *value);
 EXJSON_Array  *   exjson_value_get_array  (const EXJSON_Value *value);
 const char  *   exjson_value_get_string (const EXJSON_Value *value);
 double          exjson_value_get_number (const EXJSON_Value *value);
+long          exjson_value_get_intnumber (const EXJSON_Value *value);
 int             exjson_value_get_boolean(const EXJSON_Value *value);
 EXJSON_Value  *   exjson_value_get_parent (const EXJSON_Value *value);
 
@@ -226,6 +238,7 @@ EXJSON_Object *   exjson_object (const EXJSON_Value *value);
 EXJSON_Array  *   exjson_array  (const EXJSON_Value *value);
 const char  *   exjson_string (const EXJSON_Value *value);
 double          exjson_number (const EXJSON_Value *value);
+long          exjson_intnumber (const EXJSON_Value *value);
 int             exjson_boolean(const EXJSON_Value *value);
 
 #ifdef __cplusplus

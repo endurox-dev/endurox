@@ -26,7 +26,8 @@ name, and in second level JSON field names matches VIEW field name.
 If multiple occurrences/array of values is present in JSON, 
 then it is converted in VIEW field array elements. The function in case of success
 returns XATMI (tpcalloc'ed) VIEW buffer, which is initialised to NULL values and
-then recovered from JSON.
+then recovered from JSON. Loaded view name is loaded into 'view' parameter, which
+must not be NULL, required size of the field is 34 bytes.
 
 For example following JSON:
 

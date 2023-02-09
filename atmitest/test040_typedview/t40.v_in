@@ -37,7 +37,6 @@ carray   tcarray5   -                   1       -       5       -
 
 END
 
-
 VIEW MYVIEW2
 #type    cname      fbname              count   flag    size    null
 short    tshort1    -                   1       -       -       2000
@@ -49,3 +48,8 @@ string   tstring1   -                   1       P       15      'HELLO WORLDB'
 carray   tcarray1   -                   1       -      10      '-'
 END
 
+VIEW MYVIEW4
+#type    cname      fbname              count   flag    size    null
+long     tlong1     -                   1       -       -       5
+long     tlong2     -                   4       -       -       5
+END
