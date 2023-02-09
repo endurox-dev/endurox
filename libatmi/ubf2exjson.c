@@ -482,7 +482,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                             if (IS_INT(fldtyp))
                             {
                                 l = exjson_array_get_intnumber(array, j);
-                                NDRX_LOG(log_debug, "Array j=%d, Double Value: [%ld]", j, l);
+                                NDRX_LOG(log_debug, "Array j=%d, Integer Value: [%ld]", j, l);
                                 if (EXSUCCEED!=CBchg(p_ub, fid, j, 
                                         (char *)&l, 0L, BFLD_LONG))
                                 {
@@ -847,15 +847,15 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             exjson_object_set_value */
 
             /* Add normal element */
-            if (is_num)
+            if (is_int)
             {
-                if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
+                if (EXJSONSuccess!=exjson_array_append_intnumber(jarr, l_val))
                 {
-                    NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
-                            d_val);
+                    NDRX_LOG(log_error, "Failed to set array elem to [%ld]!", 
+                            l_val);
 
                     ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                            "elem to [%lf]!", d_val);
+                            "elem to [%ld]!", l_val);
 
                     EXFAIL_OUT(ret);
                 }
