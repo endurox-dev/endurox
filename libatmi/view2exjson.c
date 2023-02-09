@@ -700,23 +700,25 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 /* Add array element 
                 exjson_object_set_value */
 
-                    /* Add normal element */
-                    if (is_int)
+                /* Add normal element */
+                if (is_int)
+                {
+                    if (EXJSONSuccess!=exjson_array_append_intnumber(jarr, l_val))
                     {
-                        if (EXJSONSuccess!=exjson_array_append_intnumber(jarr, l_val))
-                        {
-                            NDRX_LOG(log_error, "Failed to set array elem to [%ld]!", 
-                                    l_val);
+                        NDRX_LOG(log_error, "Failed to set array elem to [%ld]!",
+                                l_val);
 
-                            ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                                    "elem to [%ld]!", l_val);
+                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                                "elem to [%ld]!", l_val);
 
-                            EXFAIL_OUT(ret);
-                        }
+                        EXFAIL_OUT(ret);
                     }
-                    else if (is_num)
+                }
+                else if (is_num)
+                {
+                    if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
                     {
-                        NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
+                        NDRX_LOG(log_error, "Failed to set array elem to [%lf]!",
                                 d_val);
 
                         ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
@@ -724,6 +726,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
 
                         EXFAIL_OUT(ret);
                     }
+                }
                 else
                 {
                     if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
@@ -737,7 +740,6 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                         EXFAIL_OUT(ret);
                     }
                 }
-
             }
             else
             {
