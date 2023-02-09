@@ -58,10 +58,16 @@ static EXJSON_Free_Function exparson_free = free;
 
 #define IS_CONT(b) (((unsigned char)(b) & 0xC0) == 0x80) /* is utf-8 continuation byte */
 
+/** number type, keep both version pls. */
+struct exjson_value_num {
+    double       number;
+    long        intnumber;
+};
+
 /* Type definitions */
 typedef union exjson_value_value {
     char        *string;
-    double       number;
+    struct exjson_value_num num;
     EXJSON_Object *object;
     EXJSON_Array  *array;
     int          boolean;
@@ -774,16 +780,30 @@ static EXJSON_Value * parse_boolean_value(const char **string) {
     return NULL;
 }
 
+/**
+ * We parse to both doulble & long, so that user can select which one to use
+ */
 static EXJSON_Value * parse_number_value(const char **string) {
     char *end;
     double number = 0;
+    EXJSON_Value *ret;
+
     errno = 0;
     number = strtod(*string, &end);
     if (errno || !is_decimal(*string, end - *string)) {
         return NULL;
     }
+
+    ret=exjson_value_init_number(number);
+    
+    if (NULL!=ret)
+    {
+        ret->value.num.intnumber = atol(*string);
+    }
+
     *string = end;
-    return exjson_value_init_number(number);
+    
+    return ret;
 }
 
 static EXJSON_Value * parse_null_value(const char **string) {
@@ -814,6 +834,7 @@ static int exjson_serialize_to_buffer_r(const EXJSON_Value *value, char *buf, in
     EXJSON_Object *object = NULL;
     size_t i = 0, count = 0;
     double num = 0.0;
+    long intnumber = 0.0;
     int written = -1, written_total = 0;
 
     switch (exjson_value_get_type(value)) {
@@ -918,12 +939,27 @@ static int exjson_serialize_to_buffer_r(const EXJSON_Value *value, char *buf, in
                 APPEND_STRING("false");
             }
             return written_total;
+        case EXJSONIntnumber:
+            intnumber = exjson_value_get_intnumber(value);
+            if (buf != NULL) {
+                num_buf = buf;
+            }
+            written = sprintf(num_buf, "%ld", intnumber);
+
+            if (written < 0) {
+                return -1;
+            }
+            if (buf != NULL) {
+                buf += written;
+            }
+            written_total += written;
+            return written_total;
         case EXJSONNumber:
             num = exjson_value_get_number(value);
             if (buf != NULL) {
                 num_buf = buf;
             }
-            
+
             if (num == ((double)(long)num)) /*  check if num is integer */
                 written = sprintf(num_buf, "%ld", (long)num);
             else /* Enduro/X specific: */
@@ -1092,6 +1128,10 @@ double exjson_object_get_number(const EXJSON_Object *object, const char *name) {
     return exjson_value_get_number(exjson_object_get_value(object, name));
 }
 
+long exjson_object_get_intnumber(const EXJSON_Object *object, const char *name) {
+    return exjson_value_get_intnumber(exjson_object_get_value(object, name));
+}
+
 EXJSON_Object * exjson_object_get_object(const EXJSON_Object *object, const char *name) {
     return exjson_value_get_object(exjson_object_get_value(object, name));
 }
@@ -1119,6 +1159,10 @@ const char * exjson_object_dotget_string(const EXJSON_Object *object, const char
 
 double exjson_object_dotget_number(const EXJSON_Object *object, const char *name) {
     return exjson_value_get_number(exjson_object_dotget_value(object, name));
+}
+
+long exjson_object_dotget_intnumber(const EXJSON_Object *object, const char *name) {
+    return exjson_value_get_intnumber(exjson_object_dotget_value(object, name));
 }
 
 EXJSON_Object * exjson_object_dotget_object(const EXJSON_Object *object, const char *name) {
@@ -1189,6 +1233,10 @@ double exjson_array_get_number(const EXJSON_Array *array, size_t index) {
     return exjson_value_get_number(exjson_array_get_value(array, index));
 }
 
+long exjson_array_get_intnumber(const EXJSON_Array *array, size_t index) {
+    return exjson_value_get_intnumber(exjson_array_get_value(array, index));
+}
+
 EXJSON_Object * exjson_array_get_object(const EXJSON_Array *array, size_t index) {
     return exjson_value_get_object(exjson_array_get_value(array, index));
 }
@@ -1227,7 +1275,20 @@ const char * exjson_value_get_string(const EXJSON_Value *value) {
 }
 
 double exjson_value_get_number(const EXJSON_Value *value) {
-    return exjson_value_get_type(value) == EXJSONNumber ? value->value.number : 0;
+    return exjson_value_get_type(value) == EXJSONNumber ? value->value.num.number : 0;
+}
+
+/* TODO:
+ * we shall support here both types: float number of int number: 
+ * as when paring in, we do not know which version end-user wants to recieve
+ */
+long exjson_value_get_intnumber(const EXJSON_Value *value) {
+    EXJSON_Value_Type typ = exjson_value_get_type(value);
+
+    if ( EXJSONIntnumber == typ || EXJSONNumber == typ )
+	return value->value.num.intnumber;
+    else
+        return 0;
 }
 
 int exjson_value_get_boolean(const EXJSON_Value *value) {
@@ -1318,10 +1379,25 @@ EXJSON_Value * exjson_value_init_number(double number) {
     }
     new_value->parent = NULL;
     new_value->type = EXJSONNumber;
-    new_value->value.number = number;
+    new_value->value.num.number = number;
+    new_value->value.num.intnumber = number;
     return new_value;
 }
 
+EXJSON_Value * exjson_value_init_intnumber(long number) {
+    EXJSON_Value *new_value = NULL;
+
+    new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
+    if (new_value == NULL) {
+        return NULL;
+    }
+
+    new_value->parent = NULL;
+    new_value->type = EXJSONIntnumber;
+    new_value->value.num.intnumber = number;
+
+    return new_value;
+}
 EXJSON_Value * exjson_value_init_boolean(int boolean) {
     EXJSON_Value *new_value = (EXJSON_Value*)exparson_malloc(sizeof(EXJSON_Value));
     if (!new_value) {
@@ -1399,6 +1475,8 @@ EXJSON_Value * exjson_value_deep_copy(const EXJSON_Value *value) {
             return exjson_value_init_boolean(exjson_value_get_boolean(value));
         case EXJSONNumber:
             return exjson_value_init_number(exjson_value_get_number(value));
+        case EXJSONIntnumber:
+            return exjson_value_init_intnumber(exjson_value_get_intnumber(value));
         case EXJSONString:
             temp_string = exjson_value_get_string(value);
             if (temp_string == NULL) {
@@ -1592,6 +1670,18 @@ EXJSON_Status exjson_array_replace_number(EXJSON_Array *array, size_t i, double 
     return EXJSONSuccess;
 }
 
+EXJSON_Status exjson_array_replace_intnumber(EXJSON_Array *array, size_t i, long number) {
+    EXJSON_Value *value = exjson_value_init_intnumber(number);
+    if (value == NULL) {
+        return EXJSONFailure;
+    }
+    if (exjson_array_replace_value(array, i, value) == EXJSONFailure) {
+        exjson_value_free(value);
+        return EXJSONFailure;
+    }
+    return EXJSONSuccess;
+}
+
 EXJSON_Status exjson_array_replace_boolean(EXJSON_Array *array, size_t i, int boolean) {
     EXJSON_Value *value = exjson_value_init_boolean(boolean);
     if (value == NULL) {
@@ -1659,6 +1749,18 @@ EXJSON_Status exjson_array_append_number(EXJSON_Array *array, double number) {
     return EXJSONSuccess;
 }
 
+EXJSON_Status exjson_array_append_intnumber(EXJSON_Array *array, long number) {
+    EXJSON_Value *value = exjson_value_init_intnumber(number);
+    if (value == NULL) {
+        return EXJSONFailure;
+    }
+    if (exjson_array_append_value(array, value) == EXJSONFailure) {
+        exjson_value_free(value);
+        return EXJSONFailure;
+    }
+    return EXJSONSuccess;
+}
+
 EXJSON_Status exjson_array_append_boolean(EXJSON_Array *array, int boolean) {
     EXJSON_Value *value = exjson_value_init_boolean(boolean);
     if (value == NULL) {
@@ -1710,6 +1812,10 @@ EXJSON_Status exjson_object_set_string(EXJSON_Object *object, const char *name, 
 
 EXJSON_Status exjson_object_set_number(EXJSON_Object *object, const char *name, double number) {
     return exjson_object_set_value(object, name, exjson_value_init_number(number));
+}
+
+EXJSON_Status exjson_object_set_intnumber(EXJSON_Object *object, const char *name, long number) {
+    return exjson_object_set_value(object, name, exjson_value_init_intnumber(number));
 }
 
 EXJSON_Status exjson_object_set_boolean(EXJSON_Object *object, const char *name, int boolean) {
@@ -1766,6 +1872,18 @@ EXJSON_Status exjson_object_dotset_string(EXJSON_Object *object, const char *nam
 
 EXJSON_Status exjson_object_dotset_number(EXJSON_Object *object, const char *name, double number) {
     EXJSON_Value *value = exjson_value_init_number(number);
+    if (value == NULL) {
+        return EXJSONFailure;
+    }
+    if (exjson_object_dotset_value(object, name, value) == EXJSONFailure) {
+        exjson_value_free(value);
+        return EXJSONFailure;
+    }
+    return EXJSONSuccess;
+}
+
+EXJSON_Status exjson_object_dotset_intnumber(EXJSON_Object *object, const char *name, long number) {
+    EXJSON_Value *value = exjson_value_init_intnumber(number);
     if (value == NULL) {
         return EXJSONFailure;
     }
@@ -1904,7 +2022,7 @@ EXJSON_Status exjson_validate(const EXJSON_Value *schema, const EXJSON_Value *va
                 }
             }
             return EXJSONSuccess;
-        case EXJSONString: case EXJSONNumber: case EXJSONBoolean: case EXJSONNull:
+        case EXJSONString: case EXJSONNumber: case EXJSONIntnumber: case EXJSONBoolean: case EXJSONNull:
             return EXJSONSuccess; /* equality already tested before switch */
         case EXJSONError: default:
             return EXJSONFailure;
@@ -1966,6 +2084,8 @@ int exjson_value_equals(const EXJSON_Value *a, const EXJSON_Value *b) {
             return exjson_value_get_boolean(a) == exjson_value_get_boolean(b);
         case EXJSONNumber:
             return fabs(exjson_value_get_number(a) - exjson_value_get_number(b)) < 0.000001; /* EPSILON */
+        case EXJSONIntnumber:
+            return abs(exjson_value_get_intnumber(a) - exjson_value_get_intnumber(b)) ==0;
         case EXJSONError:
             return 1;
         case EXJSONNull:
@@ -1993,6 +2113,10 @@ const char * exjson_string (const EXJSON_Value *value) {
 
 double exjson_number (const EXJSON_Value *value) {
     return exjson_value_get_number(value);
+}
+
+long exjson_intnumber (const EXJSON_Value *value) {
+    return exjson_value_get_intnumber(value);
 }
 
 int exjson_boolean(const EXJSON_Value *value) {

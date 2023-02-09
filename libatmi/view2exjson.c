@@ -54,8 +54,8 @@
 
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
-#define IS_INT(X) (BFLD_CHAR == X || BFLD_SHORT == X || BFLD_LONG == X || BFLD_INT == X)
-#define IS_NUM(X) (BFLD_SHORT == X || BFLD_LONG == X || BFLD_FLOAT == X || BFLD_DOUBLE == X)
+#define IS_INT(X) (BFLD_SHORT == X || BFLD_LONG == X || BFLD_INT == X)
+#define IS_NUM(X) (BFLD_FLOAT == X || BFLD_DOUBLE == X)
 #define IS_BIN(X) (BFLD_CARRAY == X)
 
 /* TODO: Fix atmi buffer size to match size of ATMI buffer size. */
@@ -83,9 +83,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
     int ret = EXSUCCEED;
     EXJSON_Value *root_value=NULL;
     EXJSON_Object *root_object=data_object;
-    
     EXJSON_Object *view_object;
-    
     EXJSON_Array *array;
     size_t i, cnt, j, arr_cnt;
     int type;
@@ -251,12 +249,12 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
             case EXJSONNumber:
             {
                 long l;
-                d_val = exjson_object_get_number(view_object, name);
-                NDRX_LOG(log_debug, "Double Value: [%lf]", d_val);
 
                 if (IS_INT(cnametyp))
                 {
-                    l = round_long(d_val);
+                    l = exjson_object_get_intnumber(view_object, name);
+                    NDRX_LOG(log_debug, "Integer Value: [%ld]", l);
+
                     if (EXSUCCEED!=CBvchg(cstruct, view, name, 0, 
                             (char *)&l, 0L, BFLD_LONG))
                     {
@@ -269,16 +267,22 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                         EXFAIL_OUT(ret);
                     }
                 }
-                else if (EXSUCCEED!=CBvchg(cstruct, view, name, 0, 
-                        (char *)&d_val, 0L, BFLD_DOUBLE))
+                else
                 {
-                    NDRX_LOG(log_error, "Failed to set [%s] to [%lf]: %s", 
-                            name, d_val, Bstrerror(Berror));
-                    
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set [%s] to [%lf]: %s", 
-                            name, d_val, Bstrerror(Berror));
-                    
-                    EXFAIL_OUT(ret);
+                    d_val = exjson_object_get_number(view_object, name);
+                    NDRX_LOG(log_debug, "Double Value: [%lf]", d_val);
+
+                    if (EXSUCCEED!=CBvchg(cstruct, view, name, 0, 
+                            (char *)&d_val, 0L, BFLD_DOUBLE))
+                    {
+                        NDRX_LOG(log_error, "Failed to set [%s] to [%lf]: %s", 
+                                name, d_val, Bstrerror(Berror));
+                        
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set [%s] to [%lf]: %s", 
+                                name, d_val, Bstrerror(Berror));
+                        
+                        EXFAIL_OUT(ret);
+                    }
                 }
             }
                     break;
@@ -366,13 +370,12 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                         case EXJSONNumber:
                         {
                             long l;
-                            d_val = exjson_array_get_number(array, j);
-                            NDRX_LOG(log_debug, "Array j=%d, Double Value: [%lf]", j, d_val);
-
+       
                             if (IS_INT(cnametyp))
                             {
-                                l = round_long(d_val);
-                                NDRX_LOG(log_debug, "Array j=%d, Long value: [%ld]", j, l);
+                                l = exjson_array_get_intnumber(array, j);
+                                NDRX_LOG(log_debug, "Array j=%d, Integer Value: [%lf]", j, l);
+
                                 if (EXSUCCEED!=CBvchg(cstruct, view, name, j, 
                                         (char *)&l, 0L, BFLD_LONG))
                                 {
@@ -386,17 +389,23 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                                         EXFAIL_OUT(ret);
                                 }
                             }
-                            else if (EXSUCCEED!=CBvchg(cstruct, view, name, j, 
-                                    (char *)&d_val, 0L, BFLD_DOUBLE))
+                            else
                             {
-                                NDRX_LOG(log_error, "Failed to set [%s] to [%lf]: %s", 
-                                        name, d_val, Bstrerror(Berror));
-                                
-                                ndrx_TPset_error_fmt(TPESYSTEM,"Failed to set "
-                                        "[%s] to [%lf]: %s", 
-                                        name, d_val, Bstrerror(Berror));
-                                
-                                EXFAIL_OUT(ret);
+                                d_val = exjson_array_get_number(array, j);
+                                NDRX_LOG(log_debug, "Array j=%d, Double Value: [%lf]", j, d_val);
+
+                                if (EXSUCCEED!=CBvchg(cstruct, view, name, j, 
+                                        (char *)&d_val, 0L, BFLD_DOUBLE))
+                                {
+                                    NDRX_LOG(log_error, "Failed to set [%s] to [%lf]: %s", 
+                                            name, d_val, Bstrerror(Berror));
+                                    
+                                    ndrx_TPset_error_fmt(TPESYSTEM,"Failed to set "
+                                            "[%s] to [%lf]: %s", 
+                                            name, d_val, Bstrerror(Berror));
+                                    
+                                    EXFAIL_OUT(ret);
+                                }
                             }
                         }
                         break;
@@ -475,12 +484,13 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     int occs;
     int is_array;
     double d_val;
+    long l_val;
     size_t strval_len = CARR_BUFFSIZE+1;
     char *strval=NULL; 
     
     size_t b64_buf_len =CARR_BUFFSIZE_B64+1;
     char *b64_buf=NULL;
-    int is_num;
+    int is_num, is_int;
     char *s_ptr;
     BFLDLEN flen;
     
@@ -504,7 +514,6 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     
     EXJSON_Value *view_value = exjson_value_init_object();
     EXJSON_Object *view_object = exjson_value_get_object(view_value);
-    
     
     char *serialized_string = NULL;
     BFLDOCC oc;
@@ -549,7 +558,6 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
         else
         {
             occs = fulloccs;
-            
             NDRX_LOG(log_dump, "Using set occs: %s", occs);
         }
         
@@ -588,7 +596,25 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 is_array = EXTRUE;
             }
 
-            if (IS_NUM(fldtype))
+            is_num = EXFALSE;
+            is_int = EXFALSE;
+
+            if (IS_INT(fldtype))
+            {
+                if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
+                        (char *)&l_val, 0L, BFLD_LONG, 0))
+                {
+                    NDRX_LOG(log_error, "Failed to get (long): %s.%s/%d: %s",
+                                                    view, cname, oc, Bstrerror(Berror));
+
+                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get (long): %s.%s/%d: %s",
+                                                    view, cname, oc, Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+                is_int = EXTRUE;
+                NDRX_LOG(log_debug, "Numeric integer: %ld", l_val);
+            }
+            else if (IS_NUM(fldtype))
             {
                 if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
                         (char *)&d_val, 0L, BFLD_DOUBLE, 0))
@@ -601,11 +627,10 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                     EXFAIL_OUT(ret);
                 }
                 is_num = EXTRUE;
-                NDRX_LOG(log_debug, "Numeric value: %lf", d_val);
+                NDRX_LOG(log_debug, "Numeric double: %lf", d_val);
             }
             else
             {
-                is_num = EXFALSE;
                 flen = strval_len;
                 if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
                         strval, &flen, BFLD_CARRAY, 0))
@@ -653,7 +678,20 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                     exjson_object_set_value */
 
                     /* Add normal element */
-                    if (is_num)
+                    if (is_int)
+                    {
+                        if (EXJSONSuccess!=exjson_array_append_intnumber(jarr, l_val))
+                        {
+                            NDRX_LOG(log_error, "Failed to set array elem to [%ld]!", 
+                                    l_val);
+
+                            ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                                    "elem to [%ld]!", l_val);
+
+                            EXFAIL_OUT(ret);
+                        }
+                    }
+                    else if (is_num)
                     {
                         if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
                         {
@@ -679,13 +717,28 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                             EXFAIL_OUT(ret);
                         }
                     }
-
             }
             else
             {
                 /* Add normal element */
-                if (is_num)
+                if (is_int)
                 {
+
+                    NDRX_LOG(log_error, "2YOPT %lf", d_val);
+                    if (EXJSONSuccess!=exjson_object_set_intnumber(view_object, cname, l_val))
+                    {
+                        NDRX_LOG(log_error, "Failed to set [%s] value to [%ld]!",
+                                            cname, l_val);
+
+                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set [%s] "
+                                "value to [%ld]!", cname, l_val);
+
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                else if (is_num)
+                {
+                    NDRX_LOG(log_error, "YOPT %lf", d_val);
                     if (EXJSONSuccess!=exjson_object_set_number(view_object, cname, d_val))
                     {
                         NDRX_LOG(log_error, "Failed to set [%s] value to [%lf]!",
@@ -821,8 +874,6 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
     buffer_obj_t *tmp_b;
     char type[XATMI_SUBTYPE_LEN+1];
     char subtype[XATMI_TYPE_LEN+1]={EXEOS};
-   
-
     char * tmp = NULL;
     char * newbuf_out = NULL; /* real output buffer */
 

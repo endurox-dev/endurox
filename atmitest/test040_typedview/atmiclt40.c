@@ -430,6 +430,77 @@ out:
     return ret;
 }
 
+
+/**
+ * Test large integer conversion.
+ */
+int test_x_json2view_796(void)
+{
+    struct MYVIEW4 *v4;
+    struct MYVIEW4 *v4_2=NULL;
+    int ret = EXSUCCEED;
+    char tmp[2048];
+    char view[NDRX_VIEW_NAME_LEN+1];
+
+    v4= (struct MYVIEW4 *) tpalloc("VIEW", "MYVIEW4", sizeof(struct MYVIEW4));
+    if (NULL==v4)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to alloc VIEW buffer!");
+        EXFAIL_OUT(ret);
+    }
+
+    memset(v4, 0, sizeof(struct MYVIEW4));
+
+    v4->tlong1 = LONG_MAX;
+
+    v4->tlong2[0] = LONG_MAX;
+    v4->tlong2[1] = LONG_MIN;
+    v4->tlong2[2] = LONG_MIN;
+    v4->tlong2[3] = 109832567849012365;
+
+    if (EXSUCCEED!=tpviewtojson((char *)v4, "MYVIEW4", tmp, sizeof(tmp), 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to convert to JSON: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    if (NULL==(v4_2= (struct MYVIEW4 *)tpjsontoview(view, tmp)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to JSON to view: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    if (0!=strcmp(view, "MYVIEW4"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: expected MYVIEW4, got [%s]", 
+                view);
+        EXFAIL_OUT(ret);
+    }
+
+    if (v4->tlong1!=v4_2->tlong1 
+        || v4->tlong2[0]!=v4_2->tlong2[0]
+        || v4->tlong2[1]!=v4_2->tlong2[1]
+        || v4->tlong2[2]!=v4_2->tlong2[2]
+        || v4->tlong2[3]!=v4_2->tlong2[3]
+    )
+    {
+        NDRX_LOG(log_error, "TESTERROR: values mismatch (%ld vs %ld, %ld vs %ld, "
+            "%ld vs %ld, %ld vs %ld, %ld vs %ld)!",
+                v4->tlong1, v4_2->tlong1,
+                v4->tlong2[0], v4_2->tlong2[0],
+                v4->tlong2[1], v4_2->tlong2[1],
+                v4->tlong2[2], v4_2->tlong2[2],
+                v4->tlong2[3], v4_2->tlong2[3]);
+
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
 /*
  * Do the test call to the server
  */
@@ -457,7 +528,6 @@ int main(int argc, char** argv) {
         }
     }
     
-    
     for (i=0; i<1000; i++)
     {
         if (EXSUCCEED!=test_x_view2json())
@@ -466,7 +536,16 @@ int main(int argc, char** argv) {
             EXFAIL_OUT(ret);
         }
     }
-    
+
+    for (i=0; i<1000; i++)
+    {
+        if (EXSUCCEED!=test_x_json2view_796())
+        {
+            NDRX_LOG(log_error, "TESTERROR: test_x_json2view_796() fail!");
+            EXFAIL_OUT(ret);
+        }
+    }
+
     /* view ops with json */
     
     for (i=0; i<10000; i++)
@@ -481,7 +560,6 @@ int main(int argc, char** argv) {
     /* View ops with services */
     for (j=0; j<1000; j++)
     {
-        
         v1= (struct MYVIEW1 *) tpalloc("VIEW", "MYVIEW1", sizeof(struct MYVIEW1));
         if (NULL==v1)
         {
