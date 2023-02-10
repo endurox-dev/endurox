@@ -335,7 +335,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                                 if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
-                                        =bin_buf))
+                                        bin_buf))
                                 {
                                     NDRX_LOG(log_debug, "Failed to "
                                             "decode base64!");
