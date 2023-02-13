@@ -807,5 +807,11 @@
 #define	TA_EX_TIMEDIFFF	((BFLDID32)33558039)	/* number: 3607	 type: long */
 #define	TA_EX_TIME	((BFLDID32)33558040)	/* number: 3608	 type: long */
 #define	TA_EX_TIMEF	((BFLDID32)33558041)	/* number: 3609	 type: long */
+#define	TA_EX_UVNAME	((BFLDID32)167775860)	/* number: 3700	 type: string */
+#define	TA_EX_UVSTR	((BFLDID32)167775861)	/* number: 3701	 type: string */
+#define	TA_EX_UVINT32	((BFLDID32)33558134)	/* number: 3702	 type: long */
+#define	TA_EX_UVG32	((BFLDID32)33558135)	/* number: 3703	 type: long */
+#define	TA_EX_UVC64	((BFLDID32)33558136)	/* number: 3704	 type: long */
+#define	TA_EX_UVTYP	((BFLDID32)3705)	/* number: 3705	 type: short */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */
