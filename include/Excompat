@@ -816,7 +816,7 @@ TA_EX_UVSTR                      1701   string  -     User value string value
 TA_EX_UVINT32                    1702   long    -     Integer32 user value
 TA_EX_UVG32                      1703   long    -     Gauge32 user value
 TA_EX_UVC64                      1704   long    -     Counter64 user value
-
+TA_EX_UVTYP                      1705   short   -     User value type: 1-string, 2-uint32, 3-gauge32, 4-counter64
 
 $#endif
 $/* vim: set ts=4 sw=4 et smartindent: */
