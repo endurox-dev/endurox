@@ -76,6 +76,7 @@ exprivate char *proc_state_to_str(long state, short msg_type)
     static char *eargslim = "Cli args on env params too long";
     static char *eenv= "Environment setup failure";
     static char *esys= "System failure";
+    static char *restart= "Restarting";
     static char unknown[256];
     char *ret;
 
@@ -127,6 +128,9 @@ exprivate char *proc_state_to_str(long state, short msg_type)
             break;
         case NDRXD_PM_ESYSTEM:
             ret = esys;
+            break;
+        case NDRXD_PM_RESTART:
+            ret = restart;
             break;
         default:
             snprintf(unknown, sizeof(unknown), "Unknown state (%ld)", state);

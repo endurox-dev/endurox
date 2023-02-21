@@ -263,6 +263,7 @@ extern "C" {
 #define NDRXD_PM_EENV               7       /**< Failed to prepare env      */
 #define NDRXD_PM_EARGSLIM           8       /**< Arguments or env too long  */
 #define NDRXD_PM_ESYSTEM            9       /**< Bad executable             */
+#define NDRXD_PM_RESTART            10      /**< stop & start back again    */
 #define NDRXD_PM_MAX_EXIT           19      /**< Maximum dead process       */
     
 #define NDRXD_PM_MIN_RUNNING        20      /**< Minimum running process    */
