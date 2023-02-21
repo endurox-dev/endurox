@@ -100,7 +100,7 @@ function install()
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2023, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
  * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
  * See LICENSE file for full text.
@@ -159,7 +159,7 @@ extern ""C"" {
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2023, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
  * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
  * See LICENSE file for full text.
@@ -259,7 +259,7 @@ out:
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2023, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
  * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
  * See LICENSE file for full text.
@@ -385,7 +385,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2023, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
 ## See LICENSE file for full text.
@@ -477,7 +477,7 @@ atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv"+::prov.testid+@".log
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2023, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
 ## See LICENSE file for full text.
@@ -771,7 +771,7 @@ tpbridge file=${TESTDIR}/tpbridge-dom2.log threaded=y
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2023, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
 ## See LICENSE file for full text.
