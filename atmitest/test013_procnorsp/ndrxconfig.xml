@@ -11,9 +11,6 @@
 		-->
 		<checkpm>1</checkpm>
 		<!--  <sanity> timer, end -->
-		<!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-		<!-- Do dead process restart every X seconds -->
-		<respawncheck>1</respawncheck>
 		<!-- Do process reset after 1 sec -->
 		<restart_min>1</restart_min>
 		<!-- If restart fails, then boot after +5 sec of previous wait time -->
