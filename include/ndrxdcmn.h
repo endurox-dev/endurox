@@ -203,13 +203,14 @@ extern "C" {
 #define NDRXD_EENVFAIL           16         /**< putenv failed                */
 #define NDRXD_EINVAL             17         /**< Invalid argument             */
 #define NDRXD_ENORMAL            18         /**< Normal state expected        */
-#define NDRXD_ECFGDEFAULTS          19         /**< Invalid defaults             */
-#define NDRXD_ECFGSERVER            20         /**< Invalid server settigns      */
-#define NDRXD_ECFGAPPCONFIG         21         /**< Invalid appconfig settings   */
+#define NDRXD_ECFGDEFAULTS       19         /**< Invalid defaults             */
+#define NDRXD_ECFGSERVER         20         /**< Invalid server settigns      */
+#define NDRXD_ECFGAPPCONFIG      21         /**< Invalid appconfig settings   */
 #define NDRXD_EACCES             22         /**< No access to file            */
 #define NDRXD_ESYNTAX            23         /**< Syntax error during parsing  */
-#define NDRXD_ESYSTEM             24         /**< E/X system failure            */
-#define NDRXD_EMAXVAL            24
+#define NDRXD_ESYSTEM            24         /**< E/X system failure           */
+#define NDRXD_ENOCFGLD           25         /**< Configuartion not loaded     */
+#define NDRXD_EMAXVAL            25
 
 /* This section list call types */
 #define NDRXD_CALL_TYPE_GENERIC         0   /**< Generic call type        */
