@@ -80,9 +80,10 @@ M_descr [] =
     {NDRXD_PM_ESYSTEM,     "esys"},
     {NDRXD_PM_EENV,        "eenv"},
     {NDRXD_PM_EBADFILE,    "badfi"},
-    {NDRXD_PM_STARTING,    "stop"},
+    {NDRXD_PM_STARTING,    "start"},
     {NDRXD_PM_RUNNING_OK,  "runok"},
-    {NDRXD_PM_STOPPING,    "start"}
+    {NDRXD_PM_STOPPING,    "stop"},
+    {NDRXD_PM_RESTART,     "rsta"}
 };
 /*---------------------------Prototypes---------------------------------*/
 

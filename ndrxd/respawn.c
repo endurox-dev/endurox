@@ -81,20 +81,27 @@ expublic int do_respawn_check(void)
 
     DL_FOREACH(G_process_model, p_pm)
     {
-        NDRX_LOG(6, "Proc: %s, Reqstate %d, curstate %d", 
-		 p_pm->binary_name, p_pm->reqstate, p_pm->state);
-        
-        if (NDRXD_PM_RUNNING_OK==p_pm->reqstate && PM_NOT_RUNNING(p_pm->state))
+        NDRX_LOG(6, "Proc: %s, Reqstate %d, curstate %d",
+            p_pm->binary_name, p_pm->reqstate, p_pm->state);
+
+        if ((NDRXD_PM_RUNNING_OK==p_pm->reqstate || NDRXD_PM_RESTART==p_pm->reqstate) 
+                && PM_NOT_RUNNING(p_pm->state))
         {
-		
-	    if (!p_pm->conf->respawn)
-	    {
-		    NDRX_LOG(6, "respawn param is off -> continue with next...");
-		    continue;
-	    }
+            if (NDRXD_PM_RESTART==p_pm->reqstate)
+            {
+                NDRX_LOG(log_warn, "Proc: %s (Srvid: %d), Reqstate %d, curstate %d "
+                    "starting as restart was requested",
+                    p_pm->binary_name, p_pm->srvid, p_pm->reqstate, p_pm->state);
+                p_pm->reqstate=NDRXD_PM_RUNNING_OK;
+            }
+            else if (!p_pm->conf->respawn)
+            {
+                NDRX_LOG(6, "respawn param is off -> continue with next...");
+                continue;
+            }
             delta = p_pm->rspstwatch;
             NDRX_LOG(6, "Respawn delta: %ld", delta);
-            
+
             /* Check is it time for startup? */
             if ( delta > G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step ||
                     delta > G_app_config->restart_max)
@@ -115,7 +122,7 @@ expublic int do_respawn_check(void)
                         schedule_next);
             }
         }
-    }/*DL_FOREACH*/     
+    }/*DL_FOREACH*/
     
 out:
 

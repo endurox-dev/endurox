@@ -934,6 +934,16 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                                       p_pm->binary_name, p_pm->srvid);
         goto out;
     }
+    else if (NDRXD_PM_STOPPING==p_pm->state)
+    {
+        /* Bug #798 */
+        NDRX_LOG(log_warn, "Not starting %s/%d as it is in still shutting down, "
+                                    "requesting restart!",
+                                    p_pm->binary_name, p_pm->srvid);
+
+        p_pm->reqstate = NDRXD_PM_RESTART;
+        goto out;
+    }
 
    /* Send notification, that we are about to start? */
     
@@ -951,7 +961,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     
     p_pm->state_changed = SANITY_CNT_START;
 
-    
     if (NULL!=p_startup_progress)
         p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTING);
     

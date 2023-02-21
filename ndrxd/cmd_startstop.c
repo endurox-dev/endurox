@@ -284,8 +284,6 @@ out:
     return EXSUCCEED;
 }
 
-
-
 /**
  * Simple reply on abort.
  * @param call
@@ -325,7 +323,6 @@ expublic int cmd_sreload (command_call_t * call, char *data, size_t len, int con
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
-    
     
     NDRX_LOG(log_warn, "cmd_start returns with status %d", ret);
     
