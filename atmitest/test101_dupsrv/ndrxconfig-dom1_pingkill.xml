@@ -37,7 +37,7 @@
         <!--
         Ping server in every X sanity units
         -->
-        <pingtime>9</pingtime>
+        <pingtime>1</pingtime>
         <!--
         Max number of sanity units in which server must respond.
         The granularity is sanity time.
@@ -58,7 +58,7 @@
 
         <killtime>1</killtime>
 
-        <reloadonchange>1</reloadonchange>
+        <reloadonchange>Y</reloadonchange>
     </defaults>
     <servers>
         <server name="atmi.sv101">

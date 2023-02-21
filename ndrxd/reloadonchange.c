@@ -95,7 +95,6 @@ exprivate void roc_calc_tstamp(roc_exe_registry_t *bin, unsigned sanity_cycle)
         bin->mtime = file_stat.st_mtime;
         bin->sanity_cycle = sanity_cycle;   
     }
-    
 }
 
 /**
@@ -154,8 +153,7 @@ expublic int roc_is_reload_in_progress(unsigned sanity_cycle)
             {
                 NDRX_LOG(log_error, "Current cycle %u reload cycle %u - assume executed",
                         el->sanity_cycle, sanity_cycle);
-                break;
-                
+                break;  
             } 
             else
             {

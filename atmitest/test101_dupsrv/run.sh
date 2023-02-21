@@ -84,6 +84,15 @@ set_dom1_pingkill() {
     export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 }
 
+set_dom1_reload() {
+    echo "Setting domain 1 (reload)"
+    . ../dom1.sh
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1_reload.xml
+    export NDRX_DMNLOG=$TESTDIR/ndrxd-dom1.log
+    export NDRX_LOG=$TESTDIR/ndrx-dom1.log
+    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
+}
+
 #
 # Generic exit function
 #
@@ -113,26 +122,42 @@ function run_call {
     fi
 }
 
-PID1=0
-PID2=0
+PID1=""
+PID2=""
 
 # Ensure that PIDs are not equal
 # as process must restarted by Enduor/X
 function get_pid_assert_not_equal {
 
     if [ "X$PID1" == "X$PID2" ]; then
-        echo "PIDs are equal: $XPID1 == $XPID2"
+        echo "PIDs are equal: [$PID1] == [$PID2]"
+        go_out -1
+    fi
+}
+
+function get_pid_assert_equal {
+
+    if [ "X$PID1" != "X$PID2" ]; then
+        echo "PIDs are not equal: [$PID1] == [$PID2]"
         go_out -1
     fi
 }
 
 function get_pid_before {
-    PID1=`xadmin ps -a atmi.sv101 | grep atmi.sv101 | awk '{print $2}'`
+    ps -ef | grep atmi.sv101 | grep -v grep
+    PID1=`xadmin ps -a atmi.sv101 | awk '{print $2}'`
 }
 
 function get_pid_after {
-    PID2=`xadmin ps -a atmi.sv101 | grep atmi.sv101 | awk '{print $2}'`
+    ps -ef | grep atmi.sv101 | grep -v grep
+    PID2=`xadmin ps -a atmi.sv101 | awk '{print $2}'`
     get_pid_assert_not_equal;
+}
+
+function get_pid_after_eq {
+    ps -ef | grep atmi.sv101 | grep -v grep
+    PID2=`xadmin ps -a atmi.sv101 | awk '{print $2}'`
+    get_pid_assert_equal;
 }
 
 rm *.log 2>/dev/null
@@ -158,7 +183,6 @@ xadmin start -y || go_out 1
 RET=0
 xadmin psc
 xadmin ppm
-
 
 for i in 0 1
 do
@@ -195,10 +219,8 @@ do
     echo ">>>> Reload On Change"
     ################################################################################
     get_pid_before;
-
-    run_call;
     touch atmi.sv101
-    sleep 30
+    sleep 20
 
     get_pid_after;
 
@@ -275,6 +297,83 @@ CNT=`xadmin ps -a atmi.sv101 | wc | awk '{print($1)}'`
 # there shall be no duplicate servers...
 if [ "X$CNT" != "X0"  ]; then
     echo "Number of atmi.sv101 processes present: $CNT but must be 0"
+    go_out -1
+fi
+xadmin stop -y
+
+################################################################################
+echo ">>> ROC - Reload only started copies (Bug #202)"
+################################################################################
+
+set_dom1_reload;
+xadmin start -y
+
+get_pid_before;
+touch atmi.sv101
+sleep 20
+get_pid_after;
+
+CNT=`xadmin ps -a atmi.sv101 | wc | awk '{print($1)}'`
+# there shall be no duplicate servers...
+if [ "X$CNT" != "X3"  ]; then
+    echo "Number of atmi.sv101 processes present: $CNT but must be 3"
+    go_out -1
+fi
+
+################################################################################
+echo ">>> sreload - Reload only started copies (Bug #202)"
+################################################################################
+
+set_dom1_reload;
+xadmin start -y
+
+get_pid_before;
+xadmin sreload atmi.sv101
+get_pid_after;
+
+CNT=`xadmin ps -a atmi.sv101 | wc | awk '{print($1)}'`
+# there shall be no duplicate servers...
+if [ "X$CNT" != "X3"  ]; then
+    echo "Number of atmi.sv101 processes present: $CNT but must be 3"
+    go_out -1
+fi
+
+################################################################################
+echo ">>> sreload by instances..."
+################################################################################
+
+xadmin stop -s atmi.sv101
+xadmin start -i 17
+xadmin start -i 18
+xadmin start -i 19
+
+# Ensure that first instances are not reload as marked as not started
+get_pid_before
+xadmin sreload -i 10
+# i.e. pid not changed
+get_pid_after_eq
+
+get_pid_before
+xadmin sreload -i 11
+get_pid_after_eq
+
+# Ensure that each reloads and pid changes
+get_pid_before
+xadmin sreload -i 17
+get_pid_after
+
+get_pid_before
+xadmin sreload -i 18
+get_pid_after
+
+get_pid_before
+xadmin sreload -i 19
+get_pid_after
+
+CNT=`xadmin ps -a atmi.sv101 | wc | awk '{print($1)}'`
+# there shall be no duplicate servers...
+if [ "X$CNT" != "X3"  ]; then
+    echo "Number of atmi.sv101 processes present: $CNT but must be 3"
     go_out -1
 fi
 
