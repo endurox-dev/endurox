@@ -375,9 +375,9 @@ PARAMETERS
     If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
     and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
     the XATMI servers one by one. The scanning will occur at every sanity
-    cycle. This is recommended to be used *only* for development purposes. And
-    must not be used on production servers! 
+    cycle. This is recommended to be used *only* for development purposes.
     This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+    Reload happens on those XATMI servers instances which were marked for start.
 'RSSMAX_DEFAULT'::
     Maximum Resident Set Size memory size after which *ndrxd(8)* process will issue
     server reload (sr) command (i.e. gracefully 

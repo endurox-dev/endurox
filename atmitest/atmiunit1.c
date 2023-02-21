@@ -792,6 +792,13 @@ Ensure(test100_svstdout)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test101_dupsrv)
+{
+    int ret;
+    ret=system_dbg("test101_dupsrv/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -972,6 +979,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test098_svqhkeep);
     add_test(suite, test099_callbuflen);
     add_test(suite, test100_svstdout);
+    add_test(suite, test101_dupsrv);
     
     return suite;
 }

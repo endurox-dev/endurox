@@ -1663,7 +1663,16 @@ expublic int app_sreload(command_startstop_t *call,
         {
             pm_node_t *p_pm_srvid = G_process_model_hash[call->srvid];
 
-            if (NULL!=p_pm_srvid)
+            if (NULL!=p_pm_srvid
+                /* Only if requested state runnable (Bug #202) 
+                 * in case if process was put in restart state (non runnable)
+                 * it will be booted back when killed & respawned and finally
+                 * it will be in running state. Thus we can skip it here from this
+                 * particular reload.
+                 * Thesame applies to bellow where restart is done by name
+                 */
+                && (PM_RUNNING(p_pm_srvid->reqstate))
+                )
             {
                 /* Firstly stop it */
                 stop_process(call, p_pm_srvid, p_shutdown_progress, 
@@ -1686,7 +1695,8 @@ expublic int app_sreload(command_startstop_t *call,
             }
             else
             {
-                NDRX_LOG(log_error, "Srvid: %d not initialized", call->srvid);
+                NDRX_LOG(log_error, "Srvid: %d not initialized or "
+                    "not requested to be run", call->srvid);
             }
         }
         else
@@ -1698,12 +1708,12 @@ expublic int app_sreload(command_startstop_t *call,
     {
         DL_FOREACH(G_process_model, p_pm)
         {
-            /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EXEOS!=call->binary_name[0] 
+            if ( ((EXEOS!=call->binary_name[0] 
                     && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    /* Do full startup if requested autostart! */
-                    /* or If full shutdown requested */
                     (EXEOS==call->binary_name[0] && p_pm->autostart))
+                    /* start only those binaries which were requested for start: */
+                    && (PM_RUNNING(p_pm->reqstate))
+                    )
             {
                 
                 stop_process(call, p_pm, p_shutdown_progress, 

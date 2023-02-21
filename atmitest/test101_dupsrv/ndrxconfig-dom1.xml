@@ -59,7 +59,7 @@
 
         <killtime>1</killtime>
 
-        <reloadonchange>1</reloadonchange>
+        <reloadonchange>Y</reloadonchange>
     </defaults>
     <servers>
         <server name="atmi.sv101">
