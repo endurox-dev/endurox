@@ -1643,19 +1643,11 @@ expublic int app_sreload(command_startstop_t *call,
     pm_node_t *p_pm;
     int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
-
-    /*
-    if (NULL==G_app_config && SUCCEED!=load_active_config(&G_app_config,
-                &G_process_model, &G_process_model_hash, &G_process_model_pid_hash))
-    {
-        ret=FAIL;
-        goto out;
-    }
-     */
     
     if (NULL==G_app_config)
     {
         NDRX_LOG(log_error, "No configuration loaded!");
+        NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "No configuration loaded!");
         ret=EXFAIL;
         goto out;
     }

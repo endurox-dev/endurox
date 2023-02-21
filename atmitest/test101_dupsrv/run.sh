@@ -142,15 +142,23 @@ xadmin killall tpbridge
 
 set_dom1;
 xadmin down -y
+
+# check config not loaded case for Support #448
+# really small check, no need for new atmitest, add here:
+
+NO_CONFIG_LOADED=`xadmin sreload atmi.sv101 2>&1`
+
+if [[ "$NO_CONFIG_LOADED" == "fail, code: 25: NDRXD_ENOCFGLD (last error 25: No configuration loaded!)" ]]; then
+    echo "Invalid error message in case if configuration not loaded and doing reload."
+    go_out -1
+fi
+
 xadmin start -y || go_out 1
 
-# Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 30
 RET=0
-
 xadmin psc
 xadmin ppm
-echo "Running off client"
+
 
 for i in 0 1
 do
