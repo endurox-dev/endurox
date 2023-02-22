@@ -56,9 +56,9 @@
 
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
-#define IS_INT(X) (BFLD_SHORT == Bfldtype(X) || BFLD_LONG == Bfldtype(X))
-#define IS_NUM(X) (BFLD_FLOAT == Bfldtype(X) || BFLD_DOUBLE == Bfldtype(X))
-#define IS_BIN(X) (BFLD_CARRAY == Bfldtype(X))
+#define IS_INT(X) (BFLD_SHORT == X || BFLD_LONG == X)
+#define IS_NUM(X) (BFLD_FLOAT == X || BFLD_DOUBLE == X)
+#define IS_BIN(X) (BFLD_CARRAY == X)
 
 /* TODO: Fix atmi buffer size to match size of ATMI buffer size. */
 #define CARR_BUFFSIZE		NDRX_MSGSIZEMAX
@@ -105,7 +105,6 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
                     fldnm, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
-
 
         if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub_tmp, NULL, innerobj))
         {
@@ -364,7 +363,6 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
             }
             case EXJSONNumber:
             {
-
                 if (IS_INT(fldtyp))
                 {
                     long l = exjson_object_get_intnumber(root_object, name);
@@ -650,7 +648,6 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
     for (fldid = BFIRSTFLDID, oc = 0;
             1 == (ret = ndrx_Bnext(&state, p_ub, &fldid, &oc, NULL, &fldlen, &d_ptr));)
     {
-        is_num=EXFALSE;
         /* Feature #232 return ID if field not found in tables... */
         nm = ndrx_Bfname_int(fldid);
         NDRX_LOG(log_debug, "Field: [%s] occ %d id: %d", nm, oc, fldid);
@@ -693,7 +690,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
 
         is_num=EXFALSE;
         is_int=EXFALSE;
-        if (IS_INT(fldid))
+        if (IS_INT(fldtyp))
         {
             if (EXSUCCEED!=CBget(p_ub, fldid, oc, (char *)&l_val, 0L, BFLD_LONG))
             {
@@ -707,7 +704,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             is_int = EXTRUE;
             NDRX_LOG(log_debug, "Numeric value: %ld", l_val);
         }
-        else if (IS_NUM(fldid))
+        else if (IS_NUM(fldtyp))
         {
             if (EXSUCCEED!=CBget(p_ub, fldid, oc, (char *)&d_val, 0L, BFLD_DOUBLE))
             {
