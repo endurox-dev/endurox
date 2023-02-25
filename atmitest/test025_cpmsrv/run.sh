@@ -73,7 +73,8 @@ PROC_COUNT=100
 #
 PROC_COUNT_DIFFALLOW=100
 
-PSCMD="ps -ef"
+# added ww -> full line print
+PSCMD="ps -efww"
 if [ "$(uname)" == "FreeBSD" ]; then
 	PSCMD="ps -auwwx"
 fi
