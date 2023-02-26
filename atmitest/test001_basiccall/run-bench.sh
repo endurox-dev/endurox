@@ -94,7 +94,7 @@ sleep 1
 (./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_21.log &
 (./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_22.log &
 (./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_23.log &
-ps -ef | grep atmiclt1 | grep -v grep | wc
+ps -efww | grep atmiclt1 | grep -v grep | wc
 
 # Run off the tests...
 echo 1 > sync.log
@@ -103,9 +103,9 @@ echo 1 > sync.log
 (./atmiclt1 2>&1 s :1:8:) > ./atmiclt1_24.log 
 
 sleep 5 # let other to complete... (sync..)
-RETP=`ps -ef | grep atmiclt1 | grep -v grep`
+RETP=`ps -efww | grep atmiclt1 | grep -v grep`
 while [[ "X$RETP" != "X" ]]; do
-    RETP=`ps -ef | grep atmiclt1 | grep -v grep`
+    RETP=`ps -efww | grep atmiclt1 | grep -v grep`
 done 
 
 RET=$?

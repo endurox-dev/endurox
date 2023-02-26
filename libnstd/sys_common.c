@@ -356,7 +356,7 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     /* snprintf(cmd, sizeof(cmd), "ps -jauxxw"); */
     NDRX_STRCPY_SAFE(cmd, "ps -wwaxo user,pid,ppid,%cpu,%mem,args");
 #else
-    NDRX_STRCPY_SAFE(cmd, "ps -ef");
+    NDRX_STRCPY_SAFE(cmd, "ps -efww");
 #endif
     
     fp = popen(cmd, "r");
@@ -432,7 +432,7 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     /* we need full username instead of uid in output...*/
     NDRX_STRCPY_SAFE(cmd, "ps -je");
 #else
-    NDRX_STRCPY_SAFE(cmd, "ps -ef");
+    NDRX_STRCPY_SAFE(cmd, "ps -efww");
 #endif
     
     if (EXEOS!=regex1[0])

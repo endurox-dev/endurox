@@ -72,7 +72,7 @@ function get_pid {
     if [ "$(uname)" == "FreeBSD" ]; then
             retpid=`ps -auwwx | grep "\-i 3519" | grep -v grep | awk '{print $2}'`;
     else
-            retpid=`ps -ef | grep "\-i 3519" | grep -v grep | awk '{print $2}'`;
+            retpid=`ps -efww | grep "\-i 3519" | grep -v grep | awk '{print $2}'`;
     fi
 
     echo $retpid

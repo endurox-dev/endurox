@@ -111,7 +111,7 @@ CNT=0
 if [ "$(uname)" == "FreeBSD" ]; then
     CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 else
-    CNT=`ps -ef | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
+    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 fi
 
 echo "Process count: $CNT"
@@ -128,7 +128,7 @@ xadmin start -s atmi.sv52
 if [ "$(uname)" == "FreeBSD" ]; then
     CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 else
-    CNT=`ps -ef | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
+    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 fi
 
 echo "Process count: $CNT"
@@ -144,7 +144,7 @@ xadmin start -i 12
 if [ "$(uname)" == "FreeBSD" ]; then
     CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 else
-    CNT=`ps -ef | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
+    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 fi
 
 echo "Process count: $CNT"
@@ -161,7 +161,7 @@ xadmin stop -s atmi.sv52
 if [ "$(uname)" == "FreeBSD" ]; then
     CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 else
-    CNT=`ps -ef | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
+    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 fi
 
 echo "Process count: $CNT"

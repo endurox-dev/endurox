@@ -169,7 +169,7 @@ set_dom3;
 #xadmin down -y
 xadmin start -y || go_out 3
 
-ps -ef | grep tpev
+ps -efww | grep tpev
 
 # Let domains to connect between them selves
 sleep 60
