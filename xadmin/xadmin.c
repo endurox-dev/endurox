@@ -324,7 +324,7 @@ cmd_mapping_t M_command_map[] =
                 "\t -m <Source Message ID> -s <Dest qspace> -q <Dest qname>"
                 , NULL},
     {"killall",   cmd_killall,EXFAIL,            1,  0, 
-                "Kill all processes (in ps -ef) matching the name\n"
+                "Kill all processes (in ps -efww) matching the name\n"
                 "\t args: killall <name1> <name2> ... <nameN>"
                 , NULL},
     {"qrm",       cmd_qrm,EXFAIL,                1,  0, 

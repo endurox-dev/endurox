@@ -136,7 +136,7 @@ xadmin start -y || go_out 2
 # Clean up the logs
 rm xadmin-*.log
 
-PSCMD="ps -ef"
+PSCMD="ps -efww"
 if [ "$(uname)" == "FreeBSD" ]; then
     PSCMD="ps -auwwx"
 fi
