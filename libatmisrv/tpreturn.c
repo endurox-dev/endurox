@@ -557,6 +557,8 @@ expublic void _tpforward (char *svc, char *data,
     
     NDRX_LOG(log_debug, "%s enter", fn);
     
+    last_call = ndrx_get_G_last_call();
+
     NDRX_STRCPY_SAFE(svcddr, svc);
     
     /* abort / tpreturn transaction if we are initiator & transaction
@@ -584,8 +586,6 @@ expublic void _tpforward (char *svc, char *data,
      * It can be servers companion thread.
      * TODO: Add the check.
      */
-    last_call = ndrx_get_G_last_call();
-    
     if (p_atmi_lib_conf->is_client && !last_call->cd)
     {
         /* this is client */

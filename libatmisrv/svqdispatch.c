@@ -715,6 +715,8 @@ expublic int sv_serve_connect(int *service, int *status,
         
         *last_call = *call; /* save last call info to ATMI library
                               * (this does excludes data by default) */
+	/* Bug #799, mv 2023.02.28 */
+	last_call->autobuf = outbufobj;
 
         /* Because we are in conversation, we should make a special cd
          * for case when we are as server
