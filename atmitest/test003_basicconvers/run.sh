@@ -80,6 +80,14 @@ if [ "X$RET" !=  "X0" ]; then
     go_out -6
 fi
 
+(./atmiclt3 echoloop 2>&1) >> ./atmiclt3.log
+RET=$?
+
+if [ "X$RET" !=  "X0" ]; then
+    echo "echoloop case failed"
+    go_out -7
+fi
+
 # ?
 xadmin killall atmisv3 2>/dev/null
 

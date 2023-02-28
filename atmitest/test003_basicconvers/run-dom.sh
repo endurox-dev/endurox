@@ -132,6 +132,20 @@ echo "Will issue client calls:"
 (./atmiclt3 normal 2>&1) > ./atmiclt-dom1.log
 RET=$?
 
+if [ "X$RET" !=  "X0" ]; then
+    echo "normal case failed"
+    go_out -6
+fi
+
+# echo loop
+(./atmiclt3 echoloop 2>&1) >> ./atmiclt3.log
+RET=$?
+
+if [ "X$RET" !=  "X0" ]; then
+    echo "echoloop case failed"
+    go_out -7
+fi
+
 echo "PSVC DOM 1 (AFTER RUN)"
 xadmin psvc
 

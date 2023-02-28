@@ -205,6 +205,31 @@ int main(int argc, char** argv) {
        NDRX_ASSERT_TP_OUT((TPEEVENT==tperrno && TPEV_SVCSUCC==revent),
                "Invalid term event %ld", revent);
     }
+    else if (0==strcmp(argv[1], "echoloop"))
+    {
+
+        for (i=0; i<100000; i++)
+        {
+            if (EXFAIL==(cd=tpconnect("ECHO", (char *)p_ub, 0L, TPRECVONLY)))
+            {
+                NDRX_LOG(log_error, "ECHO failed: %s", tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+            }
+        
+            while (EXSUCCEED==tprecv(cd, (char **)&p_ub, &len, 0L, &revent))
+            {
+                NDRX_LOG(log_error, "ECHO no msg expected");
+                ret=EXFAIL;
+                goto out;
+            }
+
+            NDRX_ASSERT_TP_OUT((TPEEVENT==tperrno && TPEV_SVCSUCC==revent),
+               "Invalid term event %ld", revent);
+
+            tpterm();
+        }
+    }
     else
     {
         NDRX_LOG(log_error, "TESTERROR: invalid test case [%s]", argv[1]);

@@ -140,12 +140,12 @@ endif()
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF (DEFINE_RELEASEBUILD)
     MESSAGE( RELEASE_BUILD )
-    SET(CMAKE_BUILD_TYPE release)
+#_cmake_modify_IGNORE     SET(CMAKE_BUILD_TYPE release)
     SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_C_FLAGS}")
     SET(CMAKE_CXX_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_CXX_FLAGS}")
 ELSE ()
     MESSAGE( DEBUG_BUILD )
-    SET(CMAKE_BUILD_TYPE debug)
+#_cmake_modify_IGNORE     SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
 #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
 
@@ -625,3 +625,14 @@ add_custom_target(index glimpseindex -n -H ./glimpse_index ${PROJECT_SOURCE_DIR}
 #this also shall generate the glimp command in the current project
 
 # vim: set ts=4 sw=4 et smartindent:
+
+message(STATUS "<<< Gentoo configuration >>>
+Build type      ${CMAKE_BUILD_TYPE}
+Install path    ${CMAKE_INSTALL_PREFIX}
+Compiler flags:
+C               ${CMAKE_C_FLAGS}
+C++             ${CMAKE_CXX_FLAGS}
+Linker flags:
+Executable      ${CMAKE_EXE_LINKER_FLAGS}
+Module          ${CMAKE_MODULE_LINKER_FLAGS}
+Shared          ${CMAKE_SHARED_LINKER_FLAGS}\n")
