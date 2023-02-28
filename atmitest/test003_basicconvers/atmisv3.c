@@ -53,6 +53,19 @@ void TOUTSV (TPSVCINFO *p_svc)
                 0L);
 } 
 
+/**
+ * Perform return success without any data
+ * for testing Bug #114 do in the loop init, connect, term by the client
+ */
+void ECHO (TPSVCINFO *p_svc)
+{
+        tpreturn( TPSUCCESS,
+                0L,
+                p_svc->data,
+                0L,
+                0L);
+}
+
 void CONVSV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
@@ -189,6 +202,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise("NOBLK", NOBLK))
     {
         NDRX_LOG(log_error, "Failed to initialize NOBLK!");
+        ret=EXFAIL;
+    }
+
+    if (EXSUCCEED!=tpadvertise("ECHO", ECHO))
+    {
+        NDRX_LOG(log_error, "Failed to initialize ECHO!");
         ret=EXFAIL;
     }
     
