@@ -99,27 +99,6 @@ endif ()
 # OS Configuration
 ################################################################################
 
-# Force C++ for C
-#SET(CMAKE_C_COMPILER ${CMAKE_CXX_COMPILER})
-
-set (CMAKE_C_STANDARD 11)
-set (CMAKE_C_STANDARD_REQUIRED 99)
-
-message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
-message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
-message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
-
-OPTION(DEFINE_FORCEPOLL "Force POLL (even on linux)" OFF)
-OPTION(DEFINE_FORCEFDPOLL "Force FDPOLL" OFF)
-OPTION(DEFINE_FORCEKQUEUE "Force Kqueue (BSD poll framework)" OFF)
-
-OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
-OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
-OPTION(DEFINE_SYSVQ "Force System V Message Queue" OFF)
-OPTION(DEFINE_SVAPOLL "Force System V Queues with AIX Poll" OFF)
-OPTION(DEFINE_ALIGNMENT_FORCE "Force alignment" OFF)
-OPTION(DEFINE_SANITIZE "Enable GCC/Clang Address Sanitizer (for debug)" OFF)
-
 # configure compiler
 ex_comp_settings()
 
@@ -442,14 +421,3 @@ add_custom_target(index glimpseindex -n -H ./glimpse_index ${PROJECT_SOURCE_DIR}
 #this also shall generate the glimp command in the current project
 
 # vim: set ts=4 sw=4 et smartindent:
-
-message(STATUS "<<< Gentoo configuration >>>
-Build type      ${CMAKE_BUILD_TYPE}
-Install path    ${CMAKE_INSTALL_PREFIX}
-Compiler flags:
-C               ${CMAKE_C_FLAGS}
-C++             ${CMAKE_CXX_FLAGS}
-Linker flags:
-Executable      ${CMAKE_EXE_LINKER_FLAGS}
-Module          ${CMAKE_MODULE_LINKER_FLAGS}
-Shared          ${CMAKE_SHARED_LINKER_FLAGS}\n")

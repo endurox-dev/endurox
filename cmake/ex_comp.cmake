@@ -39,6 +39,28 @@ cmake_minimum_required (VERSION 3.1)
 # 
 macro(ex_comp_settings)
 
+    # Force C++ for C
+    #SET(CMAKE_C_COMPILER ${CMAKE_CXX_COMPILER})
+
+    set (CMAKE_C_STANDARD 11)
+    set (CMAKE_C_STANDARD_REQUIRED 99)
+
+    message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
+    message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
+    message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
+
+    OPTION(DEFINE_FORCEPOLL "Force POLL (even on linux)" OFF)
+    OPTION(DEFINE_FORCEFDPOLL "Force FDPOLL" OFF)
+    OPTION(DEFINE_FORCEKQUEUE "Force Kqueue (BSD poll framework)" OFF)
+
+    OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
+    OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
+    OPTION(DEFINE_SYSVQ "Force System V Message Queue" OFF)
+    OPTION(DEFINE_SVAPOLL "Force System V Queues with AIX Poll" OFF)
+    OPTION(DEFINE_ALIGNMENT_FORCE "Force alignment" OFF)
+    OPTION(DEFINE_SANITIZE "Enable GCC/Clang Address Sanitizer (for debug)" OFF)
+
+
     SET (EX_ALIGNMENT_BYTES "4")
 
     SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags" FORCE)
