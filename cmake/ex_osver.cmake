@@ -144,8 +144,14 @@ macro(ex_osver)
     # -------------------------------------------------------------------------
     # additionally: use  lower case for binary names, for all components of the filename
     # 
-    if(${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_linux_server")
+    if ( (${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_linux_server") OR
+             (${LSB_RELEASE_OUTPUT_OS} STREQUAL "centos") )
+        # Common for RHEL based linux:
         set(LSB_RELEASE_OUTPUT_OS "el")
+        set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
+    elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "sles")
+        # Common for suse linux:
+        set(LSB_RELEASE_OUTPUT_OS "sl")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
     endif()
 
@@ -181,6 +187,10 @@ macro(ex_cpuarch)
         (${EX_CPU_ARCH} STREQUAL "386_64") OR (${EX_CPU_ARCH} STREQUAL "amd64")
         OR (${EX_CPU_ARCH} STREQUAL "i386_64") )
         set(EX_CPU_ARCH "x86_64")
+    elseif(${EX_CPU_ARCH} STREQUAL "powerpc_64")
+        set(EX_CPU_ARCH "ppc64")
+    elseif(${EX_CPU_ARCH} STREQUAL "powerpc")
+        set(EX_CPU_ARCH "ppc")
     endif()
 
 endmacro(ex_cpuarch)
