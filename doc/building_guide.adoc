@@ -248,7 +248,7 @@ To install Enduro/X build dependencies.
 $ su - root
 # yum install yum-utils
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel
+# yum install git libarchive cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel
 ---------------------------------------------------------------------
 
 The "dia" package is not available on this system, thus
