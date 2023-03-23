@@ -145,6 +145,7 @@ macro(ex_osver)
     # additionally: use  lower case for binary names, for all components of the filename
     # 
     if ( (${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_linux_server") OR
+             (${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracleserver") OR
              (${LSB_RELEASE_OUTPUT_OS} STREQUAL "centos") )
         # Common for RHEL based linux:
         set(LSB_RELEASE_OUTPUT_OS "el")
