@@ -140,7 +140,7 @@ macro(ex_osver)
     # SUNOS5_10                 -> solaris10
     # sles                      -> sl
     # aix7_3                    -> aix72, also powerpc -> ppc
-    # freebsd13_0_RELEASE_p7    -> freebsd13
+    # freebsd13_0_RELEASE_p7    -> freebsd13_0
     # -------------------------------------------------------------------------
     # additionally: use  lower case for binary names, for all components of the filename
     # 
@@ -154,6 +154,10 @@ macro(ex_osver)
         # Common for suse linux:
         set(LSB_RELEASE_OUTPUT_OS "sl")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
+    elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "freebsd")
+        if (LSB_RELEASE_OUTPUT_VER MATCHES "^([0-9]+_[0-9])+.*$")
+            set(LSB_RELEASE_OUTPUT_VER ${CMAKE_MATCH_1})
+        endif()
     endif()
 
     message("LSB_RELEASE OS  = ${LSB_RELEASE_OUTPUT_OS}")
