@@ -161,11 +161,6 @@ macro(ex_osver)
     message( "EX_LSB_RELEASE_VER_MAJOR = " ${EX_LSB_RELEASE_VER_MAJOR} )
     message( "EX_LSB_RELEASE_VER_MINOR = " ${EX_LSB_RELEASE_VER_MINOR} )
 
-    # disable documentation automatically if a2x is not found...
-    find_program(A2X_EXECUTABLE NAMES a2x)
-    if(NOT A2X_EXECUTABLE)
-        set(DEFINE_DISABLEDOC ON)
-    endif()
 endmacro(ex_osver)
 
 
