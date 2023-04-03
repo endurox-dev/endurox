@@ -24,7 +24,7 @@ in distribution).
 
 As input 'UBBCONFIG_file' or *stdin* is used. Enduro/X parses the structure of
 the UBB configuration file, loads it into platform script data structures, after which
-a script (built in in *ubb2ex* or provided from command line) starts to compose
+a script (built in *ubb2ex* or provided from command line) starts to compose
 the equivalent Enduro/X configuration. Additionally converter script deference 
 *ENVFILE* from the UBB configuration and copies values to *app.ini* *[@global]* section.
 
@@ -64,9 +64,9 @@ including ULOG by it self.
 *-e* file path is made relative to *$\{NDRX_ULOG\}* directory or *$\{NDRX_APPHOME\}*, if
 possible.
 
-Where *${NDRX_APPHOME}* is determined by following principles: It is common part 
+Where *$\{NDRX_APPHOME\}* is determined by following principles: It is common part
 between Tuxedo's *APPDIR* and *TUXCONFIG*. If common part is not found 
-(i.e. it is root directory */*), then *${NDRX_APPHOME}* is set to *APPDIR*.
+(i.e. it is root directory */*), then *$\{NDRX_APPHOME\}* is set to *APPDIR*.
 
 Migration script supports following Tuxedo features:
 
