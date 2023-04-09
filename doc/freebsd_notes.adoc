@@ -100,20 +100,20 @@ $ cat << EOF > $HOME/ndrx_home
 
 echo "Loading ndrx_home..."
 # Where app domain lives
-export NDRX_APPHOME=$HOME/endurox
+export NDRX_APPHOME=\$HOME/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=$HOME/endurox/dist/bin
+export NDRX_HOME=\$HOME/endurox/dist
 # Debug config too
-export NDRX_DEBUG_CONF=$HOME/endurox/sampleconfig/debug.conf
+export NDRX_DEBUG_CONF=\$HOME/endurox/sampleconfig/debug.conf
 # NDRX config too.
-export NDRX_CONFIG=$HOME/endurox/sampleconfig/ndrxconfig.xml
+export NDRX_CONFIG=\$HOME/endurox/sampleconfig/ndrxconfig.xml
 
-export PATH=$PATH:$HOME/projects/endurox/dist/bin
+export PATH=\$PATH:\$HOME/projects/endurox/dist/bin
 
-export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 
-export PATH=$PATH:/opt/csw/bin:$HOME/endurox/dist/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib
+export PATH=\$PATH:/opt/csw/bin:$HOME/endurox/dist/bin
+export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$HOME/endurox/dist/lib
 
 # Where the queues live:
 export NDRX_QPATH=/mnt/mqueue
