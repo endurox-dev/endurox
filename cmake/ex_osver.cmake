@@ -133,7 +133,6 @@ macro(ex_osver)
 
     #
     # This matches the standard releases made by Mavimax:
-    # TODO: use more friendly versions of the OSes.
     # mapping table:
     # -------------------------------------------------------------------------
     # oracle_solaris11_4        -> solaris11
@@ -155,7 +154,12 @@ macro(ex_osver)
         set(LSB_RELEASE_OUTPUT_OS "sl")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
     elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "freebsd")
-        if (LSB_RELEASE_OUTPUT_VER MATCHES "^([0-9]+_[0-9])+.*$")
+        if (LSB_RELEASE_OUTPUT_VER MATCHES "^([0-9]+_[0-9]+).*$")
+            set(LSB_RELEASE_OUTPUT_VER ${CMAKE_MATCH_1})
+        endif()
+    elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_solaris")
+        set(LSB_RELEASE_OUTPUT_OS "solaris")
+        if (LSB_RELEASE_OUTPUT_VER MATCHES "^([0-9]+).*$")
             set(LSB_RELEASE_OUTPUT_VER ${CMAKE_MATCH_1})
         endif()
     endif()
