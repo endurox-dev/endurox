@@ -73,12 +73,6 @@ PROC_COUNT=100
 #
 PROC_COUNT_DIFFALLOW=100
 
-# added ww -> full line print
-PSCMD="ps -efww"
-if [ "$(uname)" == "FreeBSD" ]; then
-	PSCMD="ps -auwwx"
-fi
-
 #
 # Generic exit function
 #
@@ -315,23 +309,11 @@ fi
 echo "Processes in system: "
 $PSCMD
 
-#CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
-#echo "$PSCMD procs: $CNT"
-#if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
-        #echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
-        #go_out 7
-#fi
-
 #
 # Having some issues when bash is doing forks inside the test script -> whileproc.sh
 # Thus filter by cpmsrv pid in ps line...
 #
 CPM_PID=`xadmin ppm | grep cpmsrv | awk '{print $3}'`
-#if [ "$(uname)" == "FreeBSD" ]; then
-#        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-#else
-#        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-#fi
 
 echo "CPM_PID=$CPM_PID"
 xadmin ps -a whileproc.sh

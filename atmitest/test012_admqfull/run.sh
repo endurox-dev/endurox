@@ -135,7 +135,7 @@ xadmin start -y
 #####
 
 # ALARM: THIS SHOULD NOT HANG!
-ps -efww | grep atmisv_012 | grep -v grep
+$PSCMD | grep atmisv_012 | grep -v grep
 xadmin ppm
 xadmin psc
 CNT=`xadmin psc | wc | awk '{print $1}'`

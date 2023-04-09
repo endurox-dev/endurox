@@ -89,13 +89,13 @@ sleep 1
 (./atmiclt17 2>&1) > ./atmiclt17_11.log &
 (./atmiclt17 2>&1) > ./atmiclt17_11.log &
 (./atmiclt17 2>&1) > ./atmiclt17_11.log &
-ps -efww | grep atmiclt17 | grep -v grep | wc
+$PSCMD | grep atmiclt17 | grep -v grep | wc
 (./atmiclt17 2>&1) > ./atmiclt17_12.log 
 
 #sleep 5 # let other to complete... (sync..)
-RETP=`ps -efww | grep atmiclt17 | grep -v grep`
+RETP=`$PSCMD | grep atmiclt17 | grep -v grep`
 while [[ "X$RET" != "X" ]]; do
-    RETP=`ps -efww | grep atmiclt17 | grep -v grep`
+    RETP=`$PSCMD | grep atmiclt17 | grep -v grep`
 done 
 
 RET=$?

@@ -94,27 +94,15 @@ sleep 2
 
 #### Capture current PIDs of all 3x processes #####
 LONG_START_PID=""
-if [ "$(uname)" == "FreeBSD" ]; then
-	LONG_START_PID=`ps -auwwx | grep "\-i 125" | grep -v grep | awk '{print $2}'`;
-else
-	LONG_START_PID=`ps -efww | grep "\-i 125" | grep -v grep | awk '{print $2}'`;
-fi
+LONG_START_PID=`$PSCMD | grep "\-i 125" | grep -v grep | awk '{print $2}'`;
 echo "long_start pid: $LONG_START_PID"
 
 NO_PING_PROCESS_PID=""
-if [ "$(uname)" == "FreeBSD" ]; then
-	NO_PING_PROCESS_PID=`ps -auwwx| grep "\-i 126" | grep -v grep | awk '{print $2}'`;
-else
-	NO_PING_PROCESS_PID=`ps -efww | grep "\-i 126" | grep -v grep | awk '{print $2}'`;
-fi
+NO_PING_PROCESS_PID=`$PSCMD | grep "\-i 126" | grep -v grep | awk '{print $2}'`;
 echo "no_ping_process pid: $NO_PING_PROCESS_PID"
 
 LONG_STOP_PID=""
-if [ "$(uname)" == "FreeBSD" ]; then
-	LONG_STOP_PID=`ps -auwwx| grep "\-i 127" | grep -v grep | awk '{print $2}'`;
-else
-	LONG_STOP_PID=`ps -efww | grep "\-i 127" | grep -v grep | awk '{print $2}'`;
-fi
+LONG_STOP_PID=`$PSCMD | grep "\-i 127" | grep -v grep | awk '{print $2}'`;
 echo "long_stop pid: $LONG_STOP_PID"
 sleep 2
 
@@ -127,30 +115,18 @@ xadmin stop -i 127 &
 
 #### Sleep some 10 sec
 sleep 20
-ps -efww | grep atmi
+$PSCMD | grep atmi
 #### All those processes now should be restarted, so get new PIDs
 LONG_START_PID2=""
-if [ "$(uname)" == "FreeBSD" ]; then
-	LONG_START_PID2=`ps -auwwx | grep "\-i 125" | grep -v grep |awk '{print $2}'`;
-else
-	LONG_START_PID2=`ps -efww | grep "\-i 125" | grep -v grep |awk '{print $2}'`;
-fi
+LONG_START_PID2=`$PSCMD | grep "\-i 125" | grep -v grep |awk '{print $2}'`;
 echo "long_start pid2: $LONG_START_PID2"
 
 NO_PING_PROCESS_PID2=""
-if [ "$(uname)" == "FreeBSD" ]; then
-	NO_PING_PROCESS_PID2=`ps -auwwx | grep "\-i 126" | grep -v grep | awk '{print $2}'`;
-else
-	NO_PING_PROCESS_PID2=`ps -efww | grep "\-i 126" | grep -v grep | awk '{print $2}'`;
-fi
+NO_PING_PROCESS_PID2=`$PSCMD | grep "\-i 126" | grep -v grep | awk '{print $2}'`;
 
 echo "no_ping_process pid2: $NO_PING_PROCESS_PID2"
 LONG_STOP_PID2=""
-if [ "$(uname)" == "FreeBSD" ]; then
-	LONG_STOP_PID2=`ps -auwwx | grep "\-i 127" | grep -v grep | awk '{print $2}'`;
-else
-	LONG_STOP_PID2=`ps -efww | grep "\-i 127" | grep -v grep | awk '{print $2}'`;
-fi
+LONG_STOP_PID2=`$PSCMD | grep "\-i 127" | grep -v grep | awk '{print $2}'`;
 echo "long_stop pid2: $LONG_STOP_PID2"
 
 
