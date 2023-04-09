@@ -144,18 +144,18 @@ function get_pid_assert_equal {
 }
 
 function get_pid_before {
-    ps -efww | grep atmi.sv101 | grep -v grep
+    $PSCMD | grep atmi.sv101 | grep -v grep
     PID1=`xadmin ps -a atmi.sv101 | awk '{print $2}'`
 }
 
 function get_pid_after {
-    ps -efww | grep atmi.sv101 | grep -v grep
+    $PSCMD | grep atmi.sv101 | grep -v grep
     PID2=`xadmin ps -a atmi.sv101 | awk '{print $2}'`
     get_pid_assert_not_equal;
 }
 
 function get_pid_after_eq {
-    ps -efww | grep atmi.sv101 | grep -v grep
+    $PSCMD | grep atmi.sv101 | grep -v grep
     PID2=`xadmin ps -a atmi.sv101 | awk '{print $2}'`
     get_pid_assert_equal;
 }

@@ -69,11 +69,7 @@ function set_dom1 {
 function get_pid {
 
     local retpid=""
-    if [ "$(uname)" == "FreeBSD" ]; then
-            retpid=`ps -auwwx | grep "\-i 3519" | grep -v grep | awk '{print $2}'`;
-    else
-            retpid=`ps -efww | grep "\-i 3519" | grep -v grep | awk '{print $2}'`;
-    fi
+    retpid=`$PSCMD | grep "\-i 3519" | grep -v grep | awk '{print $2}'`;
 
     echo $retpid
 }

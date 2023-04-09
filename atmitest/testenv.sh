@@ -39,6 +39,13 @@ unset NDRX_DEBUG_CONF
 export FLDTBLDIR=../../ubftest/ubftab
 export PATH=$PATH:../../xadmin
 
+export PSCMD="ps -efww"
+if [ "$(uname)" == "FreeBSD" ]; then
+    export PSCMD="ps -auwwx"
+elif [ "$(uname)" == "SunOS" ]; then
+    export PSCMD="ps -ef"
+fi
+
 # this is due to fact that for SystemV reasons we
 # open the shared memory segments by clients too.
 xadmin down -y >/dev/null 2>&1
@@ -50,7 +57,7 @@ xadmin qrmall , > /dev/null 2>&1
 xadmin killall ndrxd > /dev/null 2>&1
 
 if [[ `xadmin poller 2>/dev/null` == "SystemV" ]]; then
-        xadmin udown -y > /dev/null 2>&1
+    xadmin udown -y > /dev/null 2>&1
 fi
 
 # vim: set ts=4 sw=4 et smartindent:

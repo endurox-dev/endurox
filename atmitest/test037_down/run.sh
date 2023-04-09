@@ -136,11 +136,6 @@ xadmin start -y || go_out 2
 # Clean up the logs
 rm xadmin-*.log
 
-PSCMD="ps -efww"
-if [ "$(uname)" == "FreeBSD" ]; then
-    PSCMD="ps -auwwx"
-fi
-
 # Have some wait for ndrxd goes in service - wait for connection establishment.
 sleep 10
 

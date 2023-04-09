@@ -106,13 +106,7 @@ set_dom1;
 echo "Testing service stop..."
 xadmin stop -s atmi.sv52
 
-CNT=0
-
-if [ "$(uname)" == "FreeBSD" ]; then
-    CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-else
-    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-fi
+CNT=`$PSCMD | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 
 echo "Process count: $CNT"
 if [[ $CNT -ne 0 ]]; then
@@ -120,16 +114,11 @@ if [[ $CNT -ne 0 ]]; then
 	go_out 1        
 fi
 
-
 echo "Testing service start..."
 
 xadmin start -s atmi.sv52
 
-if [ "$(uname)" == "FreeBSD" ]; then
-    CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-else
-    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-fi
+CNT=`$PSCMD | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 
 echo "Process count: $CNT"
 if [[ $CNT -ne 2 ]]; then
@@ -141,11 +130,7 @@ fi
 echo "Testing service start -i..."
 xadmin start -i 12
 
-if [ "$(uname)" == "FreeBSD" ]; then
-    CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-else
-    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-fi
+CNT=`$PSCMD | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 
 echo "Process count: $CNT"
 if [[ $CNT -ne 3 ]]; then
@@ -158,11 +143,7 @@ echo "Testing service stop -s..."
 
 xadmin stop -s atmi.sv52
 
-if [ "$(uname)" == "FreeBSD" ]; then
-    CNT=`ps -auwwx | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-else
-    CNT=`ps -efww | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
-fi
+CNT=`$PSCMD | grep atmi.sv52 | grep -v grep | wc | awk '{print $1}'`;
 
 echo "Process count: $CNT"
 if [[ $CNT -ne 0 ]]; then
