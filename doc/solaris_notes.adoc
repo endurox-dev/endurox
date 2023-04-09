@@ -183,7 +183,7 @@ echo "Loading ndrx_home..."
 # Where app domain lives
 export NDRX_APPHOME=$HOME/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=\$HOME/endurox/dist/bin
+export NDRX_HOME=\$HOME/endurox/dist
 # Debug config too
 export NDRX_DEBUG_CONF=\$HOME/endurox/sampleconfig/debug.conf
 # NDRX config too.
