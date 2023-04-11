@@ -631,7 +631,8 @@ Feature #715
 - Version 8.0.1 released on 09/10/2021 (development) Support #63, Support #265, Support #753, Support #752, Bug #701, Feature #211, Support #753, Support #752,
 Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, Support #554, Bug #555, Support #759, Bug #639, Support #267
 
-- Version 7.5.36 released on 16/12/2021 (stable) Support #742, Bug #745, Bug #747, Support #748, Bug #749, Bug #750
+- Version 7.5.36 released on 16/12/2021 (stable) Support #742, Bug #745, Bug #747, Support #748, Bug #749, Bug #750, Bug #796,
+Bug #801
 
 - Version 8.0.4 released on 05/02/2022 (stable) Support #763, Feature #764, Support #765
 
@@ -650,7 +651,7 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 - Version 8.0.6 prepared on 07/03/2022 (stable) Feature #767, Support #768, Support #769, Bug #771, Feature #772, Bug #774, Bug #775
 
 - Version 8.0.8 prepared on 07/11/2022 (stable) Bug #789, Feature #792, Bug #794, Support #795, Bug #796, Bug #149,
-Bug #798, Bug #738, Support #448, Bug #125, Bug #202, Bug #799
+Bug #798, Bug #738, Support #448, Bug #125, Bug #202, Bug #799, Bug #801
 
 # Build configurations
 
