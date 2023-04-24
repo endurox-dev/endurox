@@ -147,7 +147,7 @@ expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
  * Feature #470 This now applies TP/NDRX/UBF facilities.
  * @param filename file name to log to
  */
-expublic void tplogsetreqfile_direct(char *filename)
+expublic void tplogsetreqfile_direct(const char *filename)
 {
     debug_map_t map[] = LOGGER_MAP;
     int i, dosetup=EXFALSE;
@@ -352,8 +352,8 @@ expublic void tplogclosereqfile(void)
  * @param new_file New logging file (this overrides the stuff from debug string)
  * @return SUCCEED/FAIL
  */
-expublic int tplogconfig(int logger, int lev, char *debug_string, char *module, 
-        char *new_file)
+expublic int tplogconfig(int logger, int lev, const char *debug_string, const char *module, 
+        const char *new_file)
 {
     return tplogconfig_int(logger, lev, debug_string, module, new_file, 0);
 }
@@ -375,8 +375,8 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
  * @param flags internal flags
  * @return SUCCEED/FAIL
  */
-expublic int tplogconfig_int(int logger, int lev, char *debug_string, char *module, 
-        char *new_file, long flags)
+expublic int tplogconfig_int(int logger, int lev, const char *debug_string, const char *module, 
+        const char *new_file, long flags)
 {
     int ret = EXSUCCEED;
     ndrx_debug_t *l;
@@ -577,7 +577,7 @@ out:
  * @param lev
  * @param message
  */
-expublic void tplog(int lev, char *message)
+expublic void tplog(int lev, const char *message)
 {
     /* do not want to interpret the format string */
     TP_LOG(lev, "%s", message);
@@ -588,7 +588,7 @@ expublic void tplog(int lev, char *message)
  * @param lev
  * @param message
  */
-expublic void tplogex(int lev, char *file, long line, char *message)
+expublic void tplogex(int lev, const char *file, long line, const char *message)
 {
     /* do not want to interpret the format string */
     TP_LOGEX(lev, file, line, "%s", message);
@@ -610,7 +610,7 @@ expublic char * tploggetiflags(void)
  * @param ptr
  * @param len
  */
-expublic void tplogdump(int lev, char *comment, void *ptr, int len)
+expublic void tplogdump(int lev, const char *comment, void *ptr, int len)
 {
     TP_DUMP(lev, comment, (char *)ptr, len);
 }
@@ -623,7 +623,7 @@ expublic void tplogdump(int lev, char *comment, void *ptr, int len)
  * @param ptr2
  * @param len
  */
-expublic void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+expublic void tplogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len)
 {
     TP_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
@@ -633,7 +633,7 @@ expublic void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int 
  * @param lev
  * @param message
  */
-expublic void ndrxlog(int lev, char *message)
+expublic void ndrxlog(int lev, const char *message)
 {
     /* do not want to interpret the format string */
     NDRX_LOG(lev, "%s", message);
@@ -646,7 +646,7 @@ expublic void ndrxlog(int lev, char *message)
  * @param line source line number
  * @param message log message
  */
-expublic void ndrxlogex(int lev, char *file, long line, char *message)
+expublic void ndrxlogex(int lev, const char *file, long line, const char *message)
 {
     /* do not want to interpret the format string */
     NDRX_LOGEX(lev, file, line, "%s", message);
@@ -659,7 +659,7 @@ expublic void ndrxlogex(int lev, char *file, long line, char *message)
  * @param ptr
  * @param len
  */
-expublic void ndrxlogdump(int lev, char *comment, void *ptr, int len)
+expublic void ndrxlogdump(int lev, const char *comment, void *ptr, int len)
 {
     NDRX_DUMP(lev, comment, (char *)ptr, len);
 }
@@ -672,7 +672,7 @@ expublic void ndrxlogdump(int lev, char *comment, void *ptr, int len)
  * @param ptr2
  * @param len
  */
-expublic void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+expublic void ndrxlogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len)
 {
     NDRX_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
@@ -682,7 +682,7 @@ expublic void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, in
  * @param lev
  * @param message
  */
-expublic void ubflog(int lev, char *message)
+expublic void ubflog(int lev, const char *message)
 {
     /* do not want to interpret the format string */
     UBF_LOG(lev, "%s", message);
@@ -695,7 +695,7 @@ expublic void ubflog(int lev, char *message)
  * @param line source line number
  * @param message log message
  */
-expublic void ubflogex(int lev, char *file, long line, char *message)
+expublic void ubflogex(int lev, const char *file, long line, const char *message)
 {
     /* do not want to interpret the format string */
     UBF_LOGEX(lev, file, line, "%s", message);
@@ -708,7 +708,7 @@ expublic void ubflogex(int lev, char *file, long line, char *message)
  * @param ptr
  * @param len
  */
-expublic void ubflogdump(int lev, char *comment, void *ptr, int len)
+expublic void ubflogdump(int lev, const char *comment, void *ptr, int len)
 {
     UBF_DUMP(lev, comment, (char *)ptr, len);
 }
@@ -721,7 +721,7 @@ expublic void ubflogdump(int lev, char *comment, void *ptr, int len)
  * @param ptr2
  * @param len
  */
-expublic void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len)
+expublic void ubflogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len)
 {
     UBF_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }

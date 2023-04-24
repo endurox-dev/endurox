@@ -127,10 +127,10 @@ extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 
 extern NDRX_API void ndrx_init_fail_banner(void);
 
-extern NDRX_API ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname, int do_lock, 
+extern NDRX_API ndrx_debug_file_sink_t* ndrx_debug_get_sink(const char *fname, int do_lock, 
         ndrx_debug_t *dbg_ptr, int *p_ret);
 
-extern NDRX_API int ndrx_debug_changename(char *toname, int do_lock, 
+extern NDRX_API int ndrx_debug_changename(const char *toname, int do_lock, 
         ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t* fileupdate);
 extern NDRX_API void ndrx_debug_force_closeall(void);
 extern NDRX_API void ndrx_debug_refcount(int *sinks, int *refs);
@@ -138,14 +138,14 @@ extern NDRX_API int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do
 extern NDRX_API void ndrx_debug_addref(ndrx_debug_file_sink_t* mysink);
 extern NDRX_API int ndrx_debug_reopen_all(void);
 
-extern NDRX_API int tplogconfig_int(int logger, int lev, char *debug_string, char *module, 
-        char *new_file, long flags);
+extern NDRX_API int tplogconfig_int(int logger, int lev, const char *debug_string, const char *module, 
+        const char *new_file, long flags);
 extern NDRX_API int ndrx_debug_is_proc_stderr(void);
 extern NDRX_API void ndrx_debug_proc_link_ndrx(long flags);
 
-extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode, 
+extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(const char *filename, const char *mode, 
         ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink);
-extern NDRX_API int ndrx_init_parse_line(char *dbgstr, ndrx_debug_t *dbg_ptr, 
+extern NDRX_API int ndrx_init_parse_line(const char *dbgstr, ndrx_debug_t *dbg_ptr, 
         char *tmpfname, size_t tmpfnamesz, int *do_match, char *match_nm);
 
 extern NDRX_API void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink);

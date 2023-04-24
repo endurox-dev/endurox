@@ -584,7 +584,7 @@ exprivate void ndrx_dbg_rebins_free(void)
  * @param match_nm match name
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_init_parse_line(char *dbgstr, ndrx_debug_t *dbg_ptr, 
+expublic int ndrx_init_parse_line(const char *dbgstr, ndrx_debug_t *dbg_ptr, 
         char *tmpfname, size_t tmpfnamesz, int *do_match, char *match_nm)
 {
     int ret = EXSUCCEED;
@@ -884,7 +884,7 @@ out:
  * @param[in,out] fsink file sink to use if dbg_ptr is not available.
  * @return ptr to FILE or NULL and errno set
  */
-expublic FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode,
+expublic FILE *ndrx_dbg_fopen_mkdir(const char *filename, const char *mode,
         ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink)
 {
     FILE *ret = NULL;

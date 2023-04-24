@@ -111,7 +111,7 @@ exprivate void ndrx_debug_fclose( ndrx_debug_file_sink_t* mysink)
  * @param[out] p_ret return status if EXFAIL, then logger was flipped to stderr
  * @return file sink
  */
-expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname, 
+expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(const char *fname, 
         int do_lock, ndrx_debug_t *dbg_ptr, int *p_ret)
 {
     ndrx_debug_file_sink_t *ret = NULL;
@@ -432,7 +432,7 @@ expublic void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink)
  * @param fileupdate file update object (present if doing log-rotate)
  * @return EXSUCCEED/EXFAIL (some files did not open and was forwarded to stderr)
  */
-expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_ptr, 
+expublic int ndrx_debug_changename(const char *toname, int do_lock, ndrx_debug_t *dbg_ptr, 
         ndrx_debug_file_sink_t* fileupdate)
 {
     int ret = EXSUCCEED;
