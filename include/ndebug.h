@@ -440,33 +440,33 @@ extern NDRX_API int ndrx_dbg_intlock_isset(void);
 
 /* TPLOG: */
 
-extern NDRX_API void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
-extern NDRX_API void tplogdump(int lev, char *comment, void *ptr, int len);
-extern NDRX_API void tplog(int lev, char *message);
+extern NDRX_API void tplogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len);
+extern NDRX_API void tplogdump(int lev, const char *comment, void *ptr, int len);
+extern NDRX_API void tplog(int lev, const char *message);
 extern NDRX_API long tplogqinfo(int lev, long flags);
 
 /* extended logging: */
-extern NDRX_API void tplogex(int lev, char *file, long line, char *message);
-extern NDRX_API void ndrxlogex(int lev, char *file, long line, char *message);
-extern NDRX_API void ubflogex(int lev, char *file, long line, char *message);
+extern NDRX_API void tplogex(int lev, const char *file, long line, const char *message);
+extern NDRX_API void ndrxlogex(int lev, const char *file, long line, const char *message);
+extern NDRX_API void ubflogex(int lev, const char *file, long line, const char *message);
 
 /* get integration flags: */
 extern NDRX_API char * tploggetiflags(void);
 
-extern NDRX_API void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
-extern NDRX_API void ndrxlogdump(int lev, char *comment, void *ptr, int len);
-extern NDRX_API void ndrxlog(int lev, char *message);
+extern NDRX_API void ndrxlogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len);
+extern NDRX_API void ndrxlogdump(int lev, const char *comment, void *ptr, int len);
+extern NDRX_API void ndrxlog(int lev, const char *message);
 
-extern NDRX_API void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
-extern NDRX_API void ubflogdump(int lev, char *comment, void *ptr, int len);
-extern NDRX_API void ubflog(int lev, char *message);
+extern NDRX_API void ubflogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len);
+extern NDRX_API void ubflogdump(int lev, const char *comment, void *ptr, int len);
+extern NDRX_API void ubflog(int lev, const char *message);
 
 extern NDRX_API int tploggetreqfile(char *filename, int bufsize);
-extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *module, char *new_file);
+extern NDRX_API int tplogconfig(int logger, int lev, const char *debug_string, const char *module, const char *new_file);
 extern NDRX_API int tplogreopen(void);
 extern NDRX_API void tplogclosereqfile(void);
 extern NDRX_API void tplogclosethread(void);
-extern NDRX_API void tplogsetreqfile_direct(char *filename);
+extern NDRX_API void tplogsetreqfile_direct(const char *filename);
 extern NDRX_API void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls);
 
 extern NDRX_API ndrx_debug_t * tplogfplock(int lev, long flags);

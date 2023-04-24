@@ -60,7 +60,7 @@
  * @param input input string to parse
  * @param parsed 
  */
-expublic int ndrx_stdcfgstr_parse(char *input, ndrx_stdcfgstr_t** parsed)
+expublic int ndrx_stdcfgstr_parse(const char *input, ndrx_stdcfgstr_t** parsed)
 {
     int ret = EXSUCCEED;
     int i;
