@@ -264,11 +264,22 @@ it will be user from Fedora Core OS:
 ---------------------------------------------------------------------
 
 If running unit tests with PostgreSQL, then following additional package shall
-be installed:
+be installed. Enduro/X standard build on RHEL 8.x uses PostgreSQL version 13.
+Additionally to build ECPG library "CodeReady Builder" repo shall be enabled.
 
 ---------------------------------------------------------------------
 $ su - root
-# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# dnf module reset postgresql
+# dnf module enable postgresql:13
+# mkdir -p /etc/yum/repos.d
+# cat << EOF > /etc/yum/repos.d/codeready_builder.repo
+[OL8_codeready_builder]
+name= checkmk dependencies
+baseurl=http://yum.oracle.com/repo/OracleLinux/OL8/codeready/builder/x86_64
+enabled=1
+gpgcheck=0
+EOF
+# dnf install  postgresql postgresql-devel postgresql-server postgresql-contrib libecpg-devel
 # postgresql-setup initdb
 # systemctl start postgresql
 # systemctl enable postgresql
@@ -282,9 +293,9 @@ To install Enduro/X build dependencies.
 ---------------------------------------------------------------------
 
 $ su - root
-# yum install yum-utils
-# yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc openssl openssl-devel libxml2-devel
+# dnf install yum-utils
+# dnf groupinstall 'Development Tools'
+# dnf install git cmake asciidoc openssl openssl-devel libxml2-devel
 
 ---------------------------------------------------------------------
 
@@ -301,33 +312,26 @@ it will be user from Fedora Core OS:
 ---------------------------------------------------------------------
 
 If running unit tests with PostgreSQL, then following additional package shall
-be installed:
+be installed. For ECPG "CodeReady Builder" shall be enabled.
 
 ---------------------------------------------------------------------
 $ su - root
-# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# mkdir -p /etc/yum/repos.d
+# cat << EOF > /etc/yum/repos.d/codeready_builder.repo
+[OL9_codeready_builder]
+name= checkmk dependencies
+baseurl=http://yum.oracle.com/repo/OracleLinux/OL9/codeready/builder/x86_64
+enabled=1
+gpgcheck=0
+EOF
+# dnf install  postgresql postgresql-devel postgresql-server postgresql-contrib libecpg-devel
 # postgresql-setup initdb
 # systemctl start postgresql
 # systemctl enable postgresql
 ---------------------------------------------------------------------
 
-Additionally for PostgreSQL embedded SQL C preprocessor libraries shall be installed
-(unless configuring with -DDISABLE_ECPG).
-
-For some of the RHEL flavors, this packages is not available in vendor provided
-installations, thus, for example, other vendor provided packages may be used.
-
----------------------------------------------------------------------
--- Try:
-
-# yum install libecpg-devel
-
--- If above does not work out:
-
-# wget https://www.mavimax.com/sites/default/files/libecpg-devel-13.5-1.el9.x86_64.rpm
-# rpm -i libecpg-devel-13.5-1.el9.x86_64.rpm
----------------------------------------------------------------------
-
+If ECPG precompiler for PostgreSQL is not available, the usage of it can
+be disabled by -DDISABLE_ECPG build flag.
 
 ==== AsciiDoc Integration with Dia
 
