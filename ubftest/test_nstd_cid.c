@@ -159,7 +159,7 @@ Ensure(test_nstd_cid_unq)
 Ensure(test_nstd_cid_fmt)
 {
     exuuid_t cid, cid2;
-    unsigned seq1, seq2;
+    unsigned seq1=0, seq2=0;
     pid_t pid;
     struct timeval tv, tv2, tvt;
     int i, got_diff;
