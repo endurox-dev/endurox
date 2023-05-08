@@ -44,6 +44,8 @@ if [ "$(uname)" == "FreeBSD" ]; then
     export PSCMD="ps -auwwx"
 elif [ "$(uname)" == "SunOS" ]; then
     export PSCMD="ps -ef"
+elif [ "$(uname)" == "AIX" ]; then
+    export PSCMD="ps -ef"
 fi
 
 # this is due to fact that for SystemV reasons we
