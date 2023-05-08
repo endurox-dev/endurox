@@ -36,5 +36,6 @@ cmake_minimum_required(VERSION 3.1)
 
 install (FILES
     ex_osver.cmake
+    ex_comp.cmake
     DESTINATION share/endurox/cmake)
 # vim: set ts=4 sw=4 et smartindent:
