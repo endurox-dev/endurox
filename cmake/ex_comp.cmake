@@ -63,11 +63,8 @@ macro(ex_comp_settings)
 
     SET (EX_ALIGNMENT_BYTES "4")
 
-    SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags" FORCE)
-
     # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
     if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
-    #    SET(CMAKE_C_FLAGS "-Wno-format-truncation -Wstringop-overflow=0 -D_DEFAULT_SOURCE=1 ${CMAKE_C_FLAGS}")
         SET(CMAKE_C_FLAGS "-Wno-stringop-overflow -Wno-format-truncation -Wformat-overflow=0 ${CMAKE_C_FLAGS}")
     endif()
 
@@ -78,26 +75,39 @@ macro(ex_comp_settings)
         SET (STACK_PROTECTOR "")
     endif()
 
-    # Enable release only if specified.
-    # By default if RELEASE_BUILD is not defined, then we run in debug!
-    IF (DEFINE_RELEASEBUILD)
-        MESSAGE( RELEASE_BUILD )
-    #_cmake_modify_IGNORE     SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_C_FLAGS}")
-        SET(CMAKE_CXX_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_CXX_FLAGS}")
-    ELSE ()
-        MESSAGE( DEBUG_BUILD )
-    #_cmake_modify_IGNORE     SET(CMAKE_BUILD_TYPE debug)
-    # Memory debugging:
-    #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+    # set O flag common for all compilers:
+    SET ( CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}" CACHE STRING "compile flags" FORCE)
+    SET ( CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags" FORCE)
 
-        IF (DEFINE_SANITIZE)
-            SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-            SET(CMAKE_CXX_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_CXX_FLAGS}")
-        ELSE ()
-            SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 -ggdb ${CMAKE_C_FLAGS}")
-        ENDIF()
-    ENDIF ()
+    # GNU like compiler configuration
+    if ( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang" )
+
+        if (DEFINE_RELEASEBUILD)
+            SET(CMAKE_CXX_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_CXX_FLAGS}")
+        else()
+            IF (DEFINE_SANITIZE)
+                SET(CMAKE_CXX_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+            else()
+                SET(CMAKE_CXX_FLAGS "${STACK_PROTECTOR} -ggdb ${CMAKE_CXX_FLAGS}")
+            endif()
+        endif()
+
+    endif()
+
+    # GNU like compiler configuration
+    if ( ${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang")
+
+        if (DEFINE_RELEASEBUILD)
+            SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} ${CMAKE_C_FLAGS}")
+        else()
+            IF (DEFINE_SANITIZE)
+                SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+            else()
+                SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -ggdb ${CMAKE_C_FLAGS}")
+            endif()
+        endif()
+
+    endif()
 
     IF (MUTEX_DEBUG)
         SET(CMAKE_C_FLAGS "-D_GNU_SOURCE ${CMAKE_C_FLAGS}")
@@ -144,7 +154,7 @@ macro(ex_comp_settings)
             set(EX_CPM_NO_THREADS "1")
             set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 
-        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
                 message("GNU compiler")
                 set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_MSGQSUPPORT -D_THREAD_SAFE -pthread -maix64 -Wl,-brtl,-bexpall,-berok ${CMAKE_C_FLAGS}")
                 set ( CMAKE_CXX_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_MSGQSUPPORT -D_THREAD_SAFE -pthread -maix64 -Wl,-brtl,-bexpall,-berok ${CMAKE_CXX_FLAGS}")
