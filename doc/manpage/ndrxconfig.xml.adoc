@@ -164,7 +164,7 @@ SYNOPSIS
         <client cmdline="BINARY2" ...>
             <exec tag="CLT_EXE_TAG2" .../>
         </client>
-    <clients>
+    </clients>
     <services>
         <defaults prio="SVC_PRIO_DEF" 
                  routing="SVC_ROUTE_NAME_DEF" 
