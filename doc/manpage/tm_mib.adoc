@@ -359,10 +359,12 @@ Object fields returned for *T_USERDATA* class shall be following:
 
 - Field *TA_EX_UVNAME* (string..112):
 
-- Field *TA_EX_UVTYP* (short): Entry type codes: *1* - string based data and value
-is loaded into *TA_EX_UVSTR*. *2* - data type is int32, and value is loaded into
-*TA_EX_UVINT32*. *3* - data type is Gauge32 and value is loaded into *TA_EX_UVG32*.
-*4* - data type is Counter64 and value is loaded into *TA_EX_UVC64*. When
+- Field *TA_EX_UVTYP* (short): Bitmask indication of the fields returned.
+Following constants may be OR'ed, to incidate which fields are used in response.
+Entry type codes (bits): *1* (0x0001) - string based data and value
+is loaded into *TA_EX_UVSTR*. *2* (0x0002) - data type is int32, and value is loaded into
+*TA_EX_UVINT32*. *4* (0x0004) - data type is Gauge32 and value is loaded into *TA_EX_UVG32*.
+*8* (0x0008) - data type is Counter64 and value is loaded into *TA_EX_UVC64*. When
 returning the results all fields must be filled. The fields which does not
 return the value for particular type, must be set to "0" or empty string according
 to the spare field data type.
