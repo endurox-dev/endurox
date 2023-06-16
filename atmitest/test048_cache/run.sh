@@ -20,6 +20,11 @@ fi;
 rm *.log 2>/dev/null
 rm ULOG* 2>/dev/null
 
+# cleanup data files...
+# possible due to record size differences between Enduro/X versions, we might get SIGBUS error
+# thus cleanup here.
+find . -name *.edb | xargs rm -f
+
 > ./test.out
 # Have some terminal output...
 tail -f test.out &
