@@ -70,7 +70,7 @@ $ sudo apt-get install indent asciidoc libxml2-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev libxml2-dev git
 ---------------------------------------------------------------------
 
-==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04, 20.04
+==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04, 20.04, 22.04
 
 ---------------------------------------------------------------------
 $ sudo apt-get update
