@@ -79,7 +79,7 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
         directly from cache (mainly from direct memory read).
 * Dynamic re-configuration
 * Custom server polling extensions
-* XATMI sub-system is able to work with out main application server daemon (ndrxd)
+* XATMI sub-system is able to work without main application server daemon (ndrxd)
 * Main application server daemon (ndrxd) can be restarted (if crashed). 
         When started back it enters in learning mode for some period of time, 
         in which in gathers information about system, what services are running, 
@@ -185,7 +185,7 @@ heal it self, and boot service/daemons back.
 The ndrxd learning mode is some period of time (configurable) in which ndrxd 
 will request all the system for active servers and their services, 
 to get back the view of the system and be in control. Note that system is able 
-to work even with out ndrxd, but at that time no server healing 
+to work even without ndrxd, but at that time no server healing 
 and management will be done.
 
 ![Alt text](doc/server_monitoring_and_recovery.png?raw=true "Enduro/X high 
