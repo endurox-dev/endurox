@@ -46,7 +46,7 @@ may advertise arbitrary number of services, where each service is shared queue,
 that may be shared between several other processes which advertise that service.
 Prior IBM AIX 7.3 poll did not had equivalent functionality of the Linux *EPOLLEXCLUSIVE* flag, 
 so IBM AIX was prone to the CPU wasting (thundering herd problem) at specific 
-workloads as in FreeBSD (described above). Starting from AIX 7.3 IBM 
+workloads as in FreeBSD (described above). Starting from AIX 7.3 IBM
 have implemented *POLLEXCL* flag in AIX for poll() system call. With this 
 new flag Enduro/X on IBM AIX works with the same performance benefits as on the Linux (having
 true one-queue/multiple-servers topology for all XATMI services). 
@@ -59,14 +59,9 @@ way is to use *ONE* or (*ONE:RR* as *RR* is by default). The poll() *POLLEXCL* u
 can be disabled for particular process by setting at *NDRX_NOPOLLEXCL* 
 to *Y* at *<envs>/<env>* tag (Thought this is not recommend, 
 and it will introduce thundering herd issue, if several same type binaries are started).
-Currently *svapoll* version officially is not released, due to suspected 
-(as of 25.01.2022) that AIX has a bug, when service queue is full (blocked to the client) and there
-are several XATMI servers serving / polling the queue (idling), the AIX kernel
-seems to return *POLLIN* event only to one executable, thus load is not balanced.
-When service queue is not full / blocked, seems that poll() is more dynamic
-and poll() starts to distribute events to several processes which are listening
-on the particular System V message queue.
-
+*NOTE:* that *svapoll* mode, due to bug in AIX 7.3
+(https://www.ibm.com/support/pages/apar/IJ37827), can be used only starting from
+AIX version 7.3 TL0, SP2 (where the bug is fixed).
 
 -  System V message queues, this is generally second best transport available
 on Linux and Unix operating systems. One queue multiple servers mechanism is
