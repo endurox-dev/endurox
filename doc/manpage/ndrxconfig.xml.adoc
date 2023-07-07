@@ -31,7 +31,7 @@ SYNOPSIS
         <mindispatchthreads>MIN_DISPTHREADS_DEFAULT</mindispatchthreads>
         <maxdispatchthreads>MAX_DISPTHREADS_DEFAULT</maxdispatchthreads>
         <autokill>AUTOKILL_DEFAULT</autokill>
-        <respawn>RESPAWN_DEFAULT<respawn>
+        <respawn>RESPAWN_DEFAULT</respawn>
         <env>ENV_OVERRIDE_DEFAULT</env>
         <start_max>MAX_STARTUP_TIME_DEFAULT</start_max>
         <pingtime>PING_EVERY_TIME_DEFAULT</pingtime>
@@ -67,7 +67,7 @@ SYNOPSIS
             <mindispatchthreads>MIN_DISPTHREADS_SERVER</mindispatchthreads>
             <maxdispatchthreads>MAX_DISPTHREADS_SERVER</maxdispatchthreads>
             <autokill>AUTOKILL_SRV</autokill>
-            <respawn>RESPAWN_SRV<respawn>
+            <respawn>RESPAWN_SRV</respawn>
             <env>ENV_OVERRIDE_SRV</env>
             <start_max>MAX_STARTUP_TIME_SRV</start_max>
             <pingtime>PING_EVERY_TIME_SRV</pingtime>
