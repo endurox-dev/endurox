@@ -55,6 +55,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_Q_TRYLOCK_TIME 10  /* time in which we must get the q lock */
+#define NDRX_SVQ_SCANUNIT_NDRXD 200  /*< Scan unit used for System V Q  */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -501,6 +502,12 @@ int main(int argc, char** argv)
     sa.sa_flags = SA_RESTART; /* restart system calls please... */
     sigaction (SIGCHLD, &sa, 0);
     
+    /* have short scan-unit to have more precise sanity timings when
+     * sleeping on command queue
+     */
+#ifdef EX_USE_SYSVQ
+    ndrx_svq_scanunit_set(NDRX_SVQ_SCANUNIT_NDRXD);
+#endif
     /* Do some init */
     memset(&G_sys_config, 0, sizeof(G_sys_config));
     

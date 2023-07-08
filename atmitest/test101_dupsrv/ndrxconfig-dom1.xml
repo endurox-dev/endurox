@@ -48,9 +48,6 @@
         Max time to wait until process should exit on shutdown
         -->
         <end_max>20</end_max>
-        <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
-        to process until it have been terminated. -->
-        <killtime>20</killtime>
 
         <!-- must be lower than end_max, in order to test dulicate
              scenario
