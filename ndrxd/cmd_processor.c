@@ -325,7 +325,7 @@ expublic int command_wait_and_run(int *finished, int *abort)
     /* non setting this might cause invalid args to queue <0!
     abs_timeout.tv_nsec = 0; */
     
-    /*abs_timeout.tv_nsec = timeval.tv_usec*1000;*/
+    abs_timeout.tv_nsec = timeval.tv_usec*1000;
 
     /* check for child exit... 
     if (check_child_exit())
