@@ -204,16 +204,10 @@ Internal server ping can be configured here too.
 PARAMETERS
 ----------
 
-'NDRX_CMDWAIT'::
-    Number of seconds for which *ndrxd(8)* process periodically sleeps between the
-    checks (such as sanity scans). For *SystemV* mode, accuracy of this
-    setting is 200ms (i.e. the minimum is given number of the seconds,
-    but cycle in *SystemV* mode may take 'SANITY_SECONDS'+0.2 sec between the scans).
-    Default value is *1*.
 'SANITY_SECONDS'::
     Number of seconds after which perform system sanity checks. The accuracy of the
-    setting depends on the *NDRX_CMDWAIT* value. As this actually
-    is time by which *ndrxd(8)* sleeps periodically between the checks.
+    setting depends on the *NDRX_CMDWAIT* env setting value. As this actually
+    is time by which *ndrxd(8)* sleeps periodically between the any other checks.
 'CHECKPM_STY'::
     This is number of sanity cycles into which check dead processes from the
     process model. This makes the actual checking of th PID existence system.
