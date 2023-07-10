@@ -317,16 +317,6 @@ expublic int command_wait_and_run(int *finished, int *abort)
     memset(msg_buffer_max, 0, sizeof(command_call_t));
     snprintf(context_check, sizeof(context_check), ",%d,", G_command_state.context);
 
-    /* Initialize wait timeout */
-    gettimeofday (&timeval, NULL);
-    memset(&abs_timeout, 0, sizeof(abs_timeout));
-    abs_timeout.tv_sec = timeval.tv_sec + G_sys_config.cmd_wait_time ;
-    /* Wait time in nano-seconds, maybe this causes invalid args?*/
-    /* non setting this might cause invalid args to queue <0!
-    abs_timeout.tv_nsec = 0; */
-    
-    abs_timeout.tv_nsec = timeval.tv_usec*1000;
-
     /* check for child exit... 
     if (check_child_exit())
     {
@@ -345,7 +335,6 @@ expublic int command_wait_and_run(int *finished, int *abort)
         do_sanity_check(EXFALSE);
     }
     
-    
     /* Wait for buffer 
     NDRX_LOG(log_warn, "Waiting for message..."); */
     /*siginterrupt(SIGCHLD, TRUE);  This region must be interruptible...
@@ -353,6 +342,28 @@ expublic int command_wait_and_run(int *finished, int *abort)
     
     /* Change to blocked, if not already! */
     ndrx_q_setblock(G_command_state.listenq, EXTRUE);
+
+    /* Initialize wait timeout 
+     * TODO: We might consider to have shorter abs_timeout if sanity check is closer,
+     * however that might mean more frequent command_wait_and_run() returns, and
+     * for example stop_process() might send more re-attempts due to these wakups.
+     * However this seems not to be big deal.
+     *
+     * Right now there issue is that any incoming command might
+     * interrupt us in the middle of wait, and thus we might skip some sanity scan cycle.
+     * If we add closer sanity runs, this might actually might change some behaviour
+     * for existing client systems (i.e. more frequent pings / respawns..) and actually
+     * that might happen when system seems to be busy, as command handler gets the
+     * interrupts.
+     *
+     * I guess we might consider the above change for future major release.
+     */
+
+    gettimeofday (&timeval, NULL);
+    memset(&abs_timeout, 0, sizeof(abs_timeout));
+    abs_timeout.tv_sec = timeval.tv_sec + G_sys_config.cmd_wait_time ;
+    abs_timeout.tv_nsec = timeval.tv_usec*1000;
+
     /* For OSX we need a special case here, we try to access to 
      * the queue for serveral minutes. If we get trylock rejected for
      * configured number of time, we shall close the queue and open it again
