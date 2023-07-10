@@ -350,7 +350,8 @@ expublic int command_wait_and_run(int *finished, int *abort)
      * However this seems not to be big deal.
      *
      * Right now there issue is that any incoming command might
-     * interrupt us in the middle of wait, and thus we might skip some sanity scan cycle.
+     * interrupt us in the middle of wait, and thus we might skip/oversleep some sanity scan cycle.
+     * (mostly that would be in case if sanity is set to 1).
      * If we add closer sanity runs, this might actually might change some behaviour
      * for existing client systems (i.e. more frequent pings / respawns..) and actually
      * that might happen when system seems to be busy, as command handler gets the
