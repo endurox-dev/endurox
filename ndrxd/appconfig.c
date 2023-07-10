@@ -844,12 +844,11 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     }
     
     /* Now validate configuration - all values should have not be zero! */
-    
-    if (!config->sanity)
+    if (!config->sanity || config->sanity < 0)
     {
-        NDRX_LOG(log_debug, "`sanity' not set!");
+        NDRX_LOG(log_debug, "`sanity' not set or has invalid value!");
         NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `sanity' not "
-                "set at <appconfig> section near line %d!", 
+                "set or has invalid value at <appconfig> section near line %d!", 
                 G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
