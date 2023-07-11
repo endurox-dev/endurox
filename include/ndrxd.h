@@ -412,6 +412,7 @@ extern void ndrx_ddr_apply(void);
 extern int do_sanity_check(int isfinal);
 extern int self_notify(srv_status_t *status, int block);
 extern int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq);
+extern ndrx_stopwatch_t * ndrx_get_santiy_stopwatch(void);
 
 /* Restart */
 extern int do_restart_actions(void);
@@ -444,7 +445,6 @@ extern int cmd_xadunadv (command_call_t * call, char *data, size_t len, int cont
 extern int cmd_srvunadv (command_call_t * call, char *data, size_t len, int context);
 extern int cmd_srvadv (command_call_t * call, char *data, size_t len, int context);
 extern int cmd_xadreadv (command_call_t * call, char *data, size_t len, int context);
-
 
 extern int readv_request(int srvid, char *svc);
 extern char * get_srv_admin_q(pm_node_t * p_pm);

@@ -64,6 +64,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic unsigned G_sanity_cycle = 0;
+exprivate ndrx_stopwatch_t M_timer; /**< Stopwatch for next sanity scan*/
+exprivate int M_first = EXTRUE; /**< Was the santiy init OK */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -74,6 +76,22 @@ exprivate int check_cnvsrv(char *qname);
 exprivate int check_long_startup(void);
 exprivate int check_dead_processes(void);
 exprivate void check_memlimits(void);
+
+/**
+ * Return sanity scan stopwatch
+ * @return ptr to ndrx_stopwatch_t or NULL (in case if no init done)
+ */
+expublic ndrx_stopwatch_t * ndrx_get_santiy_stopwatch(void)
+{
+
+    if (!M_first)
+    {
+        return &M_timer;
+    }
+
+    return NULL;
+}
+
 /**
  * Master process for sanity checking.
  * @param[in] finalchk perform final checks? Remove dread resources...
@@ -82,8 +100,6 @@ exprivate void check_memlimits(void);
 expublic int do_sanity_check(int finalchk)
 {
     int ret=EXSUCCEED;
-    static ndrx_stopwatch_t timer;
-    static int first = EXTRUE;    
     static char    server_prefix[NDRX_MAX_Q_SIZE+1];
     static int     server_prefix_len;
     static char    client_prefix[NDRX_MAX_Q_SIZE+1];
@@ -110,9 +126,9 @@ expublic int do_sanity_check(int finalchk)
     if (NULL==G_app_config)
         goto out;
     
-    if (first)
+    if (M_first)
     {
-        ndrx_stopwatch_reset(&timer);
+        ndrx_stopwatch_reset(&M_timer);
         /* Initialize q prefixes, +1 for skipping initial / */
         snprintf(client_prefix, sizeof(client_prefix), NDRX_CLT_QREPLY_PFX, 
                 G_sys_config.qprefix);
@@ -132,23 +148,23 @@ expublic int do_sanity_check(int finalchk)
         NDRX_LOG(log_debug, "server_prefix=[%s]/%d", server_prefix, 
                             server_prefix_len);
 	
-	snprintf(cnvclt_prefix, sizeof(cnvclt_prefix), NDRX_CONV_INITATOR_Q_PFX, 
+	    snprintf(cnvclt_prefix, sizeof(cnvclt_prefix), NDRX_CONV_INITATOR_Q_PFX, 
                 G_sys_config.qprefix);
         
         cnvclt_prefix_len=strlen(cnvclt_prefix);
         NDRX_LOG(log_debug, "cnvclt_prefix=[%s]/%d", cnvclt_prefix, 
                             cnvclt_prefix_len);
 	
-	snprintf(cnvsrv_prefix, sizeof(cnvsrv_prefix), NDRX_CONV_SRV_Q_PFX, 
+	    snprintf(cnvsrv_prefix, sizeof(cnvsrv_prefix), NDRX_CONV_SRV_Q_PFX, 
                 G_sys_config.qprefix);
         cnvsrv_prefix_len=strlen(cnvsrv_prefix);
         NDRX_LOG(log_debug, "cnvsrv_prefix=[%s]/%d", cnvsrv_prefix, 
                             cnvsrv_prefix_len);
 	
-        first=EXFALSE;
+        M_first=EXFALSE;
     }
      
-    if (ndrx_stopwatch_get_delta_sec(&timer)>=G_app_config->sanity || finalchk)
+    if (ndrx_stopwatch_get_delta_sec(&M_timer)>=G_app_config->sanity || finalchk)
     {
         wasrun = EXTRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
@@ -181,12 +197,12 @@ expublic int do_sanity_check(int finalchk)
             {
                 check_server(elt->qname);
             } /*  Bug #112 */
-	    else if (0==strncmp(elt->qname, cnvclt_prefix, 
+	        else if (0==strncmp(elt->qname, cnvclt_prefix, 
                     cnvclt_prefix_len)) 
             {
                 check_cnvclt(elt->qname);
             } /*  Bug #112 */
-	    else if (0==strncmp(elt->qname, cnvsrv_prefix, 
+	        else if (0==strncmp(elt->qname, cnvsrv_prefix, 
                     cnvsrv_prefix_len)) 
             {
                 check_cnvsrv(elt->qname);
@@ -254,7 +270,9 @@ out:
 
     /* Reset timer on run */
     if (wasrun)
-        ndrx_stopwatch_reset(&timer);
+    {
+        ndrx_stopwatch_reset(&M_timer);
+    }
 
     return ret;
 }
