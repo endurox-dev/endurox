@@ -290,6 +290,52 @@ exprivate char * get_ctx_string(int ctx)
 }
 
 /**
+ * Calculate the next command wati time
+ * Get the shortest sleep time from:
+ * - G_sys_config.cmd_wait_time
+ * or
+ * - Time left wait to next sanity scan (as wait can be interrupted by ongoing commands)
+ * use value which ever is shorter.
+ * @param[out] abs_timeout absolute time to wait for command timeout.
+ */
+exprivate void get_cmd_wait_time(struct timespec *abs_timeout)
+{
+    long wait_time_ms = G_sys_config.cmd_wait_time*1000;
+    long sanity_wait_time;
+    long nsec_tmp;
+    /* Set recieve time-out */
+    struct timeval  timeval;
+    ndrx_stopwatch_t *w;
+
+    gettimeofday (&timeval, NULL);
+    memset(abs_timeout, 0, sizeof(abs_timeout));
+    w=ndrx_get_santiy_stopwatch();
+
+    if (NULL!=w)
+    {
+        sanity_wait_time = G_app_config->sanity*1000 - ndrx_stopwatch_get_delta(w);
+
+        if (sanity_wait_time  < wait_time_ms)
+        {
+            wait_time_ms = sanity_wait_time;
+        }
+
+        if (wait_time_ms<0)
+        {
+            wait_time_ms=0;
+        }
+    }
+
+    NDRX_LOG(log_dump, "planned cmd wait: %ld ms", wait_time_ms);
+
+    /* apply to time spec */
+    abs_timeout->tv_sec = timeval.tv_sec + (wait_time_ms / 1000) ;
+    nsec_tmp = (wait_time_ms % 1000) * 1000000 + timeval.tv_usec*1000;
+    abs_timeout->tv_sec+= (nsec_tmp/1000000000);
+    abs_timeout->tv_nsec = nsec_tmp%1000000000;    
+}
+
+/**
  * Wait for commands and process the one by one...
  * @param finished
  * @return
@@ -301,8 +347,6 @@ expublic int command_wait_and_run(int *finished, int *abort)
     size_t buf_max;
     unsigned int prio = 0;
     struct timespec abs_timeout;
-    /* Set recieve time-out */
-    struct timeval  timeval;
     command_call_t * call;
     size_t  data_len;
     int     error;
@@ -343,28 +387,11 @@ expublic int command_wait_and_run(int *finished, int *abort)
     /* Change to blocked, if not already! */
     ndrx_q_setblock(G_command_state.listenq, EXTRUE);
 
-    /* Initialize wait timeout 
-     * TODO: We might consider to have shorter abs_timeout if sanity check is closer,
-     * however that might mean more frequent command_wait_and_run() returns, and
-     * for example stop_process() might send more re-attempts due to these wakups.
-     * However this seems not to be big deal.
-     *
-     * Right now there issue is that any incoming command might
-     * interrupt us in the middle of wait, and thus we might skip/oversleep some sanity scan cycle.
-     * (mostly that would be in case if sanity is set to 1).
-     * If we add closer sanity runs, this might actually might change some behaviour
-     * for existing client systems (i.e. more frequent pings / respawns..) and actually
-     * that might happen when system seems to be busy, as command handler gets the
-     * interrupts.
-     *
-     * I guess we might consider the above change for future major release.
+    /* Also, as santiy scan resets it's timer after the check,
+     * this prevents us from looping for ever on checks on slow systems.
      */
-
-    gettimeofday (&timeval, NULL);
-    memset(&abs_timeout, 0, sizeof(abs_timeout));
-    abs_timeout.tv_sec = timeval.tv_sec + G_sys_config.cmd_wait_time ;
-    abs_timeout.tv_nsec = timeval.tv_usec*1000;
-
+    get_cmd_wait_time(&abs_timeout);
+    
     /* For OSX we need a special case here, we try to access to 
      * the queue for serveral minutes. If we get trylock rejected for
      * configured number of time, we shall close the queue and open it again

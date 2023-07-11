@@ -70,12 +70,11 @@ Mandatory Env. Variables
     Full path to POSIX Shared memory mount point.
 
 *NDRX_CMDWAIT*='NDRXD_COMMAND_WAIT_SECS'::
-    Number of seconds for which *ndrxd(8)* process periodically sleeps between the
-    checks. For *SystemV* mode, accuracy of this setting is 200ms (i.e. the minimum is
-    given number of the seconds, but cycle in *SystemV* mode may take
-    'SANITY_SECONDS'+0.2 sec between the scans).
-    Default value is *1*. The sleep time between checks is not guaranteed to be this,
-    as sleep might be interrupted by any incoming *ndrxd* command.
+    Number of seconds for which *ndrxd(8)* process periodically waits on command queue
+    between the checks. For *SystemV* mode, accuracy of this setting is 200ms.
+    Additional note: the command wait time actually is lowest value between the
+    'NDRXD_COMMAND_WAIT_SECS' and time left till the next '<sanity>' cycle run,
+    configured in *ndrxconfig.xml(5)*.
 
 *NDRX_DPID*='PATH_TO_NDRXD_PID_FILE'::
     This is full path to 'ndrxd' PID file.

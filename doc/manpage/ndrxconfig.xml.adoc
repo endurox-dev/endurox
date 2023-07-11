@@ -205,9 +205,11 @@ PARAMETERS
 ----------
 
 'SANITY_SECONDS'::
-    Number of seconds after which perform system sanity checks. The accuracy of the
-    setting depends on the *NDRX_CMDWAIT* env setting value. As this actually
-    is time by which *ndrxd(8)* sleeps periodically between the any other checks.
+    Number of seconds in which perform system periodic sanity checks. Next cycle time
+    is measured from the finish of the last sanity checks, meaning that in absolute
+    terms, depending on the system performance, the next sanity check would be
+    performed after a slightly longer period of the time than specified
+    in 'SANITY_SECONDS'. The minimum value for the setting is *1*.
 'CHECKPM_STY'::
     This is number of sanity cycles into which check dead processes from the
     process model. This makes the actual checking of th PID existence system.
