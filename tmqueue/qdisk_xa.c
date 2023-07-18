@@ -880,7 +880,7 @@ out:
  */
 expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
-    NDRX_LOG(log_error, "xa_close_entry() called");
+    NDRX_LOG(log_info, "xa_close_entry() called");
     
     if (NULL!=G_atmi_tls->qdisk_tls)
     {
