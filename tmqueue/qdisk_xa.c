@@ -620,7 +620,7 @@ expublic int xa_open_entry_mkdir(char *xa_info)
     NDRX_STRNCPY(M_folder, xa_info, sizeof(M_folder)-2);
     M_folder[sizeof(M_folder)-1] = EXEOS;
     
-    NDRX_LOG(log_error, "Q data directory: [%s]", xa_info);
+    NDRX_LOG(log_info, "Q data directory: [%s]", xa_info);
     
     /* The xa_info is directory, where to store the data...*/
     NDRX_STRNCPY(M_folder_active, xa_info, sizeof(M_folder_active)-8);
@@ -639,56 +639,78 @@ expublic int xa_open_entry_mkdir(char *xa_info)
     if (EXSUCCEED!=(ret=mkdir(M_folder, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
-        NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder, strerror(err));
-        
+
         if (err!=EEXIST)
         {
+            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder, strerror(err));
+
             userlog("xa_open_entry() Q driver: failed to create directory "
                     "[%s] - [%s]!", M_folder, strerror(err));
             return XAER_RMERR;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder, strerror(err));
         }
     }
     
     if (EXSUCCEED!=(ret=mkdir(M_folder_active, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
-        NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_active, strerror(err));
         
         if (err!=EEXIST)
         {
+            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder_active, strerror(err));
+
             userlog("xa_open_entry() Q driver: failed to create directory "
                     "[%s] - [%s]!", M_folder_active, strerror(err));
             return XAER_RMERR;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder_active, strerror(err));
         }
     }
     
     if (EXSUCCEED!=(ret=mkdir(M_folder_prepared, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
-        NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_prepared, strerror(err));
         
         if (err!=EEXIST)
         {
+            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder_prepared, strerror(err));
             userlog("xa_open_entry() Q driver: failed to create directory "
                     "[%s] - [%s]!", M_folder_prepared, strerror(err));
             return XAER_RMERR;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder_prepared, strerror(err));
         }
     }
     
     if (EXSUCCEED!=(ret=mkdir(M_folder_committed, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
-        NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_committed, strerror(err));
         
         if (err!=EEXIST)
         {
+            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder_committed, strerror(err));
             userlog("xa_open_entry() Q driver: failed to create directory "
                     "[%s] - [%s]!", M_folder_committed, strerror(err));
             return XAER_RMERR;
+        }
+        else
+        {
+            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
+                "[%s] - [%s]!", M_folder_committed, strerror(err));
         }
     }
     
