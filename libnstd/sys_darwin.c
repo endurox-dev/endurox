@@ -135,7 +135,12 @@ expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
  */
 expublic int pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 {
+
+#ifdef  __arm64__
+   asm volatile("dmb sy");
+#else
     __asm__ __volatile__ ("" ::: "memory");
+#endif
     *lock = 0;
     return EXSUCCEED;
 }
@@ -193,7 +198,11 @@ expublic int pthread_spin_trylock(pthread_spinlock_t *lock)
  */
 expublic int pthread_spin_unlock(pthread_spinlock_t *lock) 
 {
+#ifdef  __arm64__
+   asm volatile("dmb sy");
+#else
     __asm__ __volatile__ ("" ::: "memory");
+#endif
     *lock = 0;
     return EXSUCCEED;
 }

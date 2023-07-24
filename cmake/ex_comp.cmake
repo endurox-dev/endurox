@@ -261,5 +261,23 @@ macro(ex_comp_settings)
 
 endmacro(ex_comp_settings)
 
+# find flex & bison
+macro(ex_comp_find_flexbison)
+    # Osx has very outdated bison,
+    # thus install by brew install bison
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+        if(EXISTS "/opt/homebrew/opt/bison/bin/bison")
+            set(BISON_EXECUTABLE "/opt/homebrew/opt/bison/bin/bison" CACHE PATH "Bison executable")
+        else()
+            set(BISON_EXECUTABLE "/usr/local/opt/bison/bin/bison" CACHE PATH "Bison executable")
+        endif()
+
+    endif()
+
+    find_package(BISON)
+    find_package(FLEX)
+
+endmacro(ex_comp_find_flexbison)
 
 # vim: set ts=4 sw=4 et smartindent:

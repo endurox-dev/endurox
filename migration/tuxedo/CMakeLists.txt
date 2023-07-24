@@ -43,15 +43,8 @@ ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-# Osx has very outdated bison,
-# thus install by brew install bison
-if(PLATFORM STREQUAL "Darwin")
-    set(BISON_EXECUTABLE "/usr/local/opt/bison/bin/bison" CACHE PATH "Bison executable")
-endif()
+ex_comp_find_flexbison()
 
-find_package(BISON)
-find_package(FLEX)
-#find_package(pscript)
 include(pscript)
 
 # Make sure the compiler can find include files from UBF library
