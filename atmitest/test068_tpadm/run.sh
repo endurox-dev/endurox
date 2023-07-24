@@ -170,18 +170,19 @@ if [ "X$ATMICLT68" == "X" ]; then
 fi
 
 # check dead processes
-DEAPROC=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad1\/1\|\.\/non_existant_bin\|DEA\|'`
+# check all at once, as during transitions, the actual status may change too...
+DEAPROC=`xadmin mibget -c T_CLIENT -m | egrep '(2\|2\/bad1\/1\|\.\/non_existant_bin\|)(DEA|ACT)\|'`
 # there might be recode condition, cpmsrv started the process, but sigchld not yet received
-DEAPROC2=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad1\/1\|\.\/non_existant_bin\|ACT\|'`
-if [ "X$DEAPROC" == "X" ] && [ "X$DEAPROC2" == "X" ]; then
+#DEAPROC2=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad1\/1\|\.\/non_existant_bin\|ACT\|'`
+if [ "X$DEAPROC" == "X" ]; then
     echo "bad1/1 shall be reported as dead or active!"
     go_out -11
 fi
 
-DEAPROC=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad2\/2\|\.\/non_existant_bin\|DEA\|'`
+DEAPROC=`xadmin mibget -c T_CLIENT -m | egrep '(2\|2\/bad2\/2\|\.\/non_existant_bin\|)(DEA|ACT)\|'`
 # there might be recode condition, cpmsrv started the process, but sigchld not yet received
-DEAPROC2=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad2\/2\|\.\/non_existant_bin\|ACT\|'`
-if [ "X$DEAPROC" == "X" ] && [ "X$DEAPROC2" == "X" ]; then
+#DEAPROC2=`xadmin mibget -c T_CLIENT -m | egrep '2\|2\/bad2\/2\|\.\/non_existant_bin\|ACT\|'`
+if [ "X$DEAPROC" == "X" ]; then
     echo "bad1/2 shall be reported as dead or active!"
     go_out -11
 fi
