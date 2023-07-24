@@ -45,14 +45,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 find_package(LibXml2 REQUIRED)
 
-# Osx has very outdated bison,
-# thus install by brew install bison
-if(PLATFORM STREQUAL "Darwin")
-    set(BISON_EXECUTABLE "/usr/local/opt/bison/bin/bison" CACHE PATH "Bison executable")
-endif()
-
-find_package(BISON)
-find_package(FLEX)
+ex_comp_find_flexbison()
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
@@ -67,7 +60,6 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 if(DEFINED EX_USE_SYSVQ)
     SET(ADDSANITY1 "sanity_sysv.c")
 endif()
-
 
 BISON_TARGET(EXPRPARSER ddr_range.y ${CMAKE_CURRENT_BINARY_DIR}/expr_range.tab.c)
 FLEX_TARGET(EXPRSCANNER ddr_range.l ${CMAKE_CURRENT_BINARY_DIR}/expr_range.lex.c)

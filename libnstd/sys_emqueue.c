@@ -341,8 +341,8 @@ expublic int emq_close(mqd_t emqd)
     
     NDRX_LOG(log_dump, "After munmap()");
 
-    NDRX_FPFREE(emqinfo);
     qd_hash_del(emqd);
+    NDRX_FPFREE(emqinfo);
 
     NDRX_LOG(log_dump, "into: emq_close ret 0");
     
