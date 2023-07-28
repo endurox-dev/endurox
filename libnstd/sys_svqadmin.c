@@ -347,7 +347,8 @@ out:
                 "guarantee application stability!");
         userlog("Admin thread failed! Abort as cannot "
                 "guarantee application stability!");
-        abort();
+        /*abort();*/
+        exit(EXFAIL);
     }
 
     if (NULL!=buf)

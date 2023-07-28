@@ -1321,7 +1321,8 @@ out:
     {
         NDRX_LOG(log_error, "System V AUX thread resume after fork failed - abort!");
         userlog("System V AUX thread resume after fork failed - abort!");
-        abort();
+        /*abort();*/
+        exit(EXFAIL); 
     }
 
 }
