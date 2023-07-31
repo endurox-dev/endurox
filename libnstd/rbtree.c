@@ -39,18 +39,16 @@
  */
 struct RBTree
 {
-    RBTNode    *root;            /* root node, or RBTNIL if tree is empty */
-
+    RBTNode         *root;            /* root node, or RBTNIL if tree is empty */
     /* Remaining fields are constant after rbt_create */
-
-    size_t        node_size;        /* actual size of tree nodes */
+    size_t          node_size;        /* actual size of tree nodes */
     /* The caller-supplied manipulation functions */
-    rbt_comparator comparator;
-    rbt_combiner combiner;
-    rbt_allocfunc allocfunc;
-    rbt_freefunc freefunc;
+    rbt_comparator  comparator;
+    rbt_combiner    combiner;
+    rbt_allocfunc   allocfunc;
+    rbt_freefunc    freefunc;
     /* Passthrough arg passed to all manipulation functions */
-    void       *arg;
+    void            *arg;
 };
 
 /*
@@ -61,7 +59,10 @@ struct RBTree
 
 static RBTNode sentinel =
 {
-    .color = RBTBLACK,.left = RBTNIL,.right = RBTNIL,.parent = NULL
+    .color  = RBTBLACK,
+    .left   = RBTNIL,
+    .right  = RBTNIL,
+    .parent = NULL
 };
 
 /*
@@ -94,6 +95,7 @@ void write_stderr(const char *fmt,...)
 #endif
 
     va_start(ap, fmt);
+
 #ifndef WIN32
     /* On Unix, we just fprintf to stderr */
     vfprintf(stderr, fmt, ap);
