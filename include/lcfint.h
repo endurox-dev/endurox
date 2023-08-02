@@ -68,11 +68,14 @@ typedef struct
     long queuesmax;     /**< Max number of queues           */
     int  svqreadersmax;    /**< Max number of concurrent lckrds*/
     int  lcfreadersmax; /**< Max number of concurrent lckrds*/
+
+    int  sgmax;         /**< Max number of singleton-groups */
+    int  sgrefresh;     /**< Expected maximums singleton-group refresh time */
     
     int  lcfmax;        /**< Max number of LCF commands     */
     key_t ipckey;       /**< Semphoare key                  */
     int  startcmdexp;   /**< Startup command delay          */
-    int lcf_norun;    /**< LCF is disabled                */
+    int lcf_norun;      /**< LCF is disabled                */
 } ndrx_nstd_libconfig_t;
 
 /**
@@ -101,6 +104,8 @@ typedef struct
     
     /**< Array of LCF commands */
     ndrx_lcf_command_t commands[0];
+
+    /** Opaque ndrx_sg_shm_t follows */
 } ndrx_lcf_shmcfg_t;
 
 /**

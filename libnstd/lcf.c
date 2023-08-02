@@ -54,7 +54,8 @@
 #define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
 #define MAX_LCFREADERS_DFLT     1000    /**< Lcf readers max this is priority */
 #define MAX_LCFSTARTMAX_DFLT    60      /**< Apply 60 seconds old commands */
-
+#define SGMREFRESH_DFLT         30      /**< Default maximum lock refresh t */
+#define SGMAX_DFLT              64      /**< Maximum number of singleton groups */
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -341,10 +342,10 @@ expublic int ndrx_lcf_init(void)
     }
     else
     {
-	int tmpkey;
+	    int tmpkey;
         
         sscanf(tmp, "%x", &tmpkey);
-	ndrx_G_libnstd_cfg.ipckey = tmpkey;
+	    ndrx_G_libnstd_cfg.ipckey = tmpkey;
 
         NDRX_LOG_EARLY(log_info, "(sysv queues): SystemV IPC Key set to: [%x]",
                             ndrx_G_libnstd_cfg.ipckey);
