@@ -142,7 +142,6 @@ struct tmq_memmsg
     char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
     /** We should have hash handler of message hash                           */
     EX_hash_handle hh; /**< makes this structure hashable (for msgid)         */
-    EX_hash_handle h2; /**< makes this structure hashable (for corrid)         */
 
     /** We should also have a linked list handler                             */
     tmq_memmsg_t *next;
