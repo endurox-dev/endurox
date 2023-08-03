@@ -2088,7 +2088,7 @@ int exjson_value_equals(const EXJSON_Value *a, const EXJSON_Value *b) {
         case EXJSONNumber:
             return fabs(exjson_value_get_number(a) - exjson_value_get_number(b)) < 0.000001; /* EPSILON */
         case EXJSONIntnumber:
-            return abs(exjson_value_get_intnumber(a) - exjson_value_get_intnumber(b)) ==0;
+            return labs(exjson_value_get_intnumber(a) - exjson_value_get_intnumber(b)) ==0;
         case EXJSONError:
             return 1;
         case EXJSONNull:

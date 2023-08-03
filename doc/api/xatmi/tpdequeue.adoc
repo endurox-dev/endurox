@@ -173,7 +173,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpdenqueue(3)* *tpenqueueex(3)* *tmqueue(8)* *persistent_message_queues_overview(guides)*
+*tpenqueue(3)* *tpenqueueex(3)* *tmqueue(8)* *persistent_message_queues_overview(guides)*
 
 COPYING
 -------
