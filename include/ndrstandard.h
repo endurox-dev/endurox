@@ -381,6 +381,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #define CONF_NDRX_RTGRP          "NDRX_RTGRP"          /**< Routing group                                */
 
+#define CONF_NDRX_SGMAX          "NDRX_SGMAX"          /**< Max number of singleton groups               */
+#define CONF_NDRX_SGREFRESH      "NDRX_SGREFRESH"      /**< Expected maximum singleton-group refresh time */
+
 /** 
  * pre-process variable for not using POLLEXCL flag for svapoll
  */

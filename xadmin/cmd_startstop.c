@@ -47,6 +47,8 @@
 #include <gencall.h>
 #include <nclopt.h>
 #include <lcfint.h>
+#include <singlegrp.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -421,7 +423,11 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         {
             ndrx_lcf_reset();
         }
+
+        /* Reset all singlegrp infos */
+        ndrx_sg_reset();
     }
+
 out:
     return ret;
 }

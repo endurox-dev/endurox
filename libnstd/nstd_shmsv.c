@@ -294,6 +294,9 @@ expublic int ndrx_shm_remove(ndrx_shm_t *shm)
                             fd, shm->key, shm->path, strerror(errno));
             ret = EXFAIL;
         }
+        /* Mark memory as removed; */
+        shm->fd = EXFAIL;
+        shm->mem = NULL;
     }
     else
     {
