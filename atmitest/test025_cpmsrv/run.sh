@@ -345,6 +345,10 @@ date
 xadmin stop -s cpmsrv
 echo ">>> AFTER STOP"
 
+# let init to collect the childs, as cpmsrv on shutdown does kill -9 on
+# the processes, and it might not yet collected childs
+sleep 5
+
 # We should have 0 now
 CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
 echo "$PSCMD procs: $CNT"
