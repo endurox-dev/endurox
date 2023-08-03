@@ -52,7 +52,6 @@ extern "C" {
 #define NDRX_LCFCNT_DEFAULT            20   /**< Default count of LCF commands                                 */
 #define NDRX_LCF_STARTCMDEXP           60   /**< Number of secs for exiting command to be expired for new proc */
 
-    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -66,11 +65,12 @@ typedef struct
 {
     char *qprefix;      /**< Queue prefix used by mappings  */
     long queuesmax;     /**< Max number of queues           */
-    int  svqreadersmax;    /**< Max number of concurrent lckrds*/
-    int  lcfreadersmax; /**< Max number of concurrent lckrds*/
 
     int  sgmax;         /**< Max number of singleton-groups */
     int  sgrefresh;     /**< Expected maximums singleton-group refresh time */
+
+    int  svqreadersmax;    /**< Max number of concurrent lckrds*/
+    int  lcfreadersmax; /**< Max number of concurrent lckrds*/
     
     int  lcfmax;        /**< Max number of LCF commands     */
     key_t ipckey;       /**< Semphoare key                  */
