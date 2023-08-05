@@ -2553,4 +2553,19 @@ expublic int ndrx_rand(void)
     return rand_r(&G_nstd_tls->rand_seed);
 }
 
+/**
+ * Get the real-time reading (best guess of real time)
+ */
+expublic int ndrx_realtime_get(struct timespec *tp)
+{
+    int ret = EXSUCCEED;
+
+    if (EXSUCCEED!=clock_gettime(CLOCK_REALTIME, tp))
+    {
+        ret = EXFAIL;
+    }
+
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

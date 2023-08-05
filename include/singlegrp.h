@@ -59,12 +59,12 @@ extern "C" {
  */
 typedef struct
 {
-    unsigned char volatile is_locked;            /**< Is group locked? */
-    unsigned char volatile is_mmon;              /**< Is maintenace mode ON? */
-    unsigned char volatile is_srv_booted;        /**< Is servers booted, when group locked? */
-    unsigned char volatile is_clt_booted;        /**< Is clients boooted, when group locked? */
-    unsigned short volatile flags;               /**< Flags for given entry */
-    _Atomic unsigned long volatile last_refresh; /**< Last lock refresh time */
+    _Atomic unsigned char volatile is_locked;            /**< Is group locked? */
+    _Atomic unsigned char volatile is_mmon;              /**< Is maintenace mode ON? */
+    _Atomic unsigned char volatile is_srv_booted;        /**< Is servers booted, when group locked? */
+    _Atomic unsigned char volatile is_clt_booted;        /**< Is clients boooted, when group locked? */
+    _Atomic unsigned short volatile flags;               /**< Flags for given entry */
+    _Atomic time_t last_refresh;                 /**< Last lock refresh time */
     _Atomic pid_t volatile lockprov_pid;         /**< Lock provider pid */
     _Atomic int volatile lockprov_srvid;         /**< Lock provder server id */       
 
@@ -75,16 +75,16 @@ typedef struct
 /*---------------------------Prototypes---------------------------------*/
 
 /** Return the ptr to single group in shared memory */
-expublic ndrx_sg_shm_t *ndrx_sg_get(int singlegrp_no);
+extern NDRX_API ndrx_sg_shm_t *ndrx_sg_get(int singlegrp_no);
 
 /** Is given group locked? */
-expublic int ndrx_sg_is_locked(int singlegrp_no, long flags);
+extern NDRX_API int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flags);
 
 /** Return snapshoot of current locking */
-expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int lock_status_out_len);
+extern NDRX_API void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len);
 
 /** Reset shared memory block having the singleton gorup infos */
-expublic void ndrx_sg_reset(void);
+extern NDRX_API void ndrx_sg_reset(void);
 
 #if defined(__cplusplus)
 }
