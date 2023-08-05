@@ -48,9 +48,16 @@ extern "C" {
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_SG_IN_USE      0x0001  /**< Given group is used        */
-#define NDRX_SG_NO_ORDER    0x0002  /**< Do not use boot order      */
-#define NDRX_SG_CHK_PID     0x0004  /**< Check that PID is alive    */
+#define NDRX_SG_IN_USE      0x0001  /**< Given group is used           */
+#define NDRX_SG_NO_ORDER    0x0002  /**< Do not use boot order         */
+#define NDRX_SG_CHK_PID     0x0004  /**< Check that PID is alive       */
+#define NDRX_SG_NOORDER_LCK 0x0008  /**< Report norder group as locked */
+
+#define NDRX_SG_RSN_NONE        0       /**< No reason                   */
+#define NDRX_SG_RSN_EXPIRED     1       /**< Expird by missing refresh   */
+#define NDRX_SG_RSN_NOPID       2       /**< PID missing of lock holder  */
+#define NDRX_SG_RSN_REFNOFILE   3       /**< Reference file is missing   */
+#define NDRX_SG_RSN_REFFFUT     4       /**< Reference file is in future */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -59,14 +66,15 @@ extern "C" {
  */
 typedef struct
 {
-    _Atomic unsigned char volatile is_locked;            /**< Is group locked? */
-    _Atomic unsigned char volatile is_mmon;              /**< Is maintenace mode ON? */
-    _Atomic unsigned char volatile is_srv_booted;        /**< Is servers booted, when group locked? */
-    _Atomic unsigned char volatile is_clt_booted;        /**< Is clients boooted, when group locked? */
-    _Atomic unsigned short volatile flags;               /**< Flags for given entry */
-    _Atomic time_t last_refresh;                 /**< Last lock refresh time */
-    _Atomic pid_t volatile lockprov_pid;         /**< Lock provider pid */
-    _Atomic int volatile lockprov_srvid;         /**< Lock provder server id */       
+    _Atomic unsigned char volatile is_locked;       /**< Is group locked? */
+    _Atomic unsigned char volatile is_mmon;         /**< Is maintenace mode ON? */
+    _Atomic unsigned char volatile is_srv_booted;   /**< Is servers booted, when group locked? */
+    _Atomic unsigned char volatile is_clt_booted;   /**< Is clients boooted, when group locked? */
+    _Atomic unsigned short volatile flags;          /**< Flags for given entry */
+    _Atomic time_t last_refresh;                    /**< Last lock refresh time */
+    _Atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
+    _Atomic int volatile lockprov_srvid;            /**< Lock provder server id */  
+    _Atomic int reason;                             /**< Reason code for unlock */     
 
 } ndrx_sg_shm_t;
 
@@ -81,7 +89,7 @@ extern NDRX_API ndrx_sg_shm_t *ndrx_sg_get(int singlegrp_no);
 extern NDRX_API int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flags);
 
 /** Return snapshoot of current locking */
-extern NDRX_API void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len);
+extern NDRX_API void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags);
 
 /** Reset shared memory block having the singleton gorup infos */
 extern NDRX_API void ndrx_sg_reset(void);
