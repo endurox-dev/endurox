@@ -67,7 +67,7 @@ typedef struct
     long queuesmax;     /**< Max number of queues           */
 
     int  sgmax;         /**< Max number of singleton-groups */
-    int  sgrefresh;     /**< Expected maximums singleton-group refresh time */
+    int  sgrefreshmax;  /**< Expected maximums singleton-group refresh time */
 
     int  svqreadersmax;    /**< Max number of concurrent lckrds*/
     int  lcfreadersmax; /**< Max number of concurrent lckrds*/

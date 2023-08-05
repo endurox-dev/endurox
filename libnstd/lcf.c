@@ -55,7 +55,7 @@
 #define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
 #define MAX_LCFREADERS_DFLT     1000    /**< Lcf readers max this is priority */
 #define MAX_LCFSTARTMAX_DFLT    60      /**< Apply 60 seconds old commands */
-#define SGMREFRESH_DFLT         30      /**< Default maximum lock refresh t */
+#define SGMREFRESHMAX_DFLT      30      /**< Default maximum lock refresh t */
 #define SGMAX_DFLT              64      /**< Maximum number of singleton groups */
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
@@ -294,15 +294,15 @@ expublic int ndrx_lcf_init(void)
     tmp = getenv(CONF_NDRX_SGREFRESH);
     if (NULL==tmp)
     {
-        ndrx_G_libnstd_cfg.sgrefresh = SGMREFRESH_DFLT;
+        ndrx_G_libnstd_cfg.sgrefreshmax = SGMREFRESHMAX_DFLT;
     }
     else
     {
-        ndrx_G_libnstd_cfg.sgrefresh = atol(tmp);
+        ndrx_G_libnstd_cfg.sgrefreshmax = atol(tmp);
     }
 
     NDRX_LOG_EARLY(log_debug, "%s set to %d", CONF_NDRX_SGREFRESH, 
-            ndrx_G_libnstd_cfg.sgrefresh);
+            ndrx_G_libnstd_cfg.sgrefreshmax);
 
     /* get number of concurrent threads */
     tmp = getenv(CONF_NDRX_SVQREADERSMAX);

@@ -36,6 +36,9 @@
 #include <ndebug.h>
 #include <singlegrp.h>
 #include <lcfint.h>
+#include <sys/stat.h>
+#include <sys_unix.h>
+#include <sys/time.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -106,40 +109,197 @@ expublic void ndrx_sg_reset(void)
 }
 
 /**
+ * Load all fields from shared memory to local copy
+ * in atomic way.
+ * @param sg local copy
+ * @param sg_shm shared memory data
+ */
+exprivate void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
+{
+    /* atomic load multi-byte fields */
+    sg->is_locked = atomic_load(&sg_shm->is_locked);
+    sg->is_mmon = atomic_load(&sg_shm->is_mmon);
+    sg->is_srv_booted = atomic_load(&sg_shm->is_srv_booted);
+    sg->is_clt_booted = atomic_load(&sg_shm->is_clt_booted);
+    sg->flags = atomic_load(&sg_shm->flags);
+    sg->last_refresh = atomic_load(&sg_shm->last_refresh);
+    sg->lockprov_pid = atomic_load(&sg_shm->lockprov_pid);
+    sg->lockprov_srvid = atomic_load(&sg_shm->lockprov_srvid);
+}
+
+/**
  * Is given group locked?
  * Get the ptr to ndrx_sg_shm_t and check following items:
  * - field is_locked is EXTRUE
  * - last_refresh (substracted current boot time / gettimeofday()) is less ndrx_G_libnstd_cfg.sgrefresh
+ * - if maintenance mode is enabled, then we do not perform any further checks, other than lock status.
  * @param singlegrp_no single group number
+ * @param reference_file this is refrence file name, used to check arn't there any future modifications
+ *  applied, or file missing?
  * @param flags biwtise flags, NDRX_SG_CHK_PID used for additional check of exsinglesv running.
  * @return EXFAIL/EXFALSE (not locked)/EXTRUE (locked)
  */
-expublic int ndrx_sg_is_locked(int singlegrp_no, long flags)
+expublic int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flags)
 {
     int ret = EXFALSE;
-    ndrx_sg_shm_t * sg = ndrx_sg_get(singlegrp_no);
-
-    if (NULL==sg)
-    {
-        return EXFAIL;
-    }
+    ndrx_sg_shm_t * sg, sg_local;
+    struct timespec ts;
+    
+    ndrx_realtime_get(&ts);
 
     if (0==singlegrp_no)
     {
-        /* group 0 is not locked */
-        return EXFALSE;
+        /* group 0 is always locked */
+        ret=EXTRUE;
+        goto out;
     }
 
-    /* TODO:
-     * Use atomic load to get the values needed for checking
+    sg=ndrx_sg_get(singlegrp_no);
+
+    if (NULL==sg)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+
+    if (!sg->is_locked)
+    {
+        /* not locked */
+        ret=EXFALSE;
+        goto out;
+    }
+
+    /* load all fields from shared memory to local copy */
+    ndrx_sg_load(&sg_local, sg);
+
+    /* validate the lock */
+    if (llabs( (long long)ts.tv_sec-(long long)sg_local.last_refresh) > ndrx_G_libnstd_cfg.sgrefreshmax)
+    {
+        /* Mark system as not locked anymor! */
+        atomic_store(&sg->is_locked, EXFALSE);
+
+        NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is expired "
+                "(did not refresh in %d sec)! "
+                "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax);
+
+        userlog("ERROR: Lock for singleton group %d is expired "
+                "(did not refresh in %d sec)! "
+                "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax);
+
+        ret=EXFALSE;
+        goto out;
+    }
+
+    /* validate the PID if requested so */
+    if (flags & NDRX_SG_CHK_PID)
+    {
+        if (!ndrx_sys_is_process_running_by_pid(sg_local.lockprov_pid))
+        {
+            /* Mark system as not locked anymor! */
+            atomic_store(&sg->is_locked, EXFALSE);
+
+            NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is expired "
+                    "(lock provider PID %d is not running)! "
+                    "Marking group as not locked!", singlegrp_no, sg_local.lockprov_pid);
+
+            userlog("ERROR: Lock for singleton group %d is expired "
+                    "(lock provider PID %d is not running)! "
+                    "Marking group as not locked!", singlegrp_no, sg_local.lockprov_pid);
+
+            ret=EXFALSE;
+            goto out;
+        }
+    }
+
+    /* stat() the file, in case if modification date is future or file is
+     * unlock the group!
      */
+    if (NULL!=reference_file)
+    {
+        struct stat st;
+        int rc;
+        struct timeval now;
+
+        rc = stat(reference_file, &st);
+
+        if (0!=rc)
+        {
+            int err=errno;
+            /* Mark system as not locked anymor! */
+            atomic_store(&sg->is_locked, EXFALSE);
+
+            NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is expired "
+                    "(reference file [%s] failed to open: [%s])! "
+                    "Marking group as not locked!", singlegrp_no, strerror(err), reference_file);
+
+            userlog("ERROR: Lock for singleton group %d is expired "
+                    "(reference file [%s] is missing: [%s])! "
+                    "Marking group as not locked!", singlegrp_no, strerror(err), reference_file);
+
+            ret=EXFALSE;
+            goto out;
+        }
+
+        /* get current time of day... 
+         * due to NTP gettimeofday() might actually be in the past.
+         * thus we can detect that other node has taken over.
+         */
+        gettimeofday(&now,NULL);
+
+        if (st.st_mtime > now.tv_sec)
+        {
+            /* Mark system as not locked anymor! */
+            atomic_store(&sg->is_locked, EXFALSE);
+
+            NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is expired "
+                    "(reference file %s is in future)! "
+                    "Marking group as not locked!", singlegrp_no, reference_file);
+
+            userlog("ERROR: Lock for singleton group %d is expired "
+                    "(reference file %s is in future)! "
+                    "Marking group as not locked!", singlegrp_no, reference_file);
+
+            ret=EXFALSE;
+            goto out;
+        }
+    }
+
+    /* finally we are done, and we are locked */
+    ret=EXTRUE;
+
+out:
     return ret;
 }
 
-/** Return snapshoot of current locking */
-expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int lock_status_out_len)
+/**
+ * Number of singleton groups.
+ * We count in group 0, which is virtual group and it is always locked
+ */
+expublic int ndrx_sg_nrgroups()
 {
+    return ndrx_G_libnstd_cfg.sgmax+1;
+}
 
+/**
+ * Take a snapshoot of all groups, to be used by
+ * batch startup processes (so that batch is started with the single status)
+ */
+expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len)
+{
+    int i=0;
+
+    /* fix up the output len */
+    if (*lock_status_out_len>ndrx_G_libnstd_cfg.sgmax)
+    {
+        *lock_status_out_len = ndrx_G_libnstd_cfg.sgmax;
+    }
+
+    for (i=0; i<*lock_status_out_len; i++)
+    {
+        lock_status_out[i] = ndrx_sg_is_locked(i+1, NULL, 0);
+    }
+
+    return;
 }
 
 
