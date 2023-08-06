@@ -1,5 +1,5 @@
 ##
-## @brief Basic Call Testing
+## @brief  Singleton group lock provider
 ##
 ## @file CMakeLists.txt
 ##
@@ -31,7 +31,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.1)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
@@ -51,16 +51,15 @@ ENDIF ($ENV{RELEASE_BUILD})
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-############################# Test - executables ###############################
-add_executable (atmisv005 atmisv005.c ../../libatmisrv/rawmain_integra.c)
-add_executable (atmiclt005 atmiclt005.c)
+############################# Libraries ########################################
+add_executable (exsinglesv exsinglesv.c ../libatmisrv/rawmain_integra.c)
+target_link_libraries (exsinglesv tpadm atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
+set_target_properties(exsinglesv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
-############################# Test - executables ###############################
-# Link the executable to the ATMI library & others...
-target_link_libraries (atmisv005 m ubf nstd atmi atmisrvinteg ${RT_LIB} pthread)
-target_link_libraries (atmiclt005 m ubf nstd atmi atmiclt ${RT_LIB} pthread)
 
-set_target_properties(atmisv005 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(atmiclt005 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-################################################################################
+# Install bin
+install (TARGETS 
+    tpadmsv
+    DESTINATION bin)
+
 # vim: set ts=4 sw=4 et smartindent:

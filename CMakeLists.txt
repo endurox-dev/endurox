@@ -286,6 +286,7 @@ ENDIF()
 add_subdirectory (viewc) # View compiler
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (tpadmsv) # Enduro/X Admin API Server
+add_subdirectory (exsinglesv) # Enduro/X Singleton Lock provider
 add_subdirectory (migration) # Migration tools
 add_subdirectory (xadmin) # Enduro X command line interface
 add_subdirectory (buildtools) # buildserver,buildclient,buildtms
