@@ -1420,7 +1420,14 @@ expublic int sv_wait_for_request(void)
         /* moved here as tout might change by callback api */
         if (G_server_conf.periodcb_sec)
         {
-            tout = G_server_conf.periodcb_sec*1000;
+            tout = G_server_conf.periodcb_sec*1000
+                - ndrx_stopwatch_get_delta(&periodic_cb);
+
+            if (tout<0)
+            {
+                tout=0;
+            }
+
         }
         else
         {
@@ -1498,8 +1505,11 @@ expublic int sv_wait_for_request(void)
             
             EXFAIL_OUT(ret);
         }
+
         /* We should use timer here because, if there are service requests at
-         * constant time (less than poll time), then callback will be never called! */
+         * constant time (less than poll time), then callback will be never called! 
+         * perform stopwatch only when timed out, otherwise 
+         */
         else if (EXFAIL!=tout && 
                 ndrx_stopwatch_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
         {

@@ -1,7 +1,7 @@
 /**
- * @brief Enduro/X common-config
+ * @brief Singleton group lock provider
  *
- * @file cconfig.h
+ * @file exsinglesv.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,67 +31,103 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef _CCONFIG_H
-#define	_CCONFIG_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <regex.h>
+#include <utlist.h>
+#include <unistd.h>
+#include <signal.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
-#include <sys/stat.h>
-#include <stdint.h>
-#include <exhash.h>
-#include <sys_unix.h>
-#include <inicfg.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <atmi_int.h>
+#include <typed_buf.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <ubfutil.h>
+#include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_CCONFIG5 "NDRX_CCONFIG5"
-#define NDRX_CCONFIG4 "NDRX_CCONFIG4"
-#define NDRX_CCONFIG3 "NDRX_CCONFIG3"
-#define NDRX_CCONFIG2 "NDRX_CCONFIG2"
-#define NDRX_CCONFIG1 "NDRX_CCONFIG1"
-#define NDRX_CCONFIG  "NDRX_CCONFIG"
-    
-#define NDRX_CCTAG "NDRX_CCTAG" /* common-config tag */
-    
-#define NDRX_CONF_SECTION_GLOBAL    "@global"
-#define NDRX_CONF_SECTION_DEBUG     "@debug"
-#define NDRX_CONF_SECTION_QUEUE     "@queue"
-#define NDRX_CONF_SECTION_CACHE     "@cache"
-#define NDRX_CONF_SECTION_CACHEDB   "@cachedb"
-#define NDRX_CONF_SECTION_UBFDB     "@ubfdb"
-    
-    
-#define NDRX_CCTAG_MAX      32          /* max len of cctag */
-    
-/*
- * Command for cconfig
- */
-#define NDRX_CCONFIG_CMD_GET        'g' /* get config (default) */
-#define NDRX_CCONFIG_CMD_LIST       'l' /* list config */
-    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-    
-extern NDRX_API int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out);
-extern NDRX_API int ndrx_cconfig_load(void);
-extern NDRX_API ndrx_inicfg_t *ndrx_get_G_cconfig(void);
-extern NDRX_API int ndrx_cconfig_reload(void);
 
-/* for user: */
-extern NDRX_API int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg);
-extern NDRX_API int ndrx_cconfig_load_sections(ndrx_inicfg_t **cfg, char **section_start_with);
-extern NDRX_API int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, 
-        ndrx_inicfg_section_keyval_t **out);
-
-#ifdef	__cplusplus
+/**
+ * Periodic lock checks
+ * In case if we are locked, perform ping lock
+ * If we are not locked try to lock master lock
+ * @return EXSUCCEED/EXFAIL. In case of failure, process will reboot.
+ */
+exprivate int ndrx_lock_chk(void)
+{
+    return EXSUCCEED;
 }
-#endif
 
-#endif	/* _CCONFIG_H */
+/**
+ * Do initialization
+ * Have a local MIB & shared MIB
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    int ret=EXSUCCEED;
+    ndrx_inicfg_t *cfg = NULL;
+
+    /* Only singleton server sections needed */
+    char *sections[] = {"@singlesv",
+                    NULL};
+
+    if (EXSUCCEED!=ndrx_cconfig_load_sections(&cfg, sections))
+    {
+        NDRX_LOG(log_error, "Failed to load configuration");
+        EXFAIL_OUT(ret);
+    }
+
+    /* TODO: read following paramsters:
+     * - singlegrp
+     * - lockfile_1
+     * - lockfile_2
+     * - exec_on_bootlocked
+     * - exec_on_locked
+     * - chkinterval
+     */
+    
+    /* Register timer check.... 
+    if (EXSUCCEED==ret &&
+            EXSUCCEED!=tpext_addperiodcb(ndrx_G_adm_config.scantime, 
+            ndrx_adm_curs_housekeep))
+    {
+        
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    */
+
+   /* perform first check
+    * so that on boot, the first locked node would boot without any interruptions */
+   if (EXSUCCEED!=ndrx_lock_chk())
+   {
+        NDRX_LOG(log_error, "Failed to perform lock check");
+        EXFAIL_OUT(ret);
+   }
+
+out:
+
+    if (NULL!=cfg)
+    {
+        ndrx_inicfg_free(cfg);
+    }
+
+    return ret;
+}
+
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    /* just for build... */
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

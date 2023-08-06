@@ -210,9 +210,11 @@ expublic int ndrx_cconfig_get(char *section, ndrx_inicfg_section_keyval_t **out)
  * pass will once again load the actual resolved values.
  * @param cfg
  * @param is_internal
+ * @param section_start_with - array of sections, which name starts with given string.
+ *  In that case load only matched sections.
  * @return 
  */
-exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
+exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal, char **section_start_with)
 {
     int ret = EXSUCCEED;
     
@@ -244,7 +246,7 @@ exprivate int _ndrx_cconfig_load(ndrx_inicfg_t **cfg, int is_internal)
     else
     {
         /* single pass */
-        ret = _ndrx_cconfig_load_pass(cfg, EXFALSE, NULL);
+        ret = _ndrx_cconfig_load_pass(cfg, EXFALSE, section_start_with);
     }
     
 out:
@@ -326,7 +328,6 @@ exprivate int _ndrx_cconfig_load_pass(ndrx_inicfg_t **cfg, int is_internal,
                 slot, config_resources[slot]);
         
         have_config = EXTRUE;
-        
         
         if (EXSUCCEED!=ndrx_inicfg_add(*cfg, config_resources[slot], section_start_with))
         {
@@ -488,7 +489,7 @@ expublic int ndrx_cconfig_load(void)
                         (G_cctag?G_cctag:""));
             }
 
-            first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE);
+            first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE, NULL);
             first = EXFALSE;
             /* Load after the ini have been processed, so that
              * these can be set in [@global] section
@@ -525,7 +526,20 @@ expublic int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg)
         G_cctag = getenv(NDRX_CCTAG);
     }
     
-    return _ndrx_cconfig_load(cfg, EXFALSE);
+    return _ndrx_cconfig_load(cfg, EXFALSE, NULL);
+}
+
+/**
+ * Load configuration file sections.
+ */
+expublic int ndrx_cconfig_load_sections(ndrx_inicfg_t **cfg, char **section_start_with)
+{
+    if (NULL==G_cctag)
+    {
+        G_cctag = getenv(NDRX_CCTAG);
+    }
+    
+    return _ndrx_cconfig_load(cfg, EXFALSE, NULL);
 }
 
 /**

@@ -371,6 +371,23 @@ expublic void ndrx_sg_bootflag_clt_set(int singlegrp_no)
 }
 
 /**
+ * Get the boot flag
+ * @param singlegrp_no single group number
+ */
+expublic unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no)
+{
+    if (singlegrp_no>0)
+    {
+        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+        return atomic_load(&sg->is_clt_booted);
+    }
+    else
+    {
+        return EXTRUE;
+    }
+}
+
+/**
  * Set the bootflag on.
  * This assumes that shared memory is already attached.
  * If the LCF was not attached, then ndrxd would not get so far.
@@ -382,6 +399,23 @@ expublic void ndrx_sg_bootflag_srv_set(int singlegrp_no)
     {
         ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
         atomic_store(&sg->is_srv_booted, EXTRUE);
+    }
+}
+
+/**
+ * Get server boot flag
+ * @param singlegrp_no single group number
+ */
+expublic unsigned char ndrx_sg_bootflag_srv_get(int singlegrp_no)
+{
+    if (singlegrp_no>0)
+    {
+        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+        return atomic_load(&sg->is_srv_booted);
+    }
+    else
+    {
+        return EXTRUE;
     }
 }
 
