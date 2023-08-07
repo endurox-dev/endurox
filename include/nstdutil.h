@@ -481,6 +481,7 @@ extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
 extern NDRX_API void ndrx_cid_generate(unsigned char prefix, exuuid_t out);
 
 extern NDRX_API int ndrx_realtime_get(struct timespec *tp);
+extern NDRX_API char * ndrx_basename(char *path);
 
 #ifdef	__cplusplus
 }

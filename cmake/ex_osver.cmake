@@ -32,7 +32,7 @@
 ## -----------------------------------------------------------------------------
 ##
 
-cmake_minimum_required (VERSION 3.1) 
+cmake_minimum_required (VERSION 3.5) 
 
 #
 # Required includes for macro package
@@ -201,6 +201,8 @@ macro(ex_cpuarch)
         set(EX_CPU_ARCH "x86_64")
     elseif(${EX_CPU_ARCH} STREQUAL "powerpc_64")
         set(EX_CPU_ARCH "ppc64")
+    elseif(${EX_CPU_ARCH} STREQUAL "arm64_64")
+        set(EX_CPU_ARCH "arm64")
     elseif(${EX_CPU_ARCH} STREQUAL "powerpc")
         set(EX_CPU_ARCH "ppc")
     endif()

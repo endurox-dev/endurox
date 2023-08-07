@@ -552,6 +552,15 @@ Ensure(test_nstd_ndrx_string_hash)
     
     ndrx_string_hash_free(h);
 }
+
+/**
+ * Test standard libary, file handling routines
+ */
+Ensure(test_nstd_file_handling)
+{
+    assert_string_equal(ndrx_basename("/some/hello/string"), "string");
+    assert_string_equal(ndrx_basename("string"), "string");
+}
     
 /**
  * Standard library tests
@@ -571,8 +580,8 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_stopwatch);
     add_test(suite, test_nstd_ndrx_strnlen);
     add_test(suite, test_nstd_ndrx_rand);
-    
     add_test(suite, test_nstd_ndrx_string_hash);
+    add_test(suite, test_nstd_file_handling);
     
     return suite;
 }
