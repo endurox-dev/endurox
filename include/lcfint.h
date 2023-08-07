@@ -71,6 +71,7 @@ typedef struct
 
     int  svqreadersmax;    /**< Max number of concurrent lckrds*/
     int  lcfreadersmax; /**< Max number of concurrent lckrds*/
+    unsigned char is_mmon;   /**< Is maintenace mode ON? */
     
     int  lcfmax;        /**< Max number of LCF commands     */
     key_t ipckey;       /**< Semphoare key                  */

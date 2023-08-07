@@ -242,7 +242,13 @@ OPTION(DEFINE_DISABLEPSCRIPT "Disable Platform Script" OFF)
 
 ################################################################################
 # Option to disable documentation build (dos are enabled by default)
-OPTION(DEFINE_DISABLEDOC "Disable documentation generation" OFF) 
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # not working on mac by default...
+    OPTION(DEFINE_DISABLEDOC "Disable documentation generation" ON) 
+else()
+    OPTION(DEFINE_DISABLEDOC "Disable documentation generation" OFF) 
+endif()
 ################################################################################
 
 ################################################################################
