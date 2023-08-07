@@ -46,7 +46,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 add_custom_command(
   OUTPUT WizardBase.c
-  COMMAND exembedfile WizardBase.pscript WizardBase
+  COMMAND exembedfile ${CMAKE_CURRENT_SOURCE_DIR}/WizardBase.pscript WizardBase
   DEPENDS WizardBase.pscript)
 
 # Make sure the compiler can find include files from our UBF library.

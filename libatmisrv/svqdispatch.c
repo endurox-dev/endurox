@@ -1481,8 +1481,17 @@ expublic int sv_wait_for_request(void)
             len = msgsize_max;
         }
         
-        nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
+        if (0==tout)
+        {
+            /* process the period callback... */
+            nfds=EXFAIL;
+        }
+        else
+        {
+            /* wait for messages or timeout... */
+            nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout, &msg_buf, &len);
+        }
         
         /* Print stuff if there is no timeout set or there is some value out there */
         
