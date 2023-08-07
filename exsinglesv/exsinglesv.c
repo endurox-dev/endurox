@@ -107,7 +107,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
     /* Load params by using ndrx_inicfg_get_subsect() */
-    if (EXSUCCEED!=ndrx_cconfig_get_cf(cfg, PROGSECTION, params))
+    if (EXSUCCEED!=ndrx_cconfig_get_cf(cfg, PROGSECTION, &params))
     {
         NDRX_LOG(log_error, "Failed to load configuration section [%s]", PROGSECTION);
         EXFAIL_OUT(ret);

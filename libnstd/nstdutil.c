@@ -2568,4 +2568,23 @@ expublic int ndrx_realtime_get(struct timespec *tp)
     return ret;
 }
 
+/**
+ * Non modifying basename() version
+ * @param path path to get basename from (filename)
+ * @return extract filename
+ */
+expublic char * ndrx_basename(char *path)
+{
+    char *p = strrchr(path, '/');
+    
+    if (NULL!=p)
+    {
+        return p+1;
+    }
+    else
+    {
+        return path;
+    }
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

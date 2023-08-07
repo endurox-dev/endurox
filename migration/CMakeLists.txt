@@ -31,7 +31,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Sub Dirs
 IF (NOT DEFINE_DISABLEPSCRIPT)
