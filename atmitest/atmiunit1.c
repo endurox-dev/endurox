@@ -950,9 +950,10 @@ TestSuite *atmi_test_all(void)
  * if crash testing is performed
  */
 #ifndef EX_USE_EMQ
+    /* EMQ does not support Q struct lock recovery from crashes */
     add_test(suite, test086_tmqlimit);
-#endif
     add_test(suite, test087_tmsrv);
+#endif
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
     add_test(suite, test090_tuxmig);
