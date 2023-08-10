@@ -48,6 +48,7 @@
 #include <ubf.h>
 #include <ubfutil.h>
 #include <cconfig.h>
+#include "exsinglesv.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define PROGSECTION "@singlesv"
@@ -56,13 +57,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate int M_singlegrp = EXFAIL; /**< Providing lock for this group */
-exprivate char M_lockfile_1[PATH_MAX+1] = {0}; /**< Lock file 1 */
-exprivate char M_lockfile_2[PATH_MAX+1] = {0}; /**< Lock file 2 */
-exprivate char M_exec_on_bootlocked[PATH_MAX+1] = {0}; /**< Exec on boot locked */
-exprivate char M_exec_on_locked[PATH_MAX+1] = {0}; /**< Exec on locked */
-exprivate int M_chkinterval = 0; /**< Check interval */
-exprivate int M_locked = EXFALSE; /**< Locked */
+expublic ndrx_exsinglesv_conf_t ndrx_G_exsinglesv_conf; /**< Configuration */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -79,8 +74,43 @@ exprivate int M_locked = EXFALSE; /**< Locked */
  */
 exprivate int ndrx_lock_chk(void)
 {
+    int ret = EXSUCCEED;
 
-    return EXSUCCEED;
+    if (!ndrx_G_exsinglesv_conf.locked1)
+    {
+        /* TODO: if in maintenace mode -> do not do any locking ... */
+
+        /* try to lock file */
+        ret=ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_1, 
+            ndrx_G_exsinglesv_conf.lockfile_1);
+        
+        if (EXSUCCEED==ret)
+        {
+            /* mark as locked */
+            ndrx_G_exsinglesv_conf.locked1=EXTRUE;
+
+            /* TODO: load details to shared memory... */
+        }
+        else
+        {
+            goto out;
+        }
+    }
+
+    /* lock/unlock 2. In case of failure, we shall unlock
+     * the group...
+     */
+    if (!ndrx_G_exsinglesv_conf.locked2)
+    {
+        /* TODO: Lock */
+    }
+    else
+    {
+        /* TODO: unlock */
+    }
+
+out:
+    return ret;
 }
 
 /**
@@ -99,6 +129,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Only singleton server sections needed */
     char *sections[] = {"@singlesv",
                     NULL};
+
+    memset(&ndrx_G_exsinglesv_conf, 0, sizeof(ndrx_G_exsinglesv_conf));
 
     if (EXSUCCEED!=ndrx_cconfig_load_sections(&cfg, sections))
     {
@@ -131,27 +163,27 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
        if (0==strcmp(el->key, "singlegrp"))
        {
-            M_singlegrp = atoi(el->val);
+            ndrx_G_exsinglesv_conf.singlegrp = atoi(el->val);
        }
        else if (0==strcmp(el->key, "lockfile_1"))
        {
-            NDRX_STRCPY_SAFE(M_lockfile_1, el->val);
+            NDRX_STRCPY_SAFE(ndrx_G_exsinglesv_conf.lockfile_1, el->val);
        }
        else if (0==strcmp(el->key, "lockfile_2"))
        {
-            NDRX_STRCPY_SAFE(M_lockfile_2, el->val);
+            NDRX_STRCPY_SAFE(ndrx_G_exsinglesv_conf.lockfile_2, el->val);
        }
        else if (0==strcmp(el->key, "exec_on_bootlocked"))
        {
-            NDRX_STRCPY_SAFE(M_exec_on_bootlocked, el->val);
+            NDRX_STRCPY_SAFE(ndrx_G_exsinglesv_conf.exec_on_bootlocked, el->val);
        }
        else if (0==strcmp(el->key, "exec_on_locked"))
        {
-            NDRX_STRCPY_SAFE(M_exec_on_locked, el->val);
+            NDRX_STRCPY_SAFE(ndrx_G_exsinglesv_conf.exec_on_locked, el->val);
        }
        else if (0==strcmp(el->key, "chkinterval"))
        {
-            M_chkinterval = atoi(el->val);
+            ndrx_G_exsinglesv_conf.chkinterval = atoi(el->val);
        }
        else
        {
@@ -161,21 +193,28 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
     /* check key flags... */
-    if (0>=M_singlegrp)
+    if (0>=ndrx_G_exsinglesv_conf.singlegrp)
     {
-        NDRX_LOG(log_error, "Invalid singlegrp value [%d]", M_singlegrp);
+        NDRX_LOG(log_error, "Invalid singlegrp value [%d]", 
+            ndrx_G_exsinglesv_conf.singlegrp);
         EXFAIL_OUT(ret);
     }
 
-    if (EXEOS==M_lockfile_1[0])
+    if (EXEOS==ndrx_G_exsinglesv_conf.lockfile_1[0])
     {
-        NDRX_LOG(log_error, "Invalid lockfile_1 value [%s]", M_lockfile_1);
+        NDRX_LOG(log_error, "Invalid lockfile_1");
         EXFAIL_OUT(ret);
     }
 
-    if (EXEOS==M_lockfile_2[0])
+    if (EXEOS==ndrx_G_exsinglesv_conf.lockfile_2[0])
     {
-        NDRX_LOG(log_error, "Invalid lockfile_1 value [%s]", M_lockfile_2);
+        NDRX_LOG(log_error, "Invalid lockfile_2");
+        EXFAIL_OUT(ret);
+    }
+
+    if (0==strcmp(ndrx_G_exsinglesv_conf.lockfile_1, ndrx_G_exsinglesv_conf.lockfile_2))
+    {
+        NDRX_LOG(log_error, "lockfile_1 and lockfile_2 shall be different");
         EXFAIL_OUT(ret);
     }
 
@@ -189,7 +228,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
-    if (0>=M_chkinterval)
+    if (0>=ndrx_G_exsinglesv_conf.chkinterval)
     {
         /* 
          * get default from NDRX_SGREFRESH
@@ -198,11 +237,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
         if (NULL!=p)
         {
-            M_chkinterval = atoi(p)/MIN_SGREFRESH_CEOFFICIENT;
+            ndrx_G_exsinglesv_conf.chkinterval = atoi(p)/MIN_SGREFRESH_CEOFFICIENT;
         }
 
         /* generate error */
-        if (M_chkinterval<=0)
+        if (ndrx_G_exsinglesv_conf.chkinterval<=0)
         {
             NDRX_LOG(log_error, "Invalid value for %s env setting. "
                 "To use defaults, it shall be atleast %d", 
@@ -215,34 +254,36 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
     /* Dump the configuration to the log file */
-    NDRX_LOG(log_info, "singlegrp=%d", M_singlegrp);
-    NDRX_LOG(log_info, "lockfile_1=[%s]", M_lockfile_1);
-    NDRX_LOG(log_info, "lockfile_2=[%s]", M_lockfile_2);
-    NDRX_LOG(log_info, "exec_on_bootlocked=[%s]", M_exec_on_bootlocked);
-    NDRX_LOG(log_info, "exec_on_locked=[%s]", M_exec_on_locked);
-    NDRX_LOG(log_info, "chkinterval=%d", M_chkinterval);
+    NDRX_LOG(log_info, "singlegrp=%d", ndrx_G_exsinglesv_conf.singlegrp);
+    NDRX_LOG(log_info, "lockfile_1=[%s]", ndrx_G_exsinglesv_conf.lockfile_1);
+    NDRX_LOG(log_info, "lockfile_2=[%s]", ndrx_G_exsinglesv_conf.lockfile_2);
+    NDRX_LOG(log_info, "exec_on_bootlocked=[%s]", ndrx_G_exsinglesv_conf.exec_on_bootlocked);
+    NDRX_LOG(log_info, "exec_on_locked=[%s]", ndrx_G_exsinglesv_conf.exec_on_locked);
+    NDRX_LOG(log_info, "chkinterval=%d", ndrx_G_exsinglesv_conf.chkinterval);
 
-    if (M_chkinterval*MIN_SGREFRESH_CEOFFICIENT>ndrx_sgrefresh)
+    if (ndrx_G_exsinglesv_conf.chkinterval*MIN_SGREFRESH_CEOFFICIENT>ndrx_sgrefresh)
     {
         NDRX_LOG(log_warn, "WARNING: `%s' (%d) shall be at least %d times "
                 "bigger than 'chkinterval' (%d)"
                 CONF_NDRX_SGREFRESH, ndrx_sgrefresh, MIN_SGREFRESH_CEOFFICIENT,
-                M_chkinterval);
+                ndrx_G_exsinglesv_conf.chkinterval);
         userlog("WARNING: `%s' (%d) shall be at least %d times "
                 "bigger than 'chkinterval' (%d)"
                 CONF_NDRX_SGREFRESH, ndrx_sgrefresh, MIN_SGREFRESH_CEOFFICIENT,
-                M_chkinterval);
+                ndrx_G_exsinglesv_conf.chkinterval);
     }
     
     /* Register timer check.... */
     if (EXSUCCEED==ret &&
-            EXSUCCEED!=tpext_addperiodcb(M_chkinterval, 
+            EXSUCCEED!=tpext_addperiodcb(ndrx_G_exsinglesv_conf.chkinterval, 
             ndrx_lock_chk))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                         tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
+
+    /* TODO: report flags and singlegrp to the ndrxd */
 
    /* perform first check
     * so that on boot, the first locked node would boot without any interruptions */
@@ -264,7 +305,7 @@ out:
 
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
-    /* just for build... */
+    /* unlock the group from SHM and unlock / close the lockfiles */
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
