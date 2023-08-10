@@ -58,6 +58,8 @@ extern "C" {
 #define NDRX_SG_RSN_NOPID       2       /**< PID missing of lock holder  */
 #define NDRX_SG_RSN_REFNOFILE   3       /**< Reference file is missing   */
 #define NDRX_SG_RSN_REFFFUT     4       /**< Reference file is in future */
+
+#define NDRX_SG_PROCNAMEMAX	16	/**< Max len of the lock process */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -72,8 +74,10 @@ typedef struct
     _Atomic unsigned char volatile is_clt_booted;   /**< Is clients boooted, when group locked? */
     _Atomic unsigned short volatile flags;          /**< Flags for given entry */
     _Atomic time_t last_refresh;                    /**< Last lock refresh time */
+    _Atomic short volatile lockprov_srvid;          /**< Lock provder server id */  
+    _Atomic short volatile lockprov_nodeid;         /**< Lock provider E/X cluster node id */
     _Atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
-    _Atomic int volatile lockprov_srvid;            /**< Lock provder server id */  
+    char volatile lockprov_procname[NDRX_SG_PROCNAMEMAX+1];  /**< Lock provider name */
     _Atomic int reason;                             /**< Reason code for unlock */     
 
 } ndrx_sg_shm_t;

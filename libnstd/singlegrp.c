@@ -54,6 +54,8 @@
 /*---------------------------Statics------------------------------------*/
 exprivate ndrx_sg_shm_t M_dum = {0}; /**< Dummy record for group 0 */
 /*---------------------------Prototypes---------------------------------*/
+exprivate void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm);
+exprivate long long  ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg);
 
 /** 
  * Return the ptr to single group in shared memory 
@@ -131,6 +133,149 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
 }
 
 /**
+ * Refresh lock for given group
+ * @param singlegrp_no single group number
+ * @param sg resolved group ptr
+ * @param nodeid cluster node id (current one, but now known in standard libary)
+ * @param srvid server id (also current one, but now known in standard libary)
+ * @param chk_lock check lock status (match current lock provider)
+ * @return EXSUCCEED if successfull, EXFAIL if failed
+*/
+exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg, 
+    short nodeid, short srvid, int chk_lock)
+{
+    int ret = EXSUCCEED;
+    ndrx_sg_shm_t sg_local;
+    pid_t pid;
+    struct timespec ts;
+    ndrx_sg_shm_t * sg_shm = NDRX_SG_GET_PTR(singlegrp_no);
+
+    if (NULL==sg)
+    {
+        if (0==singlegrp_no)
+        {
+            /* group 0 is always locked */
+            goto out;
+        }
+
+        /* copy of the shm.. */
+        ndrx_sg_load(&sg_local, sg_shm);
+        sg=&sg_local;
+    }
+
+    if (chk_lock)
+    {
+        if (!sg->is_locked)
+        {
+            NDRX_LOG(log_error, "ERROR Group %d is not locked, but "
+                "must be - terminating!", singlegrp_no);
+            userlog("ERROR Group %d is not locked, but "
+                "must be - terminating!", singlegrp_no);
+            exit(EXFAIL);
+        }
+
+        /* Check lockserver pid, nodeid, srvid -> must be ours... */
+
+        if (sg->lockprov_pid!=(pid=getpid()))
+        {
+            NDRX_LOG(log_error, "ERROR Group %d is locked by PID %d, "
+                "but must be locked by PID %d - terminating!", 
+                singlegrp_no, sg->lockprov_pid, (int)pid);
+            userlog("ERROR Group %d is locked by PID %d, "
+                "but must be locked by PID %d - terminating!", 
+                singlegrp_no, sg->lockprov_pid, (int)pid);
+            exit(EXFAIL);
+        }
+
+        if (sg->lockprov_nodeid!=nodeid)
+        {
+            NDRX_LOG(log_error, "ERROR Group %d is locked by Node %hd, "
+                "but must be locked by Node %hd - terminating!", 
+                singlegrp_no, sg->lockprov_nodeid, nodeid);
+            userlog("ERROR Group %d is locked by Node %hd, "
+                "but must be locked by Node %hd - terminating!", 
+                singlegrp_no, sg->lockprov_nodeid, nodeid);
+            exit(EXFAIL);
+        }
+
+        if (sg->lockprov_srvid!=srvid)
+        {
+            NDRX_LOG(log_error, "ERROR Group %d is locked by Server id %hd, "
+                "but must be locked by Server %hd - terminating!", 
+                singlegrp_no, sg->lockprov_srvid, srvid);
+            userlog("ERROR Group %d is locked by Server is %d, "
+                "but must be locked by Server %hd - terminating!", 
+                singlegrp_no, sg->lockprov_srvid, srvid);
+            exit(EXFAIL);
+        }
+
+        if (EXSUCCEED!=ndrx_sg_chk_timestamp(singlegrp_no, sg))
+        {
+            NDRX_LOG(log_error, "Terminating...");
+            userlog("Terminating...");
+            exit(EXFAIL);
+        }
+    }
+
+    /* Once all checks passed, lets update current timestamp */
+    ndrx_realtime_get(&ts);
+
+    atomic_store(&sg_shm->last_refresh, ts.tv_sec);
+
+out:
+    return ret;
+}
+
+/**
+ * Perform group locking (by the lock provider)
+ * @param singlegrp_no single group number
+ * @param nodeid cluster node id (current one, but now known in standard libary)
+ * @param srvid server id
+ * @param procname process name
+ * @return EXSUCCEED if successfull, EXFAIL if failed
+ */
+expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *procname)
+{
+    int ret = EXSUCCEED;
+    ndrx_sg_shm_t * sg_shm, sg;
+
+    /* nothing to do here */
+    if (0==singlegrp_no)
+    {
+        goto out;
+    }
+
+    sg_shm = NDRX_SG_GET_PTR(singlegrp_no);
+    ndrx_sg_load(&sg, sg_shm);
+
+    if (sg.is_locked)
+    {
+        NDRX_LOG(log_error, "ERROR: Group %d already locked by Node %d, PID %d, Procname [%s] - terminating",
+                singlegrp_no, sg.lockprov_nodeid, sg.lockprov_pid, sg.lockprov_procname);
+        userlog("ERROR: Group %d already locked by Node %d, PID %d, Procname [%s] - terminating",
+                singlegrp_no, sg.lockprov_nodeid, sg.lockprov_pid, sg.lockprov_procname);
+        exit(EXFAIL);
+    }
+
+    ndrx_sg_do_refresh_int(singlegrp_no, &sg, nodeid, srvid, EXFALSE);
+
+    /* store current proc info */
+    NDRX_STRCPY_SAFE((char *)sg.lockprov_procname, procname);
+    __sync_synchronize();
+
+    atomic_store(&sg_shm->lockprov_nodeid, tpgetnodeid());
+    atomic_store(&sg_shm->lockprov_pid, getpid());
+    atomic_store(&sg_shm->lockprov_srvid, srvid);
+    atomic_store(&sg_shm->is_locked, EXTRUE);
+
+    NDRX_LOG(log_debug, "Group %d locked", singlegrp_no);
+    userlog("Group %d locked", singlegrp_no);
+
+out:
+    return ret;
+}
+
+/**
  * Load all fields from shared memory to local copy
  * in atomic way.
  * @param sg local copy
@@ -145,22 +290,63 @@ exprivate void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
     sg->is_clt_booted = atomic_load(&sg_shm->is_clt_booted);
     sg->flags = atomic_load(&sg_shm->flags);
     sg->last_refresh = atomic_load(&sg_shm->last_refresh);
+    sg->lockprov_nodeid = atomic_load(&sg_shm->lockprov_nodeid);
     sg->lockprov_pid = atomic_load(&sg_shm->lockprov_pid);
     sg->lockprov_srvid = atomic_load(&sg_shm->lockprov_srvid);
+    NDRX_STRCPY_SAFE( (char *)sg->lockprov_procname, (const char *)sg_shm->lockprov_procname);
+}
+
+/**
+ * Check is shared memory timestmap still valid.
+ * @param singlegrp_no single group number
+ * @param sg local copy of the shared memory entry
+ * @return EXSUCCEED if successfull (still valid), EXFAIL if failed
+ */
+exprivate long long ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg)
+{
+    long long ret=EXSUCCEED;
+    struct timespec ts;
+
+    ndrx_realtime_get(&ts);
+
+    ret=(long long)ts.tv_sec-(long long)sg->last_refresh;
+
+    /* validate the lock */
+    if (llabs(ret) > ndrx_G_libnstd_cfg.sgrefreshmax)
+    {
+        /* Mark system as not locked anymore! */
+        ndrx_sg_unlock(sg, NDRX_SG_RSN_EXPIRED);
+
+        NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is inconsistent "
+                "(did not refresh in %d sec, diff %lld sec)! "
+                "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax,
+                ret);
+
+        userlog("ERROR: Lock for singleton group %d is inconsistent "
+                "(did not refresh in %d sec, diff %lld sec)! "
+                "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax,
+                ret);
+
+        ret=EXFALSE;
+        goto out;
+    }
+out:
+    return ret;
 }
 
 /**
  * Check is group locked (internal version)
  * @param singlegrp_no single group number
- * @param sg optional resolved group from shared memory (will be used if not NULL, instead of the lookup by no)
+ * @param sg optional resolved group from shared memory 
+ *  (will be used if not NULL, instead of the lookup by no)
  * @param reference_file file for which to check future modification date
  * @param flags NDRX_SG_CHK_PID check for pid, default 0
  */
-exprivate int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg, char *reference_file, long flags)
+exprivate int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
+    char *reference_file, long flags)
 {
     int ret = EXFALSE;
     ndrx_sg_shm_t sg_local;
-    struct timespec ts;
     
     if (NULL==sg)
     {
@@ -189,23 +375,10 @@ exprivate int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg, char *
 
     /* load all fields from shared memory to local copy */
     ndrx_sg_load(&sg_local, sg);
-    ndrx_realtime_get(&ts);
 
-    /* validate the lock */
-    if (llabs( (long long)ts.tv_sec-(long long)sg_local.last_refresh) > ndrx_G_libnstd_cfg.sgrefreshmax)
+    if (EXSUCCEED!=ndrx_sg_chk_timestamp(singlegrp_no, &sg_local))
     {
-        /* Mark system as not locked anymor! */
-        ndrx_sg_unlock(sg, NDRX_SG_RSN_EXPIRED);
-
-        NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is inconsistent "
-                "(did not refresh in %d sec)! "
-                "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax);
-
-        userlog("ERROR: Lock for singleton group %d is inconsistent "
-                "(did not refresh in %d sec)! "
-                "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax);
-
-        ret=EXFALSE;
+        ret=EXFAIL;
         goto out;
     }
 
