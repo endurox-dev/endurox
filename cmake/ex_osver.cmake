@@ -170,7 +170,7 @@ macro(ex_osver)
         if (LSB_RELEASE_OUTPUT_VER MATCHES "^([0-9]+)_([0-9]+).*$")
             if (${CMAKE_MATCH_1} STREQUAL "5")
                 set(LSB_RELEASE_OUTPUT_VER ${CMAKE_MATCH_2})
-            endif
+            endif()
         endif()
     endif()
 
