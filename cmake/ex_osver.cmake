@@ -149,7 +149,8 @@ macro(ex_osver)
         # Common for RHEL based linux:
         set(LSB_RELEASE_OUTPUT_OS "el")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
-    elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "sles")
+    elseif ( (${LSB_RELEASE_OUTPUT_OS} STREQUAL "sles") OR
+            (${LSB_RELEASE_OUTPUT_OS} STREQUAL "suse") )
         # Common for suse linux:
         set(LSB_RELEASE_OUTPUT_OS "sl")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
