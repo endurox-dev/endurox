@@ -161,7 +161,7 @@ macro(ex_osver)
         set(LSB_RELEASE_OUTPUT_OS "aix")
         set(LSB_RELEASE_OUTPUT_VER "${EX_LSB_RELEASE_VER_MAJOR}${EX_LSB_RELEASE_VER_MINOR}")
     elseif ( (${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_solaris") OR
-             (${LSB_RELEASE_OUTPUT_OS} STREQUAL "SunOS") )
+             (${LSB_RELEASE_OUTPUT_OS} STREQUAL "SUNOS") )
         set(LSB_RELEASE_OUTPUT_OS "solaris")
         if (LSB_RELEASE_OUTPUT_VER MATCHES "^([0-9]+).*$")
             set(LSB_RELEASE_OUTPUT_VER ${CMAKE_MATCH_1})
