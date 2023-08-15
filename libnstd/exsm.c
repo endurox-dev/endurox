@@ -105,7 +105,7 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
             }
             else if (cur->transitions[i].event == event)
             {
-                NDRX_LOG(log_debug , "sm: state %s (%d), event %s (%d)", 
+                NDRX_LOG(log_debug , "sm: %s (%d), event %s (%d)", 
                 cur->state_name, cur->state, cur->transitions[i].event_name, event);
                 next_state = cur->transitions[i].next_state;
                 break;
@@ -114,7 +114,7 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
 
         if (NDRX_SM_ST_RETURN==next_state)
         {
-            NDRX_LOG(log_debug, "sm: return from state %s (%d), with ret=%d", 
+            NDRX_LOG(log_debug, "sm: return from %s (%d), with ret=%d", 
                     cur->state_name, cur->state, event);
             ret=event;
             goto out;
