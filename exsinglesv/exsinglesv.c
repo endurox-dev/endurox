@@ -78,7 +78,14 @@ exprivate int ndrx_lock_chk(void)
 
     if (!ndrx_G_exsinglesv_conf.locked1)
     {
-        /* TODO: if in maintenace mode -> do not do any locking ... */
+        /* TODO: Check that SHM is not locked, if so -> restart...
+         * and mark memory as not locked
+         */
+
+
+        /* TODO: if in maintenace mode -> do not do any locking ... 
+         * TODO: API Call for check.
+         */
 
         /* try to lock file */
         ret=ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_1, 
@@ -96,17 +103,26 @@ exprivate int ndrx_lock_chk(void)
             goto out;
         }
     }
-
-    /* lock/unlock 2. In case of failure, we shall unlock
-     * the group...
-     */
-    if (!ndrx_G_exsinglesv_conf.locked2)
-    {
-        /* TODO: Lock */
-    }
     else
     {
-        /* TODO: unlock */
+        /* TODO: Check is SHM still locked. If not, restart... */
+    }
+
+    if (ndrx_G_exsinglesv_conf.locked1)
+    {
+        /* lock/unlock 2. In case of failure, we shall unlock
+         * the group...
+         */
+        if (!ndrx_G_exsinglesv_conf.locked2)
+        {
+            /* TODO: Lock */
+        }
+        else
+        {
+            /* TODO: unlock */
+        }
+
+        /* If still here lock shall be refreshed. */
     }
 
 out:

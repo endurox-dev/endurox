@@ -141,6 +141,7 @@ extern TestSuite * ubf_nstd_debug(void);
 extern TestSuite * ubf_nstd_standard(void);
 extern TestSuite *ubf_nstd_util(void);
 extern TestSuite *ubf_nstd_lh(void);
+extern TestSuite *ubf_nstd_sm(void);
 extern TestSuite *ubf_nstd_atomicadd(void);
 extern TestSuite *ubf_nstd_fsync(void);
 extern TestSuite *ubf_nstd_cid(void);

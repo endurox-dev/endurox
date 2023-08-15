@@ -263,7 +263,7 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *
     NDRX_STRCPY_SAFE((char *)sg.lockprov_procname, procname);
     __sync_synchronize();
 
-    atomic_store(&sg_shm->lockprov_nodeid, tpgetnodeid());
+    atomic_store(&sg_shm->lockprov_nodeid, nodeid);
     atomic_store(&sg_shm->lockprov_pid, getpid());
     atomic_store(&sg_shm->lockprov_srvid, srvid);
     atomic_store(&sg_shm->is_locked, EXTRUE);
