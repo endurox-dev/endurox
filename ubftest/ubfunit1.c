@@ -840,6 +840,7 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_nstd_util());
     add_suite(suite, ubf_nstd_debug());
     add_suite(suite, ubf_nstd_lh());
+    add_suite(suite, ubf_nstd_sm());
     add_suite(suite, test_nstd_macros());
     add_suite(suite, ubf_nstd_crypto());
     add_suite(suite, ubf_nstd_base64());
