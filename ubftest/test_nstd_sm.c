@@ -38,7 +38,8 @@
 #include <ndebug.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-
+#define NR_TRANS    5
+/*---------------------------Enums--------------------------------------*/
 enum
 {
     st_entry
@@ -55,9 +56,8 @@ enum
     , ev_fatal
 };
 
-/*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-NDRX_SM_T(ndrx_sm_test_t, 10);
+NDRX_SM_T(ndrx_sm_test_t, NR_TRANS);
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 exprivate int M_entry_called;
@@ -73,7 +73,7 @@ exprivate int go_work(void *data);
 
 ndrx_sm_test_t M_sm1[] = {
 
-    NDRX_SM_STATE(st_entry, entry,
+    NDRX_SM_STATE( st_entry, entry,
           NDRX_SM_TRAN      (ev_ok,         st_say_hello)
         , NDRX_SM_TRAN      (ev_err,        st_go_home)
         , NDRX_SM_TRAN      (ev_timeout,    st_go_work)
@@ -137,7 +137,7 @@ Ensure(test_nstd_sm_test1)
 {
     int data=ev_ok;
     reset_counters();
-    assert_equal(ndrx_sm_run((void *)M_sm1, 10, st_entry, (void *)&data), ev_ok);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), ev_ok);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 1);
     assert_equal(M_go_home_called, 0);
@@ -145,7 +145,7 @@ Ensure(test_nstd_sm_test1)
 
     reset_counters();
     data=ev_err;
-    assert_equal(ndrx_sm_run((void *)M_sm1, 10, st_entry, (void *)&data), ev_err);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), ev_err);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 0);
     assert_equal(M_go_home_called, 1);
@@ -154,11 +154,21 @@ Ensure(test_nstd_sm_test1)
     /* transition not found: */
     reset_counters();
     data = ev_fatal;
-    assert_equal(ndrx_sm_run((void *)M_sm1, 10, st_entry, (void *)&data), EXFAIL);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), EXFAIL);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 0);
     assert_equal(M_go_home_called, 0);
     assert_equal(M_go_work_called, 0);
+
+    /* try different entry state */
+    data=ev_ok;
+    reset_counters();
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_go_home, (void *)&data), ev_ok);
+    assert_equal(M_entry_called, 0);
+    assert_equal(M_say_hello_called, 0);
+    assert_equal(M_go_home_called, 1);
+    assert_equal(M_go_work_called, 1);
+
 }
 
 /**
