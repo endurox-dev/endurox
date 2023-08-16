@@ -43,19 +43,29 @@ extern "C" {
 #include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_SM_ST_RETURN   -1  /**< Return from state machine (special for exit) */
-#define NDRX_SM_EV_EOF      0   /**< Event 0 means no event found       */
+
+/** Return from state machine (special for exit). 
+ * This returns last event code as machine exit code
+ */
+#define NDRX_SM_ST_RETURN   -1
+
+/** Return from state machine (special for exit). 
+ * This returns 0 as machine exit code
+ */
+#define NDRX_SM_ST_RETURN0  -2
+
+#define NDRX_SM_EV_EOF      EXFAIL   /**< Event list end marker       */
 
 #define NDRX_SM_TRAN(EVENT, NEXT_STATE) {EVENT, #EVENT, NEXT_STATE} /**< Transition macro */
-#define NDRX_SM_TRAN_END {0, "", 0} /**< Transition end macro */
+#define NDRX_SM_TRAN_END {EXFAIL, "", 0} /**< Transition end macro */
 
 /**
  * State machine state definition
  */
 #define NDRX_SM_STATE(STATE, FUNC, ...)                              \
-    {                                                               \
-        STATE, #STATE, FUNC, {__VA_ARGS__}                            \
-    }                                                               \
+    {                                                                \
+        STATE, #STATE, FUNC, {__VA_ARGS__}                           \
+    }                                                                \
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

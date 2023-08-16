@@ -58,6 +58,8 @@ extern "C" {
 #define NDRX_SG_RSN_NOPID       2       /**< PID missing of lock holder  */
 #define NDRX_SG_RSN_REFNOFILE   3       /**< Reference file is missing   */
 #define NDRX_SG_RSN_REFFFUT     4       /**< Reference file is in future */
+#define NDRX_SG_RSN_NORMAL      5       /**< Normal shutdown             */
+#define NDRX_SG_RSN_LOCKE       6       /**< Locking errro (by exsinglesv)*/
 
 #define NDRX_SG_PROCNAMEMAX	16	/**< Max len of the lock process */
 /*---------------------------Enums--------------------------------------*/
@@ -89,14 +91,24 @@ typedef struct
 /** Return the ptr to single group in shared memory */
 extern NDRX_API ndrx_sg_shm_t *ndrx_sg_get(int singlegrp_no);
 
+extern NDRX_API void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm);
+
 /** Is given group locked? */
 extern NDRX_API int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flags);
+
+extern NDRX_API int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *procname,
+        time_t new_last_refresh);
+extern NDRX_API void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason);
 
 /** Return snapshoot of current locking */
 extern NDRX_API void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags);
 
 /** Reset shared memory block having the singleton gorup infos */
 extern NDRX_API void ndrx_sg_reset(void);
+
+extern NDRX_API int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg, 
+    short nodeid, short srvid, time_t new_last_refresh);
+
 
 #if defined(__cplusplus)
 }

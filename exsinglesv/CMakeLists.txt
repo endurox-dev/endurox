@@ -52,7 +52,11 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Libraries ########################################
-add_executable (exsinglesv exsinglesv.c filelock.c ../libatmisrv/rawmain_integra.c)
+add_executable (exsinglesv 
+		exsinglesv.c
+		filelock.c
+		locksm.c
+		../libatmisrv/rawmain_integra.c)
 target_link_libraries (exsinglesv tpadm atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
 set_target_properties(exsinglesv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

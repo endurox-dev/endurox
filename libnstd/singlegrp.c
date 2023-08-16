@@ -54,7 +54,6 @@
 /*---------------------------Statics------------------------------------*/
 exprivate ndrx_sg_shm_t M_dum = {0}; /**< Dummy record for group 0 */
 /*---------------------------Prototypes---------------------------------*/
-exprivate void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm);
 exprivate long long  ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg);
 
 /** 
@@ -121,15 +120,21 @@ expublic void ndrx_sg_reset(void)
  * If group was locked, but for some reason
  * we face a condition that we group shall be unlocked.
  * This resets key statistics of the group entry.
+ * if already unlocked, leave the original data there in shm.
  * @param sg resolved group ptr
  * @param reason reason code, why group was unlocked
  */
 expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
 {
-    atomic_store(&sg->is_srv_booted, EXFALSE);
-    atomic_store(&sg->is_clt_booted, EXFALSE);
-    atomic_store(&sg->is_locked, EXFALSE);
-    atomic_store(&sg->reason, reason);
+    unsigned char is_locked = atomic_load(&sg->is_locked);
+    
+    if (is_locked)
+    {
+        atomic_store(&sg->is_srv_booted, EXFALSE);
+        atomic_store(&sg->is_clt_booted, EXFALSE);
+        atomic_store(&sg->is_locked, EXFALSE);
+        atomic_store(&sg->reason, reason);
+    }
 }
 
 /**
@@ -139,15 +144,15 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
  * @param nodeid cluster node id (current one, but now known in standard libary)
  * @param srvid server id (also current one, but now known in standard libary)
  * @param chk_lock check lock status (match current lock provider)
+ * @param new_last_refresh new refresh time
  * @return EXSUCCEED if successfull, EXFAIL if failed
 */
 exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg, 
-    short nodeid, short srvid, int chk_lock)
+    short nodeid, short srvid, int chk_lock, time_t new_last_refresh)
 {
     int ret = EXSUCCEED;
     ndrx_sg_shm_t sg_local;
     pid_t pid;
-    struct timespec ts;
     ndrx_sg_shm_t * sg_shm = NDRX_SG_GET_PTR(singlegrp_no);
 
     if (NULL==sg)
@@ -171,7 +176,7 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
                 "must be - terminating!", singlegrp_no);
             userlog("ERROR Group %d is not locked, but "
                 "must be - terminating!", singlegrp_no);
-            exit(EXFAIL);
+            EXFAIL_OUT(ret);
         }
 
         /* Check lockserver pid, nodeid, srvid -> must be ours... */
@@ -184,7 +189,7 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
             userlog("ERROR Group %d is locked by PID %d, "
                 "but must be locked by PID %d - terminating!", 
                 singlegrp_no, sg->lockprov_pid, (int)pid);
-            exit(EXFAIL);
+            EXFAIL_OUT(ret);
         }
 
         if (sg->lockprov_nodeid!=nodeid)
@@ -195,7 +200,7 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
             userlog("ERROR Group %d is locked by Node %hd, "
                 "but must be locked by Node %hd - terminating!", 
                 singlegrp_no, sg->lockprov_nodeid, nodeid);
-            exit(EXFAIL);
+            EXFAIL_OUT(ret);
         }
 
         if (sg->lockprov_srvid!=srvid)
@@ -206,24 +211,35 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
             userlog("ERROR Group %d is locked by Server is %d, "
                 "but must be locked by Server %hd - terminating!", 
                 singlegrp_no, sg->lockprov_srvid, srvid);
-            exit(EXFAIL);
+            EXFAIL_OUT(ret);
         }
 
         if (EXSUCCEED!=ndrx_sg_chk_timestamp(singlegrp_no, sg))
         {
-            NDRX_LOG(log_error, "Terminating...");
-            userlog("Terminating...");
-            exit(EXFAIL);
+            EXFAIL_OUT(ret);
         }
     }
 
-    /* Once all checks passed, lets update current timestamp */
-    ndrx_realtime_get(&ts);
 
-    atomic_store(&sg_shm->last_refresh, ts.tv_sec);
+    atomic_store(&sg_shm->last_refresh, new_last_refresh);
 
 out:
     return ret;
+}
+
+/**
+ * Refresh lock for given group
+ * @param singlegrp_no single group number
+ * @param nodeid cluster node id (current one, but now known in standard libary)
+ * @param srvid server id (also current one, but now known in standard libary)
+ * @param new_last_refresh new refresh time
+ * @return EXSUCCEED if successfull, EXFAIL if failed
+ */
+expublic int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg, 
+    short nodeid, short srvid, time_t new_last_refresh)
+{
+    return ndrx_sg_do_refresh_int(singlegrp_no, sg, nodeid, srvid, 
+        EXTRUE, new_last_refresh);
 }
 
 /**
@@ -232,9 +248,11 @@ out:
  * @param nodeid cluster node id (current one, but now known in standard libary)
  * @param srvid server id
  * @param procname process name
+ * @param new_last_refresh lock time (when checks were started...)
  * @return EXSUCCEED if successfull, EXFAIL if failed
  */
-expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *procname)
+expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *procname,
+        time_t new_last_refresh)
 {
     int ret = EXSUCCEED;
     ndrx_sg_shm_t * sg_shm, sg;
@@ -254,10 +272,14 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *
                 singlegrp_no, sg.lockprov_nodeid, sg.lockprov_pid, sg.lockprov_procname);
         userlog("ERROR: Group %d already locked by Node %d, PID %d, Procname [%s] - terminating",
                 singlegrp_no, sg.lockprov_nodeid, sg.lockprov_pid, sg.lockprov_procname);
-        exit(EXFAIL);
+        EXFAIL_OUT(ret);
     }
 
-    ndrx_sg_do_refresh_int(singlegrp_no, &sg, nodeid, srvid, EXFALSE);
+    if (EXSUCCEED != ndrx_sg_do_refresh_int(singlegrp_no, 
+        &sg, nodeid, srvid, EXFALSE, new_last_refresh))
+    {
+        EXFAIL_OUT(ret);   
+    }
 
     /* store current proc info */
     NDRX_STRCPY_SAFE((char *)sg.lockprov_procname, procname);
@@ -281,7 +303,7 @@ out:
  * @param sg local copy
  * @param sg_shm shared memory data
  */
-exprivate void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
+expublic void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
 {
     /* atomic load multi-byte fields */
     sg->is_locked = atomic_load(&sg_shm->is_locked);

@@ -49,6 +49,7 @@
 #include <ubfutil.h>
 #include <cconfig.h>
 #include "exsinglesv.h"
+#include <singlegrp.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define PROGSECTION "@singlesv"
@@ -76,57 +77,51 @@ exprivate int ndrx_lock_chk(void)
 {
     int ret = EXSUCCEED;
 
-    if (!ndrx_G_exsinglesv_conf.locked1)
-    {
-        /* TODO: Check that SHM is not locked, if so -> restart...
-         * and mark memory as not locked
-         */
-
-
-        /* TODO: if in maintenace mode -> do not do any locking ... 
-         * TODO: API Call for check.
-         */
-
-        /* try to lock file */
-        ret=ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_1, 
-            ndrx_G_exsinglesv_conf.lockfile_1);
-        
-        if (EXSUCCEED==ret)
-        {
-            /* mark as locked */
-            ndrx_G_exsinglesv_conf.locked1=EXTRUE;
-
-            /* TODO: load details to shared memory... */
-        }
-        else
-        {
-            goto out;
-        }
-    }
-    else
-    {
-        /* TODO: Check is SHM still locked. If not, restart... */
-    }
-
-    if (ndrx_G_exsinglesv_conf.locked1)
-    {
-        /* lock/unlock 2. In case of failure, we shall unlock
-         * the group...
-         */
-        if (!ndrx_G_exsinglesv_conf.locked2)
-        {
-            /* TODO: Lock */
-        }
-        else
-        {
-            /* TODO: unlock */
-        }
-
-        /* If still here lock shall be refreshed. */
-    }
+    /* TODO: Run state-machine */
 
 out:
     return ret;
+}
+
+/**
+ * Un-init procedure.
+ * Close any open lock files.
+ * @param normal_unlock shall we perform normal unlock (i.e. we were locked)
+ * @param force_unlock shall we force unlock (i.e. we were not locked)
+ */
+expublic void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock)
+{
+    int do_unlock=EXFALSE;
+
+    if (ndrx_G_exsinglesv_conf.locked1)
+    {
+        ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_1);
+
+        if (normal_unlock || force_unlock)
+        {
+            do_unlock = EXTRUE;
+        }
+    }
+    else if (force_unlock)
+    {
+        do_unlock = EXTRUE;
+    }
+
+    if (ndrx_G_exsinglesv_conf.locked2)
+    {
+        ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_2);
+    }
+
+    if (do_unlock)
+    {
+        ndrx_sg_shm_t * sg = ndrx_sg_get(ndrx_G_exsinglesv_conf.singlegrp);
+
+        if (NULL!=sg)
+        {
+            ndrx_sg_unlock(sg, 
+                force_unlock?NDRX_SG_RSN_LOCKE:NDRX_SG_RSN_NORMAL);
+        }
+    }
 }
 
 /**
@@ -322,6 +317,7 @@ out:
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
     /* unlock the group from SHM and unlock / close the lockfiles */
+    ndrx_exsinglesv_uninit(EXTRUE, EXFALSE);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
