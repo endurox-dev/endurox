@@ -50,10 +50,11 @@ enum
 
 enum
 {
-    ev_ok = 1 /**< must start with >0, 0 is EOF */
+    ev_ok
     , ev_err
     , ev_timeout
     , ev_fatal
+    , ev_normal
 };
 
 /*---------------------------Typedefs-----------------------------------*/
@@ -77,6 +78,7 @@ ndrx_sm_test_t M_sm1[] = {
           NDRX_SM_TRAN      (ev_ok,         st_say_hello)
         , NDRX_SM_TRAN      (ev_err,        st_go_home)
         , NDRX_SM_TRAN      (ev_timeout,    st_go_work)
+        , NDRX_SM_TRAN      (ev_normal,     NDRX_SM_ST_RETURN0)
         , NDRX_SM_TRAN_END
         )
     , NDRX_SM_STATE(st_say_hello, say_hello,
@@ -169,6 +171,14 @@ Ensure(test_nstd_sm_test1)
     assert_equal(M_go_home_called, 1);
     assert_equal(M_go_work_called, 1);
 
+    /* exit code 0 forced (not from event code) */
+    data=ev_normal;
+    reset_counters();
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), 0);
+    assert_equal(M_entry_called, 1);
+    assert_equal(M_say_hello_called, 0);
+    assert_equal(M_go_home_called, 0);
+    assert_equal(M_go_work_called, 0);
 }
 
 /**

@@ -119,6 +119,13 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
             ret=event;
             goto out;
         }
+        else if (NDRX_SM_ST_RETURN0==next_state)
+        {
+            NDRX_LOG(log_debug, "sm: return from %s (%d), with ev %d as ret=0",
+                    cur->state_name, cur->state, event);
+            ret=0;
+            goto out;
+        }
         
         cur = ndrx_sm_state_get(sm, nr_tran, next_state);       
     }

@@ -135,7 +135,6 @@ extern NDRX_API ndrx_lcf_shmcfg_t *ndrx_G_shmcfg;
 extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 
 extern NDRX_API int ndrx_lcf_init(void);
 extern NDRX_API void ndrx_lcf_detach(void);
