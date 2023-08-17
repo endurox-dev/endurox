@@ -28,6 +28,7 @@
 #include <rbtree.h>
 #include <ndebug.h>
 
+
 /*
  * Colors of nodes (values of RBTNode.color)
  */
@@ -192,7 +193,7 @@ RBTree *ndrx_rbt_create(size_t node_size,
            rbt_freefunc freefunc,
            void *arg)
 {
-    RBTree       *tree = (RBTree *) NDRX_FPMALLOC(sizeof(RBTree),EXFALSE);
+    RBTree *tree = (RBTree *) NDRX_FPMALLOC(sizeof(RBTree),EXFALSE);
 
     Assert(node_size > sizeof(RBTNode));
 
@@ -528,11 +529,10 @@ static void rbt_insert_fixup(RBTree *rbt, RBTNode *x)
  * "data" is unmodified in either case; it's typically just a local
  * variable in the caller.
  */
-RBTNode *ndrx_rbt_insert(RBTree *rbt, const RBTNode *data, int *isNew)
+RBTNode *ndrx_rbt_insert(RBTree *rbt, RBTNode *data, int *isNew)
 {
     RBTNode    *current,
-               *parent,
-               *x;
+               *parent;
     int            cmp;
 
     /* find where node belongs */
@@ -561,31 +561,30 @@ RBTNode *ndrx_rbt_insert(RBTree *rbt, const RBTNode *data, int *isNew)
      */
     *isNew = EXTRUE;
 
-    x = rbt->allocfunc(rbt->arg);
+    // x = rbt->allocfunc(rbt->arg);
+    data->color = RBTRED;
 
-    x->color = RBTRED;
-
-    x->left = RBTNIL;
-    x->right = RBTNIL;
-    x->parent = parent;
-    rbt_copy_data(rbt, x, data);
+    data->left = RBTNIL;
+    data->right = RBTNIL;
+    data->parent = parent;
+    // rbt_copy_data(rbt, x, data);
 
     /* insert node in tree */
     if (parent)
     {
         if (cmp < 0)
-            parent->left = x;
+            parent->left = data;
         else
-            parent->right = x;
+            parent->right = data;
     }
     else
     {
-        rbt->root = x;
+        rbt->root = data;
     }
 
-    rbt_insert_fixup(rbt, x);
+    rbt_insert_fixup(rbt, data);
 
-    return x;
+    return data;
 }
 
 /**********************************************************************

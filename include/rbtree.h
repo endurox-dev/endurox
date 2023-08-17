@@ -28,6 +28,7 @@ typedef struct RBTNode
     struct RBTNode *left;          /* left child, or RBTNIL if none */
     struct RBTNode *right;         /* right child, or RBTNIL if none */
     struct RBTNode *parent;        /* parent, or NULL (not RBTNIL!) if none */
+    void *ptr;                     /* pointer to user data */
 } RBTNode;
 
 /* Opaque struct representing a whole tree */
@@ -73,7 +74,7 @@ extern RBTNode *ndrx_rbt_find_great(RBTree *rbt, const RBTNode *data, int equal_
 extern RBTNode *ndrx_rbt_find_less(RBTree *rbt, const RBTNode *data, int equal_match);
 extern RBTNode *ndrx_rbt_leftmost(RBTree *rbt);
 
-extern RBTNode *ndrx_rbt_insert(RBTree *rbt, const RBTNode *data, int *isNew);
+extern RBTNode *ndrx_rbt_insert(RBTree *rbt, RBTNode *data, int *isNew);
 extern void ndrx_rbt_delete(RBTree *rbt, RBTNode *node);
 
 extern void ndrx_rbt_begin_iterate(RBTree *rbt, RBTOrderControl ctrl,
