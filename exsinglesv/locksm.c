@@ -163,7 +163,7 @@ ndrx_locksm_t M_locksm[] = {
     , NDRX_SM_STATE(st_do_lock, do_lock,
           NDRX_SM_TRAN      (ev_ok,         NDRX_SM_ST_RETURN0)
         , NDRX_SM_TRAN      (ev_busy,       NDRX_SM_ST_RETURN0)
-        , NDRX_SM_TRAN      (ev_err,        st_abort)
+        , NDRX_SM_TRAN      (ev_err,        st_abort_unlock)
         , NDRX_SM_TRAN_END
         )
 
