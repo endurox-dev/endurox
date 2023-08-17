@@ -62,28 +62,6 @@ expublic ndrx_exsinglesv_conf_t ndrx_G_exsinglesv_conf; /**< Configuration */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Periodic lock logic:
- *  - perform lock or unlock, alternately at every check cycle
- *  - in case if we are not locked, try to lock master lock (permanent lock)
- *  - in case if we are master locked, at every loop update the shared memory
- *  last_refresh
- *  - in case if maintenance mode is on, do not perform any locking 
- *  (if we are not locked). If locked, then original logic stays.
- *  - ping lock fails to lock or unlock, mark group as non locked, terminate the current
- *  proceess.
- * @return EXSUCCEED/EXFAIL. In case of failure, process will reboot.
- */
-exprivate int ndrx_lock_chk(void)
-{
-    int ret = EXSUCCEED;
-
-    /* TODO: Run state-machine */
-
-out:
-    return ret;
-}
-
-/**
  * Un-init procedure.
  * Close any open lock files.
  * @param normal_unlock shall we perform normal unlock (i.e. we were locked)
@@ -287,7 +265,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Register timer check.... */
     if (EXSUCCEED==ret &&
             EXSUCCEED!=tpext_addperiodcb(ndrx_G_exsinglesv_conf.chkinterval, 
-            ndrx_lock_chk))
+            ndrx_exsinglesv_sm_run))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                         tpstrerror(tperrno));
@@ -298,7 +276,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
    /* perform first check
     * so that on boot, the first locked node would boot without any interruptions */
-   if (EXSUCCEED!=ndrx_lock_chk())
+   if (EXSUCCEED!=ndrx_exsinglesv_sm_run())
    {
         NDRX_LOG(log_error, "Failed to perform lock check");
         EXFAIL_OUT(ret);

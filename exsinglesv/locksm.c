@@ -372,4 +372,14 @@ exprivate int do_lock(void *ctx)
 out:
     return ret;
 }
+
+/**
+ * Run lock/check statemachine
+ * @return 0 (on success), otherwise fail
+ */
+expublic int ndrx_exsinglesv_sm_run(void)
+{
+    ndrx_locksm_ctx_t ctx;
+    return ndrx_sm_run((void *)M_locksm, NR_TRANS, st_get_singlegrp, (void *)&ctx);
+}
 /* vim: set ts=4 sw=4 et smartindent: */
