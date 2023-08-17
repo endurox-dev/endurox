@@ -22,63 +22,73 @@
  * rbt_create.)    RBTNode is declared here to support this usage, but
  * callers must treat it as an opaque struct.
  */
-typedef struct RBTNode
+typedef struct ndrx_rbt_node
 {
-    char color;                    /* node's current color, red or black */
-    struct RBTNode *left;          /* left child, or RBTNIL if none */
-    struct RBTNode *right;         /* right child, or RBTNIL if none */
-    struct RBTNode *parent;        /* parent, or NULL (not RBTNIL!) if none */
-    void *ptr;                     /* pointer to user data */
-} RBTNode;
+    char color;                     /* node's current color, red or black */
+    struct ndrx_rbt_node *left;     /* left child, or RBTNIL if none */
+    struct ndrx_rbt_node *right;    /* right child, or RBTNIL if none */
+    struct ndrx_rbt_node *parent;   /* parent, or NULL (not RBTNIL!) if none */
+    void *ptr;                      /* pointer to user data */
+} ndrx_rbt_node_t;
 
 /* Opaque struct representing a whole tree */
-typedef struct RBTree RBTree;
+typedef struct ndrx_rbt_tree ndrx_rbt_tree_t;
 
 /* Available tree iteration orderings */
-typedef enum RBTOrderControl
+typedef enum ndrx_rbt_order_control
 {
     LeftRightWalk,                /* inorder: left child, node, right child */
     RightLeftWalk                 /* reverse inorder: right, node, left */
-} RBTOrderControl;
+} ndrx_rbt_order_control_t;
 
 /*
  * RBTreeIterator holds state while traversing a tree.  This is declared
  * here so that callers can stack-allocate this, but must otherwise be
  * treated as an opaque struct.
  */
-typedef struct RBTreeIterator RBTreeIterator;
+typedef struct ndrx_rbt_ree_iterator ndrx_rbt_ree_iterator_t;
 
-struct RBTreeIterator
+struct ndrx_rbt_ree_iterator
 {
-    RBTree     *rbt;
-    RBTNode    *(*iterate) (RBTreeIterator *iter);
-    RBTNode    *last_visited;
-    int         is_over;
+    ndrx_rbt_tree_t     *rbt;
+    ndrx_rbt_node_t     *(*iterate) (ndrx_rbt_ree_iterator_t *iter);
+    ndrx_rbt_node_t     *last_visited;
+    int                 is_over;
 };
 
 /* Support functions to be provided by caller */
-typedef int (*rbt_comparator) (const RBTNode *a, const RBTNode *b, void *arg);
-typedef void (*rbt_combiner) (RBTNode *existing, const RBTNode *newdata, void *arg);
-typedef RBTNode *(*rbt_allocfunc) (void *arg);
-typedef void (*rbt_freefunc) (RBTNode *x, void *arg);
+typedef int (*rbt_comparator) (const ndrx_rbt_node_t *a, 
+                                const ndrx_rbt_node_t *b, void *arg);
+typedef void (*rbt_combiner) (ndrx_rbt_node_t *existing, 
+                                const ndrx_rbt_node_t *newdata, void *arg);
+typedef ndrx_rbt_node_t *(*rbt_allocfunc) (void *arg);
+typedef void (*rbt_freefunc) (ndrx_rbt_node_t *x, void *arg);
 
-extern RBTree *ndrx_rbt_create(size_t node_size,
-                                                    rbt_comparator comparator,
-                                                    rbt_combiner combiner,
-                                                    rbt_allocfunc allocfunc,
-                                                    rbt_freefunc freefunc,
-                                                    void *arg);
+extern ndrx_rbt_tree_t *ndrx_rbt_create(size_t node_size,
+                                            rbt_comparator comparator,
+                                            rbt_combiner combiner,
+                                            rbt_allocfunc allocfunc,
+                                            rbt_freefunc freefunc,
+                                            void *arg);
 
-extern RBTNode *ndrx_rbt_find(RBTree *rbt, const RBTNode *data);
-extern RBTNode *ndrx_rbt_find_great(RBTree *rbt, const RBTNode *data, int equal_match);
-extern RBTNode *ndrx_rbt_find_less(RBTree *rbt, const RBTNode *data, int equal_match);
-extern RBTNode *ndrx_rbt_leftmost(RBTree *rbt);
+extern ndrx_rbt_node_t *ndrx_rbt_find(ndrx_rbt_tree_t *rbt, 
+                                        const ndrx_rbt_node_t *data);
+extern ndrx_rbt_node_t *ndrx_rbt_find_great(ndrx_rbt_tree_t *rbt, 
+                                            const ndrx_rbt_node_t *data, 
+                                            int equal_match);
+extern ndrx_rbt_node_t *ndrx_rbt_find_less(ndrx_rbt_tree_t *rbt, 
+                                            const ndrx_rbt_node_t *data, 
+                                            int equal_match);
+extern ndrx_rbt_node_t *ndrx_rbt_leftmost(ndrx_rbt_tree_t *rbt);
 
-extern RBTNode *ndrx_rbt_insert(RBTree *rbt, RBTNode *data, int *isNew);
-extern void ndrx_rbt_delete(RBTree *rbt, RBTNode *node);
+extern ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, 
+                                        ndrx_rbt_node_t *data, int *isNew);
+extern void ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node);
 
-extern void ndrx_rbt_begin_iterate(RBTree *rbt, RBTOrderControl ctrl,
-                                                    RBTreeIterator *iter);
-extern RBTNode *ndrx_rbt_iterate(RBTreeIterator *iter);
+extern void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt, 
+                                    ndrx_rbt_order_control_t ctrl,
+                                    ndrx_rbt_ree_iterator_t *iter);
+
+extern ndrx_rbt_node_t *ndrx_rbt_iterate(ndrx_rbt_ree_iterator_t *iter);
 
 #endif                            /* RBTREE_H */
