@@ -38,9 +38,9 @@
 /*
  * RBTree control structure
  */
-struct RBTree
+struct ndrx_rbt_tree
 {
-    RBTNode         *root;            /* root node, or RBTNIL if tree is empty */
+    ndrx_rbt_node_t *root;            /* root node, or RBTNIL if tree is empty */
     /* Remaining fields are constant after rbt_create */
     size_t          node_size;        /* actual size of tree nodes */
     /* The caller-supplied manipulation functions */
@@ -58,7 +58,7 @@ struct RBTree
  */
 #define RBTNIL (&sentinel)
 
-static RBTNode sentinel =
+static ndrx_rbt_node_t sentinel =
 {
     .color  = RBTBLACK,
     .left   = RBTNIL,
@@ -186,16 +186,16 @@ void ExceptionalCondition(const char *conditionName,
  * resetting or deleting the memory context it's stored in.  You can pfree
  * the RBTree node if you feel the urge.
  */
-RBTree *ndrx_rbt_create(size_t node_size,
-           rbt_comparator comparator,
-           rbt_combiner combiner,
-           rbt_allocfunc allocfunc,
-           rbt_freefunc freefunc,
-           void *arg)
+ndrx_rbt_tree_t *ndrx_rbt_create(size_t node_size,
+                                    rbt_comparator comparator,
+                                    rbt_combiner combiner,
+                                    rbt_allocfunc allocfunc,
+                                    rbt_freefunc freefunc,
+                                    void *arg)
 {
-    RBTree *tree = (RBTree *) NDRX_FPMALLOC(sizeof(RBTree),EXFALSE);
+    ndrx_rbt_tree_t *tree = (ndrx_rbt_tree_t *) NDRX_FPMALLOC(sizeof(ndrx_rbt_tree_t),EXFALSE);
 
-    Assert(node_size > sizeof(RBTNode));
+    Assert(node_size > sizeof(ndrx_rbt_node_t));
 
     tree->root = RBTNIL;
     tree->node_size = node_size;
@@ -210,10 +210,11 @@ RBTree *ndrx_rbt_create(size_t node_size,
 }
 
 /* Copy the additional data fields from one RBTNode to another */
-static inline void
-rbt_copy_data(RBTree *rbt, RBTNode *dest, const RBTNode *src)
+static inline void ndrx_rbt_copy_data(ndrx_rbt_tree_t *rbt, 
+                                        ndrx_rbt_node_t *dest, 
+                                        const ndrx_rbt_node_t *src)
 {
-    memcpy(dest + 1, src + 1, rbt->node_size - sizeof(RBTNode));
+    memcpy(dest + 1, src + 1, rbt->node_size - sizeof(ndrx_rbt_node_t));
 }
 
 /**********************************************************************
@@ -228,13 +229,13 @@ rbt_copy_data(RBTree *rbt, RBTNode *dest, const RBTNode *src)
  *
  * Returns the matching tree entry, or NULL if no match is found.
  */
-RBTNode *ndrx_rbt_find(RBTree *rbt, const RBTNode *data)
+ndrx_rbt_node_t *ndrx_rbt_find(ndrx_rbt_tree_t *rbt, const ndrx_rbt_node_t *data)
 {
-    RBTNode    *node = rbt->root;
+    ndrx_rbt_node_t *node = rbt->root;
 
     while (node != RBTNIL)
     {
-        int            cmp = rbt->comparator(data, node, rbt->arg);
+        int cmp = rbt->comparator(data, node, rbt->arg);
 
         if (cmp == 0)
             return node;
@@ -254,14 +255,14 @@ RBTNode *ndrx_rbt_find(RBTree *rbt, const RBTNode *data)
  *
  * Returns the matching tree entry, or NULL if no match is found.
  */
-RBTNode *ndrx_rbt_find_great(RBTree *rbt, const RBTNode *data, int equal_match)
+ndrx_rbt_node_t *ndrx_rbt_find_great(ndrx_rbt_tree_t *rbt, const ndrx_rbt_node_t *data, int equal_match)
 {
-    RBTNode    *node = rbt->root;
-    RBTNode    *greater = NULL;
+    ndrx_rbt_node_t *node = rbt->root;
+    ndrx_rbt_node_t *greater = NULL;
 
     while (node != RBTNIL)
     {
-        int            cmp = rbt->comparator(data, node, rbt->arg);
+        int cmp = rbt->comparator(data, node, rbt->arg);
 
         if (equal_match && cmp == 0)
             return node;
@@ -284,14 +285,14 @@ RBTNode *ndrx_rbt_find_great(RBTree *rbt, const RBTNode *data, int equal_match)
  *
  * Returns the matching tree entry, or NULL if no match is found.
  */
-RBTNode *ndrx_rbt_find_less(RBTree *rbt, const RBTNode *data, int equal_match)
+ndrx_rbt_node_t *ndrx_rbt_find_less(ndrx_rbt_tree_t *rbt, const ndrx_rbt_node_t *data, int equal_match)
 {
-    RBTNode    *node = rbt->root;
-    RBTNode    *lesser = NULL;
+    ndrx_rbt_node_t *node = rbt->root;
+    ndrx_rbt_node_t *lesser = NULL;
 
     while (node != RBTNIL)
     {
-        int            cmp = rbt->comparator(data, node, rbt->arg);
+        int cmp = rbt->comparator(data, node, rbt->arg);
 
         if (equal_match && cmp == 0)
             return node;
@@ -315,10 +316,10 @@ RBTNode *ndrx_rbt_find_less(RBTree *rbt, const RBTNode *data, int equal_match)
  * that's a bit awkward.  Just call rbt_delete on the result if that's what
  * you want.
  */
-RBTNode *ndrx_rbt_leftmost(RBTree *rbt)
+ndrx_rbt_node_t *ndrx_rbt_leftmost(ndrx_rbt_tree_t *rbt)
 {
-    RBTNode    *node = rbt->root;
-    RBTNode    *leftmost = rbt->root;
+    ndrx_rbt_node_t *node = rbt->root;
+    ndrx_rbt_node_t *leftmost = rbt->root;
 
     while (node != RBTNIL)
     {
@@ -342,9 +343,9 @@ RBTNode *ndrx_rbt_leftmost(RBTree *rbt)
  * x's right child takes its place in the tree, and x becomes the left
  * child of that node.
  */
-static void rbt_rotate_left(RBTree *rbt, RBTNode *x)
+static void ndrx_rbt_rotate_left(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *x)
 {
-    RBTNode    *y = x->right;
+    ndrx_rbt_node_t *y = x->right;
 
     /* establish x->right link */
     x->right = y->left;
@@ -378,9 +379,9 @@ static void rbt_rotate_left(RBTree *rbt, RBTNode *x)
  * x's left right child takes its place in the tree, and x becomes the right
  * child of that node.
  */
-static void rbt_rotate_right(RBTree *rbt, RBTNode *x)
+static void ndrx_rbt_rotate_right(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *x)
 {
-    RBTNode    *y = x->left;
+    ndrx_rbt_node_t *y = x->left;
 
     /* establish x->left link */
     x->left = y->right;
@@ -421,7 +422,7 @@ static void rbt_rotate_right(RBTree *rbt, RBTNode *x)
  * (This does not work lower down in the tree because we must also maintain
  * the invariant that every leaf has equal black-height.)
  */
-static void rbt_insert_fixup(RBTree *rbt, RBTNode *x)
+static void ndrx_rbt_insert_fixup(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *x)
 {
     /*
      * x is always a red node.  Initially, it is the newly inserted node. Each
@@ -447,7 +448,7 @@ static void rbt_insert_fixup(RBTree *rbt, RBTNode *x)
          */
         if (x->parent == x->parent->parent->left)
         {
-            RBTNode    *y = x->parent->parent->right;
+            ndrx_rbt_node_t *y = x->parent->parent->right;
 
             if (y->color == RBTRED)
             {
@@ -465,20 +466,20 @@ static void rbt_insert_fixup(RBTree *rbt, RBTNode *x)
                 {
                     /* make x a left child */
                     x = x->parent;
-                    rbt_rotate_left(rbt, x);
+                    ndrx_rbt_rotate_left(rbt, x);
                 }
 
                 /* recolor and rotate */
                 x->parent->color = RBTBLACK;
                 x->parent->parent->color = RBTRED;
 
-                rbt_rotate_right(rbt, x->parent->parent);
+                ndrx_rbt_rotate_right(rbt, x->parent->parent);
             }
         }
         else
         {
             /* mirror image of above code */
-            RBTNode    *y = x->parent->parent->left;
+            ndrx_rbt_node_t *y = x->parent->parent->left;
 
             if (y->color == RBTRED)
             {
@@ -495,12 +496,12 @@ static void rbt_insert_fixup(RBTree *rbt, RBTNode *x)
                 if (x == x->parent->left)
                 {
                     x = x->parent;
-                    rbt_rotate_right(rbt, x);
+                    ndrx_rbt_rotate_right(rbt, x);
                 }
                 x->parent->color = RBTBLACK;
                 x->parent->parent->color = RBTRED;
 
-                rbt_rotate_left(rbt, x->parent->parent);
+                ndrx_rbt_rotate_left(rbt, x->parent->parent);
             }
         }
     }
@@ -529,11 +530,11 @@ static void rbt_insert_fixup(RBTree *rbt, RBTNode *x)
  * "data" is unmodified in either case; it's typically just a local
  * variable in the caller.
  */
-RBTNode *ndrx_rbt_insert(RBTree *rbt, RBTNode *data, int *isNew)
+ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *data, int *isNew)
 {
-    RBTNode    *current,
-               *parent;
-    int            cmp;
+    ndrx_rbt_node_t *current,
+                    *parent;
+    int             cmp;
 
     /* find where node belongs */
     current = rbt->root;
@@ -582,7 +583,7 @@ RBTNode *ndrx_rbt_insert(RBTree *rbt, RBTNode *data, int *isNew)
         rbt->root = data;
     }
 
-    rbt_insert_fixup(rbt, data);
+    ndrx_rbt_insert_fixup(rbt, data);
 
     return data;
 }
@@ -594,7 +595,7 @@ RBTNode *ndrx_rbt_insert(RBTree *rbt, RBTNode *data, int *isNew)
 /*
  * Maintain Red-Black tree balance after deleting a black node.
  */
-static void rbt_delete_fixup(RBTree *rbt, RBTNode *x)
+static void ndrx_rbt_delete_fixup(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *x)
 {
     /*
      * x is always a black node.  Initially, it is the former child of the
@@ -612,14 +613,14 @@ static void rbt_delete_fixup(RBTree *rbt, RBTNode *x)
          */
         if (x == x->parent->left)
         {
-            RBTNode    *w = x->parent->right;
+            ndrx_rbt_node_t *w = x->parent->right;
 
             if (w->color == RBTRED)
             {
                 w->color = RBTBLACK;
                 x->parent->color = RBTRED;
 
-                rbt_rotate_left(rbt, x->parent);
+                ndrx_rbt_rotate_left(rbt, x->parent);
                 w = x->parent->right;
             }
 
@@ -636,27 +637,27 @@ static void rbt_delete_fixup(RBTree *rbt, RBTNode *x)
                     w->left->color = RBTBLACK;
                     w->color = RBTRED;
 
-                    rbt_rotate_right(rbt, w);
+                    ndrx_rbt_rotate_right(rbt, w);
                     w = x->parent->right;
                 }
                 w->color = x->parent->color;
                 x->parent->color = RBTBLACK;
                 w->right->color = RBTBLACK;
 
-                rbt_rotate_left(rbt, x->parent);
+                ndrx_rbt_rotate_left(rbt, x->parent);
                 x = rbt->root;    /* Arrange for loop to terminate. */
             }
         }
         else
         {
-            RBTNode    *w = x->parent->left;
+            ndrx_rbt_node_t *w = x->parent->left;
 
             if (w->color == RBTRED)
             {
                 w->color = RBTBLACK;
                 x->parent->color = RBTRED;
 
-                rbt_rotate_right(rbt, x->parent);
+                ndrx_rbt_rotate_right(rbt, x->parent);
                 w = x->parent->left;
             }
 
@@ -673,14 +674,14 @@ static void rbt_delete_fixup(RBTree *rbt, RBTNode *x)
                     w->right->color = RBTBLACK;
                     w->color = RBTRED;
 
-                    rbt_rotate_left(rbt, w);
+                    ndrx_rbt_rotate_left(rbt, w);
                     w = x->parent->left;
                 }
                 w->color = x->parent->color;
                 x->parent->color = RBTBLACK;
                 w->left->color = RBTBLACK;
 
-                rbt_rotate_right(rbt, x->parent);
+                ndrx_rbt_rotate_right(rbt, x->parent);
                 x = rbt->root;    /* Arrange for loop to terminate. */
             }
         }
@@ -691,10 +692,10 @@ static void rbt_delete_fixup(RBTree *rbt, RBTNode *x)
 /*
  * Delete node z from tree.
  */
-static void rbt_delete_node(RBTree *rbt, RBTNode *z)
+static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
 {
-    RBTNode    *x,
-               *y;
+    ndrx_rbt_node_t     *x,
+                        *y;
 
     /* This is just paranoia: we should only get called on a valid node */
     if (!z || z == RBTNIL)
@@ -743,14 +744,14 @@ static void rbt_delete_node(RBTree *rbt, RBTNode *z)
      * the data for the removed node to the one we were supposed to remove.
      */
     if (y != z)
-        rbt_copy_data(rbt, z, y);
+        ndrx_rbt_copy_data(rbt, z, y);
 
     /*
      * Removing a black node might make some paths from root to leaf contain
      * fewer black nodes than others, or it might make two red nodes adjacent.
      */
     if (y->color == RBTBLACK)
-        rbt_delete_fixup(rbt, x);
+        ndrx_rbt_delete_fixup(rbt, x);
 
     /* Now we can recycle the y node */
     if (rbt->freefunc)
@@ -766,16 +767,16 @@ static void rbt_delete_node(RBTree *rbt, RBTNode *z)
  * responsibility off to the freefunc, as some other physical node
  * may be the one actually freed!)
  */
-void ndrx_rbt_delete(RBTree *rbt, RBTNode *node)
+void ndrx_ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node)
 {
-    rbt_delete_node(rbt, node);
+    ndrx_rbt_delete_node(rbt, node);
 }
 
 /**********************************************************************
  *                          Traverse                                      *
  **********************************************************************/
 
-static RBTNode *rbt_left_right_iterator(RBTreeIterator *iter)
+static ndrx_rbt_node_t *rbt_left_right_iterator(ndrx_rbt_ree_iterator_t *iter)
 {
     if (iter->last_visited == NULL)
     {
@@ -797,7 +798,7 @@ static RBTNode *rbt_left_right_iterator(RBTreeIterator *iter)
 
     for (;;)
     {
-        RBTNode    *came_from = iter->last_visited;
+        ndrx_rbt_node_t *came_from = iter->last_visited;
 
         iter->last_visited = iter->last_visited->parent;
         if (iter->last_visited == NULL)
@@ -807,8 +808,7 @@ static RBTNode *rbt_left_right_iterator(RBTreeIterator *iter)
         }
 
         if (iter->last_visited->left == came_from)
-            break;                /* came from left sub-tree, return current
-                                 * node */
+            break;          /* came from left sub-tree, return current node */
 
         /* else - came from right sub-tree, continue to move up */
     }
@@ -816,7 +816,7 @@ static RBTNode *rbt_left_right_iterator(RBTreeIterator *iter)
     return iter->last_visited;
 }
 
-static RBTNode *rbt_right_left_iterator(RBTreeIterator *iter)
+static ndrx_rbt_node_t *rbt_right_left_iterator(ndrx_rbt_ree_iterator_t *iter)
 {
     if (iter->last_visited == NULL)
     {
@@ -838,7 +838,7 @@ static RBTNode *rbt_right_left_iterator(RBTreeIterator *iter)
 
     for (;;)
     {
-        RBTNode    *came_from = iter->last_visited;
+        ndrx_rbt_node_t *came_from = iter->last_visited;
 
         iter->last_visited = iter->last_visited->parent;
         if (iter->last_visited == NULL)
@@ -848,8 +848,7 @@ static RBTNode *rbt_right_left_iterator(RBTreeIterator *iter)
         }
 
         if (iter->last_visited->right == came_from)
-            break;                /* came from right sub-tree, return current
-                                 * node */
+            break;          /* came from right sub-tree, return current node */
 
         /* else - came from left sub-tree, continue to move up */
     }
@@ -870,7 +869,9 @@ static RBTNode *rbt_right_left_iterator(RBTreeIterator *iter)
  * The iterator state is stored in the 'iter' struct.  The caller should
  * treat it as an opaque struct.
  */
-void ndrx_rbt_begin_iterate(RBTree *rbt, RBTOrderControl ctrl, RBTreeIterator *iter)
+void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt, 
+                            ndrx_rbt_order_control_t ctrl, 
+                            ndrx_rbt_ree_iterator_t *iter)
 {
     /* Common initialization for all traversal orders */
     iter->rbt = rbt;
@@ -893,7 +894,7 @@ void ndrx_rbt_begin_iterate(RBTree *rbt, RBTOrderControl ctrl, RBTreeIterator *i
 /*
  * rbt_iterate: return the next node in traversal order, or NULL if no more
  */
-RBTNode *ndrx_rbt_iterate(RBTreeIterator *iter)
+ndrx_rbt_node_t *ndrx_rbt_iterate(ndrx_rbt_ree_iterator_t *iter)
 {
     if (iter->is_over)
         return NULL;
