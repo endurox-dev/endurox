@@ -743,8 +743,33 @@ static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
      * If we removed the tree successor of z rather than z itself, then move
      * the data for the removed node to the one we were supposed to remove.
      */
+    /*
     if (y != z)
         ndrx_rbt_copy_data(rbt, z, y);
+    */
+
+    /* transplant y to z palce */
+    if (y != z)
+    {
+        if (RBTNIL==z->parent)
+        {	
+             rbt->root=y;
+        }
+        else if (z->parent->left==z)
+        {
+             z->parent->left=y;
+        }
+        else
+        {
+            z->parent->right=y;
+        }
+
+        /* keep the orignal ptrs of the z (down ptrs and color)
+         * keep in mind that if y structure has traling data,
+         * it stays in the y as only rbt data is copied
+        */
+        memcpy(y, z, sizeof(ndrx_rbt_node_t));
+    }
 
     /*
      * Removing a black node might make some paths from root to leaf contain
@@ -755,7 +780,7 @@ static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
 
     /* Now we can recycle the y node */
     if (rbt->freefunc)
-        rbt->freefunc(y, rbt->arg);
+        rbt->freefunc(z, rbt->arg);
 }
 
 /*
