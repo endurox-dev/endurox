@@ -276,7 +276,7 @@ extern "C" {
 #define	TPQWAIT		0x00080		/**< RFU, wait for dequeuing */		
 #define	TPQREPLYQ	0x00100		/**< set/get reply queue */		
 #define	TPQTIME_ABS	0x00200		/**< RFU, set absolute time */		
-#define	TPQTIME_REL	0x00400		/**< RFU, set absolute time */		
+#define	TPQTIME_REL	0x00400		/**< RFU, set relative time */		
 #define	TPQGETBYCORRIDOLD 0x00800	/**< deprecated */		
 #define	TPQPEEK		0x01000		/**< peek */		
 #define TPQDELIVERYQOS  0x02000         /**< RFU, delivery quality of service */		
@@ -427,7 +427,7 @@ typedef void* TPCONTEXT_T; /* Enduro/X full context switching handler */
 struct tpqctl_t 
 {
     long flags;         /**< indicates which of the values are set */		
-    long deq_time;      /**< absolute/relative  time for dequeuing */		
+    long deq_time;      /**< absolute/relative time for dequeuing */		
     long priority;      /**< enqueue priority */		
     long diagnostic;    /**< indicates reason for failure */		
     char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
