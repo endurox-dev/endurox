@@ -85,7 +85,6 @@ enum
     , st_shm_refresh
     , st_abort
     , st_abort_unlock
-    , st_end_normal
 };
 
 /*---------------------------Typedefs-----------------------------------*/
@@ -166,7 +165,6 @@ ndrx_locksm_t M_locksm[] = {
         , NDRX_SM_TRAN      (ev_err,        st_abort_unlock)
         , NDRX_SM_TRAN_END
         )
-
 };
 
 /**
@@ -343,6 +341,7 @@ exprivate int do_lock(void *ctx)
 {
     ndrx_locksm_ctx_t *lock_ctx = (ndrx_locksm_ctx_t *)ctx;
     int ret=ev_ok;
+    char *boot_script = NULL;
 
     switch (ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_1, 
         ndrx_G_exsinglesv_conf.lockfile_1))
@@ -355,18 +354,50 @@ exprivate int do_lock(void *ctx)
             goto out;
         case EXSUCCEED:
 
-            /* mark shm as locked by us too */
-            if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.singlegrp, 
-                    tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME), lock_ctx->new_refresh))
-            {
-                ret=ev_err;
-                goto out;
-            }
+            ndrx_G_exsinglesv_conf.locked1=EXTRUE;
 
             break;
         default:
             ret = ev_err;
             goto out;  
+    }
+
+    if (ndrx_G_exsinglesv_conf.first_boot
+        && EXEOS!=ndrx_G_exsinglesv_conf.exec_on_bootlocked[0])
+    {
+        boot_script=ndrx_G_exsinglesv_conf.exec_on_bootlocked;
+    }
+    else if (ndrx_G_exsinglesv_conf.first_boot
+        && EXEOS!=ndrx_G_exsinglesv_conf.exec_on_locked[0])
+    {
+        boot_script=ndrx_G_exsinglesv_conf.exec_on_locked;
+    }
+
+    if (NULL!=boot_script)
+    {
+        /* execute boot script */
+        NDRX_LOG(log_info, "Executing boot script: %s", boot_script);
+
+        ret=system(boot_script);
+
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Failed to execute boot script [%s], "
+                "finished with %d", boot_script, ret);
+            userlog("Failed to execute boot script [%s], "
+                "finished with %d", boot_script, ret);
+            ret=ev_err;
+            goto out;
+        }
+    }
+
+    /* mark shm as locked by us too */
+    NDRX_LOG(log_debug, "Lock shared memory...");
+    if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.singlegrp, 
+            tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME), lock_ctx->new_refresh))
+    {
+        ret=ev_err;
+        goto out;
     }
 
 out:
@@ -381,5 +412,14 @@ expublic int ndrx_exsinglesv_sm_run(void)
 {
     ndrx_locksm_ctx_t ctx;
     return ndrx_sm_run((void *)M_locksm, NR_TRANS, st_get_singlegrp, (void *)&ctx);
+}
+
+/**
+ * Runtime validation of the state machine
+ * @return 0 (on success), otherwise fail
+ */
+expublic int ndrx_exsinglesv_sm_validate(void)
+{
+    return ndrx_sm_validate((void *)M_locksm, NR_TRANS, st_get_singlegrp, st_abort_unlock);
 }
 /* vim: set ts=4 sw=4 et smartindent: */

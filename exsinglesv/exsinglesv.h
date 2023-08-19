@@ -1,7 +1,6 @@
 /**
- * @brief State machine definition
- * 
- * @file exsm.h
+ * Singleton group lock provider
+ * @file exsinglesv.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,77 +30,58 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef EXSM_H__
-#define EXSM_H__
 
-#if defined(__cplusplus)
+#ifndef EXSINGLESV_H
+#define	EXSINGLESV_H
+
+#ifdef	__cplusplus
 extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
-#include <ndrstandard.h>
+#include <limits.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define NDRX_LOCK_FILE_1         0 /**< first lock file name, permanent  */
+#define NDRX_LOCK_FILE_2         1/**< Ping lock                         */
 
-/** Return from state machine (special for exit). 
- * This returns last event code as machine exit code
- */
-#define NDRX_SM_ST_RETURN   -1
-
-/** Return from state machine (special for exit). 
- * This returns 0 as machine exit code
- */
-#define NDRX_SM_ST_RETURN0  -2
-
-#define NDRX_SM_EV_EOF      EXFAIL   /**< Event list end marker       */
-
-#define NDRX_SM_TRAN(EVENT, NEXT_STATE) {EVENT, #EVENT, NEXT_STATE} /**< Transition macro */
-#define NDRX_SM_TRAN_END {EXFAIL, "", 0} /**< Transition end macro */
-
-/**
- * State machine state definition
- */
-#define NDRX_SM_STATE(STATE, FUNC, ...)                              \
-    {                                                                \
-        STATE, #STATE, FUNC, {__VA_ARGS__}                           \
-    }                                                                \
+#define NDRX_LOCKE_FILE          -1 /**< failed to create file           */
+#define NDRX_LOCKE_LOCK          -2 /**< failed to lock file             */
+#define NDRX_LOCKE_BUSY          -3 /**< file is locked                  */
+#define NDRX_LOCKE_NOLOCK        -4 /**< File is not locked              */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
- * State machine transition 
+ * Admin server configuration
  */
 typedef struct
 {
-    int event;              /**< event id                       */
-    char event_name[32];    /**<                                */
-    int next_state;         /**< next state                     */
-} ndrx_sm_tran_t;
+    int singlegrp; /**< Providing lock for this group   */
+    char lockfile_1[PATH_MAX+1]; /**< Lock file 1       */
+    char lockfile_2[PATH_MAX+1]; /**< Lock file 2       */
+    char exec_on_bootlocked[PATH_MAX+1]; /**< Exec on boot locked */
+    char exec_on_locked[PATH_MAX+1]; /**< Exec on locked*/
+    int chkinterval; /**< Check interval                */
+    int locked1; /**< Locked                            */
+    int locked2; /**< File segment 1 is locked          */
+    int first_boot; /**< Is booting up                  */
 
-/**
- * State machine type, with custom number of transitions
- * @param NAME state machine name
- * @param NR_TRAN number of transitions
- */
-#define NDRX_SM_T(NAME, NR_TRAN)                                    \
-    typedef struct                                                  \
-    {                                                               \
-        int state; /**< state number */                             \
-        char state_name[32]; /**< state name */                     \
-        int (*func)(void *data); /**< state function (callback) */  \
-        ndrx_sm_tran_t transitions[NR_TRAN]; /**< transitions */    \
-    } NAME
+} ndrx_exsinglesv_conf_t;
+
 /*---------------------------Globals------------------------------------*/
+extern ndrx_exsinglesv_conf_t ndrx_G_exsinglesv_conf; /**< Configuration */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-extern NDRX_API int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data);
-extern NDRX_API int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_state);
-
-#if defined(__cplusplus)
+extern int ndrx_exsinglesv_file_lock(int lock_no, char *lockfile);
+extern int ndrx_exsinglesv_file_unlock(int lock_no);
+extern void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock);
+extern int ndrx_exsinglesv_sm_run(void);
+extern int ndrx_exsinglesv_sm_validate(void);
+#ifdef	__cplusplus
 }
 #endif
 
-#endif
+#endif	/* EXSINGLESV_H */
+
 /* vim: set ts=4 sw=4 et smartindent: */

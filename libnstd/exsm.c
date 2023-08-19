@@ -133,4 +133,67 @@ out:
     return ret;
 }
 
+/**
+ * Validate state machine.
+ * Checks:
+ *  - states are in sequence with memory arrays
+ *  - every state transitions ends with NDRX_SM_EV_EOF (may cause core dump if not found)
+ *  - every state transitions count is not greater than nr_tran
+ *  - every state transitions point to valid state (i.e. state nr is less than last_state)
+ * No gaps in states are allowed.
+ * @param sm state machine (basically according to ndrx_sm_state_handle_t,
+ * but having dynamic number of transitions)
+ * @param nr_tran number of transitions per state (must be same for all states)
+ * @param first_state first state of the machine
+ * @param last_last last state of the machine
+ * @return 0 if ok, -1 if error
+ */
+expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_state)
+{
+    int i;
+    int tran;
+    int ret = EXSUCCEED;
+    int got_eof;
+
+    for (i=first_state; i<=last_state; i++)
+    {
+        ndrx_sm_state_handle_t *cur = ndrx_sm_state_get(sm, nr_tran, i);
+
+        /* check that state is intialized */
+
+        if (cur->state != i)
+        {
+            NDRX_LOG(log_error, "sm: ERROR ! state %s (%d) is not in sequence!", 
+                    cur->state_name, cur->state);
+            EXFAIL_OUT(ret);
+        }
+
+        got_eof=EXFALSE;
+        for (tran=0; tran<=nr_tran; tran++)
+        {
+            if (NDRX_SM_EV_EOF==cur->transitions[tran].event)
+            {
+                /* ok */
+                got_eof=EXTRUE;
+                break;
+            }
+            else if ( (cur->transitions[tran].next_state <first_state ||
+                cur->transitions[tran].next_state >last_state) && 
+                NDRX_SM_ST_RETURN!=cur->transitions[tran].next_state &&
+                NDRX_SM_ST_RETURN0!=cur->transitions[tran].next_state)
+            {
+                NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %s (%d): "
+                        "next state %d is out of range [%d..%d]!", 
+                        cur->state_name, cur->state, cur->transitions[tran].event_name, 
+                        cur->transitions[tran].event, cur->transitions[tran].next_state, 
+                        first_state, last_state);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
