@@ -119,6 +119,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     char *sections[] = {"@singlesv",
                     NULL};
 
+    if (EXSUCCEED!=ndrx_exsinglesv_sm_validate())
+    {
+        NDRX_LOG(log_error, "Statemachine error");
+        userlog("Statemachine error");
+        EXFAIL_OUT(ret);
+    }
+
     memset(&ndrx_G_exsinglesv_conf, 0, sizeof(ndrx_G_exsinglesv_conf));
 
     if (EXSUCCEED!=ndrx_cconfig_load_sections(&cfg, sections))
@@ -274,6 +281,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     /* TODO: report flags and singlegrp to the ndrxd */
 
+    ndrx_G_exsinglesv_conf.first_boot = EXTRUE;
    /* perform first check
     * so that on boot, the first locked node would boot without any interruptions */
    if (EXSUCCEED!=ndrx_exsinglesv_sm_run())
@@ -281,6 +289,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to perform lock check");
         EXFAIL_OUT(ret);
    }
+
+   ndrx_G_exsinglesv_conf.first_boot = EXFALSE;
 
 out:
 

@@ -100,6 +100,26 @@ ndrx_sm_test_t M_sm1[] = {
         )
 };
 
+/**
+ * Broken memory sequeuence
+ */
+ndrx_sm_test_t M_sm2[] = {
+
+    NDRX_SM_STATE( st_entry, entry,
+          NDRX_SM_TRAN      (ev_ok,         st_say_hello)
+        , NDRX_SM_TRAN      (ev_err,        st_go_home)
+        , NDRX_SM_TRAN      (ev_timeout,    st_go_work)
+        , NDRX_SM_TRAN      (ev_normal,     NDRX_SM_ST_RETURN0)
+        , NDRX_SM_TRAN_END
+        )
+    , NDRX_SM_STATE(st_go_home, go_home,
+          NDRX_SM_TRAN      (ev_ok,         st_go_work)
+        , NDRX_SM_TRAN      (ev_err,        st_go_work)
+        , NDRX_SM_TRAN      (ev_timeout,    st_go_work)
+        , NDRX_SM_TRAN_END
+        )
+};
+
 exprivate void reset_counters(void)
 {
     M_entry_called = 0;
@@ -182,6 +202,18 @@ Ensure(test_nstd_sm_test1)
 }
 
 /**
+ * Check SM validations
+ */
+Ensure(test_nstd_sm_validate)
+{
+    assert_equal(ndrx_sm_validate((void *)M_sm1, NR_TRANS, st_entry, st_go_work), EXSUCCEED);
+    /* missing state: */
+    assert_equal(ndrx_sm_validate((void *)M_sm1, NR_TRANS, st_entry, st_go_home), EXFAIL);
+    /* missing EOF in transitions: */
+    assert_equal(ndrx_sm_validate((void *)M_sm2, NR_TRANS, st_entry, st_go_home), EXFAIL);
+}
+
+/**
  * Standard library tests
  * @return
  */
@@ -190,6 +222,7 @@ TestSuite *ubf_nstd_sm(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_nstd_sm_test1);
+    add_test(suite, test_nstd_sm_validate);
     
     return suite;
 }
