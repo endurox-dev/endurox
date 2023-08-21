@@ -14,15 +14,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cgreen/cgreen.h>
-// #include <ubf.h>
 #include <ndrstandard.h>
 #include <string.h>
 #include <unistd.h>
-// #include "test.fd.h"
-// #include "ubfunit1.h"
 #include "ndebug.h"
-// #include "atmi_int.h"
-
 #include <rbtree.h>
 
 #define Max(x, y)		((x) > (y) ? (x) : (y))
@@ -163,7 +158,7 @@ static void ndrx_rbt_populate(ndrx_rbt_tree_t *tree, int size, int step)
  * Left-right traversal is correct if all elements are
  * visited in increasing order.
  */
-Ensure(testleftright)
+Ensure(test_rbt_leftright)
 {
     ndrx_rbt_tree_t	        *tree = ndrx_create_int_rbtree();
     ndrx_int_RBTree_Node_t  *node;
@@ -203,7 +198,7 @@ Ensure(testleftright)
  * Right-left traversal is correct if all elements are
  * visited in decreasing order.
  */
-Ensure (testrightleft)
+Ensure (test_rbt_rightleft)
 {
     ndrx_rbt_tree_t         *tree = ndrx_create_int_rbtree();
     ndrx_int_RBTree_Node_t  *node;
@@ -242,7 +237,7 @@ Ensure (testrightleft)
  * Check the correctness of the rbt_find operation by searching for
  * both elements we inserted and elements we didn't.
  */
-Ensure(testfind)
+Ensure(test_rbt_find)
 {
     ndrx_rbt_tree_t	   *tree = ndrx_create_int_rbtree();
     int i;
@@ -286,7 +281,7 @@ Ensure(testfind)
  * by searching for an equal key and iterating the lesser keys then the greater
  * keys.
  */
-Ensure(testfindltgt)
+Ensure(test_rbt_findltgt)
 {
     ndrx_rbt_tree_t *tree = ndrx_create_int_rbtree();
     int             size = M_size;
@@ -386,7 +381,7 @@ Ensure(testfindltgt)
  * Check the correctness of the rbt_leftmost operation.
  * This operation should always return the smallest element of the tree.
  */
-Ensure(testleftmost)
+Ensure(test_rbt_leftmost)
 {
     ndrx_rbt_tree_t         *tree = ndrx_create_int_rbtree();
     ndrx_int_RBTree_Node_t  *result;
@@ -408,7 +403,7 @@ Ensure(testleftmost)
 /*
  * Check the correctness of the rbt_delete operation.
  */
-Ensure(testdelete)
+Ensure(test_rbt_delete)
 {
     ndrx_rbt_tree_t *tree = ndrx_create_int_rbtree();
     int             *deleteIds;
@@ -496,7 +491,7 @@ Ensure(testdelete)
     NDRX_FREE(chosen);
 }
 
-TestSuite *test_rb_tree(void)
+TestSuite *test_rbt_tree(void)
 {
     TestSuite *suite = create_test_suite();
 
@@ -506,12 +501,13 @@ TestSuite *test_rb_tree(void)
     if (M_size <= 0 || M_size > NDRX_MSGSIZEMAX / sizeof(int))
         NDRX_LOG(log_error, "invalid size for test_rb_tree: %d", M_size);
 
-    add_test(suite, testleftright);
-    add_test(suite, testrightleft);
-    add_test(suite, testfind);
-    add_test(suite, testfindltgt);
-    add_test(suite, testleftmost);
-    add_test(suite, testdelete);
+    add_test(suite, test_rbt_leftright);
+    add_test(suite, test_rbt_rightleft);
+    add_test(suite, test_rbt_find);
+    add_test(suite, test_rbt_findltgt);
+    add_test(suite, test_rbt_leftmost);
+    add_test(suite, test_rbt_delete);
+
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */
