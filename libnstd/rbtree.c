@@ -767,7 +767,7 @@ static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
  * responsibility off to the freefunc, as some other physical node
  * may be the one actually freed!)
  */
-void ndrx_ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node)
+void ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node)
 {
     ndrx_rbt_delete_node(rbt, node);
 }
