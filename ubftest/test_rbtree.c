@@ -70,7 +70,8 @@ static ndrx_rbt_node_t *ndrx_irbt_alloc(void *arg)
 /* Node freer */
 static void ndrx_irbt_free(ndrx_rbt_node_t *node, void *arg)
 {
-    NDRX_FREE(node);
+    if (node != NULL)
+        NDRX_FREE(node);
 }
 
 /*
@@ -170,7 +171,10 @@ Ensure(test_rbt_leftright)
     /* check iteration over empty tree */
     ndrx_rbt_begin_iterate(tree, LeftRightWalk, &iter);
     if (ndrx_rbt_iterate(&iter) != NULL)
+    {
         NDRX_LOG(log_error, "left-right walk over empty tree produced an element");
+        assert_true(EXTRUE);
+    }
 
     /* fill tree with consecutive natural numbers */
     ndrx_rbt_populate(tree, size, 1);
@@ -188,9 +192,16 @@ Ensure(test_rbt_leftright)
     }
 
     if (lastKey != size - 1)
+    {
         NDRX_LOG(log_error, "left-right walk did not reach end");
+        assert_true(EXTRUE);
+    }
+
     if (count != size)
+    {
         NDRX_LOG(log_error, "left-right walk missed some elements");
+        assert_true(EXTRUE);
+    }
 }
 
 /*
