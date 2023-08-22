@@ -636,30 +636,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                         sizeof(p_cltproc->stat.log_stderr));
                 
                 /* update the process name / hint */
-#if 0
-                /* TODO: Use strtokblk engine to extract first token ... */
-                //
-                p = strpbrk (p_cltproc->stat.command_line, separators);
-                
-                if (p > 0)
-                {
-                    /* get the len */
-                    len = p - p_cltproc->stat.command_line;
-                }
-                else
-                {
-                    len = strlen(p_cltproc->stat.command_line);
-                }
 
-                
-                if (len > sizeof(p_cltproc->stat.procname)-1)
-                {
-                    len = sizeof(p_cltproc->stat.procname)-1;
-                }
-                
-                strncpy(p_cltproc->stat.procname, p_cltproc->stat.command_line, len);
-                p_cltproc->stat.procname[len] = EXEOS;
-#endif
                 NDRX_STRCPY_SAFE(tmp_command_line, p_cltproc->stat.command_line);
                 
                 token = ndrx_strtokblk(tmp_command_line, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);

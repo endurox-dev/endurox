@@ -288,14 +288,15 @@ extern "C" {
 #define NDRXD_SVC_STATUS_BUSY           1       /**< Service is busy          */
 
     
-#define NDRXD_CALL_FLAGS_DEADQ          0x0001  /**< Reply queue is dead....! */
-#define NDRXD_CALL_FLAGS_PAGE2          0x0002  /**< Second page from call    */
-#define NDRXD_CALL_FLAGS_RSPHAVE_MORE   0x0004	/**< Have more stuff to wait for */
+#define NDRXD_CALL_FLAGS_DEADQ          0x0001  /**< Reply queue is dead....!   */
+#define NDRXD_CALL_FLAGS_PAGE2          0x0002  /**< Second page from call      */
+#define NDRXD_CALL_FLAGS_RSPHAVE_MORE   0x0004	/**< Have more stuff to wait for*/
+#define NDRXD_CALL_FLAGS_PAGE3          0x0008	/**< Third page                 */
 
 #define SRV_KEY_FLAGS_BRIDGE            0x0001  /**< This server is bridge server                 */
 #define SRV_KEY_FLAGS_SENDREFERSH       0x0002  /**< Bridge requires that we send refersh to them */
 #define SRV_KEY_FLAGS_CONNECTED         0x0004  /**< Is bridge connected?                         */
-    
+#define SRV_KEY_FLAGS_SINGLEGRPLP       0x0008  /**< Singleton group lock providers               */   
     
 /*
  *  values for bridge_refresh_svc_t.mode
@@ -739,6 +740,8 @@ typedef struct
     long state_changed;     /**< Timer for state changed       */
     int flags;              /**< Flags sent by server info     */
     short   nodeid;         /**< other node id, if this is bridge */
+    int singlegrp;          /**< Sinlegron group of the process */
+    int singlegrplp;        /**< Provides lock for the given singleton gorup */
     
 } command_reply_ppm_t;
 
@@ -851,7 +854,8 @@ typedef struct
     */
    char rqaddress[NDRX_MAX_Q_SIZE+1];
    
-   int resid;             /**< Resource id server id for poll, qid for sysv   */
+   int resid;               /**< Resource id server id for poll, qid for sysv   */
+   int singlegrplp;         /**< Singleton group lock provider                  */
    
 } srv_key_t;
 

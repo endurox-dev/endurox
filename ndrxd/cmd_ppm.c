@@ -87,6 +87,8 @@ expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     ppm_info->state_changed = p_pm->state_changed;
     ppm_info->flags = p_pm->flags;
     ppm_info->nodeid = p_pm->nodeid;
+    ppm_info->singlegrp = p_pm->conf->singlegrp;
+    ppm_info->singlegrplp = p_pm->singlegrplp;
 
     NDRX_LOG(log_debug, "magic: %ld", ppm_info->rply.magic);
 }

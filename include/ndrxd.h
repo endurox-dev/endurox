@@ -125,6 +125,7 @@ struct conf_server_node
     int mindispatchthreads; /**< minimum dispatch threads                     */
     int maxdispatchthreads; /**< maximum dispatch threads                     */
     int threadstacksize;    /**< thread stack size in KB, 0 - default         */
+    int singlegrp;          /**< Singleton group number, 0 - not used         */
     
     /* have entries for environment */
     
@@ -195,6 +196,7 @@ struct pm_node
     int reloadonchange_cksum; /**< Checksum code of the binary                */
     char binary_path[PATH_MAX+1]; /**< Path were binary lives...              */
     int resid;              /**< Res id to be installed in shm for poll & sysv*/
+    int singlegrplp;        /**< Singleton group's lock provider              */
     /* Linked list */
     pm_node_t *prev;
     pm_node_t *next;
@@ -211,6 +213,15 @@ struct pm_pidhash
     pm_pidhash_t *prev;
     pm_pidhash_t *next;
 };
+
+/**
+ * Options for singleton groups
+ */
+typedef struct
+{
+    int singlegrp;
+    short flags;    /**< See flags of ndrx_sg_shm_t.flags */
+} ndrx_singlegrp_opts_t;
 
 /**
  * Full configuration handler
@@ -285,6 +296,7 @@ typedef struct
     int default_mindispatchthreads; /**< minimum dispatch threads             */
     int default_maxdispatchthreads; /**< maximum dispatch threads             */
     int default_threadstacksize;    /**< thread stack size in KB, 0 - default */
+    int default_singlegrp;          /**< Default singleton group              */
     
     /** Environment group hash */
     ndrx_env_group_t *envgrouphash;
@@ -300,6 +312,9 @@ typedef struct
     
     /** malloc'd an compiled routing blocks             */
     char *routing_block;
+
+    /** options for singleton groups */
+    ndrx_singlegrp_opts_t *singlegrp_opts;
     
     
 } config_t;

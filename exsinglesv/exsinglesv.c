@@ -282,15 +282,18 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* TODO: report flags and singlegrp to the ndrxd */
 
     ndrx_G_exsinglesv_conf.first_boot = EXTRUE;
-   /* perform first check
+    /* perform first check
     * so that on boot, the first locked node would boot without any interruptions */
-   if (EXSUCCEED!=ndrx_exsinglesv_sm_run())
-   {
+    if (EXSUCCEED!=ndrx_exsinglesv_sm_run())
+    {
         NDRX_LOG(log_error, "Failed to perform lock check");
         EXFAIL_OUT(ret);
-   }
+    }
 
-   ndrx_G_exsinglesv_conf.first_boot = EXFALSE;
+    ndrx_G_exsinglesv_conf.first_boot = EXFALSE;
+
+    /* report us as lock provider */
+    tpext_configsinglegrplp (ndrx_G_exsinglesv_conf.singlegrp);
 
 out:
 
