@@ -47,6 +47,7 @@
 #include <nstdutil.h>
 #include <exenv.h>
 #include <exenvapi.h>
+#include <singlegrp.h>
 
 #include "cpmsrv.h"
 /*---------------------------Externs------------------------------------*/
@@ -335,6 +336,24 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
             xmlFree(p);
         }
+        else if (0==strcmp((char *)attr->name, "singlegrp"))
+        {
+            /* singleton group no */
+            p = (char *)xmlNodeGetContent(attr->children);
+            int singlegrp = atoi(p);
+
+            if (EXSUCCEED!=ndrx_sg_is_valid(singlegrp))
+            {
+                NDRX_LOG(log_error, "Invalid singleton group no: %d", singlegrp);
+                userlog("Invalid singleton group no: %d", singlegrp);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+
+            cltproc.stat.singlegrp=singlegrp;
+
+            xmlFree(p);
+        }
     }
     
     /* Check the client config... */
@@ -519,13 +538,33 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
                     xmlFree(p);
                 }
+                else if (0==strcmp((char *)attr->name, "singlegrp"))
+                {
+                    /* singleton group no */
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    int singlegrp = atoi(p);
+
+                    if (EXSUCCEED!=ndrx_sg_is_valid(singlegrp))
+                    {
+                        NDRX_LOG(log_error, "Invalid singleton group no: %d", singlegrp);
+                        userlog("Invalid singleton group no: %d", singlegrp);
+                        xmlFree(p);
+                        EXFAIL_OUT(ret);
+                    }
+
+                    p_cltproc->stat.singlegrp=singlegrp;
+
+                    xmlFree(p);
+                }
             }
             
             NDRX_LOG(log_debug, "klevel = low=%d high=%d", 
                     p_cltproc->stat.flags & CPM_F_KILL_LEVEL_LOW,
                     p_cltproc->stat.flags & CPM_F_KILL_LEVEL_HIGH
                     );
-            
+
+            NDRX_LOG(log_debug, "singlegrp=%d", p_cltproc->stat.singlegrp);
+
             /* Check the client config... */
             if (EXEOS==p_cltproc->tag[0])
             {
@@ -781,7 +820,6 @@ out:
     {
        ndrx_ndrxconf_envs_groups_free(&M_envgrouphash);
     }
-
     
     return ret;
 }
@@ -913,14 +951,12 @@ expublic int load_config(void)
         goto out;
     }
     
-    
     /* Mark config as not refreshed */
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         c->is_cfg_refresh = EXFALSE;
     }
 
-    
     /* Lock so that background thread cannot access the 
      * config during the changes in struct... 
      * Bug #108 01/04/2015, mvitolin

@@ -71,7 +71,6 @@ typedef struct
 
     int  svqreadersmax;    /**< Max number of concurrent lckrds*/
     int  lcfreadersmax; /**< Max number of concurrent lckrds*/
-    unsigned char is_mmon;   /**< Is maintenace mode ON? */
     
     int  lcfmax;        /**< Max number of LCF commands     */
     key_t ipckey;       /**< Semphoare key                  */
@@ -102,6 +101,7 @@ typedef struct
     unsigned char ddr_page;          /**< DDR page number  0 or 1, version not changes, using long for align */
     unsigned char ddr_ver1;          /**< DDR Version when we prepare to install data        */
     char reserved[NDRX_LCF_RESVR];  /**< reserved space for future updates             */
+    unsigned char is_mmon;   /**< Is maintenace mode ON? */
     
     /**< Array of LCF commands */
     ndrx_lcf_command_t commands[0];

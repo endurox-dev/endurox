@@ -474,7 +474,7 @@ cmd_mapping_t M_command_map[] =
     {"shmcfg",  cmd_shmcfg,EXFAIL,             0,  0, 
                 "Print shared memory current configuration"
                 , NULL},
-    {"prtsvc",     cmd_prtsvc,   EXFAIL,    1,  1, 
+    {"prtsvc",  cmd_prtsvc,   EXFAIL,    1,  1, 
                 "Print routing services\n"
                 "\tUsage: prtsvc [OPTION]...\n"
                 "\tOptional arguments: \n"
@@ -482,6 +482,15 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -i\tPrint in use slots\n"
                 "\t\t -w\tPrint was in use slots",
                 NULL},
+    {"psg",     cmd_psg,EXFAIL,             0,  0, 
+                "Print singleton groups"
+                , NULL},
+    {"mmon",    cmd_mmon,EXFAIL,             0,  0, 
+                "Enable maintenace mode"
+                , NULL},
+    {"mmoff",    cmd_mmoff,EXFAIL,             0,  0, 
+                "Disable maintenace mode"
+                , NULL},
 };
 
 /*

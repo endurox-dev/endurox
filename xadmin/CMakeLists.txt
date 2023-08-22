@@ -118,7 +118,7 @@ add_executable (xadmin xadmin.c exec.c config.c
     cmd_cs.c cmd_cd.c cmd_ci.c
     cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c cmd_util.c
     cmd_appconfig.c cmd_dping.c linenoise.c cmd_tranlocal.c
-    cmd_tmib.c taboutput.c cmd_lcf.c cmd_prtsvc.c)
+    cmd_tmib.c taboutput.c cmd_lcf.c cmd_prtsvc.c cmd_psg.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

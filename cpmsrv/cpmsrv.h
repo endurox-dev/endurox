@@ -102,6 +102,7 @@ struct cpm_static_info
     
     long subsectfrom;         /**< sub-section from                     */
     long subsectto;           /**< sub-section to                       */
+    int singlegrp;            /**< Singleton group number               */
     
     /** list of process specific environment variables */
     ndrx_env_list_t *envs;

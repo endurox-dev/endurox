@@ -549,6 +549,7 @@ expublic int cmd_shmcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     printf("use_ddr = %d\n", ndrx_G_shmcfg->use_ddr);
     printf("ddr_page = %u\n", (unsigned)ndrx_G_shmcfg->ddr_page);
     printf("ddr_ver1 = %u\n", (unsigned)ndrx_G_shmcfg->ddr_ver1);
+    printf("is_mmon = %u\n", (unsigned)ndrx_G_shmcfg->is_mmon);
     return EXSUCCEED;
 }
 
