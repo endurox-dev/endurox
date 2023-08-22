@@ -884,6 +884,7 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_bojoin_tests());
     add_suite(suite, ubf_bmkfldid_multidir_tests());
     add_suite(suite, ubf_embubf_tests());
+    add_suite(suite, test_rbt_tree());
 
     if (argc > 1)
     {
