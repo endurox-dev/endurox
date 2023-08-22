@@ -97,8 +97,6 @@ expublic ndrx_sg_shm_t *ndrx_sg_get(int singlegrp_no)
     ret = (ndrx_sg_shm_t *)((char *)ndrx_G_shmcfg->commands 
             + sizeof(ndrx_G_shmcfg->commands[0])*ndrx_G_libnstd_cfg.lcfmax
             + sizeof(ndrx_sg_shm_t)*(singlegrp_no-1));
-
-    
 out:
     return ret;
 }

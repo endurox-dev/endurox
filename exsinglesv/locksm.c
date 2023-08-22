@@ -318,7 +318,7 @@ exprivate int chk_mmon(void *ctx)
                 ndrx_G_exsinglesv_conf.singlegrp);
         ret = ev_busy;
     }
-    else if (ndrx_G_libnstd_cfg.is_mmon)
+    else if (ndrx_G_shmcfg->is_mmon)
     {
         /* maintenance mode is ON */
         NDRX_LOG(log_debug, "Application is in maintenance mode");
