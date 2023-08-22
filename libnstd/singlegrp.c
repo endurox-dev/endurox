@@ -614,4 +614,35 @@ expublic unsigned char ndrx_sg_bootflag_srv_get(int singlegrp_no)
     }
 }
 
+/**
+ * Check the singleton group validity
+ * @param singlegrp_no number to check
+ * @return EXSUCCEED (OK) / EXFAIL (not valid)
+ */
+expublic int ndrx_sg_is_valid(int singlegrp_no)
+{
+    int ret = EXSUCCEED;
+    if (singlegrp_no < 0 || singlegrp_no > ndrx_G_libnstd_cfg.sgmax)
+    {
+        NDRX_LOG(log_error, "Invalid single group number: %d", singlegrp_no);
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
+}
+
+/**
+ * Store flags for the group
+ * @param singlegrp_no group number
+ * @param flags new flags value
+ */
+expublic void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags)
+{
+    if (singlegrp_no>0)
+    {
+        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+        atomic_store(&sg->flags, flags);
+    }
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

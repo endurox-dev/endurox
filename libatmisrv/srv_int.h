@@ -200,6 +200,7 @@ struct srv_conf
     NDRX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync        */
     
     int ddr_keep_grp;           /**< shall we keep DDR group name in svcnm? */
+    int singlegrplp;            /**< Singleton group lock provider group id, 0 - not used */
 };
 
 typedef struct srv_conf srv_conf_t;

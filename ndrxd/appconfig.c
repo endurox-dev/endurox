@@ -44,7 +44,9 @@
 #include <ndrxd.h>
 #include <exenv.h>
 #include <exenvapi.h>
-
+#include <singlegrp.h>
+#include <lcfint.h>
+#include <ndrx_intdef.h>
 #include "ndebug.h"
 #include "utlist.h"
 #include "nstdutil.h"
@@ -81,6 +83,7 @@ pm_pidhash_t **G_process_model_pid_hash = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate int ndrx_prase_killseq(int *killseq, char *seq, int last_line);
+exprivate void ndrx_singlegrp_opts_apply(void);
 
 /**
  * Validate request address, also strip down any un-needed chars
@@ -110,6 +113,35 @@ out:
     return ret;
 }
 
+/**
+ * Allocate empty configuration handler
+ */
+exprivate config_t * config_alloc(void)
+{
+    config_t *ret = NDRX_CALLOC(1, sizeof(config_t));
+    
+    if (NULL==ret)
+    {
+        NDRXD_set_error_msg(NDRXD_ESYSTEM, "Failed to malloc config_t");
+        goto out;
+    }
+
+    /* allocate structures for singlegrp_opts */
+    ret->singlegrp_opts = NDRX_CALLOC(ndrx_G_libnstd_cfg.sgmax, sizeof(ndrx_singlegrp_opts_t));
+
+    if (NULL==ret)
+    {
+        NDRXD_set_error_fmt(NDRXD_ESYSTEM, "Failed to malloc ndrx_singlegrp_opts_t (%d)", 
+                ndrx_G_libnstd_cfg.sgmax);
+        NDRX_FREE(ret);
+
+        ret=NULL;
+        goto out;
+    }
+
+out:
+    return ret;
+}
 
 /**
  * Free up config memory
@@ -133,7 +165,6 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
         {
             DL_FOREACH_SAFE((*app_config)->monitor_config,elt,tmp)
             {
-                
                 /* free up envs, if any */
                 ndrx_ndrxconf_envs_envs_free(&elt->envlist);
                 ndrx_ndrxconf_envs_grouplists_free(&elt->envgrouplist);
@@ -171,8 +202,6 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
     }
     
     /* Free up the services */
-    
-
     if (*process_model_hash)
     {
         NDRX_FREE(*process_model_hash);
@@ -201,6 +230,7 @@ expublic int load_active_config_live(void)
     {
         /* apply DDR */
         ndrx_ddr_apply();
+        ndrx_singlegrp_opts_apply();
     }
     
     return ret;
@@ -599,6 +629,24 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "singlegrp"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->default_singlegrp = atoi(p);
+
+                if (EXSUCCEED!=ndrx_sg_is_valid(config->default_singlegrp))
+                {
+                    NDRXD_set_error_fmt(NDRXD_ECFGSERVER, "(%s) `singlegrp' invalid value (%d)! "
+                        "near %d line", G_sys_config.config_file_short, config->default_singlegrp,
+                        last_line);
+                    xmlFree(p);
+                    EXFAIL_OUT(ret);
+                }
+
+                NDRX_LOG(log_debug, "default singlegrp: %d",
+                                        config->default_singlegrp);
+                xmlFree(p);
+            }
             
 #if 0
             else
@@ -719,7 +767,6 @@ exprivate int ndrx_prase_killseq(int *killseq, char *seq, int last_line)
         
         killseq[i] = sig;
         i++;
-        
     }
     
 out:
@@ -729,6 +776,187 @@ out:
         ndrx_stdcfgstr_free(parsed);
     }
 
+    return ret;
+}
+
+/**
+ * Activate singleton group options
+ */
+exprivate void ndrx_singlegrp_opts_apply(void)
+{
+    int i;
+    ndrx_singlegrp_opts_t *p;
+    
+    for (i=1; i<=ndrx_G_libnstd_cfg.sgmax; i++)
+    {
+        ndrx_sg_flags_set(i, G_app_config->singlegrp_opts[i].flags);
+    }
+}
+
+/**
+ * Parse singlegrp opt
+ * @param config current config loading
+ * @param doc
+ * @param cur
+ * @param is_defaults is this parsing of default
+ * @param p_defaults default settings
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_appconfig_singlegrp_opt_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
+        int is_defaults, ndrx_singlegrp_opts_t *p_defaults)
+{
+    int ret=EXSUCCEED;
+    xmlAttrPtr attr;
+    ndrx_singlegrp_opts_t *p_svc=NULL;
+    ndrx_singlegrp_opts_t local;
+    char *p;
+    
+    /* service shall not be defined */
+    
+    if (is_defaults)
+    {
+        p_svc=p_defaults;
+    }
+    else
+    {
+        p_svc = &local;
+        memcpy(p_svc, p_defaults, sizeof(ndrx_singlegrp_opts_t));
+    }
+    
+    for (attr=cur->properties; attr; attr = attr->next)
+    {
+        p = (char *)xmlNodeGetContent(attr->children);
+        
+        if (0==strcmp((char *)attr->name, "id"))
+        {
+            /* group id which we configure */
+            if (is_defaults)
+            {
+                NDRX_LOG(log_error, "(%s) `id' not expected <defaults> near line %d", 
+                    G_sys_config.config_file_short, G_sys_config.last_line);
+
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
+                    "(%s) `id' not expected <defaults> near line %d", 
+                    G_sys_config.config_file_short, G_sys_config.last_line);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+
+            /* check is range valid...  */
+            p_svc->singlegrp = atoi(p);
+            if (0==p_svc->singlegrp || !ndrx_sg_is_valid(p_svc->singlegrp))
+            {
+                NDRX_LOG(log_error, "(%s) Invalid `id' %d in <singlegrp> "
+                    "(valid values 1..%d) section near line %d", 
+                    G_sys_config.config_file_short, p_svc->singlegrp, 
+                    ndrx_G_libnstd_cfg.sgmax, G_sys_config.last_line);
+
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
+                    "(%s) Invalid `id' %d in <singlegrp> "
+                    "(valid values 1..%d) section near line %d", 
+                    G_sys_config.config_file_short, p_svc->singlegrp, 
+                    ndrx_G_libnstd_cfg.sgmax, G_sys_config.last_line);
+
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (0==strcmp((char *)attr->name, "noorder"))
+        {
+            /* y/Y */
+            if (NDRX_SETTING_TRUE1==*p || NDRX_SETTING_TRUE2==*p)
+            {
+                p_svc->flags|=NDRX_SG_NO_ORDER;
+            } /* n/N - Bug #675 */
+            else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE1==*p)
+            {
+                p_svc->flags&=~NDRX_SG_NO_ORDER;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "(%s) Invalid `noorder' setting [%s] in "
+                        "<singlegrp> or <defaults> "
+                        "section, expected values [%c%c%c%c] near line %d", 
+                        G_sys_config.config_file_short, p,
+                        NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, G_sys_config.last_line);
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
+                        "(%s) Invalid `noorder' setting [%s] in "
+                        "<singlegrp> or <defaults> "
+                        "section, expected values [%c%c%c%c] near line %d",
+                        G_sys_config.config_file_short, p,
+                        NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, G_sys_config.last_line);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        xmlFree(p);
+    }
+    
+    /* no hashing for defaults */
+    if (!is_defaults)
+    {
+        if (p_svc->singlegrp < 1)
+        {
+            NDRX_LOG(log_error, "(%s) Attribute `id' is not set in <singlegrp> "
+                "section near line %d", 
+                G_sys_config.config_file_short, G_sys_config.last_line);
+
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
+               "(%s) Attribute `id' is not set in <singlegrp> "
+                "section near line %d", 
+                G_sys_config.config_file_short, G_sys_config.last_line);
+
+            EXFAIL_OUT(ret);
+        }
+
+        /* store the parsed value: */
+        memcpy((char *) (&config->singlegrp_opts[p_svc->singlegrp-1]), 
+            p_svc, sizeof(ndrx_singlegrp_opts_t));
+
+    }
+out:
+    
+    return ret;
+}
+
+/**
+ * Parse singleton group options
+ */
+expublic int ndrx_appconfig_singlegrp_opts(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
+{
+    int ret=EXSUCCEED;
+    ndrx_singlegrp_opts_t default_opt;
+    
+    int is_singlegrp;
+    int is_defaults;
+    
+    memset(&default_opt, 0, sizeof(default_opt));
+    
+    for (; cur ; cur=cur->next)
+    {
+        is_singlegrp= (0==strcmp((char*)cur->name, "singlegrp"));
+        is_defaults= (0==strcmp((char*)cur->name, "defaults"));
+        G_sys_config.last_line = cur->line;
+        
+        if (is_singlegrp || is_defaults)
+        {
+            /* Get the server name */
+            if (EXSUCCEED!=ndrx_appconfig_singlegrp_opt_parse(config, doc, 
+                cur, is_defaults, &default_opt))
+            {
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
+                        "parse <appconfig>/<singlegrp_opts> section near line %d", 
+                        G_sys_config.config_file_short, G_sys_config.last_line);
+                ret=EXFAIL;
+                goto out;
+            }
+        }
+    }
+out:
+                
     return ret;
 }
 
@@ -828,7 +1056,6 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                                   p, config->rqaddrttl);
                 xmlFree(p);
             }
-            
             else if (0==strcmp((char*)cur->name, "ddrreload"))
             {
                 p = (char *)xmlNodeGetContent(cur);
@@ -836,6 +1063,15 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_debug, "ddrreload: [%s] - %d sty",
                                                   p, config->ddrreload);
                 xmlFree(p);
+            }
+            else if (0==strcmp((char*)cur->name, "singlegrp_opts") &&
+                EXSUCCEED!=ndrx_appconfig_singlegrp_opts(config, doc, cur->children))
+            {
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
+                        "parse <defaults>", G_sys_config.config_file_short);
+                ret=EXFAIL;
+                goto out;
+
             }
             
             last_line=cur->line;
@@ -963,6 +1199,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->isprotected = EXFAIL;
     p_srvnode->reloadonchange = EXFAIL;
     p_srvnode->respawn = EXFAIL;
+    p_srvnode->singlegrp = EXFAIL;
     
     memcpy(p_srvnode->killseq, config->default_killseq, sizeof(config->default_killseq));
     
@@ -1318,6 +1555,25 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
             xmlFree(p);
         }
+        else if (0==strcmp((char*)cur->name, "singlegrp"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            p_srvnode->singlegrp = atoi(p);
+
+            if (EXSUCCEED!=ndrx_sg_is_valid(p_srvnode->singlegrp))
+            {
+                NDRXD_set_error_fmt(NDRXD_ECFGSERVER, "(%s) `singlegrp' invalid value (%d)! "
+                    "srvid=%hd near %d line", G_sys_config.config_file_short,  p_srvnode->singlegrp,
+                    p_srvnode->srvid, last_line);
+
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+
+            NDRX_LOG(log_debug, "default singlegrp: %d",
+                                    p_srvnode->singlegrp);
+            xmlFree(p);
+        }
         
         last_line = cur->line;
     }
@@ -1396,6 +1652,9 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     if (EXFAIL==p_srvnode->respawn)
         p_srvnode->respawn = config->default_respawn;
+
+    if (EXFAIL==p_srvnode->singlegrp)
+        p_srvnode->singlegrp = config->default_singlegrp;
     
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {
@@ -1443,7 +1702,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
             "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\""
 	    "RESPAWN=\"%c\" FULLPATH=\"%s\" CMDLINE=\"%s\" RSSMAX=%ld VSZMAX=%ld "
-            "MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d THREADSTACKSIZE=%d",
+            "MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d THREADSTACKSIZE=%d SINGLEGRP=%d",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, 
@@ -1453,14 +1712,15 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->srvstopwait,
                     p_srvnode->cctag,
                     p_srvnode->reloadonchange?'Y':'N',
-		    p_srvnode->respawn?'Y':'N',
+		            p_srvnode->respawn?'Y':'N',
                     p_srvnode->fullpath,
                     p_srvnode->cmdline,
                     p_srvnode->rssmax,
                     p_srvnode->vszmax,
                     p_srvnode->mindispatchthreads,
                     p_srvnode->maxdispatchthreads,
-                    p_srvnode->threadstacksize
+                    p_srvnode->threadstacksize,
+                    p_srvnode->singlegrp
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 
@@ -1525,7 +1785,6 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     /* Loop over root elements */
     do
     {
-        
         if (0==strcmp((char*)cur->name, "defaults")
                 && EXSUCCEED!=parse_defaults(config, doc, cur->children))
         {
@@ -1931,6 +2190,7 @@ expublic int test_config(int reload, command_call_t * call,
         G_process_model_pid_hash = t_process_model_pid_hash;
         
         ndrx_ddr_apply();
+        ndrx_singlegrp_opts_apply();
 
         /* so that in case of error we do not destroy already master config. */
         t_app_config = NULL;
