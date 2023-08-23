@@ -200,6 +200,9 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
 
         /* reset shared memory! */
         ndrxd_shm_resetsrv(srvid);
+
+        /* reset PM fields */
+        pm_pid->p_pm->singlegrplp=0;
         
     }
     else

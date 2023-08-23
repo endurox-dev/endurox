@@ -440,6 +440,7 @@ extern int app_startup(command_startstop_t *call,
 extern int is_srvs_down(void);
 
 extern int ndrxd_unlink_pid_file(int second_call);
+extern void ndrx_mark_singlegrp_srv_booted(int nrgrps, int *sg_groups);
 
 /* Error handling API */
 extern void NDRXD_error (char *str);

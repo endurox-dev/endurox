@@ -63,9 +63,13 @@ typedef struct
     char exec_on_bootlocked[PATH_MAX+1]; /**< Exec on boot locked */
     char exec_on_locked[PATH_MAX+1]; /**< Exec on locked*/
     int chkinterval; /**< Check interval                */
+    int locked_wait; /**< Number of check cycles for lock takeover */
     int locked1; /**< Locked                            */
     int locked2; /**< File segment 1 is locked          */
     int first_boot; /**< Is booting up                  */
+    
+    int wait_counter;   /**< if this is not first boot, then wait */
+    int is_locked;  /**< Is process fully locked        */
 
 } ndrx_exsinglesv_conf_t;
 

@@ -49,6 +49,7 @@
 #include "exsha1.h"
 #include <exatomic.h>
 #include <singlegrp.h>
+#include <lcfint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_LCFMAX_DFLT         20      /**< Default max commands       */
@@ -482,6 +483,12 @@ expublic int ndrx_lcf_init(void)
     
     ndrx_lcf_func_add_int(&creg);
     
+    if (EXSUCCEED!=ndrx_sg_init())
+    {
+        NDRX_LOG_EARLY(log_error, "Singleton group init failed");
+        EXFAIL_OUT(ret);
+    }
+
 out:
     
     if (EXSUCCEED!=ret)

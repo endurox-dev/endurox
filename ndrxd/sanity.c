@@ -57,6 +57,8 @@
 #include <atmi_shm.h>
 #include "userlog.h"
 #include "sys_unix.h"
+#include <lcfint.h>
+#include <singlegrp.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -614,6 +616,11 @@ exprivate int check_long_startup(void)
     pm_node_t *p_pm;
     int delta;
     int cksum_reload_sent = EXFALSE; /* for now single binary only at one cycle */
+
+    int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+    int sg_groups[nrgrps];
+
+    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
     
     DL_FOREACH(G_process_model, p_pm)
     {
@@ -657,6 +664,21 @@ exprivate int check_long_startup(void)
                     p_pm->pingstwatch,
                     p_pm->rspstwatch,
                     p_pm->pingtimer);
+
+            /* if running state & lost the lock -> SIGKILL */
+            if (p_pm->conf->singlegrp > 0 && PM_RUNNING(p_pm->state) 
+                && !sg_groups[p_pm->conf->singlegrp])
+            {
+                NDRX_LOG(log_error, "proc: %s/%d singlegrp %d lost the lock -> SIGKILL", 
+                    p_pm->binary_name, p_pm->srvid, p_pm->conf->singlegrp);
+                userlog("proc: %s/%d singlegrp %d lost the lock -> SIGKILL", 
+                    p_pm->binary_name, p_pm->srvid, p_pm->conf->singlegrp);
+                p_pm->last_sig = SANITY_CNT_START;
+
+                /* Kill immediately */
+                send_kill(p_pm, SIGKILL, 0);
+            }
+
             if (!p_pm->killreq)
             {
                 if (NDRXD_PM_STARTING==p_pm->state &&

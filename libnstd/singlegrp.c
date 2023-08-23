@@ -56,8 +56,17 @@ exprivate ndrx_sg_shm_t M_dum = {0}; /**< Dummy record for group 0 */
 /*---------------------------Prototypes---------------------------------*/
 exprivate long long  ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg);
 
+/**
+ * Perform init of the singleton group support
+*/
+expublic int ndrx_sg_init(void)
+{
+    M_dum.flags=NDRX_SG_NO_ORDER;
+    return EXSUCCEED;
+}
+
 /** 
- * Return the ptr to single group in shared memory 
+ * Return the ptr to singleton group in shared memory 
  * Check against group number limits
  * Check is the LCF shared memory actually attached (as it is optional)
  * The group numbers start from 1. Group 0 is reserved for internal use,
@@ -501,7 +510,6 @@ expublic int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flag
     return ndrx_sg_is_locked_int(singlegrp_no, NULL, reference_file, flags);
 }
 
-
 /**
  * Number of singleton groups.
  * We count in group 0, which is virtual group and it is always locked
@@ -519,7 +527,7 @@ expublic int ndrx_sg_nrgroups()
  * @param flags 0 or (NDRX_SG_NOORDER_LCK -> if ordering not required, assume locked)
  *  additonally may pass NDRX_SG_CHK_PID to check for lock provider pid
  */
-expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags)
+expublic void fndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags)
 {
     int i=0;
     int locked;
