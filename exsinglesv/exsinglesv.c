@@ -54,6 +54,7 @@
 /*---------------------------Macros-------------------------------------*/
 #define PROGSECTION "@singlesv"
 #define MIN_SGREFRESH_CEOFFICIENT 3 /**< Minimum devider to use faults */
+#define DEFAULT_LOCKED_WAIT 2 /**< Default wait cycles after lock to report to shm */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -100,6 +101,8 @@ expublic void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock)
                 force_unlock?NDRX_SG_RSN_LOCKE:NDRX_SG_RSN_NORMAL);
         }
     }
+
+    ndrx_G_exsinglesv_conf.is_locked=EXFALSE;
 }
 
 /**
@@ -141,6 +144,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
+    /* setup some defaults */
+    ndrx_G_exsinglesv_conf.locked_wait=DEFAULT_LOCKED_WAIT;
+
     /* Iterate over params */
     EXHASH_ITER(hh, params, el, elt)
     {
@@ -154,9 +160,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         exec_on_bootlocked=/some/script/to/exec.sh
         exec_on_locked=/some/script/to/exec.sh
         interval=3
+        # this will make tototally to wait 6 seconds before taking over
+        # (in case if we lock in non boot order)
+        locked_wait=2
         to the global vars
         */
-
+       
+       /* read value from NDRX_SINGLEGRPLP env */
        if (0==strcmp(el->key, "singlegrp"))
        {
             ndrx_G_exsinglesv_conf.singlegrp = atoi(el->val);
@@ -180,6 +190,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
        else if (0==strcmp(el->key, "chkinterval"))
        {
             ndrx_G_exsinglesv_conf.chkinterval = atoi(el->val);
+       }
+       /* Number of cycles to wait to proceed with group locking in shared
+        * memory. This is needed in case if we take over, then let other node
+        * to kill all the processes. This shall be larger than other nodes sanity cycle
+        * length. This setting is number of chkinterval cycles.
+        */
+       else if (0==strcmp(el->key, "locked_wait"))
+       {
+            ndrx_G_exsinglesv_conf.locked_wait = atoi(el->val);
        }
        else
        {
@@ -223,7 +242,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             "expecting >0", CONF_NDRX_SGREFRESH);
         EXFAIL_OUT(ret);
     }
-
     if (0>=ndrx_G_exsinglesv_conf.chkinterval)
     {
         /* 

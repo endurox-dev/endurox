@@ -67,6 +67,7 @@ enum
     , ev_locked
     , ev_unlocked
     , ev_err
+    , ev_wait
     , ev_busy
     , ev_abort
 };
@@ -162,6 +163,7 @@ ndrx_locksm_t M_locksm[] = {
     , NDRX_SM_STATE(st_do_lock, do_lock,
           NDRX_SM_TRAN      (ev_ok,         NDRX_SM_ST_RETURN0)
         , NDRX_SM_TRAN      (ev_busy,       NDRX_SM_ST_RETURN0)
+        , NDRX_SM_TRAN      (ev_wait,       NDRX_SM_ST_RETURN0)
         , NDRX_SM_TRAN      (ev_err,        st_abort_unlock)
         , NDRX_SM_TRAN_END
         )
@@ -217,7 +219,7 @@ exprivate int chk_l_lock(void *ctx)
     ndrx_locksm_ctx_t *lock_ctx = (ndrx_locksm_ctx_t *)ctx;
     int ret;
 
-    if (ndrx_G_exsinglesv_conf.locked1)
+    if (ndrx_G_exsinglesv_conf.is_locked)
     {
         /* local process is locked */
         ret = ev_locked;
@@ -343,25 +345,54 @@ exprivate int do_lock(void *ctx)
     int ret=ev_ok;
     char *boot_script = NULL;
 
-    switch (ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_1, 
-        ndrx_G_exsinglesv_conf.lockfile_1))
+    if (!ndrx_G_exsinglesv_conf.locked1)
     {
-        case NDRX_LOCKE_BUSY:
-            /* file is locked */
-            NDRX_LOG(log_info, "Singleton group %d is already locked (by other node)", 
-                    ndrx_G_exsinglesv_conf.singlegrp);
-            ret = ev_busy;
-            goto out;
-        case EXSUCCEED:
+        switch (ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_1, 
+            ndrx_G_exsinglesv_conf.lockfile_1))
+        {
+            case NDRX_LOCKE_BUSY:
+                /* file is locked */
+                NDRX_LOG(log_info, "Singleton group %d is already locked (by other node)", 
+                        ndrx_G_exsinglesv_conf.singlegrp);
+                ret = ev_busy;
+                goto out;
+            case EXSUCCEED:
 
-            ndrx_G_exsinglesv_conf.locked1=EXTRUE;
+                ndrx_G_exsinglesv_conf.locked1=EXTRUE;
 
-            break;
-        default:
-            ret = ev_err;
-            goto out;  
+                break;
+            default:
+                ret = ev_err;
+                goto out;  
+        }
     }
 
+    /* If this is first boot, lock immeditally */
+    if (ndrx_G_exsinglesv_conf.first_boot)
+    {
+        ndrx_G_exsinglesv_conf.is_locked=EXTRUE;
+    }
+    else
+    {
+        ndrx_G_exsinglesv_conf.wait_counter++;
+        NDRX_LOG(log_info, "Waiting after files locked %d/%d", 
+                ndrx_G_exsinglesv_conf.wait_counter, 
+                ndrx_G_exsinglesv_conf.locked_wait);
+    
+        if (ndrx_G_exsinglesv_conf.wait_counter>ndrx_G_exsinglesv_conf.locked_wait)
+        {
+            /* we have waited enough, lock it */
+            ndrx_G_exsinglesv_conf.is_locked=EXTRUE;
+        }
+        else
+        {
+            /* we have to wait more */
+            ret=ev_wait;
+            goto out;
+        }
+    }
+
+    /* we are locked down here... */
     if (ndrx_G_exsinglesv_conf.first_boot
         && EXEOS!=ndrx_G_exsinglesv_conf.exec_on_bootlocked[0])
     {

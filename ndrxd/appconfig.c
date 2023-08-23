@@ -2164,6 +2164,7 @@ expublic int test_config(int reload, command_call_t * call,
                 new->pingtimer = old->pingtimer;
                 new->pingseq = old->pingseq;
                 new->pingroundtrip = old->pingroundtrip;
+                new->singlegrplp = old->singlegrplp;
                 
                 /* So that we do not unlink the list later when old pm is freed */
                 old->svcs = NULL;

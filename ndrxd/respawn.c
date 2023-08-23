@@ -52,6 +52,8 @@
 #include <signal.h>
 
 #include "userlog.h"
+#include <lcfint.h>
+#include <singlegrp.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -72,12 +74,17 @@ expublic int do_respawn_check(void)
     pm_node_t *p_pm;
     long delta;
     int abort = EXFALSE;
+    int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+    int sg_groups[nrgrps];
     
     /* No sanity checks while app config not loaded */
     if (NULL==G_app_config)
         goto out;
         
     NDRX_LOG(6, "Time for respawning checking...");
+
+    /* use snapshoo checks here... */
+    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, NDRX_SG_NOORDER_LCK);
 
     DL_FOREACH(G_process_model, p_pm)
     {
@@ -111,7 +118,7 @@ expublic int do_respawn_check(void)
                 NDRX_LOG(log_warn, "Respawning server: srvid: %d,"
                         " name: [%s], seq try: %d, already not running: %d secs",
                         p_pm->srvid, p_pm->binary_name, p_pm->exec_seq_try, delta);
-                start_process(NULL, p_pm, NULL, &processes_started, EXTRUE, &abort);
+                start_process(NULL, p_pm, NULL, &processes_started, EXTRUE, &abort, sg_groups);
 
                 /***Just for info***/
                 schedule_next = G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step;
@@ -123,7 +130,10 @@ expublic int do_respawn_check(void)
             }
         }
     }/*DL_FOREACH*/
-    
+
+    /* set the boot flag */
+    ndrx_mark_singlegrp_srv_booted(nrgrps, sg_groups);
+
 out:
 
     return ret;

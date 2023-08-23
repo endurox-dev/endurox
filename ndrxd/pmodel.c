@@ -60,6 +60,8 @@
 #include <sys_unix.h>
 #include <exenvapi.h>
 #include <ndrxdiag.h>
+#include <lcfint.h>
+#include <singlegrp.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -903,13 +905,15 @@ out:
  * Start single process...
  * TODO: Add SIGCHLD handler here!
  * @param pm
+ * @param sg_snapshoot - snapshoot of the singleton groups
  * @return SUCCEED/FAIL
  */
 expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
             int no_wait,
-            int *doabort)
+            int *doabort,
+            int *sg_snapshoot)
 {
     int ret=EXSUCCEED;
     pid_t pid;
@@ -956,9 +960,27 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     else
     {
-        p_pm->state = NDRXD_PM_STARTING;
+        /* check the group state...
+         * if we shall start or not.
+         */
+        if (0==p_pm->conf->singlegrp || NULL==sg_snapshoot ||
+            /* if snapshoot is OK, and current lock is good too 
+             * as lock might change during the startup and thus
+             * we shall not start any more if that fact is changed
+             */
+            (sg_snapshoot[p_pm->conf->singlegrp] && 
+                EXTRUE==ndrx_sg_is_locked(p_pm->conf->singlegrp, NULL, NDRX_SG_CHK_PID)))
+        {
+            p_pm->state = NDRXD_PM_STARTING;
+        }
+        else
+        {
+            /* put process in wait state for lock */
+            p_pm->state = NDRXD_PM_WAIT;
+            p_pm->state_changed = SANITY_CNT_START;
+        }
     }
-    
+
     p_pm->state_changed = SANITY_CNT_START;
 
     if (NULL!=p_startup_progress)
@@ -1279,6 +1301,14 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 EXFAIL_OUT(ret);
             }
         }
+
+        /* if was started, and given process provides singleton group,
+         * update the snapshoot, as normally lock provider would come first
+         */
+        if (p_pm->singlegrplp > 0)
+        {
+            sg_snapshoot[p_pm->singlegrplp] = ndrx_sg_is_locked(p_pm->singlegrplp, NULL, 0);
+        }
     }
     else
     {
@@ -1441,6 +1471,24 @@ out:
 }
 
 /**
+ * Mark group as booted
+ * @param nrgrps number of groups
+ * @param sg_groups array of groups
+ */
+expublic void ndrx_mark_singlegrp_srv_booted(int nrgrps, int *sg_groups)
+{
+    int i;
+    for (i=0; i<nrgrps; i++)
+    {
+        if (sg_groups[i] && !ndrx_sg_bootflag_srv_get(i))
+        {
+            NDRX_LOG(log_debug, "Marking singleton group %d as server booted", i);
+            ndrx_sg_bootflag_srv_get(i);
+        }
+    }
+}
+
+/**
  * Start whole application. If configuration is not loaded, then this will
  * initiate configuration load.
  * @return SUCCEED/FAIL
@@ -1477,7 +1525,7 @@ expublic int app_startup(command_startstop_t *call,
             if (NULL!=p_pm_srvid)
             {
                 start_process(call, p_pm_srvid, p_startup_progress,
-                                    p_processes_started, EXFALSE, &abort);
+                                    p_processes_started, EXFALSE, &abort, NULL);
             }
             else
             {
@@ -1491,10 +1539,20 @@ expublic int app_startup(command_startstop_t *call,
     }
     else /* process this if request for srvnm or full startup... */
     {
+        int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+        int sg_groups[nrgrps];
+
         if (EXEOS==call->binary_name[0])
         {
             G_sys_config.fullstart=EXTRUE;
         }
+
+        /* get the snapshoot of the current sg groups 
+         * if not locked, but have noorder flag, then
+         * report as locked, so that if during the group becomes locked
+         * we proceed with startup
+         */
+        ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, NDRX_SG_NOORDER_LCK);
         
         DL_FOREACH(G_process_model, p_pm)
         {
@@ -1508,8 +1566,9 @@ expublic int app_startup(command_startstop_t *call,
                     /* Do full startup if requested autostart! */
                     (EXEOS==call->binary_name[0] ))) /* or If full shutdown requested */
             {
+
                 start_process(call, p_pm, p_startup_progress, 
-                        p_processes_started, EXFALSE, &abort);
+                        p_processes_started, EXFALSE, &abort, sg_groups);
                 
                 if (abort)
                 {
@@ -1520,6 +1579,8 @@ expublic int app_startup(command_startstop_t *call,
                 }
             }
         } /* DL_FORACH pm. */
+
+        ndrx_mark_singlegrp_srv_booted(nrgrps, sg_groups);
         
         if (G_sys_config.fullstart)
         {
@@ -1682,7 +1743,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm_srvid, p_startup_progress,
-                                        p_processes_started, EXFALSE, &abort);
+                                        p_processes_started, EXFALSE, &abort, NULL);
                 }
                 
                 if (abort)
@@ -1722,7 +1783,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm, p_startup_progress, 
-                            p_processes_started, EXFALSE, &abort);
+                            p_processes_started, EXFALSE, &abort, NULL);
                 }
                 
                 if (abort)

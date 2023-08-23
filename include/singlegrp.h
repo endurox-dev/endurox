@@ -104,6 +104,7 @@ extern NDRX_API void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason);
 extern NDRX_API void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags);
 
 /** Reset shared memory block having the singleton gorup infos */
+extern NDRX_API int ndrx_sg_init(void);
 extern NDRX_API void ndrx_sg_reset(void);
 
 extern NDRX_API int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg, 
@@ -111,6 +112,11 @@ extern NDRX_API int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg,
 
 extern NDRX_API int ndrx_sg_is_valid(int singlegrp_no);
 extern NDRX_API void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags);
+
+extern NDRX_API unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no);
+extern NDRX_API void ndrx_sg_bootflag_clt_set(int singlegrp_no);
+extern NDRX_API unsigned char ndrx_sg_bootflag_srv_get(int singlegrp_no);
+extern NDRX_API void ndrx_sg_bootflag_srv_set(int singlegrp_no);
 
 #if defined(__cplusplus)
 }
