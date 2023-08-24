@@ -473,8 +473,6 @@ Ensure(test_rbt_delete)
         if (node == NULL || node->key != deleteIds[i])
         {
             /* Do not delete non-existing elements in the deleteIds array */
-            NDRX_LOG(log_error, "element not found during deleting"
-                "deleteIds[%d]=%d (node->key=%d)", i, deleteIds[i], deleteIds[i]);
         }
         else
         {
@@ -523,7 +521,7 @@ Ensure(test_rbt_delete)
         node = (ndrx_int_RBTree_Node_t *) ndrx_rbt_find(tree, (ndrx_rbt_node_t *) &find);
         if (node == NULL || node->key != i)
         {
-            NDRX_LOG(log_error, "node->key = %d - element was not found during deleting", deleteIds[j]);
+            /* ok - element was not found during deleting */
         }
         else
         {
