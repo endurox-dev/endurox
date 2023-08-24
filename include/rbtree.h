@@ -46,12 +46,12 @@ typedef enum ndrx_rbt_order_control
  * here so that callers can stack-allocate this, but must otherwise be
  * treated as an opaque struct.
  */
-typedef struct ndrx_rbt_ree_iterator ndrx_rbt_ree_iterator_t;
+typedef struct ndrx_rbt_tree_iterator ndrx_rbt_tree_iterator_t;
 
-struct ndrx_rbt_ree_iterator
+struct ndrx_rbt_tree_iterator
 {
     ndrx_rbt_tree_t     *rbt;
-    ndrx_rbt_node_t     *(*iterate) (ndrx_rbt_ree_iterator_t *iter);
+    ndrx_rbt_node_t     *(*iterate) (ndrx_rbt_tree_iterator_t *iter);
     ndrx_rbt_node_t     *last_visited;
     int                 is_over;
 };
@@ -87,8 +87,8 @@ extern void ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node);
 
 extern void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt, 
                                     ndrx_rbt_order_control_t ctrl,
-                                    ndrx_rbt_ree_iterator_t *iter);
+                                    ndrx_rbt_tree_iterator_t *iter);
 
-extern ndrx_rbt_node_t *ndrx_rbt_iterate(ndrx_rbt_ree_iterator_t *iter);
+extern ndrx_rbt_node_t *ndrx_rbt_iterate(ndrx_rbt_tree_iterator_t *iter);
 
 #endif                            /* RBTREE_H */
