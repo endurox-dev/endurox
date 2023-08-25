@@ -46,7 +46,6 @@ struct ndrx_rbt_tree
     /* The caller-supplied manipulation functions */
     rbt_comparator  comparator;
     rbt_combiner    combiner;
-    rbt_allocfunc   allocfunc;
     rbt_freefunc    freefunc;
     /* Passthrough arg passed to all manipulation functions */
     void            *arg;
@@ -162,7 +161,6 @@ void ExceptionalCondition(const char *conditionName,
  *    The manipulation functions:
  *    comparator: compare two RBTNodes for less/equal/greater
  *    combiner: merge an existing tree entry with a new one
- *    allocfunc: allocate a new RBTNode
  *    freefunc: free an old RBTNode
  *    arg: passthrough pointer that will be passed to the manipulation functions
  *
@@ -189,11 +187,10 @@ void ExceptionalCondition(const char *conditionName,
 ndrx_rbt_tree_t *ndrx_rbt_create(size_t node_size,
                                     rbt_comparator comparator,
                                     rbt_combiner combiner,
-                                    rbt_allocfunc allocfunc,
                                     rbt_freefunc freefunc,
                                     void *arg)
 {
-    ndrx_rbt_tree_t *tree = (ndrx_rbt_tree_t *) NDRX_FPMALLOC(sizeof(ndrx_rbt_tree_t),EXFALSE);
+    ndrx_rbt_tree_t *tree = (ndrx_rbt_tree_t *) NDRX_FPMALLOC(sizeof(ndrx_rbt_tree_t),0);
 
     Assert(node_size > sizeof(ndrx_rbt_node_t));
 
@@ -201,7 +198,6 @@ ndrx_rbt_tree_t *ndrx_rbt_create(size_t node_size,
     tree->node_size = node_size;
     tree->comparator = comparator;
     tree->combiner = combiner;
-    tree->allocfunc = allocfunc;
     tree->freefunc = freefunc;
 
     tree->arg = arg;
@@ -563,35 +559,36 @@ ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *data, in
      */
     *isNew = EXTRUE;
 
-    x = rbt->allocfunc(rbt->arg);
-    x->color = RBTRED;
+    /* x = rbt->allocfunc(rbt->arg); */
+    data->color = RBTRED;
 
-    x->left = RBTNIL;
-    x->right = RBTNIL;
-    x->parent = parent;
-    ndrx_rbt_copy_data(rbt, x, data);
+    data->left = RBTNIL;
+    data->right = RBTNIL;
+    data->parent = parent;
+    /* ndrx_rbt_copy_data(rbt, x, data);*/
 
     /* insert node in tree */
     if (parent)
     {
         if (cmp < 0)
-            parent->left = x;
+            parent->left = data;
         else
-            parent->right = x;
+            parent->right = data;
     }
     else
     {
-        rbt->root = x;
+        rbt->root = data;
     }
 
-    ndrx_rbt_insert_fixup(rbt, x);
+    ndrx_rbt_insert_fixup(rbt, data);
 
-    return x;
+    return data;
 }
 
 /**********************************************************************
  *                            Deletion                                  *
  **********************************************************************/
+
 
 /*
  * Maintain Red-Black tree balance after deleting a black node.
@@ -690,100 +687,83 @@ static void ndrx_rbt_delete_fixup(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *x)
     x->color = RBTBLACK;
 }
 
-/*
- * Delete node z from tree.
+/**
+ * Find the tree minimum (from the given node)
  */
-static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
+static ndrx_rbt_node_t *ndrx_rbt_tree_minimum(ndrx_rbt_node_t *x)
 {
-    ndrx_rbt_node_t     *x,
-                        *y;
-
-    /* This is just paranoia: we should only get called on a valid node */
-    if (!z || z == RBTNIL)
-        return;
-
-    /*
-     * y is the node that will actually be removed from the tree.  This will
-     * be z if z has fewer than two children, or the tree successor of z
-     * otherwise.
-     */
-    if (z->left == RBTNIL || z->right == RBTNIL)
+    while (x->left != RBTNIL)
     {
-        /* y has a RBTNIL node as a child */
-        y = z;
+        x = x->left;
     }
+    return x;
+}
+
+/**
+ * Standard transplant
+ */
+static void ndx_rbt_transplant(struct ndrx_rbt_tree *tree, 
+    ndrx_rbt_node_t *u, ndrx_rbt_node_t *v)
+{
+    if (u->parent == NULL)
+    {
+        tree->root = v;
+    } 
+    else if (u == u->parent->left)
+    {
+        u->parent->left = v;
+    } 
     else
     {
-        /* find tree successor */
-        y = z->right;
-        while (y->left != RBTNIL)
-            y = y->left;
+        u->parent->right = v;
     }
+    v->parent = u->parent;
+}
 
-    /* x is y's only child */
-    if (y->left != RBTNIL)
-        x = y->left;
+/**
+ * Standard delete 
+ */
+static void ndrx_rbt_delete_node(struct ndrx_rbt_tree *rbt, ndrx_rbt_node_t *z)
+{
+    ndrx_rbt_node_t *y = z;
+    ndrx_rbt_node_t *x;
+    char y_original_color = y->color;
+
+    if (z->left == RBTNIL)
+    {
+        x = z->right;
+        ndx_rbt_transplant(rbt, z, z->right);
+    } 
+    else if (z->right == RBTNIL)
+    {
+        x = z->left;
+        ndx_rbt_transplant(rbt, z, z->left);
+    } 
     else
+    {
+        y = ndrx_rbt_tree_minimum(z->right);
+        y_original_color = y->color;
         x = y->right;
 
-    /* Remove y from the tree. */
-    x->parent = y->parent;
-    if (y->parent)
-    {
-        if (y == y->parent->left)
-            y->parent->left = x;
-        else
-            y->parent->right = x;
-    }
-    else
-    {
-        rbt->root = x;
-    }
-
-    /*
-     * If we removed the tree successor of z rather than z itself, then move
-     * the data for the removed node to the one we were supposed to remove.
-     */
-/* original source - start */
-	if (y != z)
-		ndrx_rbt_copy_data(rbt, z, y);
-
-
-#if 0 
-/* try to optimize the code */
-    /* transplant y to z palce */
-    if (y != z)
-    {
-        if (RBTNIL==z->parent)
-        {	
-             rbt->root=y;
-        }
-        else if (z->parent->left==z)
-        {
-             z->parent->left=y;
-        }
-        else
-        {
-            z->parent->right=y;
+        if (y->parent == z) {
+            x->parent = y;  /* Update x's parent for fixup */
+        } else {
+            ndx_rbt_transplant(rbt, y, y->right);
+            y->right = z->right;
+            y->right->parent = y;
         }
 
-        /* keep the orignal ptrs of the z (down ptrs and color)
-         * keep in mind that if y structure has traling data,
-         * it stays in the y as only rbt data is copied
-        */
-        memcpy(y, z, sizeof(ndrx_rbt_node_t));
-
+        ndx_rbt_transplant(rbt, z, y);
+        y->left = z->left;
+        y->left->parent = y;
+        y->color = z->color;
     }
-#endif
 
-    /*
-     * Removing a black node might make some paths from root to leaf contain
-     * fewer black nodes than others, or it might make two red nodes adjacent.
-     */
-    if (y->color == RBTBLACK)
+    if (y_original_color == RBTBLACK)
+    {
         ndrx_rbt_delete_fixup(rbt, x);
+    }
 
-    /* Now we can recycle the y node */
     if (rbt->freefunc)
         rbt->freefunc(z, rbt->arg);
 }
@@ -911,11 +891,11 @@ void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt,
     switch (ctrl)
     {
         case LeftRightWalk:        /* visit left, then self, then right */
-            // iter->iterate = rbt_left_right_iterator;
+            /* iter->iterate = rbt_left_right_iterator; */
             iter->iterate = rbt_left_right_iterator;
             break;
         case RightLeftWalk:        /* visit right, then self, then left */
-            // iter->iterate = rbt_right_left_iterator;
+            /* iter->iterate = rbt_right_left_iterator; */
             iter->iterate = rbt_right_left_iterator;
             break;
         default:

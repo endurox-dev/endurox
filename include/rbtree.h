@@ -28,7 +28,6 @@ typedef struct ndrx_rbt_node
     struct ndrx_rbt_node *left;     /* left child, or RBTNIL if none */
     struct ndrx_rbt_node *right;    /* right child, or RBTNIL if none */
     struct ndrx_rbt_node *parent;   /* parent, or NULL (not RBTNIL!) if none */
-    void *ptr;                      /* pointer to user data */
 } ndrx_rbt_node_t;
 
 /* Opaque struct representing a whole tree */
@@ -67,7 +66,6 @@ typedef void (*rbt_freefunc) (ndrx_rbt_node_t *x, void *arg);
 extern ndrx_rbt_tree_t *ndrx_rbt_create(size_t node_size,
                                             rbt_comparator comparator,
                                             rbt_combiner combiner,
-                                            rbt_allocfunc allocfunc,
                                             rbt_freefunc freefunc,
                                             void *arg);
 
