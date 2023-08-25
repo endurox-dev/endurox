@@ -67,6 +67,7 @@ extern "C" {
 #define CLT_STATE_NOTRUN            0   /**< Not running                  */
 #define CLT_STATE_STARTING          1   /**< Starting...                  */
 #define CLT_STATE_STARTED           2   /**< Started                      */
+#define CLT_STATE_WAIT              3   /**< Waiting on group lock        */
     
 #define CLT_CHK_INTERVAL_DEFAULT    15  /**< Do the checks every 15 sec   */
 #define CLT_KILL_INTERVAL_DEFAULT    30  /**< Default kill interval       */
@@ -173,7 +174,7 @@ extern cpm_process_t * cpm_client_get(char *tag, char *subsect);
 extern int cpm_sigchld_init(void);
 extern void cpm_sigchld_uninit(void);
 
-extern void cpm_pidtest(cpm_process_t *c);
+extern void cpm_pidtest(cpm_process_t *c, int *sg_groups);
 extern int cpm_kill(cpm_process_t *c);
 extern int cpm_killall(void);
 extern cpm_process_t * cpm_start_all(void);

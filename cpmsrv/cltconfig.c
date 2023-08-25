@@ -972,7 +972,6 @@ expublic int load_config(void)
     }
     
     /* Remove dead un-needed processes (killed & not in new config) */
-    
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         if (!c->is_cfg_refresh && CLT_STATE_NOTRUN==c->dyn.cur_state)

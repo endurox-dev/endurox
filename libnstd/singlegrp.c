@@ -411,8 +411,19 @@ exprivate int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
         goto out;
     }
 
+    if (flags & NDRX_SG_SRVBOOTCHK 
+        && !(sg_local.flags & NDRX_SG_NO_ORDER) 
+        && !sg_local.is_srv_booted)
+    {
+        /* if servers are not booted, but order required, 
+         * report group as not locked
+         */
+        NDRX_LOG(log_debug, "Singleton group %d servers not booted",
+            singlegrp_no);
+        goto out;
+    }
     /* validate the PID if requested so */
-    if (flags & NDRX_SG_CHK_PID)
+    else if (flags & NDRX_SG_CHK_PID)
     {
         if (!ndrx_sys_is_process_running_by_pid(sg_local.lockprov_pid))
         {
@@ -527,7 +538,7 @@ expublic int ndrx_sg_nrgroups()
  * @param flags 0 or (NDRX_SG_NOORDER_LCK -> if ordering not required, assume locked)
  *  additonally may pass NDRX_SG_CHK_PID to check for lock provider pid
  */
-expublic void fndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags)
+expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags)
 {
     int i=0;
     int locked;
@@ -549,7 +560,7 @@ expublic void fndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status
         }
         else
         {
-            lock_status_out[i]=ndrx_sg_is_locked_int(i, p, NULL, (flags & NDRX_SG_CHK_PID));
+            lock_status_out[i]=ndrx_sg_is_locked_int(i, p, NULL, flags);
         }
     }
 

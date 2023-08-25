@@ -265,7 +265,7 @@ extern "C" {
 #define NDRXD_PM_EARGSLIM           8       /**< Arguments or env too long  */
 #define NDRXD_PM_ESYSTEM            9       /**< Bad executable             */
 #define NDRXD_PM_RESTART            10      /**< stop & start back again    */
-#define NDRXD_PM_WAIT               11      /**< Process wait on group      */
+#define NDRXD_PM_WAIT               11      /**< Process waits on group     */
 #define NDRXD_PM_MAX_EXIT           19      /**< Maximum dead process       */
     
 #define NDRXD_PM_MIN_RUNNING        20      /**< Minimum running process    */

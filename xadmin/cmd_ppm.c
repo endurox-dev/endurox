@@ -83,7 +83,8 @@ M_descr [] =
     {NDRXD_PM_STARTING,    "start"},
     {NDRXD_PM_RUNNING_OK,  "runok"},
     {NDRXD_PM_STOPPING,    "stop"},
-    {NDRXD_PM_RESTART,     "rsta"}
+    {NDRXD_PM_RESTART,     "rsta"},
+    {NDRXD_PM_WAIT,        "wait"},
 };
 /*---------------------------Prototypes---------------------------------*/
 

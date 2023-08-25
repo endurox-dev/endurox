@@ -52,7 +52,10 @@
 #include "cpmsrv.h"
 #include "userlog.h"
 #include <exregex.h>
-  
+#include <exhash.h>
+#include <singlegrp.h>
+#include <lcfint.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -293,9 +296,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, "tpsvrdone called - shutting down client processes...");
     
     cpm_killall();
-    
     cpm_sigchld_uninit();
-    
     ndrx_cltshm_detach();
     ndrx_cltshm_remove(EXFALSE);
 
@@ -313,6 +314,8 @@ exprivate int cpm_callback_timer(void)
     cpm_process_t *ct = NULL;
     static int first = EXTRUE;
     static ndrx_stopwatch_t t;
+    int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+    int sg_groups[nrgrps];
     
     if (first)
     {
@@ -327,9 +330,13 @@ exprivate int cpm_callback_timer(void)
     
     ndrx_stopwatch_reset(&t);
     
-    
     NDRX_LOG(log_debug, "cpm_callback_timer() enter");
-            
+
+    /* Take a group snapshoot
+     * Check lock here only once, as spawning is quick (no wait on status...)
+     */
+    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
+
     /* Mark config as not refreshed */
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
@@ -337,11 +344,27 @@ exprivate int cpm_callback_timer(void)
                 c->tag, c->subsect, c->dyn.req_state, c->dyn.cur_state);
         
         if ((CLT_STATE_NOTRUN==c->dyn.cur_state ||
-                CLT_STATE_STARTING==c->dyn.cur_state)  &&
+                CLT_STATE_STARTING==c->dyn.cur_state ||
+                CLT_STATE_WAIT==c->dyn.cur_state)  &&
                 CLT_STATE_STARTED==c->dyn.req_state)
         {
-            /* Try to boot the process... */
-            cpm_exec(c);
+            /* check the group state... */
+            if (c->stat.singlegrp > 0 && !sg_groups[c->stat.singlegrp])
+            {
+                if (CLT_STATE_WAIT!=c->dyn.cur_state)
+                {
+                    /* can do without lock, as no threads may set
+                     * other status, as process is not running
+                     */
+                    c->dyn.cur_state=CLT_STATE_WAIT;
+                    cpm_set_cur_time(c);
+                }
+            }
+            else
+            {
+                /* Try to boot the process... */
+                cpm_exec(c);
+            }
         }
         else if (CLT_STATE_STARTED==c->dyn.cur_state && 
                 (EXFAIL!=c->stat.rssmax || EXFAIL!=c->stat.vszmax)
@@ -419,7 +442,7 @@ exprivate int cpm_callback_timer(void)
             
         } /* started & require mem test... */
        
-        cpm_pidtest(c);
+        cpm_pidtest(c, sg_groups);
        
     } /* hash loop */
     
@@ -489,7 +512,7 @@ exprivate int cpm_sc_obj(UBFH *p_ub, int cd, char *tag, char *subsect,
         
         if (CLT_STATE_STARTED ==  c->dyn.cur_state)
         {
-            if (EXSUCCEED==cpm_kill(c))
+            if (EXSUCCEED==cpm_kill(c)) 
             {
                 snprintf(debug, sizeof(debug), "Client process %s/%s stopped", 
                         tag, subsect);
@@ -841,6 +864,12 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
         {
             snprintf(output, sizeof(output), "%s/%s - starting (%s)",c->tag, 
                     c->subsect, buffer);
+        }
+        else if (CLT_STATE_WAIT == c->dyn.cur_state && 
+                c->dyn.req_state != CLT_STATE_NOTRUN)
+        {
+            snprintf(output, sizeof(output), "%s/%s - waiting on group %d lock (%s)",c->tag, 
+                    c->subsect, c->stat.singlegrp, buffer);
         }
         else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_STARTED) )
         {
