@@ -52,6 +52,7 @@ extern "C" {
 #define NDRX_SG_NO_ORDER    0x0002  /**< Do not use boot order         */
 #define NDRX_SG_CHK_PID     0x0004  /**< Check that PID is alive       */
 #define NDRX_SG_NOORDER_LCK 0x0008  /**< Report norder group as locked */
+#define NDRX_SG_SRVBOOTCHK  0x0010  /**< Check that servers are booted */
 
 #define NDRX_SG_RSN_NONE        0       /**< No reason                   */
 #define NDRX_SG_RSN_EXPIRED     1       /**< Expird by missing refresh   */

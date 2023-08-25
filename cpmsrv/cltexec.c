@@ -284,9 +284,22 @@ out:
 /**
  * Perform test on PID
  * @param c client process
+ * @param sg_groups singleton groups
  */
-expublic void cpm_pidtest(cpm_process_t *c)
+expublic void cpm_pidtest(cpm_process_t *c, int *sg_groups)
 {
+    /* 
+     * if group lock is lost, kill immediatelly 
+     */
+    if (NULL!=sg_groups && c->stat.singlegrp>0 && !sg_groups[c->stat.singlegrp] && 
+            CLT_STATE_STARTED==c->dyn.cur_state)
+    {
+        NDRX_LOG(log_error, "Group %d lock lost for "
+                "%s/%s pid %d, killing immediatelly", 
+                c->stat.singlegrp, c->tag, c->subsect, (int)c->dyn.pid);
+        kill(c->dyn.pid, SIGKILL);
+    }
+
     if (CLT_STATE_STARTED==c->dyn.cur_state && c->dyn.shm_read)
     {
         /* check the pid status, as we might be booted with existing
@@ -343,7 +356,7 @@ expublic int cpm_killall(void)
             /* 
              * still check the pid, not? If running from shared mem blocks?
              */
-            cpm_pidtest(c);
+            cpm_pidtest(c, NULL);
             
             if (CLT_STATE_STARTED==c->dyn.cur_state)
             {
@@ -471,7 +484,7 @@ expublic int cpm_kill(cpm_process_t *c)
     {
         /* if running from shared memory, do the check... */
         
-        cpm_pidtest(c);
+        cpm_pidtest(c, NULL);
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
@@ -492,7 +505,6 @@ expublic int cpm_kill(cpm_process_t *c)
     /* if we kill with -9, then kill all children too
      * this is lengthly operation, thus only for emergency kill only 
      */
-    
     
     if (c->stat.flags & CPM_F_KILL_LEVEL_LOW)
     {
@@ -563,7 +575,7 @@ expublic int cpm_exec(cpm_process_t *c)
     {
         /* close parent resources... Bug #176 
          * this will be closed by ndrx_atfork handler
-	atmisrv_un_initialize(EXTRUE);*/
+	    atmisrv_un_initialize(EXTRUE);*/
         
         /* reset signal handler so that for new processes there is scratch start */
         signal(SIGCHLD, SIG_DFL);
