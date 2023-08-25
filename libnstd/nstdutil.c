@@ -68,6 +68,29 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Compare 4 longs
+ */
+expublic int ndrx_compare4(long a1, long a2, long a3, long a4, long b1, long b2, long b3, long b4)
+{
+    
+    long res1 =  a1 - b1;
+    long res2 =  a2 - b2;
+    long res3 =  a3 - b3;
+    long res4 =  a4 - b4;
+    
+    if (res1!=0)
+        return (int)res1;
+    
+    if (res2!=0)
+        return (int)res2;
+
+    if (res3!=0)
+        return (int)res3;
+    
+    return (int)res4;
+}
+
+/**
  * Compre 3 segmeneted number
  * @param a1
  * @param a2
@@ -94,6 +117,7 @@ expublic int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
     return (int)res3;
     
 }
+
 /**
  * Return -1 in case if t1/tusec1 is less than t2/tusec2
  * return 0 in case if t1/tusec1 equals t2/tusec2

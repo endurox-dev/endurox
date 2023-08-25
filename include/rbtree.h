@@ -30,7 +30,29 @@ typedef struct ndrx_rbt_node
     struct ndrx_rbt_node *parent;   /* parent, or NULL (not RBTNIL!) if none */
 } ndrx_rbt_node_t;
 
-/* Opaque struct representing a whole tree */
+/* Support functions to be provided by caller */
+typedef int (*rbt_comparator) (const ndrx_rbt_node_t *a,
+                                const ndrx_rbt_node_t *b, void *arg);
+typedef void (*rbt_combiner) (ndrx_rbt_node_t *existing,
+                                const ndrx_rbt_node_t *newdata, void *arg);
+typedef void (*rbt_freefunc) (ndrx_rbt_node_t *x, void *arg);
+
+/*
+ * RBTree control structure
+ */
+struct ndrx_rbt_tree
+{
+    ndrx_rbt_node_t *root;            /* root node, or RBTNIL if tree is empty */
+    /* Remaining fields are constant after rbt_create */
+    /* The caller-supplied manipulation functions */
+    rbt_comparator  comparator;
+    rbt_combiner    combiner;
+    rbt_freefunc    freefunc;
+    /* Passthrough arg passed to all manipulation functions */
+    void            *arg;
+};
+
+/* struct representing a whole tree */
 typedef struct ndrx_rbt_tree ndrx_rbt_tree_t;
 
 /* Available tree iteration orderings */
@@ -55,19 +77,16 @@ struct ndrx_rbt_tree_iterator
     int                 is_over;
 };
 
-/* Support functions to be provided by caller */
-typedef int (*rbt_comparator) (const ndrx_rbt_node_t *a, 
-                                const ndrx_rbt_node_t *b, void *arg);
-typedef void (*rbt_combiner) (ndrx_rbt_node_t *existing, 
-                                const ndrx_rbt_node_t *newdata, void *arg);
-typedef ndrx_rbt_node_t *(*rbt_allocfunc) (void *arg);
-typedef void (*rbt_freefunc) (ndrx_rbt_node_t *x, void *arg);
-
-extern ndrx_rbt_tree_t *ndrx_rbt_create(size_t node_size,
-                                            rbt_comparator comparator,
+extern ndrx_rbt_tree_t *ndrx_rbt_create(rbt_comparator comparator,
                                             rbt_combiner combiner,
                                             rbt_freefunc freefunc,
                                             void *arg);
+
+extern ndrx_rbt_tree_t *ndrx_rbt_init(ndrx_rbt_tree_t *tree,
+                                    rbt_comparator comparator,
+                                    rbt_combiner combiner,
+                                    rbt_freefunc freefunc,
+                                    void *arg);
 
 extern ndrx_rbt_node_t *ndrx_rbt_find(ndrx_rbt_tree_t *rbt, 
                                         const ndrx_rbt_node_t *data);

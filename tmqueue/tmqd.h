@@ -45,6 +45,7 @@ extern "C" {
 #include <atmi.h>
 #include <exhash.h>
 #include <exthpool.h>
+#include <rbtree.h>
 #include "tmqueue.h"
     
 /*---------------------------Externs------------------------------------*/
@@ -138,20 +139,18 @@ typedef struct tmq_cormsg tmq_corhash_t;
 typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
+    ndrx_rbt_node_t cur;    /**< handle in future or now list */
+    ndrx_rbt_node_t cor;    /**< handle in correlator list    */
+
     char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
-    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator              */
     /** We should have hash handler of message hash                           */
     EX_hash_handle hh; /**< makes this structure hashable (for msgid)         */
-    EX_hash_handle h2; /**< makes this structure hashable (for corrid)         */
 
-    /** We should also have a linked list handler                             */
+    /** handlers for in-flight q (used for current message listing)           */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
-    
-    /** Our position in corq, if any, next. Use utlist2.h in different object */
-    tmq_memmsg_t *next2;
-    /** Our position in corq, if any, prev. Use utlist2.h in different object */
-    tmq_memmsg_t *prev2;
+
     /** backlink to correlator q, so that we know where to remove             */
     tmq_corhash_t *corhash;
 
@@ -164,11 +163,13 @@ struct tmq_memmsg
 struct tmq_cormsg
 {
     char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
-    /** queue by correlation, CDL, next2, prev2 */
-    tmq_memmsg_t *corq;
+    /** queue by correlation, CDL, next2, prev2 
+    tmq_memmsg_t *corq;*/
+
+    ndrx_rbt_tree_t corq; /**< queue uses standard sorting (insert time)      */
+
     EX_hash_handle hh; /**< makes this structure hashable        */
 };
-
 
 /**
  * List of queues (for queued messages)
@@ -182,9 +183,18 @@ struct tmq_qhash
     
     long numenq;    /**< Enqueued messages (even locked)         */
     long numdeq;    /**< Dequeued messages (removed, including aborts)     */
-    
+
     EX_hash_handle hh; /**< makes this structure hashable        */
-    tmq_memmsg_t *q;    /**< messages queued                     */
+
+    ndrx_rbt_tree_t q; /**< Currently available messages        */
+    ndrx_rbt_tree_t q_fut; /**< future messages (not yet ready for proc) */
+
+    /** 
+     * in-flight messages (in process) 
+     * this is linked list head
+     */
+    tmq_memmsg_t *q_infligh;
+
     tmq_corhash_t *corhash; /**< has of correlators                */
 };
 
@@ -328,6 +338,14 @@ extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
 extern int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf);
 extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);
+
+/* Red-black tree support: */
+extern void tmq_rbt_combine_cur(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *newdata, void *arg);
+extern void tmq_rbt_combine_fut(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *newdata, void *arg);
+extern void tmq_rbt_combine_cor(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *newdata, void *arg);
+extern int tmq_rbt_cmp_cur(const ndrx_rbt_node_t *a, const ndrx_rbt_node_t *b, void *arg);
+extern int tmq_rbt_cmp_cor(const ndrx_rbt_node_t *a, const ndrx_rbt_node_t *b, void *arg);
+extern int tmq_rbt_cmp_fut (const ndrx_rbt_node_t *a, const ndrx_rbt_node_t *b, void *arg);
 
 extern int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats);
 extern void tmq_fwd_busy_inc(fwd_stats_t *p_stats);

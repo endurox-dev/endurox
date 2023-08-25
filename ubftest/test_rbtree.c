@@ -85,8 +85,7 @@ static void ndrx_irbt_free(ndrx_rbt_node_t *node, void *arg)
  */
 static ndrx_rbt_tree_t *ndrx_create_int_rbtree(void)
 {
-    return ndrx_rbt_create(sizeof(ndrx_int_RBTree_Node_t),
-                      ndrx_irbt_cmp,
+    return ndrx_rbt_create(ndrx_irbt_cmp,
                       ndrx_irbt_combine,
                       ndrx_irbt_free,
                       NULL);
