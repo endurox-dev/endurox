@@ -533,7 +533,8 @@ static void ndrx_rbt_insert_fixup(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *x)
 ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *data, int *isNew)
 {
     ndrx_rbt_node_t *current,
-                    *parent;
+                    *parent,
+                    *x;
     int             cmp;
 
     /* find where node belongs */
@@ -562,30 +563,30 @@ ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *data, in
      */
     *isNew = EXTRUE;
 
-    // x = rbt->allocfunc(rbt->arg);
-    data->color = RBTRED;
+    x = rbt->allocfunc(rbt->arg);
+    x->color = RBTRED;
 
-    data->left = RBTNIL;
-    data->right = RBTNIL;
-    data->parent = parent;
-    // rbt_copy_data(rbt, x, data);
+    x->left = RBTNIL;
+    x->right = RBTNIL;
+    x->parent = parent;
+    ndrx_rbt_copy_data(rbt, x, data);
 
     /* insert node in tree */
     if (parent)
     {
         if (cmp < 0)
-            parent->left = data;
+            parent->left = x;
         else
-            parent->right = data;
+            parent->right = x;
     }
     else
     {
-        rbt->root = data;
+        rbt->root = x;
     }
 
-    ndrx_rbt_insert_fixup(rbt, data);
+    ndrx_rbt_insert_fixup(rbt, x);
 
-    return data;
+    return x;
 }
 
 /**********************************************************************
@@ -743,11 +744,13 @@ static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
      * If we removed the tree successor of z rather than z itself, then move
      * the data for the removed node to the one we were supposed to remove.
      */
-    /*
-    if (y != z)
-        ndrx_rbt_copy_data(rbt, z, y);
-    */
+/* original source - start */
+	if (y != z)
+		ndrx_rbt_copy_data(rbt, z, y);
 
+
+#if 0 
+/* try to optimize the code */
     /* transplant y to z palce */
     if (y != z)
     {
@@ -769,7 +772,9 @@ static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
          * it stays in the y as only rbt data is copied
         */
         memcpy(y, z, sizeof(ndrx_rbt_node_t));
+
     }
+#endif
 
     /*
      * Removing a black node might make some paths from root to leaf contain
@@ -792,7 +797,7 @@ static void ndrx_rbt_delete_node(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *z)
  * responsibility off to the freefunc, as some other physical node
  * may be the one actually freed!)
  */
-void ndrx_ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node)
+void ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node)
 {
     ndrx_rbt_delete_node(rbt, node);
 }
@@ -801,7 +806,7 @@ void ndrx_ndrx_rbt_delete(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *node)
  *                          Traverse                                      *
  **********************************************************************/
 
-static ndrx_rbt_node_t *rbt_left_right_iterator(ndrx_rbt_ree_iterator_t *iter)
+static ndrx_rbt_node_t *rbt_left_right_iterator(ndrx_rbt_tree_iterator_t *iter)
 {
     if (iter->last_visited == NULL)
     {
@@ -841,7 +846,7 @@ static ndrx_rbt_node_t *rbt_left_right_iterator(ndrx_rbt_ree_iterator_t *iter)
     return iter->last_visited;
 }
 
-static ndrx_rbt_node_t *rbt_right_left_iterator(ndrx_rbt_ree_iterator_t *iter)
+static ndrx_rbt_node_t *rbt_right_left_iterator(ndrx_rbt_tree_iterator_t *iter)
 {
     if (iter->last_visited == NULL)
     {
@@ -896,7 +901,7 @@ static ndrx_rbt_node_t *rbt_right_left_iterator(ndrx_rbt_ree_iterator_t *iter)
  */
 void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt, 
                             ndrx_rbt_order_control_t ctrl, 
-                            ndrx_rbt_ree_iterator_t *iter)
+                            ndrx_rbt_tree_iterator_t *iter)
 {
     /* Common initialization for all traversal orders */
     iter->rbt = rbt;
@@ -906,9 +911,11 @@ void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt,
     switch (ctrl)
     {
         case LeftRightWalk:        /* visit left, then self, then right */
+            // iter->iterate = rbt_left_right_iterator;
             iter->iterate = rbt_left_right_iterator;
             break;
         case RightLeftWalk:        /* visit right, then self, then left */
+            // iter->iterate = rbt_right_left_iterator;
             iter->iterate = rbt_right_left_iterator;
             break;
         default:
@@ -919,7 +926,7 @@ void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt,
 /*
  * rbt_iterate: return the next node in traversal order, or NULL if no more
  */
-ndrx_rbt_node_t *ndrx_rbt_iterate(ndrx_rbt_ree_iterator_t *iter)
+ndrx_rbt_node_t *ndrx_rbt_iterate(ndrx_rbt_tree_iterator_t *iter)
 {
     if (iter->is_over)
         return NULL;

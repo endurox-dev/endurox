@@ -144,6 +144,7 @@ extern TestSuite *ubf_nstd_lh(void);
 extern TestSuite *ubf_nstd_atomicadd(void);
 extern TestSuite *ubf_nstd_fsync(void);
 extern TestSuite *ubf_nstd_cid(void);
+extern TestSuite *test_rbt_tree(void);
 
 #ifdef	__cplusplus
 }
