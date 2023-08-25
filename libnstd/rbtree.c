@@ -36,22 +36,6 @@
 #define RBTRED        (1)
 
 /*
- * RBTree control structure
- */
-struct ndrx_rbt_tree
-{
-    ndrx_rbt_node_t *root;            /* root node, or RBTNIL if tree is empty */
-    /* Remaining fields are constant after rbt_create */
-    size_t          node_size;        /* actual size of tree nodes */
-    /* The caller-supplied manipulation functions */
-    rbt_comparator  comparator;
-    rbt_combiner    combiner;
-    rbt_freefunc    freefunc;
-    /* Passthrough arg passed to all manipulation functions */
-    void            *arg;
-};
-
-/*
  * all leafs are sentinels, use customized NIL name to prevent
  * collision with system-wide constant NIL which is actually NULL
  */
@@ -157,7 +141,6 @@ void ExceptionalCondition(const char *conditionName,
  * rbt_create: create an empty RBTree
  *
  * Arguments are:
- *    node_size: actual size of tree nodes (> sizeof(RBTNode))
  *    The manipulation functions:
  *    comparator: compare two RBTNodes for less/equal/greater
  *    combiner: merge an existing tree entry with a new one
@@ -184,33 +167,42 @@ void ExceptionalCondition(const char *conditionName,
  * resetting or deleting the memory context it's stored in.  You can pfree
  * the RBTree node if you feel the urge.
  */
-ndrx_rbt_tree_t *ndrx_rbt_create(size_t node_size,
-                                    rbt_comparator comparator,
+ndrx_rbt_tree_t *ndrx_rbt_create(rbt_comparator comparator,
                                     rbt_combiner combiner,
                                     rbt_freefunc freefunc,
                                     void *arg)
 {
     ndrx_rbt_tree_t *tree = (ndrx_rbt_tree_t *) NDRX_FPMALLOC(sizeof(ndrx_rbt_tree_t),0);
+    if (NULL==tree)
+    {
+        return NULL;
+    }
 
-    Assert(node_size > sizeof(ndrx_rbt_node_t));
+    return ndrx_rbt_init(tree, comparator, combiner,
+                         freefunc, arg);
+}
 
+/**
+ * Initialize the tree
+ * @param tree allocated tree
+ * @param comparator comparator function
+ * @param combiner combiner function
+ * @param freefunc free function
+ * @param arg additional data ptr to functions
+ * @return tree
+ */
+ndrx_rbt_tree_t *ndrx_rbt_init(ndrx_rbt_tree_t *tree,
+                                    rbt_comparator comparator,
+                                    rbt_combiner combiner,
+                                    rbt_freefunc freefunc,
+                                    void *arg)
+{
     tree->root = RBTNIL;
-    tree->node_size = node_size;
     tree->comparator = comparator;
     tree->combiner = combiner;
     tree->freefunc = freefunc;
-
     tree->arg = arg;
-
     return tree;
-}
-
-/* Copy the additional data fields from one RBTNode to another */
-static inline void ndrx_rbt_copy_data(ndrx_rbt_tree_t *rbt, 
-                                        ndrx_rbt_node_t *dest, 
-                                        const ndrx_rbt_node_t *src)
-{
-    memcpy(dest + 1, src + 1, rbt->node_size - sizeof(ndrx_rbt_node_t));
 }
 
 /**********************************************************************

@@ -88,6 +88,10 @@ expublic tmq_corhash_t * tmq_cor_add(tmq_qhash_t *qhash, char *corrid_str)
     memset(corhash, 0, sizeof(tmq_corhash_t));
     NDRX_STRCPY_SAFE(corhash->corrid_str, corrid_str);
     EXHASH_ADD_STR( qhash->corhash, corrid_str, corhash);
+
+    /* setup red-black trees */
+    ndrx_rbt_init(&corhash->corq, tmq_rbt_cmp_cur, tmq_rbt_combine_cor, NULL, corhash);
+
     NDRX_LOG(log_debug, "Added corrid_str [%s] %p",
             corhash->corrid_str, corhash);
 
