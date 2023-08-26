@@ -127,9 +127,9 @@ exprivate config_t * config_alloc(void)
     }
 
     /* allocate structures for singlegrp_opts */
-    ret->singlegrp_opts = NDRX_CALLOC(ndrx_G_libnstd_cfg.sgmax, sizeof(ndrx_singlegrp_opts_t));
+    ret->singlegrp_opts = NDRX_CALLOC(ndrx_G_libnstd_cfg.sgmax+1, sizeof(ndrx_singlegrp_opts_t));
 
-    if (NULL==ret)
+    if (NULL==ret->singlegrp_opts)
     {
         NDRXD_set_error_fmt(NDRXD_ESYSTEM, "Failed to malloc ndrx_singlegrp_opts_t (%d)", 
                 ndrx_G_libnstd_cfg.sgmax);
@@ -258,7 +258,14 @@ expublic int load_active_config(config_t **app_config, pm_node_t **process_model
     else
     {
         NDRX_LOG(log_debug, "Active configuration not loaded - will load!");
-        *app_config = NDRX_CALLOC(1, sizeof(config_t));
+        *app_config = config_alloc();
+        if (NULL==*app_config)
+        {
+            /* Reply to caller that config failed to load */
+            NDRXD_set_error(NDRXD_EOS);
+            ret=EXFAIL;
+            goto out;
+        }
     }
 
     if (EXSUCCEED!=load_config(*app_config, G_sys_config.config_file))
@@ -785,7 +792,6 @@ out:
 exprivate void ndrx_singlegrp_opts_apply(void)
 {
     int i;
-    ndrx_singlegrp_opts_t *p;
     
     for (i=1; i<=ndrx_G_libnstd_cfg.sgmax; i++)
     {
