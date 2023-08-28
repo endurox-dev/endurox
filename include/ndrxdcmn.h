@@ -462,6 +462,7 @@ typedef struct
     short complete_shutdown;            /**< Id of the server */
     int srvid;
     char binary_name[MAXTIDENT+1];
+    char procgrp[MAXTIDENT+1];  /**< process group to shutdown */
 
 } command_startstop_t;
 
