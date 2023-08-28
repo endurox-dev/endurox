@@ -94,6 +94,7 @@ EX_CPMOUTPUT    101     string   -       CPM output
 EX_CPMTAG       102     string   -       Tag
 EX_CPMSUBSECT   103     string   -       Sub-section
 EX_CPMWAIT      104     long     -       Wait milliseconds after batch processing
+EX_CPMPROCGRP   105     string   -       Process group name
 
 # Generic fields
 EX_CLTID        	150	string	-	client identifier for originating client

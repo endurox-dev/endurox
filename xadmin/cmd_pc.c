@@ -87,9 +87,10 @@ out:
 
 /**
  * This basically tests the normal case when all have been finished OK!
+ * @param procgrp process group top operate with
  * @return
  */
-exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long twait)
+exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, char *procgrp, long twait)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, CPM_DEF_BUFFER_SZ);
     int ret=EXSUCCEED;
@@ -124,6 +125,18 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long tw
     
     if (0!=strcmp(CPM_CMD_PC, cmd))
     {
+        if (tag[0] && procgrp[0])
+        {
+            NDRX_LOG(log_error, "-t and -g cannot be comnbined");
+            EXFAIL_OUT(ret);
+        }
+
+        if (subsect[0] && procgrp[0])
+        {
+            NDRX_LOG(log_error, "-s and -g cannot be comnbined");
+            EXFAIL_OUT(ret);
+        }
+
         if (EXSUCCEED!=Bchg(p_ub, EX_CPMTAG, 0, tag, 0L))
         {
             NDRX_LOG(log_error, "Failed to set EX_CPMCOMMAND to %s!", tag);        
@@ -133,6 +146,12 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long tw
         if (EXSUCCEED!=Bchg(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
         {
             NDRX_LOG(log_error, "Failed to set EX_CPMSUBSECT to %s!", subsect);        
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED!=Bchg(p_ub, EX_CPMPROCGRP, 0, procgrp, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to set EX_CPMPROCGRP to %s!", subsect);        
             EXFAIL_OUT(ret);
         }
     }
@@ -166,7 +185,9 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, long tw
             if (TPEEVENT == tp_errno)
             {
                 if (TPEV_SVCSUCC == revent)
+                {
                         ret = EXSUCCEED;
+                }
                 else
                 {
                     NDRX_LOG(log_error,
@@ -223,7 +244,7 @@ expublic int cmd_pc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 {
     int ret = EXSUCCEED;
     
-    call_cpm(NDRX_SVC_CPM, CPM_CMD_PC, NULL, NULL, 0);
+    call_cpm(NDRX_SVC_CPM, CPM_CMD_PC, NULL, NULL, NULL, 0);
     
 out:
     return ret;
@@ -241,6 +262,7 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     int ret = EXSUCCEED;
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
+    char procgrp[MAXTIDENT+1] = {EXEOS};
     long twait = 0;
     char *p;
     ncloptmap_t clopt[] =
@@ -249,6 +271,8 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                                 NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
+        {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Process group name"},
         {'w', BFLD_LONG, (void *)&twait, sizeof(twait), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Wait milliseconds"},
         {0}
@@ -286,7 +310,7 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         }
     }
     
-    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_SC, tag, subsect, twait);
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_SC, tag, subsect, procgrp, twait);
     
 out:
     return ret;
@@ -304,6 +328,7 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     int ret = EXSUCCEED;
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
+    char procgrp[MAXTIDENT+1] = {EXEOS};
     long twait = 0;
     char *p;
     ncloptmap_t clopt[] =
@@ -312,6 +337,8 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                                 NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
+        {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Process group name"},
         {'w', BFLD_LONG, (void *)&twait, sizeof(twait), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Wait milliseconds"},
         {0}
@@ -346,7 +373,7 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         EXFAIL_OUT(ret);
     }
     
-    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_BC, tag, subsect, twait);
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_BC, tag, subsect, procgrp, twait);
     
 out:
     return ret;
@@ -364,6 +391,7 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     int ret = EXSUCCEED;
     char tag[CPM_TAG_LEN];
     char subsect[CPM_SUBSECT_LEN] = {"-"};
+    char procgrp[MAXTIDENT+1] = {EXEOS};
     long twait = 0;
     char *p;
     
@@ -373,6 +401,8 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                                 NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
+        {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Process group name"},
         {'w', BFLD_LONG, (void *)&twait, sizeof(twait), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Wait milliseconds"},
         {0}
@@ -407,9 +437,10 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         EXFAIL_OUT(ret);
     }
     
-    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_RC, tag, subsect, twait);
+    ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_RC, tag, subsect, procgrp, twait);
     
 out:
     return ret;
 }
+
 /* vim: set ts=4 sw=4 et smartindent: */
