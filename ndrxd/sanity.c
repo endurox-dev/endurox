@@ -1047,4 +1047,6 @@ out:
     return ret;
 }
 
+/* TODO: add sanity checks for singleton groups shared memory */
+
 /* vim: set ts=4 sw=4 et smartindent: */

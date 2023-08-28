@@ -210,7 +210,8 @@ extern "C" {
 #define NDRXD_ESYNTAX            23         /**< Syntax error during parsing  */
 #define NDRXD_ESYSTEM            24         /**< E/X system failure           */
 #define NDRXD_ENOCFGLD           25         /**< Configuartion not loaded     */
-#define NDRXD_EMAXVAL            25
+#define NDRXD_ENOENT             26         /**< No entry found               */
+#define NDRXD_EMAXVAL            26
 
 /* This section list call types */
 #define NDRXD_CALL_TYPE_GENERIC         0   /**< Generic call type        */
