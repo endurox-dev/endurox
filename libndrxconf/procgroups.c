@@ -134,7 +134,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                 snprintf(err->error_msg, sizeof(err->error_msg), 
                     "(%s) Invalid `grpno' %d in <procgroup> "
                     "(valid values 1..%d) section near line %d", 
-                    config_file_short, ndrx_G_libnstd_cfg.sgmax, *last_line);
+                    config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.sgmax, *last_line);
                 err->error_code = NDRXD_ECFGINVLD;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
