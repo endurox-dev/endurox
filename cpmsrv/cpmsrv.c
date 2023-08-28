@@ -89,7 +89,6 @@ void CPMSVC (TPSVCINFO *p_svc)
     
     p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 4096);
     
-    
     if (EXSUCCEED!=Bget(p_ub, EX_CPMCOMMAND, 0, cmd, &len))
     {
         NDRX_LOG(log_error, "missing EX_CPMCOMMAND!");
@@ -683,9 +682,10 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     int ret = EXSUCCEED;
     char msg[256];
     cpm_process_t *c = NULL, *ct = NULL;
-    
-    char tag[CPM_TAG_LEN+1];
-    char subsect[CPM_SUBSECT_LEN+1];
+    BFLDLEN tmp_len;
+    char tag[CPM_TAG_LEN+1]={EXEOS};
+    char subsect[CPM_SUBSECT_LEN+1]={EXEOS};
+    char procgrp[MAXTIDENT+1]={EXEOS};
     
     char regex_tag[CPM_TAG_LEN * 2 + 2 + 1]; /* all symbols can be escaped, 
                                             * have ^$ start/end and EOS */
@@ -699,10 +699,11 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     
     int nr_proc = 0;
     
-    if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
-    {
-        NDRX_LOG(log_error, "Missing EX_CPMTAG!");
-    }
+    tmp_len=sizeof(tag);
+    Bget(p_ub, EX_CPMTAG, 0, tag, &tmp_len);
+
+    tmp_len=sizeof(procgrp);
+    Bget(p_ub, EX_CPMPROCGRP, 0, procgrp, &tmp_len);
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
     {
@@ -710,8 +711,50 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     }
     
     Bget(p_ub, EX_CPMWAIT, 0, (char *)&twait, 0L);
-    
-    if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
+    if (EXEOS!=procgrp[0])
+    {
+        /* resolve process group */
+        ndrx_procgroup_t* p_grp=ndrx_ndrxconf_procgroups_resolvenm(ndrx_G_procgroups_config, 
+            procgrp);
+
+        if (NULL==p_grp)
+        {
+            snprintf(msg, sizeof(msg), "Process group [%s] not found", procgrp);
+            cpm_send_msg(p_ub, cd, msg);
+            EXFAIL_OUT(ret);
+        }
+
+        /* loop over, match & execute... */
+        EXHASH_ITER(hh, G_clt_config, c, ct)
+        {
+            if (c->stat.procgrp_no==p_grp->grpno)
+            {
+                int cur_nr_proc = nr_proc;
+                NDRX_LOG(log_debug, "[%s]/[%s] procgrp_no %d - matched", 
+                    c->tag, c->subsect, c->stat.procgrp_no);
+                
+                if (EXSUCCEED!=p_func(p_ub, cd, c->tag, c->subsect, c, &nr_proc))
+                {
+                    NDRX_LOG(log_error, "Matched process [%s]/[%s] procgrp_no %d failed to start/stop",
+                            c->tag, c->subsect, c->stat.procgrp_no);
+                }
+
+                if (cur_nr_proc!=nr_proc && twait > 0)
+                {
+                    NDRX_LOG(log_debug, "Sleeping %d millisec", twait);
+                    usleep(twait*1000);
+                }
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "[%s]/[%s] procgrp_no %d - NOT matched group %d", 
+                    c->tag, c->subsect, c->stat.procgrp_no, p_grp->grpno);
+            }
+        }
+        snprintf(msg, sizeof(msg), "%d client(s) %s.", nr_proc, finish_msg);
+        cpm_send_msg(p_ub, cd, msg);
+    }
+    else if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
     {
         c = cpm_client_get(tag, subsect);
         /* Bug #428 */
@@ -725,7 +768,6 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
         }
         else
         {
-        
             snprintf(msg, sizeof(msg), "Client process %s/%s not found",
                     tag, subsect);
             cpm_send_msg(p_ub, cd, msg);
@@ -745,7 +787,6 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
             cpm_send_msg(p_ub, cd, msg);
         }
         r_comp_tag_alloc=EXTRUE;
-        
         
         ndrx_regasc_cpyesc(regex_subsect, subsect, '^', '$', '%', ".*");
         NDRX_LOG(log_debug, "Got regex subsect: [%s]", subsect);
@@ -768,7 +809,6 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
             {
                 int cur_nr_proc = nr_proc;
                 NDRX_LOG(log_debug, "[%s]/[%s] - matched", c->tag, c->subsect);
-                
                 
                 if (EXSUCCEED!=p_func(p_ub, cd, c->tag, c->subsect, c, &nr_proc))
                 {
