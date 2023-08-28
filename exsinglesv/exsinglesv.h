@@ -57,7 +57,7 @@ extern "C" {
  */
 typedef struct
 {
-    int singlegrp; /**< Providing lock for this group   */
+    int procgrp_lp_no; /**< Providing lock for this group   */
     char lockfile_1[PATH_MAX+1]; /**< Lock file 1       */
     char lockfile_2[PATH_MAX+1]; /**< Lock file 2       */
     char exec_on_bootlocked[PATH_MAX+1]; /**< Exec on boot locked */

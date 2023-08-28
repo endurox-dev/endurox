@@ -291,12 +291,16 @@ expublic void cpm_pidtest(cpm_process_t *c, int *sg_groups)
     /* 
      * if group lock is lost, kill immediatelly 
      */
-    if (NULL!=sg_groups && c->stat.singlegrp>0 && !sg_groups[c->stat.singlegrp] && 
+    if (NULL!=sg_groups 
+        && c->stat.procgrp_no>0 
+        && ndrx_ndrxconf_procgroups_is_singleton(ndrx_G_procgroups_config, 
+                c->stat.procgrp_no)
+        && !sg_groups[c->stat.procgrp_no] && 
             CLT_STATE_STARTED==c->dyn.cur_state)
     {
-        NDRX_LOG(log_error, "Group %d lock lost for "
+        NDRX_LOG(log_error, "Singleton process group %d lock lost for "
                 "%s/%s pid %d, killing immediatelly", 
-                c->stat.singlegrp, c->tag, c->subsect, (int)c->dyn.pid);
+                c->stat.procgrp_no, c->tag, c->subsect, (int)c->dyn.pid);
         kill(c->dyn.pid, SIGKILL);
     }
 

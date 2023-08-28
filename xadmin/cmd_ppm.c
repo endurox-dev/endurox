@@ -111,8 +111,8 @@ exprivate void print_hdr2(void)
  */
 exprivate void print_hdr3(void)
 {
-    fprintf(stderr, "BINARY   SRVID      PID    SVPID SINGLEGRP SINGLEGRPLP\n");
-    fprintf(stderr, "-------- ----- -------- -------- --------- -----------\n");
+    fprintf(stderr, "BINARY   SRVID      PID    SVPID PROCGRPNO PROCGRPLPNO PROCGRPLPNOA\n");
+    fprintf(stderr, "-------- ----- -------- -------- --------- ----------- ------------\n");
 }
 
 /**
@@ -166,7 +166,7 @@ exprivate char *decode_flags(command_reply_ppm_t * ppm_info)
     }
 
     /* This is lock provider... */
-    if (ppm_info->flags & SRV_KEY_FLAGS_SINGLEGRPLP)
+    if (ppm_info->flags & SRV_KEY_FLAGS_PROCGRPLP)
     {
         strcat(buf, "l");
     }
@@ -220,13 +220,14 @@ expublic int ppm_rsp_process3(command_reply_t *reply, size_t reply_len)
     {
         command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
         FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
-        fprintf(stdout, "%-8.8s %5d %8d %8d %9d %11d\n", 
+        fprintf(stdout, "%-8.8s %5d %8d %8d %9d %11d %12d\n", 
                 ppm_info->binary_name,
                 ppm_info->srvid,
                 ppm_info->pid, 
                 ppm_info->svpid,
-                ppm_info->singlegrp,
-                ppm_info->singlegrplp
+                ppm_info->procgrp_no,
+                ppm_info->procgrp_lp_no,
+                ppm_info->procgrp_lp_no_act
                 );
     }
     

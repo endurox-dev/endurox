@@ -46,6 +46,7 @@ extern "C" {
 #include <cpm.h>
 #include <cconfig.h>
 #include <exenv.h>
+#include <libndrxconf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -103,7 +104,7 @@ struct cpm_static_info
     
     long subsectfrom;         /**< sub-section from                     */
     long subsectto;           /**< sub-section to                       */
-    int singlegrp;            /**< Singleton group number               */
+    int procgrp_no;           /**< Process group number                 */
     
     /** list of process specific environment variables */
     ndrx_env_list_t *envs;
@@ -165,6 +166,7 @@ typedef struct cpmsrv_config cpmsrv_config_t;
 /*---------------------------Globals------------------------------------*/
 extern cpmsrv_config_t G_config;
 extern cpm_process_t *G_clt_config;
+extern ndrx_procgroups_t *ndrx_G_procgroups_config;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int load_config(void);
