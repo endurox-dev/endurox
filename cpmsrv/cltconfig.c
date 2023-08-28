@@ -46,7 +46,7 @@
 #include <sys/types.h>
 #include <nstdutil.h>
 #include <exenv.h>
-#include <exenvapi.h>
+#include <libndrxconf.h>
 #include <singlegrp.h>
 
 #include "cpmsrv.h"
