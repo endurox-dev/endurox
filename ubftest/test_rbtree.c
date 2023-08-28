@@ -54,15 +54,24 @@ static void ndrx_irbt_combine(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *
     const ndrx_int_RBTree_Node_t *eexist = (const ndrx_int_RBTree_Node_t *) existing;
     const ndrx_int_RBTree_Node_t *enew = (const ndrx_int_RBTree_Node_t *) newdata;
 
+    assert_equal(eexist->key, enew->key);
+    
+    /* release new node */
+    NDRX_FPFREE((void*)newdata);
+       
+/*
     if (eexist->key != enew->key)
         NDRX_LOG(log_error, "red-black tree combines %d into %d",
              enew->key, eexist->key);
+*/
+    /* if combines OK, release the the new */
+    
 }
 
 /* Node allocator */
 static ndrx_rbt_node_t *ndrx_irbt_alloc(void *arg)
 {
-    return (ndrx_rbt_node_t *) NDRX_FPMALLOC(sizeof(ndrx_int_RBTree_Node_t), EXTRUE);
+    return (ndrx_rbt_node_t *) NDRX_FPMALLOC(sizeof(ndrx_int_RBTree_Node_t), 0);
 }
 
 /* Node freer */
@@ -76,10 +85,8 @@ static void ndrx_irbt_free(ndrx_rbt_node_t *node, void *arg)
  */
 static ndrx_rbt_tree_t *ndrx_create_int_rbtree(void)
 {
-    return ndrx_rbt_create(sizeof(ndrx_int_RBTree_Node_t),
-                      ndrx_irbt_cmp,
+    return ndrx_rbt_create(ndrx_irbt_cmp,
                       ndrx_irbt_combine,
-                      ndrx_irbt_alloc,
                       ndrx_irbt_free,
                       NULL);
 }
@@ -92,7 +99,7 @@ static int *ndrx_GetPermutation(int size)
     int		   *permutation;
     int			i;
 
-    permutation = (int *) NDRX_FPMALLOC(size * sizeof(int), EXFALSE);
+    permutation = (int *) NDRX_FPMALLOC(size * sizeof(int), 0);
 
     permutation[0] = 0;
 
@@ -123,7 +130,7 @@ static int *ndrx_GetPermutation(int size)
 static void ndrx_rbt_populate(ndrx_rbt_tree_t *tree, int size, int step)
 {
     int                    *permutation = ndrx_GetPermutation(size);
-    ndrx_int_RBTree_Node_t node;
+    ndrx_int_RBTree_Node_t *node;
     int                    isNew = EXFALSE;
     int                    i;
     int                    isOk = EXTRUE;
@@ -131,15 +138,17 @@ static void ndrx_rbt_populate(ndrx_rbt_tree_t *tree, int size, int step)
     /* Insert values.  We don't expect any collisions. */
     for (i = 0; i < size; i++)
     {
-        node.key = step * permutation[i];
-        ndrx_rbt_insert(tree, (ndrx_rbt_node_t *) &node, &isNew);
+        node=(ndrx_int_RBTree_Node_t *)ndrx_irbt_alloc(NULL);
+        assert_not_equal(node, NULL);
+        node->key = step * permutation[i];
+        ndrx_rbt_insert(tree, (ndrx_rbt_node_t *) node, &isNew);
         if (!isNew){
             NDRX_LOG(log_error, "unexpected !isNew result from ndrx_rbt_insert");
             isOk = EXFALSE;
         }
     }
 
-        assert_true(isOk);
+    assert_true(isOk);
 
     /*
      * Re-insert the first value to make sure collisions work right.  It's
@@ -147,8 +156,11 @@ static void ndrx_rbt_populate(ndrx_rbt_tree_t *tree, int size, int step)
      */
     if (size > 0)
     {
-        node.key = step * permutation[0];
-        ndrx_rbt_insert(tree, (ndrx_rbt_node_t *) &node, &isNew);
+        node=(ndrx_int_RBTree_Node_t *)ndrx_irbt_alloc(NULL);
+        assert_not_equal(node, NULL);
+
+        node->key = step * permutation[0];
+        ndrx_rbt_insert(tree, (ndrx_rbt_node_t *) node, &isNew);
         assert_false_with_message(isNew, "unexpected isNew result from ndrx_rbt_insert");
     }
 
@@ -451,7 +463,7 @@ Ensure(test_rbt_delete)
     /* fill tree with consecutive natural numbers */
     ndrx_rbt_populate(tree, size, 1);
 
-    deleteIds = (int *) NDRX_FPMALLOC(delsize * sizeof(int), EXFALSE);
+    deleteIds = (int *) NDRX_FPMALLOC(delsize * sizeof(int), 0);
 
     /* Choose unique and random ids to delete */
     for (i = 0; i < delsize; i++)
@@ -544,8 +556,8 @@ TestSuite *test_rbt_tree(void)
 {
     TestSuite *suite = create_test_suite();
 
-M_size    = 15;
-M_delSize = 5;
+M_size    = 1200;
+M_delSize = 200;
 
     add_test(suite, test_rbt_leftright);
     add_test(suite, test_rbt_rightleft);
