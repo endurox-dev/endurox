@@ -58,7 +58,7 @@
 #include <bridge_int.h>
 #include <atmi_shm.h>
 #include <sys_unix.h>
-#include <exenvapi.h>
+#include <libndrxconf.h>
 #include <ndrxdiag.h>
 #include <lcfint.h>
 #include <singlegrp.h>
@@ -963,13 +963,15 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* check the group state...
          * if we shall start or not.
          */
-        if (0==p_pm->conf->singlegrp || NULL==sg_snapshoot ||
-            /* if snapshoot is OK, and current lock is good too 
+        if (0==p_pm->conf->procgrp_no || NULL==sg_snapshoot ||
+            /* if snapshoot is OK, group is singleton and current lock is good too 
              * as lock might change during the startup and thus
              * we shall not start any more if that fact is changed
              */
-            (sg_snapshoot[p_pm->conf->singlegrp] && 
-                EXTRUE==ndrx_sg_is_locked(p_pm->conf->singlegrp, NULL, NDRX_SG_CHK_PID)))
+            (   ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, 
+                    p_pm->conf->procgrp_no) &&
+                sg_snapshoot[p_pm->conf->procgrp_no] && 
+                EXTRUE==ndrx_sg_is_locked(p_pm->conf->procgrp_no, NULL, NDRX_SG_CHK_PID)))
         {
             p_pm->state = NDRXD_PM_STARTING;
         }
@@ -1302,12 +1304,12 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
         }
 
-        /* if was started, and given process provides singleton group,
+        /* if was started, and given process provides singleton group lock,
          * update the snapshoot, as normally lock provider would come first
          */
-        if (p_pm->singlegrplp > 0)
+        if (p_pm->procgrp_lp_no > 0)
         {
-            sg_snapshoot[p_pm->singlegrplp] = ndrx_sg_is_locked(p_pm->singlegrplp, NULL, 0);
+            sg_snapshoot[p_pm->procgrp_lp_no] = ndrx_sg_is_locked(p_pm->procgrp_lp_no, NULL, 0);
         }
     }
     else

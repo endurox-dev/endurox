@@ -93,7 +93,7 @@ expublic void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock)
 
     if (do_unlock)
     {
-        ndrx_sg_shm_t * sg = ndrx_sg_get(ndrx_G_exsinglesv_conf.singlegrp);
+        ndrx_sg_shm_t * sg = ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
 
         if (NULL!=sg)
         {
@@ -167,11 +167,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         */
        
        /* read value from NDRX_SINGLEGRPLP env */
-       if (0==strcmp(el->key, "singlegrp"))
-       {
-            ndrx_G_exsinglesv_conf.singlegrp = atoi(el->val);
-       }
-       else if (0==strcmp(el->key, "lockfile_1"))
+       if (0==strcmp(el->key, "lockfile_1"))
        {
             NDRX_STRCPY_SAFE(ndrx_G_exsinglesv_conf.lockfile_1, el->val);
        }
@@ -207,11 +203,23 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
        }
     }
 
-    /* check key flags... */
-    if (0>=ndrx_G_exsinglesv_conf.singlegrp)
+    p=getenv(CONF_NDRX_PROCGRP_LP_NO);
+
+    if (NULL==p)
     {
-        NDRX_LOG(log_error, "Invalid singlegrp value [%d]", 
-            ndrx_G_exsinglesv_conf.singlegrp);
+        NDRX_LOG(log_error, "Missing %s environment variable", 
+            CONF_NDRX_PROCGRP_LP_NO);
+        EXFAIL_OUT(ret);
+    }
+
+    ndrx_G_exsinglesv_conf.procgrp_lp_no = atoi(p);
+
+    /* check is it valid against singleton groups */
+    if (EXSUCCEED!=ndrx_sg_is_valid(ndrx_G_exsinglesv_conf.procgrp_lp_no))
+    {
+        NDRX_LOG(log_error, "Invalid singleton process group number [%d], "
+            "check %s env setting",
+            ndrx_G_exsinglesv_conf.procgrp_lp_no, CONF_NDRX_PROCGRP_LP_NO);
         EXFAIL_OUT(ret);
     }
 
@@ -268,7 +276,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
     /* Dump the configuration to the log file */
-    NDRX_LOG(log_info, "singlegrp=%d", ndrx_G_exsinglesv_conf.singlegrp);
+    NDRX_LOG(log_info, "procgrp_lp_no=%d", ndrx_G_exsinglesv_conf.procgrp_lp_no);
     NDRX_LOG(log_info, "lockfile_1=[%s]", ndrx_G_exsinglesv_conf.lockfile_1);
     NDRX_LOG(log_info, "lockfile_2=[%s]", ndrx_G_exsinglesv_conf.lockfile_2);
     NDRX_LOG(log_info, "exec_on_bootlocked=[%s]", ndrx_G_exsinglesv_conf.exec_on_bootlocked);
@@ -311,7 +319,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     ndrx_G_exsinglesv_conf.first_boot = EXFALSE;
 
     /* report us as lock provider */
-    tpext_configsinglegrplp (ndrx_G_exsinglesv_conf.singlegrp);
+    tpext_configprocgrp_lp (ndrx_G_exsinglesv_conf.procgrp_lp_no);
 
 out:
 

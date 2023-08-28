@@ -67,6 +67,11 @@ expublic cpm_process_t *G_clt_config=NULL;
  */
 exprivate ndrx_env_group_t * M_envgrouphash = NULL;
 
+/**
+ * Actual process group configuration
+ */
+expublic ndrx_procgroups_t * ndrx_G_procgroups_config = NULL;
+
 exprivate MUTEX_LOCKDECL(M_config_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -204,7 +209,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     int i, genloop;
     char *token;
     char tmp_command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
-    
+    ndrx_procgroup_t *p_grp;
     memset(&cltproc, 0, sizeof(cpm_process_t));
     
     cltproc.stat.flags |= CPM_F_KILL_LEVEL_DEFAULT;
@@ -336,21 +341,22 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
             xmlFree(p);
         }
-        else if (0==strcmp((char *)attr->name, "singlegrp"))
+        else if (0==strcmp((char *)attr->name, "procgrp"))
         {
             /* singleton group no */
             p = (char *)xmlNodeGetContent(attr->children);
-            int singlegrp = atoi(p);
+            p_grp = ndrx_ndrxconf_procgroups_resolvenm(ndrx_G_procgroups_config, p);
 
-            if (EXSUCCEED!=ndrx_sg_is_valid(singlegrp))
+            if (NULL==p_grp)
             {
-                NDRX_LOG(log_error, "Invalid singleton group no: %d", singlegrp);
-                userlog("Invalid singleton group no: %d", singlegrp);
+                NDRX_LOG(log_error, "Process group not defined: [%s]", p);
+                userlog("Process group not defined: [%s]", p);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
 
-            cltproc.stat.singlegrp=singlegrp;
+            cltproc.stat.procgrp_no=p_grp->grpno;
+            NDRX_LOG(log_debug, "procgrp_no %d", cltproc.stat.procgrp_no);
 
             xmlFree(p);
         }
@@ -538,21 +544,22 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
                     xmlFree(p);
                 }
-                else if (0==strcmp((char *)attr->name, "singlegrp"))
+                else if (0==strcmp((char *)attr->name, "procgrp"))
                 {
                     /* singleton group no */
                     p = (char *)xmlNodeGetContent(attr->children);
-                    int singlegrp = atoi(p);
+                    p_grp = ndrx_ndrxconf_procgroups_resolvenm(ndrx_G_procgroups_config, p);
 
-                    if (EXSUCCEED!=ndrx_sg_is_valid(singlegrp))
+                    if (NULL==p_grp)
                     {
-                        NDRX_LOG(log_error, "Invalid singleton group no: %d", singlegrp);
-                        userlog("Invalid singleton group no: %d", singlegrp);
+                        NDRX_LOG(log_error, "Process group not defined: [%s]", p);
+                        userlog("Process group not defined: [%s]", p);
                         xmlFree(p);
                         EXFAIL_OUT(ret);
                     }
 
-                    p_cltproc->stat.singlegrp=singlegrp;
+                    p_cltproc->stat.procgrp_no=p_grp->grpno;
+                    NDRX_LOG(log_debug, "procgrp_no %d", p_cltproc->stat.procgrp_no);
 
                     xmlFree(p);
                 }
@@ -562,8 +569,6 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     p_cltproc->stat.flags & CPM_F_KILL_LEVEL_LOW,
                     p_cltproc->stat.flags & CPM_F_KILL_LEVEL_HIGH
                     );
-
-            NDRX_LOG(log_debug, "singlegrp=%d", p_cltproc->stat.singlegrp);
 
             /* Check the client config... */
             if (EXEOS==p_cltproc->tag[0])
@@ -827,12 +832,16 @@ out:
 /**
  * Parse config out...
  * @param doc
+ * @param cur
+ * @param config_file_short configuration file name
  * @return
  */
-exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur, char *config_file_short)
 {
     int ret=EXSUCCEED;
-    
+    ndrx_procgroups_t *tmp_conf=NULL;
+    ndrx_ndrxconf_err_t err;
+
     if (NULL==cur)
     {
         NDRX_LOG(log_error, "Empty config?");
@@ -849,11 +858,36 @@ exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
         {
             EXFAIL_OUT(ret);
         }
+        else if (0==strcmp((char*)cur->name, "procgroups"))
+        {
+            ret=ndrx_ndrxconf_procgroups_parse(&tmp_conf,
+                    doc, cur->children,
+                    config_file_short, &err);
+
+            if (EXSUCCEED!=ret)
+            {
+                EXFAIL_OUT(ret);
+            }
+
+            /* apply new configuration */
+            if (NULL!=ndrx_G_procgroups_config)
+            {
+                ndrx_ndrxconf_procgroups_free(ndrx_G_procgroups_config);
+            }
+
+            ndrx_G_procgroups_config=tmp_conf;
+            tmp_conf=NULL;
+        }
         
         cur=cur->next;
     } while (cur);
     
 out:
+
+    if (NULL!=tmp_conf)
+    {
+        ndrx_ndrxconf_procgroups_free(tmp_conf);
+    }
     
     return ret;
 }
@@ -888,7 +922,7 @@ expublic int load_xml_config(char *config_file)
     }
 
     /* Step into first childer */
-    ret=parse_config(doc, root->children);
+    ret=parse_config(doc, root->children, ndrx_basename(config_file));
     
 out:
 

@@ -946,7 +946,7 @@ extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flag
 
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char **buf, int len, char msg_type));
-extern NDRX_API void tpext_configsinglegrplp (int singlegrp);
+extern NDRX_API void tpext_configprocgrp_lp(int singlegrp);
 
 extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Object *data_object);

@@ -202,7 +202,7 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
         ndrxd_shm_resetsrv(srvid);
 
         /* reset PM fields */
-        pm_pid->p_pm->singlegrplp=0;
+        pm_pid->p_pm->procgrp_lp_no=0;
         
     }
     else

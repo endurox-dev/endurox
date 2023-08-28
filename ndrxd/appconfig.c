@@ -83,7 +83,6 @@ pm_pidhash_t **G_process_model_pid_hash = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate int ndrx_prase_killseq(int *killseq, char *seq, int last_line);
-exprivate void ndrx_singlegrp_opts_apply(void);
 
 /**
  * Validate request address, also strip down any un-needed chars
@@ -219,7 +218,7 @@ expublic int load_active_config_live(void)
     {
         /* apply DDR */
         ndrx_ddr_apply();
-        ndrx_singlegrp_opts_apply();
+        ndrx_ndrxconf_procgroups_apply_singlegrp(G_app_config->procgroups);
     }
     
     return ret;
@@ -625,15 +624,54 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 
                 xmlFree(p);
             }
-            else if (0==strcmp((char*)cur->name, "procgrp"))
-            {
-                p = (char *)xmlNodeGetContent(cur);
-                int procgrp_no = atoi(p);
-                
-                /* resolve */
+        else if (0==strcmp((char*)cur->name, "procgrp"))
+        {
+            ndrx_procgroup_t *p_grp;
+            p = (char *)xmlNodeGetContent(cur);
 
+            p_grp=ndrx_ndrxconf_procgroups_resolvenm(config->procgroups, p);
+
+            if (NULL==p_grp)
+            {
+                NDRX_LOG(log_error, "Failed to resolve default procgrp: [%s]", p);
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                        "near line %d", 
+                        G_sys_config.config_file_short, p,
+                        (int)cur->line);
                 xmlFree(p);
+                EXFAIL_OUT(ret);
             }
+
+            config->default_procgrp_no=p_grp->grpno;
+
+            NDRX_LOG(log_debug, "default procgrp: [%s] no: %d",
+                                    p, config->default_procgrp_no);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "procgrp_lp"))
+        {
+            ndrx_procgroup_t *p_grp;
+            p = (char *)xmlNodeGetContent(cur);
+
+            p_grp=ndrx_ndrxconf_procgroups_resolvenm(config->procgroups, p);
+
+            if (NULL==p_grp)
+            {
+                NDRX_LOG(log_error, "Failed to resolve default procgrp_lp: [%s]", p);
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                        "near line %d", 
+                        G_sys_config.config_file_short, p,
+                        (int)cur->line);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+            
+            config->default_procgrp_lp_no=p_grp->grpno;
+
+            NDRX_LOG(log_debug, "default procgrp_lp: [%s] no: %d",
+                                    p, config->default_procgrp_lp_no);
+            xmlFree(p);
+        }
             
 #if 0
             else
@@ -996,7 +1034,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->isprotected = EXFAIL;
     p_srvnode->reloadonchange = EXFAIL;
     p_srvnode->respawn = EXFAIL;
-    p_srvnode->singlegrp = EXFAIL;
+    p_srvnode->procgrp_no = EXFAIL;
+    p_srvnode->procgrp_lp_no = EXFAIL;
     
     memcpy(p_srvnode->killseq, config->default_killseq, sizeof(config->default_killseq));
     
@@ -1352,23 +1391,52 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
             xmlFree(p);
         }
-        else if (0==strcmp((char*)cur->name, "singlegrp"))
+        else if (0==strcmp((char*)cur->name, "procgrp"))
         {
+            ndrx_procgroup_t *p_grp;
             p = (char *)xmlNodeGetContent(cur);
-            p_srvnode->singlegrp = atoi(p);
 
-            if (EXSUCCEED!=ndrx_sg_is_valid(p_srvnode->singlegrp))
+            p_grp=ndrx_ndrxconf_procgroups_resolvenm(config->procgroups, p);
+
+            if (NULL==p_grp)
             {
-                NDRXD_set_error_fmt(NDRXD_ECFGSERVER, "(%s) `singlegrp' invalid value (%d)! "
-                    "srvid=%hd near %d line", G_sys_config.config_file_short,  p_srvnode->singlegrp,
-                    p_srvnode->srvid, last_line);
-
+                NDRX_LOG(log_error, "Failed to resolve procgrp: [%s]", p);
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                        "at srvid=%d near line %d", 
+                        G_sys_config.config_file_short, p, p_srvnode->srvid,
+                        (int)cur->line);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
 
-            NDRX_LOG(log_debug, "default singlegrp: %d",
-                                    p_srvnode->singlegrp);
+            p_srvnode->procgrp_no=p_grp->grpno;
+
+            NDRX_LOG(log_debug, "procgrp: [%s] no: %d",
+                                    p, p_srvnode->procgrp_no);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "procgrp_lp"))
+        {
+            ndrx_procgroup_t *p_grp;
+            p = (char *)xmlNodeGetContent(cur);
+
+            p_grp=ndrx_ndrxconf_procgroups_resolvenm(config->procgroups, p);
+
+            if (NULL==p_grp)
+            {
+                NDRX_LOG(log_error, "Failed to resolve procgrp_lp: [%s]", p);
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                        "at srvid=%d near line %d", 
+                        G_sys_config.config_file_short, p, p_srvnode->srvid,
+                        (int)cur->line);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+            
+            p_srvnode->procgrp_lp_no=p_grp->grpno;
+
+            NDRX_LOG(log_debug, "procgrp_lp: [%s] no: %d",
+                                    p, p_srvnode->procgrp_lp_no);
             xmlFree(p);
         }
         
@@ -1450,8 +1518,11 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (EXFAIL==p_srvnode->respawn)
         p_srvnode->respawn = config->default_respawn;
 
-    if (EXFAIL==p_srvnode->singlegrp)
-        p_srvnode->singlegrp = config->default_singlegrp;
+    if (EXFAIL==p_srvnode->procgrp_no)
+        p_srvnode->procgrp_no = config->default_procgrp_no;
+
+    if (EXFAIL==p_srvnode->procgrp_lp_no)
+        p_srvnode->procgrp_lp_no = config->default_procgrp_lp_no;
     
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {
@@ -1499,7 +1570,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
             "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\""
 	    "RESPAWN=\"%c\" FULLPATH=\"%s\" CMDLINE=\"%s\" RSSMAX=%ld VSZMAX=%ld "
-            "MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d THREADSTACKSIZE=%d SINGLEGRP=%d",
+            "MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d THREADSTACKSIZE=%d PROCGRP(no)=%d PROCGRP_LP(no)=%d",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, 
@@ -1517,7 +1588,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->mindispatchthreads,
                     p_srvnode->maxdispatchthreads,
                     p_srvnode->threadstacksize,
-                    p_srvnode->singlegrp
+                    p_srvnode->procgrp_no,
+                    p_srvnode->procgrp_lp_no
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 
@@ -1749,7 +1821,7 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         }
         else if (0==strcmp((char*)cur->name, "procgroups")
                 && EXSUCCEED!=ndrx_ndrxconf_procgroups_parse(&config->procgroups, doc, cur->children, 
-                    G_sys_config.config_file_short, &G_sys_config.last_line, &err))
+                    G_sys_config.config_file_short, &err))
         {
             NDRXD_set_error_fmt(err.error_code, err.error_msg);
             ret=EXFAIL;
@@ -1757,7 +1829,7 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         } 
         /* parse clients to validate procgrp attrib in <client> and <client>/<exec> sections */
         else if (0==strcmp((char*)cur->name, "clients")
-                && EXSUCCEED!=ndrx_ndrxconf_clients_parse(&config->procgroups, doc, cur->children))
+                && EXSUCCEED!=parse_clients(config, doc, cur->children))
         {
             NDRXD_set_error_fmt(err.error_code, err.error_msg);
             ret=EXFAIL;
@@ -2101,7 +2173,7 @@ expublic int test_config(int reload, command_call_t * call,
                 new->pingtimer = old->pingtimer;
                 new->pingseq = old->pingseq;
                 new->pingroundtrip = old->pingroundtrip;
-                new->singlegrplp = old->singlegrplp;
+                new->procgrp_lp_no = old->procgrp_lp_no;
                 
                 /* So that we do not unlink the list later when old pm is freed */
                 old->svcs = NULL;
@@ -2128,7 +2200,7 @@ expublic int test_config(int reload, command_call_t * call,
         G_process_model_pid_hash = t_process_model_pid_hash;
         
         ndrx_ddr_apply();
-        ndrx_singlegrp_opts_apply();
+        ndrx_ndrxconf_procgroups_apply_singlegrp(G_app_config->procgroups);
 
         /* so that in case of error we do not destroy already master config. */
         t_app_config = NULL;

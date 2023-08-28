@@ -67,13 +67,12 @@
  * @param is_defaults is defaults section
  * @param p_defaults defaults
  * @param config_file_short config file name (xml)
- * @param last_line last line number in XML parser
  * @param err error structure. Contains error codes from the ndrxdcmn.h
  * @return EXSUCCEED/EXSUCCEED
  */
 expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config, 
     xmlDocPtr doc, xmlNodePtr cur, int is_defaults, ndrx_procgroup_t *p_defaults, 
-    char *config_file_short, int *last_line, ndrx_ndrxconf_err_t *err)
+    char *config_file_short, ndrx_ndrxconf_err_t *err)
 {
     int ret=EXSUCCEED;
     xmlAttrPtr attr;
@@ -105,7 +104,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             {
                 snprintf(err->error_msg, sizeof(err->error_msg),
                     "(%s) invalid length %d for `name' for <procgroup> near line %d", 
-                    config_file_short, len, *last_line);
+                    config_file_short, len, cur->line);
                 err->error_code = NDRXD_EINVAL;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
@@ -120,7 +119,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             {
                 snprintf(err->error_msg, sizeof(err->error_msg),
                     "(%s) `grpno' not expected <defaults> near line %d", 
-                    config_file_short, *last_line);
+                    config_file_short, cur->line);
                 err->error_code = NDRXD_ECFGINVLD;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
@@ -134,7 +133,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                 snprintf(err->error_msg, sizeof(err->error_msg), 
                     "(%s) Invalid `grpno' %d in <procgroup> "
                     "(valid values 1..%d) section near line %d", 
-                    config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.sgmax, *last_line);
+                    config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.sgmax, cur->line);
                 err->error_code = NDRXD_ECFGINVLD;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
@@ -160,7 +159,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                         "section, expected values [%c%c%c%c] near line %d", 
                         config_file_short, p,
                         NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
-                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, *last_line);
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, cur->line);
                 err->error_code = NDRXD_ECFGINVLD;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
@@ -186,7 +185,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                         "section, expected values [%c%c%c%c] near line %d", 
                         config_file_short, p,
                         NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
-                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, *last_line);
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, cur->line);
                 err->error_code = NDRXD_ECFGINVLD;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
@@ -205,7 +204,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
         {
             snprintf(err->error_msg, sizeof(err->error_msg), 
                 "(%s) `name' not set in <procgroup> section near line %d", 
-                config_file_short, *last_line);
+                config_file_short, cur->line);
             err->error_code = NDRXD_ECFGINVLD;
             NDRX_LOG(log_error, "%s", err->error_msg);
             EXFAIL_OUT(ret);
@@ -216,7 +215,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
         {
             snprintf(err->error_msg, sizeof(err->error_msg), 
                 "(%s) `grpno' not set in <procgroup> section near line %d", 
-                config_file_short, *last_line);
+                config_file_short, cur->line);
             err->error_code = NDRXD_ECFGINVLD;
             NDRX_LOG(log_error, "%s", err->error_msg);
             EXFAIL_OUT(ret);
@@ -227,7 +226,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
         {
             snprintf(err->error_msg, sizeof(err->error_msg), 
                 "(%s) `name' %s is duplicate in <procgroup> section near line %d", 
-                config_file_short, p_grp->grpname, *last_line);
+                config_file_short, p_grp->grpname, cur->line);
             err->error_code = NDRXD_ECFGINVLD;
             NDRX_LOG(log_error, "%s", err->error_msg);
             EXFAIL_OUT(ret);
@@ -238,7 +237,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
         {
             snprintf(err->error_msg, sizeof(err->error_msg), 
                 "(%s) `grpno' %d is duplicate in <procgroup> section near line %d", 
-                config_file_short, p_grp->grpno, *last_line);
+                config_file_short, p_grp->grpno, cur->line);
             err->error_code = NDRXD_ECFGINVLD;
             NDRX_LOG(log_error, "%s", err->error_msg);
             EXFAIL_OUT(ret);
@@ -270,7 +269,7 @@ out:
  */
 expublic int ndrx_ndrxconf_procgroups_parse(ndrx_procgroups_t **config, 
     xmlDocPtr doc, xmlNodePtr cur, 
-    char *config_file_short, int *last_line, ndrx_ndrxconf_err_t *err)
+    char *config_file_short, ndrx_ndrxconf_err_t *err)
 {
     int ret=EXSUCCEED;
     ndrx_procgroup_t default_opt;
@@ -287,13 +286,12 @@ expublic int ndrx_ndrxconf_procgroups_parse(ndrx_procgroups_t **config,
     {
         is_procgroup= (0==strcmp((char*)cur->name, "procgroup"));
         is_defaults= (0==strcmp((char*)cur->name, "defaults"));
-        *last_line = cur->line;
-
+        
         if (is_procgroup || is_defaults)
         {
             /* read the group... */
             if (EXSUCCEED!=ndrx_appconfig_procgroup(config, doc, cur,
-                is_defaults, &default_opt, config_file_short, last_line, err))
+                is_defaults, &default_opt, config_file_short, err))
             {
                 EXFAIL_OUT(ret);
             }
@@ -338,6 +336,37 @@ expublic ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolvenm(ndrx_procgroups_t 
 
     EXHASH_FIND_STR(handle->groups_by_name, name, ret);
 
+    return ret;
+}
+
+/**
+ * Check if group is singleton
+ * @param handle configuration handle
+ * @param procgrp_no group number
+ * @return EXTRUE (group is singleton)/EXFALSE (group is not singleton)
+ */
+expublic int ndrx_ndrxconf_procgroups_is_singleton(ndrx_procgroups_t *handle, int procgrp_no)
+{
+    ndrx_procgroup_t *p_grp;
+    int ret = EXFALSE;
+
+    if (NULL==handle)
+    {
+        goto out;
+    }
+
+    p_grp = &handle->groups_by_no[procgrp_no-1];
+
+    if (p_grp->flags & NDRX_PG_SINGLETON)
+    {
+        ret=EXTRUE;
+    }
+    else
+    {
+        ret=EXFALSE;
+    }
+    
+out:
     return ret;
 }
 

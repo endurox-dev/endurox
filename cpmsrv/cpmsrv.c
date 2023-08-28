@@ -349,7 +349,10 @@ exprivate int cpm_callback_timer(void)
                 CLT_STATE_STARTED==c->dyn.req_state)
         {
             /* check the group state... */
-            if (c->stat.singlegrp > 0 && !sg_groups[c->stat.singlegrp])
+            if (c->stat.procgrp_no > 0 
+                && ndrx_ndrxconf_procgroups_is_singleton(ndrx_G_procgroups_config
+                    , c->stat.procgrp_no)
+                && !sg_groups[c->stat.procgrp_no])
             {
                 if (CLT_STATE_WAIT!=c->dyn.cur_state)
                 {
@@ -868,8 +871,8 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
         else if (CLT_STATE_WAIT == c->dyn.cur_state && 
                 c->dyn.req_state != CLT_STATE_NOTRUN)
         {
-            snprintf(output, sizeof(output), "%s/%s - waiting on group %d lock (%s)",c->tag, 
-                    c->subsect, c->stat.singlegrp, buffer);
+            snprintf(output, sizeof(output), "%s/%s - waiting on process group %d lock (%s)",c->tag, 
+                    c->subsect, c->stat.procgrp_no, buffer);
         }
         else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_STARTED) )
         {

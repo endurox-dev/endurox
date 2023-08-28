@@ -262,14 +262,14 @@ expublic void tpext_configbrige
  * Mark current process as singleton group lock provider
  * @param singlegrp group number to which locks are provided
  */
-expublic void tpext_configsinglegrplp (int singlegrp)
+expublic void tpext_configprocgrp_lp (int procgrp_lp_no)
 {
     ndrx_TPunset_error();
-    G_server_conf.singlegrplp=singlegrp;
-    G_server_conf.flags |= SRV_KEY_FLAGS_SINGLEGRPLP;
+    G_server_conf.procgrp_lp_no=procgrp_lp_no;
+    G_server_conf.flags |= SRV_KEY_FLAGS_PROCGRPLP;
     
-    NDRX_LOG(log_debug, "Singleton group %d lock provder", 
-            singlegrp);   
+    NDRX_LOG(log_debug, "Singleton procerss group %d lock provder", 
+            procgrp_lp_no);
 }
 
 /**

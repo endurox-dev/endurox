@@ -180,11 +180,11 @@ exprivate int get_singlegrp(void *ctx)
     int ret;
     struct timespec ts;
 
-    lock_ctx->pshm=ndrx_sg_get(ndrx_G_exsinglesv_conf.singlegrp);
+    lock_ctx->pshm=ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
     if (NULL==lock_ctx->pshm)
     {
-        NDRX_LOG(log_error, "Failed to get single group: %s", 
-                ndrx_G_exsinglesv_conf.singlegrp);
+        NDRX_LOG(log_error, "Failed to get singleton process group: %s", 
+                ndrx_G_exsinglesv_conf.procgrp_lp_no);
         ret = ev_err;
         goto out;
     }
@@ -197,7 +197,7 @@ exprivate int get_singlegrp(void *ctx)
     lock_ctx->new_refresh = ts.tv_sec;
 
     /* determine the current state of the group */
-    switch(ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.singlegrp, NULL, 0))
+    switch(ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL, 0))
     {
         case EXTRUE:
             ret = ev_locked;
@@ -316,8 +316,8 @@ exprivate int chk_mmon(void *ctx)
     if (lock_ctx->local.is_mmon)
     {
         /* maintenance mode is ON */
-        NDRX_LOG(log_debug, "Singleton group %d is in maintenance mode", 
-                ndrx_G_exsinglesv_conf.singlegrp);
+        NDRX_LOG(log_debug, "Singleton process group %d is in maintenance mode", 
+                ndrx_G_exsinglesv_conf.procgrp_lp_no);
         ret = ev_busy;
     }
     else if (ndrx_G_shmcfg->is_mmon)
@@ -352,8 +352,9 @@ exprivate int do_lock(void *ctx)
         {
             case NDRX_LOCKE_BUSY:
                 /* file is locked */
-                NDRX_LOG(log_info, "Singleton group %d is already locked (by other node)", 
-                        ndrx_G_exsinglesv_conf.singlegrp);
+                NDRX_LOG(log_info, "Singleton process group %d "
+                        "is already locked (by other node)", 
+                        ndrx_G_exsinglesv_conf.procgrp_lp_no);
                 ret = ev_busy;
                 goto out;
             case EXSUCCEED:
@@ -424,7 +425,7 @@ exprivate int do_lock(void *ctx)
 
     /* mark shm as locked by us too */
     NDRX_LOG(log_debug, "Lock shared memory...");
-    if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.singlegrp, 
+    if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.procgrp_lp_no, 
             tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME), lock_ctx->new_refresh))
     {
         ret=ev_err;

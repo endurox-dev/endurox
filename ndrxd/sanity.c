@@ -617,7 +617,7 @@ exprivate int check_long_startup(void)
     int delta;
     int cksum_reload_sent = EXFALSE; /* for now single binary only at one cycle */
 
-    int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+    int nrgrps = ndrx_G_libnstd_cfg.sgmax;
     int sg_groups[nrgrps];
 
     ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
@@ -666,13 +666,16 @@ exprivate int check_long_startup(void)
                     p_pm->pingtimer);
 
             /* if running state & lost the lock -> SIGKILL */
-            if (p_pm->conf->singlegrp > 0 && PM_RUNNING(p_pm->state) 
-                && !sg_groups[p_pm->conf->singlegrp])
+            if (p_pm->conf->procgrp_no > 0
+                && PM_RUNNING(p_pm->state) 
+                && ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, 
+                    p_pm->conf->procgrp_no)
+                && !sg_groups[p_pm->conf->procgrp_no])
             {
-                NDRX_LOG(log_error, "proc: %s/%d singlegrp %d lost the lock -> SIGKILL", 
-                    p_pm->binary_name, p_pm->srvid, p_pm->conf->singlegrp);
-                userlog("proc: %s/%d singlegrp %d lost the lock -> SIGKILL", 
-                    p_pm->binary_name, p_pm->srvid, p_pm->conf->singlegrp);
+                NDRX_LOG(log_error, "proc: %s/%d procgrp no %d lost the lock -> SIGKILL", 
+                    p_pm->binary_name, p_pm->srvid, p_pm->conf->procgrp_no);
+                userlog("proc: %s/%d procgrp no %d lost the lock -> SIGKILL", 
+                    p_pm->binary_name, p_pm->srvid, p_pm->conf->procgrp_no);
                 p_pm->last_sig = SANITY_CNT_START;
 
                 /* Kill immediately */

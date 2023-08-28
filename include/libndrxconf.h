@@ -113,10 +113,11 @@ extern int ndrx_ndrxconf_envs_append(ndrx_env_list_t **dest, ndrx_env_list_t *so
 extern int ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle);
 extern ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolveno(ndrx_procgroups_t *handle, int procgrpno);
 extern ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolvenm(ndrx_procgroups_t *handle, char *name);
+extern int ndrx_ndrxconf_procgroups_is_singleton(ndrx_procgroups_t *handle, int procgrp_no);
 extern void ndrx_ndrxconf_procgroups_free(ndrx_procgroups_t *handle);
 extern int ndrx_ndrxconf_procgroups_parse(ndrx_procgroups_t **config, 
     xmlDocPtr doc, xmlNodePtr cur, 
-    char *config_file_short, int *last_line, ndrx_ndrxconf_err_t *err);
+    char *config_file_short, ndrx_ndrxconf_err_t *err);
 
 
 #endif /* NDRXCONF_H_ */
