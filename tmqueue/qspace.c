@@ -69,6 +69,7 @@
 #include "nstdutil.h"
 #include "tmqueue.h"
 #include "cconfig.h"
+#include <rbtree.h>
 #include "qtran.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -954,6 +955,10 @@ exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
     NDRX_STRCPY_SAFE(ret->qname, qname);
     
     EXHASH_ADD_STR( G_qhash, qname, ret );
+
+    /* setup red-black trees */
+    ndrx_rbt_init(&ret->q, tmq_rbt_cmp_cur, tmq_rbt_combine_cur, NULL, ret);
+    ndrx_rbt_init(&ret->q, tmq_rbt_cmp_fut, tmq_rbt_combine_cor, NULL, ret);
     
 out:
     return ret;
