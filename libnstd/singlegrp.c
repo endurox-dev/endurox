@@ -1,5 +1,6 @@
 /**
  * @brief Singleton group support routines
+ *  Internal library, assumes that group number is pre-valdiated (i.e. >0 && <=sgmax)
  *
  * @file singlegrp.c
  */
@@ -52,7 +53,6 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate ndrx_sg_shm_t M_dum = {0}; /**< Dummy record for group 0 */
 /*---------------------------Prototypes---------------------------------*/
 exprivate long long  ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg);
 
@@ -61,7 +61,6 @@ exprivate long long  ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg);
 */
 expublic int ndrx_sg_init(void)
 {
-    M_dum.flags=NDRX_SG_NO_ORDER;
     return EXSUCCEED;
 }
 
@@ -78,13 +77,6 @@ expublic int ndrx_sg_init(void)
 expublic ndrx_sg_shm_t *ndrx_sg_get(int singlegrp_no)
 {
     ndrx_sg_shm_t *ret = NULL;
-
-    /* in case if group 0 used, return dummy record */
-    if (0 == singlegrp_no)
-    {
-        ret = &M_dum;
-        goto out;
-    }
 
     /* Check against group number limits */
     if (singlegrp_no < 0 || singlegrp_no > ndrx_G_libnstd_cfg.sgmax)
@@ -164,12 +156,6 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
 
     if (NULL==sg)
     {
-        if (0==singlegrp_no)
-        {
-            /* group 0 is always locked */
-            goto out;
-        }
-
         /* copy of the shm.. */
         ndrx_sg_load(&sg_local, sg_shm);
         sg=&sg_local;
@@ -263,12 +249,6 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *
 {
     int ret = EXSUCCEED;
     ndrx_sg_shm_t * sg_shm, sg;
-
-    /* nothing to do here */
-    if (0==singlegrp_no)
-    {
-        goto out;
-    }
 
     sg_shm = NDRX_SG_GET_PTR(singlegrp_no);
     ndrx_sg_load(&sg, sg_shm);
@@ -379,13 +359,6 @@ exprivate int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
     
     if (NULL==sg)
     {
-        if (0==singlegrp_no)
-        {
-            /* group 0 is always locked */
-            ret=EXTRUE;
-            goto out;
-        }
-
         sg=ndrx_sg_get(singlegrp_no);
 
         if (NULL==sg)
@@ -523,11 +496,10 @@ expublic int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flag
 
 /**
  * Number of singleton groups.
- * We count in group 0, which is virtual group and it is always locked
  */
 expublic int ndrx_sg_nrgroups()
 {
-    return ndrx_G_libnstd_cfg.sgmax+1;
+    return ndrx_G_libnstd_cfg.sgmax;
 }
 
 /**
@@ -552,7 +524,7 @@ expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_
 
     for (i=0; i<*lock_status_out_len; i++)
     {
-        p=ndrx_sg_get(i);
+        p=ndrx_sg_get(i+1);
 
         if ( (p->flags & NDRX_SG_NO_ORDER) && (flags & NDRX_SG_NOORDER_LCK))
         {
@@ -560,7 +532,7 @@ expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_
         }
         else
         {
-            lock_status_out[i]=ndrx_sg_is_locked_int(i, p, NULL, flags);
+            lock_status_out[i]=ndrx_sg_is_locked_int(i+1, p, NULL, flags);
         }
     }
 
@@ -575,11 +547,8 @@ expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_
  */
 expublic void ndrx_sg_bootflag_clt_set(int singlegrp_no)
 {
-    if (singlegrp_no>0)
-    {
-        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-        atomic_store(&sg->is_clt_booted, EXTRUE);
-    }
+    ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+    atomic_store(&sg->is_clt_booted, EXTRUE);
 }
 
 /**
@@ -588,15 +557,8 @@ expublic void ndrx_sg_bootflag_clt_set(int singlegrp_no)
  */
 expublic unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no)
 {
-    if (singlegrp_no>0)
-    {
-        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-        return atomic_load(&sg->is_clt_booted);
-    }
-    else
-    {
-        return EXTRUE;
-    }
+    ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+    return atomic_load(&sg->is_clt_booted);
 }
 
 /**
@@ -607,11 +569,8 @@ expublic unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no)
  */
 expublic void ndrx_sg_bootflag_srv_set(int singlegrp_no)
 {
-    if (singlegrp_no>0)
-    {
-        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-        atomic_store(&sg->is_srv_booted, EXTRUE);
-    }
+    ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+    atomic_store(&sg->is_srv_booted, EXTRUE);
 }
 
 /**
@@ -620,15 +579,8 @@ expublic void ndrx_sg_bootflag_srv_set(int singlegrp_no)
  */
 expublic unsigned char ndrx_sg_bootflag_srv_get(int singlegrp_no)
 {
-    if (singlegrp_no>0)
-    {
-        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-        return atomic_load(&sg->is_srv_booted);
-    }
-    else
-    {
-        return EXTRUE;
-    }
+    ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+    return atomic_load(&sg->is_srv_booted);
 }
 
 /**
@@ -655,11 +607,8 @@ out:
  */
 expublic void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags)
 {
-    if (singlegrp_no>0)
-    {
-        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-        atomic_store(&sg->flags, flags);
-    }
+    ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+    atomic_store(&sg->flags, flags);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

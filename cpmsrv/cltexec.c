@@ -50,7 +50,7 @@
 #include <ndrstandard.h>
 #include <userlog.h>
 #include <atmi.h>
-#include <exenvapi.h>
+#include <libndrxconf.h>
 #include <ndrxdiag.h>
 
 #include "cpmsrv.h"
