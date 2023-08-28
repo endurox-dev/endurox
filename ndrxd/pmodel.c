@@ -1501,8 +1501,20 @@ expublic int app_startup(command_startstop_t *call,
 {
     int ret=EXSUCCEED;
     pm_node_t *p_pm;
+    ndrx_procgroup_t *p_procgrp;
     int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
+
+    if (EXEOS!=call->procgrp[0])
+    {
+        p_procgrp =  ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
+        if (NULL==p_procgrp)
+        {
+            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
+            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
+            EXFAIL_OUT(ret);
+        }
+    }
 
     /*
     if (NULL==G_app_config && EXSUCCEED!=load_active_config(&G_app_config,
@@ -1564,9 +1576,11 @@ expublic int app_startup(command_startstop_t *call,
              * Only autostart instances needs to be booted.
              */
             if (p_pm->autostart &&
-                    ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    /* Do full startup if requested autostart! */
-                    (EXEOS==call->binary_name[0] ))) /* or If full shutdown requested */
+                    ( (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+                      (EXEOS!=call->procgrp[0] && p_pm->conf->procgrp_no == p_procgrp->grpno) ||
+                      /* Do full startup if requested autostart! */
+                      (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0])
+                    )) /* or If full shutdown requested */
             {
 
                 start_process(call, p_pm, p_startup_progress, 
@@ -1576,8 +1590,7 @@ expublic int app_startup(command_startstop_t *call,
                 {
                     NDRX_LOG(log_warn, "Aborting app domain startup!");
                     NDRXD_set_error_fmt(NDRXD_EABORT, "App domain startup aborted!");
-                    ret=EXFAIL;
-                    goto out;
+                    EXFAIL_OUT(ret);
                 }
             }
         } /* DL_FORACH pm. */
@@ -1607,10 +1620,21 @@ expublic int app_shutdown(command_startstop_t *call,
     int ret=EXSUCCEED;
     int abort=EXFALSE;
     pm_node_t *p_pm;
+    ndrx_procgroup_t *p_procgrp;
     
     NDRX_LOG(log_warn, "Stopping application domain");
 
-
+    if (EXEOS!=call->procgrp[0])
+    {
+        p_procgrp =  ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
+        if (NULL==p_procgrp)
+        {
+            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
+            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     /* OK, now loop throught the stuff 
     G_sys_config.stat_flags |= NDRXD_STATE_SHUTDOWN;
 */
@@ -1642,8 +1666,11 @@ expublic int app_shutdown(command_startstop_t *call,
         DL_REVFOREACH(G_process_model, p_pm, i)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    (EXEOS==call->binary_name[0] &&  /* or If full shutdown requested */
+            if (  
+                    (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+                    (EXEOS!=call->procgrp[0] && (p_pm->conf->procgrp_no==p_procgrp->grpno)) ||
+                    (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0] &&  
+                    /* or If full shutdown requested */
                     /* is if binary is not protected, or we run complete shutdown... */
                     (!p_pm->conf->isprotected || call->complete_shutdown))) 
             {
@@ -1705,7 +1732,8 @@ expublic int app_sreload(command_startstop_t *call,
     int ret=EXSUCCEED;
     pm_node_t *p_pm;
     int abort = EXFALSE;
-    NDRX_LOG(log_warn, "Starting application domain");
+    ndrx_procgroup_t *p_procgrp;
+    NDRX_LOG(log_warn, "Reloading application domain");
     
     if (NULL==G_app_config)
     {
@@ -1713,6 +1741,17 @@ expublic int app_sreload(command_startstop_t *call,
         NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "No configuration loaded!");
         ret=EXFAIL;
         goto out;
+    }
+
+    if (EXEOS!=call->procgrp[0])
+    {
+        p_procgrp = ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
+        if (NULL==p_procgrp)
+        {
+            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
+            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
+            EXFAIL_OUT(ret);
+        }
     }
 
     /* OK, now loop throught the stuff 
@@ -1771,12 +1810,13 @@ expublic int app_sreload(command_startstop_t *call,
     {
         DL_FOREACH(G_process_model, p_pm)
         {
-            if ( ((EXEOS!=call->binary_name[0] 
-                    && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    (EXEOS==call->binary_name[0] && p_pm->autostart))
-                    /* start only those binaries which were requested for start: */
-                    && (PM_RUNNING(p_pm->reqstate))
-                    )
+            if ( (  (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+                    (EXEOS!=call->procgrp[0] && p_pm->conf->procgrp_no==p_procgrp->grpno) ||
+                    (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0] && p_pm->autostart)
+                )
+                /* start only those binaries which were requested for start: */
+                && (PM_RUNNING(p_pm->reqstate))
+                )
             {
                 
                 stop_process(call, p_pm, p_shutdown_progress, 

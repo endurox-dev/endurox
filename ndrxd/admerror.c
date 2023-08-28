@@ -90,6 +90,7 @@ struct err_msg
     {NDRXD_ERROR(NDRXD_ESYNTAX)},
     {NDRXD_ERROR(NDRXD_ESYSTEM)},
     {NDRXD_ERROR(NDRXD_ENOCFGLD)},
+    {NDRXD_ERROR(NDRXD_ENOENT)},
     {NDRXD_ERROR(NDRXD_EMAXVAL)}	/* maximum error message */
 };
 

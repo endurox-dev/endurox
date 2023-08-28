@@ -397,7 +397,7 @@ expublic ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolveno(ndrx_procgroups_t 
  * Apply settings to singleton groups.
  * This will synchronize all group flags to singleton group support library
  */
-expublic int ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle)
+expublic void ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle)
 {
     int i;
     unsigned short flags;
