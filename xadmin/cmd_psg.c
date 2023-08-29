@@ -121,7 +121,7 @@ expublic int cmd_psg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
             refresh=-1;
         }
 
-        fprintf(stdout, "%4d %-4.4s %-4.4s %-5.5s %-5.5s %7hd %8d %-16.16s %8.8s %3d %-5.5s\n",
+        fprintf(stdout, "%4d %-4.4s %-4.4s %-5.5s %-5.5s %7d %8d %-16.16s %8.8s %3d %-5.5s\n",
                 i, 
                 local.is_locked?"Y":"N",
                 local.is_mmon?"Y":"N",
