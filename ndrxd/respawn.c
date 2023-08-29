@@ -74,7 +74,7 @@ expublic int do_respawn_check(void)
     pm_node_t *p_pm;
     long delta;
     int abort = EXFALSE;
-    int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+    int nrgrps = ndrx_G_libnstd_cfg.sgmax;
     int sg_groups[nrgrps];
     
     /* No sanity checks while app config not loaded */

@@ -1553,7 +1553,7 @@ expublic int app_startup(command_startstop_t *call,
     }
     else /* process this if request for srvnm or full startup... */
     {
-        int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+        int nrgrps = ndrx_G_libnstd_cfg.sgmax;
         int sg_groups[nrgrps];
 
         if (EXEOS==call->binary_name[0])
