@@ -1758,7 +1758,6 @@ out:
     return ret;
 }
 
-
 /**
  * Parse config out...
  * @param doc
@@ -1988,9 +1987,12 @@ expublic int test_config(int reload, command_call_t * call,
         char *old_bin, char *new_bin, int error, char *msg))
 {
     int ret=EXSUCCEED;
+    int i;
     int new_error=EXFALSE;
     int old_error=EXFALSE;
     int do_free = EXFALSE;
+    int procgrplps[ndrx_G_libnstd_cfg.sgmax];
+
     /*
      * Active monitor configuration
      */
@@ -2043,12 +2045,16 @@ expublic int test_config(int reload, command_call_t * call,
         goto out;
     }
     
+    memset(procgrplps, 0, sizeof(int)*ndrx_G_libnstd_cfg.sgmax);
+
     /* I think we need two loops:
      * 1. loop
      * If first we go over all new configs PM, and check Old srv hash.
      * If server names & id the same, then OK
      * If server names differ for id, then old must be shut down
      * If server name not taken, then all, this is new binary
+     * TODO: If server is lock provider, check that lp group in new config matches actual group
+     *   (that's in case if binary is running)
      * --------------------------
      * 2. loop
      * We go over the old PM, and check new hash.
@@ -2069,7 +2075,6 @@ expublic int test_config(int reload, command_call_t * call,
         else if (0!=strcmp(old->binary_name, new->binary_name))
         {
             if (NDRXD_PM_EXIT!=old->state)
-
             {
                 NDRX_LOG(log_error, "Renamed binary [%s] for "
                         "serverid=%d is in non shutdown state (%d)! New binary for this id is [%s]",
@@ -2097,11 +2102,43 @@ expublic int test_config(int reload, command_call_t * call,
                                 new->srvid, old->binary_name, new->binary_name);
             }
         }
+        else if (PM_RUNNING(old->state) 
+                && old->procgrp_lp_no > 0 
+                && old->procgrp_lp_no != new->conf->procgrp_lp_no)
+        {
+            NDRXD_set_error_fmt(NDRXD_EREBBINARYRUN, "(%s) Lock provider [%s]/%d must be shutdown prior"
+                            "changing locking group (from %d to %d)",
+                            G_sys_config.config_file_short, 
+                            old->binary_name, old->srvid, old->procgrp_lp_no, new->conf->procgrp_lp_no);
+            new_error=EXTRUE;
+        }
         else
         {
-            NDRX_LOG(log_debug, "Binary name [%s] not "
+            /* check for LPs */
+            if (new->conf->procgrp_lp_no > 0 && 
+                0!=procgrplps[new->conf->procgrp_lp_no-1])
+            {
+
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Lock provider "
+                            "[%s]/%d duplicate for process group %d. "
+                            "Lock already provided by srvid %d",
+                            G_sys_config.config_file_short, 
+                            new->binary_name, new->srvid, new->conf->procgrp_lp_no, 
+                            procgrplps[new->conf->procgrp_lp_no-1]);
+                new_error=EXTRUE;
+            }
+            else 
+            {
+                if (new->conf->procgrp_lp_no > 0)
+                {
+                    /* mark provess as group LP */
+                    procgrplps[new->conf->procgrp_lp_no-1]=new->srvid;
+                }
+
+                NDRX_LOG(log_debug, "Binary name [%s] not "
                             "changed for server id=%d",
                             old->binary_name, new->srvid);
+            }
         }
     }
     /*
@@ -2140,6 +2177,29 @@ expublic int test_config(int reload, command_call_t * call,
                 NDRX_LOG(log_debug,"Binary [%s] for "
                         "serverid=%d is removed and is shutdown!",
                         old->binary_name, old->srvid);
+            }
+        }
+    }
+
+    /* Check that for each singleton process group lock provider is defined 
+     * Loop over all process groups and check are they loaded to the procgrplps
+     */
+    if (NULL!=t_app_config->procgroups)
+    {
+        ndrx_procgroup_t *p_grp;
+        for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
+        {
+            p_grp = &t_app_config->procgroups->groups_by_no[i];
+
+            if (    (p_grp->flags & NDRX_PG_USED)
+                    && (p_grp->flags & NDRX_PG_SINGLETON) 
+                    && 0==procgrplps[p_grp->grpno-1])
+            {
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Singleton process group %d "
+                            "does not have lock provider defined",
+                            G_sys_config.config_file_short, 
+                            p_grp->grpno);
+                new_error=EXTRUE;
             }
         }
     }
