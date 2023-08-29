@@ -482,6 +482,7 @@ extern NDRX_API void ndrx_cid_generate(unsigned char prefix, exuuid_t out);
 
 extern NDRX_API int ndrx_realtime_get(struct timespec *tp);
 extern NDRX_API char * ndrx_basename(char *path);
+extern NDRX_API void ndrx_volatile_strcpy(volatile char *dest, const volatile char *src, size_t dest_size);
 
 #ifdef	__cplusplus
 }
