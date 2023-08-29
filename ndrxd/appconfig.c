@@ -229,6 +229,77 @@ expublic int load_active_config_live(void)
     
     return ret;
 }
+
+/**
+ * Validate process groups
+ * @param app_config parsed config
+ * @param process_model process model
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int validate_process_groups(config_t *app_config, pm_node_t *process_model)
+{
+    int ret=EXSUCCEED;
+    int i;
+    pm_node_t *p_pm;
+    int procgrplps[ndrx_G_libnstd_cfg.sgmax];
+
+    memset(procgrplps, 0, sizeof(int)*ndrx_G_libnstd_cfg.sgmax);
+
+    DL_FOREACH(process_model, p_pm)
+    {
+        /* check for LPs */
+        if (p_pm->conf->procgrp_lp_no > 0 && 
+            0!=procgrplps[p_pm->conf->procgrp_lp_no-1])
+        {
+
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Lock provider "
+                        "[%s]/%d duplicate for process group [%s]. "
+                        "Lock already provided by srvid %d",
+                        G_sys_config.config_file_short, 
+                        p_pm->binary_name, p_pm->srvid, 
+                        /* this is pre-validated, will be present: */
+                        ndrx_ndrxconf_procgroups_resolveno(app_config->procgroups, p_pm->conf->procgrp_lp_no)->grpname, 
+                        procgrplps[p_pm->conf->procgrp_lp_no-1]);
+            EXFAIL_OUT(ret);
+        }
+        else 
+        {
+            if (p_pm->conf->procgrp_lp_no > 0)
+            {
+                /* mark provess as group LP */
+                procgrplps[p_pm->conf->procgrp_lp_no-1]=p_pm->srvid;
+            }
+        }
+    }
+
+    /* Check that for each singleton process group lock provider is defined 
+     * Loop over all process groups and check are they loaded to the procgrplps
+     */
+    if (NULL!=app_config->procgroups)
+    {
+        ndrx_procgroup_t *p_grp;
+        for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
+        {
+            p_grp = &app_config->procgroups->groups_by_no[i];
+
+            if (    (p_grp->flags & NDRX_PG_USED)
+                    && (p_grp->flags & NDRX_PG_SINGLETON) 
+                    && 0==procgrplps[p_grp->grpno-1])
+            {
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Singleton process group [%s] "
+                            "does not have lock provider defined",
+                            G_sys_config.config_file_short, 
+                            p_grp->grpname);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    
+
+out:
+    return ret;
+}
+
 /**
  * Load active configuration.
  * This should also build the main process model i.e. get ready for startup!
@@ -307,7 +378,11 @@ expublic int load_active_config(config_t **app_config, pm_node_t **process_model
         goto out;
     }
 
-    /* TODO: Process group validations */
+    if (EXSUCCEED!=validate_process_groups(*app_config, *process_model))
+    {
+        ret = EXFAIL;
+        goto out;
+    }
 
 out:
 
@@ -1982,7 +2057,6 @@ expublic int test_config(int reload, command_call_t * call,
     int new_error=EXFALSE;
     int old_error=EXFALSE;
     int do_free = EXFALSE;
-    int procgrplps[ndrx_G_libnstd_cfg.sgmax];
 
     /*
      * Active monitor configuration
@@ -2035,8 +2109,6 @@ expublic int test_config(int reload, command_call_t * call,
         /* free up the config otherwise we get leak.. */
         goto out;
     }
-    
-    memset(procgrplps, 0, sizeof(int)*ndrx_G_libnstd_cfg.sgmax);
 
     /* I think we need two loops:
      * 1. loop
@@ -2105,31 +2177,10 @@ expublic int test_config(int reload, command_call_t * call,
         }
         else
         {
-            /* check for LPs */
-            if (new->conf->procgrp_lp_no > 0 && 
-                0!=procgrplps[new->conf->procgrp_lp_no-1])
-            {
 
-                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Lock provider "
-                            "[%s]/%d duplicate for process group %d. "
-                            "Lock already provided by srvid %d",
-                            G_sys_config.config_file_short, 
-                            new->binary_name, new->srvid, new->conf->procgrp_lp_no, 
-                            procgrplps[new->conf->procgrp_lp_no-1]);
-                new_error=EXTRUE;
-            }
-            else 
-            {
-                if (new->conf->procgrp_lp_no > 0)
-                {
-                    /* mark provess as group LP */
-                    procgrplps[new->conf->procgrp_lp_no-1]=new->srvid;
-                }
-
-                NDRX_LOG(log_debug, "Binary name [%s] not "
+            NDRX_LOG(log_debug, "Binary name [%s] not "
                             "changed for server id=%d",
                             old->binary_name, new->srvid);
-            }
         }
     }
     /*
@@ -2168,29 +2219,6 @@ expublic int test_config(int reload, command_call_t * call,
                 NDRX_LOG(log_debug,"Binary [%s] for "
                         "serverid=%d is removed and is shutdown!",
                         old->binary_name, old->srvid);
-            }
-        }
-    }
-
-    /* Check that for each singleton process group lock provider is defined 
-     * Loop over all process groups and check are they loaded to the procgrplps
-     */
-    if (NULL!=t_app_config->procgroups)
-    {
-        ndrx_procgroup_t *p_grp;
-        for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
-        {
-            p_grp = &t_app_config->procgroups->groups_by_no[i];
-
-            if (    (p_grp->flags & NDRX_PG_USED)
-                    && (p_grp->flags & NDRX_PG_SINGLETON) 
-                    && 0==procgrplps[p_grp->grpno-1])
-            {
-                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Singleton process group %d "
-                            "does not have lock provider defined",
-                            G_sys_config.config_file_short, 
-                            p_grp->grpno);
-                new_error=EXTRUE;
             }
         }
     }

@@ -211,11 +211,6 @@ expublic int ppm_rsp_process3(command_reply_t *reply, size_t reply_len)
 {
     char binary[9+1];
     
-    if (reply->flags & NDRXD_CALL_FLAGS_PAGE2)
-    {
-        return ppm_rsp_process2(reply, reply_len);
-    }
-
     if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
     {
         command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
@@ -228,7 +223,7 @@ expublic int ppm_rsp_process3(command_reply_t *reply, size_t reply_len)
                 ppm_info->procgrp_no,
                 ppm_info->procgrp_lp_no,
                 ppm_info->procgrp_lp_no_act
-                );
+            );
     }
     
     return EXSUCCEED;
@@ -250,7 +245,7 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
     }
     else if (reply->flags & NDRXD_CALL_FLAGS_PAGE3)
     {
-        return ppm_rsp_process2(reply, reply_len);
+        return ppm_rsp_process3(reply, reply_len);
     }
 
     if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
@@ -316,7 +311,7 @@ expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         print_hdr2();
         call.flags|=NDRXD_CALL_FLAGS_PAGE2;
     }
-    else if (print_2nd)
+    else if (print_3rd)
     {
         /* Print header at first step! */
         print_hdr3();
