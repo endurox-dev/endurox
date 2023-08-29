@@ -184,6 +184,9 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
             /* so that we do no try again to wake it up! */
             pm_pid->p_pm->state=NDRXD_PM_EXIT;
         }
+
+        /* reset PM fields */
+        pm_pid->p_pm->procgrp_lp_no=0;
         
         NDRX_LOG(log_warn, "Removing resources allocated "
                             "for process [%s]", pm_pid->p_pm->binary_name);
@@ -200,9 +203,6 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
 
         /* reset shared memory! */
         ndrxd_shm_resetsrv(srvid);
-
-        /* reset PM fields */
-        pm_pid->p_pm->procgrp_lp_no=0;
         
     }
     else

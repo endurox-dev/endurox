@@ -63,7 +63,7 @@ set_target_properties(exsinglesv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # Install bin
 install (TARGETS 
-    tpadmsv
+    exsinglesv
     DESTINATION bin)
 
 # vim: set ts=4 sw=4 et smartindent:

@@ -1107,6 +1107,19 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             NDRX_PM_SET_ENV(CONF_NDRX_THREADSTACKSIZE, tmp);
         }
 
+        /* export process groups */
+        if (p_pm->conf->procgrp_lp_no > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->procgrp_lp_no);
+            NDRX_PM_SET_ENV(CONF_NDRX_PROCGRP_LP_NO, tmp);
+        }
+
+        if (p_pm->conf->procgrp_no > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->procgrp_no);
+            NDRX_PM_SET_ENV(CONF_NDRX_PROCGRP_NO, tmp);
+        }
+
         alloc_args = 0;
         REALLOC_CMD;
         
@@ -1189,9 +1202,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 exit(1);
             }
         }
-        
+
         /* process env variables defined in ndrxconfig.xml */
-        
         if (EXSUCCEED!=ndrx_ndrxconf_envs_applyall(p_pm->conf->envgrouplist,
                 p_pm->conf->envlist))
         {
