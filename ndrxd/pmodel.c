@@ -958,29 +958,27 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
          */
         was_starting=EXTRUE;
     }
-    else
+    else if (   p_pm->conf->procgrp_no > 0
+                /* group is singleton: */
+                && ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, 
+                    p_pm->conf->procgrp_no)
+                /* and group is not locked by snapshoot or current data */
+        &&  (  (NULL!=sg_snapshoot && !sg_snapshoot[p_pm->conf->procgrp_no])
+            || EXTRUE!=ndrx_sg_is_locked(p_pm->conf->procgrp_no, NULL, NDRX_SG_CHK_PID)
+            ))
     {
-        /* check the group state...
-         * if we shall start or not.
-         */
-        if (0==p_pm->conf->procgrp_no || NULL==sg_snapshoot ||
-            /* if snapshoot is OK, group is singleton and current lock is good too 
-             * as lock might change during the startup and thus
-             * we shall not start any more if that fact is changed
-             */
-            (   ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, 
-                    p_pm->conf->procgrp_no) &&
-                sg_snapshoot[p_pm->conf->procgrp_no] && 
-                EXTRUE==ndrx_sg_is_locked(p_pm->conf->procgrp_no, NULL, NDRX_SG_CHK_PID)))
+        NDRX_LOG(log_warn, " %s/%d Not staring as singleton process group %d is not locked",
+                                    p_pm->binary_name, p_pm->srvid, p_pm->conf->procgrp_no);
+
+        if (NULL!=p_startup_progress)
+            p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTING);
+
+        if (NDRXD_PM_WAIT!=p_pm->state)
         {
-            p_pm->state = NDRXD_PM_STARTING;
-        }
-        else
-        {
-            /* put process in wait state for lock */
             p_pm->state = NDRXD_PM_WAIT;
             p_pm->state_changed = SANITY_CNT_START;
         }
+        goto progress_out;
     }
 
     p_pm->state_changed = SANITY_CNT_START;

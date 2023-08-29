@@ -79,6 +79,7 @@ exprivate char *proc_state_to_str(long state, short msg_type)
     static char *eenv= "Environment setup failure";
     static char *esys= "System failure";
     static char *restart= "Restarting";
+    static char *ewait= "Waiting on group lock";
     static char unknown[256];
     char *ret;
 
@@ -133,6 +134,9 @@ exprivate char *proc_state_to_str(long state, short msg_type)
             break;
         case NDRXD_PM_RESTART:
             ret = restart;
+            break;
+        case NDRXD_PM_WAIT:
+            ret = ewait;
             break;
         default:
             snprintf(unknown, sizeof(unknown), "Unknown state (%ld)", state);
