@@ -80,12 +80,12 @@ enum
     st_get_singlegrp
     , st_chk_l_lock
     , st_chk_l_unlock /**< Was local unlocked? */
-    , st_do_lock
-    , st_chk_mmon
     , st_ping_lock
     , st_shm_refresh
     , st_abort
     , st_abort_unlock
+    , st_chk_mmon
+    , st_do_lock
 };
 
 /*---------------------------Typedefs-----------------------------------*/
@@ -452,6 +452,6 @@ expublic int ndrx_exsinglesv_sm_run(void)
  */
 expublic int ndrx_exsinglesv_sm_validate(void)
 {
-    return ndrx_sm_validate((void *)M_locksm, NR_TRANS, st_get_singlegrp, st_abort_unlock);
+    return ndrx_sm_validate((void *)M_locksm, NR_TRANS, st_get_singlegrp, st_do_lock);
 }
 /* vim: set ts=4 sw=4 et smartindent: */
