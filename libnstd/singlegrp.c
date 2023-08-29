@@ -147,7 +147,7 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
  * @return EXSUCCEED if successfull, EXFAIL if failed
 */
 exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg, 
-    short nodeid, short srvid, int chk_lock, time_t new_last_refresh)
+    short nodeid, int srvid, int chk_lock, time_t new_last_refresh)
 {
     int ret = EXSUCCEED;
     ndrx_sg_shm_t sg_local;
@@ -198,11 +198,11 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
 
         if (sg->lockprov_srvid!=srvid)
         {
-            NDRX_LOG(log_error, "ERROR Group %d is locked by Server id %hd, "
-                "but must be locked by Server %hd - terminating!", 
+            NDRX_LOG(log_error, "ERROR Group %d is locked by Server id %d, "
+                "but must be locked by Server %d - terminating!", 
                 singlegrp_no, sg->lockprov_srvid, srvid);
             userlog("ERROR Group %d is locked by Server is %d, "
-                "but must be locked by Server %hd - terminating!", 
+                "but must be locked by Server %d - terminating!", 
                 singlegrp_no, sg->lockprov_srvid, srvid);
             EXFAIL_OUT(ret);
         }
@@ -229,7 +229,7 @@ out:
  * @return EXSUCCEED if successfull, EXFAIL if failed
  */
 expublic int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg, 
-    short nodeid, short srvid, time_t new_last_refresh)
+    short nodeid, int srvid, time_t new_last_refresh)
 {
     return ndrx_sg_do_refresh_int(singlegrp_no, sg, nodeid, srvid, 
         EXTRUE, new_last_refresh);
@@ -244,7 +244,7 @@ expublic int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg,
  * @param new_last_refresh lock time (when checks were started...)
  * @return EXSUCCEED if successfull, EXFAIL if failed
  */
-expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *procname,
+expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *procname,
         time_t new_last_refresh)
 {
     int ret = EXSUCCEED;
@@ -303,6 +303,7 @@ expublic void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
     sg->lockprov_pid = atomic_load(&sg_shm->lockprov_pid);
     sg->lockprov_srvid = atomic_load(&sg_shm->lockprov_srvid);
     NDRX_STRCPY_SAFE( (char *)sg->lockprov_procname, (const char *)sg_shm->lockprov_procname);
+    sg->reason = atomic_load(&sg_shm->reason);
 }
 
 /**
@@ -351,7 +352,7 @@ out:
  * @param reference_file file for which to check future modification date
  * @param flags NDRX_SG_CHK_PID check for pid, default 0
  */
-exprivate int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
+expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
     char *reference_file, long flags)
 {
     int ret = EXFALSE;

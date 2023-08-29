@@ -78,6 +78,7 @@ exprivate int check_cnvsrv(char *qname);
 exprivate int check_long_startup(void);
 exprivate int check_dead_processes(void);
 exprivate void check_memlimits(void);
+exprivate int check_singlegrp(void);
 
 /**
  * Return sanity scan stopwatch
@@ -242,6 +243,9 @@ expublic int do_sanity_check(int finalchk)
         {
             do_respawn_check();
         }
+
+        /* check singleton groups */
+        check_singlegrp();
         
         /* update queue statistics (if enabled) */
         
@@ -1047,11 +1051,97 @@ out:
     return ret;
 }
 
-/* TODO: add sanity checks for singleton groups shared memory
+/**
+ * Compare the array of integers
+ */
+exprivate int cmp_int(const void *a, const void *b)
+{
+    return (*(int*)a - *(int*)b);
+}
+
+/**
+ * Perform sanity checks for singleton groups shared memory
  * loop over all groups, check if group is locked, that processes
  * are running. If not running, the group shall be unlocked.
  * ensure that actul lock provider (from p_pm) matches the group
  * if does not matches, group shall be unlocked.
  */
+exprivate int check_singlegrp(void)
+{
+    int i;
+    int ret = EXSUCCEED;
+    pm_node_t *p_pm_srvid;
+    ndrx_sg_shm_t *p_shm, local;
+    int grp2srvid[ndrx_G_libnstd_cfg.sgmax];
+
+    memset(grp2srvid, 0, ndrx_G_libnstd_cfg.sgmax*sizeof(int));
+
+    for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
+    {
+        p_shm = ndrx_sg_get(i+1);
+
+        if (NULL!=p_shm)
+        {
+            EXFAIL_OUT(ret);
+        }
+
+        /* check if the group if group is locked */
+        if (!ndrx_sg_is_locked_int(i+1, p_shm, NULL, 0))
+        {
+            continue;
+        }
+
+        /* verify the servers... */
+        ndrx_sg_load(&local, p_shm);
+
+        if (!(local.lockprov_srvid>=0 && local.lockprov_srvid < ndrx_get_G_atmi_env()->max_servers))
+        {
+            NDRX_LOG(log_error, "Invalid server id %hd for singleton process group %d -> unlocking",
+                    local.lockprov_srvid, i+1);
+            userlog("Invalid server id %hd for singleton process group %d -> unlocking",
+                    local.lockprov_srvid, i+1);
+            ndrx_sg_unlock(p_shm, NDRX_SG_RSN_CORRUPT);
+            continue;
+        }
+
+        p_pm_srvid = G_process_model_hash[local.lockprov_srvid];
+
+        /* check the state of the server... */
+        if (!PM_RUNNING(p_pm_srvid->state))
+        {
+            NDRX_LOG(log_error, "Server %d/%s/%d is not running -> "
+                "unlocking singleton process group %d",
+                p_pm_srvid->pid, p_pm_srvid->binary_name, p_pm_srvid->srvid, i+1);
+            userlog("Server %d/%s/%d is not running -> "
+                "unlocking singleton process group %d",
+                p_pm_srvid->pid, p_pm_srvid->binary_name, p_pm_srvid->srvid, i+1);
+            ndrx_sg_unlock(p_shm, NDRX_SG_RSN_CORRUPT);
+            continue;
+        }
+
+        /* add given server id for duplicate checks */
+        grp2srvid[i] = local.lockprov_srvid;
+    }
+
+    /* sort grp2srvid and check are there any duplicates  */
+    qsort(grp2srvid, ndrx_G_libnstd_cfg.sgmax, sizeof(int), cmp_int);
+
+    for (i=0; i<ndrx_G_libnstd_cfg.sgmax-1; i++)
+    {
+        if (grp2srvid[i]>0 && grp2srvid[i]==grp2srvid[i+1])
+        {
+            NDRX_LOG(log_error, "Duplicate server id %d for "
+                    "singleton process group %d -> unlocking",
+                    grp2srvid[i], i+1);
+            userlog("Duplicate server id %d for "
+                    "singleton process group %d -> unlocking",
+                    grp2srvid[i], i+1);
+            ndrx_sg_unlock(p_shm, NDRX_SG_RSN_CORRUPT);
+        }
+    }
+
+out:
+    return ret;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

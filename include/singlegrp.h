@@ -61,6 +61,7 @@ extern "C" {
 #define NDRX_SG_RSN_REFFFUT     4       /**< Reference file is in future */
 #define NDRX_SG_RSN_NORMAL      5       /**< Normal shutdown             */
 #define NDRX_SG_RSN_LOCKE       6       /**< Locking errro (by exsinglesv)*/
+#define NDRX_SG_RSN_CORRUPT     7       /**< Corrupted structures        */
 
 #define NDRX_SG_PROCNAMEMAX	16	/**< Max len of the lock process */
 /*---------------------------Enums--------------------------------------*/
@@ -77,7 +78,7 @@ typedef struct
     _Atomic unsigned char volatile is_clt_booted;   /**< Is clients boooted, when group locked? */
     _Atomic unsigned short volatile flags;          /**< Flags for given entry */
     _Atomic time_t last_refresh;                    /**< Last lock refresh time */
-    _Atomic short volatile lockprov_srvid;          /**< Lock provder server id */  
+    _Atomic int volatile lockprov_srvid;            /**< Lock provder server id */  
     _Atomic short volatile lockprov_nodeid;         /**< Lock provider E/X cluster node id */
     _Atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
     char volatile lockprov_procname[NDRX_SG_PROCNAMEMAX+1];  /**< Lock provider name */
@@ -96,8 +97,9 @@ extern NDRX_API void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm);
 
 /** Is given group locked? */
 extern NDRX_API int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flags);
+extern NDRX_API int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg, char *reference_file, long flags);
 
-extern NDRX_API int ndrx_sg_do_lock(int singlegrp_no, short nodeid, short srvid, char *procname,
+extern NDRX_API int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *procname,
         time_t new_last_refresh);
 extern NDRX_API void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason);
 
@@ -109,7 +111,7 @@ extern NDRX_API int ndrx_sg_init(void);
 extern NDRX_API void ndrx_sg_reset(void);
 
 extern NDRX_API int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg, 
-    short nodeid, short srvid, time_t new_last_refresh);
+    short nodeid, int srvid, time_t new_last_refresh);
 
 extern NDRX_API int ndrx_sg_is_valid(int singlegrp_no);
 extern NDRX_API void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags);
