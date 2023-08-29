@@ -78,6 +78,7 @@ typedef struct
     threadpool thpool;
     
     int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
+    long vnodeid;            /**< Node id, command id used for failovers    */
     
 } tmsrv_cfg_t;
 

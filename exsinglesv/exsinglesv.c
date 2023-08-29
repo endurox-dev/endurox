@@ -215,7 +215,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     ndrx_G_exsinglesv_conf.procgrp_lp_no = atoi(p);
 
     /* check is it valid against singleton groups */
-    if (EXSUCCEED!=ndrx_sg_is_valid(ndrx_G_exsinglesv_conf.procgrp_lp_no))
+    if (!ndrx_sg_is_valid(ndrx_G_exsinglesv_conf.procgrp_lp_no))
     {
         NDRX_LOG(log_error, "Invalid singleton process group number [%d], "
             "check %s env setting",

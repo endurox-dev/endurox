@@ -2555,7 +2555,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
             else
             {
                 /* just create dummy entry for active transactions */
-                M_p_tmq_setup_cmdheader_dum(&p_block->hdr, NULL, tpgetnodeid(), 
+                M_p_tmq_setup_cmdheader_dum(&p_block->hdr, NULL, nodeid, 
                         0, ndrx_G_qspace, 0);
                 p_block->hdr.command_code = TMQ_STORCMD_DUM;
             }

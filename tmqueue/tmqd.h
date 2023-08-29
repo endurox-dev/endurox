@@ -114,6 +114,8 @@ typedef struct
     long fsync_flags;         /**< special flags for disk sync              */
     
     int no_chkrun;           /**< If set to true, do not trigger queue run  */
+
+    long vnodeid;            /**< Node id, command id used for failovers    */
     
 } tmqueue_cfg_t;
 

@@ -109,7 +109,7 @@ expublic int background_read_log(void)
     char fnamefull[PATH_MAX+1];
     atmi_xa_log_t *pp_tl = NULL;
     
-    snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", tpgetnodeid(), 
+    snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid, 
             G_atmi_env.xa_rmid, G_server_conf.srv_id);
     len = strlen(tranmask);
     /* List the files here. */

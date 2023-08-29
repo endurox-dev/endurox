@@ -612,9 +612,10 @@ int tpsvrinit(int argc, char **argv)
      * which in case of tmqueue forward enqueue failures will hang the transaction
      */
     G_tmqueue_cfg.ses_timeout=EXFAIL;
+    G_tmqueue_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:N")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:Nn:")) != -1)
     {
         if (optarg)
         {
@@ -627,6 +628,11 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'n':
+                G_tmqueue_cfg.vnodeid = atol(optarg);
+                NDRX_LOG(log_info, "Virtual Enduro/X Cluster Node ID set to %ld",
+                            G_tmqueue_cfg.vnodeid);
+                break;
             case 'N':
                 G_tmqueue_cfg.no_chkrun = EXTRUE;
                 NDRX_LOG(log_info, "Will not forward trigger queue run.");
@@ -776,7 +782,7 @@ int tpsvrinit(int argc, char **argv)
      * Also.. when we will recover from disk we will have to ensure the correct order
      * of the enqueued messages. We can use time-stamp for doing ordering.
      */
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TMQ, tpgetnodeid(), tpgetsrvid());
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TMQ, G_tmqueue_cfg.vnodeid, tpgetsrvid());
     
     if (EXSUCCEED!=tpadvertise(svcnm, TMQUEUE))
     {

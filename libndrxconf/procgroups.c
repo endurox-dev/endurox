@@ -128,11 +128,11 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             /* check is range valid...  */
             p_grp->grpno = atoi(p);
             /* check that grpno is in range (the upper range is singleton groups) */
-            if (0>=p_grp->grpno || !ndrx_sg_is_valid(p_grp->grpno))
+            if (!ndrx_sg_is_valid(p_grp->grpno))
             {
                 snprintf(err->error_msg, sizeof(err->error_msg), 
-                    "(%s) Invalid `grpno' %d in <procgroup> "
-                    "(valid values 1..%d) section near line %d", 
+                    "(%s) Invalid `grpno' %d (valid values 1..%d) in <procgroup> "
+                    "section near line %d", 
                     config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.sgmax, cur->line);
                 err->error_code = NDRXD_ECFGINVLD;
                 NDRX_LOG(log_error, "%s", err->error_msg);
@@ -401,6 +401,12 @@ expublic void ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle
 {
     int i;
     unsigned short flags;
+
+    /* nothing to-do */
+    if (NULL==handle)
+    {
+        return;
+    }
 
     for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
     {

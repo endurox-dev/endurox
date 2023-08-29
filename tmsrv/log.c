@@ -503,7 +503,7 @@ out_nolock:
 exprivate void tms_get_file_name(atmi_xa_log_t *p_tl)
 {
     snprintf(p_tl->fname, sizeof(p_tl->fname), "%s/TRN-%ld-%hd-%d-%s", 
-            G_tmsrv_cfg.tlog_dir, tpgetnodeid(), G_atmi_env.xa_rmid, 
+            G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid, 
             G_server_conf.srv_id, p_tl->tmxid);
 }
 
@@ -1209,7 +1209,7 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
     TOKEN_READ("info", "tmnodeid");
     TOKEN_READ("info", "tmsrvid");
     p_tl->tmrmid = G_atmi_env.xa_rmid;
-    p_tl->tmnodeid = tpgetnodeid();
+    p_tl->tmnodeid = G_tmsrv_cfg.vnodeid;
     p_tl->tmsrvid = G_server_conf.srv_id;
     
     TOKEN_READ("info", "txtout");
