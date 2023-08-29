@@ -1,5 +1,11 @@
 /**
  * @brief Configuration handling.
+ *   Additional validations:
+ *    - If singleton groups are defined, sure that there are lock provider binary for
+ *          the group defined
+ *    - Check that only single lock provider is defined for the singleton group
+ *    - If doing reload, ensure that if LP is running and it's locked group is different
+ *       thant defined, then lock provider must be shutdown prior the configuration reload.
  *
  * @file appconfig.c
  */

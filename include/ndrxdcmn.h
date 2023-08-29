@@ -294,6 +294,7 @@ extern "C" {
 #define NDRXD_CALL_FLAGS_PAGE2          0x0002  /**< Second page from call      */
 #define NDRXD_CALL_FLAGS_RSPHAVE_MORE   0x0004	/**< Have more stuff to wait for*/
 #define NDRXD_CALL_FLAGS_PAGE3          0x0008	/**< Third page                 */
+#define NDRXD_CALL_FLAGS_LP2GRP         0x0010  /**< Lock provider bind to group*/
 
 #define SRV_KEY_FLAGS_BRIDGE            0x0001  /**< This server is bridge server                 */
 #define SRV_KEY_FLAGS_SENDREFERSH       0x0002  /**< Bridge requires that we send refersh to them */
@@ -463,7 +464,8 @@ typedef struct
     short complete_shutdown;            /**< Id of the server */
     int srvid;
     char binary_name[MAXTIDENT+1];
-    char procgrp[MAXTIDENT+1];  /**< process group to shutdown */
+    char procgrp[MAXTIDENT+1];  /**< process group to shutdown        */
+    long flags;                 /**< Additional flags for the command */
 
 } command_startstop_t;
 

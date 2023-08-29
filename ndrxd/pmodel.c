@@ -1578,6 +1578,8 @@ expublic int app_startup(command_startstop_t *call,
             if (p_pm->autostart &&
                     ( (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                       (EXEOS!=call->procgrp[0] && p_pm->conf->procgrp_no == p_procgrp->grpno) ||
+                      (EXEOS!=call->procgrp[0] && (call->flags & NDRXD_CALL_FLAGS_LP2GRP) && 
+                        p_pm->conf->procgrp_lp_no == p_procgrp->grpno) ||
                       /* Do full startup if requested autostart! */
                       (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0])
                     )) /* or If full shutdown requested */
@@ -1669,6 +1671,8 @@ expublic int app_shutdown(command_startstop_t *call,
             if (  
                     (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     (EXEOS!=call->procgrp[0] && (p_pm->conf->procgrp_no==p_procgrp->grpno)) ||
+                    (EXEOS!=call->procgrp[0] && (call->flags & NDRXD_CALL_FLAGS_LP2GRP) && 
+                        p_pm->conf->procgrp_lp_no == p_procgrp->grpno) ||
                     (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0] &&  
                     /* or If full shutdown requested */
                     /* is if binary is not protected, or we run complete shutdown... */
@@ -1812,6 +1816,8 @@ expublic int app_sreload(command_startstop_t *call,
         {
             if ( (  (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     (EXEOS!=call->procgrp[0] && p_pm->conf->procgrp_no==p_procgrp->grpno) ||
+                    (EXEOS!=call->procgrp[0] && (call->flags & NDRXD_CALL_FLAGS_LP2GRP) && 
+                        p_pm->conf->procgrp_lp_no == p_procgrp->grpno) ||
                     (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0] && p_pm->autostart)
                 )
                 /* start only those binaries which were requested for start: */
