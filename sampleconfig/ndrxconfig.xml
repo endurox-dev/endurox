@@ -34,7 +34,7 @@
 		
 	</appconfig>
 	<procgroups>
-	        <procgroup grpno="1" name="GRP1" singleton="Y" />
+	        <procgroup grpno="1" name="GRP1" singleton="N" />
 	</procgroups>
 	<defaults>
 		<min>1</min>
@@ -145,13 +145,10 @@
 			<min>15</min>
 			<max>15</max>
 			<sysopt>-e /tmp/EXBENCH</sysopt>
-			<procgrp>GRP1</procgrp>
 		</server>
 
 		<server name="cpmsrv">
 			<srvid>9999</srvid>
-			<cctag>YOMENT</cctag>
-			<procgrp_lp>GRP1</procgrp_lp>
 			<min>1</min>
 			<max>1</max>
 			<sysopt>-e /tmp/CPMSRV -r -- -i10 -k5</sysopt>
