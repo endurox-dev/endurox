@@ -307,6 +307,8 @@ expublic int load_active_config(config_t **app_config, pm_node_t **process_model
         goto out;
     }
 
+    /* TODO: Process group validations */
+
 out:
 
     /* Release memory, if config not loaded */
@@ -1860,7 +1862,6 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     }
     
     /* gen routing blocks */
-    
     if (EXSUCCEED!=ndrx_ddr_gen_blocks(config))
     {
         NDRX_LOG(log_error, "Failed to generate routing blocks");
@@ -1914,16 +1915,6 @@ expublic int load_config(config_t *config, char *config_file)
     int ret=EXSUCCEED;
     xmlDocPtr doc;
     xmlNodePtr root;
-#if 0
-    reader = xmlNewTextReaderFilename(config_file);
-
-    if(!reader) {
-        NDRX_LOG(log_error, "Failed to open [%s] with error: %s",
-                                        config_file, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-#endif
     
     xmlSetStructuredErrorFunc	(NULL, ndrx_xmlStructuredErrorFunc);
     

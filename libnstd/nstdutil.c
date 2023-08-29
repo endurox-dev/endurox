@@ -2587,4 +2587,25 @@ expublic char * ndrx_basename(char *path)
     }
 }
 
+
+/**
+ * Copy string to volatile char array.
+ * @param dest destination volatile array
+ * @param src source buffer
+ * @param dest_size destination buffer size
+ */
+expublic void ndrx_volatile_strcpy(volatile char *dest, const volatile char *src, size_t dest_size)
+{
+    size_t i;
+
+    for (i = 0; i < dest_size - 1 && src[i] != '\0'; ++i)
+    {
+        dest[i] = src[i];
+    }
+
+    dest[i] = '\0';
+
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */

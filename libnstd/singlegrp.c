@@ -269,7 +269,7 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     }
 
     /* store current proc info */
-    NDRX_STRCPY_SAFE((char *)sg.lockprov_procname, procname);
+    ndrx_volatile_strcpy(sg.lockprov_procname, procname, sizeof(sg.lockprov_procname));
     __sync_synchronize();
 
     atomic_store(&sg_shm->lockprov_nodeid, nodeid);
@@ -302,7 +302,8 @@ expublic void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
     sg->lockprov_nodeid = atomic_load(&sg_shm->lockprov_nodeid);
     sg->lockprov_pid = atomic_load(&sg_shm->lockprov_pid);
     sg->lockprov_srvid = atomic_load(&sg_shm->lockprov_srvid);
-    NDRX_STRCPY_SAFE( (char *)sg->lockprov_procname, (const char *)sg_shm->lockprov_procname);
+    ndrx_volatile_strcpy(sg->lockprov_procname, sg_shm->lockprov_procname,
+        sizeof(sg->lockprov_procname));
     sg->reason = atomic_load(&sg_shm->reason);
 }
 
