@@ -266,7 +266,7 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     }
     
     /* ask for -y for -g too: */
-    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] && EXEOS==procgrp[0] &&
           !ndrx_chk_confirm("Are you sure you want to start application?", confirm))
     {
         EXFAIL_OUT(ret);
@@ -392,7 +392,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         keep_running_ndrxd = EXTRUE;
     }
     
-    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] && EXEOS==procgrp[0] &&
           !ndrx_chk_confirm("Are you sure you want to stop application?", confirm))
     {
         EXFAIL_OUT(ret);
@@ -669,7 +669,7 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] && EXEOS==procgrp[0] &&
           !ndrx_chk_confirm("Are you sure you want to start application?", confirm))
     {
         EXFAIL_OUT(ret);

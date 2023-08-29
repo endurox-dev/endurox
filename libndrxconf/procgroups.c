@@ -248,9 +248,10 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
         /* copy stuff config entry */
         memcpy(&(*config)->groups_by_no[p_grp->grpno-1], p_grp, sizeof(ndrx_procgroup_t));
 
+        p_grp=&(*config)->groups_by_no[p_grp->grpno-1];
+
         /* add to hashmap by name */
         EXHASH_ADD_STR((*config)->groups_by_name, grpname, p_grp);
-
     }
 out:
     
