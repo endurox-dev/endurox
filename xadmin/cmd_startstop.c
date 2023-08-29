@@ -208,6 +208,7 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     short confirm = EXFALSE;
     short keep_running_ndrxd;
     int ids=0;
+    short include_lp=EXFALSE;
 
     ncloptmap_t clopt[] =
     {
@@ -217,6 +218,9 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
         {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
         {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
@@ -272,7 +276,12 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
     NDRX_STRCPY_SAFE(call.procgrp, procgrp);
-    
+
+    if (include_lp)
+    {
+        call.flags|=NDRXD_CALL_FLAGS_LP2GRP;
+    }
+
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
                         (command_call_t *)&call, sizeof(call),
@@ -314,6 +323,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     short keep_lcf=EXFALSE;
     pid_t pid = EXFAIL;
     int ids=0;
+    short include_lp=EXFALSE;
+
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -324,6 +335,9 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
         {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'c', BFLD_SHORT, (void *)&dummy, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Left for compatibility"},
         {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
@@ -410,6 +424,10 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
     NDRX_STRCPY_SAFE(call.procgrp, procgrp);
+    if (include_lp)
+    {
+        call.flags|=NDRXD_CALL_FLAGS_LP2GRP;
+    }
 
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                     NDRXD_CALL_TYPE_GENERIC,
@@ -491,7 +509,8 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     short confirm = EXFALSE;
     short keep_running_ndrxd = EXFALSE;
     int ids=0;
-    
+    short include_lp=EXFALSE;
+
     /* just verify that content is ok: */
     ncloptmap_t clopt[] =
     {
@@ -501,9 +520,11 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
         {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
-                                
         {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
@@ -521,27 +542,6 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
             fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
             EXFAIL_OUT(ret);
         }
-    }
-
-    if (EXFAIL!=srvid)
-    {
-        ids++;
-    }
-
-    if (EXEOS!=srvnm[0])
-    {
-        ids++;
-    }
-
-    if (EXEOS!=procgrp[0])
-    {
-        ids++;
-    }
-
-    if (ids>1)
-    {
-        fprintf(stderr, "-i, -s and -g cannot be combined!\n");
-        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_info, "Shutting down...");
@@ -615,6 +615,7 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     char procgrp[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
     int ids=0;
+    short include_lp=EXFALSE;
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -623,6 +624,9 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
         {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
         {0}
@@ -675,6 +679,11 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
     NDRX_STRCPY_SAFE(call.procgrp, procgrp);
+
+    if (include_lp)
+    {
+        call.flags|=NDRXD_CALL_FLAGS_LP2GRP;
+    }
 
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,

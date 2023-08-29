@@ -1047,6 +1047,11 @@ out:
     return ret;
 }
 
-/* TODO: add sanity checks for singleton groups shared memory */
+/* TODO: add sanity checks for singleton groups shared memory
+ * loop over all groups, check if group is locked, that processes
+ * are running. If not running, the group shall be unlocked.
+ * ensure that actul lock provider (from p_pm) matches the group
+ * if does not matches, group shall be unlocked.
+ */
 
 /* vim: set ts=4 sw=4 et smartindent: */
