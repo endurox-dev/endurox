@@ -248,6 +248,13 @@ exprivate int ping_lock(void *ctx)
     ndrx_locksm_ctx_t *lock_ctx = (ndrx_locksm_ctx_t *)ctx;
     int ret=ev_ok;
 
+    /* Validate that lock is still functional: */
+    if ( EXSUCCEED!=ndrx_exsinglesv_file_chkpid(NDRX_LOCK_FILE_1, ndrx_G_exsinglesv_conf.lockfile_1) )
+    {
+        ret=ev_err;
+        goto out;
+    }
+
     if (!ndrx_G_exsinglesv_conf.locked2)
     {
         if (EXSUCCEED!=ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_2, ndrx_G_exsinglesv_conf.lockfile_2))

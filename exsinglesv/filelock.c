@@ -78,6 +78,47 @@ exprivate ndrx_exsinglesv_filelock_t M_locks[MAX_LOCKS] = {
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Check PID of the the lock file (file must be locked)
+ * @param lock_no lock number (file numbers)
+ * @param lockfile lock file
+ * @return EXSUCCEED/EXFAIL
+ */ 
+expublic int ndrx_exsinglesv_file_chkpid(int lock_no, char *lockfile)
+{
+    int ret = EXSUCCEED;
+    struct flock lck;
+    
+    memset(&lck, 0, sizeof(lck));
+
+    lck.l_whence = SEEK_SET;
+    lck.l_start = 0;
+    lck.l_len = 1;
+    lck.l_type = F_WRLCK;
+
+    NDRX_LOG(log_debug, "Checking (%d) [%s] lock status...", lock_no, lockfile);
+
+    if ( EXSUCCEED!=fcntl(M_locks[lock_no].fd, F_GETLK, &lck))
+    {
+        NDRX_LOG(log_info, "Failed to fcntl F_GETLK on [%s]: %s",
+                    lockfile, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+    /* 
+     * we as lock owners, can lock it twice, thus must be reported as F_UNLOCK
+     */
+    if (lck.l_type!=F_UNLCK)
+    {
+        NDRX_LOG(log_error, "ERROR ! Lock file [%s] locked by other process (pid=%d)",
+                    lockfile, (int)lck.l_pid);
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
+/**
  * Perform locking on the file
  * @param lock_no lock number
  * @param lockfile lock file
@@ -95,7 +136,7 @@ expublic int ndrx_exsinglesv_file_lock(int lock_no, char *lockfile)
     lck.l_len = 1;
     lck.l_type = F_WRLCK;
 
-    NDRX_LOG(log_debug, "Trying to locking file (%d) [%s]", lock_no, lockfile);
+    NDRX_LOG(log_debug, "Trying to lock file (%d) [%s]", lock_no, lockfile);
 
     /* open lock file */
     if (EXFAIL==(M_locks[lock_no].fd = open(lockfile, O_RDWR|O_CREAT, 0666)))
@@ -111,8 +152,8 @@ expublic int ndrx_exsinglesv_file_lock(int lock_no, char *lockfile)
     {
         if (EACCES==errno || EAGAIN==errno)
         {
-            memset(&lck, 0, sizeof(lck));
-            fcntl(M_locks[lock_no].fd, F_SETLK, &lck);
+            /* memset(&lck, 0, sizeof(lck)); */
+            fcntl(M_locks[lock_no].fd, F_GETLK, &lck);
 
             NDRX_LOG(log_info, "Failed to lock file [%s]: %s (pid=%d)",
                     lockfile, strerror(errno), (int)lck.l_pid);

@@ -309,11 +309,12 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 exprivate int cpm_callback_timer(void)
 {
     int ret = EXSUCCEED;
+    int i;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     static int first = EXTRUE;
     static ndrx_stopwatch_t t;
-    int nrgrps = ndrx_G_libnstd_cfg.sgmax+1;
+    int nrgrps = ndrx_G_libnstd_cfg.sgmax;
     int sg_groups[nrgrps];
     
     if (first)
@@ -447,6 +448,16 @@ exprivate int cpm_callback_timer(void)
         cpm_pidtest(c, sg_groups);
        
     } /* hash loop */
+
+    /* mark groups as booted.. */
+    for (i=0; i<nrgrps; i++)
+    {
+        if (sg_groups[i] && !ndrx_sg_bootflag_clt_get(i+1))
+        {
+            NDRX_LOG(log_debug, "Marking singleton group %d as clients booted", i);
+            ndrx_sg_bootflag_clt_set(i+1);
+        }
+    }
     
 out:
     return EXSUCCEED;
@@ -891,7 +902,6 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
     /* Remove dead un-needed processes (killed & not in new config) */
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
-        
         NDRX_LOG(log_info, "cpm_pc: %s/%s", c->tag, c->subsect);
         
         localtime_r (&c->dyn.stattime, &timeinfo);
