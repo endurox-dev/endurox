@@ -268,7 +268,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXFAIL==ndrx_G_exsinglesv_conf.locked_wait)
     {
         /* giver other node time to detect and shutdown */
-        ndrx_G_exsinglesv_conf.locked_wait = ndrx_G_exsinglesv_conf.chkinterval*MIN_SGREFRESH_CEOFFICIENT;
+        ndrx_G_exsinglesv_conf.locked_wait = MIN_SGREFRESH_CEOFFICIENT;
     }
 
     /* Dump the configuration to the log file */

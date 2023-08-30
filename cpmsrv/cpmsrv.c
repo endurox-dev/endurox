@@ -351,7 +351,7 @@ exprivate int cpm_callback_timer(void)
             if (c->stat.procgrp_no > 0 
                 && ndrx_ndrxconf_procgroups_is_singleton(ndrx_G_procgroups_config
                     , c->stat.procgrp_no)
-                && !sg_groups[c->stat.procgrp_no])
+                && !sg_groups[c->stat.procgrp_no-1])
             {
                 if (CLT_STATE_WAIT!=c->dyn.cur_state)
                 {
