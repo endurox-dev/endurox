@@ -274,6 +274,7 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     atomic_store(&sg_shm->lockprov_pid, getpid());
     atomic_store(&sg_shm->lockprov_srvid, srvid);
     atomic_store(&sg_shm->is_locked, EXTRUE);
+    atomic_store(&sg_shm->reason, 0);
 
     NDRX_LOG(log_debug, "Group %d locked", singlegrp_no);
     userlog("Group %d locked", singlegrp_no);

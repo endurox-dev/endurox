@@ -1499,7 +1499,7 @@ expublic void ndrx_mark_singlegrp_srv_booted(int nrgrps, int *sg_groups)
     {
         if (sg_groups[i] && !ndrx_sg_bootflag_srv_get(i+1))
         {
-            NDRX_LOG(log_debug, "Marking singleton group %d as server booted", i);
+            NDRX_LOG(log_debug, "Marking singleton group %d as servers booted", i);
             ndrx_sg_bootflag_srv_set(i+1);
         }
     }
