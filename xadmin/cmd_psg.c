@@ -99,6 +99,21 @@ expublic int cmd_psg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     int i;
     struct timespec ts;
     long long refresh;
+    int print_all = EXFALSE;
+
+    ncloptmap_t clopt[] =
+    {
+        {'a', BFLD_INT, (void *)&print_all, 0, 
+                            NCLOPT_OPT|NCLOPT_TRUEBOOL, "Print all groups"},
+        {0}
+    };
+
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
 
     /* print header: */
     fprintf(stderr, "SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS\n");
@@ -110,6 +125,12 @@ expublic int cmd_psg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         ndrx_sg_shm_t *p_shm=ndrx_sg_get(i);
         ndrx_sg_shm_t local;
         ndrx_sg_load(&local, p_shm);
+
+        /* print only used groups by default */
+        if (!(local.is_locked || (local.flags & NDRX_SG_IN_USE)) && !print_all )
+        {
+            continue;
+        }
 
         if (local.is_locked)
         {

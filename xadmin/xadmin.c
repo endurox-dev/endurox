@@ -482,13 +482,16 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -i\tPrint in use slots\n"
                 "\t\t -w\tPrint was in use slots",
                 NULL},
-    {"psg",     cmd_psg,EXFAIL,             0,  0, 
+    {"psg",     cmd_psg,EXFAIL,              1,  0, 
                 "Print singleton groups"
+                "\tUsage: psg [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -a\tPrint all singleton groups (including unused)\n"
                 , NULL},
     {"mmon",    cmd_mmon,EXFAIL,             0,  0, 
                 "Enable maintenace mode"
                 , NULL},
-    {"mmoff",    cmd_mmoff,EXFAIL,             0,  0, 
+    {"mmoff",    cmd_mmoff,EXFAIL,           0,  0, 
                 "Disable maintenace mode"
                 , NULL},
 };

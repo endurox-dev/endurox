@@ -177,7 +177,7 @@ ndrx_locksm_t M_locksm[] = {
 exprivate int get_singlegrp(void *ctx)
 {
     ndrx_locksm_ctx_t *lock_ctx = (ndrx_locksm_ctx_t *)ctx;
-    int ret;
+    int ret, lock_status;
     struct timespec ts;
 
     lock_ctx->pshm=ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
@@ -196,8 +196,13 @@ exprivate int get_singlegrp(void *ctx)
     ndrx_realtime_get(&ts);
     lock_ctx->new_refresh = ts.tv_sec;
 
+    lock_status = ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL, 0);
+
+    NDRX_LOG(log_debug, "Current group %d lock status: %d", 
+        ndrx_G_exsinglesv_conf.procgrp_lp_no, lock_status);
+
     /* determine the current state of the group */
-    switch(ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL, 0))
+    switch(lock_status)
     {
         case EXTRUE:
             ret = ev_locked;
@@ -273,7 +278,7 @@ exprivate int shm_refresh(void *ctx)
     ndrx_locksm_ctx_t *lock_ctx = (ndrx_locksm_ctx_t *)ctx;
     int ret=ev_ok;
 
-    if (EXSUCCEED!=ndrx_sg_do_refresh(EXFAIL, &lock_ctx->local,
+    if (EXSUCCEED!=ndrx_sg_do_refresh(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL,
         tpgetnodeid(), tpgetsrvid(), lock_ctx->new_refresh))
     {
         ret=ev_err;

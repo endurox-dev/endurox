@@ -412,7 +412,8 @@ expublic void ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle
     for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
     {
         ndrx_procgroup_t *p_grp = &handle->groups_by_no[i];
-
+        flags=0;
+        
         if (p_grp->flags & NDRX_PG_SINGLETON)
         {
             flags = NDRX_SG_IN_USE;

@@ -54,7 +54,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-exprivate long long  ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg);
+exprivate int  ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg);
 
 /**
  * Perform init of the singleton group support
@@ -173,7 +173,6 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
         }
 
         /* Check lockserver pid, nodeid, srvid -> must be ours... */
-
         if (sg->lockprov_pid!=(pid=getpid()))
         {
             NDRX_LOG(log_error, "ERROR Group %d is locked by PID %d, "
@@ -212,7 +211,6 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
             EXFAIL_OUT(ret);
         }
     }
-
 
     atomic_store(&sg_shm->last_refresh, new_last_refresh);
 
@@ -269,7 +267,7 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     }
 
     /* store current proc info */
-    ndrx_volatile_strcpy(sg.lockprov_procname, procname, sizeof(sg.lockprov_procname));
+    ndrx_volatile_strcpy(sg_shm->lockprov_procname, procname, sizeof(sg.lockprov_procname));
     __sync_synchronize();
 
     atomic_store(&sg_shm->lockprov_nodeid, nodeid);
@@ -313,17 +311,18 @@ expublic void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
  * @param sg local copy of the shared memory entry
  * @return EXSUCCEED if successfull (still valid), EXFAIL if failed
  */
-exprivate long long ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg)
+exprivate int ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg)
 {
-    long long ret=EXSUCCEED;
+    int ret=EXSUCCEED;
     struct timespec ts;
+    long long time_diff;
 
     ndrx_realtime_get(&ts);
 
-    ret=(long long)ts.tv_sec-(long long)sg->last_refresh;
+    time_diff=(long long)ts.tv_sec-(long long)sg->last_refresh;
 
     /* validate the lock */
-    if (llabs(ret) > ndrx_G_libnstd_cfg.sgrefreshmax)
+    if (llabs(time_diff) > ndrx_G_libnstd_cfg.sgrefreshmax)
     {
         /* Mark system as not locked anymore! */
         ndrx_sg_unlock(sg, NDRX_SG_RSN_EXPIRED);
@@ -331,15 +330,14 @@ exprivate long long ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg)
         NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is inconsistent "
                 "(did not refresh in %d sec, diff %lld sec)! "
                 "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax,
-                ret);
+                time_diff);
 
         userlog("ERROR: Lock for singleton group %d is inconsistent "
                 "(did not refresh in %d sec, diff %lld sec)! "
                 "Marking group as not locked!", singlegrp_no, ndrx_G_libnstd_cfg.sgrefreshmax,
-                ret);
+                time_diff);
 
-        ret=EXFALSE;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 out:
     return ret;
@@ -352,6 +350,7 @@ out:
  *  (will be used if not NULL, instead of the lookup by no)
  * @param reference_file file for which to check future modification date
  * @param flags NDRX_SG_CHK_PID check for pid, default 0
+ * @return EXTRUE/EXFALSE/EXFAIL
  */
 expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
     char *reference_file, long flags)
@@ -365,6 +364,7 @@ expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
 
         if (NULL==sg)
         {
+            NDRX_LOG(log_error, "singleton group %d not found", singlegrp_no);
             ret=EXFAIL;
             goto out;
         }
@@ -373,6 +373,7 @@ expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
     if (!sg->is_locked)
     {
         /* not locked */
+        NDRX_LOG(log_info, "singleton group %d is not locked", singlegrp_no);
         ret=EXFALSE;
         goto out;
     }
@@ -382,7 +383,7 @@ expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
 
     if (EXSUCCEED!=ndrx_sg_chk_timestamp(singlegrp_no, &sg_local))
     {
-        ret=EXFAIL;
+        ret=EXFALSE;
         goto out;
     }
 
