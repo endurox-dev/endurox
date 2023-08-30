@@ -127,13 +127,14 @@ exprivate int call_cpm(char *svcnm, char *cmd, char *tag, char *subsect, char *p
     {
         if (tag[0] && procgrp[0])
         {
-            NDRX_LOG(log_error, "-t and -g cannot be comnbined");
+            NDRX_LOG(log_error, "-t and -g cannot be combined");
             EXFAIL_OUT(ret);
         }
 
-        if (subsect[0] && procgrp[0])
+        /* - is basically empty value for tag */
+        if (subsect[0] && procgrp[0] && subsect[0]!='-')
         {
-            NDRX_LOG(log_error, "-s and -g cannot be comnbined");
+            NDRX_LOG(log_error, "-s and -g cannot be combined");
             EXFAIL_OUT(ret);
         }
 
@@ -260,7 +261,7 @@ out:
 expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret = EXSUCCEED;
-    char tag[CPM_TAG_LEN];
+    char tag[CPM_TAG_LEN]={EXEOS};
     char subsect[CPM_SUBSECT_LEN] = {"-"};
     char procgrp[MAXTIDENT+1] = {EXEOS};
     long twait = 0;
@@ -268,7 +269,7 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
-                                NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
         {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
@@ -307,6 +308,11 @@ expublic int cmd_sc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         {
             fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
             EXFAIL_OUT(ret);
+        } 
+        else if (EXEOS==tag[0] && EXEOS==procgrp[0])
+        {
+            fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+            EXFAIL_OUT(ret);
         }
     }
     
@@ -326,7 +332,7 @@ out:
 expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret = EXSUCCEED;
-    char tag[CPM_TAG_LEN];
+    char tag[CPM_TAG_LEN]={EXEOS};
     char subsect[CPM_SUBSECT_LEN] = {"-"};
     char procgrp[MAXTIDENT+1] = {EXEOS};
     long twait = 0;
@@ -334,7 +340,7 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
-                                NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
         {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
@@ -372,6 +378,12 @@ expublic int cmd_bc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         EXFAIL_OUT(ret);
     }
+    else if (EXEOS==tag[0] && EXEOS==procgrp[0])
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+
     
     ret = call_cpm(NDRX_SVC_CPM, CPM_CMD_BC, tag, subsect, procgrp, twait);
     
@@ -389,7 +401,7 @@ out:
 expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret = EXSUCCEED;
-    char tag[CPM_TAG_LEN];
+    char tag[CPM_TAG_LEN]={EXEOS};
     char subsect[CPM_SUBSECT_LEN] = {"-"};
     char procgrp[MAXTIDENT+1] = {EXEOS};
     long twait = 0;
@@ -398,7 +410,7 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     ncloptmap_t clopt[] =
     {
         {'t', BFLD_STRING, (void *)tag, sizeof(tag), 
-                                NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Tag"},
+                                NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Tag"},
         {'s', BFLD_STRING, (void *)subsect, sizeof(subsect), 
                                 NCLOPT_OPT | NCLOPT_HAVE_VALUE, "Subsection"},
         {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
@@ -432,6 +444,11 @@ expublic int cmd_rc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
         }
     }
     else if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+    else if (EXEOS==tag[0] && EXEOS==procgrp[0])
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         EXFAIL_OUT(ret);

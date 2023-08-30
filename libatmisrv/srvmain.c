@@ -233,7 +233,6 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
         
         for (i=0; NULL!=grparr[i]; i++)
         {
-            
             len = strlen(grparr[i]);
             if (len>XATMI_SERVICE_NAME_LENGTH)
             {

@@ -267,8 +267,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     if (EXFAIL==ndrx_G_exsinglesv_conf.locked_wait)
     {
-        /* giver other node time to detect and shutdown */
-        ndrx_G_exsinglesv_conf.locked_wait = MIN_SGREFRESH_CEOFFICIENT;
+        /* giver other node time to detect and shutdown 
+         * basically if other system has default 30 sec refresh time,
+         * then in those 30 sec they should detect that lock is expired
+         * and shutdown all the processes. So we shall wait twice the time
+         * to take over.
+         */
+        ndrx_G_exsinglesv_conf.locked_wait = MIN_SGREFRESH_CEOFFICIENT*2;
     }
 
     /* Dump the configuration to the log file */
@@ -277,6 +282,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_info, "lockfile_2=[%s]", ndrx_G_exsinglesv_conf.lockfile_2);
     NDRX_LOG(log_info, "exec_on_bootlocked=[%s]", ndrx_G_exsinglesv_conf.exec_on_bootlocked);
     NDRX_LOG(log_info, "exec_on_locked=[%s]", ndrx_G_exsinglesv_conf.exec_on_locked);
+    
+    /* Key timing configuration: */
+    NDRX_LOG(log_info, "ndrx_sgrefresh=%d", ndrx_sgrefresh);
     NDRX_LOG(log_info, "chkinterval=%d", ndrx_G_exsinglesv_conf.chkinterval);
     NDRX_LOG(log_info, "locked_wait=%d", ndrx_G_exsinglesv_conf.locked_wait);
 

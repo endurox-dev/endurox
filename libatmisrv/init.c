@@ -342,7 +342,8 @@ expublic int atmisrv_build_advertise_list(void)
             svn_nm_srch=s_el->svc_aliasof;
             svn_nm_add=s_el->svc_nm;
         }
-        else if (!G_server_conf.advertise_all)
+        /* else if (!G_server_conf.advertise_all) - why? */
+        else
         {
             svn_nm_srch=s_el->svc_nm;
             svn_nm_add=s_el->svc_nm;
