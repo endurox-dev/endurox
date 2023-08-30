@@ -963,8 +963,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 && ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, 
                     p_pm->conf->procgrp_no)
                 /* and group is not locked by snapshoot or current data */
-        &&  (  (NULL!=sg_snapshoot && !sg_snapshoot[p_pm->conf->procgrp_no])
-            || EXTRUE!=ndrx_sg_is_locked(p_pm->conf->procgrp_no, NULL, NDRX_SG_CHK_PID)
+        &&  (  (NULL!=sg_snapshoot && !sg_snapshoot[p_pm->conf->procgrp_no-1])
+            || EXTRUE!=ndrx_sg_is_locked(p_pm->conf->procgrp_no, NULL, 0)
             ))
     {
         NDRX_LOG(log_warn, " %s/%d Not staring as singleton process group %d is not locked",
@@ -976,6 +976,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         if (NDRXD_PM_WAIT!=p_pm->state)
         {
             p_pm->state = NDRXD_PM_WAIT;
+            p_pm->reqstate = NDRXD_PM_RUNNING_OK;
             p_pm->state_changed = SANITY_CNT_START;
         }
         goto progress_out;
@@ -1321,9 +1322,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* if was started, and given process provides singleton group lock,
          * update the snapshoot, as normally lock provider would come first
          */
-        if (p_pm->procgrp_lp_no > 0)
+        if (NULL!=sg_snapshoot && p_pm->procgrp_lp_no > 0)
         {
-            sg_snapshoot[p_pm->procgrp_lp_no] = ndrx_sg_is_locked(p_pm->procgrp_lp_no, NULL, 0);
+            sg_snapshoot[p_pm->procgrp_lp_no-1] = ndrx_sg_is_locked(p_pm->procgrp_lp_no, NULL, 0);
         }
     }
     else
@@ -1496,10 +1497,10 @@ expublic void ndrx_mark_singlegrp_srv_booted(int nrgrps, int *sg_groups)
     int i;
     for (i=0; i<nrgrps; i++)
     {
-        if (sg_groups[i] && !ndrx_sg_bootflag_srv_get(i))
+        if (sg_groups[i] && !ndrx_sg_bootflag_srv_get(i+1))
         {
             NDRX_LOG(log_debug, "Marking singleton group %d as server booted", i);
-            ndrx_sg_bootflag_srv_get(i);
+            ndrx_sg_bootflag_srv_set(i+1);
         }
     }
 }

@@ -295,7 +295,7 @@ expublic void cpm_pidtest(cpm_process_t *c, int *sg_groups)
         && c->stat.procgrp_no>0 
         && ndrx_ndrxconf_procgroups_is_singleton(ndrx_G_procgroups_config, 
                 c->stat.procgrp_no)
-        && !sg_groups[c->stat.procgrp_no] && 
+        && !sg_groups[c->stat.procgrp_no-1] && 
             CLT_STATE_STARTED==c->dyn.cur_state)
     {
         NDRX_LOG(log_error, "Singleton process group %d lock lost for "

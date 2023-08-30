@@ -127,7 +127,7 @@ expublic int cmd_psg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         ndrx_sg_load(&local, p_shm);
 
         /* print only used groups by default */
-        if (!(local.is_locked || (local.flags & NDRX_SG_IN_USE)) && !print_all )
+        if (!( local.is_locked || (local.flags & NDRX_SG_IN_USE)) && !print_all )
         {
             continue;
         }

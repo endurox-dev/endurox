@@ -372,8 +372,6 @@ expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
 
     if (!sg->is_locked)
     {
-        /* not locked */
-        NDRX_LOG(log_info, "singleton group %d is not locked", singlegrp_no);
         ret=EXFALSE;
         goto out;
     }

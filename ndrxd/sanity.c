@@ -674,7 +674,7 @@ exprivate int check_long_startup(void)
                 && PM_RUNNING(p_pm->state) 
                 && ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, 
                     p_pm->conf->procgrp_no)
-                && !sg_groups[p_pm->conf->procgrp_no])
+                && !sg_groups[p_pm->conf->procgrp_no-1])
             {
                 NDRX_LOG(log_error, "proc: %s/%d procgrp no %d lost the lock -> SIGKILL", 
                     p_pm->binary_name, p_pm->srvid, p_pm->conf->procgrp_no);
