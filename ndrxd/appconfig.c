@@ -2169,7 +2169,7 @@ expublic int test_config(int reload, command_call_t * call,
                 && old->procgrp_lp_no > 0 
                 && old->procgrp_lp_no != new->conf->procgrp_lp_no)
         {
-            NDRXD_set_error_fmt(NDRXD_EREBBINARYRUN, "(%s) Lock provider [%s]/%d must be shutdown prior"
+            NDRXD_set_error_fmt(NDRXD_EREBBINARYRUN, "(%s) Lock provider [%s]/%d must be shutdown prior "
                             "changing locking group (from %d to %d)",
                             G_sys_config.config_file_short, 
                             old->binary_name, old->srvid, old->procgrp_lp_no, new->conf->procgrp_lp_no);

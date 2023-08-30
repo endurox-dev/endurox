@@ -325,7 +325,7 @@ exprivate int ndrx_sg_chk_timestamp(int singlegrp_no, ndrx_sg_shm_t *sg)
     if (llabs(time_diff) > ndrx_G_libnstd_cfg.sgrefreshmax)
     {
         /* Mark system as not locked anymore! */
-        ndrx_sg_unlock(sg, NDRX_SG_RSN_EXPIRED);
+        ndrx_sg_unlock(NDRX_SG_GET_PTR(singlegrp_no), NDRX_SG_RSN_EXPIRED);
 
         NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is inconsistent "
                 "(did not refresh in %d sec, diff %lld sec)! "
