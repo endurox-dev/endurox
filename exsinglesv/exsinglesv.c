@@ -1,5 +1,8 @@
 /**
  * @brief Singleton group lock provider
+ *   At normal start it tries to lock immeditaly (however this gives slight risk
+ *   that if node 2 just lost the lock, cpmsrv/ndrxd would not have enought time
+ *   to kill the processes). 
  *
  * @file exsinglesv.c
  */
@@ -50,11 +53,12 @@
 #include <cconfig.h>
 #include "exsinglesv.h"
 #include <singlegrp.h>
+#include <lcfint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define PROGSECTION "@singlesv"
-#define MIN_SGREFRESH_CEOFFICIENT 3 /**< Minimum devider to use faults */
-#define DEFAULT_LOCKED_WAIT 2 /**< Default wait cycles after lock to report to shm */
+#define PROGSECTION "@exsinglesv"
+#define MIN_SGREFRESH_CEOFFICIENT   3 /**< Minimum devider to use faults */
+#define DEFAULT_CHECK_INTERVAL      5 /**< Default lock refresh interval */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -131,6 +135,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     memset(&ndrx_G_exsinglesv_conf, 0, sizeof(ndrx_G_exsinglesv_conf));
 
+    /* set default: */
+    ndrx_G_exsinglesv_conf.chkinterval = DEFAULT_CHECK_INTERVAL;
+    ndrx_G_exsinglesv_conf.locked_wait = EXFAIL;
+
     if (EXSUCCEED!=ndrx_cconfig_load_sections(&cfg, sections))
     {
         NDRX_LOG(log_error, "Failed to load configuration");
@@ -143,9 +151,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to load configuration section [%s]", PROGSECTION);
         EXFAIL_OUT(ret);
     }
-
-    /* setup some defaults */
-    ndrx_G_exsinglesv_conf.locked_wait=DEFAULT_LOCKED_WAIT;
 
     /* Iterate over params */
     EXHASH_ITER(hh, params, el, elt)
@@ -241,26 +246,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
-    p = getenv(CONF_NDRX_SGREFRESH);
-    if (NULL==p || (ndrx_sgrefresh=atoi(p))<=0)
-    {
-        NDRX_LOG(log_error, "Environment variable [%s] is not set or having invalid value, "
-            "expecting >0", CONF_NDRX_SGREFRESH);
-        userlog("Environment variable [%s] is not set or having invalid value, "
-            "expecting >0", CONF_NDRX_SGREFRESH);
-        EXFAIL_OUT(ret);
-    }
-    if (0>=ndrx_G_exsinglesv_conf.chkinterval)
-    {
-        /* 
-         * get default from NDRX_SGREFRESH
-         */
-        char *p = getenv(CONF_NDRX_SGREFRESH);
+    ndrx_sgrefresh = ndrx_G_libnstd_cfg.sgrefreshmax;
 
-        if (NULL!=p)
-        {
-            ndrx_G_exsinglesv_conf.chkinterval = atoi(p)/MIN_SGREFRESH_CEOFFICIENT;
-        }
+    if (0>=ndrx_G_exsinglesv_conf.chkinterval)
+    {        
+        ndrx_G_exsinglesv_conf.chkinterval = ndrx_sgrefresh/MIN_SGREFRESH_CEOFFICIENT;
 
         /* generate error */
         if (ndrx_G_exsinglesv_conf.chkinterval<=0)
@@ -275,6 +265,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
 
+    if (EXFAIL==ndrx_G_exsinglesv_conf.locked_wait)
+    {
+        /* giver other node time to detect and shutdown */
+        ndrx_G_exsinglesv_conf.locked_wait = ndrx_G_exsinglesv_conf.chkinterval*MIN_SGREFRESH_CEOFFICIENT;
+    }
+
     /* Dump the configuration to the log file */
     NDRX_LOG(log_info, "procgrp_lp_no=%d", ndrx_G_exsinglesv_conf.procgrp_lp_no);
     NDRX_LOG(log_info, "lockfile_1=[%s]", ndrx_G_exsinglesv_conf.lockfile_1);
@@ -282,15 +278,17 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_info, "exec_on_bootlocked=[%s]", ndrx_G_exsinglesv_conf.exec_on_bootlocked);
     NDRX_LOG(log_info, "exec_on_locked=[%s]", ndrx_G_exsinglesv_conf.exec_on_locked);
     NDRX_LOG(log_info, "chkinterval=%d", ndrx_G_exsinglesv_conf.chkinterval);
+    NDRX_LOG(log_info, "locked_wait=%d", ndrx_G_exsinglesv_conf.locked_wait);
 
-    if (ndrx_G_exsinglesv_conf.chkinterval*MIN_SGREFRESH_CEOFFICIENT>ndrx_sgrefresh)
+    /* Validate check interval: */
+    if (ndrx_G_exsinglesv_conf.chkinterval*MIN_SGREFRESH_CEOFFICIENT > ndrx_sgrefresh)
     {
         NDRX_LOG(log_warn, "WARNING: `%s' (%d) shall be at least %d times "
-                "bigger than 'chkinterval' (%d)"
+                "bigger than 'chkinterval' (%d)",
                 CONF_NDRX_SGREFRESH, ndrx_sgrefresh, MIN_SGREFRESH_CEOFFICIENT,
                 ndrx_G_exsinglesv_conf.chkinterval);
         userlog("WARNING: `%s' (%d) shall be at least %d times "
-                "bigger than 'chkinterval' (%d)"
+                "bigger than 'chkinterval' (%d)",
                 CONF_NDRX_SGREFRESH, ndrx_sgrefresh, MIN_SGREFRESH_CEOFFICIENT,
                 ndrx_G_exsinglesv_conf.chkinterval);
     }
@@ -304,8 +302,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                         tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
-
-    /* TODO: report flags and singlegrp to the ndrxd */
 
     ndrx_G_exsinglesv_conf.first_boot = EXTRUE;
     /* perform first check
@@ -322,6 +318,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     tpext_configprocgrp_lp (ndrx_G_exsinglesv_conf.procgrp_lp_no);
 
 out:
+
+    if (NULL!=params)
+    {
+        ndrx_keyval_hash_free(params);
+    }
 
     if (NULL!=cfg)
     {

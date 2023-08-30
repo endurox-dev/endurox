@@ -168,7 +168,7 @@ exprivate char *decode_flags(command_reply_ppm_t * ppm_info)
     /* This is lock provider... */
     if (ppm_info->flags & SRV_KEY_FLAGS_PROCGRPLP)
     {
-        strcat(buf, "l");
+        strcat(buf, "L");
     }
     
     return buf;

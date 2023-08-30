@@ -86,12 +86,14 @@ exprivate ndrx_exsinglesv_filelock_t M_locks[MAX_LOCKS] = {
 expublic int ndrx_exsinglesv_file_lock(int lock_no, char *lockfile)
 {
     int ret = EXSUCCEED;
-      struct flock lck = {
-        .l_whence = SEEK_SET,
-        .l_start = 0,
-        .l_len = 1,
-        lck.l_type = F_WRLCK
-    };
+    struct flock lck;
+    
+    memset(&lck, 0, sizeof(lck));
+
+    lck.l_whence = SEEK_SET;
+    lck.l_start = 0;
+    lck.l_len = 1;
+    lck.l_type = F_WRLCK;
 
     NDRX_LOG(log_debug, "Trying to locking file (%d) [%s]", lock_no, lockfile);
 
