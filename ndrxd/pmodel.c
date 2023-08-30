@@ -849,7 +849,7 @@ exprivate int wait_for_status(pm_node_t *p_pm, long *p_processes_started, int *d
     int ret = EXSUCCEED;
     ndrx_stopwatch_t timer;
     int finished = EXFALSE;
-    
+
     /* this is parent for child - sleep some seconds, then check for PID... */
     /* TODO: Replace sleep with wait call from service - wait for message? */
     /*usleep(250000);  250 milli seconds */
@@ -979,6 +979,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             p_pm->state_changed = SANITY_CNT_START;
         }
         goto progress_out;
+    }
+    else
+    {
+        p_pm->state = NDRXD_PM_STARTING;
     }
 
     p_pm->state_changed = SANITY_CNT_START;
@@ -1515,17 +1519,6 @@ expublic int app_startup(command_startstop_t *call,
     int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
 
-    if (EXEOS!=call->procgrp[0])
-    {
-        p_procgrp =  ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
-        if (NULL==p_procgrp)
-        {
-            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
-            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
-            EXFAIL_OUT(ret);
-        }
-    }
-
     /*
     if (NULL==G_app_config && EXSUCCEED!=load_active_config(&G_app_config,
                 &G_process_model, &G_process_model_hash, &G_process_model_pid_hash))
@@ -1538,6 +1531,17 @@ expublic int app_startup(command_startstop_t *call,
 
     /* OK, now loop through the stuff */
     G_sys_config.stat_flags |= NDRXD_STATE_DOMSTART;
+
+    if (EXEOS!=call->procgrp[0])
+    {
+        p_procgrp =  ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
+        if (NULL==p_procgrp)
+        {
+            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
+            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
+            EXFAIL_OUT(ret);
+        }
+    }
 
     if (EXFAIL!=call->srvid)
     {
@@ -1594,7 +1598,6 @@ expublic int app_startup(command_startstop_t *call,
                       (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0])
                     )) /* or If full shutdown requested */
             {
-
                 start_process(call, p_pm, p_startup_progress, 
                         p_processes_started, EXFALSE, &abort, sg_groups);
                 
@@ -1638,6 +1641,14 @@ expublic int app_shutdown(command_startstop_t *call,
 
     if (EXEOS!=call->procgrp[0])
     {
+        if (NULL==G_app_config)
+        {
+            NDRX_LOG(log_error, "Configuration not loaded!");
+            NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "Configuration not loaded!");
+            ret=EXFAIL;
+            goto out;
+        }
+
         p_procgrp =  ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
         if (NULL==p_procgrp)
         {
@@ -1751,8 +1762,8 @@ expublic int app_sreload(command_startstop_t *call,
     
     if (NULL==G_app_config)
     {
-        NDRX_LOG(log_error, "No configuration loaded!");
-        NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "No configuration loaded!");
+        NDRX_LOG(log_error, "Configuration not loaded!");
+        NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "Configuration not loaded!");
         ret=EXFAIL;
         goto out;
     }

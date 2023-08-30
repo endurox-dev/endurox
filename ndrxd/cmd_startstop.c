@@ -73,8 +73,8 @@ expublic void reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *
     pm_info->state = pm->state;
     pm_info->pid = pm->pid;
 
-    NDRX_LOG(log_debug, "magic: %ld, pid: %d",
-                            pm_info->rply.magic, pm_info->pid);
+    NDRX_LOG(log_debug, "magic: %ld, pid: %d, state: %ld",
+                            pm_info->rply.magic, pm_info->pid, pm_info->state);
 }
 
 /**

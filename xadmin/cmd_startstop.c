@@ -391,7 +391,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL!=srvid || EXEOS!=srvnm[0])
+    if (EXFAIL!=srvid || EXEOS!=srvnm[0] || EXEOS!=procgrp[0])
     {
         keep_running_ndrxd = EXTRUE;
     }
