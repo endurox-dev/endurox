@@ -114,27 +114,24 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
         }
         else if (0==strcmp((char *)attr->name, "grpno"))
         {
-            /* group id which we configure */
-            if (is_defaults)
-            {
-                snprintf(err->error_msg, sizeof(err->error_msg),
-                    "(%s) `grpno' not expected <defaults> near line %d", 
-                    config_file_short, cur->line);
-                err->error_code = NDRXD_ECFGINVLD;
-                NDRX_LOG(log_error, "%s", err->error_msg);
-                xmlFree(p);
-                EXFAIL_OUT(ret);
-            }
-            /* check is range valid...  */
             p_grp->grpno = atoi(p);
             /* check that grpno is in range (the upper range is singleton groups) */
             if (!ndrx_sg_is_valid(p_grp->grpno))
             {
-                snprintf(err->error_msg, sizeof(err->error_msg), 
-                    "(%s) Invalid `grpno' %d (valid values 1..%d) in <procgroup> "
-                    "section near line %d", 
-                    config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.sgmax, cur->line);
-                err->error_code = NDRXD_ECFGINVLD;
+                if (ndrx_G_libnstd_cfg.sgmax > 0)
+                {
+                    snprintf(err->error_msg, sizeof(err->error_msg), 
+                        "(%s) Invalid `grpno' %d (valid values 1..%d) in <procgroup> "
+                        "section near line %d", 
+                        config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.sgmax, cur->line);
+                }
+                else
+                {
+                    snprintf(err->error_msg, sizeof(err->error_msg), 
+                        "(%s) Process groups are disabled near line %d", 
+                        config_file_short, ndrx_G_libnstd_cfg.sgmax, cur->line);
+                }
+                err->error_code = NDRXD_EINVAL;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
@@ -160,7 +157,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                         config_file_short, p,
                         NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
                         NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, cur->line);
-                err->error_code = NDRXD_ECFGINVLD;
+                err->error_code = NDRXD_EINVAL;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
@@ -186,7 +183,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                         config_file_short, p,
                         NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
                         NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, cur->line);
-                err->error_code = NDRXD_ECFGINVLD;
+                err->error_code = NDRXD_EINVAL;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
@@ -227,7 +224,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             snprintf(err->error_msg, sizeof(err->error_msg), 
                 "(%s) `name' %s is duplicate in <procgroup> section near line %d", 
                 config_file_short, p_grp->grpname, cur->line);
-            err->error_code = NDRXD_ECFGINVLD;
+            err->error_code = NDRXD_EINVAL;
             NDRX_LOG(log_error, "%s", err->error_msg);
             EXFAIL_OUT(ret);
         }
@@ -238,7 +235,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             snprintf(err->error_msg, sizeof(err->error_msg), 
                 "(%s) `grpno' %d is duplicate in <procgroup> section near line %d", 
                 config_file_short, p_grp->grpno, cur->line);
-            err->error_code = NDRXD_ECFGINVLD;
+            err->error_code = NDRXD_EINVAL;
             NDRX_LOG(log_error, "%s", err->error_msg);
             EXFAIL_OUT(ret);
         }
@@ -422,8 +419,6 @@ expublic void ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle
             {
                 flags |= NDRX_SG_NO_ORDER;
             }
-            
-            ndrx_sg_flags_set(i+1, flags);
         }
         ndrx_sg_flags_set(i+1, flags);
     }

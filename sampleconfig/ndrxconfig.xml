@@ -34,7 +34,7 @@
 		
 	</appconfig>
 	<procgroups>
-	        <procgroup grpno="1" name="GRP1" singleton="N" />
+	        <procgroup noorder="Y" grpno="1" name="GRP1" singleton="N" />
 	</procgroups>
 	<defaults>
 		<min>1</min>
