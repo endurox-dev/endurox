@@ -160,6 +160,7 @@ add_subdirectory (test098_svqhkeep)
 add_subdirectory (test099_callbuflen)
 add_subdirectory (test100_svstdout)
 add_subdirectory (test101_dupsrv)
+add_subdirectory (test102_procgrp)
 
 ################################################################################
 # Master test case drivere

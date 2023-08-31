@@ -572,6 +572,10 @@ exprivate int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
             NDRX_LOG(log_debug, "Client process [%s], pid %d terminated normally", 
                     process, pid);
             prev_stat = EXFALSE;
+#ifdef EX_USE_EMQ
+            /* unlink anyway.... (on MacOS might be broken Q) */
+            unlink_dead_queue(qname);
+#endif
         }
         /* Remove any conv queues... */
     }
