@@ -144,7 +144,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             {
                 p_grp->flags|=NDRX_PG_NOORDER;
             } /* n/N */
-            else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE1==*p)
+            else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE2==*p)
             {
                 p_grp->flags&=~NDRX_PG_NOORDER;
             }
@@ -170,7 +170,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             {
                 p_grp->flags|=NDRX_PG_SINGLETON;
             } /* n/N */
-            else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE1==*p)
+            else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE2==*p)
             {
                 p_grp->flags&=~NDRX_PG_SINGLETON;
             }

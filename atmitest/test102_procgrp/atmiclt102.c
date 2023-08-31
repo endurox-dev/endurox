@@ -36,16 +36,8 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
-
-#include <atmi.h>
-#include <ubf.h>
-#include <ndebug.h>
-#include <test.fd.h>
-#include <ndrstandard.h>
-#include <nstopwatch.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <nstdutil.h>
+
 #include "test102.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -61,30 +53,9 @@
 int main(int argc, char** argv)
 {
 
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    long rsplen;
-    int i;
-    int ret=EXSUCCEED;
-    
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
-    {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
+    sleep(9999);
 
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-    {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-out:
-    tpterm();
-    fprintf(stderr, "Exit with %d\n", ret);
-
-    return ret;
+    return 0;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
