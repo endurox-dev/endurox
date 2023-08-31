@@ -716,7 +716,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (NULL==p_grp)
             {
                 NDRX_LOG(log_error, "Failed to resolve default procgrp: [%s]", p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                NDRXD_set_error_fmt(NDRXD_ENOENT, "(%s) Failed to resolve procgrp: [%s] "
                         "near line %d", 
                         G_sys_config.config_file_short, p,
                         (int)cur->line);
@@ -740,7 +740,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (NULL==p_grp)
             {
                 NDRX_LOG(log_error, "Failed to resolve default procgrp_lp: [%s]", p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp_lp: [%s] "
+                NDRXD_set_error_fmt(NDRXD_ENOENT, "(%s) Failed to resolve procgrp_lp: [%s] "
                         "near line %d", 
                         G_sys_config.config_file_short, p,
                         (int)cur->line);
@@ -1483,7 +1483,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (NULL==p_grp)
             {
                 NDRX_LOG(log_error, "Failed to resolve procgrp: [%s]", p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                NDRXD_set_error_fmt(NDRXD_ENOENT, "(%s) Failed to resolve procgrp: [%s] "
                         "at srvid=%d near line %d", 
                         G_sys_config.config_file_short, p, p_srvnode->srvid,
                         (int)cur->line);
@@ -1507,7 +1507,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (NULL==p_grp)
             {
                 NDRX_LOG(log_error, "Failed to resolve procgrp_lp: [%s]", p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp_lp: [%s] "
+                NDRXD_set_error_fmt(NDRXD_ENOENT, "(%s) Failed to resolve procgrp_lp: [%s] "
                         "at srvid=%d near line %d", 
                         G_sys_config.config_file_short, p, p_srvnode->srvid,
                         (int)cur->line);
@@ -1735,7 +1735,7 @@ exprivate int parse_client_exec(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_error, "(%s) Invalid `procgrp' attribute value [%s] "
                     "for <exec> section near line %d: group not found", 
                     G_sys_config.config_file_short, p, cur->line);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid `procgrp' attribute value [%s] "
+                NDRXD_set_error_fmt(NDRXD_ENOENT, "(%s) Invalid `procgrp' attribute value [%s] "
                     "for <exec> section near line %d: group not found", 
                     G_sys_config.config_file_short, p, cur->line);
                 xmlFree(p);
@@ -1774,7 +1774,7 @@ exprivate int parse_client(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_error, "(%s) Invalid `procgrp' attribute value [%s] "
                     "for <client> section near line %d: group not found", 
                     G_sys_config.config_file_short, p, cur->line);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid `procgrp' attribute value [%s] "
+                NDRXD_set_error_fmt(NDRXD_ENOENT, "(%s) Invalid `procgrp' attribute value [%s] "
                     "for <client> section near line %d: group not found", 
                     G_sys_config.config_file_short, p, cur->line);
 

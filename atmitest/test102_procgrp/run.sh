@@ -159,13 +159,200 @@ validate_invalid_config "ndrxconfig-dom1-noorder_inval.xml" "NDRXD_EINVAL" "Inva
 validate_invalid_config "ndrxconfig-dom1-no-name.xml" "NDRXD_ECFGINVLD" "\`name' not set in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-no-id.xml" "NDRXD_ECFGINVLD" "\`grpno' not set in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-lp_missing.xml" "NDRXD_ECFGINVLD" "Singleton process group [OK] does not have lock provider defined"
-validate_invalid_config "ndrxconfig-dom1-inval_procgrp_lp.xml" "NDRXD_EINVAL" "Failed to resolve procgrp_lp"
-validate_invalid_config "ndrxconfig-dom1-inval_procgrp.xml" "NDRXD_EINVAL" "Failed to resolve procgrp"
+validate_invalid_config "ndrxconfig-dom1-inval_procgrp_lp.xml" "NDRXD_ENOENT" "Failed to resolve procgrp_lp"
+validate_invalid_config "ndrxconfig-dom1-inval_procgrp.xml" "NDRXD_ENOENT" "Failed to resolve procgrp"
 validate_invalid_config "ndrxconfig-dom1-defaults-dup_no.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-defaults-dup_name.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-bad-no.xml" "NDRXD_EINVAL" "Invalid \`grpno'"
 
+# TODO: validate invlid client section settings.
 
+# test server group operations:
+export NDRX_CONFIG="ndrxconfig-dom1-procgroups.xml"
+xadmin stop -y
+xadmin start -y
+
+################################################################################
+CMD="xadmin ppm -3"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+# check that 5x atmi.sv102 processs are running
+# shall have in output 
+PATTERN="BINARY   SRVID      PID    SVPID PROCGRPNO PROCGRPLPNO PROCGRPLPNOA
+-------- ----- -------- -------- --------- ----------- ------------
+atmi.sv1[[:space:]]*10[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*28[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*11[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*28[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*12[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*28[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*100[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*101[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*102[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*103[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*104[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
+cpmsrv[[:space:]]*1000[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*0[[:space:]]*0[[:space:]]*0"
+
+if [[ "$OUT" =~ "$PATTERN" ]]; then
+    echo "ppm -3 page invalid"
+    go_out -1
+fi
+
+################################################################################
+CMD="xadmin stop -g OK"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+# check that 5x atmi.sv102 processs are running
+# shall have in output 
+PATTERN="Server executable = atmi.sv102	Id = 12 :	Shutdown succeeded.
+Server executable = atmi.sv102	Id = 11 :	Shutdown succeeded.
+Server executable = atmi.sv102	Id = 10 :	Shutdown succeeded.
+Shutdown finished. 3 processes stopped."
+
+if [[ $OUT != *"$PATTERN"* ]]; then
+    echo "Expected 3x servers to be stopped"
+    go_out -1
+fi
+
+# check that we have 5x servers running
+xadmin ps -a atmi.sv102
+CNT=`xadmin ps -a atmi.sv102 | wc | awk '{print $1}'`
+if [ "$CNT" -ne "5" ]; then
+    echo "Expected 5 servers after group shutdown, got [$CNT]"
+    go_out -1
+fi
+
+################################################################################
+CMD="xadmin start -g OK"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+
+PATTERN="exec atmi.sv102 -k nre38Kff1kz -i 10 -e .*/test102_procgrp/atmisv-dom1.log -r --  :
+	process id=[0-9]+ ... Started.
+exec atmi.sv102 -k nre38Kff1kz -i 11 -e .*/test102_procgrp/atmisv-dom1.log -r --  :
+	process id=[0-9]+ ... Started.
+exec atmi.sv102 -k nre38Kff1kz -i 12 -e .*/test102_procgrp/atmisv-dom1.log -r --  :
+	process id=[0-9]+ ... Started.
+Startup finished. 3 processes started."
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected 3x servers to be started"
+    go_out -1
+fi
+
+# check that we have 8x servers running
+xadmin ps -a atmi.sv102
+CNT=`xadmin ps -a atmi.sv102 | wc | awk '{print $1}'`
+if [ "$CNT" -ne "8" ]; then
+    echo "Expected 8 servers after group shutdown, got [$CNT]"
+    go_out -1
+fi
+
+################################################################################
+CMD="xadmin sreload -g OK"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+
+PATTERN="Server executable = atmi.sv102	Id = 10 :	Shutdown succeeded.
+exec atmi.sv102 -k nre38Kff1kz -i 10 -e .*/test102_procgrp/atmisv-dom1.log -r --  :
+	process id=[0-9]+ ... Started.
+Server executable = atmi.sv102	Id = 11 :	Shutdown succeeded.
+exec atmi.sv102 -k nre38Kff1kz -i 11 -e .*/test102_procgrp/atmisv-dom1.log -r --  :
+	process id=[0-9]+ ... Started.
+Server executable = atmi.sv102	Id = 12 :	Shutdown succeeded.
+exec atmi.sv102 -k nre38Kff1kz -i 12 -e .*/test102_procgrp/atmisv-dom1.log -r --  :
+	process id=[0-9]+ ... Started.
+Reload finished. 3 processes reloaded."
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected 3x servers to be started"
+    go_out -1
+fi
+
+# check that we have 8x servers running
+xadmin ps -a atmi.sv102
+CNT=`xadmin ps -a atmi.sv102 | wc | awk '{print $1}'`
+if [ "$CNT" -ne "8" ]; then
+    echo "Expected 8 servers after group shutdown, got [$CNT]"
+    go_out -1
+fi
+
+################################################################################
+CMD="xadmin stop -g OK -s JJJ"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+
+PATTERN="-i, -s and -g cannot be combined!"
+
+if [[ "$OUT" != *"$PATTERN"* ]]; then
+    echo "Pattern [$PATTERN] not found in output"
+    go_out -1
+fi
+
+################################################################################
+CMD="xadmin stop -g OK -i 500"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+
+PATTERN="-i, -s and -g cannot be combined!"
+
+if [[ "$OUT" != *"$PATTERN"* ]]; then
+    echo "Pattern [$PATTERN] not found in output"
+    go_out -1
+fi
+
+################################################################################
+CMD="xadmin stop -g KK"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+
+PATTERN="NDRXD_ENOENT.*Process group \[KK\] is not defined"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "pattern [$PATTERN] not found in output"
+    go_out -1
+fi
+
+xadmin sc -g OK
+xadmin bc -g OK
+xadmin rc -g OK
+xadmin pc
+
+echo "grp OK2"
+
+xadmin stop -g OK2
+xadmin start -g OK2
+xadmin sreload -g OK2
+
+xadmin sc -g OK2
+xadmin bc -g OK2
+xadmin rc -g OK2
+xadmin pc
 
 #xadmin down -y
 #xadmin start -y || go_out 1
