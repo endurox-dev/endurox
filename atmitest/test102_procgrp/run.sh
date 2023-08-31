@@ -111,6 +111,29 @@ function validate_invalid_config {
     
 }
 
+#
+# Check ndrxconfig.xml for errors
+#
+function validate_invalid_config_reload {
+
+    code=$1
+    message=$2
+    
+    xadmin reload
+    OUT=`xadmin reload 2>&1`
+    
+    if [[ $OUT != *"$code"* ]]; then
+        echo "Missing error code [$code] in ldcf output for $cfg_file"
+        go_out -1
+    fi
+    
+    if [[ $OUT != *"$message"* ]]; then
+        echo "Missing message code [$message] in ldcf output for $cfg_file"
+        go_out -1
+    fi
+    
+}
+
 rm *.log 2>/dev/null
 # Any bridges that are live must be killed!
 #xadmin killall tpbridge
@@ -118,8 +141,31 @@ rm *.log 2>/dev/null
 set_dom1;
 
 # grpno outside 1..64 range:
+
+
+# Running LP changed group...
+# reload test:
+export NDRX_CCONFIG="$TESTDIR"
+export NDRX_CONFIG="ndrxconfig-dom1-lp_tmp.xml.tmp"
+cp ndrxconfig-dom1-lp_ok.xml ndrxconfig-dom1-lp_tmp.xml.tmp
+xadmin start -y
+cp ndrxconfig-dom1-lp_changed.xml ndrxconfig-dom1-lp_tmp.xml.tmp
+validate_invalid_config_reload "NDRXD_EREBBINARYRUN" "Lock provider [exsinglesv]/10 must be shutdown prior changing locking group (from 12 to 13)"
+
+# load config tests:
+validate_invalid_config "ndrxconfig-dom1-dup_lp.xml" "NDRXD_ECFGINVLD" "Lock provider [exsinglesv]/11 duplicate for process group [OK]. Lock already provided by srvid 10"
+validate_invalid_config "ndrxconfig-dom1-singlegrp_inval1.xml" "NDRXD_EINVAL" "Invalid \`singleton' setting [X] in <procgroup>"
+validate_invalid_config "ndrxconfig-dom1-noorder_inval.xml" "NDRXD_EINVAL" "Invalid \`noorder' setting [X] in <procgroup>"
+validate_invalid_config "ndrxconfig-dom1-no-name.xml" "NDRXD_ECFGINVLD" "\`name' not set in <procgroup> section"
+validate_invalid_config "ndrxconfig-dom1-no-id.xml" "NDRXD_ECFGINVLD" "\`grpno' not set in <procgroup> section"
+validate_invalid_config "ndrxconfig-dom1-lp_missing.xml" "NDRXD_ECFGINVLD" "Singleton process group [OK] does not have lock provider defined"
+validate_invalid_config "ndrxconfig-dom1-inval_procgrp_lp.xml" "NDRXD_EINVAL" "Failed to resolve procgrp_lp"
+validate_invalid_config "ndrxconfig-dom1-inval_procgrp.xml" "NDRXD_EINVAL" "Failed to resolve procgrp"
+validate_invalid_config "ndrxconfig-dom1-defaults-dup_no.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-defaults-dup_name.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-bad-no.xml" "NDRXD_EINVAL" "Invalid \`grpno'"
+
+
 
 #xadmin down -y
 #xadmin start -y || go_out 1

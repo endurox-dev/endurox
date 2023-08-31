@@ -251,7 +251,6 @@ exprivate int validate_process_groups(config_t *app_config, pm_node_t *process_m
         if (p_pm->conf->procgrp_lp_no > 0 && 
             0!=procgrplps[p_pm->conf->procgrp_lp_no-1])
         {
-
             NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Lock provider "
                         "[%s]/%d duplicate for process group [%s]. "
                         "Lock already provided by srvid %d",
@@ -741,7 +740,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (NULL==p_grp)
             {
                 NDRX_LOG(log_error, "Failed to resolve default procgrp_lp: [%s]", p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp_lp: [%s] "
                         "near line %d", 
                         G_sys_config.config_file_short, p,
                         (int)cur->line);
@@ -1508,7 +1507,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (NULL==p_grp)
             {
                 NDRX_LOG(log_error, "Failed to resolve procgrp_lp: [%s]", p);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp: [%s] "
+                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to resolve procgrp_lp: [%s] "
                         "at srvid=%d near line %d", 
                         G_sys_config.config_file_short, p, p_srvnode->srvid,
                         (int)cur->line);
