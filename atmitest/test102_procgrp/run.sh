@@ -338,36 +338,117 @@ if ! [[ "$OUT" =~ $PATTERN ]]; then
     go_out -1
 fi
 
-xadmin sc -g OK
-xadmin bc -g OK
-xadmin rc -g OK
-xadmin pc
+# TODO: add tests for cpmsrv:
+################################################################################
+CMD="xadmin sc -g OK"
+echo "$CMD"
+################################################################################
 
-echo "grp OK2"
+OUT=`$CMD 2>&1`
+echo "got output [$OUT]"
 
-xadmin stop -g OK2
-xadmin start -g OK2
-xadmin sreload -g OK2
+PATTERN="Client process CLT1/- stopped
+Client process CLT2/- stopped
+Client process CLT3/- stopped
+3 client(s) stopped."
 
-xadmin sc -g OK2
-xadmin bc -g OK2
-xadmin rc -g OK2
-xadmin pc
+if ! [[ "$OUT" != *"$PATTER"N* ]]; then
+    echo "pattern [$PATTERN] not found in output"
+    go_out -1
+fi
 
-#xadmin down -y
-#xadmin start -y || go_out 1
+# check that we have 4x clients running
+xadmin ps -a atmiclt102
+CNT=`xadmin ps -a atmiclt102 | wc | awk '{print $1}'`
+if [ "$CNT" -ne "4" ]; then
+    echo "Expected 4x atmiclt102, got [$CNT]"
+    go_out -1
+fi
 
-# Have some wait for ndrxd goes in service - wait for connection establishment.
-#sleep 30
-#RET=0
 
-#xadmin psc
-#xadmin ppm
-#echo "Running off client"
+################################################################################
+CMD="xadmin bc -g OK"
+echo "$CMD"
+################################################################################
 
-#set_dom1;
-#(./atmiclt102 2>&1) > ./atmiclt-dom1.log
-#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt102 2>&1) > ./atmiclt-dom1.log
+OUT=`$CMD 2>&1`
+echo "got output [$OUT]"
+
+PATTERN="Client process CLT1/- stopped
+Client process CLT2/- stopped
+Client process CLT3/- stopped
+3 client(s) stopped."
+
+# let clients to boot..
+sleep 7
+
+if ! [[ "$OUT" != *"$PATTER"N* ]]; then
+    echo "pattern [$PATTERN] not found in output"
+    go_out -1
+fi
+
+# check that we have 7x clients running
+xadmin ps -a atmiclt102
+CNT=`xadmin ps -a atmiclt102 | wc | awk '{print $1}'`
+if [ "$CNT" -ne "7" ]; then
+    echo "Expected 7x atmiclt102, got [$CNT]"
+    go_out -1
+fi
+
+################################################################################
+CMD="xadmin bc -g OK"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+echo "got output [$OUT]"
+
+PATTERN="Client process CLT1/- stopped
+Client process CLT1/- marked for start
+Client process CLT2/- stopped
+Client process CLT2/- marked for start
+Client process CLT3/- stopped
+Client process CLT3/- marked for start
+3 client(s) restarted."
+
+# let clients to boot..
+sleep 7
+
+if ! [[ "$OUT" != *"$PATTER"N* ]]; then
+    echo "pattern [$PATTERN] not found in output"
+    go_out -1
+fi
+
+# check that we have 7x clients running
+xadmin ps -a atmiclt102
+CNT=`xadmin ps -a atmiclt102 | wc | awk '{print $1}'`
+if [ "$CNT" -ne "7" ]; then
+    echo "Expected 7x atmiclt102, got [$CNT]"
+    go_out -1
+fi
+
+
+################################################################################
+CMD="xadmin pc"
+echo "$CMD"
+################################################################################
+
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+
+PATTERN="CLT1/- - running pid.*
+CLT2/- - running pid.*
+CLT3/- - running pid.*
+CLT4/- - running pid.*
+CLT5/- - running pid.*
+CLT6/- - running pid.*
+CLT7/- - running pid.*"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected 3x servers to be started"
+    go_out -1
+fi
 
 RET=$?
 
@@ -381,9 +462,6 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
     RET=-2
 fi
 
-
 go_out $RET
-
-
 # vim: set ts=4 sw=4 et smartindent:
 
