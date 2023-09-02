@@ -118,12 +118,12 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             /* check that grpno is in range (the upper range is singleton groups) */
             if (!ndrx_sg_is_valid(p_grp->grpno))
             {
-                if (ndrx_G_libnstd_cfg.sgmax > 0)
+                if (ndrx_G_libnstd_cfg.pgmax > 0)
                 {
                     snprintf(err->error_msg, sizeof(err->error_msg), 
                         "(%s) Invalid `grpno' %d (valid values 1..%d) in <procgroup> "
                         "section near line %d", 
-                        config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.sgmax, cur->line);
+                        config_file_short, p_grp->grpno, ndrx_G_libnstd_cfg.pgmax, cur->line);
                 }
                 else
                 {
@@ -278,7 +278,7 @@ expublic int ndrx_ndrxconf_procgroups_parse(ndrx_procgroups_t **config,
     memset(&default_opt, 0, sizeof(default_opt));
 
     *config = NDRX_CALLOC(1, sizeof(ndrx_procgroups_t) + 
-            sizeof(ndrx_procgroup_t) * (ndrx_G_libnstd_cfg.sgmax));
+            sizeof(ndrx_procgroup_t) * (ndrx_G_libnstd_cfg.pgmax));
 
     for (; cur ; cur=cur->next)
     {
@@ -374,7 +374,7 @@ out:
 expublic ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolveno(ndrx_procgroups_t *handle, int procgrpno)
 {
     ndrx_procgroup_t *ret;
-    if (procgrpno<1 || procgrpno>ndrx_G_libnstd_cfg.sgmax)
+    if (procgrpno<1 || procgrpno>ndrx_G_libnstd_cfg.pgmax)
     {
         return NULL;
     }
@@ -406,7 +406,7 @@ expublic void ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle
         return;
     }
 
-    for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
+    for (i=0; i<ndrx_G_libnstd_cfg.pgmax; i++)
     {
         ndrx_procgroup_t *p_grp = &handle->groups_by_no[i];
         flags=0;

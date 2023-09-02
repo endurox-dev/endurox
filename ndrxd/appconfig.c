@@ -241,9 +241,9 @@ exprivate int validate_process_groups(config_t *app_config, pm_node_t *process_m
     int ret=EXSUCCEED;
     int i;
     pm_node_t *p_pm;
-    int procgrplps[ndrx_G_libnstd_cfg.sgmax];
+    int procgrplps[ndrx_G_libnstd_cfg.pgmax];
 
-    memset(procgrplps, 0, sizeof(int)*ndrx_G_libnstd_cfg.sgmax);
+    memset(procgrplps, 0, sizeof(int)*ndrx_G_libnstd_cfg.pgmax);
 
     DL_FOREACH(process_model, p_pm)
     {
@@ -277,7 +277,7 @@ exprivate int validate_process_groups(config_t *app_config, pm_node_t *process_m
     if (NULL!=app_config->procgroups)
     {
         ndrx_procgroup_t *p_grp;
-        for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
+        for (i=0; i<ndrx_G_libnstd_cfg.pgmax; i++)
         {
             p_grp = &app_config->procgroups->groups_by_no[i];
 
