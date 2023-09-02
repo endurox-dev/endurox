@@ -79,7 +79,6 @@
         </server>
     </servers>
     <clients>
-        <!-- batch mode/% tests -->
         <client cmdline="atmiclt102" autostart="Y" procgrp="OK">
             <exec tag="CLT1" />
             <exec tag="CLT2" />
@@ -89,7 +88,7 @@
             <exec tag="CLT4" />
             <exec tag="CLT5" />
             <exec tag="CLT6" />
-            <exec tag="CLT6" />
+            <exec tag="CLT7" />
         </client>
     </clients>
 </endurox>
