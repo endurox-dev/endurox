@@ -120,7 +120,7 @@ expublic int cmd_psg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     fprintf(stderr, "---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----\n");
 
     /* process groups: */
-    for (i=1; i<ndrx_G_libnstd_cfg.sgmax; i++)
+    for (i=1; i<ndrx_G_libnstd_cfg.pgmax; i++)
     {
         ndrx_sg_shm_t *p_shm=ndrx_sg_get(i);
         ndrx_sg_shm_t local;

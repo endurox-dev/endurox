@@ -57,7 +57,7 @@
 #define MAX_LCFREADERS_DFLT     1000    /**< Lcf readers max this is priority */
 #define MAX_LCFSTARTMAX_DFLT    60      /**< Apply 60 seconds old commands */
 #define SGMREFRESHMAX_DFLT      30      /**< Default maximum lock refresh t */
-#define SGMAX_DFLT              64      /**< Maximum number of singleton groups */
+#define PGMAX_DFLT              64      /**< Maximum number of singleton groups */
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -279,17 +279,17 @@ expublic int ndrx_lcf_init(void)
             ndrx_G_libnstd_cfg.qprefix);
 
     /* Read maximum number of singleton groups */
-    tmp = getenv(CONF_NDRX_SGMAX);
+    tmp = getenv(CONF_NDRX_PGMAX);
     if (NULL==tmp)
     {
-        ndrx_G_libnstd_cfg.sgmax = SGMAX_DFLT;
+        ndrx_G_libnstd_cfg.pgmax = PGMAX_DFLT;
     }
     else
     {
-        ndrx_G_libnstd_cfg.sgmax = atol(tmp);
+        ndrx_G_libnstd_cfg.pgmax = atol(tmp);
     }
-    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_SGMAX,
-            ndrx_G_libnstd_cfg.sgmax);
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_PGMAX,
+            ndrx_G_libnstd_cfg.pgmax);
 
     /* Read the SG refresh time */
     tmp = getenv(CONF_NDRX_SGREFRESH);
@@ -406,7 +406,7 @@ expublic int ndrx_lcf_init(void)
         /* LCF command segment */
         + sizeof(ndrx_lcf_command_t) * ndrx_G_libnstd_cfg.lcfmax 
         /*  Singleton group segment */
-        + sizeof(ndrx_sg_shm_t) * ndrx_G_libnstd_cfg.sgmax;
+        + sizeof(ndrx_sg_shm_t) * ndrx_G_libnstd_cfg.pgmax;
     
     snprintf(M_lcf_shm.path,  sizeof(M_lcf_shm.path), NDRX_SHM_LCF,  ndrx_G_libnstd_cfg.qprefix);
     

@@ -625,7 +625,7 @@ exprivate int check_long_startup(void)
     int delta;
     int cksum_reload_sent = EXFALSE; /* for now single binary only at one cycle */
 
-    int nrgrps = ndrx_G_libnstd_cfg.sgmax;
+    int nrgrps = ndrx_G_libnstd_cfg.pgmax;
     int sg_groups[nrgrps];
 
     ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
@@ -1076,11 +1076,11 @@ exprivate int check_singlegrp(void)
     int ret = EXSUCCEED;
     pm_node_t *p_pm_srvid;
     ndrx_sg_shm_t *p_shm, local;
-    int grp2srvid[ndrx_G_libnstd_cfg.sgmax];
+    int grp2srvid[ndrx_G_libnstd_cfg.pgmax];
 
-    memset(grp2srvid, 0, ndrx_G_libnstd_cfg.sgmax*sizeof(int));
+    memset(grp2srvid, 0, ndrx_G_libnstd_cfg.pgmax*sizeof(int));
 
-    for (i=0; i<ndrx_G_libnstd_cfg.sgmax; i++)
+    for (i=0; i<ndrx_G_libnstd_cfg.pgmax; i++)
     {
         p_shm = ndrx_sg_get(i+1);
 
@@ -1128,9 +1128,9 @@ exprivate int check_singlegrp(void)
     }
 
     /* sort grp2srvid and check are there any duplicates  */
-    qsort(grp2srvid, ndrx_G_libnstd_cfg.sgmax, sizeof(int), cmp_int);
+    qsort(grp2srvid, ndrx_G_libnstd_cfg.pgmax, sizeof(int), cmp_int);
 
-    for (i=0; i<ndrx_G_libnstd_cfg.sgmax-1; i++)
+    for (i=0; i<ndrx_G_libnstd_cfg.pgmax-1; i++)
     {
         if (grp2srvid[i]>0 && grp2srvid[i]==grp2srvid[i+1])
         {

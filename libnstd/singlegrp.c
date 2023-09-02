@@ -1,6 +1,6 @@
 /**
  * @brief Singleton group support routines
- *  Internal library, assumes that group number is pre-valdiated (i.e. >0 && <=sgmax)
+ *  Internal library, assumes that group number is pre-valdiated (i.e. >0 && <=pgmax)
  *
  * @file singlegrp.c
  */
@@ -79,7 +79,7 @@ expublic ndrx_sg_shm_t *ndrx_sg_get(int singlegrp_no)
     ndrx_sg_shm_t *ret = NULL;
 
     /* Check against group number limits */
-    if (singlegrp_no < 0 || singlegrp_no > ndrx_G_libnstd_cfg.sgmax)
+    if (singlegrp_no < 0 || singlegrp_no > ndrx_G_libnstd_cfg.pgmax)
     {
         NDRX_LOG(log_error, "Invalid single group number: %d", singlegrp_no);
         goto out;
@@ -111,7 +111,7 @@ expublic void ndrx_sg_reset(void)
     {
         memset( (char *)ndrx_G_shmcfg->commands 
                     + sizeof(ndrx_G_shmcfg->commands[0])*ndrx_G_libnstd_cfg.lcfmax,
-                    0, sizeof(ndrx_sg_shm_t)*ndrx_G_libnstd_cfg.sgmax);
+                    0, sizeof(ndrx_sg_shm_t)*ndrx_G_libnstd_cfg.pgmax);
     }
 }
 
@@ -501,7 +501,7 @@ expublic int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, long flag
  */
 expublic int ndrx_sg_nrgroups()
 {
-    return ndrx_G_libnstd_cfg.sgmax;
+    return ndrx_G_libnstd_cfg.pgmax;
 }
 
 /**
@@ -519,9 +519,9 @@ expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_
     ndrx_sg_shm_t *p;
 
     /* fix up the output len */
-    if (*lock_status_out_len>ndrx_G_libnstd_cfg.sgmax)
+    if (*lock_status_out_len>ndrx_G_libnstd_cfg.pgmax)
     {
-        *lock_status_out_len = ndrx_G_libnstd_cfg.sgmax;
+        *lock_status_out_len = ndrx_G_libnstd_cfg.pgmax;
     }
 
     for (i=0; i<*lock_status_out_len; i++)
@@ -594,7 +594,7 @@ expublic int ndrx_sg_is_valid(int singlegrp_no)
 {
     int ret = EXTRUE;
 
-    if (singlegrp_no <= 0 || singlegrp_no > ndrx_G_libnstd_cfg.sgmax)
+    if (singlegrp_no <= 0 || singlegrp_no > ndrx_G_libnstd_cfg.pgmax)
     {
         NDRX_LOG(log_error, "Invalid single group number: %d", singlegrp_no);
         ret=EXFALSE;

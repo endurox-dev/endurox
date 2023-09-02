@@ -314,7 +314,7 @@ exprivate int cpm_callback_timer(void)
     cpm_process_t *ct = NULL;
     static int first = EXTRUE;
     static ndrx_stopwatch_t t;
-    int nrgrps = ndrx_G_libnstd_cfg.sgmax;
+    int nrgrps = ndrx_G_libnstd_cfg.pgmax;
     int sg_groups[nrgrps];
     
     if (first)
