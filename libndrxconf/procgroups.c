@@ -128,8 +128,8 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                 else
                 {
                     snprintf(err->error_msg, sizeof(err->error_msg), 
-                        "(%s) Process groups are disabled near line %d", 
-                        config_file_short, ndrx_G_libnstd_cfg.sgmax, cur->line);
+                        "(%s) Process groups are disabled (NDRX_PGMAX=0) near line %d", 
+                        config_file_short, cur->line);
                 }
                 err->error_code = NDRXD_EINVAL;
                 NDRX_LOG(log_error, "%s", err->error_msg);

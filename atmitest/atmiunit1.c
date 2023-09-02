@@ -806,6 +806,13 @@ Ensure(test102_procgrp)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test103_singlegrp)
+{
+    int ret;
+    ret=system_dbg("test103_singlegrp/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -988,6 +995,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test100_svstdout);
     add_test(suite, test101_dupsrv);
     add_test(suite, test102_procgrp);
+    add_test(suite, test103_singlegrp);
     
     return suite;
 }
