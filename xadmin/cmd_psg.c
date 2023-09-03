@@ -80,7 +80,7 @@ exprivate char *decode_flags(unsigned short flags)
 
     if (flags & NDRX_SG_IN_USE)
     {
-        strcat(buf, "I");
+        strcat(buf, "i");
     }
 
     return buf;

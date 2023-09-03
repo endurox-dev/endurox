@@ -1089,8 +1089,10 @@ exprivate int check_singlegrp(void)
             EXFAIL_OUT(ret);
         }
 
-        /* check if the group if group is locked */
-        if (!ndrx_sg_is_locked_int(i+1, p_shm, NULL, 0))
+        /* check if the group if group is locked,
+         * continue with next if not
+         */
+        if (EXTRUE!=ndrx_sg_is_locked_int(i+1, p_shm, NULL, 0))
         {
             continue;
         }

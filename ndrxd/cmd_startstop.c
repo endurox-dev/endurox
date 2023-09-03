@@ -124,7 +124,6 @@ expublic int cmd_start (command_call_t * call, char *data, size_t len, int conte
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
     
-    
     NDRX_LOG(log_warn, "cmd_start returns with status %d", ret);
     
 out:

@@ -69,7 +69,8 @@
             <min>1</min>
             <max>1</max>
             <srvid>50</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -- slow</sysopt>
+            <!-- server waits on boot -->
+            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -- -w20</sysopt>
             <procgrp>OK1</procgrp>
         </server>
         <server name="atmi.sv103">
@@ -89,7 +90,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>9999</srvid>
-            <sysopt>-e ${NDRX_ULOG}/cpmsrv.log -r -- -k3 -i10</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom2.log -r -- -k3 -i2</sysopt>
         </server>
     </servers>
     <clients>

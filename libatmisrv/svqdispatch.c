@@ -1491,17 +1491,13 @@ expublic int sv_wait_for_request(void)
             /* wait for messages or timeout... */
             nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout, &msg_buf, &len);
-        }
-        
-        /* Print stuff if there is no timeout set or there is some value out there */
-        
-        if (nfds || EXFAIL==tout)
-        {
-            NDRX_LOG(log_debug, "Poll says: %d len: %d", nfds, len);
+
+            /* Print stuff if there is no timeout set or there is some value out there */
+            NDRX_LOG(log_debug, "Poll says: %d len: %d tout: %d", nfds, len, tout);
         }
         
         /* If there are zero FDs &  */
-        if (EXFAIL==nfds)
+        if (EXFAIL==nfds && 0!=tout)
         {
             int err = errno;
             ndrx_TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 

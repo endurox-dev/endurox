@@ -48,6 +48,9 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+exprivate int M_wait = 0; /**< service wait time        */
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -79,8 +82,7 @@ void TESTSV (TPSVCINFO *p_svc)
         ret=EXFAIL;
         goto out;
     }
-        
-    
+
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
@@ -95,13 +97,40 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret = EXSUCCEED;
+    int c;
     NDRX_LOG(log_debug, "tpsvrinit called");
+
+        /* Parse command line  */
+    while ((c = getopt(argc, argv, "w:")) != -1)
+    {
+        if (optarg)
+        {
+            NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "got %c", c);
+        }
+
+        switch(c)
+        {
+            case 'w':
+                M_wait = atoi(optarg);
+                break;
+        }
+    }
 
     if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
     {
         NDRX_LOG(log_error, "Failed to initialise TESTSV!");
         EXFAIL_OUT(ret);
     }
+
+    if (M_wait > 0)
+    {
+        sleep(M_wait);
+    }
+
 out:
     return ret;
 }

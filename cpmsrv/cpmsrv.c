@@ -334,8 +334,10 @@ exprivate int cpm_callback_timer(void)
 
     /* Take a group snapshoot
      * Check lock here only once, as spawning is quick (no wait on status...)
+     * if in-order group, check that servers are booted in first place and only then
+     * boot this group of clients.
      */
-    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
+    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, NDRX_SG_SRVBOOTCHK);
 
     /* Mark config as not refreshed */
     EXHASH_ITER(hh, G_clt_config, c, ct)
