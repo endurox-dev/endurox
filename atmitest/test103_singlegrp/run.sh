@@ -111,6 +111,10 @@ set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
 
+################################################################################
+echo ">>> Basic tests of no lock at the boot"
+################################################################################
+#
 set_dom2;
 xadmin down -y
 xadmin start -y || go_out 2
@@ -120,24 +124,127 @@ xadmin ppm
 #echo "Running off client"
 #
 
-xadmin start -i  10
-# TODO: Validate wait status of the processes...
-sleep 5
+# TODO: validate startup (wait on grou plock)
+# validated PPM, "wait" state.
 
+################################################################################
+echo ">>> Basic tests of singleton groups -> group start, check order"
+################################################################################
+
+xadmin psg -a
+xadmin start -i  10
+# Let processes to lock and boot
+sleep 7
+
+CMD="xadmin ppm"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+echo "got output [$OUT]"
+
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'start runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "1" ]; then
+    echo "Expected 1 in start state, got [$CNT]"
+    go_out -1
+fi
+
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'wait  runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "10" ]; then
+    echo "Expected 10 atmi.sv103 processes in wait state, got [$CNT]"
+    go_out -1
+fi
+
+xadmin ps -a atmi.sv103
+CNT=`xadmin ps -a atmi.sv103 -b nZ22K8K7kewKo | wc | awk '{print $1}'`
+if [ "$CNT" -ne "1" ]; then
+    echo "Expected 1 atmi.sv103 running, got [$CNT]"
+    go_out -1
+fi
+
+# Ensure that PSG is locked but server & client are not booted
+CMD="xadmin psg"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+PATTERN="SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
+---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
+   1 Y    N    N     N          10    [0-9]+ exsinglesv             .*   0 i"
+
+echo "got output [$OUT]"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected group to be locked, but not client/servers booted"
+    go_out -1
+fi
+
+CMD="xadmin pc"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+PATTERN="TAG1/SUBSECTION1 - waiting on process group 1 lock.*
+TAG2/SUBSECTION2 - waiting on process group 1 lock.*"
+
+echo "got output [$OUT]"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected to wait on group lock by the clients."
+    go_out -1
+fi
+
+# Server 50 shall be starting, all other shall be still in wait.
+echo ">>> wait 25 for full boot..."
+sleep 25
 xadmin ppm
 
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'runok runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "11" ]; then
+    echo "Expected 11 atmi.sv103 processes in start state, got [$CNT]"
+    go_out -1
+fi
 
+xadmin ps -a atmi.sv103
+CNT=`xadmin ps -a atmi.sv103 -b nZ22K8K7kewKo | wc | awk '{print $1}'`
+if [ "$CNT" -ne "11" ]; then
+    echo "Expected 11 atmi.sv103 running, got [$CNT]"
+    go_out -1
+fi
 
-#set_dom1;
-#(./atmiclt103 2>&1) > ./atmiclt-dom1.log
-#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt103 2>&1) > ./atmiclt-dom1.log
+# Ensure that group is fully booted.
+CMD="xadmin psg"
+echo "$CMD"
+OUT=`$CMD 2>&1`
 
-#
-#
-#
+PATTERN="SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
+---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
+   1 Y    N    Y     Y          10    [0-9]+ exsinglesv             .*   0 i"
 
+echo "got output [$OUT]"
 
-RET=$?
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected group to be locked, but not client/servers booted"
+    go_out -1
+fi
+
+CMD="xadmin pc"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+PATTERN="TAG1/SUBSECTION1 - running pid .*
+TAG2/SUBSECTION2 - running pid .*"
+
+echo "got output [$OUT]"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected TAG1/SUBSECTION1 and TAG2/SUBSECTION2 to be running"
+    go_out -1
+fi
+
+# TODO: Check no-order startup sequence
+# TODO: Check normal startup with immediate lock
+# TODO: Check failover from dom2 -> dom1 (with lock delay)
+# TODO: Check lock broken (locked by some other process) -> shall unlock immediately
+
+RET=0
 
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
@@ -145,13 +252,11 @@ fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-        echo "Test error detected!"
-        RET=-2
+    echo "Test error detected!"
+    RET=-2
 fi
 
-
 go_out $RET
-
 
 # vim: set ts=4 sw=4 et smartindent:
 

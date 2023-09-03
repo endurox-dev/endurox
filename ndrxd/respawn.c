@@ -66,6 +66,11 @@
 /**
  * This will check the list of dead processes and will try to start them up
  * if the wait time have been reached.
+ * 
+ * Forbid running function in restart mode, respawns with wait, can cause
+ * that, and that can break the logic of sequential order startups (required
+ * for singleton group boots at failover).
+ * 
  * @return 
  */
 expublic int do_respawn_check(void)
@@ -76,15 +81,27 @@ expublic int do_respawn_check(void)
     int abort = EXFALSE;
     int nrgrps = ndrx_G_libnstd_cfg.pgmax;
     int sg_groups[nrgrps];
-    
+    static int into_respawn = EXFALSE;
+    int we_run = EXFALSE;
+    int singleton_attempt = EXFALSE;
+
     /* No sanity checks while app config not loaded */
     if (NULL==G_app_config)
         goto out;
-        
+
+    if (into_respawn)
+    {
+        NDRX_LOG(log_info, "do_respawn_check: recursive call, bypass the run!");
+        goto out;
+    }
+
+    we_run=EXTRUE;
+    into_respawn=EXTRUE;
+
     NDRX_LOG(6, "Time for respawning checking...");
 
     /* use snapshoo checks here... */
-    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, NDRX_SG_NOORDER_LCK);
+    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
 
     DL_FOREACH(G_process_model, p_pm)
     {
@@ -106,19 +123,41 @@ expublic int do_respawn_check(void)
                 NDRX_LOG(6, "respawn param is off -> continue with next...");
                 continue;
             }
+
+            if ( NDRXD_PM_WAIT==p_pm->state 
+                && ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, p_pm->conf->procgrp_no)
+                && p_pm->conf->procgrp_no > 0)
+            {
+                singleton_attempt=EXTRUE;
+            }
+
             delta = p_pm->rspstwatch;
-            NDRX_LOG(6, "Respawn delta: %ld", delta);
+            NDRX_LOG(6, "Respawn delta: %ld singleton_attempt: %d", delta, singleton_attempt);
 
             /* Check is it time for startup? */
-            if ( delta > G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step ||
-                    delta > G_app_config->restart_max)
+            if ( delta > G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step 
+                    || delta > G_app_config->restart_max
+                    || singleton_attempt)
             {
                 long processes_started=0;
                 long schedule_next;
+                int no_wait = EXTRUE;
                 NDRX_LOG(log_warn, "Respawning server: srvid: %d,"
-                        " name: [%s], seq try: %d, already not running: %d secs",
-                        p_pm->srvid, p_pm->binary_name, p_pm->exec_seq_try, delta);
-                start_process(NULL, p_pm, NULL, &processes_started, EXTRUE, &abort, sg_groups);
+                        " name: [%s], seq try: %d, already not running: %d secs, singleton_attempt: %d",
+                        p_pm->srvid, p_pm->binary_name, p_pm->exec_seq_try, delta, singleton_attempt);
+
+                /* 
+                 * If process is in group and previous state was "wait", then we shall wait for process response
+                 * (if it is bootable, checked by start_process), to keep the order of booting.
+                 */
+                if ( singleton_attempt
+                    && !(NDRX_SG_NO_ORDER & sg_groups[p_pm->conf->procgrp_no-1]) )
+                {
+                    /* Ordering required, lets wait */
+                    no_wait = EXFALSE;
+                }
+
+                start_process(NULL, p_pm, NULL, &processes_started, no_wait, &abort, sg_groups);
 
                 /***Just for info***/
                 schedule_next = G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step;
@@ -129,12 +168,19 @@ expublic int do_respawn_check(void)
                         schedule_next);
             }
         }
+
     }/*DL_FOREACH*/
 
     /* set the boot flag */
     ndrx_mark_singlegrp_srv_booted(nrgrps, sg_groups);
 
 out:
+
+    /* restore state as runnable.. */
+    if (we_run)
+    {
+        into_respawn=EXFALSE;
+    }
 
     return ret;
 }

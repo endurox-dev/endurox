@@ -395,6 +395,7 @@ expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
          */
         NDRX_LOG(log_debug, "Singleton group %d servers not booted",
             singlegrp_no);
+        ret=EXFALSE;
         goto out;
     }
     /* validate the PID if requested so */
@@ -509,8 +510,10 @@ expublic int ndrx_sg_nrgroups()
  * batch startup processes (so that batch is started with the single status)
  * @param lock_status_out where to put the group statuses
  * @param lock_status_out_len length of the lock_status_out
- * @param flags 0 or (NDRX_SG_NOORDER_LCK -> if ordering not required, assume locked)
+ * @param flags passed to lock status check
  *  additonally may pass NDRX_SG_CHK_PID to check for lock provider pid
+ * @return returns array of single group statuses. May contain 0, if not locked,
+ *   NDRX_SG_NO_ORDER if locked, but no order required, NDRX_SG_IN_USE if locked.
  */
 expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_out_len, long flags)
 {
@@ -524,17 +527,23 @@ expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_
         *lock_status_out_len = ndrx_G_libnstd_cfg.pgmax;
     }
 
+    memset(lock_status_out, 0, sizeof(int)*(*lock_status_out_len));
+
     for (i=0; i<*lock_status_out_len; i++)
     {
         p=ndrx_sg_get(i+1);
 
-        if ( (p->flags & NDRX_SG_NO_ORDER) && (flags & NDRX_SG_NOORDER_LCK))
+        if (EXTRUE==ndrx_sg_is_locked_int(i+1, p, NULL, flags))
         {
-            lock_status_out[i]=EXTRUE;
-        }
-        else
-        {
-            lock_status_out[i]=ndrx_sg_is_locked_int(i+1, p, NULL, flags);
+            if (p->flags & NDRX_SG_NO_ORDER)
+            {
+                lock_status_out[i]=NDRX_SG_NO_ORDER;
+            }
+            else
+            {
+                lock_status_out[i]=NDRX_SG_IN_USE;
+            }
+            NDRX_LOG(log_debug, "Group %d lock flag: 0x%x", i+1, lock_status_out[i]);
         }
     }
 

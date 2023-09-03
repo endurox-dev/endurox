@@ -905,6 +905,7 @@ out:
  * Start single process...
  * TODO: Add SIGCHLD handler here!
  * @param pm
+ * @param no_wait - do not wait for process startup response
  * @param sg_snapshoot - snapshoot of the singleton groups
  * @return SUCCEED/FAIL
  */
@@ -1322,9 +1323,11 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* if was started, and given process provides singleton group lock,
          * update the snapshoot, as normally lock provider would come first
          */
-        if (NULL!=sg_snapshoot && p_pm->procgrp_lp_no > 0)
+        if (NULL!=sg_snapshoot 
+            && p_pm->procgrp_lp_no > 0
+            && EXTRUE==ndrx_sg_is_locked(p_pm->procgrp_lp_no, NULL, 0))
         {
-            sg_snapshoot[p_pm->procgrp_lp_no-1] = ndrx_sg_is_locked(p_pm->procgrp_lp_no, NULL, 0);
+            sg_snapshoot[p_pm->procgrp_lp_no-1] = EXTRUE;
         }
     }
     else
@@ -1576,12 +1579,7 @@ expublic int app_startup(command_startstop_t *call,
             G_sys_config.fullstart=EXTRUE;
         }
 
-        /* get the snapshoot of the current sg groups 
-         * if not locked, but have noorder flag, then
-         * report as locked, so that if during the group becomes locked
-         * we proceed with startup
-         */
-        ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, NDRX_SG_NOORDER_LCK);
+        ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
         
         DL_FOREACH(G_process_model, p_pm)
         {
