@@ -168,7 +168,7 @@ OUT=`$CMD 2>&1`
 
 PATTERN="SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
 ---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
-   1 Y    N    N     N          10    [0-9]+ exsinglesv             .*   0 i"
+   1 Y    N    N     N          10[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 i"
 
 echo "got output [$OUT]"
 
@@ -216,7 +216,7 @@ OUT=`$CMD 2>&1`
 
 PATTERN="SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
 ---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
-   1 Y    N    Y     Y          10    [0-9]+ exsinglesv             .*   0 i"
+   1 Y    N    Y     Y          10[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 i"
 
 echo "got output [$OUT]"
 
