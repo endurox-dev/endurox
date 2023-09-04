@@ -64,7 +64,7 @@ set_dom1() {
     export NDRX_CCONFIG=$TESTDIR/app-dom1.ini
     export NDRX_DMNLOG=$TESTDIR/ndrxd-dom1.log
     export NDRX_LOG=$TESTDIR/ndrx-dom1.log
-    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
+    #export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 }
 
 
@@ -78,7 +78,7 @@ set_dom2() {
     export NDRX_CCONFIG=$TESTDIR/app-dom2.ini
     export NDRX_DMNLOG=$TESTDIR/ndrxd-dom2.log
     export NDRX_LOG=$TESTDIR/ndrx-dom2.log
-    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom2.conf
+    #export NDRX_DEBUG_CONF=$TESTDIR/debug-dom2.conf
 }
 
 #
@@ -103,13 +103,15 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log
+rm *.log 2>/dev/null
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
-set_dom1;
-xadmin down -y
-xadmin start -y || go_out 1
+#set_dom1;
+#xadmin down -y
+#xadmin start -y || go_out 1
+
+# lets start with Domain 2. While the Domain 1 is in cold state...
 
 ################################################################################
 echo ">>> Basic tests of no lock at the boot"
@@ -117,15 +119,62 @@ echo ">>> Basic tests of no lock at the boot"
 #
 set_dom2;
 xadmin down -y
-xadmin start -y || go_out 2
+CMD="xadmin start -y 2>&1"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+#
+# Validate that we wait on group lock. And group 2 starts OK
+#
+PATTERN="exec atmi.sv103 -k nZ22K8K7kewKo -i 50 -e .*\/test103_singlegrp\/atmisv-dom2.log -r -- -w20 --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 100 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 101 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 102 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 103 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 104 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 105 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 106 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 107 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 108 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec atmi.sv103 -k nZ22K8K7kewKo -i 109 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
+[[:space:]]process id=0 ... Waiting on group lock.
+exec tpbridge -k nZ22K8K7kewKo -i 2300 -e .*\/atmitest\/test103_singlegrp\/bridge-dom2.log -r -- -f -n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0 :
+[[:space:]]process id=[0-9]+ ... Started.
+exec exsinglesv -k nZ22K8K7kewKo -i 3000 -e .*\/atmitest\/test103_singlegrp\/exsinglesv2-dom2.log -r --  :
+[[:space:]]process id=[0-9]+ ... Started.
+exec atmi103_v2 -k nZ22K8K7kewKo -i 4000 -e .*\/atmitest\/test103_singlegrp\/atmi103_v2-dom2.log -r  --  :
+[[:space:]]process id=[0-9]+ ... Started.
+exec atmi103_v2 -k nZ22K8K7kewKo -i 4001 -e .*\/atmitest\/test103_singlegrp\/atmi103_v2-dom2.log -r  --  :
+[[:space:]]process id=[0-9]+ ... Started.
+exec atmi103_v2 -k nZ22K8K7kewKo -i 4002 -e .*\/atmitest\/test103_singlegrp\/atmi103_v2-dom2.log -r  --  :
+[[:space:]]process id=[0-9]+ ... Started.
+exec atmi103_v2 -k nZ22K8K7kewKo -i 4003 -e .*\/atmitest\/test103_singlegrp\/atmi103_v2-dom2.log -r  --  :
+[[:space:]]process id=[0-9]+ ... Started.
+exec atmi103_v2 -k nZ22K8K7kewKo -i 4004 -e .*\/atmitest\/test103_singlegrp\/atmi103_v2-dom2.log -r  --  :
+[[:space:]]process id=[0-9]+ ... Started.
+exec cpmsrv -k nZ22K8K7kewKo -i 9999 -e .*\/atmitest\/test103_singlegrp\/cpmsrv-dom2.log -r -- -k3 -i2 --  :
+[[:space:]]process id=[0-9]+ ... Started.
+Startup finished. 8 processes started."
+
+echo "got output [$OUT]"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Unexpected output from xadmin start -y"
+    go_out -1
+fi
 
 xadmin psc
 xadmin ppm
-#echo "Running off client"
-#
-
-# TODO: validate startup (wait on grou plock)
-# validated PPM, "wait" state.
 
 ################################################################################
 echo ">>> Basic tests of singleton groups -> group start, check order"
@@ -182,7 +231,8 @@ echo "$CMD"
 OUT=`$CMD 2>&1`
 
 PATTERN="TAG1/SUBSECTION1 - waiting on process group 1 lock.*
-TAG2/SUBSECTION2 - waiting on process group 1 lock.*"
+TAG2/SUBSECTION2 - waiting on process group 1 lock.*
+TAG3/- - running pid [0-9]+ .*"
 
 echo "got output [$OUT]"
 
@@ -243,6 +293,31 @@ fi
 # TODO: Check normal startup with immediate lock
 # TODO: Check failover from dom2 -> dom1 (with lock delay)
 # TODO: Check lock broken (locked by some other process) -> shall unlock immediately
+
+################################################################################
+echo ">>> Lock loss: ping failure"
+################################################################################
+
+################################################################################
+echo ">>> Lock loss: due to exsinglesv crash"
+################################################################################
+
+################################################################################
+echo ">>> Lock loss: exsinglesv freeze (lock loss)"
+################################################################################
+
+################################################################################
+echo ">>> Node 1 boot -> groups not locked"
+################################################################################
+
+################################################################################
+echo ">>> Node 2 shutdown: exsinglesv waits for reporting lock"
+################################################################################
+
+################################################################################
+echo ">>> Node 2 shutdown: no-order group wait long wait server booted fully"
+################################################################################
+
 
 RET=0
 

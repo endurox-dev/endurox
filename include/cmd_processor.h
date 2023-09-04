@@ -97,7 +97,7 @@ extern int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
             int no_wait,
-            int *abort, int *sg_snapshoot);
+            int *abort, int *sg_snapshoot, int is_respawn);
 
 /* cmd_config.c: */
 extern int cmd_config_load(command_call_t * call, char *data, size_t len, int context);
