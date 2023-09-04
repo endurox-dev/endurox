@@ -165,12 +165,13 @@ validate_invalid_config "ndrxconfig-dom1-defaults-dup_no.xml" "NDRXD_EINVAL" "is
 validate_invalid_config "ndrxconfig-dom1-defaults-dup_name.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-bad-no.xml" "NDRXD_EINVAL" "Invalid \`grpno'"
 
-# TODO: validate invlid client section settings.
-
 # test server group operations:
 export NDRX_CONFIG="ndrxconfig-dom1-procgroups.xml"
 xadmin stop -y
 xadmin start -y
+# let clients to boot:
+sleep 6
+xadmin pc
 
 ################################################################################
 CMD="xadmin ppm -3"
@@ -338,7 +339,6 @@ if ! [[ "$OUT" =~ $PATTERN ]]; then
     go_out -1
 fi
 
-# TODO: add tests for cpmsrv:
 ################################################################################
 CMD="xadmin sc -g OK"
 echo "$CMD"
@@ -352,7 +352,7 @@ Client process CLT2/- stopped
 Client process CLT3/- stopped
 3 client(s) stopped."
 
-if ! [[ "$OUT" != *"$PATTER"N* ]]; then
+if [[ "$OUT" != *"$PATTERN"* ]]; then
     echo "pattern [$PATTERN] not found in output"
     go_out -1
 fi
@@ -374,15 +374,15 @@ echo "$CMD"
 OUT=`$CMD 2>&1`
 echo "got output [$OUT]"
 
-PATTERN="Client process CLT1/- stopped
-Client process CLT2/- stopped
-Client process CLT3/- stopped
-3 client(s) stopped."
+PATTERN="Client process CLT1/- marked for start
+Client process CLT2/- marked for start
+Client process CLT3/- marked for start
+3 client(s) marked for start."
 
 # let clients to boot..
 sleep 7
 
-if ! [[ "$OUT" != *"$PATTER"N* ]]; then
+if [[ "$OUT" != *"$PATTERN"* ]]; then
     echo "pattern [$PATTERN] not found in output"
     go_out -1
 fi
@@ -396,7 +396,7 @@ if [ "$CNT" -ne "7" ]; then
 fi
 
 ################################################################################
-CMD="xadmin bc -g OK"
+CMD="xadmin rc -g OK"
 echo "$CMD"
 ################################################################################
 
@@ -414,7 +414,7 @@ Client process CLT3/- marked for start
 # let clients to boot..
 sleep 7
 
-if ! [[ "$OUT" != *"$PATTER"N* ]]; then
+if [[ "$OUT" != *"$PATTERN"* ]]; then
     echo "pattern [$PATTERN] not found in output"
     go_out -1
 fi

@@ -35,7 +35,7 @@
         <respawn>1</respawn>
         <!-- The maximum time while process can hang in 'starting' state i.e.
         have not completed initialisation, sec -->
-        <start_max>20</start_max>
+        <start_max>40</start_max>
         <!--
         Ping server in every X sanity checks
         -->
