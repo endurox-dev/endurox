@@ -84,10 +84,13 @@ expublic int do_respawn_check(void)
     static int into_respawn = EXFALSE;
     int we_run = EXFALSE;
     int singleton_attempt = EXFALSE;
+    int is_respawn;
 
     /* No sanity checks while app config not loaded */
     if (NULL==G_app_config)
+    {
         goto out;
+    }
 
     if (into_respawn)
     {
@@ -129,6 +132,11 @@ expublic int do_respawn_check(void)
                 && p_pm->conf->procgrp_no > 0)
             {
                 singleton_attempt=EXTRUE;
+                is_respawn=EXFALSE;
+            }
+            else
+            {
+                is_respawn=EXTRUE;
             }
 
             delta = p_pm->rspstwatch;
@@ -157,7 +165,7 @@ expublic int do_respawn_check(void)
                     no_wait = EXFALSE;
                 }
 
-                start_process(NULL, p_pm, NULL, &processes_started, no_wait, &abort, sg_groups);
+                start_process(NULL, p_pm, NULL, &processes_started, no_wait, &abort, sg_groups, is_respawn);
 
                 /***Just for info***/
                 schedule_next = G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step;

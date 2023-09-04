@@ -907,6 +907,7 @@ out:
  * @param pm
  * @param no_wait - do not wait for process startup response
  * @param sg_snapshoot - snapshoot of the singleton groups
+ * @param is_respawn - did process restart after the crash?
  * @return SUCCEED/FAIL
  */
 expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
@@ -914,7 +915,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             long *p_processes_started,
             int no_wait,
             int *doabort,
-            int *sg_snapshoot)
+            int *sg_snapshoot,
+            int is_respawn)
 {
     int ret=EXSUCCEED;
     pid_t pid;
@@ -1122,6 +1124,11 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         {
             snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->procgrp_no);
             NDRX_PM_SET_ENV(CONF_NDRX_PROCGRP_NO, tmp);
+        }
+
+        if (is_respawn)
+        {
+            NDRX_PM_SET_ENV(CONF_NDRX_RESPAWN, "1");
         }
 
         alloc_args = 0;
@@ -1557,7 +1564,7 @@ expublic int app_startup(command_startstop_t *call,
             if (NULL!=p_pm_srvid)
             {
                 start_process(call, p_pm_srvid, p_startup_progress,
-                                    p_processes_started, EXFALSE, &abort, NULL);
+                                    p_processes_started, EXFALSE, &abort, NULL, EXFALSE);
             }
             else
             {
@@ -1598,7 +1605,7 @@ expublic int app_startup(command_startstop_t *call,
                     )) /* or If full shutdown requested */
             {
                 start_process(call, p_pm, p_startup_progress, 
-                        p_processes_started, EXFALSE, &abort, sg_groups);
+                        p_processes_started, EXFALSE, &abort, sg_groups, EXFALSE);
                 
                 if (abort)
                 {
@@ -1808,7 +1815,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm_srvid, p_startup_progress,
-                                        p_processes_started, EXFALSE, &abort, NULL);
+                                        p_processes_started, EXFALSE, &abort, NULL, EXFALSE);
                 }
                 
                 if (abort)
@@ -1851,7 +1858,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm, p_startup_progress, 
-                            p_processes_started, EXFALSE, &abort, NULL);
+                            p_processes_started, EXFALSE, &abort, NULL, EXFALSE);
                 }
                 
                 if (abort)

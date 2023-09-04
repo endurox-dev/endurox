@@ -54,7 +54,7 @@
     </defaults>
     <procgroups>
         <procgroup grpno="1" name="OK1" singleton="Y" />
-<!--        <procgroup grpno="2" name="OK2" singleton="Y" noorder="Y" /> -->
+        <procgroup grpno="2" name="OK2" singleton="Y" /> 
     </procgroups>
     <servers>
         <!-- OK1 group -->
@@ -86,6 +86,22 @@
             <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
             <appopt>-f -n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0</appopt>
         </server>
+        <!-- ensure that we boot at startup -->
+        <server name="exsinglesv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>3000</srvid>
+            <sysopt>-e ${TESTDIR}/exsinglesv2-dom2.log -r</sysopt>
+            <procgrp_lp>OK2</procgrp_lp>
+            <cctag>OK2</cctag>
+        </server>
+        <server name="atmi103_v2">
+            <min>5</min>
+            <max>5</max>
+            <srvid>4000</srvid>
+            <sysopt>-e ${TESTDIR}/atmi103_v2-dom2.log -r </sysopt>
+            <procgrp>OK2</procgrp>
+        </server>
         <server name="cpmsrv">
             <min>1</min>
             <max>1</max>
@@ -98,11 +114,9 @@
             <exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/sleep-1.log"/>
             <exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_ULOG}/sleep-2.log"/>
         </client>
-<!--
         <client cmdline="sleep 999" procgrp="OK2">
             <exec tag="TAG3" autostart="Y" log="${NDRX_ULOG}/sleep-3.log"/>
         </client>
--->
     </clients>
 </endurox>
 

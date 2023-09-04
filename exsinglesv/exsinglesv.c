@@ -270,10 +270,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         /* giver other node time to detect and shutdown 
          * basically if other system has default 30 sec refresh time,
          * then in those 30 sec they should detect that lock is expired
-         * and shutdown all the processes. So we shall wait twice the time
-         * to take over.
+         * and shutdown all the processes. So we shall wait twice the time.
          */
-        ndrx_G_exsinglesv_conf.locked_wait = MIN_SGREFRESH_CEOFFICIENT*2;
+        ndrx_G_exsinglesv_conf.locked_wait = ndrx_sgrefresh/ndrx_G_exsinglesv_conf.chkinterval*2;
     }
 
     /* Dump the configuration to the log file */
@@ -286,7 +285,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Key timing configuration: */
     NDRX_LOG(log_info, "ndrx_sgrefresh=%d", ndrx_sgrefresh);
     NDRX_LOG(log_info, "chkinterval=%d", ndrx_G_exsinglesv_conf.chkinterval);
-    NDRX_LOG(log_info, "locked_wait=%d", ndrx_G_exsinglesv_conf.locked_wait);
+    NDRX_LOG(log_info, "locked_wait=%d (number of chkinterval cycles)", 
+        ndrx_G_exsinglesv_conf.locked_wait);
 
     /* Validate check interval: */
     if (ndrx_G_exsinglesv_conf.chkinterval*MIN_SGREFRESH_CEOFFICIENT > ndrx_sgrefresh)
@@ -311,7 +311,18 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
-    ndrx_G_exsinglesv_conf.first_boot = EXTRUE;
+    p=getenv(CONF_NDRX_RESPAWN);
+
+    if (NULL!=p && 0==strcmp(p, "1"))
+    {
+        NDRX_LOG(log_warn, "Lock server respawn after the crash, "
+            "will use locked_wait for first lock");
+            ndrx_G_exsinglesv_conf.first_boot = EXFALSE;
+    }
+    else
+    {
+        ndrx_G_exsinglesv_conf.first_boot = EXTRUE;
+    }
     /* perform first check
     * so that on boot, the first locked node would boot without any interruptions */
     if (EXSUCCEED!=ndrx_exsinglesv_sm_run())
