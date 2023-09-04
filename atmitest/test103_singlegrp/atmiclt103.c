@@ -61,29 +61,47 @@
 int main(int argc, char** argv)
 {
 
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    long rsplen;
-    int i;
-    int ret=EXSUCCEED;
+    /* attempt to lock ping file (several times) */
+    int ret=EXFAIL;
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    if (argc>2 && 0==strcmp(argv[1], "lock_file"))
     {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
+        char *lockfile = argv[2];
+        struct flock lck;
+        int fd;
+        memset(&lck, 0, sizeof(lck));
 
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-    {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        lck.l_whence = SEEK_SET;
+        lck.l_start = 0;
+        lck.l_len = 1;
+        lck.l_type = F_WRLCK;
+
+        if (EXFAIL==(fd = open(lockfile, O_RDWR|O_CREAT, 0666)))
+        {
+            NDRX_LOG(log_error, "Failed to open lock file [%s]: %s",
+                lockfile, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+            
+        while (EXFAIL==fcntl(fd, F_SETLK, &lck))
+        {
+            if (EACCES==errno || EAGAIN==errno)
+            {
+                sleep(1);
+            } 
+            else
+            {
+                NDRX_LOG(log_error, "Failed to lock file [%s]: %s",
+                    lockfile, strerror(errno));
+                EXFAIL_OUT(ret);
+            }
+        }
+        NDRX_LOG(log_debug, "Locked OK");
+        sleep(999);
     }
-    
-out:
-    tpterm();
-    fprintf(stderr, "Exit with %d\n", ret);
 
+
+out:
     return ret;
 }
 

@@ -298,6 +298,77 @@ fi
 echo ">>> Lock loss: ping failure"
 ################################################################################
 
+atmiclt103 lock_file ${TESTDIR}/lock_OK1_2 &
+
+# the exsinglesv interval is 5 sec, so ping shall detect that it cannot lock
+# anymore, and group will be unlocked and processes would get killed
+# and would result in waiting for lock again
+sleep 10
+
+# have some debug:
+xadmin ppm
+
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'wait  runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "11" ]; then
+    echo "Expected 11 atmi.sv103 processes in wait state, got [$CNT] (after the lock lost)"
+    go_out -1
+fi
+
+# validate the xadmin pc output
+CMD="xadmin pc"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+PATTERN="TAG1/SUBSECTION1 - waiting on process group 1 lock.*
+TAG2/SUBSECTION2 - waiting on process group 1 lock.*
+TAG3/- - running pid [0-9]+ .*"
+
+echo "got output [$OUT]"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected to wait on group lock by the clients."
+    go_out -1
+fi
+
+# release the lock:
+xadmin killall atmiclt103
+
+# the lock is not returned immediately, but instead of 60 sec...
+echo "Wait 30 to check locked_wait"
+sleep 30
+
+# we shall still wait on lock, as exsignlesv was restarted
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'wait  runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "11" ]; then
+    echo "Expected 11 atmi.sv103 processes in wait state, got [$CNT] (after the lock lost)"
+    go_out -1
+fi
+
+echo "Wait 65 to check locked_wait + boot order booted all processes..."
+sleep 65
+
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'runok runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "11" ]; then
+    echo "Expected 11 atmi.sv103 processes in wait state, got [$CNT] (after the lock lost)"
+    go_out -1
+fi
+
+# validate the xadmin pc output
+CMD="xadmin pc"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+PATTERN="TAG1/SUBSECTION1 - running pid [0-9]+ .*
+TAG2/SUBSECTION2 - running pid [0-9]+ .*
+TAG3/- - running pid [0-9]+ .*"
+
+echo "got output [$OUT]"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected to wait on group lock by the clients."
+    go_out -1
+fi
+
 ################################################################################
 echo ">>> Lock loss: due to exsinglesv crash"
 ################################################################################
