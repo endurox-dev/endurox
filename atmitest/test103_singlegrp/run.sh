@@ -188,7 +188,7 @@ xadmin killall tpbridge
 ################################################################################
 echo ">>> Basic tests of no lock at the boot"
 ################################################################################
-#
+
 set_dom2;
 xadmin down -y
 CMD="xadmin start -y 2>&1"
@@ -383,7 +383,9 @@ validate_OK1_recovery;
 echo ">>> Lock loss: due to exsinglesv crash"
 ################################################################################
 
-xadmin killall exsinglesv
+LOCK_PID=`xadmin ps -a "exsinglesv -k nZ22K8K7kewKo -i 10" -p`
+kill -9 $LOCK_PID
+
 # let ndrxd to collect the fact
 sleep 5
 validate_OK1_lock_loss;
