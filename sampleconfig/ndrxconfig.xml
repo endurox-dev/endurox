@@ -3,7 +3,7 @@
 	<appconfig>
 		<!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
 		<!-- Sanity check time, sec -->
-		<sanity>5</sanity>
+		<sanity>1</sanity>
 		<!--
 		Seconds in which we should send service refresh to other node.
 		-->
@@ -61,7 +61,7 @@
 		The granularity is sanity time.
 		X <= 0 = disabled 
 		-->
-		<ping_max>40</ping_max>
+		<ping_max>60</ping_max>
 		<!--
 		Max time to wait until process should exit on shutdown
 		X <= 0 = disabled 
