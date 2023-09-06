@@ -136,7 +136,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     memset(&ndrx_G_exsinglesv_conf, 0, sizeof(ndrx_G_exsinglesv_conf));
 
     /* set default: */
-    ndrx_G_exsinglesv_conf.chkinterval = DEFAULT_CHECK_INTERVAL;
+    ndrx_G_exsinglesv_conf.chkinterval = EXFAIL;
     ndrx_G_exsinglesv_conf.locked_wait = EXFAIL;
 
     if (EXSUCCEED!=ndrx_cconfig_load_sections(&cfg, sections))

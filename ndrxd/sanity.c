@@ -1078,16 +1078,25 @@ exprivate int check_singlegrp(void)
     ndrx_sg_shm_t *p_shm, local;
     int grp2srvid[ndrx_G_libnstd_cfg.pgmax];
 
+    NDRX_LOG(log_debug, "Into check_singlegrp()");
     memset(grp2srvid, 0, ndrx_G_libnstd_cfg.pgmax*sizeof(int));
 
     for (i=0; i<ndrx_G_libnstd_cfg.pgmax; i++)
     {
         p_shm = ndrx_sg_get(i+1);
 
-        if (NULL!=p_shm)
+        if (NULL==p_shm)
         {
+            NDRX_LOG(log_error, "Null shared memory for singleton "
+                "groups (grpno: %d)", i);
             EXFAIL_OUT(ret);
         }
+
+        /* verify the servers... */
+        ndrx_sg_load(&local, p_shm);
+
+        /* add given server id for duplicate checks */
+        grp2srvid[i] = local.lockprov_srvid;
 
         /* check if the group if group is locked,
          * continue with next if not
@@ -1096,9 +1105,6 @@ exprivate int check_singlegrp(void)
         {
             continue;
         }
-
-        /* verify the servers... */
-        ndrx_sg_load(&local, p_shm);
 
         if (!(local.lockprov_srvid>=0 && local.lockprov_srvid < ndrx_get_G_atmi_env()->max_servers))
         {
@@ -1121,12 +1127,29 @@ exprivate int check_singlegrp(void)
             userlog("Server %d/%s/%d is not running -> "
                 "unlocking singleton process group %d",
                 p_pm_srvid->pid, p_pm_srvid->binary_name, p_pm_srvid->srvid, i+1);
-            ndrx_sg_unlock(p_shm, NDRX_SG_RSN_CORRUPT);
+            ndrx_sg_unlock(p_shm, NDRX_SG_RSN_NOPID);
             continue;
         }
 
-        /* add given server id for duplicate checks */
-        grp2srvid[i] = local.lockprov_srvid;
+        /* check the PIDs, it must match real server pid
+         * in case also check real pid, as if not yet reported
+         * then svpid might be not set.
+         */
+        if (p_pm_srvid->svpid!=local.lockprov_pid
+                &&  p_pm_srvid->pid!=local.lockprov_pid)
+        {
+            NDRX_LOG(log_error, "Server %d/%s/%d/%d pid mistmatch with group's lockprov_pid %d -> "
+                "unlocking singleton process group %d",
+                (int)p_pm_srvid->pid, (int)p_pm_srvid->svpid, p_pm_srvid->binary_name,
+                p_pm_srvid->srvid, (int)local.lockprov_pid, i+1);
+
+            userlog("Server %d/%s/%d/%d pid mistmatch with group's lockprov_pid %d -> "
+                "unlocking singleton process group %d",
+                (int)p_pm_srvid->pid, (int)p_pm_srvid->svpid, p_pm_srvid->binary_name,
+                p_pm_srvid->srvid, (int)local.lockprov_pid, i+1);
+            ndrx_sg_unlock(p_shm, NDRX_SG_RSN_NOPID);
+            continue;
+        }
     }
 
     /* sort grp2srvid and check are there any duplicates  */
