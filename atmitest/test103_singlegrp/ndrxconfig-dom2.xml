@@ -64,6 +64,7 @@
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/exsinglesv-dom2.log -r</sysopt>
             <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
         </server>
         <server name="atmi.sv103">
             <min>1</min>

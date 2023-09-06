@@ -188,6 +188,7 @@ TAG3/- - running pid [0-9]+ .*"
 rm *.log 2>/dev/null
 rm lock_* 2>/dev/null
 rm ULOG* 2>/dev/null
+rm -f *.status 2>/dev/null
 
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
@@ -295,6 +296,17 @@ if [ "$CNT" -ne "1" ]; then
     go_out -1
 fi
 
+# check the bootlock flag
+if [ ! -f ${TESTDIR}/exec_on_bootlocked.status ]; then
+    echo "Expected exec_on_bootlocked.status file"
+    go_out -1
+fi
+
+if [ -f ${TESTDIR}/exec_on_locked.status ]; then
+    echo "Not expected exec_on_locked.status file"
+    go_out -1
+fi
+
 # Ensure that PSG is locked but server & client are not booted
 CMD="xadmin psg"
 echo "$CMD"
@@ -386,6 +398,11 @@ sleep 5
 validate_OK1_lock_loss;
 xadmin killall atmiclt103
 validate_OK1_recovery;
+
+if [ ! -f ${TESTDIR}/exec_on_locked.status ]; then
+    echo "Expected exec_on_locked.status file"
+    go_out -1
+fi
 
 ################################################################################
 echo ">>> Lock loss: due to exsinglesv crash"
@@ -544,6 +561,40 @@ if ! [[ "$OUT" =~ $PATTERN ]]; then
     echo "Expected both groups locked..."
     go_out -1
 fi
+
+
+################################################################################
+echo ">>> bootlock script not working..."
+################################################################################
+
+chmod 000 $TESTDIR/exec_on_bootlocked.status
+chmod 000 $TESTDIR/exec_on_locked.status
+
+xadmin stop -y
+xadmin start -y
+
+# let cpmsrv to gather stats..
+sleep 5
+
+# let the lock to fail...
+xadmin ppm
+xadmin psg
+xadmin pc
+
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'wait  runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "11" ]; then
+    echo "Expected 11 atmi.sv103 processes in wait state, got [$CNT]"
+    go_out -1
+fi
+
+# wait by cpmsrv too...
+CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "2" ]; then
+    echo "Expected 2 clients in waiting state, got [$CNT]"
+    go_out -1
+fi
+
+# we are done!
 
 RET=0
 
