@@ -54,6 +54,11 @@ export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
 export NDRX_SILENT=Y
 
+# This gives:
+# 3 sec check time for exsinglesv
+# 20 sec lock take over time
+export NDRX_SGREFRESH=10
+
 #
 # Domain 1 - here client will live
 #
@@ -107,6 +112,7 @@ function validate_OK1_lock_loss {
 
     # have some debug:
     xadmin ppm
+    xadmin psg
 
     CNT=`xadmin ppm | grep atmi.sv1 | grep 'wait  runok' | wc | awk '{print $1}'`
     if [ "$CNT" -ne "11" ]; then
@@ -137,9 +143,11 @@ TAG3/- - running pid [0-9]+ .*"
 #
 function validate_OK1_recovery {
 
-    # the lock is not returned immediately, but instead of 60 sec...
-    echo "Wait 30 to check locked_wait"
-    sleep 30
+    # the lock is not returned immediately, but instead of 20 sec...
+    echo "Wait 5 to check locked_wait"
+    sleep 5
+    xadmin ppm
+    xadmin psg
 
     # we shall still wait on lock, as exsignlesv was restarted
     CNT=`xadmin ppm | grep atmi.sv1 | grep 'wait  runok' | wc | awk '{print $1}'`
@@ -148,12 +156,14 @@ function validate_OK1_recovery {
         go_out -1
     fi
 
-    echo "Wait 65 to check locked_wait + boot order booted all processes..."
-    sleep 65
+    echo "Wait 30 (lock regain + wait) check locked_wait + boot order booted all processes..."
+    sleep 30
+    xadmin ppm
+    xadmin psg
 
     CNT=`xadmin ppm | grep atmi.sv1 | grep 'runok runok' | wc | awk '{print $1}'`
     if [ "$CNT" -ne "11" ]; then
-        echo "Expected 11 atmi.sv103 processes in wait state, got [$CNT] (after the lock lost)"
+        echo "Expected 11 atmi.sv103 processes in runok state, got [$CNT] (after the lock lost)"
         go_out -1
     fi
 
@@ -174,8 +184,11 @@ TAG3/- - running pid [0-9]+ .*"
     fi
 }
 
-
+# clean up some old stuff
 rm *.log 2>/dev/null
+rm lock_* 2>/dev/null
+rm ULOG* 2>/dev/null
+
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
@@ -198,7 +211,7 @@ OUT=`$CMD 2>&1`
 #
 # Validate that we wait on group lock. And group 2 starts OK
 #
-PATTERN="exec atmi.sv103 -k nZ22K8K7kewKo -i 50 -e .*\/test103_singlegrp\/atmisv-dom2.log -r -- -w20 --  :
+PATTERN="exec atmi.sv103 -k nZ22K8K7kewKo -i 50 -e .*\/test103_singlegrp\/atmisv-dom2.log -r -- -w10 --  :
 [[:space:]]process id=0 ... Waiting on group lock.
 exec atmi.sv103 -k nZ22K8K7kewKo -i 100 -e .*\/atmitest\/test103_singlegrp\/atmisv-dom2.log -r  --  :
 [[:space:]]process id=0 ... Waiting on group lock.
@@ -234,7 +247,7 @@ exec atmi103_v2 -k nZ22K8K7kewKo -i 4003 -e .*\/atmitest\/test103_singlegrp\/atm
 [[:space:]]process id=[0-9]+ ... Started.
 exec atmi103_v2 -k nZ22K8K7kewKo -i 4004 -e .*\/atmitest\/test103_singlegrp\/atmi103_v2-dom2.log -r  --  :
 [[:space:]]process id=[0-9]+ ... Started.
-exec cpmsrv -k nZ22K8K7kewKo -i 9999 -e .*\/atmitest\/test103_singlegrp\/cpmsrv-dom2.log -r -- -k3 -i2 --  :
+exec cpmsrv -k nZ22K8K7kewKo -i 9999 -e .*\/atmitest\/test103_singlegrp\/cpmsrv-dom2.log -r -- -k3 -i1 --  :
 [[:space:]]process id=[0-9]+ ... Started.
 Startup finished. 8 processes started."
 
@@ -313,7 +326,6 @@ if ! [[ "$OUT" =~ $PATTERN ]]; then
     go_out -1
 fi
 
-# Server 50 shall be starting, all other shall be still in wait.
 echo ">>> wait 25 for full boot..."
 sleep 25
 xadmin ppm
@@ -361,20 +373,16 @@ if ! [[ "$OUT" =~ $PATTERN ]]; then
     go_out -1
 fi
 
-# TODO: Check no-order startup sequence
-# TODO: Check normal startup with immediate lock
-# TODO: Check failover from dom2 -> dom1 (with lock delay)
-# TODO: Check lock broken (locked by some other process) -> shall unlock immediately
-
 ################################################################################
 echo ">>> Lock loss: ping failure"
 ################################################################################
 
 atmiclt103 lock_file ${TESTDIR}/lock_OK1_2 &
-# the exsinglesv interval is 5 sec, so ping shall detect that it cannot lock
+
+# the exsinglesv interval is 3 sec, so ping shall detect that it cannot lock
 # anymore, and group will be unlocked and processes would get killed
 # and would result in waiting for lock again
-sleep 10
+sleep 5
 validate_OK1_lock_loss;
 xadmin killall atmiclt103
 validate_OK1_recovery;
@@ -397,8 +405,12 @@ echo ">>> Lock loss: exsinglesv freeze (lock loss)"
 
 LOCK_PID=`xadmin ps -a "exsinglesv -k nZ22K8K7kewKo -i 10" -p`
 kill -SIGSTOP $LOCK_PID
-# wait for loss detect
-sleep 35
+# wait for loss detect:
+# -> group timeout => 10 sec
+# -> killall processes -> 1sec
+# -> try boot processes -> 1 sec
+# -> + 2 sec buffer
+sleep 15
 validate_OK1_lock_loss;
 kill -SIGCONT $LOCK_PID
 validate_OK1_recovery;
@@ -407,14 +419,131 @@ validate_OK1_recovery;
 echo ">>> Node 1 boot -> groups not locked"
 ################################################################################
 
+set_dom1;
+xadmin down -y
+xadmin start -y || go_out 1
+xadmin ppm
+xadmin pc
+xadmin psg
+
+# let CPM to cycle on...
+sleep 5
+
+# verify that no group is booted...
+CNT=`xadmin ppm | grep atmi | grep 'wait  runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "16" ]; then
+    echo "Expected 16 atmi.sv103/atmi103_v2 processes in wait state, got [$CNT]"
+    go_out -1
+fi
+
+CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "3" ]; then
+    echo "Expected 3 clients in waiting state, got [$CNT]"
+    go_out -1
+fi
+
+################################################################################
+echo ">>> Test maintenance mode (no lock takover)"
+################################################################################
+
+xadmin mmon
+
+# node2 goes down, first does not take over as in maintenace mode...
+set_dom2;
+xadmin stop -y
+
+set_dom1;
+# let exsinglesv to cycle..
+sleep 5
+
+xadmin ppm 
+xadmin pc
+xadmin psg
+
+CNT=`xadmin ppm | grep atmi | grep 'wait  runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "16" ]; then
+    echo "Expected 16 atmi.sv103/atmi103_v2 processes in wait state, got [$CNT]"
+    go_out -1
+fi
+
+CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "3" ]; then
+    echo "Expected 3 clients in waiting state, got [$CNT]"
+    go_out -1
+fi
+
+# release maintenance mode
+xadmin mmoff
 ################################################################################
 echo ">>> Node 2 shutdown: exsinglesv waits for reporting lock"
 ################################################################################
+
+echo "sleep 5, check that we do not report the lock yet"
+sleep 5
+xadmin ppm
+xadmin pc
+xadmin psg
+
+CNT=`xadmin ppm | grep atmi. | grep 'wait  runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "16" ]; then
+    echo "Expected 16 atmi.sv103/atmi103_v2 processes in wait state, got [$CNT]"
+    go_out -1
+fi
+
+CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "3" ]; then
+    echo "Expected 3 clients in waiting state, got [$CNT]"
+    go_out -1
+fi
 
 ################################################################################
 echo ">>> Node 2 shutdown: no-order group wait long wait server booted fully"
 ################################################################################
 
+# wait for locks to establish
+sleep 20
+
+# all process shall be running, expect that long booting, shall be still in start
+# state
+
+xadmin ppm
+xadmin psg
+xadmin pc
+
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'runok runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "10" ]; then
+    echo "Expected 10 atmi.sv103 processes in runok state, got [$CNT]"
+    go_out -1
+fi
+
+CNT=`xadmin ppm | grep atmi.sv1 | grep 'start runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "1" ]; then
+    echo "Expected 1 atmi.sv103 processes in start state, got [$CNT]"
+    go_out -1
+fi
+
+CNT=`xadmin pc | grep 'running pid' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "3" ]; then
+    echo "Expected 3 clients in running state, got [$CNT]"
+    go_out -1
+fi
+
+# Ensure that PSG is locked but server & client are not booted
+CMD="xadmin psg"
+echo "$CMD"
+OUT=`$CMD 2>&1`
+
+PATTERN="SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
+---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
+   1 Y    N    Y     Y          10[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 ni[[:space:]]*
+   2 Y    N    Y     Y        3000[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 ni[[:space:]]*"
+
+echo "got output [$OUT]"
+
+if ! [[ "$OUT" =~ $PATTERN ]]; then
+    echo "Expected both groups locked..."
+    go_out -1
+fi
 
 RET=0
 

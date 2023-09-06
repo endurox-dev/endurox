@@ -137,7 +137,11 @@ expublic int do_respawn_check(void)
                 singleton_attempt=EXFALSE;
             }
 
+            /*
             delta = p_pm->rspstwatch;
+            */
+            delta = p_pm->state_changed;
+
             NDRX_LOG(6, "Respawn delta: %ld singleton_attempt: %d", delta, singleton_attempt);
 
             /* Check is it time for startup? */

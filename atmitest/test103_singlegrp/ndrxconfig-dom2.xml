@@ -13,8 +13,8 @@
         <!--  <sanity> timer, end -->
 
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-        <!-- Do process reset after 1 sec -->
-        <restart_min>1</restart_min>
+        <!-- Do process reset after 2 sec -->
+        <restart_min>2</restart_min>
         <!-- If restart fails, then boot after +5 sec of previous wait time -->
         <restart_step>10</restart_step>
         <!-- If still not started, then max boot time is a 30 sec. -->
@@ -70,7 +70,7 @@
             <max>1</max>
             <srvid>50</srvid>
             <!-- server waits on boot -->
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -- -w20</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -- -w10</sysopt>
             <procgrp>OK1</procgrp>
         </server>
         <server name="atmi.sv103">
@@ -106,7 +106,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>9999</srvid>
-            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom2.log -r -- -k3 -i2</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom2.log -r -- -k3 -i1</sysopt>
         </server>
     </servers>
     <clients>

@@ -152,6 +152,7 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
 
     if (NULL!=pm_pid)
     {
+        int org_state = pm_pid->p_pm->state;
         int srvid = pm_pid->p_pm->srvid;
         
         /* Bug #214 */
@@ -182,6 +183,12 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
         {
             /* so that we do no try again to wake it up! */
             pm_pid->p_pm->state=NDRXD_PM_EXIT;
+        }
+
+        /* reset state change counter */
+        if (pm_pid->p_pm->state!=org_state)
+        {
+            pm_pid->p_pm->state_changed = SANITY_CNT_START;
         }
 
         /* reset PM fields */
