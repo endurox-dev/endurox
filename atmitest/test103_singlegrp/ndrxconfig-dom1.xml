@@ -62,8 +62,9 @@
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/exsinglesv-dom2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/exsinglesv-dom1.log -r</sysopt>
             <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
         </server>
         <server name="atmi.sv103">
             <min>1</min>
@@ -91,7 +92,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>3000</srvid>
-            <sysopt>-e ${TESTDIR}/exsinglesv2-dom2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/exsinglesv2-dom1.log -r</sysopt>
             <procgrp_lp>OK2</procgrp_lp>
             <cctag>OK2</cctag>
         </server>

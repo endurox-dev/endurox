@@ -388,9 +388,6 @@ exprivate int do_lock(void *ctx)
     else
     {
         ndrx_G_exsinglesv_conf.wait_counter++;
-        NDRX_LOG(log_info, "Waiting after files locked %d/%d", 
-                ndrx_G_exsinglesv_conf.wait_counter, 
-                ndrx_G_exsinglesv_conf.locked_wait);
     
         if (ndrx_G_exsinglesv_conf.wait_counter>ndrx_G_exsinglesv_conf.locked_wait)
         {
@@ -400,6 +397,10 @@ exprivate int do_lock(void *ctx)
         else
         {
             /* we have to wait more */
+            NDRX_LOG(log_info, "Waiting after files locked %d/%d",
+                ndrx_G_exsinglesv_conf.wait_counter,
+                ndrx_G_exsinglesv_conf.locked_wait);
+
             ret=ev_wait;
             goto out;
         }
@@ -411,7 +412,7 @@ exprivate int do_lock(void *ctx)
     {
         boot_script=ndrx_G_exsinglesv_conf.exec_on_bootlocked;
     }
-    else if (ndrx_G_exsinglesv_conf.first_boot
+    else if (!ndrx_G_exsinglesv_conf.first_boot
         && EXEOS!=ndrx_G_exsinglesv_conf.exec_on_locked[0])
     {
         boot_script=ndrx_G_exsinglesv_conf.exec_on_locked;
@@ -427,9 +428,9 @@ exprivate int do_lock(void *ctx)
         if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "Failed to execute boot script [%s], "
-                "finished with %d", boot_script, ret);
+                "exited with %d", boot_script, ret);
             userlog("Failed to execute boot script [%s], "
-                "finished with %d", boot_script, ret);
+                "exited with %d", boot_script, ret);
             ret=ev_err;
             goto out;
         }
