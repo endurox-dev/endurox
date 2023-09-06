@@ -427,9 +427,9 @@ exprivate int do_lock(void *ctx)
 
         if (EXSUCCEED!=ret)
         {
-            NDRX_LOG(log_error, "Failed to execute boot script [%s], "
+            NDRX_LOG(log_error, "ERROR: Lock script [%s], "
                 "exited with %d", boot_script, ret);
-            userlog("Failed to execute boot script [%s], "
+            userlog("ERROR: Lock script [%s], "
                 "exited with %d", boot_script, ret);
             ret=ev_err;
             goto out;
