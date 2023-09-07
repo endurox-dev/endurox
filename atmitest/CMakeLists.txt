@@ -162,6 +162,7 @@ add_subdirectory (test100_svstdout)
 add_subdirectory (test101_dupsrv)
 add_subdirectory (test102_procgrp)
 add_subdirectory (test103_singlegrp)
+add_subdirectory (test104_tmqfailover)
 
 ################################################################################
 # Master test case drivere
