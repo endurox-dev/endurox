@@ -151,6 +151,7 @@ function get_pid_before {
 function get_pid_after {
     $PSCMD | grep atmi.sv101 | grep -v grep
     PID2=`xadmin ps -a atmi.sv101 | awk '{print $2}'`
+    xadmin ppm
     get_pid_assert_not_equal;
 }
 

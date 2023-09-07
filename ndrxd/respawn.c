@@ -144,9 +144,13 @@ expublic int do_respawn_check(void)
 
             NDRX_LOG(6, "Respawn delta: %ld singleton_attempt: %d", delta, singleton_attempt);
 
-            /* Check is it time for startup? */
-            if ( delta > G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step 
-                    || delta > G_app_config->restart_max
+            /* Check is it time for startup? Note that exec_seq_try is incremented prior respawn
+             * check. Thus the first cycle of sanity is without try increment.
+             */
+            if ( (p_pm->exec_seq_try<=1 && delta >= G_app_config->restart_min)
+		    || (p_pm->exec_seq_try>1 
+                           && delta >= (G_app_config->restart_min+(p_pm->exec_seq_try-1)*G_app_config->restart_step))
+                    || (delta >= G_app_config->restart_max)
                     || singleton_attempt)
             {
                 long processes_started=0;
