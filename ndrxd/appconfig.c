@@ -1006,11 +1006,12 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         ret=EXFAIL;
         goto out;
     } 
-    else if (!config->restart_min)
+    else if (config->restart_min < 0)
     {
-        NDRX_LOG(log_debug, "`restart_min' not set!");
-        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `restart_min' "
-                "not set at <appconfig> section near line %d!", 
+        NDRX_LOG(log_debug, "Invalid value %d for `restart_min'!",
+			config->restart_min);
+        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, 
+		"(%s) Invalid value %d for `restart_min' near line %d!", 
                 G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
@@ -1025,11 +1026,12 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         ret=EXFAIL;
         goto out;
     }
-    else if (!config->restart_max)
+    else if (config->restart_max < 0)
     {
-        NDRX_LOG(log_debug, "`restart_max' not set!");
-        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `restart_max' "
-                "not set at <appconfig> section near line %d!",
+        NDRX_LOG(log_debug, "Invalid value %d for `restart_max'!",
+            config->restart_max);
+        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG,
+                "(%s) Invalid value for `restart_max' near line %d!",
                 G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
