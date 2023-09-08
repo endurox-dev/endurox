@@ -68,7 +68,7 @@ set_dom1() {
 
     # XA SECTION
     export NDRX_XA_RES_ID=1
-    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+nolocal=f+Threads=true+Loose_Coupling=false"
+    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+NoLocal=true+Threads=true+Loose_Coupling=false"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
     export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1

@@ -38,7 +38,9 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
 					 ${ENDUROX_SOURCE_DIR}/ubftest
-                                         $ENV{ORACLE_HOME}/precomp/public)
+                     $ENV{ORACLE_HOME}/precomp/public
+                     # for oci.h
+                     $ENV{ORACLE_HOME}/rdbms/public)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -66,6 +68,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c
         ONAME=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c)
 
 add_executable (atmi.sv47 atmisv47.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmi.sv47_oci atmisv47_oci.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt47 atmiclt47.c)
 add_executable (atmiclt47_loop atmiclt47_loop.c)
 ################################################################################
@@ -73,10 +76,12 @@ add_executable (atmiclt47_loop atmiclt47_loop.c)
 # Link the executable to the ATMI library & others...
 # libatmi shall come first, as it exposes ax_reg() if doing dynamic-reg tests
 target_link_libraries (atmi.sv47 atmisrvinteg atmi clntsh ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv47_oci atmisrvinteg atmi clntsh ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt47 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt47_loop atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv47 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmi.sv47_oci PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt47 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt47_loop PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
