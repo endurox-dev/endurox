@@ -63,8 +63,8 @@ exprivate OCISvcCtx     *M_oci_svc_ctx;
 exprivate int do_insert(char *accnum, long balance)
 {
     int           ret;
-    OCIStmt       *stmt_h;
-    OCIError      *err_h;
+    OCIStmt       *stmt_h=NULL;
+    OCIError      *err_h=NULL;
     char stmt[1024];
     
     snprintf(stmt, sizeof(stmt), "INSERT INTO accounts(accnum, balance) VALUES('%s', %ld)",
@@ -104,15 +104,20 @@ exprivate int do_insert(char *accnum, long balance)
         EXFAIL_OUT(ret);
     }
 
-    OCIHandleFree((dvoid *)stmt_h, (ub4)OCI_HTYPE_STMT);
-    OCIHandleFree((dvoid *)err_h, (ub4)OCI_HTYPE_ERROR);
-    
     ret=EXSUCCEED;
     
 out:
+    if (NULL!=stmt_h)
+    {
+        OCIHandleFree((dvoid *)stmt_h, (ub4)OCI_HTYPE_STMT);
+    }
+
+    if (NULL!=err_h)
+    {
+        OCIHandleFree((dvoid *)err_h, (ub4)OCI_HTYPE_ERROR);
+    }
+
     return ret;
-
-
 }
 
 /**
