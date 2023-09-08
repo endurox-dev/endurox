@@ -100,7 +100,7 @@ exprivate int do_insert(char *accnum, long balance)
 
     if (OCI_SUCCESS != ret && OCI_SUCCESS_WITH_INFO != ret)
     {
-        fprintf(stderr, "Failed to execute ret: %d", ret);
+        NDRX_LOG(log_error, "Failed to execute ret: %d", ret);
         EXFAIL_OUT(ret);
     }
 
