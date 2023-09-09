@@ -39,7 +39,7 @@
         <!--
         Ping server in every X sanity checks
         -->
-        <pingtime>9</pingtime>
+        <pingtime>0</pingtime>
         <!--
         Max number of sanity units in which server must respond.
         -->
