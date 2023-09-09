@@ -71,7 +71,7 @@ expublic void atmi_xa_new_xid(XID *xid)
     exuuid_t uuid_val;
     atmi_lib_env_t *atmi_env = ndrx_get_G_atmi_env();
     unsigned char rmid =  (unsigned char)atmi_env->xa_rmid;
-    short node_id = (short) htons(atmi_env->our_nodeid);
+    short node_id = (short) htons(G_tmsrv_cfg.vnodeid);
     short srv_id = (short) htons(G_srv_id);
     
     /* Do the locking, so that we get unique xids... */

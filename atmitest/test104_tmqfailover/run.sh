@@ -162,7 +162,7 @@ xadmin psc
 ################################################################################
 echo ">>> Loop enqueue + crash"
 ################################################################################
-NUM=6
+NUM=50
 
 counter=0
 while [ $counter -lt $NUM ]
@@ -184,22 +184,27 @@ do
         # whoever will first get the lock that will win...
         xadmin killall exsinglesv
         
+        # let ndrxd to collect, otherwise we might remove some msg where
+        # some TM already writes the message to disk...
         # remove transaction logs which are not
+        sleep 5
         # prepared...
         if [ "$(($counter % 3))" == "0" ]; then
             grep -L ":S:50:" $TESTDIR/RM1/* | xargs rm
             grep -L ":S:50:" $TESTDIR/RM2/* | xargs rm
         fi
 
-        echo "Sleep 17... to bring processes back..."
-        sleep 17
+        echo "Sleep 15... to bring processes back... (with some buffer for msg read)"
+        sleep 15
 
         set_dom1;
         xadmin psg
+        xadmin mqlq
         xadmin ppm
 
         set_dom2;
         xadmin psg
+        xadmin mqlq
         xadmin ppm
     else
         echo "Echo let processes to run for 1 sec"
@@ -211,10 +216,12 @@ do
         set_dom1;
         xadmin psg
         xadmin ppm
+        xadmin mqlq
     else
         set_dom2;
         xadmin psg
         xadmin ppm
+        xadmin mqlq
     fi
 
     ((counter++))

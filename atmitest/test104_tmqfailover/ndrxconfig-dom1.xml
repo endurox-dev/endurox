@@ -37,8 +37,9 @@
         <start_max>20</start_max>
         <!--
         Ping server in every X sanity units
+        no Ping so that on MacOs we do not crash
         -->
-        <pingtime>9</pingtime>
+        <pingtime>0</pingtime>
         <!--
         Max number of sanity units in which server must respond.
         The granularity is sanity time.
