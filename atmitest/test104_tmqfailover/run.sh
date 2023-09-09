@@ -65,7 +65,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=10
+export NDRX_TOUT=25
 export NDRX_SILENT=Y
 
 ################################################################################
@@ -73,7 +73,7 @@ export NDRX_SILENT=Y
 # lock expire if not refreshed in 6 seconds
 # lock take over by other node if file unlocked: 12 sec
 # exsinglesv periodic scans / locks 2 sec
-export NDRX_SGREFRESH=9
+export NDRX_SGREFRESH=6
 ################################################################################
 
 if [ "$(uname)" == "Darwin" ]; then
@@ -162,7 +162,7 @@ xadmin psc
 ################################################################################
 echo ">>> Loop enqueue + crash"
 ################################################################################
-NUM=50
+NUM=60
 
 counter=0
 while [ $counter -lt $NUM ]
@@ -222,6 +222,46 @@ do
         xadmin psg
         xadmin ppm
         xadmin mqlq
+    fi
+
+
+    # periodically freeze the active tmsrv (this will
+    # simulate the case when )
+
+    if [ "$(($counter % 6))" == "0" ]; then
+
+        echo "Node freeze test...."
+        # for active node, we will suspend tmsrv...
+        # that shall cause failover...
+
+        set_dom1;
+
+        if [[ "X`xadmin ppm | grep 'wait  runok'`" != "X" ]]; then
+            echo "domain 2 is active"
+            set_dom2;
+        else
+            echo "domain 1 is active"
+        fi
+
+        ########################################################################
+        # this point we will freeze the tmsrv and will remove the logs (if
+        # transaction is not comitting). As aborts will be collected
+        # by tmrecoversv.
+        # Simualte the case if node does freeze (suspend) and
+        # does continue, transaction logs must be in place
+        ########################################################################
+
+        xadmin ps -a tmsrv -p | xargs kill -SIGSTOP
+
+        grep -L ":S:50:" $TESTDIR/RM1/* | xargs rm
+        grep -L ":S:50:" $TESTDIR/RM2/* | xargs rm
+
+        # let tmsrv's to detect the situation...
+        xadmin ps -a tmsrv -p | xargs kill -SIGCONT
+
+        echo "Let to failover tmsrvs... (sleep 15)"
+        sleep 15
+
     fi
 
     ((counter++))

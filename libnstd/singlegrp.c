@@ -437,12 +437,12 @@ expublic int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg,
             ndrx_sg_unlock(sg, NDRX_SG_RSN_REFNOFILE);
 
             NDRX_LOG(log_error, "ERROR: Lock for singleton group %d is inconsistent "
-                    "(reference file [%s] failed to open: [%s])! "
-                    "Marking group as not locked!", singlegrp_no, strerror(err), reference_file);
+                    "(reference file [%s] failed to open: %s)! "
+                    "Marking group as not locked!", singlegrp_no, reference_file, strerror(err));
 
             userlog("ERROR: Lock for singleton group %d is inconsistent "
-                    "(reference file [%s] is missing: [%s])! "
-                    "Marking group as not locked!", singlegrp_no, strerror(err), reference_file);
+                    "(reference file [%s] is missing: %s)! "
+                    "Marking group as not locked!", singlegrp_no, reference_file, strerror(err));
 
             ret=EXFALSE;
             goto out;
@@ -625,4 +625,14 @@ expublic void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags)
     atomic_store(&sg->flags, flags);
 }
 
+/**
+ * Return the singleton group flags
+ * @return group flags
+ */
+expublic unsigned short ndrx_sg_flags_get(int singlegrp_no)
+{
+    ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+    return atomic_load(&sg->flags);
+
+}
 /* vim: set ts=4 sw=4 et smartindent: */
