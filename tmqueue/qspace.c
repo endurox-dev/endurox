@@ -319,7 +319,7 @@ out:
 expublic void tmq_msgid_gen(char *msgid)
 {
     exuuid_t uuid_val;
-    short node_id = (short) ndrx_get_G_atmi_env()->our_nodeid;
+    short node_id = (short) G_tmqueue_cfg.vnodeid;
     short srv_id = (short) G_srv_id;
    
     memset(msgid, 0, TMMSGIDLEN);

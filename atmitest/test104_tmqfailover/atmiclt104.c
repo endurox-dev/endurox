@@ -60,16 +60,95 @@
  */
 int main(int argc, char** argv)
 {
-
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     int i;
     int ret=EXSUCCEED;
+    TPQCTL qctl;
+    short num;
+    long len;
 
-    /* 
-     * TODO: Call for enqueue
-     * TODO: Call for dequeue given number of messages..
-     */
+    if (argc < 3)
+    {
+        fprintf(stderr, "Usage: %s {enq <msg_no> | deq <msg_tot> }\n", argv[0]);
+        exit(EXFAIL);
+    }
+    num = atoi(argv[2]);
+
+    if (0==strcmp(argv[1], "enq"))
+    {
+        if (EXSUCCEED!=Bchg(p_ub, T_SHORT_FLD, 0, (char *)&num, 0L))
+        {
+            fprintf(stderr, "Failed to set T_SHORT_FLD\n");
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue buffer */
+        memset(&qctl, 0, sizeof(qctl));
+
+        if (EXSUCCEED!=tpenqueue("TESTSP", "Q1", &qctl, (char *)p_ub, 0, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() to `Q1' failed %s diag: %d:%s",
+                            tpstrerror(tperrno), qctl.diagnostic, qctl.diagmsg);
+                    EXFAIL_OUT(ret);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (0==strcmp(argv[1], "deq"))
+    {
+        /* read number of message and match slots, check for duplicates */
+        short messages[num];
+        short val;
+        char q[2][16] = {"Q1", "Q2"};
+        int j;
+        memset(messages, 0, sizeof(messages));
+
+        for (j=0; j<2; j++)
+        {
+            /* read from q1 or q2, if no msg present, then generate error */
+            while (EXSUCCEED==tpdequeue("TESTSP", q[j], &qctl, (char **)&p_ub, &len, 0))
+            {
+                if (EXSUCCEED!=Bget(p_ub, T_SHORT_FLD, 0, (char *)&val, NULL))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: Failed to get T_SHORT_FLD: %s", Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+
+                if (val<0 || val>=num)
+                {
+                    NDRX_LOG(log_error, "TESTERROR: Message %d out of range in Q [%s]", val, q[j]);
+                    EXFAIL_OUT(ret);
+                }
+
+                if (messages[val]!=0)
+                {
+                    NDRX_LOG(log_error, "TESTERROR: Duplicate message %d in Q [%s]", val, q[j]);
+                    EXFAIL_OUT(ret);
+                }
+                messages[val] = 1;
+            }
+
+            if (TPEDIAGNOSTIC!=tperrno)
+            {
+                NDRX_LOG(log_error, "TESTRROR: Expected TPEDIAGNOSTIC, got %s", tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        for (j=0; j<num; j++)
+        {
+            if (messages[j]!=1)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Message %d not found in Q", j);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Unknown command %s", argv[1]);
+        exit(EXFAIL);
+    }
     
 out:
     tpterm();

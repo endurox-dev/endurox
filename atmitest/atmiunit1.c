@@ -813,6 +813,14 @@ Ensure(test103_singlegrp)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test104_tmqfailover)
+{
+    int ret;
+    ret=system_dbg("test104_tmqfailover/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -996,6 +1004,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test101_dupsrv);
     add_test(suite, test102_procgrp);
     add_test(suite, test103_singlegrp);
+    add_test(suite, test104_tmqfailover);
     
     return suite;
 }
