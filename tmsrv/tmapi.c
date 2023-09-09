@@ -358,9 +358,8 @@ expublic int tm_tpbegin(UBFH *p_ub)
     /* load the XID into buffer */
     NDRX_STRCPY_SAFE(xai.tmxid, xid_str);
     xai.tmrmid = G_atmi_env.xa_rmid;
-    xai.tmnodeid = G_atmi_env.our_nodeid;
+    xai.tmnodeid = G_tmsrv_cfg.vnodeid;
     xai.tmsrvid = G_server_conf.srv_id;
-    
     
     /* Currently time-out is handled only locally by TM */
     if (EXSUCCEED!=Bget(p_ub, TMTXTOUT, 0, (char *)&txtout, 0L) || 0>=txtout)

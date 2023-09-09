@@ -1134,16 +1134,18 @@ exprivate int check_singlegrp(void)
         /* check the PIDs, it must match real server pid
          * in case also check real pid, as if not yet reported
          * then svpid might be not set.
+         * Or other case might be that ndrxd have respawned the exsinglesv
+         * which is not yet locked.
          */
         if (p_pm_srvid->svpid!=local.lockprov_pid
                 &&  p_pm_srvid->pid!=local.lockprov_pid)
         {
-            NDRX_LOG(log_error, "Server %d/%s/%d/%d pid mistmatch with group's lockprov_pid %d -> "
+            NDRX_LOG(log_error, "Server %d/%d/%s/%d pid mistmatch with group's lockprov_pid %d -> "
                 "unlocking singleton process group %d",
                 (int)p_pm_srvid->pid, (int)p_pm_srvid->svpid, p_pm_srvid->binary_name,
                 p_pm_srvid->srvid, (int)local.lockprov_pid, i+1);
 
-            userlog("Server %d/%s/%d/%d pid mistmatch with group's lockprov_pid %d -> "
+            userlog("Server %d/%d/%s/%d pid mistmatch with group's lockprov_pid %d -> "
                 "unlocking singleton process group %d",
                 (int)p_pm_srvid->pid, (int)p_pm_srvid->svpid, p_pm_srvid->binary_name,
                 p_pm_srvid->srvid, (int)local.lockprov_pid, i+1);

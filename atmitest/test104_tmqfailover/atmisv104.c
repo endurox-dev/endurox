@@ -61,7 +61,7 @@ void QFWD1 (TPSVCINFO *p_svc)
     TPQCTL ctl;
     memset(&ctl, 0, sizeof(ctl));
 
-    if (EXSUCCEED!=tpenqueue("TESTSP", "QFWD2", &ctl, (char *)p_ub, 0, 0))
+    if (EXSUCCEED!=tpenqueue("TESTSP", "Q2", &ctl, (char *)p_ub, 0, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpenqueue() to `QFWD2' failed %s diag: %d:%s",
                         tpstrerror(tperrno), ctl.diagnostic, ctl.diagmsg);
@@ -85,7 +85,7 @@ void QFWD2 (TPSVCINFO *p_svc)
     TPQCTL ctl;
     memset(&ctl, 0, sizeof(ctl));
 
-    if (EXSUCCEED!=tpenqueue("TESTSP", "QFWD1", &ctl, (char *)p_ub, 0, 0))
+    if (EXSUCCEED!=tpenqueue("TESTSP", "Q1", &ctl, (char *)p_ub, 0, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpenqueue() to `QFWD2' failed %s diag: %d:%s",
                         tpstrerror(tperrno), ctl.diagnostic, ctl.diagmsg);

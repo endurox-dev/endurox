@@ -69,11 +69,11 @@ export NDRX_TOUT=10
 export NDRX_SILENT=Y
 
 ################################################################################
-# 15 gives:
-# lock expire if not refreshed in 15 seconds
-# lock take over by other node if file unlocked: 30 sec
-# exsinglesv periodic scans / locks 5 sec
-export NDRX_SGREFRESH=15
+# 6 gives:
+# lock expire if not refreshed in 6 seconds
+# lock take over by other node if file unlocked: 12 sec
+# exsinglesv periodic scans / locks 2 sec
+export NDRX_SGREFRESH=9
 ################################################################################
 
 if [ "$(uname)" == "Darwin" ]; then
@@ -152,14 +152,98 @@ set_dom2;
 xadmin down -y
 xadmin start -y || go_out 2
 
+echo "Sleep 15 for link"
+sleep 15
 
 set_dom1;
 xadmin psg
 xadmin psc
 
-# TODO: in the loop restart the exsinglesv from one or another domain
-# and wait 
-# do the testing in the loop
+################################################################################
+echo ">>> Loop enqueue + crash"
+################################################################################
+NUM=6
+
+counter=0
+while [ $counter -lt $NUM ]
+do
+    echo "Loop [$counter]"
+
+    # enq single msg...
+    ./atmiclt104 enq $counter
+    RET=$?
+
+    if [[ "X$RET" != "X0" ]]; then
+        echo "./atmiclt104 enq $counter failed"
+        go_out $RET
+    fi
+
+    if [ "$(($counter % 5))" == "0" ]; then
+        echo "Doing failover..."
+        # failover the groups...
+        # whoever will first get the lock that will win...
+        xadmin killall exsinglesv
+        
+        # remove transaction logs which are not
+        # prepared...
+        if [ "$(($counter % 3))" == "0" ]; then
+            grep -L ":S:50:" $TESTDIR/RM1/* | xargs rm
+            grep -L ":S:50:" $TESTDIR/RM2/* | xargs rm
+        fi
+
+        echo "Sleep 17... to bring processes back..."
+        sleep 17
+
+        set_dom1;
+        xadmin psg
+        xadmin ppm
+
+        set_dom2;
+        xadmin psg
+        xadmin ppm
+    else
+        echo "Echo let processes to run for 1 sec"
+        sleep 1
+    fi
+
+    # swap the domains of attempts...
+    if [ "$(($counter % 2))" == "0" ]; then
+        set_dom1;
+        xadmin psg
+        xadmin ppm
+    else
+        set_dom2;
+        xadmin psg
+        xadmin ppm
+    fi
+
+    ((counter++))
+
+done
+
+
+
+################################################################################
+echo ">>> Validate $NUM messages"
+################################################################################
+
+# disable auto from Qs....
+xadmin mqch -n2 -i 200 -qQ1,autoq=n
+xadmin mqch -n2 -i 200 -qQ2,autoq=n
+sleep 5
+# lets Q to complete...
+xadmin mqlc
+xadmin mqlq
+
+# validate that all messages are in place
+# enq single msg...
+./atmiclt104 deq $NUM
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt104 deq $counter failed"
+    go_out $RET
+fi
 
 RET=$?
 
