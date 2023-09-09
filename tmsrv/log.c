@@ -65,6 +65,7 @@
 #include <exhash.h>
 #include <unistd.h>
 #include <Exfields.h>
+#include <singlegrp.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define LOG_MAX         1024
@@ -1287,7 +1288,7 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             G_atmi_env.test_tmsrv_write_fail=EXTRUE;
             make_crash=EXTRUE;
         }
-        
+
         /* no write & report error */
         if (stage > 0 && crash_class==CRASH_CLASS_NO_WRITE && stage == crash_stage)
         {
@@ -1303,11 +1304,25 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         }
 
         /* in case if switching to committing, we must sync the log & directory */
-        if ( ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage)) &&
-            (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) || 
-                EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags)))
+        if ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage))
         {
-            EXFAIL_OUT(ret);
+            if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
+                EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags))
+            {
+                EXFAIL_OUT(ret);
+            }
+
+            /* verify is singleton group still locked...
+             * so that if there were server freeze, we do not proceed with the decision, if
+             * file modification date was in future or log file is missing at all
+             */
+
+            if (G_tmsrv_cfg.singlegrp_no>0 &&
+                !ndrx_sg_is_locked(G_tmsrv_cfg.singlegrp_no, p_tl->fname, 0))
+            {
+                NDRX_LOG(log_error, "Singleton process group %d lost lock -> cannot continue");
+                exit(-1);
+            }
         }
     }
     
@@ -1346,18 +1361,60 @@ out:
  */
 exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
 {
-   int ret = EXSUCCEED;
-   TOKEN_READ_VARS;
-   
-   TOKEN_READ("stage", "tstamp");
-   p_tl->t_update = atol(p);
-   TOKEN_READ("info", "cmdid");
-   
-   TOKEN_READ("stage", "txstage");
-   p_tl->txstage = (short)atoi(p);
+    int ret = EXSUCCEED;
+    short stage;
+    TOKEN_READ_VARS;
+
+    TOKEN_READ("stage", "tstamp");
+    p_tl->t_update = atol(p);
+    TOKEN_READ("info", "cmdid");
+
+    TOKEN_READ("stage", "txstage");
+
+    /* In case ... if we are committing, there will be no abort.
+    * and vice versa. that's in case if doing failover
+    * the first state shall live on...
+    */
+    stage=(short)atoi(p);
+    if (p_tl->txstage>=XA_TX_STAGE_ABORTING &&
+        p_tl->txstage<=XA_TX_STAGE_ABFORGOT_HEU)
+    {
+        if (stage>=XA_TX_STAGE_ABORTING &&
+            stage<=XA_TX_STAGE_ABFORGOT_HEU)
+        {
+            p_tl->txstage = stage;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Invalid stage for [%s] was %hd (abort range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+            userlog("Invalid stage for [%s] was %hd (abort range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+        }
+    }
+    else if (p_tl->txstage>=XA_TX_STAGE_COMMITTING &&
+        p_tl->txstage<=XA_TX_STAGE_COMFORGOT_HEU)
+    {
+        if (stage>=XA_TX_STAGE_COMMITTING &&
+            stage<=XA_TX_STAGE_COMFORGOT_HEU)
+        {
+            p_tl->txstage = stage;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+            userlog("Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+        }
+    }
+    else
+    {
+        p_tl->txstage = stage;
+    }
    
 out:
-   return ret;
+    return ret;
 }
 
 /**

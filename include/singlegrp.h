@@ -114,6 +114,7 @@ extern NDRX_API int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg,
 
 extern NDRX_API int ndrx_sg_is_valid(int singlegrp_no);
 extern NDRX_API void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags);
+extern NDRX_API unsigned short ndrx_sg_flags_get(int singlegrp_no);
 
 extern NDRX_API unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no);
 extern NDRX_API void ndrx_sg_bootflag_clt_set(int singlegrp_no);

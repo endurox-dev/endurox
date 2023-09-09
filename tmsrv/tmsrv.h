@@ -74,11 +74,12 @@ typedef struct
     int xa_retries;
     
     int ping_time; /**< Number of seconds for interval of doing "pings" to db */
-    int ping_mode_jointran; /**< PING with join non existent transaction */
+    int ping_mode_jointran; /**< PING with join non existent transaction    */
     threadpool thpool;
     
     int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
     long vnodeid;            /**< Node id, command id used for failovers    */
+    int singlegrp_no;        /**< Actual singlelton group number            */
     
 } tmsrv_cfg_t;
 
