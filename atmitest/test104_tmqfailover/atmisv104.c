@@ -128,6 +128,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);   
     }
 
+    /* Check tmsrv without -X */
+    if (EXSUCCEED!=tpbegin(30, 0) ||
+        EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "Transaction fail: %s", 
+            tpstrerror(tperrno));
+        EXFAIL_OUT(ret); 
+    }
+
 out:
     return ret;
 }

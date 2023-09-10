@@ -96,7 +96,7 @@
             <cctag>RM2TMQ</cctag>
             <procgrp>GRP1</procgrp>
             <!-- shared node id set to 2 (i.e. -n2) -->
-            <sysopt>-e ${TESTDIR}/tm2-dom2.log -r -- -t1 -l${TESTDIR}/RM2 -m10 -n2</sysopt>
+            <sysopt>-e ${TESTDIR}/tm2-dom2.log -r -- -t1 -l${TESTDIR}/RM2 -m10 -n2 -X</sysopt>
         </server>
 
         <server name="tmqueue">
