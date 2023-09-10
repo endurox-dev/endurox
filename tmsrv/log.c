@@ -1318,7 +1318,8 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
              */
 
             if (G_tmsrv_cfg.singlegrp_no>0 &&
-                !ndrx_sg_is_locked(G_tmsrv_cfg.singlegrp_no, p_tl->fname, 0))
+                !ndrx_sg_is_locked(G_tmsrv_cfg.singlegrp_no,
+                    (G_tmsrv_cfg.sg_chk_log?p_tl->fname:NULL), 0))
             {
                 NDRX_LOG(log_error, "Singleton process group %d lost lock -> cannot continue");
                 exit(-1);

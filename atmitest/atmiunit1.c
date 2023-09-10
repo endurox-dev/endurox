@@ -681,6 +681,13 @@ Ensure(test086_tmqlimit)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test105_respawn)
+{
+    int ret;
+    ret=system_dbg("test105_respawn/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 /* first test shall fail all, as logs are overwritten */
 Ensure(test087_tmsrv)
 {
@@ -1005,6 +1012,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test102_procgrp);
     add_test(suite, test103_singlegrp);
     add_test(suite, test104_tmqfailover);
+    add_test(suite, test105_respawn);
     
     return suite;
 }

@@ -52,6 +52,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -82,6 +83,23 @@ function go_out {
     exit $1
 }
 
+#
+# Validate the exec sequece
+#
+validate_exec_seq() {
+
+    expected=$1
+    xadmin ppm
+    cur=`xadmin ppm | grep 'atmi.sv1' | awk '{print($8)}'`
+
+    if [ "X$expected" != "X$cur" ]; then
+
+        echo "TESTERROR: exected seq $expected, got $cur"
+        go_out -1
+    fi
+
+}
+
 rm *.log 2>/dev/null
 rm ULOG* 2>/dev/null
 
@@ -90,24 +108,19 @@ xadmin down -y
 xadmin start -y || go_out 1
 
 # it shall be 1
+validate_exec_seq 1
 
-xadmin ppm
-sleep 12
-xadmin ppm
-# it shall be 2
+sleep 7
+validate_exec_seq 2
+
+sleep 17
+validate_exec_seq 3
 
 sleep 22
-xadmin ppm
-# it shall be 3
+validate_exec_seq 4
 
-sleep 32
-xadmin ppm
-# it shall be 4
-
-sleep 32
-xadmin ppm
-# it shall be 5
-
+sleep 22
+validate_exec_seq 5
 
 RET=$?
 

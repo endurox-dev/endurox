@@ -80,6 +80,7 @@ typedef struct
     int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
     long vnodeid;            /**< Node id, command id used for failovers    */
     int singlegrp_no;        /**< Actual singlelton group number            */
+    int sg_chk_log;       /**< When working is singleton mode, validate log existance */
     
 } tmsrv_cfg_t;
 
