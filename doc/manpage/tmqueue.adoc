@@ -15,8 +15,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This is special ATMI server which is used for transactional persistent queue operations.
-*tmqueue* is backend server used by *tpenqueue* and *tpdequeue()* calls. Queue server
+This is a special ATMI server that is used for transactional
+persistent message queue operations. *tmqueue* is backend server used by 
+*tpenqueue* and *tpdequeue()* calls. Queue server
 works in pair with *tmsrv(8)* instance, where both *tmqueue* and *tmsrv* are configured in
 XA environment with 'NDRX_XA_RMLIB=libndrxxaqdisk.so' (actual disk driver) and 
 *NDRX_XA_DRIVERLIB=libndrxxaqdisks.so* (static registration) or 
@@ -24,7 +25,7 @@ XA environment with 'NDRX_XA_RMLIB=libndrxxaqdisk.so' (actual disk driver) and
 Related *tmsrv* instance shall be started first, before tmqueue process.
 
 Actual queue configuration is described either in configuration file *q.conf(5)*
-which may be present as separate file or as par of common-configuration ini section.
+which may be present as a separate file or as part of the common-configuration ini section.
 
 Current storage backends uses file system for persistence. For more details on
 back-end configuration see *libndrxxaqdisks(8)*.
@@ -39,17 +40,17 @@ do the XA driver calls which in the end sends notifications to the same server b
 
 Three thread-pools are used:
 
-1) First one is for accepting the ATMI *tpcall(3)* requests. 
+1) The first one is for accepting the ATMI *tpcall(3)* requests. 
 
-2) Second thread pool is used by forward services (which basically are senders
+2) The second thread pool is used by forward services (which basically are senders
 for automatic queues). 
 
-3) Third thread pool is used by notifications received from transaction manager 
+3) The third thread pool is used by notifications received from transaction manager 
 (TM). TM notifies the queue server for XA operation progress (prepare, abort, commit).
 
 Every instance of *tmqueue* will advertise following list of services:
 
-1. @TMQ-<Cluster Node ID>-<Server ID>
+1. @TMQ-<Cluster (or Virtual) Node ID>-<Server ID>
 
 2. @QSP<Queue space>
 
@@ -105,13 +106,13 @@ OPTIONS
 -------
 
 [*-q* 'QUEUE_CONFIG']::
-This either full or relative path to the queue definition file (see 'q.conf(5)' 
+This is either full or relative path to the queue definition file (see 'q.conf(5)' 
 for more info on syntax. When changes are done in this file, it is possible to 
 reload the configuration during the runtime, with 'xadmin mqrc' command. Note 
 that queues are not removed, but changed or added. If flag is not set,
 then data is searched in *[@queue]* ini section. And uses *<cctag>* for
 sub-section search, if multiple Q-spaces are defined. Firstly it attempts 
-to load form this flag specified configuration file, afterwards attempt is 
+to load form this flag-specified configuration file, afterwards attempt is 
 made to load from CConfig if available.
 
 [*-s* 'SCAN_TIME']::
@@ -149,12 +150,23 @@ Default value is *180*.
 If flag is set, the enqueue operations will not trigger immediate forwarder
 thread wakeup.
 
+[*-n* 'ENDUROX_NODE_ID']::
+Indicates the virtual Enduro/X cluster node ID. If the parameter is not set, then
+given parameter matches the local application domain node ID set in *NDRX_NODEID*
+environment variable. Parameter normally is set to some common cluster node id
+number for singleton process group operations. So that in case of group failover,
+the tmqueue server from shared storage would read, recognize and process 
+failed (other) node's persisted messages. Additionally, it is required that <srvid>
+for the <server> tag in *ndrxconfig.xml(5)* used by tmqueue matches the 
+failed nodes <srvid> value. At event of group failover to other Enduor/X node,
+if Node ID or Server ID does not match, existing stored messages would be ignored.
+
 LIMITATIONS
 -----------
-When commit is performed for several enqueued messages within global transaction,
+When commit is performed for several enqueued messages within a global transaction,
 each message is unblocked (made available in queue space for dequeue or automatic
-forward) separately, message by message. So this means that during the commit
-execution, even thought commit is not completed yet, part of the messages will
+forward) separately, message by message. This means that during the commit
+execution, even though commit is not completed yet, part of the messages will
 appear as committed.
 
 Flag *NOJOIN* is not supported for XA libndrxxaqdisks and libndrxxaqdiskd drivers.

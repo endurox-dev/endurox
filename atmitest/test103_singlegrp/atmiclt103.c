@@ -99,6 +99,19 @@ int main(int argc, char** argv)
         NDRX_LOG(log_debug, "Locked OK");
         sleep(999);
     }
+    else if (argc>2 && 0==strcmp(argv[1], "grp_verif"))
+    {
+         char *p = getenv(CONF_NDRX_PROCGRP_NO);
+
+         if (NULL==p || 2!=atoi(p))
+         {
+             NDRX_LOG(log_error, "TESTERROR: invalid %s value %s", CONF_NDRX_PROCGRP_NO, p?p:"NULL");
+             EXFAIL_OUT(ret);
+         }
+
+         NDRX_LOG(log_error, "group OK %s", p);
+         sleep(999);
+    }
 
 
 out:

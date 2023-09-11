@@ -562,6 +562,7 @@ expublic int cpm_exec(cpm_process_t *c)
     int fd_stderr;
     int fd;
     int ret = EXSUCCEED;
+    char tmp[256];
 
     NDRX_LOG(log_warn, "*********processing for startup %s *********", 
             c->stat.command_line);
@@ -616,7 +617,20 @@ expublic int cpm_exec(cpm_process_t *c)
                     NDRX_CLTSUBSECT, c->subsect, strerror(errno));
             exit(1);
         }
-        
+
+        if (c->stat.procgrp_no > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", c->stat.procgrp_no);
+            if (EXSUCCEED!=setenv(CONF_NDRX_PROCGRP_NO, tmp, EXTRUE))
+            {
+                NDRX_LOG(log_error, "Cannot set [%s] to [%s]: %s", 
+                        CONF_NDRX_PROCGRP_NO, c->tag, strerror(errno));
+                userlog("Cannot set [%s] to [%s]: %s", 
+                        CONF_NDRX_PROCGRP_NO, c->tag, strerror(errno));
+                exit(1);
+            }
+        }
+
         NDRX_STRCPY_SAFE(cmd_str, c->stat.command_line);
 
         token = ndrx_strtokblk(cmd_str, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);

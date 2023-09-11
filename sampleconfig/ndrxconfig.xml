@@ -33,9 +33,11 @@
 		<ddrreload>1</ddrreload>
 		
 	</appconfig>
+<!--
 	<procgroups>
 	        <procgroup noorder="Y" grpno="1" name="GRP1" singleton="N" />
 	</procgroups>
+-->
 	<defaults>
 		<min>1</min>
 		<max>2</max>

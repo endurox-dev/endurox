@@ -56,7 +56,7 @@
 #define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
 #define MAX_LCFREADERS_DFLT     1000    /**< Lcf readers max this is priority */
 #define MAX_LCFSTARTMAX_DFLT    60      /**< Apply 60 seconds old commands */
-#define SGMREFRESHMAX_DFLT      30      /**< Default maximum lock refresh t */
+#define SGMREFRESHMAX_DFLT      30      /**< Number of sec. in which lock stamp must be refreshed */
 #define PGMAX_DFLT              64      /**< Maximum number of singleton groups */
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
