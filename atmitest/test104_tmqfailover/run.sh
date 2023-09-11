@@ -78,6 +78,8 @@ export NDRX_SGREFRESH=6
 
 if [ "$(uname)" == "Darwin" ]; then
     export NDRX_LIBEXT="dylib"
+else
+    export NDRX_LIBEXT="so"
 fi
 
 #
