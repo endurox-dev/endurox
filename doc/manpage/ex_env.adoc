@@ -9,11 +9,11 @@ ex_env - Enduro/X Environment configuration
 
 DESCRIPTION
 -----------
-Enduro/X use set of environment variables which is initial environment
-for application domain. There is set of parameters related to system,
-prefixes, Posix Queue mount points, various system limits. Next step
-to the configuration is application domain configuration by it self, 
-in 'ndrxconfig.xml' and 'debug.conf' (or Common-Configuration respectively).
+Enduro/X uses set of environment variables which are an initial environment
+for the application domain. There is a set of parameters related to the system,
+prefixes, Posix Queue mount points, and various system limits. The next step
+to the configuration is application domain configuration, in 'ndrxconfig.xml' and 'debug.conf' 
+(or Common-Configuration respectively).
 
 Mandatory Env. Variables
 ------------------------
@@ -38,7 +38,7 @@ Mandatory Env. Variables
 *NDRX_ULOG*='ULOG_PATH'::
     Writable system path where to write user logs. Significant
     system events as well as *userlog(3)* output is written
-    to file *ULOG.YYYYMMDD*, where 'YYYYMMDD' correspond to current
+    to file *ULOG.YYYYMMDD*, where 'YYYYMMDD' corresponds to the current
     date. This directory also typically is used to output any process
     related Enduro/X logs, from internal logging 
     (topics *ndrx* and *ubf*) or from user logging (*tp* topic)
@@ -458,6 +458,36 @@ Mandatory Env. Variables
     solving thundering herd issue. Also this setting disables setup of the
     *POLLEXCL_POLICY=LIFE:ONE* environment variable by *ndrxd* prior exec of
     new binary.
+*NDRX_PGMAX*='NUMBER_OF_GROUPS'::
+    This is number of process groups that can be registered in shared memory for 
+    *<procgroups>* tag. The default value for 'NUMBER_OF_GROUPS' is *64*.
+    Minimum value is *0*, which disables the process group functionality.
+    If changing this setting, "xadmin down -y" cleanup after the shutdown
+    is recommended, as this affects LCF shared memory size which might
+    be present event in shutdown state.
+*NDRX_SGREFRESH*='SINGLETON_GROUP_REFRESH_TIME'::
+    Defines the time in seconds by which the singleton group lock provider 
+    (*exsinglesv(8)*) must refresh (updated timestamp) in s hared memory
+    to indicate that the group lock is verified and still valid.
+    Default value is *60* seconds.
+*NDRX_PROCGRP_NO*='PROCESS_GROUP_NUMBER'::
+    For XATMI server process or XATMI client process value is set to
+    process group number, if process is part of process group.
+    In *ndrxconfig.xml(5)*  XATMI server processes are added to processes
+    group by setting group name in '<procgrp>' tag, and client processes
+    are added to process group by setting group-name in 'procgrp' attribute of
+    the <client>/<exec> tag.
+*NDRX_PROCGRP_LP_NO*='PROCESS_GROUP_NUMBER'::
+    This environment variable is exported for lock provider processes
+    (*exsinglesv(8)*) to indicate the group number for which given
+    process manages the lock. Variable is set to process only in case
+    if '<procgrp_lp>' tag is set to <server> in *ndrxconfig.xml(5)*.
+*NDRX_RESPAWN*='RESPAWN_FLAG'::
+    The environment variable is exported to the process in case, if
+    process is restarted after the process crash. For such case
+    value *1* is present in variable. Note, that during normal
+    start/sreload/reload-on-change operations this flag is environment
+    variable is not set.
 
 EXAMPLE
 -------

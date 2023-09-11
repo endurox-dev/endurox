@@ -24,10 +24,10 @@ NDRX_XA_LAZY_INIT=1
 
 DESCRIPTION
 -----------
-This XA Switch loader driver resolves XA Null switch from *libatmi*. The NULL
-XA Switch provides OK status all XA related operations. Thus this switch may be
-used for binaries which may want to orchestrate the two-phase commit transactions,
-but does not actually do any resource manager (e.g. database) related work.
+This XA Switch loader driver resolves the XA Null switch from *libatmi*. The NULL
+XA Switch provides OK status for all XA-related operations. Thus this switch may be
+used for binaries that may want to orchestrate the two-phase commit transactions
+but do not do any resource manager (e.g. database) related work.
 
 BUGS
 ----

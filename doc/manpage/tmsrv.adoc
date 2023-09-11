@@ -15,7 +15,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This is a special ATMI server which is used for distributed transaction coordination.
+This is a special ATMI server that is used for distributed transaction coordination.
 For transactions started with *tpbegin(3)*, *tmsrv* generates new XID and passes
 XID back to transaction initiator. At the same time transaction is remembered by *tmsrv*
 as active transaction, transaction time-out expiry is checked by background thread.
@@ -59,9 +59,9 @@ Every instance of *tmsrv* will advertise following list of services
 
 1. '@TM-<Resource Manager ID>'
 
-2. '@TM-<Cluster Node ID>-<Resource Manager ID>'
+2. '@TM-<Cluster (or Virtual) Node ID>-<Resource Manager ID>'
 
-3. '@TM-<Cluster Node ID>-<Resource Manager ID>-<EnduroX Server ID>'
+3. '@TM-<Cluster (or Virtual) Node ID>-<Resource Manager ID>-<EnduroX Server ID>'
 
 For example for Resource Manager ID 1, Cluster Node ID 6, Enduro/X Server ID 10
 services will look like:
@@ -81,14 +81,14 @@ to register new Resource Manager ID as part of the transaction.
 For XA processing, resource manager drivers are loaded via dynamic loadable shared libs.
 Resource manager should expose xa_switch in shared lib. For every different resource manager,
 there is different Enduro/X *tmsrv* running. Enduro/X process gets associated with
-corresponding RMID via *NDRX_XA_RES_ID* environment variable.
+the corresponding RMID via *NDRX_XA_RES_ID* environment variable.
 
-To configure different RMID's for different processes or tmsrvs, use the Enduro/X built in
+To configure different RMID's for different processes or tmsrvs, use the Enduro/X built-in
 facility of environment variable override or associate processes with *<cctag>* setting
 which corresponds to *[@global/<cctag>]* sub-section where the XA settings can be placed. 
 See the manpage of *ex_env(5)* for more details.
 
-Enduro/X support static and dynamic XA registration.
+Enduro/X supports static and dynamic XA registration.
 
 LOGGING AND RECOVERY
 --------------------
@@ -125,7 +125,7 @@ particular Resource Manager level:
 
 - $ xadmin forgetlocal
 
-*WARNING:* These commands does not consult with the originatig transaction
+*WARNING:* These commands does not consult with the originating transaction
 managers for the transaction statuses, thus these command shall be used only
 when system is idling (not processing any useful workload and it is known that
 there some records at resources locked / stuck at prepare stage).
@@ -218,6 +218,34 @@ Enable xa_recover() call for PINGs instead of xa_start(). See *-P* flag descript
 [*-h* 'HOUSEKEEP_TIMEOUT']::
 Number of seconds after which corrupted transaction log files are removed at
 tmsrv startup. Default value is *5400* (1 hour 30 min).
+
+[*-n* 'ENDUROX_NODE_ID']::
+Indicates the virtual Enduro/X cluster node ID. If the parameter is not set, then
+given paramter matches the local application domain node ID set in *NDRX_NODEID*
+environment variable. Parameter normally is set to some common cluster node id
+number for singleton process group operations. So that in case of group failover,
+the tmsrv server from shared storage would read, recognize and process 
+failed (other) node's transaction logs. Additionally it is required that <srvid>
+for the <server> tag in *ndrxconfig.xml(5)* used by tmsrv instance matches the 
+failed nodes <srvid> value. The same applies to *NDRX_XA_RES_ID* setting from
+the *ex_env(5)*, it must match with failed node's *NDRX_XA_RES_ID* setting.
+In case if parameters does not match, the log entries from shared storage are
+silently ignored.
+
+[*-X*]::
+If working in singleton process group, after the commit or abort decision
+logging, ensure that group still holds the lock, by doing additional 
+check on transaction log file existence and that file modification date is not in the future.
+If this flag is not set, then only time-based check is executed, that 
+singleton group lock provider has refreshed the group in time.
+The *-X* can be used as an extra precaution to detect real-time clock skew
+and that node thinks that it still holds the lock, 
+however, the other node has already taken over. In any case if lock is lost,
+*tmsrv* will exit immediately with logging the error message to log file
+and ULOG. See more ex_adminman(guides)(Enduro/X Administration Manual, Active-Active considerations) section.
+The downside for this flag is, that it uses a system call to check the file
+the presence (stat() function). To detect clock skew, additionally *FSYNC* 
+(instead of *FDATASYNC*) flag in *NDRX_XA_FLAGS* shall be used.
 
 XA RECOVER SETTINGS FOR ORACLE DB
 ---------------------------------

@@ -180,6 +180,13 @@ exprivate int get_singlegrp(void *ctx)
     int ret, lock_status;
     struct timespec ts;
 
+    /* get new time-stamp. Shall be done as first step, so that if
+     * system freezes happens during the work of the binary
+     * we would write expired time-stamp to shared memory
+     * and that would cause to group to unlock
+     */
+    ndrx_realtime_get(&ts);
+
     lock_ctx->pshm=ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
     if (NULL==lock_ctx->pshm)
     {
@@ -192,8 +199,6 @@ exprivate int get_singlegrp(void *ctx)
     /* Load group locally... */
     ndrx_sg_load(&lock_ctx->local, lock_ctx->pshm);
 
-    /* mark new refresh time */
-    ndrx_realtime_get(&ts);
     lock_ctx->new_refresh = ts.tv_sec;
 
     lock_status = ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL, 0);

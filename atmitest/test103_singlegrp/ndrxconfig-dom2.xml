@@ -115,7 +115,7 @@
             <exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/sleep-1.log"/>
             <exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_ULOG}/sleep-2.log"/>
         </client>
-        <client cmdline="sleep 999" procgrp="OK2">
+        <client cmdline="atmiclt103 grp_verif 2" procgrp="OK2">
             <exec tag="TAG3" autostart="Y" log="${NDRX_ULOG}/sleep-3.log"/>
         </client>
     </clients>
