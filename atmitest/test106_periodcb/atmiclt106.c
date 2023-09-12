@@ -119,10 +119,10 @@ int main(int argc, char** argv)
         if (0==test_case)
         {
             /* Ensure that fix is working (+1 as during the run.sh there is sleep) */
-            if (l < 60-DEVIATION_ALLOW || l > 60+DEVIATION_ALLOW)
+            if (labs(l-60)> DEVIATION_ALLOW)
             {
                 NDRX_LOG(log_error, "TESTERROR: Expected 60 +- %d callback calls, got %ld", 
-                DEVIATION_ALLOW, l);
+                    DEVIATION_ALLOW, l);
                 ret=EXFAIL;
                 goto out;
             }
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
         else
         {
             /* Ensure that fix is working (+1 as during the run.sh there is sleep) */
-            if (l < 120-DEVIATION_ALLOW*2 || l > 120+DEVIATION_ALLOW*2)
+            if (labs(l-120)> DEVIATION_ALLOW)
             {
                 NDRX_LOG(log_error, "TESTERROR: Expected 120 +- %d callback calls, got %ld", 
                     DEVIATION_ALLOW*2, l);
