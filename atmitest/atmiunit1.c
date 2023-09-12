@@ -681,13 +681,6 @@ Ensure(test086_tmqlimit)
     assert_equal(ret, EXSUCCEED);
 }
 
-Ensure(test105_respawn)
-{
-    int ret;
-    ret=system_dbg("test105_respawn/run.sh");
-    assert_equal(ret, EXSUCCEED);
-}
-
 /* first test shall fail all, as logs are overwritten */
 Ensure(test087_tmsrv)
 {
@@ -827,7 +820,14 @@ Ensure(test104_tmqfailover)
     assert_equal(ret, EXSUCCEED);
 }
 
-Ensure(test104_tmqfailover)
+Ensure(test105_respawn)
+{
+    int ret;
+    ret=system_dbg("test105_respawn/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test106_periodcb)
 {
     int ret;
     ret=system_dbg("test106_periodcb/run.sh");

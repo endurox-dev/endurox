@@ -93,7 +93,7 @@ int main(int argc, char** argv)
                  * get callbacks every 1.5 sec, thus totally 40.
                  * in fixed verison it must be 60.
                  */
-                usleep(500*1000);
+                usleep(800*1000);
             }
             /* for test_case 1, ensure that callbackups work correctly at full load
              * of the service
