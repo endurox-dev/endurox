@@ -827,6 +827,12 @@ Ensure(test104_tmqfailover)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test104_tmqfailover)
+{
+    int ret;
+    ret=system_dbg("test106_periodcb/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
 
 TestSuite *atmi_test_all(void)
 {
@@ -1013,6 +1019,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test103_singlegrp);
     add_test(suite, test104_tmqfailover);
     add_test(suite, test105_respawn);
+    add_test(suite, test106_periodcb);
     
     return suite;
 }
