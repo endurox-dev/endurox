@@ -64,6 +64,10 @@ expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     command_reply_ppm_t * ppm_info = (command_reply_ppm_t *)reply;
     pm_node_t *p_pm = (pm_node_t *)params->mod_param1;
     pm_node_svc_t *elt;
+    ndrx_procgroup_t* p_procgrp = ndrx_ndrxconf_procgroups_resolveno(G_app_config->procgroups
+        , p_pm->conf->procgrp_no);
+    ndrx_procgroup_t* p_procgrp_lp = ndrx_ndrxconf_procgroups_resolveno(G_app_config->procgroups
+        , p_pm->conf->procgrp_lp_no);
     
     reply->msg_type = NDRXD_CALL_TYPE_PM_PPM;
     /* calculate new send size */
@@ -90,6 +94,24 @@ expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     ppm_info->procgrp_no = p_pm->conf->procgrp_no;
     ppm_info->procgrp_lp_no = p_pm->conf->procgrp_lp_no;
     ppm_info->procgrp_lp_no_act = p_pm->procgrp_lp_no;
+
+    if (NULL!=p_procgrp)
+    {
+        NDRX_STRCPY_SAFE(ppm_info->procgrp, p_procgrp->grpname);
+    }
+    else
+    {
+        ppm_info->procgrp[0] = EXEOS;
+    }
+
+    if (NULL!=p_procgrp_lp)
+    {
+        NDRX_STRCPY_SAFE(ppm_info->procgrp_lp, p_procgrp_lp->grpname);
+    }
+    else
+    {
+        ppm_info->procgrp_lp[0] = EXEOS;
+    }
 
     NDRX_LOG(log_debug, "magic: %ld", ppm_info->rply.magic);
 }

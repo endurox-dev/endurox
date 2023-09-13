@@ -737,8 +737,9 @@ PARAMETERS
     Additionally any *BFLD_CARRAY* is mapped to *STRING*. 
 
 'PROCGROUP_NAME'::
-    Process group name. Identifier max length is 30 chars. If a process
-    group name is not defined for the '<procgroup>' tag, then the default name
+    Process group name. Identifier may contain following characters: "a-zA-Z0-9_".
+    Max length 30 chars. If a process group name
+    is not defined for the '<procgroup>' tag, then the default name
     is taken from 'PROCGROUP_NAME_DEF' value. Name is mandatory for the
     process group being defined in the configuration file. Name must be
     unique for the process group.

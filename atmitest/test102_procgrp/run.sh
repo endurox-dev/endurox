@@ -98,6 +98,7 @@ function validate_invalid_config {
     xadmin stop -y
     xadmin ldcf
     OUT=`xadmin ldcf 2>&1`
+    echo "YOPT [$OUT]"
     
     if [[ $OUT != *"$code"* ]]; then
         echo "Missing error code [$code] in ldcf output for $cfg_file"
@@ -121,7 +122,7 @@ function validate_invalid_config_reload {
     
     xadmin reload
     OUT=`xadmin reload 2>&1`
-    
+
     if [[ $OUT != *"$code"* ]]; then
         echo "Missing error code [$code] in ldcf output for $cfg_file"
         go_out -1
@@ -164,6 +165,9 @@ validate_invalid_config "ndrxconfig-dom1-inval_procgrp.xml" "NDRXD_ENOENT" "Fail
 validate_invalid_config "ndrxconfig-dom1-defaults-dup_no.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-defaults-dup_name.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-bad-no.xml" "NDRXD_EINVAL" "Invalid \`grpno'"
+validate_invalid_config "ndrxconfig-dom1-bad-name.xml" "NDRXD_EINVAL" "invalid characters used in"
+# in this case config is OK, config was loaded
+validate_invalid_config "ndrxconfig-dom1-ok-name.xml" "NDRXD_ECFGLDED" "NDRXD_ECFGLDED"
 
 # test server group operations:
 export NDRX_CONFIG="ndrxconfig-dom1-procgroups.xml"
@@ -195,7 +199,7 @@ atmi.sv1[[:space:]]*103[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space
 atmi.sv1[[:space:]]*104[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
 cpmsrv[[:space:]]*1000[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*0[[:space:]]*0[[:space:]]*0"
 
-if [[ "$OUT" =~ "$PATTERN" ]]; then
+if ! [[ "$OUT" =~ "$PATTERN" ]]; then
     echo "ppm -3 page invalid"
     go_out -1
 fi

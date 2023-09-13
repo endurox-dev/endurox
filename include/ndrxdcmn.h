@@ -748,6 +748,8 @@ typedef struct
     int procgrp_no;         /**< Sinlegron group of the process */
     int procgrp_lp_no;      /**< Defined lock provider for group no */
     int procgrp_lp_no_act;  /**< Actual number of lock provider (reported) */
+    char procgrp[MAXTIDENT+1];   /**< Sinlegron group of the process, name */
+    char procgrp_lp[MAXTIDENT+1];/**< Defined lock provider for group name*/
 
 } command_reply_ppm_t;
 

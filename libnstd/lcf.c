@@ -58,6 +58,7 @@
 #define MAX_LCFSTARTMAX_DFLT    60      /**< Apply 60 seconds old commands */
 #define SGMREFRESHMAX_DFLT      30      /**< Number of sec. in which lock stamp must be refreshed */
 #define PGMAX_DFLT              64      /**< Maximum number of singleton groups */
+#define PGMAX_MAX               99999   /**< Upper limit of number of process groups */
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -288,6 +289,14 @@ expublic int ndrx_lcf_init(void)
     {
         ndrx_G_libnstd_cfg.pgmax = atol(tmp);
     }
+
+    if (ndrx_G_libnstd_cfg.pgmax > PGMAX_MAX)
+    {
+        NDRX_LOG_EARLY(log_error, "%s value %d exceeds hard limit %d, defaulting to %d",
+            CONF_NDRX_PGMAX, ndrx_G_libnstd_cfg.pgmax, PGMAX_MAX, PGMAX_MAX);
+        ndrx_G_libnstd_cfg.pgmax=PGMAX_MAX;
+    }
+
     NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_PGMAX,
             ndrx_G_libnstd_cfg.pgmax);
 

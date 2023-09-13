@@ -899,6 +899,7 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
     char output[256];
     char buffer [80];
     struct tm timeinfo;
+    int len;
     
     NDRX_LOG(log_info, "cpm_pc: listing clients");
     /* Remove dead un-needed processes (killed & not in new config) */
@@ -906,8 +907,28 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
     {
         NDRX_LOG(log_info, "cpm_pc: %s/%s", c->tag, c->subsect);
         
+        buffer[0]=EXEOS;
+
+        if (c->stat.procgrp_no > 0)
+        {
+            ndrx_procgroup_t* p_grp=ndrx_ndrxconf_procgroups_resolveno(ndrx_G_procgroups_config, 
+                c->stat.procgrp_no);
+
+            NDRX_STRCPY_SAFE(buffer, "process group");
+            /* can be null, as for existing processes config validity of cpmsrv is not enforced */
+            if (NULL!=p_grp)
+            {
+                len = strlen(buffer);
+                snprintf(buffer+len, sizeof(buffer)-len, " %s ", p_grp->grpname);
+            }
+
+            len = strlen(buffer);
+            snprintf(buffer+len, sizeof(buffer)-len, "(no %d), ", c->stat.procgrp_no);
+        }
+
+        len = strlen(buffer);
         localtime_r (&c->dyn.stattime, &timeinfo);
-        strftime (buffer, 80, "%c", (&timeinfo));
+        strftime (buffer+len, sizeof(buffer)-len, "%c", (&timeinfo));
     
         if (CLT_STATE_STARTED == c->dyn.cur_state)
         {
@@ -923,8 +944,8 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
         else if (CLT_STATE_WAIT == c->dyn.cur_state && 
                 c->dyn.req_state != CLT_STATE_NOTRUN)
         {
-            snprintf(output, sizeof(output), "%s/%s - waiting on process group %d lock (%s)",c->tag, 
-                    c->subsect, c->stat.procgrp_no, buffer);
+            snprintf(output, sizeof(output), "%s/%s - waiting on group lock (%s)",c->tag, 
+                    c->subsect, buffer);
         }
         else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_STARTED) )
         {
