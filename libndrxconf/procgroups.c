@@ -103,8 +103,19 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             if (len>MAXTIDENT || len < 1)
             {
                 snprintf(err->error_msg, sizeof(err->error_msg),
-                    "(%s) invalid length %d for `name' for <procgroup> near line %d", 
+                    "(%s) invalid length %d for `name' attribute at <procgroup> near line %d", 
                     config_file_short, len, cur->line);
+                err->error_code = NDRXD_EINVAL;
+                NDRX_LOG(log_error, "%s", err->error_msg);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+
+            if (!ndrx_str_valid_alphanumeric_(p, MAXTIDENT))
+            {
+                snprintf(err->error_msg, sizeof(err->error_msg),
+                    "(%s) invalid characters used in `name' attribute at <procgroup> near line %d",
+                    config_file_short, cur->line);
                 err->error_code = NDRXD_EINVAL;
                 NDRX_LOG(log_error, "%s", err->error_msg);
                 xmlFree(p);

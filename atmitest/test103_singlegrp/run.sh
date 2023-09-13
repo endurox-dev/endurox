@@ -125,8 +125,8 @@ function validate_OK1_lock_loss {
     echo "$CMD"
     OUT=`$CMD 2>&1`
 
-    PATTERN="TAG1/SUBSECTION1 - waiting on process group 1 lock.*
-TAG2/SUBSECTION2 - waiting on process group 1 lock.*
+    PATTERN="TAG1/SUBSECTION1 - waiting on group lock \(process group OK1 \(no 1\), .*
+TAG2/SUBSECTION2 - waiting on group lock \(process group OK1 \(no 1\), .*
 TAG3/- - running pid [0-9]+ .*"
 
     echo "got output [$OUT]"
@@ -327,8 +327,8 @@ CMD="xadmin pc"
 echo "$CMD"
 OUT=`$CMD 2>&1`
 
-PATTERN="TAG1/SUBSECTION1 - waiting on process group 1 lock.*
-TAG2/SUBSECTION2 - waiting on process group 1 lock.*
+PATTERN="TAG1/SUBSECTION1 - waiting on group lock \(process group OK1 \(no 1\), .*
+TAG2/SUBSECTION2 - waiting on group lock \(process group OK1 \(no 1\), .*
 TAG3/- - running pid [0-9]+ .*"
 
 echo "got output [$OUT]"
@@ -453,7 +453,7 @@ if [ "$CNT" -ne "16" ]; then
     go_out -1
 fi
 
-CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+CNT=`xadmin pc | grep 'waiting on group lock' | wc | awk '{print $1}'`
 if [ "$CNT" -ne "3" ]; then
     echo "Expected 3 clients in waiting state, got [$CNT]"
     go_out -1
@@ -483,7 +483,7 @@ if [ "$CNT" -ne "16" ]; then
     go_out -1
 fi
 
-CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+CNT=`xadmin pc | grep 'waiting on group lock' | wc | awk '{print $1}'`
 if [ "$CNT" -ne "3" ]; then
     echo "Expected 3 clients in waiting state, got [$CNT]"
     go_out -1
@@ -507,7 +507,7 @@ if [ "$CNT" -ne "16" ]; then
     go_out -1
 fi
 
-CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+CNT=`xadmin pc | grep 'waiting on group lock' | wc | awk '{print $1}'`
 if [ "$CNT" -ne "3" ]; then
     echo "Expected 3 clients in waiting state, got [$CNT]"
     go_out -1
@@ -588,7 +588,7 @@ if [ "$CNT" -ne "11" ]; then
 fi
 
 # wait by cpmsrv too...
-CNT=`xadmin pc | grep 'waiting on process group' | wc | awk '{print $1}'`
+CNT=`xadmin pc | grep 'waiting on group lock' | wc | awk '{print $1}'`
 if [ "$CNT" -ne "2" ]; then
     echo "Expected 2 clients in waiting state, got [$CNT]"
     go_out -1

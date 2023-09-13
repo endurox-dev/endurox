@@ -2338,6 +2338,35 @@ expublic int ndrx_str_valid_cid(char *str, int max_len)
 }
 
 /**
+ * May contain [a-zA-Z0-9_]+
+ * @param str string to check
+ * @param max_len max allowed len
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_str_valid_alphanumeric_(char *str, int max_len)
+{ 
+    int i;
+    int len = strlen(str);
+    
+    if (len < 1 || len > max_len)
+    {
+        return EXFALSE;
+    }
+
+    for (i = 0; i < len; i++)
+    { 
+        if (!((str[i] >= 'a' && str[i] <= 'z') 
+              || (str[i] >= 'A' && str[i] <= 'Z') 
+              || (str[i] >= '0' && str[i] <= '9') 
+              || str[i] == '_')) 
+        return EXFALSE;
+    } 
+  
+    return EXTRUE;
+}
+
+
+/**
  * Check that str ends with needle
  * @param str string
  * @param needle what to search for str trailing

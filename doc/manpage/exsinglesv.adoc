@@ -1,0 +1,136 @@
+EXSINGLESV(8)
+=============
+:doctype: manpage
+
+
+NAME
+----
+exsinglesv - Singleton process group lock provider. XATMI server.
+
+
+SYNOPSIS
+--------
+*exsinglesv* ['OPTIONS']
+
+DESCRIPTION
+-----------
+This is a special XATMI server used for providing lock services
+for singleton process groups. Several copies of the process can be started,
+one for each singleton process group.
+
+The lock server supports file system-based fnctl() locking. When process
+acquires such lock, it reports the status to the shared memory, so that
+*ndrxd(8)* and *cpmsrv(8)* can do the booting or failover sequences.
+
+The lock server periodically checks the lock health, by doing the following actions:
+
+* Checking of the primary lock file and additionally doing "ping locks" on
+the secondary lock file, where it is regularly locked and unlocked. 
+* Checks include lock state verification (*exsinglesv* current state must match
+singleton groups state).
+
+In case any checks fail, a singleton process group in shared memory 
+(if was locked) and lock files are unlocked, 
+and the process exits with failure.
+
+Lock provider distinguishes two locking modes:
+
+1. If the process is started by normal boot (i.e. it does not respawn after crash),
+the process locks the primary file and immediately reports the locking status to the shared memory.
+
+2. If the process is respawned after the crash, it locks the primary file, however, it
+does not report the status immediately to the shared memory. Instead, it waits
+for the number of lock health checks (basically time delay) and after that,
+the group becomes locked. This is done for the reason, of letting the
+other (previously active) Enduro/X node kill the processes for the group that lost the lock.
+
+The status for the process groups can be checked by running the following *xadmin(8)*
+command:
+
+--------------------------------------------------------------------------------
+$ xadmin psg
+--------------------------------------------------------------------------------
+
+*exsinglesv* has two user exits which may be set in the configuration
+file, parameters: *exec_on_bootlocked* and *exec_on_locked*. The first program is executed in
+case if lock was acquired during the normal startup, and the second (*exec_on_locked*)
+is executed in case if failover has happened (lock files were unlocked) or
+if *exsinglesv* did crash, was restarted and acquired the lock. If programs
+specified by these flags return non *0* status, the *exsinglesv* would unlock
+any resources it locked and exits with failure.
+
+CONFIGURATION
+-------------
+
+Process requires common configuration (ini-files) to be set up for the Enduor/X instance,
+where *exsinglesv* is booted.
+
+Process reads settings from "[*@exsinglesv*[/<NDRX_CCTAG>]]" section.
+
+*lockfile_1=*'FILE_PATH'::
+Primary lock file-path on which fcntl() advisory write lock is acquired.
+parameter is mandatory to be set. If file is missing, it will be created.
+For distributed servers, path to file must be located on the shared file system,
+such as GPFS, GFS2 or any other shared file system which supports fcntl().
+
+*lockfile_2=*'FILE_PATH'::
+Ping lock file, which periodically (by the *chkinterval*) performs lock/unlock.
+File system shall be writable by the process. If file is missing, it will be created.
+File is expected to point to the same directory where *lockfile_1* is located.
+
+*exec_on_bootlocked*='FILE_PATH'::
+Optional user exit, which is executed in case if lock was 
+acquired during the normal startup. The program file is executed by system()
+call. If the program returns non *0* status, the *exsinglesv* would unlock files and
+restart.
+
+*exec_on_locked*='FILE_PATH'::
+Optional user exit, which is executed in case if lock was 
+acquired during the failover or after the crash. The program file is executed by system()
+call. If the program returns non *0* status, the *exsinglesv* would unlock files and
+restart.
+
+*chkinterval*='NUMBER_OF_SECONDS'::
+Interval in seconds between lock checks. Parameter is optional.
+The default value is extracted from *NDRX_SGREFRESH* environment variable, 
+which value is divided by *3*. The final parameter value must be greater than *0*. 
+Additionally ULOG warning will be generated
+in case if check interval multiplied by 3 is longer time specified in *NDRX_SGREFRESH*.
+setting. Note that the default *NDRX_SGREFRESH* value is *30* seconds, in such case
+without specified parameter default check interval is calculated as *10* sec.
+
+*locked_wait*='NUMBER_OF_CHECKS':
+The number of check cycles after which file locked status is reported to the
+shared memory of the Enduro/X application domain. This parameter is only
+used in case if it acquired the *lockfile_1* lock when binary was already running
+(e.g. failover happens for other node to this) or *exsinglesv* by it self
+for some reason was reloaded to due to crash (failed exit, etc). At normal
+application domain boot, this wait does not apply and file lock is reported
+immediately to the shared memory. The parameter is optional, and the default
+value is calculated as *NDRX_SGREFRESH* value divided by *chkinterval* and multiplied by 2.
+If using all defaults, then this value is set to *6*. This means that after
+the failover, that singleton group depending on this lock provider 
+will be booted only after *60* seconds.
+
+For more detailed setup of the singleton groups, functions and limitations,
+please see more ex_adminman(guides)(Enduro/X Administration Manual, Active-Active considerations) section.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ex_env(5)* *ndrxconfig.xml(5)* *xadmin(8)* *ex_adminman(guides)*
+
+COPYING
+-------
+(C) Mavimax, Ltd

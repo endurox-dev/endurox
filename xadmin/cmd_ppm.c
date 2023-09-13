@@ -111,8 +111,8 @@ exprivate void print_hdr2(void)
  */
 exprivate void print_hdr3(void)
 {
-    fprintf(stderr, "BINARY   SRVID      PID    SVPID PROCGRPNO PROCGRPLPNO PROCGRPLPNOA\n");
-    fprintf(stderr, "-------- ----- -------- -------- --------- ----------- ------------\n");
+    fprintf(stderr, "BINARY   SRVID      PID    SVPID PROCGRP   PGNO PROCGRPL PGLNO PGNLA\n");
+    fprintf(stderr, "-------- ----- -------- -------- -------- ----- -------- ----- -----\n");
 }
 
 /**
@@ -210,17 +210,35 @@ expublic int ppm_rsp_process2(command_reply_t *reply, size_t reply_len)
 expublic int ppm_rsp_process3(command_reply_t *reply, size_t reply_len)
 {
     char binary[9+1];
+    char procgrp[8+1];
+    char procgrp_lp[8+1];
     
     if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
     {
         command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
         FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
-        fprintf(stdout, "%-8.8s %5d %8d %8d %9d %11d %12d\n", 
+        FIX_NM(ppm_info->procgrp, procgrp, (sizeof(procgrp)-1));
+
+        if (EXEOS==procgrp[0])
+        {
+            NDRX_STRCPY_SAFE(procgrp, "N/A");
+        }
+
+        FIX_NM(ppm_info->procgrp_lp, procgrp_lp, (sizeof(procgrp_lp)-1));
+
+        if (EXEOS==procgrp_lp[0])
+        {
+            NDRX_STRCPY_SAFE(procgrp_lp, "N/A");
+        }
+
+        fprintf(stdout, "%-8.8s %5d %8d %8d %-8.8s %5d %-8.8s %5d %5d\n", 
                 ppm_info->binary_name,
                 ppm_info->srvid,
                 ppm_info->pid, 
                 ppm_info->svpid,
+                procgrp,
                 ppm_info->procgrp_no,
+                procgrp_lp,
                 ppm_info->procgrp_lp_no,
                 ppm_info->procgrp_lp_no_act
             );
