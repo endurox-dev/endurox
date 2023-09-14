@@ -98,7 +98,6 @@ function validate_invalid_config {
     xadmin stop -y
     xadmin ldcf
     OUT=`xadmin ldcf 2>&1`
-    echo "YOPT [$OUT]"
     
     if [[ $OUT != *"$code"* ]]; then
         echo "Missing error code [$code] in ldcf output for $cfg_file"
