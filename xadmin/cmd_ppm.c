@@ -221,14 +221,14 @@ expublic int ppm_rsp_process3(command_reply_t *reply, size_t reply_len)
 
         if (EXEOS==procgrp[0])
         {
-            NDRX_STRCPY_SAFE(procgrp, "N/A");
+            NDRX_STRCPY_SAFE(procgrp, "-");
         }
 
         FIX_NM(ppm_info->procgrp_lp, procgrp_lp, (sizeof(procgrp_lp)-1));
 
         if (EXEOS==procgrp_lp[0])
         {
-            NDRX_STRCPY_SAFE(procgrp_lp, "N/A");
+            NDRX_STRCPY_SAFE(procgrp_lp, "-");
         }
 
         fprintf(stdout, "%-8.8s %5d %8d %8d %-8.8s %5d %-8.8s %5d %5d\n", 
