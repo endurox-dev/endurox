@@ -50,6 +50,7 @@ typedef struct
     int state; /**< state number */
     char state_name[32]; /**< state name */
     int (*func)(void *data); /**< state function (callback) */
+    int flags;              /**< internal flags of the state */
     ndrx_sm_tran_t transitions[0]; /**< transitions */
 } ndrx_sm_state_handle_t;
 /*---------------------------Globals------------------------------------*/
@@ -93,23 +94,59 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
         event = cur->func(data);
         
         /* find next state */
-        for (i=0; i<nr_tran; i++)
+        if (cur->flags & NDRX_SM_FLAGS_SCAN)
         {
-            if (NDRX_SM_EV_EOF==cur->transitions[i].event)
+            for (i=0; i<nr_tran; i++)
             {
+                 if (NDRX_SM_EV_EOF==cur->transitions[i].event)
+                 {
+                    break;
+                 }
+                 else if (cur->transitions[i].event == event)
+                 {
+                    break;
+                 }
+            }
+        }
+        else if (cur->flags & NDRX_SM_FLAGS_INDEX)
+        {
+            if (event>=0 && event<nr_tran)
+            {
+                i = event;
+            }
+            else
+            {
+                /* event ouf of the rnage: */
                 NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
-                        "no transition found!", cur->state_name, cur->state, event);
+                    "no transition found!", cur->state_name, cur->state, event);
                 userlog("sm: ERROR ! state %s (%d), event %d: "
                         "no transition found!",cur->state_name, cur->state, event);
                 EXFAIL_OUT(ret);
             }
-            else if (cur->transitions[i].event == event)
-            {
-                NDRX_LOG(log_debug , "sm: %s, event %s", 
-                    cur->state_name, cur->transitions[i].event_name);
-                next_state = cur->transitions[i].next_state;
-                break;
-            }
+        }
+        else
+        {
+            NDRX_LOG(log_error, "sm: ERROR ! machine not validated (flags=%x)",
+                    cur->flags);
+            userlog("sm: ERROR ! machine not validated (flags=%x)",
+                    cur->flags);
+            EXFAIL_OUT(ret);
+        }
+
+        if (NDRX_SM_EV_EOF==cur->transitions[i].event)
+        {
+            NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
+                    "no transition found!", cur->state_name, cur->state, event);
+            userlog("sm: ERROR ! state %s (%d), event %d: "
+                    "no transition found!",cur->state_name, cur->state, event);
+            EXFAIL_OUT(ret);
+        }
+        else if (cur->transitions[i].event == event)
+        {
+            NDRX_LOG(log_debug , "sm: %s, event %s", 
+                cur->state_name, cur->transitions[i].event_name);
+            next_state = cur->transitions[i].next_state;
+            break;
         }
 
         if (NDRX_SM_ST_RETURN==next_state)
@@ -154,6 +191,7 @@ expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_s
     int tran;
     int ret = EXSUCCEED;
     int got_eof;
+    int in_range;
 
     for (i=first_state; i<=last_state; i++)
     {
@@ -169,7 +207,9 @@ expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_s
         }
 
         got_eof=EXFALSE;
-        for (tran=0; tran<=nr_tran; tran++)
+        in_range=EXTRUE;
+
+        for (tran=0; tran<nr_tran; tran++)
         {
             if (NDRX_SM_EV_EOF==cur->transitions[tran].event)
             {
@@ -189,6 +229,44 @@ expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_s
                         first_state, last_state);
                 EXFAIL_OUT(ret);
             }
+            else if (cur->transitions[tran].event<0 || cur->transitions[tran].event>=nr_tran)
+            {
+                in_range=EXFALSE;
+            }
+        }
+
+        /* build index  */
+        if (in_range)
+        {
+            ndrx_sm_tran_t tmp_trn[nr_tran];
+            got_eof=EXFALSE;
+            /* copy current table */
+            memcpy(tmp_trn, cur->transitions, sizeof(tmp_trn));
+
+            cur->flags |= NDRX_SM_FLAGS_INDEX;
+            /* generate index table... */
+            for (tran=0; tran<nr_tran; tran++)
+            {
+                if (NDRX_SM_EV_EOF==cur->transitions[tran].event)
+                {
+                    /* ok */
+                    got_eof=EXTRUE;
+                }
+
+                if (got_eof)
+                {
+                    /* set all index left-overs to EOF */
+                    cur->transitions[tran].event = NDRX_SM_EV_EOF;
+                }
+                else
+                {
+                    cur->transitions[tmp_trn[tran].event] = tmp_trn[tran];
+                }
+            }
+        }
+        else
+        {
+            cur->flags |= NDRX_SM_FLAGS_SCAN;
         }
     }
 
