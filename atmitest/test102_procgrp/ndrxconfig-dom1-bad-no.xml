@@ -53,7 +53,7 @@
         <killtime>20</killtime>
     </defaults>
     <procgroups>
-        <procgroup grpno="128" name="OK" />
+        <procgroup grpno="65" name="OK" />
     </procgroups>
     <servers>
         <server name="atmi.sv102">

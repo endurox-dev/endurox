@@ -57,6 +57,7 @@
         <procgroup />
         <defaults grpno="1" name="OK2" />
         <procgroup />
+        <procgroup name="_this_IS_long_grp64" singleton="Y" grpno="64"/>
     </procgroups>
     <servers>
         <server name="atmi.sv102">
@@ -72,6 +73,16 @@
             <srvid>100</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
             <procgrp>OK2</procgrp>
+        </server>
+        <server name="exsinglesv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>200</srvid>
+            <sysopt>-e ${TESTDIR}/exsinglesv.log -r</sysopt>
+            <procgrp_lp>_this_IS_long_grp64</procgrp_lp>
+            <envs>
+                <env name="NDRX_CCONFIG">${TESTDIR}/lock.ini</env>
+            </envs>
         </server>
         <server name="cpmsrv">
             <srvid>1000</srvid>

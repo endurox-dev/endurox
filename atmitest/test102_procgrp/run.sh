@@ -136,6 +136,8 @@ function validate_invalid_config_reload {
 }
 
 rm *.log 2>/dev/null
+rm ULOG* 2>/dev/null
+rm -f lock_* 2>/dev/null
 # Any bridges that are live must be killed!
 #xadmin killall tpbridge
 
@@ -187,19 +189,20 @@ OUT=`$CMD 2>&1`
 echo "got output [$OUT]"
 # check that 5x atmi.sv102 processs are running
 # shall have in output 
-PATTERN="BINARY   SRVID      PID    SVPID PROCGRPNO PROCGRPLPNO PROCGRPLPNOA
--------- ----- -------- -------- --------- ----------- ------------
-atmi.sv1[[:space:]]*10[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*28[[:space:]]*0[[:space:]]*0
-atmi.sv1[[:space:]]*11[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*28[[:space:]]*0[[:space:]]*0
-atmi.sv1[[:space:]]*12[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*28[[:space:]]*0[[:space:]]*0
-atmi.sv1[[:space:]]*100[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
-atmi.sv1[[:space:]]*101[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
-atmi.sv1[[:space:]]*102[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
-atmi.sv1[[:space:]]*103[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
-atmi.sv1[[:space:]]*104[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*1[[:space:]]*0[[:space:]]*0
-cpmsrv[[:space:]]*1000[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*0[[:space:]]*0[[:space:]]*0"
+PATTERN="BINARY[[:space:]]*SRVID[[:space:]]*PID[[:space:]]*SVPID[[:space:]]*PROCGRP[[:space:]]*PGNO[[:space:]]*PROCGRPL[[:space:]]*PGLNO[[:space:]]*PGNLA
+--------[[:space:]]*-----[[:space:]]*--------[[:space:]]*--------[[:space:]]*--------[[:space:]]*-----[[:space:]]*--------[[:space:]]*-----[[:space:]]*-----
+atmi.sv1[[:space:]]*10[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK[[:space:]]*28[[:space:]]*-[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*11[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK[[:space:]]*28[[:space:]]*-[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*12[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK[[:space:]]*28[[:space:]]*-[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*100[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK2[[:space:]]*1[[:space:]]*-[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*101[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK2[[:space:]]*1[[:space:]]*-[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*102[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK2[[:space:]]*1[[:space:]]*-[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*103[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK2[[:space:]]*1[[:space:]]*-[[:space:]]*0[[:space:]]*0
+atmi.sv1[[:space:]]*104[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*OK2[[:space:]]*1[[:space:]]*-[[:space:]]*0[[:space:]]*0
+exsingle[[:space:]]*200[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*-[[:space:]]*0[[:space:]]*_this_I\+[[:space:]]*64[[:space:]]*64
+cpmsrv[[:space:]]*1000[[:space:]]*[0-9]+[[:space:]]*[0-9]+[[:space:]]*-[[:space:]]*0[[:space:]]*-[[:space:]]*0[[:space:]]*0"
 
-if ! [[ "$OUT" =~ "$PATTERN" ]]; then
+if ! [[ "$OUT" =~ $PATTERN ]]; then
     echo "ppm -3 page invalid"
     go_out -1
 fi
