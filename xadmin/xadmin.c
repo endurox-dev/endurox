@@ -127,7 +127,7 @@ cmd_mapping_t M_command_map[] =
     {"start",   cmd_start, NDRXD_COM_START_RQ,  1,  1, 
                 "Start application domain\n"
                 "\t Also loads configuration automatically.\n"
-                "\t args: start [-y] [-s <server>] [-i <srvid>]"
+                "\t args: start [-y]  [(-s <server>) | (-i <srvid>) | (-g <procgrp>)]"
                 , NULL},
     {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,    1,  1, 
                 "Print services\n"
@@ -136,7 +136,7 @@ cmd_mapping_t M_command_map[] =
                 NULL},
     {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  2, 
                 "Stop application domain\n"
-                "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f] [-l]"
+                "\t args: stop [-y] [(-s <server>) | (-i <srvid>) | (-g <procgrp>)] [-k] [-f] [-l]"
                 , NULL},
     {"down",    cmd_fdown, EXFAIL,              1,  0, 
                 "Force App Server shutdown & resources cleanup\n"
@@ -200,7 +200,7 @@ cmd_mapping_t M_command_map[] =
                 , NULL},
     {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,1,  1, 
                 "Restarts server instance by instance\n"
-                "\t Args: sreload [-y] [-s <server>] [-i <srvid>]"
+                "\t Args: sreload [-y] [(-s <server>) | (-i <srvid>) | (-g <procgrp>)]"
                 , NULL},
     {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  1, 
                 "Alias for `sreload'"
@@ -283,15 +283,15 @@ cmd_mapping_t M_command_map[] =
                 , NULL},
     {"sc",        cmd_sc,EXFAIL,                 1,  1, 
                 "Stop client\n"
-                "\t args: sc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
+                "\t args: sc (-t <Tag> [-s <Subsection (default -)]) | (-g <procgrp>) [-w <wait in millis>]"
                 , NULL},
     {"bc",        cmd_bc,EXFAIL,                 1,  1, 
                 "Boot(start) client\n"
-                "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
+                "\t args: bc (-t <Tag> [-s <Subsection (default -)]) | (-g <procgrp>) [-w <wait in millis>]"
                 , NULL},
     {"rc",        cmd_rc,EXFAIL,                 1,  1, 
                 "Reload/Restart clients one-by-one\n"
-                "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
+                "\t args: rc (-t <Tag> [-s <Subsection (default -)]) | (-g <procgrp>) [-w <wait in millis>]"
                 , NULL},
     {"mqlc",      cmd_mqlc,EXFAIL,               0,  1, 
                 "List persistent queue configuration"
