@@ -126,9 +126,9 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
         }
         else
         {
-            NDRX_LOG(log_error, "sm: ERROR ! machine not validated (flags=%x)",
+            NDRX_LOG(log_error, "sm: ERROR ! machine not compiled (flags=%x)",
                     cur->flags);
-            userlog("sm: ERROR ! machine not validated (flags=%x)",
+            userlog("sm: ERROR ! machine not compiled (flags=%x)",
                     cur->flags);
             EXFAIL_OUT(ret);
         }
@@ -146,7 +146,6 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
             NDRX_LOG(log_debug , "sm: %s, event %s", 
                 cur->state_name, cur->transitions[i].event_name);
             next_state = cur->transitions[i].next_state;
-            break;
         }
 
         if (NDRX_SM_ST_RETURN==next_state)
@@ -171,7 +170,11 @@ out:
 }
 
 /**
- * Validate state machine.
+ * Compile + Validate state machine.
+ * Compilation makes converts structures for mapping events to array indexes for transitions
+ * (where possible)
+ * !!!! This assumes that SM buffer size is enough to handle largest state number.
+ * thus machine must be allocated with last state in mind.
  * Checks:
  *  - states are in sequence with memory arrays
  *  - every state transitions ends with NDRX_SM_EV_EOF (may cause core dump if not found)
@@ -180,12 +183,12 @@ out:
  * No gaps in states are allowed.
  * @param sm state machine (basically according to ndrx_sm_state_handle_t,
  * but having dynamic number of transitions)
+ * @param nr_state number of total states
  * @param nr_tran number of transitions per state (must be same for all states)
- * @param first_state first state of the machine
- * @param last_last last state of the machine
+ * @param last_last last state used of the machine, so that remainder can be reset.
  * @return 0 if ok, -1 if error
  */
-expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_state)
+expublic int ndrx_sm_comp(void *sm, int nr_state, int nr_tran, int last_state)
 {
     int i;
     int tran;
@@ -193,7 +196,74 @@ expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_s
     int got_eof;
     int in_range;
 
-    for (i=first_state; i<=last_state; i++)
+    /* temp backup copy of SM being compiled */
+    NDRX_SM_T(ndrx_sm_comp_t, nr_tran);
+    ndrx_sm_comp_t tmp[nr_state];
+
+    /* fix the sm.., reset remainder states, as array space is larger than
+     * number of states
+     */
+    got_eof=EXFALSE;
+    for (i=0; i<nr_state; i++)
+    {
+        ndrx_sm_comp_t *cur;
+        cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(sm, nr_tran, i);
+
+        if (got_eof)
+        {
+            cur->state=EXFAIL;
+        }
+        else if (cur->state==last_state)
+        {
+            got_eof=EXTRUE;
+        }
+        else if (cur->state >=nr_state)
+        {
+            NDRX_LOG(log_error, "sm: ERROR ! got state %d, but max allowed is %d!",
+                    cur->state, nr_state-1);
+            EXFAIL_OUT(ret);
+        }
+    }
+
+    memcpy(tmp, sm, sizeof(tmp));
+
+    /* reset SM */
+    got_eof=EXFALSE;
+    for (i=0; i<nr_state; i++)
+    {
+        ndrx_sm_comp_t *cur;
+        cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(sm, nr_tran, i);
+        cur->state=i;
+        cur->func=NULL;
+        if (tran>0)
+        {
+            cur->transitions[0].event=NDRX_SM_EV_EOF;
+        }
+    }
+
+    /* generate new mapping */
+    for (i=0; i<nr_state; i++)
+    {
+        ndrx_sm_comp_t *cur;
+        ndrx_sm_comp_t *tmp_cur;
+
+        tmp_cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(tmp, nr_tran, i);
+
+        if (tmp_cur->state==EXFAIL)
+        {
+            /* we are done... */
+            break;
+        }
+        
+        /* map out the states to indexes */
+        cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(sm, nr_tran, tmp_cur->state);
+
+        memcpy(cur, tmp_cur, sizeof(ndrx_sm_comp_t));
+    }
+
+
+    /* validate indexes */
+    for (i=0; i<nr_state; i++)
     {
         ndrx_sm_state_handle_t *cur = ndrx_sm_state_get(sm, nr_tran, i);
 
@@ -217,16 +287,29 @@ expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_s
                 got_eof=EXTRUE;
                 break;
             }
-            else if ( (cur->transitions[tran].next_state <first_state ||
-                cur->transitions[tran].next_state >last_state) && 
+            else if ( (cur->transitions[tran].next_state <0 ||
+                cur->transitions[tran].next_state >nr_state-1) &&
                 NDRX_SM_ST_RETURN!=cur->transitions[tran].next_state &&
-                NDRX_SM_ST_RETURN0!=cur->transitions[tran].next_state)
+                NDRX_SM_ST_RETURN0!=cur->transitions[tran].next_state
+                )
             {
                 NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %s (%d): "
-                        "next state %d is out of range [%d..%d]!", 
-                        cur->state_name, cur->state, cur->transitions[tran].event_name, 
-                        cur->transitions[tran].event, cur->transitions[tran].next_state, 
-                        first_state, last_state);
+                        "next state %d is out of range [%d..%d]!",
+                        cur->state_name, cur->state, cur->transitions[tran].event_name,
+                        cur->transitions[tran].event, cur->transitions[tran].next_state,
+                        0, nr_state-1);
+                EXFAIL_OUT(ret);
+            }
+            else if (
+                NDRX_SM_ST_RETURN!=cur->transitions[tran].next_state &&
+                NDRX_SM_ST_RETURN0!=cur->transitions[tran].next_state &&
+                NULL==ndrx_sm_state_get(sm, nr_tran, cur->transitions[tran].next_state)->func
+                )
+            {
+                NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %s (%d): "
+                        "next state %d is not used!",
+                        cur->state_name, cur->state, cur->transitions[tran].event_name,
+                        cur->transitions[tran].event, cur->transitions[tran].next_state);
                 EXFAIL_OUT(ret);
             }
             else if (cur->transitions[tran].event<0 || cur->transitions[tran].event>=nr_tran)
@@ -247,21 +330,18 @@ expublic int ndrx_sm_validate(void *sm, int nr_tran, int first_state, int last_s
             /* generate index table... */
             for (tran=0; tran<nr_tran; tran++)
             {
-                if (NDRX_SM_EV_EOF==cur->transitions[tran].event)
+                /* reset all to EOF*/
+                cur->transitions[tran].event = NDRX_SM_EV_EOF;
+            }
+            for (tran=0; tran<nr_tran; tran++)
+            {
+                if (NDRX_SM_EV_EOF==tmp_trn[tran].event)
                 {
-                    /* ok */
-                    got_eof=EXTRUE;
+                    /* mapping done. */
+                    break;
                 }
 
-                if (got_eof)
-                {
-                    /* set all index left-overs to EOF */
-                    cur->transitions[tran].event = NDRX_SM_EV_EOF;
-                }
-                else
-                {
-                    cur->transitions[tmp_trn[tran].event] = tmp_trn[tran];
-                }
+                cur->transitions[tmp_trn[tran].event] = tmp_trn[tran];
             }
         }
         else

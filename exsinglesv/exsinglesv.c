@@ -126,7 +126,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     char *sections[] = {"@singlesv",
                     NULL};
 
-    if (EXSUCCEED!=ndrx_exsinglesv_sm_validate())
+    if (EXSUCCEED!=ndrx_exsinglesv_sm_comp())
     {
         NDRX_LOG(log_error, "Statemachine error");
         userlog("Statemachine error");

@@ -82,7 +82,7 @@ extern int ndrx_exsinglesv_file_unlock(int lock_no);
 extern int ndrx_exsinglesv_file_chkpid(int lock_no, char *lockfile);
 extern void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock);
 extern int ndrx_exsinglesv_sm_run(void);
-extern int ndrx_exsinglesv_sm_validate(void);
+extern int ndrx_exsinglesv_sm_comp(void);
 #ifdef	__cplusplus
 }
 #endif
