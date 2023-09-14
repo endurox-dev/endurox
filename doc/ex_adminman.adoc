@@ -1991,7 +1991,8 @@ if for example administrator changes the clocks setting on the servers.
 In such case, if changes cover larger gaps of time than specified
 in *NDRX_SGREFRESH* parameter, group will unlock and failover will
 happen. It is recommend to keep the clocks accurrate and let the *NTP*
-daemon on regular bases, (few times in hour), to sychrnoize the clocks.
+daemon on regular bases, (e.g. few times in a hour - depending on hardware
+and softare environment), to sychrnoize the clocks.
 
 - *exsinglesv* regulary verifies the lock status on shard FS and additionally
 employs the second "ping" lock file, which on regular basis is locked and
