@@ -59,12 +59,14 @@ extern "C" {
 #define NDRX_SM_TRAN(EVENT, NEXT_STATE) {EVENT, #EVENT, NEXT_STATE} /**< Transition macro */
 #define NDRX_SM_TRAN_END {EXFAIL, "", 0} /**< Transition end macro */
 
+#define NDRX_SM_FLAGS_SCAN   0x0001 /*< Use scanning approach to match events */
+#define NDRX_SM_FLAGS_INDEX  0x0002 /*< Use index approach to match events    */
 /**
  * State machine state definition
  */
 #define NDRX_SM_STATE(STATE, FUNC, ...)                              \
     {                                                                \
-        STATE, #STATE, FUNC, {__VA_ARGS__}                           \
+        STATE, #STATE, FUNC, 0, {__VA_ARGS__}                        \
     }                                                                \
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -90,6 +92,7 @@ typedef struct
         int state; /**< state number */                             \
         char state_name[32]; /**< state name */                     \
         int (*func)(void *data); /**< state function (callback) */  \
+        int flags;              /**< internal flags of the state */ \
         ndrx_sm_tran_t transitions[NR_TRAN]; /**< transitions */    \
     } NAME
 /*---------------------------Globals------------------------------------*/

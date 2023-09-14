@@ -159,6 +159,10 @@ Ensure(test_nstd_sm_test1)
 {
     int data=ev_ok;
     reset_counters();
+
+    /* compile the SM: */
+    assert_equal(ndrx_sm_validate((void *)M_sm1, NR_TRANS, st_entry, st_go_work), EXSUCCEED);
+
     assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), ev_ok);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 1);
