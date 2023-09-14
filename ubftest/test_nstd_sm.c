@@ -46,6 +46,7 @@ enum
     , st_say_hello
     , st_go_home
     , st_go_work
+    , st_count /* used for state index counting..., not functional */
 };
 
 enum
@@ -72,7 +73,7 @@ exprivate int say_hello(void *data);
 exprivate int go_home(void *data);
 exprivate int go_work(void *data);
 
-ndrx_sm_test_t M_sm1[] = {
+ndrx_sm_test_t M_sm1[st_count] = {
 
     NDRX_SM_STATE( st_entry, entry,
           NDRX_SM_TRAN      (ev_ok,         st_say_hello)
@@ -101,12 +102,12 @@ ndrx_sm_test_t M_sm1[] = {
 };
 
 /**
- * Broken memory sequeuence
+ * last state is st_go_home and not st_go_work
  */
-ndrx_sm_test_t M_sm2[] = {
+ndrx_sm_test_t M_sm2[st_count] = {
 
     NDRX_SM_STATE( st_entry, entry,
-          NDRX_SM_TRAN      (ev_ok,         st_say_hello)
+          NDRX_SM_TRAN      (ev_ok,          st_go_home)
         , NDRX_SM_TRAN      (ev_err,        st_go_home)
         , NDRX_SM_TRAN      (ev_timeout,    st_go_work)
         , NDRX_SM_TRAN      (ev_normal,     NDRX_SM_ST_RETURN0)
@@ -119,6 +120,41 @@ ndrx_sm_test_t M_sm2[] = {
         , NDRX_SM_TRAN_END
         )
 };
+
+/* have strange event codes, use scanning*/
+ndrx_sm_test_t M_sm3[st_count] = {
+
+    NDRX_SM_STATE( st_entry, entry,
+          NDRX_SM_TRAN      (-500,          st_go_home)
+        , NDRX_SM_TRAN      (511,           st_go_home)
+        , NDRX_SM_TRAN_END
+        )
+    , NDRX_SM_STATE(st_go_home, go_home,
+          NDRX_SM_TRAN      (ev_ok,         st_go_work)
+        , NDRX_SM_TRAN_END
+        )
+    , NDRX_SM_STATE(st_go_work, go_work,
+          NDRX_SM_TRAN      (-500,         NDRX_SM_ST_RETURN)
+        , NDRX_SM_TRAN      (511,         NDRX_SM_ST_RETURN)
+        , NDRX_SM_TRAN_END
+        )
+};
+
+
+/* missing state (out of range) */
+ndrx_sm_test_t M_sm4[st_count] = {
+
+    NDRX_SM_STATE( st_entry, entry,
+          NDRX_SM_TRAN      (-500,          st_go_home)
+        , NDRX_SM_TRAN      (511,           777)
+        , NDRX_SM_TRAN_END
+        )
+    , NDRX_SM_STATE(st_go_home, go_home,
+          NDRX_SM_TRAN      (ev_ok,         st_go_work)
+        , NDRX_SM_TRAN_END
+        )
+};
+
 
 exprivate void reset_counters(void)
 {
@@ -161,7 +197,7 @@ Ensure(test_nstd_sm_test1)
     reset_counters();
 
     /* compile the SM: */
-    assert_equal(ndrx_sm_validate((void *)M_sm1, NR_TRANS, st_entry, st_go_work), EXSUCCEED);
+    assert_equal(ndrx_sm_comp((void *)M_sm1, st_count, NR_TRANS, st_go_work), EXSUCCEED);
 
     assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), ev_ok);
     assert_equal(M_entry_called, 1);
@@ -210,12 +246,30 @@ Ensure(test_nstd_sm_test1)
  */
 Ensure(test_nstd_sm_validate)
 {
-    assert_equal(ndrx_sm_validate((void *)M_sm1, NR_TRANS, st_entry, st_go_work), EXSUCCEED);
+    assert_equal(ndrx_sm_comp((void *)M_sm1, st_count, NR_TRANS, st_go_work), EXSUCCEED);
     /* missing state: */
-    assert_equal(ndrx_sm_validate((void *)M_sm1, NR_TRANS, st_entry, st_go_home), EXFAIL);
+    assert_equal(ndrx_sm_comp((void *)M_sm4, st_count, NR_TRANS, st_go_home), EXFAIL);
     /* missing EOF in transitions: */
-    assert_equal(ndrx_sm_validate((void *)M_sm2, NR_TRANS, st_entry, st_go_home), EXFAIL);
+    assert_equal(ndrx_sm_comp((void *)M_sm2, st_count, NR_TRANS, st_go_home), EXFAIL);
 }
+
+/**
+ * Ensure non index events works
+ */
+Ensure(test_nstd_sm_scan_evs)
+{
+    int data;
+    assert_equal(ndrx_sm_comp((void *)M_sm3, st_count, NR_TRANS, st_go_work), EXSUCCEED);
+
+    data=-500;
+    reset_counters();
+    assert_equal(ndrx_sm_run((void *)M_sm3, NR_TRANS, st_entry, (void *)&data), -500);
+
+    data=511;
+    reset_counters();
+    assert_equal(ndrx_sm_run((void *)M_sm3, NR_TRANS, st_entry, (void *)&data), 511);
+}
+
 
 /**
  * Standard library tests
@@ -227,6 +281,7 @@ TestSuite *ubf_nstd_sm(void)
 
     add_test(suite, test_nstd_sm_test1);
     add_test(suite, test_nstd_sm_validate);
+    add_test(suite, test_nstd_sm_scan_evs);
     
     return suite;
 }
