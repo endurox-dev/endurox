@@ -112,6 +112,8 @@ expublic void ndrx_sg_reset(void)
         memset( (char *)ndrx_G_shmcfg->commands 
                     + sizeof(ndrx_G_shmcfg->commands[0])*ndrx_G_libnstd_cfg.lcfmax,
                     0, sizeof(ndrx_sg_shm_t)*ndrx_G_libnstd_cfg.pgmax);
+        /* remove from maintenance mode too */
+        ndrx_G_shmcfg->is_mmon=EXFALSE;
     }
 }
 

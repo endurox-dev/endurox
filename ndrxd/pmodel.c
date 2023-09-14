@@ -905,7 +905,7 @@ out:
  * Start single process...
  * TODO: Add SIGCHLD handler here!
  * @param pm
- * @param no_wait - do not wait for process startup response
+ * @param do_wait - wait for process startup results
  * @param sg_snapshoot - snapshoot of the singleton groups
  * @param is_respawn - did process restart after the crash?
  * @return SUCCEED/FAIL
@@ -913,7 +913,7 @@ out:
 expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
-            int no_wait,
+            int do_wait,
             int *doabort,
             int *sg_snapshoot,
             int is_respawn)
@@ -998,7 +998,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     {
         NDRX_LOG(log_info, "Binary was restarted and startup was requested, sync");
         
-        if (!no_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
+        if (do_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
         {
             EXFAIL_OUT(ret);
         }
@@ -1319,12 +1319,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         }
         
         /* Do bellow stuff only if we can wait! */
-        if (!no_wait)
+        if (do_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
         {
-            if (EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
-            {
-                EXFAIL_OUT(ret);
-            }
+            EXFAIL_OUT(ret);
         }
 
         /* if was started, and given process provides singleton group lock,
@@ -1564,7 +1561,7 @@ expublic int app_startup(command_startstop_t *call,
             if (NULL!=p_pm_srvid)
             {
                 start_process(call, p_pm_srvid, p_startup_progress,
-                                    p_processes_started, EXFALSE, &abort, NULL, EXFALSE);
+                                    p_processes_started, EXTRUE, &abort, NULL, EXFALSE);
             }
             else
             {
@@ -1605,7 +1602,7 @@ expublic int app_startup(command_startstop_t *call,
                     )) /* or If full shutdown requested */
             {
                 start_process(call, p_pm, p_startup_progress, 
-                        p_processes_started, EXFALSE, &abort, sg_groups, EXFALSE);
+                        p_processes_started, EXTRUE, &abort, sg_groups, EXFALSE);
                 
                 if (abort)
                 {
@@ -1815,7 +1812,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm_srvid, p_startup_progress,
-                                        p_processes_started, EXFALSE, &abort, NULL, EXFALSE);
+                                        p_processes_started, EXTRUE, &abort, NULL, EXFALSE);
                 }
                 
                 if (abort)
@@ -1858,7 +1855,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm, p_startup_progress, 
-                            p_processes_started, EXFALSE, &abort, NULL, EXFALSE);
+                            p_processes_started, EXTRUE, &abort, NULL, EXFALSE);
                 }
                 
                 if (abort)

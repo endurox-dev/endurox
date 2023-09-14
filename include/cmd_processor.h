@@ -96,7 +96,7 @@ extern int srv_send_ping (pm_node_t *p_pm);
 extern int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
-            int no_wait,
+            int do_wait,
             int *abort, int *sg_snapshoot, int is_respawn);
 
 /* cmd_config.c: */

@@ -113,7 +113,7 @@
             <max>1</max>
             <srvid>250</srvid>
             <procgrp>GRP1</procgrp>
-            <sysopt>-e ${NDRX_ULOG}/tmrecoversv-dom2.log -r -- -s1</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmrecoversv-dom2.log -r -- -i</sysopt>
         </server>
 
         <server name="tpbridge">

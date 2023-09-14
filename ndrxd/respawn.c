@@ -93,7 +93,7 @@ expublic int do_respawn_check(void)
 
     if (into_respawn)
     {
-        NDRX_LOG(log_info, "do_respawn_check: recursive call, bypass the run!");
+        NDRX_LOG(log_debug, "do_respawn_check: recursive call, bypass the run!");
         goto out;
     }
 
@@ -155,10 +155,7 @@ expublic int do_respawn_check(void)
             {
                 long processes_started=0;
                 long schedule_next;
-                int no_wait = EXTRUE;
-                NDRX_LOG(log_warn, "Respawning server: srvid: %d,"
-                        " name: [%s], seq try: %d, already not running: %d secs, singleton_attempt: %d",
-                        p_pm->srvid, p_pm->binary_name, p_pm->exec_seq_try, delta, singleton_attempt);
+                int do_wait = EXFALSE;
 
                 /* 
                  * If process is in group and previous state was "wait", then we shall wait for process response
@@ -168,11 +165,15 @@ expublic int do_respawn_check(void)
                     && !(NDRX_SG_NO_ORDER & sg_groups[p_pm->conf->procgrp_no-1]) )
                 {
                     /* Ordering required, lets wait */
-                    no_wait = EXFALSE;
+                    do_wait = EXTRUE;
                 }
 
+                NDRX_LOG(log_warn, "Respawning server: srvid: %d,"
+                        " name: [%s], seq try: %d, already not running: %d secs, singleton_attempt: %d, do_wait: %d",
+                        p_pm->srvid, p_pm->binary_name, p_pm->exec_seq_try, delta, singleton_attempt, do_wait);
+
                 /* if not doing singleton_attempt, then it is respawn... */
-                start_process(NULL, p_pm, NULL, &processes_started, no_wait, &abort, sg_groups, !singleton_attempt);
+                start_process(NULL, p_pm, NULL, &processes_started, do_wait, &abort, sg_groups, !singleton_attempt);
 
                 /***Just for info***/
                 schedule_next = G_app_config->restart_min+p_pm->exec_seq_try*G_app_config->restart_step;

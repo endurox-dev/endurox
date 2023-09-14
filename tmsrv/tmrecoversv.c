@@ -98,12 +98,13 @@ int tpsvrinit (int argc, char **argv)
     /* scan after 30 sec */
     int scan_time = 30;
     int c;
-    
+    int immediate = EXFALSE;
+
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "s:p")) != -1)
+    while ((c = getopt(argc, argv, "s:pi")) != -1)
     {
 
-	if (optarg)
+	    if (optarg)
         {
             NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         }
@@ -123,20 +124,42 @@ int tpsvrinit (int argc, char **argv)
                 M_periodic=EXTRUE;
                 NDRX_LOG(log_info, "Periodic scan enabled");
                 break;
+            case 'i':
+                immediate=EXTRUE;
+                NDRX_LOG(log_info, "Immediate (boot time) recover enabled");
+                break;
             default:
                 /*return FAIL;*/
                 break;
         }
     }
-    
-    /* Register timer check (needed for time-out detection) */
-    if (EXSUCCEED!=tpext_addperiodcb(scan_time, recover_scan))
+
+    if (immediate)
     {
-        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
-                        tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_info, "Immediate transaction recover scan started");
+
+        /* requires client init for accessing shared memory */
+        if (EXSUCCEED!=tpinit(NULL))
+        {
+            EXFAIL_OUT(ret);
+        }
+        if (EXSUCCEED!=ndrx_tmrecover_do())
+        {
+            EXFAIL_OUT(ret);
+        }
     }
-    
+
+    /* register extension only if periodic or deffered scanning is enabled. */
+    if (M_periodic || !immediate)
+    {
+        /* Register timer check (needed for time-out detection) */
+        if (EXSUCCEED!=tpext_addperiodcb(scan_time, recover_scan))
+        {
+            NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                            tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
     
 out:
     return ret;

@@ -72,6 +72,16 @@ exprivate ndrx_sm_state_handle_t * ndrx_sm_state_get(void *sm, int nr_tran, int 
 }
 
 /**
+ * return size of the single state
+ * @param nr_tran number of transitions per state (must be same for all states)
+ * @return state object size in bytes
+ */
+exprivate size_t ndrx_sm_state_size(int nr_tran)
+{
+    return (sizeof(ndrx_sm_state_handle_t) + nr_tran*sizeof(ndrx_sm_tran_t));
+}
+
+/**
  * Run state machine.
  * @param sm state machine (basically according to ndrx_sm_state_handle_t,
  *  but having dynamic number of transitions)
@@ -195,10 +205,8 @@ expublic int ndrx_sm_comp(void *sm, int nr_state, int nr_tran, int last_state)
     int ret = EXSUCCEED;
     int got_eof;
     int in_range;
-
-    /* temp backup copy of SM being compiled */
-    NDRX_SM_T(ndrx_sm_comp_t, nr_tran);
-    ndrx_sm_comp_t tmp[nr_state];
+    size_t state_size = ndrx_sm_state_size(nr_tran);
+    char tmp[ndrx_sm_state_size(nr_tran)*nr_state];
 
     /* fix the sm.., reset remainder states, as array space is larger than
      * number of states
@@ -206,8 +214,8 @@ expublic int ndrx_sm_comp(void *sm, int nr_state, int nr_tran, int last_state)
     got_eof=EXFALSE;
     for (i=0; i<nr_state; i++)
     {
-        ndrx_sm_comp_t *cur;
-        cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(sm, nr_tran, i);
+        ndrx_sm_state_handle_t *cur;
+        cur = ndrx_sm_state_get(sm, nr_tran, i);
 
         if (got_eof)
         {
@@ -231,8 +239,8 @@ expublic int ndrx_sm_comp(void *sm, int nr_state, int nr_tran, int last_state)
     got_eof=EXFALSE;
     for (i=0; i<nr_state; i++)
     {
-        ndrx_sm_comp_t *cur;
-        cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(sm, nr_tran, i);
+        ndrx_sm_state_handle_t *cur;
+        cur = ndrx_sm_state_get(sm, nr_tran, i);
         cur->state=i;
         cur->func=NULL;
         if (tran>0)
@@ -244,10 +252,10 @@ expublic int ndrx_sm_comp(void *sm, int nr_state, int nr_tran, int last_state)
     /* generate new mapping */
     for (i=0; i<nr_state; i++)
     {
-        ndrx_sm_comp_t *cur;
-        ndrx_sm_comp_t *tmp_cur;
+        ndrx_sm_state_handle_t *cur;
+        ndrx_sm_state_handle_t *tmp_cur;
 
-        tmp_cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(tmp, nr_tran, i);
+        tmp_cur = ndrx_sm_state_get(tmp, nr_tran, i);
 
         if (tmp_cur->state==EXFAIL)
         {
@@ -256,9 +264,9 @@ expublic int ndrx_sm_comp(void *sm, int nr_state, int nr_tran, int last_state)
         }
         
         /* map out the states to indexes */
-        cur = (ndrx_sm_comp_t*)ndrx_sm_state_get(sm, nr_tran, tmp_cur->state);
+        cur = ndrx_sm_state_get(sm, nr_tran, tmp_cur->state);
 
-        memcpy(cur, tmp_cur, sizeof(ndrx_sm_comp_t));
+        memcpy(cur, tmp_cur, state_size);
     }
 
 
