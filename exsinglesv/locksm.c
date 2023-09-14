@@ -86,6 +86,7 @@ enum
     , st_abort_unlock
     , st_chk_mmon
     , st_do_lock
+    , st_count
 };
 
 /*---------------------------Typedefs-----------------------------------*/
@@ -119,7 +120,7 @@ exprivate int shm_refresh(void *ctx);
 exprivate int do_abort(void *ctx);
 exprivate int do_abort_unlock(void *ctx);
 
-ndrx_locksm_t M_locksm[] = {
+ndrx_locksm_t M_locksm[st_count] = {
 
     NDRX_SM_STATE( st_get_singlegrp, get_singlegrp,
           NDRX_SM_TRAN      (ev_locked,     st_chk_l_lock)
@@ -465,11 +466,11 @@ expublic int ndrx_exsinglesv_sm_run(void)
 }
 
 /**
- * Runtime validation of the state machine
+ * Runtime compilation of the state machine
  * @return 0 (on success), otherwise fail
  */
-expublic int ndrx_exsinglesv_sm_validate(void)
+expublic int ndrx_exsinglesv_sm_comp(void)
 {
-    return ndrx_sm_validate((void *)M_locksm, NR_TRANS, st_get_singlegrp, st_do_lock);
+    return ndrx_sm_comp((void *)M_locksm, st_count, NR_TRANS, st_do_lock);
 }
 /* vim: set ts=4 sw=4 et smartindent: */
