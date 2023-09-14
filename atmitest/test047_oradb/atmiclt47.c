@@ -111,6 +111,8 @@ int main(int argc, char** argv)
     int ret=EXSUCCEED;
     int upper1=100, upper2=300;
     char *p;
+    /* test Pro*C + OCI at account open */
+    char opensvc[2][64] = {"ACCOPEN", "ACCOPEN_OCI"};
 
     if (NULL!=(p=getenv(CONF_NDRX_XA_FLAGS)) && NULL!=strstr(p, "BTIGHT"))
     {
@@ -191,9 +193,9 @@ int main(int argc, char** argv)
         /* TPTRANSUSPEND must be present, otherwise other RMID must be defined
          * as two binaries cannot operate on the same transaction
          */
-        if (EXFAIL == tpcall("ACCOPEN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND))
+        if (EXFAIL == tpcall(opensvc[l%2], (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND))
         {
-            NDRX_LOG(log_error, "ACCOPEN failed: %s", tpstrerror(tperrno));
+            NDRX_LOG(log_error, "%s failed: %s", opensvc[l%2], tpstrerror(tperrno));
             ret=EXFAIL;
             goto out;
         }
@@ -220,9 +222,9 @@ int main(int argc, char** argv)
             goto out;
         }
         
-        if (EXFAIL == tpcall("ACCOPEN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND))
+        if (EXFAIL == tpcall(opensvc[l%2], (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND))
         {
-            NDRX_LOG(log_error, "ACCOPEN failed: %s", tpstrerror(tperrno));
+            NDRX_LOG(log_error, "%s failed: %s", opensvc[l%2], tpstrerror(tperrno));
             ret=EXFAIL;
             goto out;
         }
@@ -345,6 +347,57 @@ int main(int argc, char** argv)
         NDRX_LOG(log_error, "tpcommit failed: %s", tpstrerror(tperrno));
         ret=EXFAIL;
         goto out;
+    }
+
+    /* Check ops without transaction (local at server trans) */
+    NDRX_LOG(log_debug, "Checking server transactions");
+    if (NULL==p_ub)
+    {
+        /* FETCH previously returns NULL buffer ... */
+        p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    }
+    for (l=0; l<upper1; l++)
+    {
+        snprintf(tmp, sizeof(tmp), "ACX%03ld", l);
+
+        /* make an account, but abort... */        
+
+        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, tmp, 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (EXFAIL==CBchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0, BFLD_LONG))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_LONG_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }
+
+
+        if (EXFAIL == tpcall(opensvc[l%2], (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
+        {
+            NDRX_LOG(log_error, "%s failed: %s", opensvc[l%2], tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        if (EXSUCCEED!=check_balance(tmp, &bal))
+        {
+            NDRX_LOG(log_error, "Account [%s] NOT found!", tmp);
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (bal!=l)
+        {
+            NDRX_LOG(log_error, "Invalid balance expected: %ld, but got: %ld",
+                    l, bal);
+            ret=EXFAIL;
+            goto out;
+        }
     }
 
     
