@@ -1929,81 +1929,105 @@ to the other machine.
 
 ==== Process groups
 
-If the requiremenet for application is to have only one copy of the binary in
+If the requirement for the application is to have only one copy of the binary in
 the server cluster, then singleton process groups can be used for this purpose.
 Each singleton group requires a lock provider *exsinglesv(8)* process instance, which, by
 acquiring the lock, distinguishes on which machine the singleton group is started.
 *exsinglesv(8)* currently works with fcntl(2) Unix locks, meaning that cluster
 file system (such as *GFS2* or *GPFS*) must be configured for the Enduro/X nodes.
 
-In event of node failover, the next node will acquire the lock and after certain
+In the event of node failover, the next node will acquire the lock and after a certain
 time delay singleton group will be started on the new node. Meanwhile if old
-node is still active, but lost the lock for some technical reason (such as
+node is still active but lost the lock for some technical reason (such as
 shared file system becomes unavailable, or *exsinglesv* was shutdown),
 the processes in groups are killed with signal 9.
 
-The processes in groups (as well as all processes in Enduro/X) are controlled by eihter
-*ndrxd(8)* or *cpmsrv(8)*, thus group activation and deactivation (kill -9, if lock was lost)
-are peformed by theses binaries within the sanity check intervals, thus reasonable
+The processes in groups (as well as all processes in Enduro/X) are controlled by either
+*ndrxd(8)* or *cpmsrv(8)*, thus group activation and deactivation (kill -9, if the lock was lost)
+are performed by theses binaries within the sanity check intervals, thus reasonable
 short sanity cycles shall be set for the processes (tag <sanity> in *ndrxconfig.xml(5)* for 
 *ndrxd* and *-i* flag for *cpmsrv*). Reasonably these should be set to *1* or *2* seconds,
 however, depending on the process count configuration, that might increase 
 the system load spent on checks.
 
 The singleton process group boot order by default is as for the normal startup. In case
-if failover happen, the *exsinglesv* got the lock, did failover wait and after reporting
+if failover happens, the *exsinglesv* got the lock, did failover wait and after reporting
 locked status to shared memory, at next *ndrxd* sanity cycle, will 
 boot all the XATMI server processes in the original boot sequence. 
-When all servers in group are started, *cpmsrv* will continue with the
+When all servers in the group are started, *cpmsrv* will continue with the
 boot of the client processes.
 
-By setting attribute *noorder="Y"* in *<procgroup>*, boot order is ignored, and
-all server processes in the group are started in the parallel. The *cpmsrv* will not
-wait for the process group servers to boot, but will proceed immediately.
+By setting attribute *noorder="Y"* in *<procgroup>*, the boot order is ignored, and
+all server processes in the group are started in parallel. The *cpmsrv* will not
+wait for the process group servers to boot but will proceed immediately.
 
-The maximum number of processes in the group is limited by the *<maxproc>* attribute
-TODO...
+The maximum number of processes in the process group is limited by the 
+*NDRX_MSGMAX* setting from the *ex_env(5)*. The default is limit *64*. Hard limit
+is *99999*.
 
-Singleton process groups does not guaratee 100% probability that processes
+Singleton process groups does not guarantee 100% probability that processes
 will run only at the same time on one Enduro/X server instance. There could
 be cases, such as VM suspend and resume, when current node was removed from
-shard FS cluster, other node did got the shared file system lock and group
-was booted on new node. Meanwhile, for some reason VM on old node was resumed,
+the shard FS cluster, the other node did got the shared file system lock and the group
+was booted on the new node. Meanwhile, for some reason VM on the old node was resumed,
 the old node *exsinglesv*/*ndrxd*/*cpmsrv* will detect that group lock was
 lost and group processes will be killed, but this detection requires at least
 about *2* sanity cycles of *ndrxd*/*cpmsrv*, meaning that during that time
 singleton processes will run on two nodes at the same time. To ensure that
-this never happens, *STONITH* device must be configured. For example *GFS2*
+this never happens, the *STONITH* device must be configured. For example *GFS2*
 requires *STONITH* as part of the shared file system installation. For
-other shared file system cluster, please consult with correspoding vendor.
+other shared file system clusters, please consult with corresponding vendor.
 
 Singleton groups keeps the following health-checks:
 
 - Each group in shared memory keeps the refresh time-stamp interval.
-the *exsinglesv* task is periodically refresh the time-stamp in shared memory.
+the *exsinglesv* task is periodically refreshes the time-stamp in shared memory.
 If processes such as *ndrxd* and *cpmsrv* detects at sanity cycles that
-time-stamp refresh has not happend in given time (*NDRX_SGREFRESH* from
+time-stamp refresh has not happened in given time (*NDRX_SGREFRESH* from
 *ex_env(5)*), the group in shared memory is unlocked, and *ndrxd*/*cpmsrv*
-proceeds with kill all the group processes. For time stamping *CLOCK_REALTIME*
-clock is used, which reports to the system real-time, thus inactivity or
-system freezes can be detected by this clock. However false-positives may,
-if for example administrator changes the clocks setting on the servers.
-In such case, if changes cover larger gaps of time than specified
-in *NDRX_SGREFRESH* parameter, group will unlock and failover will
-happen. It is recommend to keep the clocks accurrate and let the *NTP*
-daemon on regular bases, (e.g. few times in a hour - depending on hardware
-and softare environment), to sychrnoize the clocks.
+proceeds with killing all the group processes. For time stamping *CLOCK_REALTIME*
+the clock is used, which reports to the system real-time, thus inactivity or
+system freezes can be detected by this clock. However, false-positives are possible,
+if for example administrator changes the clock setting on the servers.
+In such cases, if changes cover larger gaps of time than specified
+in *NDRX_SGREFRESH* parameter, the group will unlock and failover will
+happen. It is recommended to keep the clocks accurate and let the *NTP*
+daemon on a regular bases, (e.g. few times a hour - depending on the hardware
+and software environment), to sychrnoize the clocks.
 
-- *exsinglesv* regulary verifies the lock status on shard FS and additionally
-employs the second "ping" lock file, which on regular basis is locked and
-unlocked. If fore some reason there is issue with lock check or "ping" lock
+- *exsinglesv* regularly verifies the lock status on shard FS and additionally
+employs the second "ping" lock file, which on a regular basis is locked and
+unlocked. If fore some reason there is an issue with the lock check or "ping" lock
 sequences, the singleton process group is unlocked and *ndrxd*/*cpmsrv* will
 proceed with kill group binaries.
 
-==== tmsrv limitations
+==== Distributed transactions in A-A environment
 
-*tmsrv(8)* 
+By design, transaction logs of the *tmsrv(8)* are not replicated to other nodes.
+Thus if active cluster node fails, the other nodes cannot complete transactions
+started on the crashed node. However, transaction manager logs may be stored
+on shared file system and *tmsrv(8)* instances may be configured in the
+sinegton groups. In such case failover can happen to other nodes, for which
+if properly configured, the transaction manager will be booted back, it will
+recongnize the transaction logs from crashed node, and will perform
+distributed transaction completing.
 
+Following configuration settings must be set for the transaction manager:
+
+- Shared "virtual" Enduro/X cluster node ID shall be set for *tmsrv* instances
+which may took the failover. Command line parameter *-n*. Which shall be
+set to any node number from the cluster.
+
+- Transaction manager instances in different Enduro/X nodes must match
+
+
+Following limitations apply:
+
+...
+
+
+Transaction manager server *tmsrv(8)* for the particular resource manager shall
+run only in one copie 
 One way to make more automatic operations of *tmsrv(8)* recovery would be to put
 the logging on cluster file system such as *GFS* or *GPFS*, use heartbeat software
 to active only single instance of particular tmsrv processes. Also here small code change
@@ -2026,6 +2050,10 @@ messages are loaded, as currently tmqueue would skip such messages.
 
 Also here for performance reasons (as cluster FS might be slow) Enduro/X could
 be modified to use database storage (and also assuming that DB is HA aware).
+
+==== Sample configuration fof Active-Active setup with singleton groups
+
+TODO.
 
 == Standard configuration strings
 
