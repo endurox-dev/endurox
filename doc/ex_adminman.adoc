@@ -1969,9 +1969,10 @@ is *99999*.
 
 Singleton process groups do not guarantee 100% probability that processes
 will run only at the same time on one Enduro/X node instance. There could
-be cases, such as VM suspend and resume, when the current node was removed from
-the shard FS cluster, the other node did got the shared file system lock and the group
-was booted on the new node. Meanwhile, for some reason VM on the old node was resumed,
+be cases, such as VM suspends and resumes when the current node was removed from
+the shard FS cluster fcntl lock removes, the other node gets 
+the shared file system lock and the group is booted on the new node.
+Meanwhile, for some reason VM on the old node was resumed,
 the old node *exsinglesv*/*ndrxd*/*cpmsrv* will detect that group lock was
 lost and group processes will be killed, but this detection requires at least
 about *2* sanity cycles of *ndrxd*/*cpmsrv*, meaning that during that time
@@ -1997,9 +1998,10 @@ changed by the system administrator, or it can be changed by NTP.
 In such cases, if clock changes are done with large gaps of time,
 larger than the time specified in *NDRX_SGREFRESH* parameter,
 then groups will be unlocked and failover will
-happen. It is recommended to keep the clocks accurate and let the NTP
-daemon synchronize clock on a regular basis with small interval bases
+happen. To keep the server time accurate, it is recommended to perform NTP
+clock synchronization on a regular basis with small check/sync intervals
 (e.g. several times per hour - depending on the hardware and software environment).
+Additionally, NTP shall not set large fcntl
 
 For Linux systems, *CLOCK_BOOTTIME* is used, which is not affected by
 adjustment problem.
@@ -2018,51 +2020,63 @@ and processes form singleton groups would not be removed.
 
 ==== Distributed transactions in A-A environment
 
-The full life-cycle of the transaction is managed by particular
-transaction manager *tmsrv(8)* instance which did start the particular
+The full life-cycle of the transaction is managed by a particular
+transaction manager *tmsrv(8)* instance which starts the particular
 distributed transaction. *tmsrv* instance instance is identified
 by Enduro/X cluster node id and <srvid> tag from *ndrxconfig.xml(5)*.
 
 In case if high-availability is required for the distributed transaction
-environment, the failover functionality may be confiugred for the *tmsrv*. So that,
-if node had active transaction managers, but for some reason node
+environment, the failover functionality may be configured for the *tmsrv*. So that,
+if the node had active transaction managers, but for some reason node
 becomes unavailable, the other Enduro/X node may take over the transactions
 started on the crashed node.
 
 By design, distributed transaction manager *tmsrv(8)* uses file system storage,
-for strong the transaction logs. The first step of configuring failover, transaction
-manager shall store it's logs on (i.e. CLI paramter *-l* shall point to) shared file system, such
+to strong the transaction logs. The first step of configuring failover, the transaction
+manager shall store it's logs on (i.e. CLI parameter *-l* shall point to) shared file system, such
 as *GPFS* or *GFS2*.
 
-Second step for implemeting failover for transaction managers, is to configure
-the singleton groups for *tmsrv(8)* instances. Additionally instances on different
-Enduro/X nodes, shall point to the same transaction log directory. As transaction
+The second step for implementing failover for transaction managers is to configure
+the singleton groups for *tmsrv(8)* instances. Additionally instances on the different
+Enduro/X nodes shall point to the same transaction log directory. As transaction
 logs include information about the Enduro/X cluster node id and <srvrid> values on
-which transaction was started, it is crutial that *tmsrv(8)* on different Enduro/X
-nodes matches following attributes:
+which transaction was started, it is crucial that *tmsrv(8)* on different Enduro/X
+nodes match following attributes:
 
 - Common virtual Enduro/X cluster node id shall be set for matching *tmsrv(8)* instances.
-Value shall be passed to the *tmsrv* parameter *-n*. Which shall be 
+The value shall be passed to the *tmsrv* parameter *-n*. Which shall be 
 set to any node number from the cluster.
 
 - Transaction manager instances in different Enduro/X nodes must
 match *<srvid>* tag from *ndrxconfig.xml(5)*.
 
-At the end of each singleton group it is recommended to configure the *tmrecoversv(8)*.
+At the end of each singleton group, it is recommended to configure the *tmrecoversv(8)*.
 This will ensure that any orphaned prepared 
 transactions branches are collected (rolled back). For failover groups,
 it is recommended to use *-i* (immediate) flag, so that *tmrecoversv* is done
 without a delay. Orphans may happen if Enduro/X cluster node crashes during the
 prepare phase of the distributed transaction, as at that time for performance reasons,
-guarantee transaciton log file storage is not used.
+guarantee transaction log file storage is not used.
 
 *tmsrv(8)* shall be configured to use *FSYNC* (or *FDATASYNC*) and *DSYNC* flags
-in the *NDRX_XA_FLAGS* env, so that commit decision is fully logged to storage
-device. In case if planning to use *tmsrv(8)* *-X* flag for clock scew detection
+in the *NDRX_XA_FLAGS* env, so that the commit decision is fully logged to the storage
+device. In case if planning to use *tmsrv(8)* *-X* flag for clock skew detection
 against the log files, then *FSYNC* and *DSYNC* shall be used, instead of the *FDATASYNC*
 and *O_DSYNC*, as *FDATASYNC* does not flush log file modification dates to the
-file system. However, *FSYNC* and *-X* paramter may have performance impact on the
+file system. However, *FSYNC* and *-X* parameter may have a performance impact on the
 system transaction throughput.
+
+To guarantee that transaction consistency even if *STONITH* is not configured, *tmsrv(8)*
+has following features implemented:
+
+- *tmsrv(8)* after the commit decision logged, *tmsrv* check's its singleton group
+lock status (which includes the refresh time-stamp verfication). If the group was
+not refreshed in the given time *tmsrv(8)* terminates with the failure, as there
+might be other node which have picked up the transaction for completion.
+
+- *tmsrv(8)* has implemented additional flag *-X* which verifies the presence of the
+transaciton log file (it must exist) and file modification date. If log file
+does not exist, or modification date is in future (i.e. )
 
 
 ==== tmqueue limitations
