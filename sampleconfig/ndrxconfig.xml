@@ -34,7 +34,7 @@
 		
 	</appconfig>
 	<procgroups>
-	        <procgroup noorder="Y" grpno="1" name="GRP1" singleton="N" />
+	        <procgroup noorder="Y" grpno="1" name="GRP1" singleton="Y" sg_nodes="5,6,7" sg_verify="y" />
 	        <procgroup noorder="Y" grpno="2" name="THIS_IS_MEGA_GROUP" singleton="N" />
 	</procgroups>
 	<defaults>
@@ -81,7 +81,7 @@
 			<max>1</max>
 			<sysopt>-e /tmp/RECOVER -r</sysopt>
 			<appopt>-c10</appopt>
-<procgrp>GRP1</procgrp>
+<procgrp_lp>GRP1</procgrp_lp>
 		</server>
 		<server name="tpevsrv">
 			<srvid>300</srvid>

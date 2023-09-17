@@ -45,9 +45,6 @@
 #include <nerror.h>
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
-#define NDRX_PG_USED        0x00000001 /**< This groups is used                     */
-#define NDRX_PG_SINGLETON   0x00000002 /**< This is singlelton group                */
-#define NDRX_PG_NOORDER     0x00000004 /**< Do not use startup order for singleton  */
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 
@@ -59,6 +56,8 @@ typedef struct
     char grpname[MAXTIDENT+1]; /**< group name                                */
     int grpno;                /**< group number, 1..ndrx_G_libnstd_cfg.sgmax  */
     long flags;                 /**< group flags                                */
+    char sg_nodes[CONF_NDRX_NODEID_COUNT];  /**< Group nodes (full list us + them) */
+
     EX_hash_handle hh;         /**< makes this structure hashable               */
 } ndrx_procgroup_t;
 

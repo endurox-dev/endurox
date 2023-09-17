@@ -221,5 +221,19 @@ out:
     return ret;
 }
 
+/**
+ * Extended group check.
+ * @return EXFAIL/EXTRUE/EXFALSE
+ */
+expublic int ndrx_exsinglesv_sg_is_locked(void)
+{
+    /* check local */
+
+    /* check all remote */
+
+    /* if any fail, check local */
+
+    return EXFAIL;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -133,7 +133,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
      * TPBEGIN...
      */
     int ret=EXSUCCEED;
-    thread_server_t *thread_data = (thread_server_t *)ptr;
+    ndrx_thread_server_t *thread_data = (ndrx_thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
     int int_diag = 0;
@@ -450,7 +450,7 @@ void TMQUEUE (TPSVCINFO *p_svc)
     long size;
     char btype[16];
     char stype[16];
-    thread_server_t *thread_data = NDRX_MALLOC(sizeof(thread_server_t));
+    ndrx_thread_server_t *thread_data = NDRX_MALLOC(sizeof(ndrx_thread_server_t));
     char cmd = EXEOS;
     
     if (NULL==thread_data)

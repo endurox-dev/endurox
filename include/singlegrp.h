@@ -48,10 +48,17 @@ extern "C" {
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/**
+ * Flags used for process groups & singleton groups, including internal
+ * flags: 
+ */
 #define NDRX_SG_IN_USE      0x0001  /**< Given group is used           */
 #define NDRX_SG_NO_ORDER    0x0002  /**< Do not use boot order         */
 #define NDRX_SG_CHK_PID     0x0004  /**< Check that PID is alive       */
 #define NDRX_SG_SRVBOOTCHK  0x0008  /**< Check that servers are booted */
+#define NDRX_SG_VERIFY      0x0010  /**< Shall extra checks be made in locked mode */
+#define NDRX_SG_SINGLETON   0x0020  /**< Singleton group (used for pgs) */
 
 #define NDRX_SG_RSN_NONE        0       /**< No reason                   */
 #define NDRX_SG_RSN_EXPIRED     1       /**< Expird by missing refresh   */
@@ -63,6 +70,7 @@ extern "C" {
 #define NDRX_SG_RSN_CORRUPT     7       /**< Corrupted structures        */
 
 #define NDRX_SG_PROCNAMEMAX	16	/**< Max len of the lock process */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -81,6 +89,7 @@ typedef struct
     _Atomic short volatile lockprov_nodeid;         /**< Lock provider E/X cluster node id */
     _Atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
     char volatile lockprov_procname[NDRX_SG_PROCNAMEMAX+1];  /**< Lock provider name */
+    char volatile sg_nodes[CONF_NDRX_NODEID_COUNT]; /**< Group nodes (full list us + them) */
     _Atomic int reason;                             /**< Reason code for unlock */     
 
 } ndrx_sg_shm_t;
@@ -115,6 +124,7 @@ extern NDRX_API int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg,
 extern NDRX_API int ndrx_sg_is_valid(int singlegrp_no);
 extern NDRX_API void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags);
 extern NDRX_API unsigned short ndrx_sg_flags_get(int singlegrp_no);
+extern NDRX_API void ndrx_sg_nodes_set(int singlegrp_no, char *sg_nodes);
 
 extern NDRX_API unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no);
 extern NDRX_API void ndrx_sg_bootflag_clt_set(int singlegrp_no);

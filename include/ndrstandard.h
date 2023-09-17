@@ -310,6 +310,15 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_MAX_ID_SIZE    96      /**< pfx + binary name + server id + pid + nodeid */
 #define NDRX_MAX_KEY_SIZE   128     /**< Key size for random key                      */
 #define NDRX_QDIAG_MSG_SIZE 256     /**< Q diagnostic message size                    */
+
+/* Range for cluster ID's
+ * Currently we allow 254 nodes.
+ */
+#define CONF_NDRX_NODEID_MIN        1       /**< Min Node ID                  	*/
+#define CONF_NDRX_NODEID_COUNT 		32 		/*< Total count of cluster nodes 	*/
+/** Max Node ID */
+#define CONF_NDRX_NODEID_MAX        CONF_NDRX_NODEID_COUNT
+
 /* List of configuration environment variables */
 #define CONF_NDRX_TOUT           "NDRX_TOUT"
 #define CONF_NDRX_ULOG           "NDRX_ULOG"
@@ -477,6 +486,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_SVC_ADMIN    "@ADMINSVC"           /**< Admin service for atmiservices, logical */
 #define NDRX_SVC_REPLY    "@REPLYSVC"           /**< Reply service for atmiservices, logical */
 
+#define NDRX_SVC_SINGL      "@SINGL-%ld-%d"         /**< singleton grp Node_id,srvid */
+
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
 #define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
     
@@ -592,6 +603,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_MSGPRIO_MIN                1  /**< Minimum priority                               */
 #define NDRX_MSGPRIO_MAX                100 /**< Max priority                                  */
 #define NDRX_MSGPRIO_NOTIFY             60 /**< Notification is higher prio                    */
+
 
 #ifdef	__cplusplus
 }

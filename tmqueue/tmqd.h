@@ -119,18 +119,6 @@ typedef struct
     
 } tmqueue_cfg_t;
 
-/**
- * Server thread struct
- */
-struct thread_server
-{
-    char *context_data; /* malloced by enduro/x */
-    int cd;
-    char *buffer; /* buffer data, managed by enduro/x */
-};
-/* note we must malloc this struct too. */
-typedef struct thread_server thread_server_t;
-
 /** correlator message queue hash */
 typedef struct tmq_cormsg tmq_corhash_t;
 

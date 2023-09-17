@@ -102,6 +102,7 @@ add_library (objatmi OBJECT
                 tpcrypto.c
                 multibuf.c
                 ddr_atmi.c
+                txsinglegrp.c
             )
 
 # shared libraries need PIC

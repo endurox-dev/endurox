@@ -305,6 +305,9 @@ expublic void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
     sg->lockprov_srvid = atomic_load(&sg_shm->lockprov_srvid);
     ndrx_volatile_strcpy(sg->lockprov_procname, sg_shm->lockprov_procname,
         sizeof(sg->lockprov_procname));
+
+    ndrx_volatile_memcy(sg->sg_nodes, sg_shm->sg_nodes, sizeof(sg->sg_nodes));
+
     sg->reason = atomic_load(&sg_shm->reason);
 }
 
@@ -637,4 +640,14 @@ expublic unsigned short ndrx_sg_flags_get(int singlegrp_no)
     return atomic_load(&sg->flags);
 
 }
+
+/**
+ * Set the used cluster nodes
+ */
+expublic void ndrx_sg_nodes_set(int singlegrp_no, char *sg_nodes)
+{
+    ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+    ndrx_volatile_memcy(sg->sg_nodes, sg_nodes, sizeof(sg->sg_nodes));
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

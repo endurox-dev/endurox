@@ -291,6 +291,15 @@ EX_CACHE_NRDEL              664         long -         Number of records deleted
 EX_CACHE_NRDUPDEL           665         long -         Number of duplicates deleted
 EX_CACHE_BUFLEN             667         long -         Data len, bytes
 
+################################################################################
+# Sintleton group support + some generics
+################################################################################
+
+EX_COMMAND                  700         string -       generic command code
+EX_TSTAMP                   701         long   -       UTC timestamp
+EX_LCKSTATUS                702         char   -       Lock status
+EX_PROCGRP_NO               703         long   -       Process group number
+
 $#endif
 
 $/* vim: set ts=4 sw=4 et smartindent: */

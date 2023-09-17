@@ -56,6 +56,8 @@ add_executable (exsinglesv
 		exsinglesv.c
 		filelock.c
 		locksm.c
+		local.c
+		remote.c
 		../libatmisrv/rawmain_integra.c)
 target_link_libraries (exsinglesv tpadm atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
 set_target_properties(exsinglesv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

@@ -202,13 +202,6 @@ extern "C" {
 #define XATMI_SUBTYPE_LEN           33      /**< Max sub-type len             */
 #define XATMI_EVENT_MAX             42      /**< Max len of event to bcast    */
      
-/* Range for cluster ID's
- * Currently we allow 254 nodes.
- */
-#define CONF_NDRX_NODEID_MIN        1       /**< Min Node ID                  */
-#define CONF_NDRX_NODEID_MAX        33      /**< Max Node ID                  */
-/* Total count of cluster nodes */
-#define CONF_NDRX_NODEID_COUNT (CONF_NDRX_NODEID_MAX-CONF_NDRX_NODEID_MIN)
 #define CONF_NDRX_MAX_SRVIDS_XADMIN 512    /**< max number of server IDs for 
                                                xadmin printing in poll mode */
     

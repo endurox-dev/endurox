@@ -187,5 +187,9 @@
 #define	EX_CACHE_NRDEL	((BFLDID32)33555196)	/* number: 764	 type: long */
 #define	EX_CACHE_NRDUPDEL	((BFLDID32)33555197)	/* number: 765	 type: long */
 #define	EX_CACHE_BUFLEN	((BFLDID32)33555199)	/* number: 767	 type: long */
+#define	EX_COMMAND	((BFLDID32)167772960)	/* number: 800	 type: string */
+#define	EX_TSTAMP	((BFLDID32)33555233)	/* number: 801	 type: long */
+#define	EX_LCKSTATUS	((BFLDID32)67109666)	/* number: 802	 type: char */
+#define	EX_PROCGRP_NO	((BFLDID32)33555235)	/* number: 803	 type: long */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */
