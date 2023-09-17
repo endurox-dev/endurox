@@ -1857,7 +1857,7 @@ expublic int Bprint (UBFH *p_ub)
  * @param title title of the dump
  * @param p_ub UBF buffer
  */
-expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
+expublic void   ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
 {
     API_ENTRY;
     ndrx_debug_t * dbg = debug_get_tp_ptr();

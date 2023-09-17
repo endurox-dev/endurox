@@ -281,8 +281,8 @@ exprivate int validate_process_groups(config_t *app_config, pm_node_t *process_m
         {
             p_grp = &app_config->procgroups->groups_by_no[i];
 
-            if (    (p_grp->flags & NDRX_PG_USED)
-                    && (p_grp->flags & NDRX_PG_SINGLETON) 
+            if (    (p_grp->flags & NDRX_SG_IN_USE)
+                    && (p_grp->flags & NDRX_SG_SINGLETON) 
                     && 0==procgrplps[p_grp->grpno-1])
             {
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Singleton process group [%s] "

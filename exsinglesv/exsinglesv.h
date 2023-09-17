@@ -40,6 +40,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <limits.h>
+#include <exthpool.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_LOCK_FILE_1         0 /**< first lock file name, permanent  */
@@ -71,6 +72,11 @@ typedef struct
     int wait_counter;   /**< if this is not first boot, then wait */
     int is_locked;  /**< Is process fully locked        */
 
+    threadpool thpool_local;    /**< local requests */
+    threadpool thpool_remote;   /**< remote requests */
+    int threads;
+    int svc_timeout; /**< Service timeout (for remote calls) */
+
 } ndrx_exsinglesv_conf_t;
 
 /*---------------------------Globals------------------------------------*/
@@ -83,6 +89,13 @@ extern int ndrx_exsinglesv_file_chkpid(int lock_no, char *lockfile);
 extern void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock);
 extern int ndrx_exsinglesv_sm_run(void);
 extern int ndrx_exsinglesv_sm_comp(void);
+
+extern int ndrx_exsinglesv_sg_is_locked(void);
+
+extern void ndrx_exsingle_local (void *ptr, int *p_finish_off);
+extern void ndrx_exsingle_remote (void *ptr, int *p_finish_off);
+extern void ndrx_exsinglesv_set_error_fmt(UBFH *p_ub, long error_code, const char *fmt, ...);
+
 #ifdef	__cplusplus
 }
 #endif

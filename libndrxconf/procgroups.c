@@ -60,6 +60,28 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Desceing sort of the node array
+ */
+exprivate int compare_descending(const void *a, const void *b)
+{
+    char *aa = (char *)a;
+    char *bb = (char *)b;
+
+    if (*aa > *bb)
+    {
+        return -1;
+    }
+    else if (*aa < *bb)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/**
  * Parse process group
  * @param config config
  * @param doc xml doc
@@ -148,16 +170,58 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                 EXFAIL_OUT(ret);
             }
         }
+        else if (0==strcmp((char *)attr->name, "sg_nodes"))
+        {
+            ndrx_stdcfgstr_t *parsed=NULL, *el;
+            /* process singleton group node_ids */
+            if (EXSUCCEED!=ndrx_stdcfgstr_parse(p, &parsed))
+            {
+                snprintf(err->error_msg, sizeof(err->error_msg), 
+                    "(%s) Failed to parse `sg_nodes' %s in <procgroup> section near line %d", 
+                    config_file_short, p, cur->line);
+                err->error_code = NDRXD_EINVAL;
+                NDRX_LOG(log_error, "%s", err->error_msg);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+
+            DL_FOREACH(parsed, el)
+            {
+                int nodeid = atoi(el->key);
+
+                /* check that node id is in range */
+                if (nodeid<CONF_NDRX_NODEID_MIN || nodeid>CONF_NDRX_NODEID_MAX)
+                {
+                    snprintf(err->error_msg, sizeof(err->error_msg), 
+                        "(%s) Invalid `sg_nodes' %d (valid values 1..%d) in <procgroup> "
+                        "section near line %d", 
+                        config_file_short, nodeid, CONF_NDRX_NODEID_MAX, cur->line);
+                    err->error_code = NDRXD_EINVAL;
+                    NDRX_LOG(log_error, "%s", err->error_msg);
+                    xmlFree(p);
+                    ndrx_stdcfgstr_free(parsed);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* set group as used */
+                p_grp->sg_nodes[nodeid-1]=nodeid;
+            }
+
+            /* snow sort the array, so that we do not need to scan
+             * all the time the array of seeking for nodes to check
+             */
+            qsort(p_grp->sg_nodes, CONF_NDRX_NODEID_COUNT, sizeof(char), compare_descending);
+        }
         else if (0==strcmp((char *)attr->name, "noorder"))
         {
             /* y/Y */
             if (NDRX_SETTING_TRUE1==*p || NDRX_SETTING_TRUE2==*p)
             {
-                p_grp->flags|=NDRX_PG_NOORDER;
+                p_grp->flags|=NDRX_SG_NO_ORDER;
             } /* n/N */
             else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE2==*p)
             {
-                p_grp->flags&=~NDRX_PG_NOORDER;
+                p_grp->flags&=~NDRX_SG_NO_ORDER;
             }
             else
             {
@@ -179,16 +243,42 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             /* y/Y */
             if (NDRX_SETTING_TRUE1==*p || NDRX_SETTING_TRUE2==*p)
             {
-                p_grp->flags|=NDRX_PG_SINGLETON;
+                p_grp->flags|=NDRX_SG_SINGLETON;
             } /* n/N */
             else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE2==*p)
             {
-                p_grp->flags&=~NDRX_PG_SINGLETON;
+                p_grp->flags&=~NDRX_SG_SINGLETON;
             }
             else
             {
                 snprintf(err->error_msg, sizeof(err->error_msg), 
                     "(%s) Invalid `singleton' setting [%s] in "
+                        "<procgroup> or <defaults> "
+                        "section, expected values [%c%c%c%c] near line %d", 
+                        config_file_short, p,
+                        NDRX_SETTING_TRUE1, NDRX_SETTING_TRUE2,
+                        NDRX_SETTING_FALSE1, NDRX_SETTING_FALSE2, cur->line);
+                err->error_code = NDRXD_EINVAL;
+                NDRX_LOG(log_error, "%s", err->error_msg);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (0==strcmp((char *)attr->name, "sg_verify"))
+        {
+            /* y/Y */
+            if (NDRX_SETTING_TRUE1==*p || NDRX_SETTING_TRUE2==*p)
+            {
+                p_grp->flags|=NDRX_SG_VERIFY;
+            } /* n/N */
+            else if (NDRX_SETTING_FALSE1==*p || NDRX_SETTING_FALSE2==*p)
+            {
+                p_grp->flags&=~NDRX_SG_VERIFY;
+            }
+            else
+            {
+                snprintf(err->error_msg, sizeof(err->error_msg), 
+                    "(%s) Invalid `sg_verify' setting [%s] in "
                         "<procgroup> or <defaults> "
                         "section, expected values [%c%c%c%c] near line %d", 
                         config_file_short, p,
@@ -251,7 +341,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             EXFAIL_OUT(ret);
         }
 
-        p_grp->flags|=NDRX_PG_USED;
+        p_grp->flags|=NDRX_SG_IN_USE;
 
         /* copy stuff config entry */
         memcpy(&(*config)->groups_by_no[p_grp->grpno-1], p_grp, sizeof(ndrx_procgroup_t));
@@ -366,7 +456,7 @@ expublic int ndrx_ndrxconf_procgroups_is_singleton(ndrx_procgroups_t *handle, in
 
     p_grp = &handle->groups_by_no[procgrp_no-1];
 
-    if (p_grp->flags & NDRX_PG_SINGLETON)
+    if (p_grp->flags & NDRX_SG_SINGLETON)
     {
         ret=EXTRUE;
     }
@@ -392,7 +482,7 @@ expublic ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolveno(ndrx_procgroups_t 
 
     ret=&handle->groups_by_no[procgrpno-1];
 
-    if (ret->flags & NDRX_PG_USED)
+    if (ret->flags & NDRX_SG_IN_USE)
     {
         return ret;
     }
@@ -420,20 +510,11 @@ expublic void ndrx_ndrxconf_procgroups_apply_singlegrp(ndrx_procgroups_t *handle
     for (i=0; i<ndrx_G_libnstd_cfg.pgmax; i++)
     {
         ndrx_procgroup_t *p_grp = &handle->groups_by_no[i];
-        flags=0;
-        
-        if (p_grp->flags & NDRX_PG_SINGLETON)
-        {
-            flags = NDRX_SG_IN_USE;
+        ndrx_sg_flags_set(i+1, p_grp->flags);
 
-            if (p_grp->flags & NDRX_PG_NOORDER)
-            {
-                flags |= NDRX_SG_NO_ORDER;
-            }
-        }
-        ndrx_sg_flags_set(i+1, flags);
+        /* set cluster node_ids */
+        ndrx_sg_nodes_set(i+1, p_grp->sg_nodes);
     }
 }
-
 
 /* vim: set ts=4 sw=4 et smartindent: */
