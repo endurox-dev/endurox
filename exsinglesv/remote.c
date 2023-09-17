@@ -87,7 +87,7 @@ void ndrx_exsingle_remote (void *ptr, int *p_finish_off)
     if (EXSUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
     {
         userlog("tmqueue: Failed to set context");
-        NDRX_LOG(log_error, "Failed to set context");
+        TP_LOG(log_error, "Failed to set context");
         exit(1);
     }
 
@@ -109,7 +109,7 @@ void ndrx_exsingle_remote (void *ptr, int *p_finish_off)
         || EXSUCCEED!=Bchg(p_ub, EX_LCKSTATUS, 0, (char *)&local.is_locked, 0)
         || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)procgrp_no, 0))
     {
-        NDRX_LOG(log_error, "Failed to set EX_TSTAMP");
+        TP_LOG(log_error, "Failed to set EX_TSTAMP");
         ndrx_exsinglesv_set_error_fmt(p_ub, TPESYSTEM, "Failed to set UBF values: %s",
             Bstrerror(Berror));
         EXFAIL_OUT(ret);

@@ -113,7 +113,7 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
             }
 
             tmp = grpno_lookup;
-            if (EXSUCCEED!=Bchg(p_ub, EX_COMMAND, 0, NDRX_SGCMD_QUERY, 0L)
+            if (EXSUCCEED!=Bchg(p_ub, EX_COMMAND, 0, NDRX_SGCMD_VERIFY, 0L)
                 || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)&tmp, 0L))
             {
                 NDRX_LOG(log_error, "Failed to setup request buffer: %s", Bstrerror(Berror));
