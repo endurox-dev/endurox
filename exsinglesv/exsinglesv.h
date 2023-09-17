@@ -41,6 +41,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <limits.h>
 #include <exthpool.h>
+#include <singlegrp.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_LOCK_FILE_1         0 /**< first lock file name, permanent  */
@@ -76,8 +77,23 @@ typedef struct
     threadpool thpool_remote;   /**< remote requests */
     int threads;
     int svc_timeout; /**< Service timeout (for remote calls) */
+    int clock_tolerance; /**< Allowed between us and them*/
 
 } ndrx_exsinglesv_conf_t;
+
+/**
+ * Locking state machine context
+ */
+typedef struct
+{
+    ndrx_sg_shm_t *pshm; /**< Shared memory ptr of current group        */
+    ndrx_sg_shm_t  local;   /**< Atomically copied shard memory entry   */
+    /** 
+     * New precalcualted refresh time, so that at of the system
+     * freeze this would already be old
+     */
+    time_t new_refresh;
+} ndrx_locksm_ctx_t;
 
 /*---------------------------Globals------------------------------------*/
 extern ndrx_exsinglesv_conf_t ndrx_G_exsinglesv_conf; /**< Configuration */
@@ -89,9 +105,7 @@ extern int ndrx_exsinglesv_file_chkpid(int lock_no, char *lockfile);
 extern void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock);
 extern int ndrx_exsinglesv_sm_run(void);
 extern int ndrx_exsinglesv_sm_comp(void);
-
-extern int ndrx_exsinglesv_sg_is_locked(void);
-
+extern int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx);
 extern void ndrx_exsingle_local (void *ptr, int *p_finish_off);
 extern void ndrx_exsingle_remote (void *ptr, int *p_finish_off);
 extern void ndrx_exsinglesv_set_error_fmt(UBFH *p_ub, long error_code, const char *fmt, ...);

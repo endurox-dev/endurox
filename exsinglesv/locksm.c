@@ -92,20 +92,6 @@ enum
 /*---------------------------Typedefs-----------------------------------*/
 NDRX_SM_T(ndrx_locksm_t, NR_TRANS);
 
-/**
- * Locking state machine context
- */
-typedef struct
-{
-    ndrx_sg_shm_t *pshm; /**< Shared memory ptr of current group        */
-    ndrx_sg_shm_t  local;   /**< Atomically copied shard memory entry   */
-    /** 
-     * New precalcualted refresh time, so that at of the system
-     * freeze this would already be old
-     */
-    time_t new_refresh;
-} ndrx_locksm_ctx_t;
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -187,24 +173,17 @@ exprivate int get_singlegrp(void *ctx)
      * and that would cause to group to unlock
      */
     ndrx_realtime_get(&ts);
+    lock_ctx->new_refresh = ts.tv_sec;
 
-    lock_ctx->pshm=ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
-    if (NULL==lock_ctx->pshm)
+    lock_status = ndrx_exsinglesv_sg_is_locked(lock_ctx);
+
+    if (EXFAIL==lock_status)
     {
-        NDRX_LOG(log_error, "Failed to get singleton process group: %s", 
-                ndrx_G_exsinglesv_conf.procgrp_lp_no);
-        ret = ev_err;
+        ret=ev_err;
         goto out;
     }
 
-    /* Load group locally... */
-    ndrx_sg_load(&lock_ctx->local, lock_ctx->pshm);
-
-    lock_ctx->new_refresh = ts.tv_sec;
-
-    lock_status = ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL, 0);
-
-    NDRX_LOG(log_debug, "Current group %d lock status: %d", 
+    TP_LOG(log_debug, "Current group %d lock status: %d", 
         ndrx_G_exsinglesv_conf.procgrp_lp_no, lock_status);
 
     /* determine the current state of the group */
@@ -405,14 +384,14 @@ exprivate int chk_mmon(void *ctx)
     if (lock_ctx->local.is_mmon)
     {
         /* maintenance mode is ON */
-        NDRX_LOG(log_debug, "Singleton process group %d is in maintenance mode", 
+        TP_LOG(log_debug, "Singleton process group %d is in maintenance mode", 
                 ndrx_G_exsinglesv_conf.procgrp_lp_no);
         ret = ev_busy;
     }
     else if (ndrx_G_shmcfg->is_mmon)
     {
         /* maintenance mode is ON */
-        NDRX_LOG(log_debug, "Application is in maintenance mode");
+        TP_LOG(log_debug, "Application is in maintenance mode");
         ret = ev_busy;
     }
     else
@@ -441,7 +420,7 @@ exprivate int do_lock(void *ctx)
         {
             case NDRX_LOCKE_BUSY:
                 /* file is locked */
-                NDRX_LOG(log_info, "Singleton process group %d "
+                TP_LOG(log_info, "Singleton process group %d "
                         "is already locked (by other node)", 
                         ndrx_G_exsinglesv_conf.procgrp_lp_no);
                 ret = ev_busy;
@@ -474,7 +453,7 @@ exprivate int do_lock(void *ctx)
         else
         {
             /* we have to wait more */
-            NDRX_LOG(log_info, "Waiting after files locked %d/%d",
+            TP_LOG(log_info, "Waiting after files locked %d/%d",
                 ndrx_G_exsinglesv_conf.wait_counter,
                 ndrx_G_exsinglesv_conf.locked_wait);
 
@@ -498,13 +477,13 @@ exprivate int do_lock(void *ctx)
     if (NULL!=boot_script)
     {
         /* execute boot script */
-        NDRX_LOG(log_info, "Executing boot script: %s", boot_script);
+        TP_LOG(log_info, "Executing boot script: %s", boot_script);
 
         ret=system(boot_script);
 
         if (EXSUCCEED!=ret)
         {
-            NDRX_LOG(log_error, "ERROR: Lock script [%s], "
+            TP_LOG(log_error, "ERROR: Lock script [%s], "
                 "exited with %d", boot_script, ret);
             userlog("ERROR: Lock script [%s], "
                 "exited with %d", boot_script, ret);
@@ -514,7 +493,7 @@ exprivate int do_lock(void *ctx)
     }
 
     /* mark shm as locked by us too */
-    NDRX_LOG(log_debug, "Lock shared memory...");
+    TP_LOG(log_debug, "Lock shared memory...");
     if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.procgrp_lp_no, 
             tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME), lock_ctx->new_refresh))
     {

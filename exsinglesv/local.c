@@ -74,6 +74,7 @@ void ndrx_exsingle_local (void *ptr, int *p_finish_off)
     int cd;
     int int_diag = 0;
     char lock_status;
+    ndrx_locksm_ctx_t lockst;
     long lookup_grpno;
 
     /**************************************************************************/
@@ -85,7 +86,7 @@ void ndrx_exsingle_local (void *ptr, int *p_finish_off)
     if (EXSUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
     {
         userlog("tmqueue: Failed to set context");
-        NDRX_LOG(log_error, "Failed to set context");
+        TP_LOG(log_error, "Failed to set context");
         exit(1);
     }
 
@@ -94,7 +95,7 @@ void ndrx_exsingle_local (void *ptr, int *p_finish_off)
     /* check local group, is it locked or not ... */
     if (EXSUCCEED!=Bget(p_ub, EX_PROCGRP_NO, 0, (char *)&lookup_grpno, 0L))
     {
-        NDRX_LOG(log_error, "Failed to get EX_PROCGRP_NO: %s", Bstrerror(Berror));
+        TP_LOG(log_error, "Failed to get EX_PROCGRP_NO: %s", Bstrerror(Berror));
         ndrx_exsinglesv_set_error_fmt(p_ub, TPEINVAL, "Failed to get EX_PROCGRP_NO: %s",
             Bstrerror(Berror));
         EXFAIL_OUT(ret);
@@ -102,7 +103,7 @@ void ndrx_exsingle_local (void *ptr, int *p_finish_off)
 
     if (ndrx_G_exsinglesv_conf.procgrp_lp_no!=lookup_grpno)
     {
-        NDRX_LOG(log_error, "Invalid EX_PROCGRP_NO server %ld, requested %ld",
+        TP_LOG(log_error, "Invalid EX_PROCGRP_NO server %ld, requested %ld",
             ndrx_G_exsinglesv_conf.procgrp_lp_no, lookup_grpno);
         ndrx_exsinglesv_set_error_fmt(p_ub, TPEINVAL, 
             "Invalid EX_PROCGRP_NO server %ld, requested %ld",
@@ -110,11 +111,11 @@ void ndrx_exsingle_local (void *ptr, int *p_finish_off)
         EXFAIL_OUT(ret);
     }
 
-    ret=ndrx_exsinglesv_sg_is_locked();
+    ret=ndrx_exsinglesv_sg_is_locked(&lockst);
 
     if (EXFAIL==ret)
     {
-        NDRX_LOG(log_error, "Failed to check lock status");
+        TP_LOG(log_error, "Failed to check lock status");
         ndrx_exsinglesv_set_error_fmt(p_ub, TPESYSTEM, "Failed to check lock status");
         EXFAIL_OUT(ret);
     }
@@ -123,7 +124,7 @@ void ndrx_exsingle_local (void *ptr, int *p_finish_off)
 
     if (EXSUCCEED!=Bchg(p_ub, EX_LCKSTATUS, 0, &lock_status, 9))
     {
-        NDRX_LOG(log_error, "Failed to set EX_LCKSTATUS: %s", Bstrerror(Berror));
+        TP_LOG(log_error, "Failed to set EX_LCKSTATUS: %s", Bstrerror(Berror));
         ndrx_exsinglesv_set_error_fmt(p_ub, TPESYSTEM, "Failed to set EX_LCKSTATUS: %s",
             Bstrerror(Berror));
         EXFAIL_OUT(ret);
