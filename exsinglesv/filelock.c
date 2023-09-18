@@ -59,6 +59,7 @@
 #define DATA_SIZE       24 /* full block for node */
 #define DATA_FOR_CRC    16 /* full block for node */
 #define PING_READ_CRC_ERR  -2
+#define PING_NO_FILE  -3
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -419,9 +420,6 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                 break;
             }
         }
-        /* Do additional checks, if group flags require that... */
-
-        /* loop over the nodes try to call them... */
     }
 
     /* if any fail, check local */
@@ -453,7 +451,7 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
     for (copy=0; copy<2; copy++)
     {
         size_t offset= DATA_SIZE * CONF_NDRX_NODEID_COUNT * copy 
-            + DATA_SIZE*(ndrx_G_exsinglesv_conf.procgrp_lp_no-1);
+            + DATA_SIZE*(G_atmi_env.our_nodeid-1);
 
         fd = open(ndrx_G_exsinglesv_conf.lockfile_2, O_RDWR | O_CREAT, 0660);
 
@@ -491,7 +489,7 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
         {
             if (ftruncate(fd, fsize) == -1)
             {
-                TP_LOG(log_error, "copy %d:Truncate [%s] (fd=%d) to %d bytes failed: %s", 
+                TP_LOG(log_error, "copy %d: Truncate [%s] (fd=%d) to %d bytes failed: %s", 
                     copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, fsize, strerror(errno));
                 EXFAIL_OUT(ret);
             }
@@ -505,14 +503,16 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
             /* create location for secondary location too... */
             for (i=0; i<CONF_NDRX_NODEID_COUNT*2; i++)
             {
-                bytes_written = write(fd, data_block, DATA_SIZE);
+                size_t init_offset=DATA_SIZE * i;
 
-                if (lseek(fd, sizeof(ent)*i, SEEK_SET) == -1)
+                if (lseek(fd, init_offset, SEEK_SET) == -1)
                 {
                     TP_LOG(log_error, "copy %d: lseek [%s] (fd=%d) to offset %d bytes failed: %s", 
-                            copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, sizeof(ent)*i, strerror(errno));
+                            copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, init_offset, strerror(errno));
                     EXFAIL_OUT(ret);
                 }
+
+                bytes_written = write(fd, data_block, DATA_SIZE);
 
                 /* shall succeed for such small amount... */
                 if (DATA_SIZE!=bytes_written)
@@ -545,6 +545,13 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
         memcpy(data_block, &ent.lock_time, sizeof(ent.lock_time));
         memcpy(data_block+sizeof(ent.lock_time), &ent.sequence, sizeof(ent.sequence));
         ent.crc32=ndrx_Crc32_ComputeBuf(0, (unsigned char *)data_block, DATA_FOR_CRC);
+
+        /* Dump data... */
+        TP_LOG(log_info, "copy %d: writting nodeid=%d group=%d "
+            "refresh=%ld sequence=%ld crc32=%lx", 
+            copy, G_atmi_env.our_nodeid, ndrx_G_exsinglesv_conf.procgrp_lp_no, 
+            (long)lock_ctx->new_refresh, (long)lock_ctx->new_sequence, (long)ent.crc32);
+
         ent.crc32 = htonll(ent.crc32);
         memcpy(data_block+DATA_FOR_CRC, &ent.crc32, sizeof(ent.crc32));
 
@@ -625,6 +632,14 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsingles
     {
         NDRX_LOG(log_error, "Failed to open [%s]: %s", 
             ndrx_G_exsinglesv_conf.lockfile_2, strerror(errno));
+
+        /* if file is not found, return PING_NO_FILE */
+        if (ENOENT==errno)
+        {
+            ret=PING_NO_FILE;
+            goto out;
+        }
+        
         EXFAIL_OUT(ret);
     }
 
@@ -657,8 +672,8 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsingles
     } 
     else
     {
-        TP_LOG(log_debug, "copy %d: Read %zd bytes at offset %d: for node: %d (file: [%s])", 
-            copy, bytes_read, offset, nodeid, ndrx_G_exsinglesv_conf.lockfile_2);
+        TP_LOG(log_debug, "copy %d: Read %zd bytes at offset %d: for node: %d (fd=%d)", 
+            copy, bytes_read, offset, nodeid, fd);
     }
 
     /* Release the lock and close the file */
@@ -679,6 +694,11 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsingles
     p_ent->lock_time = ntohll(p_ent->lock_time);
     p_ent->crc32 = ntohll(p_ent->crc32);
     p_ent->sequence = ntohll(p_ent->sequence);
+
+    TP_LOG(log_info, "copy %d: got nodeid=%d group=%d "
+            "refresh=%ld sequence=%ld crc32=%lx", 
+            copy, nodeid, ndrx_G_exsinglesv_conf.procgrp_lp_no, 
+            (long)p_ent->lock_time, (long)p_ent->sequence, (long)p_ent->crc32);
 
     crc32_calc = ndrx_Crc32_ComputeBuf(0, (unsigned char *)data_block, DATA_FOR_CRC);
 
@@ -712,11 +732,11 @@ expublic int ndrx_exsinglesv_ping_read(int nodeid, ndrx_exsinglesv_lockent_t *p_
     {
         ret=ndrx_exsinglesv_ping_read_int(i<2?i:0, nodeid, p_ent);
 
-        if (ret!=PING_READ_CRC_ERR)
+        if (ret==PING_READ_CRC_ERR)
         {
-            EXFAIL_OUT(ret);
-            break;
+            continue;
         }
+
     }
 
     /* give some advice if lock file is totally corrupt... */
@@ -733,17 +753,20 @@ expublic int ndrx_exsinglesv_ping_read(int nodeid, ndrx_exsinglesv_lockent_t *p_
     }
 
 out:
+
+    TP_LOG(log_error, "returns %d", ret);
     return ret;
 }
 
 /**
  * Read max sequence number from files for all the nodes...
  * Used during intial lock and pinging...
+ * If file does not exist, j
  * @return max sequence number as seen in lock files
  */
 expublic long ndrx_exsinglesv_sg_max_seq(ndrx_locksm_ctx_t *lock_ctx)
 {
-    long ret=EXFAIL;
+    long ret=EXSUCCEED;
     int i;
     ndrx_exsinglesv_lockent_t ent;
 
@@ -754,7 +777,16 @@ expublic long ndrx_exsinglesv_sg_max_seq(ndrx_locksm_ctx_t *lock_ctx)
             TP_LOG(log_debug, "Checking node [%d]...", 
                     lock_ctx->local.sg_nodes[i]);
 
-            if (EXFAIL==ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
+            ret = ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent);
+
+            /* no file, max sequence is 0 */
+            if (ret==PING_NO_FILE)
+            {
+                /* we are done... */
+                ret=0;
+                break;
+            }
+            else if (EXSUCCEED!=ret)
             {
                 TP_LOG(log_error, "Failed to distinguish current max sequence number for node %d", 
                     (int)lock_ctx->local.sg_nodes[i]);
@@ -769,7 +801,7 @@ expublic long ndrx_exsinglesv_sg_max_seq(ndrx_locksm_ctx_t *lock_ctx)
     }
 
 out:
-    NDRX_LOG(log_info, "returns (max sequence) %d", ret);
+    TP_LOG(log_info, "returns (max sequence) %d", ret);
     return ret;
 }
 

@@ -87,9 +87,10 @@ exprivate size_t ndrx_sm_state_size(int nr_tran)
  *  but having dynamic number of transitions)
  * @param nr_tran number of transitions per state (must be same for all states)
  * @param data data to pass to state functions
+ * @param log_topic LOG_FACILITY_NDRX or LOG_FACILITY_TP
  * @return last event passed to NDRX_SM_ST_RETURN (or -1 if error)
  */
-expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
+expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data, int log_topic)
 {
     int ret = EXSUCCEED;
     ndrx_sm_state_handle_t *cur = ndrx_sm_state_get(sm, nr_tran, entry_state);
@@ -127,8 +128,16 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
             else
             {
                 /* event ouf of the rnage: */
-                NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
-                    "no transition found!", cur->state_name, cur->state, event);
+                if (LOG_FACILITY_TP==log_topic)
+                {
+                    TP_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
+                        "no transition found!", cur->state_name, cur->state, event);
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
+                        "no transition found!", cur->state_name, cur->state, event);
+                }
                 userlog("sm: ERROR ! state %s (%d), event %d: "
                         "no transition found!",cur->state_name, cur->state, event);
                 EXFAIL_OUT(ret);
@@ -136,8 +145,16 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
         }
         else
         {
-            NDRX_LOG(log_error, "sm: ERROR ! machine not compiled (flags=%x)",
-                    cur->flags);
+            if (LOG_FACILITY_TP==log_topic)
+            {
+                TP_LOG(log_error, "sm: ERROR ! machine not compiled (flags=%x)",
+                        cur->flags);
+            }
+            else
+            {
+                NDRX_LOG(log_error, "sm: ERROR ! machine not compiled (flags=%x)",
+                        cur->flags);
+            }
             userlog("sm: ERROR ! machine not compiled (flags=%x)",
                     cur->flags);
             EXFAIL_OUT(ret);
@@ -145,30 +162,64 @@ expublic int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data)
 
         if (NDRX_SM_EV_EOF==cur->transitions[i].event)
         {
-            NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
-                    "no transition found!", cur->state_name, cur->state, event);
+            if (LOG_FACILITY_TP==log_topic)
+            {
+                TP_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
+                        "no transition found!", cur->state_name, cur->state, event);
+            }
+            else
+            {
+                NDRX_LOG(log_error, "sm: ERROR ! state %s (%d), event %d: "
+                        "no transition found!", cur->state_name, cur->state, event);
+            }
             userlog("sm: ERROR ! state %s (%d), event %d: "
                     "no transition found!",cur->state_name, cur->state, event);
             EXFAIL_OUT(ret);
         }
         else if (cur->transitions[i].event == event)
         {
-            NDRX_LOG(log_debug , "sm: %s, event %s", 
-                cur->state_name, cur->transitions[i].event_name);
+            if (LOG_FACILITY_TP==log_topic)
+            {
+                TP_LOG(log_debug , "sm: %s, event %s", 
+                    cur->state_name, cur->transitions[i].event_name);
+            }
+            else
+            {
+                NDRX_LOG(log_debug , "sm: %s, event %s", 
+                    cur->state_name, cur->transitions[i].event_name);
+            }
             next_state = cur->transitions[i].next_state;
         }
 
         if (NDRX_SM_ST_RETURN==next_state)
         {
-            NDRX_LOG(log_debug, "sm: return from %s, with ret=%d", 
+            if (LOG_FACILITY_TP==log_topic)
+            {
+                TP_LOG(log_debug, "sm: return from %s, with ret=%d", 
                     cur->state_name, event);
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "sm: return from %s, with ret=%d", 
+                    cur->state_name, event);
+            }
+            
             ret=event;
             goto out;
         }
         else if (NDRX_SM_ST_RETURN0==next_state)
         {
-            NDRX_LOG(log_debug, "sm: return from %s, with ev %d as ret=0",
+            if (LOG_FACILITY_TP==log_topic)
+            {
+                TP_LOG(log_debug, "sm: return from %s, with ev %d as ret=0",
                     cur->state_name, event);
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "sm: return from %s, with ev %d as ret=0",
+                    cur->state_name, event);
+            }
+            
             ret=0;
             goto out;
         }

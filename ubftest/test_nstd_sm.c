@@ -199,7 +199,7 @@ Ensure(test_nstd_sm_test1)
     /* compile the SM: */
     assert_equal(ndrx_sm_comp((void *)M_sm1, st_count, NR_TRANS, st_go_work), EXSUCCEED);
 
-    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), ev_ok);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data, LOG_FACILITY_NDRX), ev_ok);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 1);
     assert_equal(M_go_home_called, 0);
@@ -207,7 +207,7 @@ Ensure(test_nstd_sm_test1)
 
     reset_counters();
     data=ev_err;
-    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), ev_err);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data, LOG_FACILITY_NDRX), ev_err);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 0);
     assert_equal(M_go_home_called, 1);
@@ -216,7 +216,7 @@ Ensure(test_nstd_sm_test1)
     /* transition not found: */
     reset_counters();
     data = ev_fatal;
-    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), EXFAIL);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data, LOG_FACILITY_NDRX), EXFAIL);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 0);
     assert_equal(M_go_home_called, 0);
@@ -225,7 +225,7 @@ Ensure(test_nstd_sm_test1)
     /* try different entry state */
     data=ev_ok;
     reset_counters();
-    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_go_home, (void *)&data), ev_ok);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_go_home, (void *)&data, LOG_FACILITY_NDRX), ev_ok);
     assert_equal(M_entry_called, 0);
     assert_equal(M_say_hello_called, 0);
     assert_equal(M_go_home_called, 1);
@@ -234,7 +234,7 @@ Ensure(test_nstd_sm_test1)
     /* exit code 0 forced (not from event code) */
     data=ev_normal;
     reset_counters();
-    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data), 0);
+    assert_equal(ndrx_sm_run((void *)M_sm1, NR_TRANS, st_entry, (void *)&data, LOG_FACILITY_NDRX), 0);
     assert_equal(M_entry_called, 1);
     assert_equal(M_say_hello_called, 0);
     assert_equal(M_go_home_called, 0);
@@ -263,11 +263,11 @@ Ensure(test_nstd_sm_scan_evs)
 
     data=-500;
     reset_counters();
-    assert_equal(ndrx_sm_run((void *)M_sm3, NR_TRANS, st_entry, (void *)&data), -500);
+    assert_equal(ndrx_sm_run((void *)M_sm3, NR_TRANS, st_entry, (void *)&data, LOG_FACILITY_NDRX), -500);
 
     data=511;
     reset_counters();
-    assert_equal(ndrx_sm_run((void *)M_sm3, NR_TRANS, st_entry, (void *)&data), 511);
+    assert_equal(ndrx_sm_run((void *)M_sm3, NR_TRANS, st_entry, (void *)&data, LOG_FACILITY_NDRX), 511);
 }
 
 

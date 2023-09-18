@@ -277,7 +277,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     TP_LOG(log_info, "chkinterval=%d", ndrx_G_exsinglesv_conf.chkinterval);
     TP_LOG(log_info, "locked_wait=%d (number of chkinterval cycles)", 
         ndrx_G_exsinglesv_conf.locked_wait);
-    TP_LOG(log_info, "svc_timeout=%s", ndrx_G_exsinglesv_conf.svc_timeout);
+    TP_LOG(log_info, "svc_timeout=%d", ndrx_G_exsinglesv_conf.svc_timeout);
     /* TP_LOG(log_info, "clock_tolerance=%s", ndrx_G_exsinglesv_conf.clock_tolerance); */
 
     /* Validate check interval: */
