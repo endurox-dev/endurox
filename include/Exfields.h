@@ -191,5 +191,6 @@
 #define	EX_TSTAMP	((BFLDID32)33555233)	/* number: 801	 type: long */
 #define	EX_LCKSTATUS	((BFLDID32)67109666)	/* number: 802	 type: char */
 #define	EX_PROCGRP_NO	((BFLDID32)33555235)	/* number: 803	 type: long */
+#define	EX_SEQUENCE	((BFLDID32)33555236)	/* number: 804	 type: long */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */

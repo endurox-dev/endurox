@@ -69,8 +69,8 @@ extern "C" {
 #define NDRX_SG_RSN_LOCKE       6       /**< Locking errro (by exsinglesv)*/
 #define NDRX_SG_RSN_CORRUPT     7       /**< Corrupted structures        */
 #define NDRX_SG_RSN_NETLOCK     8       /**< Locked by network rsp (other node) */
-#define NDRX_SG_RSN_TNETLCK     9       /**< Network time ahead of us (>=)   */
-#define NDRX_SG_RSN_TFLCK       10      /**< Their locktime in file (>=) our lck time    */
+#define NDRX_SG_RSN_NETSEQ      9       /**< Network seq ahead of us (>=)   */
+#define NDRX_SG_RSN_FSEQ        10      /**< Their seq in file (>=) our lck time    */
 
 #define NDRX_SG_PROCNAMEMAX	16	/**< Max len of the lock process */
 
@@ -88,6 +88,7 @@ typedef struct
     _Atomic unsigned char volatile is_clt_booted;   /**< Is clients boooted, when group locked? */
     _Atomic unsigned short volatile flags;          /**< Flags for given entry */
     _Atomic time_t last_refresh;                    /**< Last lock refresh time */
+    _Atomic long sequence;                          /**< Current ping lock seuqence */
     _Atomic int volatile lockprov_srvid;            /**< Lock provder server id */  
     _Atomic short volatile lockprov_nodeid;         /**< Lock provider E/X cluster node id */
     _Atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
@@ -111,7 +112,7 @@ extern NDRX_API int ndrx_sg_is_locked(int singlegrp_no, char *reference_file, lo
 extern NDRX_API int ndrx_sg_is_locked_int(int singlegrp_no, ndrx_sg_shm_t * sg, char *reference_file, long flags);
 
 extern NDRX_API int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *procname,
-        time_t new_last_refresh);
+        time_t new_last_refresh, long new_sequence);
 extern NDRX_API void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason);
 
 /** Return snapshoot of current locking */

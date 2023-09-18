@@ -63,32 +63,16 @@
  * Allow clock drift for one check interval only.
  * @param p_svc - data & len used only... (to be in future)
  */
-void ndrx_exsingle_local (void *ptr, int *p_finish_off)
+void SGLOC (TPSVCINFO *p_svc)
 {
-    /* Ok we should not handle the commands
-     * TPBEGIN...
-     */
+    UBFH *p_ub = (UBFH *)p_svc->data;
     int ret=EXSUCCEED;
-    ndrx_thread_server_t *thread_data = (ndrx_thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
     int int_diag = 0;
     char lock_status;
     ndrx_locksm_ctx_t lockst;
     long lookup_grpno;
-
-    /**************************************************************************/
-    /*                        THREAD CONTEXT RESTORE                          */
-    /**************************************************************************/
-    UBFH *p_ub = (UBFH *)thread_data->buffer;
-
-    /* restore context. */
-    if (EXSUCCEED!=tpsrvsetctxdata(thread_data->context_data, SYS_SRV_THREAD))
-    {
-        userlog("tmqueue: Failed to set context");
-        TP_LOG(log_error, "Failed to set context");
-        exit(1);
-    }
 
     ndrx_debug_dump_UBF(log_info, "ndrx_exsingle_local request buffer:", p_ub);
 

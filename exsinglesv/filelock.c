@@ -55,15 +55,12 @@
 #include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define MAX_LOCKS   2
+#define MAX_LOCKS       2
+#define DATA_SIZE       24 /* full block for node */
+#define DATA_FOR_CRC    16 /* full block for node */
+#define PING_READ_CRC_ERR  -2
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-typedef struct
-{
-    int64_t lock_time;  /**< lock time in UTC epoch */
-    uint64_t crc32;     /**< crc32 of the lock time */
-} ndrx_exsinglesv_lockent_t;
 
 /**
  * Locking structure 
@@ -243,8 +240,11 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
     int locked_by_stat;
     char lckstatus;
     long last_refresh;
+    long their_sequence;
     int is_net_rply;
+    ndrx_exsinglesv_lockent_t ent;
     /* check local */
+
     lock_ctx->pshm=ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
     if (NULL==lock_ctx->pshm)
     {
@@ -300,7 +300,7 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                 tpsblktime(ndrx_G_exsinglesv_conf.svc_timeout, TPBLK_NEXT);
 
                 /* call server for results */
-                snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SINGL, (long)lock_ctx->local.sg_nodes[i], 
+                snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGREM, (long)lock_ctx->local.sg_nodes[i], 
                     ndrx_G_exsinglesv_conf.procgrp_lp_no);
                 TP_LOG(log_debug, "Checking with [%s] group %d lock status", svcnm, 
                     ndrx_G_exsinglesv_conf.procgrp_lp_no);
@@ -338,24 +338,30 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                         svcnm, tpstrerror(tperrno));
 
                     /* read the node entry from the disk */
-                    last_refresh=ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i]);
-
-                    if (EXFAIL==last_refresh)
+                    if (EXSUCCEED!=ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
                     {
-                        TP_LOG(log_error, "Failed to read lock file for node %d", 
+                        TP_LOG(log_error, "Failed to read lock file for node %d - corrupted file?", 
+                            (int)lock_ctx->local.sg_nodes[i]);
+                        userlog("Failed to read lock file for node %d  - corrupted file?", 
                             (int)lock_ctx->local.sg_nodes[i]);
                         EXFAIL_OUT(ret);
                     }
+
+                    /* load the values down.. */
+                    last_refresh = ent.lock_time;
+                    their_sequence = ent.sequence;
+
                 }
                 else
                 {
                     ndrx_tplogprintubf(log_debug, "svc response", p_ub);
                     /* read lock status... */
                     if (EXSUCCEED!=Bget(p_ub, EX_LCKSTATUS, 0, &lckstatus, 0L) 
-                        || EXSUCCEED!=Bget(p_ub, EX_TSTAMP, 0, (char *)&last_refresh, 0L))
+                        || EXSUCCEED!=Bget(p_ub, EX_TSTAMP, 0, (char *)&last_refresh, 0L)
+                        || EXSUCCEED!=Bget(p_ub, EX_SEQUENCE, 0, (char *)&their_sequence, 0L))
                     {
                         /* mandatory field is missing in reply */
-                        TP_LOG(log_error, "Failed to get EX_LCKSTATUS or EX_TSTAMP from node %d: %s", 
+                        TP_LOG(log_error, "Failed to get EX_LCKSTATUS/EX_TSTAMP/EX_SEQUENCE from node %d: %s", 
                             (int)lock_ctx->local.sg_nodes[i], Bstrerror(Berror));
                         EXFAIL_OUT(ret);
                     }
@@ -384,24 +390,24 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                     EXFAIL_OUT(ret);
                 }
 
-                if (last_refresh>=lock_ctx->local.last_refresh)
+                if (their_sequence>=lock_ctx->local.sequence)
                 {
-                    TP_LOG(log_error, "Node %d has newer or equal lock time than us. "
-                        "Their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
-                        (int)lock_ctx->local.sg_nodes[i], last_refresh, lock_ctx->local.last_refresh,
+                    TP_LOG(log_error, "Node %d has higher sequence than us. "
+                        "their seq: %ld, our seq: %ld, their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
+                        (int)lock_ctx->local.sg_nodes[i], their_sequence, lock_ctx->local.sequence, last_refresh, lock_ctx->local.last_refresh,
                         ndrx_G_exsinglesv_conf.procgrp_lp_no, is_net_rply?"network":"disk");
-                    userlog("Node %d has newer or equal lock time than us. "
-                        "Their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
-                        (int)lock_ctx->local.sg_nodes[i], last_refresh, lock_ctx->local.last_refresh,
+                    userlog("Node %d has higher sequence than us. "
+                        "their seq: %ld, our seq: %ld, their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
+                        (int)lock_ctx->local.sg_nodes[i], their_sequence, lock_ctx->local.sequence, last_refresh, lock_ctx->local.last_refresh,
                         ndrx_G_exsinglesv_conf.procgrp_lp_no, is_net_rply?"network":"disk");
 
                     if (is_net_rply)
                     {
-                        ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_TNETLCK);
+                        ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_NETSEQ);
                     }
                     else
                     {
-                        ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_TFLCK);
+                        ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_FSEQ);
                     }
 
                     EXFAIL_OUT(ret);
@@ -423,8 +429,6 @@ out:
     return ret;
 }
 
-
-
 /**
  * read 16 bytes for each of the nodes in the file
  * 8 bytes=> lock time, 8 bytes => crc32 (to match the E/X lib)
@@ -436,128 +440,152 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
     int ret=EXSUCCEED;
     ssize_t bytes_written;
     struct flock lock;
-    size_t fsize = sizeof(ndrx_exsinglesv_lockent_t)*CONF_NDRX_NODEID_COUNT;
-    size_t offset=sizeof(ndrx_exsinglesv_lockent_t)*(ndrx_G_exsinglesv_conf.procgrp_lp_no-1);
+    size_t fsize = sizeof(ndrx_exsinglesv_lockent_t)*CONF_NDRX_NODEID_COUNT*2;
     ndrx_exsinglesv_lockent_t ent;
-    int i;
+    int i, copy;
+    char data_block[DATA_SIZE];
 
-    fd = open(ndrx_G_exsinglesv_conf.lockfile_2, O_RDWR | O_CREAT, 0660);
-
-    if (EXFAIL==fd)
+    /* write our statistics to two places ...
+     * so that if we crash during the first write, the
+     * last record sayes OK... and other node can recover from it
+     * to keep the counter growing past the crash.
+     */
+    for (copy=0; copy<2; copy++)
     {
-        NDRX_LOG(log_error, "Failed to open [%s]: %s", 
-            ndrx_G_exsinglesv_conf.lockfile_2, strerror(errno));
-        EXFAIL_OUT(ret);
-    }
+        size_t offset= sizeof(ndrx_exsinglesv_lockent_t) * CONF_NDRX_NODEID_COUNT * copy 
+            + sizeof(ndrx_exsinglesv_lockent_t)*(ndrx_G_exsinglesv_conf.procgrp_lp_no-1);
 
-    /* Acquire an fcntl() write lock */
-    lock.l_type = F_WRLCK;
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
+        fd = open(ndrx_G_exsinglesv_conf.lockfile_2, O_RDWR | O_CREAT, 0660);
 
-    /* Lock the entire file */
-    lock.l_len = 0;
-
-    if (fcntl(fd, F_SETLK, &lock) == -1)
-    {
-        TP_LOG(log_error, "Failed to write lock [%s] (fd=%d) file: %s", 
-            ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-
-    if (fstat(fd, &st) == -1)
-    {
-        TP_LOG(log_error, "Failed to stat [%s] (fd=%d) file: %s", 
-            ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-
-    /* initialize the lock file.. */
-    if (st.st_size == 0)
-    {
-        if (ftruncate(fd, fsize) == -1)
+        if (EXFAIL==fd)
         {
-            TP_LOG(log_error, "Truncate [%s] (fd=%d) to %d bytes failed: %s", 
-                ndrx_G_exsinglesv_conf.lockfile_2, fd, fsize, strerror(errno));
+            NDRX_LOG(log_error, "copy %d: Failed to open [%s]: %s", 
+                copy, ndrx_G_exsinglesv_conf.lockfile_2, strerror(errno));
             EXFAIL_OUT(ret);
         }
 
-        /* reset structs to CRC32 valid */
-        memset(&ent, 0, sizeof(ent));
-        ndrx_Crc32_ComputeBuf(0, (unsigned char *)&ent.lock_time, sizeof(ent.lock_time));
-        ent.lock_time = htonll(ent.lock_time);
+        /* Acquire an fcntl() write lock */
+        lock.l_type = F_WRLCK;
+        lock.l_whence = SEEK_SET;
+        lock.l_start = 0;
 
-        for (i=0; i<CONF_NDRX_NODEID_COUNT; i++)
+        /* Lock the entire file */
+        lock.l_len = 0;
+
+        if (fcntl(fd, F_SETLK, &lock) == -1)
         {
-            bytes_written = write(fd, &ent, sizeof(ndrx_exsinglesv_lockent_t));
+            TP_LOG(log_error, "copy %d: Failed to write lock [%s] (fd=%d) file: %s", 
+                copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
 
-            if (lseek(fd, sizeof(ent)*i, SEEK_SET) == -1)
+        if (fstat(fd, &st) == -1)
+        {
+            TP_LOG(log_error, "copy %d: Failed to stat [%s] (fd=%d) file: %s", 
+                copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* initialize the lock file.. */
+        if (st.st_size == 0)
+        {
+            if (ftruncate(fd, fsize) == -1)
             {
-                TP_LOG(log_error, "lseek [%s] (fd=%d) to offset %d bytes failed: %s", 
-                        ndrx_G_exsinglesv_conf.lockfile_2, fd, sizeof(ent)*i, strerror(errno));
+                TP_LOG(log_error, "copy %d:Truncate [%s] (fd=%d) to %d bytes failed: %s", 
+                    copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, fsize, strerror(errno));
                 EXFAIL_OUT(ret);
             }
 
-            /* shall succeed for such small amount... */
-            if (sizeof(ndrx_exsinglesv_lockent_t)!=bytes_written)
+            /* reset structs to CRC32 valid */            
+            memset(data_block, 0, DATA_FOR_CRC);
+            ent.crc32=ndrx_Crc32_ComputeBuf(0, (unsigned char *)data_block, DATA_FOR_CRC);
+            ent.crc32 = htonll(ent.crc32);
+            memcpy(data_block+DATA_FOR_CRC, &ent.crc32, sizeof(ent.crc32));
+
+            /* create location for secondary location too... */
+            for (i=0; i<CONF_NDRX_NODEID_COUNT*2; i++)
             {
-                TP_LOG(log_error, "write [%s] (fd=%d) of %d bytes (wrote %zd) failed: %s", 
-                        ndrx_G_exsinglesv_conf.lockfile_2, fd, sizeof(ndrx_exsinglesv_lockent_t), 
-                        bytes_written, strerror(errno));
-                EXFAIL_OUT(ret);
-            }
-            else
-            {
-                TP_LOG(log_debug, "Wrote %zd bytes at offset %d", bytes_written, offset);
+                bytes_written = write(fd, data_block, DATA_SIZE);
+
+                if (lseek(fd, sizeof(ent)*i, SEEK_SET) == -1)
+                {
+                    TP_LOG(log_error, "copy %d: lseek [%s] (fd=%d) to offset %d bytes failed: %s", 
+                            copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, sizeof(ent)*i, strerror(errno));
+                    EXFAIL_OUT(ret);
+                }
+
+                /* shall succeed for such small amount... */
+                if (DATA_SIZE!=bytes_written)
+                {
+                    TP_LOG(log_error, "copy %d, write [%s] (fd=%d) of %d bytes (wrote %zd) failed: %s", 
+                            copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, DATA_SIZE, 
+                            bytes_written, strerror(errno));
+                    EXFAIL_OUT(ret);
+                }
+                else
+                {
+                    TP_LOG(log_debug, "copy %d: Wrote %zd bytes at offset %d", copy, bytes_written, offset);
+                }
             }
         }
-    }
 
-    if (lseek(fd, offset, SEEK_SET) == -1)
-    {
-        TP_LOG(log_error, "lseek [%s] (fd=%d) to offset %d bytes failed: %s", 
-                ndrx_G_exsinglesv_conf.lockfile_2, fd, offset, strerror(errno));
-        EXFAIL_OUT(ret);
-    }
+        if (lseek(fd, offset, SEEK_SET) == -1)
+        {
+            TP_LOG(log_error, "copy %d: lseek [%s] (fd=%d) to offset %d bytes failed: %s", 
+                    copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, offset, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
 
-    /* prep data + chksum them */
-    ent.lock_time = lock_ctx->local.last_refresh;
-    ent.crc32 = ndrx_Crc32_ComputeBuf(0, (unsigned char *)&ent.lock_time, sizeof(ent.lock_time));
+        /* write new sequence down there... */
+        /* and write new refresh time down there too... */
+        ent.lock_time = htonll(lock_ctx->new_refresh);
+        ent.sequence = htonll(lock_ctx->new_sequence);
 
-    /* convert ent fields to network format */
-    ent.lock_time = htonll(ent.lock_time);
-    ent.crc32 = htonll(ent.crc32);
+        /* copy to memory buffer */
+        memcpy(data_block, &ent.lock_time, sizeof(ent.lock_time));
+        memcpy(data_block+sizeof(ent.lock_time), &ent.sequence, sizeof(ent.sequence));
+        ent.crc32=ndrx_Crc32_ComputeBuf(0, (unsigned char *)data_block, DATA_FOR_CRC);
+        ent.crc32 = htonll(ent.crc32);
+        memcpy(data_block+DATA_FOR_CRC, &ent.crc32, sizeof(ent.crc32));
 
-    bytes_written = write(fd, &ent, sizeof(ndrx_exsinglesv_lockent_t));
+        bytes_written = write(fd, data_block, DATA_SIZE);
 
-    /* shall succeed for such small amount... */
-    if (sizeof(ndrx_exsinglesv_lockent_t)!=bytes_written)
-    {
-        TP_LOG(log_error, "write [%s] (fd=%d) of %d bytes (wrote %zd) failed: %s", 
-                ndrx_G_exsinglesv_conf.lockfile_2, fd, sizeof(ndrx_exsinglesv_lockent_t), 
-                bytes_written, strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    else
-    {
-        TP_LOG(log_debug, "Wrote %zd bytes at offset %d", bytes_written, offset);
-    }
+        /* shall succeed for such small amount... */
+        if (DATA_SIZE!=bytes_written)
+        {
+            TP_LOG(log_error, "copy %d: write [%s] (fd=%d) of %d bytes (wrote %zd) failed: %s", 
+                    copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, DATA_SIZE, 
+                    bytes_written, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            TP_LOG(log_debug, "copy %d: Wrote %zd bytes at offset %d", 
+                copy, bytes_written, offset);
+        }
 
-    /* flush the changes to the disk fully */
-    if (EXSUCCEED!=fsync(fd))
-    {
-        TP_LOG(log_error, "fsync [%s] (fd=%d) failed: %s", 
-            ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno)); 
-        EXFAIL_OUT(ret);
-    }
+        /* flush the changes to the disk fully */
+        if (EXSUCCEED!=fsync(fd))
+        {
+            TP_LOG(log_error, "copy %d: fsync [%s] (fd=%d) failed: %s", 
+                copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno)); 
+            EXFAIL_OUT(ret);
+        }
 
-    /* Release the lock and close the file */
-    lock.l_type = F_UNLCK;
-    if (fcntl(fd, F_SETLK, &lock) == -1)
-    {
-        TP_LOG(log_error, "fcntl unlock [%s] (fd=%d) failed: %s", 
-            ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno)); 
-        EXFAIL_OUT(ret);
+        /* Release the lock and close the file */
+        lock.l_type = F_UNLCK;
+        if (fcntl(fd, F_SETLK, &lock) == -1)
+        {
+            TP_LOG(log_error, "copy %d: fcntl unlock [%s] (fd=%d) failed: %s", 
+                copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno)); 
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXFAIL!=fd)
+        {
+            close(fd);
+            fd=EXFAIL;
+        }
     }
 
 out:
@@ -571,18 +599,26 @@ out:
 }
 
 /**
- * Read the data from the ping file
+ * Read the data from the ping file.
+ *  This totally does 3x attempts:
+ *   1) if first one failed, try to read from the second file
+ *   2) if second failed, try first, just in case if first was in progress of write / crashed
+ *   3) if second try again first, just in case if first was in progress of write
+ * @param copy which copy to read
  * @param procgrp_no process group number from which to get time-stamp
- * @return EXFAIL or UTC epoch lock time
+ * @param p_ent entry to read
+ * @return EXFAIL or UTC epoch lock time, or -2 if CRC error
  */
-expublic long ndrx_exsinglesv_ping_read(int procgrp_no)
+exprivate int ndrx_exsinglesv_ping_read_int(int copy, int procgrp_no, ndrx_exsinglesv_lockent_t *p_ent)
 {
-    long ret = EXFAIL; /**< tstamp read */
-    size_t offset=sizeof(ndrx_exsinglesv_lockent_t)*(procgrp_no-1);
-    ndrx_exsinglesv_lockent_t ent;
+    int ret = EXSUCCEED;
     int fd;
     struct flock lock;
     ssize_t bytes_read;
+    size_t offset=sizeof(ndrx_exsinglesv_lockent_t) * CONF_NDRX_NODEID_COUNT * copy  + 
+        sizeof(ndrx_exsinglesv_lockent_t)*(procgrp_no-1)*copy;
+    char data_block[DATA_SIZE];
+    int64_t crc32_calc;
 
     /* Open the file for reading */
     fd = open(ndrx_G_exsinglesv_conf.lockfile_2, O_RDONLY);
@@ -600,54 +636,58 @@ expublic long ndrx_exsinglesv_ping_read(int procgrp_no)
 
     if (fcntl(fd, F_SETLK, &lock) == EXFAIL)
     {
-        TP_LOG(log_error, "Failed to read lock [%s] (fd=%d) file: %s", 
-            ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
+        TP_LOG(log_error, "copy %d: Failed to read lock [%s] (fd=%d) file: %s", 
+            copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
         EXFAIL_OUT(ret);
     }
 
     if (lseek(fd, offset, SEEK_SET) == -1)
     {
-        TP_LOG(log_error, "lseek [%s] (fd=%d) to offset %d bytes failed: %s", 
-                ndrx_G_exsinglesv_conf.lockfile_2, fd, offset, strerror(errno));
+        TP_LOG(log_error, "copy %d: lseek [%s] (fd=%d) to offset %d bytes failed: %s", 
+                copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, offset, strerror(errno));
         EXFAIL_OUT(ret);
     }
 
-    bytes_read = read(fd, &ent, sizeof(ent));
-    if (bytes_read == -1)
+    bytes_read = read(fd, data_block, DATA_SIZE);
+    if (bytes_read != DATA_SIZE)
     {
-        TP_LOG(log_error, "read [%s] (fd=%d) of %d bytes (wrote %zd) failed: %s", 
-                ndrx_G_exsinglesv_conf.lockfile_2, fd, sizeof(ndrx_exsinglesv_lockent_t), 
+        TP_LOG(log_error, "copy %d: read [%s] (fd=%d) of %d bytes (wrote %zd) failed: %s", 
+                copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, DATA_SIZE, 
                 bytes_read, strerror(errno));
         EXFAIL_OUT(ret);
     } 
     else
     {
-        TP_LOG(log_debug, "Read %zd bytes at offset %d: for grp: %d", 
-            bytes_read, offset, procgrp_no);
+        TP_LOG(log_debug, "copy %d: Read %zd bytes at offset %d: for grp: %d", 
+            copy, bytes_read, offset, procgrp_no);
     }
 
     /* Release the lock and close the file */
     lock.l_type = F_UNLCK;
     if (fcntl(fd, F_SETLK, &lock) == -1)
     {
-        TP_LOG(log_error, "fcntl unlock [%s] (fd=%d) failed: %s", 
-            ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno)); 
+        TP_LOG(log_error, "copy %d: fcntl unlock [%s] (fd=%d) failed: %s", 
+            copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno)); 
         EXFAIL_OUT(ret);
     }
 
-    /* verify the record...,
-     * firstly convert to host format */
+    /* extract from buffer */
+    memcpy(&p_ent->lock_time, data_block, sizeof(p_ent->lock_time));
+    memcpy(&p_ent->sequence, data_block+sizeof(p_ent->lock_time), sizeof(p_ent->sequence));
+    memcpy(&p_ent->crc32, data_block+DATA_FOR_CRC, sizeof(p_ent->crc32));
 
-    ent.lock_time = ntohll(ent.lock_time);
-    ent.crc32 = ntohll(ent.crc32);
+    /* convert to host format */
+    p_ent->lock_time = ntohll(p_ent->lock_time);
+    p_ent->crc32 = ntohll(p_ent->crc32);
+    p_ent->sequence = ntohll(p_ent->sequence);
 
-    if (ent.crc32!=ndrx_Crc32_ComputeBuf(0, (unsigned char *)&ent.lock_time, sizeof(ent.lock_time)))
+    crc32_calc = ndrx_Crc32_ComputeBuf(0, (unsigned char *)data_block, DATA_FOR_CRC);
+
+    if (p_ent->crc32!=crc32_calc)
     {
-        TP_LOG(log_warn, "CRC32 mismatch for group %d", procgrp_no);
-        /* return zero time... (as really no time to return),
-         * as storge did not fail, but not to read yet.
-         */
-        ret=0;
+        TP_LOG(log_warn, "copy %d: CRC32 mismatch for group %d (disk: %lx calc: %lx)", copy, procgrp_no,
+            (long)p_ent->crc32, (long)crc32_calc);
+        ret=PING_READ_CRC_ERR;
     }
 
 out:
@@ -656,6 +696,31 @@ out:
         close(fd);
     }
 
+    return ret;
+}
+
+/**
+ * Try to extract lock entry from file.
+ * @param procgrp_no process group number
+ * @param p_ent entry to read
+ * @return EXFAIL or EXSUCCEED (p_ent loaded with CRC32 validate values)
+ */
+expublic int ndrx_exsinglesv_ping_read(int procgrp_no, ndrx_exsinglesv_lockent_t *p_ent)
+{
+    int i, ret;
+
+    for (i=0; i<3; i++)
+    {
+        ret=ndrx_exsinglesv_ping_read_int(i<2?i:0, procgrp_no, p_ent);
+
+        if (ret!=PING_READ_CRC_ERR)
+        {
+            EXFAIL_OUT(ret);
+            break;
+        }
+    }
+
+out:
     return ret;
 }
 

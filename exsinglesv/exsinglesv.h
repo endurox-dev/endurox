@@ -72,12 +72,7 @@ typedef struct
     
     int wait_counter;   /**< if this is not first boot, then wait */
     int is_locked;  /**< Is process fully locked        */
-
-    threadpool thpool_local;    /**< local requests */
-    threadpool thpool_remote;   /**< remote requests */
-    int threads;
     int svc_timeout; /**< Service timeout (for remote calls) */
-    int clock_tolerance; /**< Allowed between us and them*/
 
 } ndrx_exsinglesv_conf_t;
 
@@ -93,7 +88,18 @@ typedef struct
      * freeze this would already be old
      */
     time_t new_refresh;
+    long new_sequence; /**< New sequence number */
 } ndrx_locksm_ctx_t;
+
+/**
+ * Disk based lock entry...
+ */
+typedef struct
+{
+    int64_t lock_time;  /**< lock time in UTC epoch */
+    int64_t sequence;   /**< sequence counted on    */
+    int64_t crc32;     /**< crc32 of the lock time */
+} ndrx_exsinglesv_lockent_t;
 
 /*---------------------------Globals------------------------------------*/
 extern ndrx_exsinglesv_conf_t ndrx_G_exsinglesv_conf; /**< Configuration */
@@ -106,11 +112,19 @@ extern void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock);
 extern int ndrx_exsinglesv_sm_run(void);
 extern int ndrx_exsinglesv_sm_comp(void);
 extern int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx);
-extern void ndrx_exsingle_local (void *ptr, int *p_finish_off);
-extern void ndrx_exsingle_remote (void *ptr, int *p_finish_off);
 extern void ndrx_exsinglesv_set_error_fmt(UBFH *p_ub, long error_code, const char *fmt, ...);
-extern long ndrx_exsinglesv_ping_read(int procgrp_no);
+
 extern int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx);
+extern int ndrx_exsinglesv_ping_read(int procgrp_no, ndrx_exsinglesv_lockent_t *p_ent);
+
+/* Local service: */
+extern void SGLOC (TPSVCINFO *p_svc);
+
+/* Remote service: */
+extern void SGREM (TPSVCINFO *p_svc);
+
+/* LP specifics: */
+extern void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock);
 
 #ifdef	__cplusplus
 }
