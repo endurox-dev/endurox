@@ -2310,4 +2310,28 @@ out:
     return ret;
 }
 
+/**
+ * Check is given singleton process group locked.
+ * @param grpno singleton group number
+ * @param flags TPACK
+ * @return EXAIL/EXFALSE/EXTRUE
+ */
+expublic int tpsgislocked(int grpno, long flags)
+{
+    int ret = EXSUCCEED;
+    
+    ndrx_TPunset_error();
+    
+     if ( (flags & ~TPACK) !=0 )
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Unsupported flags %ld", flags);
+        EXFAIL_OUT(ret);
+    }
+
+    ret = ndrx_tpsgislocked(grpno, flags);
+
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

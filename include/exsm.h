@@ -99,7 +99,7 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern NDRX_API int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data);
+extern NDRX_API int ndrx_sm_run(void *sm, int nr_tran, int entry_state, void *data, int log_topic);
 extern NDRX_API int ndrx_sm_comp(void *sm, int nr_state, int nr_tran, int last_state);
 
 #if defined(__cplusplus)

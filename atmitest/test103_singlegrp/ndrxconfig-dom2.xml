@@ -53,8 +53,8 @@
         <killtime>20</killtime>
     </defaults>
     <procgroups>
-        <procgroup grpno="1" name="OK1" singleton="Y" />
-        <procgroup grpno="2" name="OK2" singleton="Y" /> 
+        <procgroup grpno="1" name="OK1" singleton="Y" sg_nodes="1,2"/>
+        <procgroup grpno="2" name="OK2" singleton="Y" sg_nodes="1,2"/> 
     </procgroups>
     <servers>
         <!-- OK1 group -->

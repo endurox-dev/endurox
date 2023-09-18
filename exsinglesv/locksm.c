@@ -56,6 +56,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NR_TRANS 10 /**< Max number of transitions for each state */
+#define SEQUENCE_START 5 /**< From where do we start? */
 /*---------------------------Enums--------------------------------------*/
 
 /**
@@ -422,8 +423,9 @@ exprivate int do_lock(void *ctx)
         goto out;
     }
 
-    TP_LOG(log_warn, "New sequence number is %d (old seq +5)", 
-        lock_ctx->new_sequence+5);
+    lock_ctx->new_sequence+=SEQUENCE_START;
+    TP_LOG(log_warn, "New sequence number is %d (old seq +%d)", 
+        lock_ctx->new_sequence, SEQUENCE_START);
 
     /* mark shm as locked by us too */
     TP_LOG(log_debug, "Lock shared memory...");
@@ -447,7 +449,8 @@ out:
 expublic int ndrx_exsinglesv_sm_run(void)
 {
     ndrx_locksm_ctx_t ctx;
-    return ndrx_sm_run((void *)M_locksm, NR_TRANS, st_get_singlegrp, (void *)&ctx);
+    return ndrx_sm_run((void *)M_locksm, NR_TRANS, st_get_singlegrp, 
+        (void *)&ctx, LOG_FACILITY_TP);
 }
 
 /**

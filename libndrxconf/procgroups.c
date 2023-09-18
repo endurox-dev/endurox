@@ -264,7 +264,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                 EXFAIL_OUT(ret);
             }
         }
-        else if (0==strcmp((char *)attr->name, "sg_verify"))
+        else if (0==strcmp((char *)attr->name, "sg_node_verify"))
         {
             /* y/Y */
             if (NDRX_SETTING_TRUE1==*p || NDRX_SETTING_TRUE2==*p)
@@ -278,7 +278,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
             else
             {
                 snprintf(err->error_msg, sizeof(err->error_msg), 
-                    "(%s) Invalid `sg_verify' setting [%s] in "
+                    "(%s) Invalid `sg_node_verify' setting [%s] in "
                         "<procgroup> or <defaults> "
                         "section, expected values [%c%c%c%c] near line %d", 
                         config_file_short, p,
@@ -375,8 +375,14 @@ expublic int ndrx_ndrxconf_procgroups_parse(ndrx_procgroups_t **config,
 
     int is_procgroup;
     int is_defaults;
+    int our_nodeid = ndrx_get_G_atmi_env()->our_nodeid;
 
     memset(&default_opt, 0, sizeof(default_opt));
+
+    /* set defaults:*/
+
+    /* our node is always in the group...*/
+    default_opt.sg_nodes[our_nodeid-1]=our_nodeid;
 
     *config = NDRX_CALLOC(1, sizeof(ndrx_procgroups_t) + 
             sizeof(ndrx_procgroup_t) * (ndrx_G_libnstd_cfg.pgmax));

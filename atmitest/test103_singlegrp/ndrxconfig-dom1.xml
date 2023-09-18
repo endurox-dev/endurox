@@ -27,8 +27,8 @@
         <brrefresh>5</brrefresh>
     </appconfig>
     <procgroups>
-        <procgroup grpno="1" name="OK1" singleton="Y" noorder="Y" />
-        <procgroup grpno="2" name="OK2" singleton="Y" noorder="Y" />
+        <procgroup grpno="1" name="OK1" singleton="Y" noorder="Y" sg_nodes="1,2"/>
+        <procgroup grpno="2" name="OK2" singleton="Y" noorder="Y" sg_nodes="1,2"/>
     </procgroups>
     <defaults>
         <min>1</min>
