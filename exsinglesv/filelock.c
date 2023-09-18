@@ -340,10 +340,10 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                     /* read the node entry from the disk */
                     if (EXSUCCEED!=ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
                     {
-                        TP_LOG(log_error, "Failed to read lock file for node %d - corrupted file?", 
-                            (int)lock_ctx->local.sg_nodes[i]);
-                        userlog("Failed to read lock file for node %d  - corrupted file?", 
-                            (int)lock_ctx->local.sg_nodes[i]);
+                        TP_LOG(log_error, "Failed to ping lock file [%s] for node %d"
+                            , ndrx_G_exsinglesv_conf.lockfile_2, (int)lock_ctx->local.sg_nodes[i]);
+                        userlog("Failed to ping lock file [%s] for node %d"
+                            , ndrx_G_exsinglesv_conf.lockfile_2, (int)lock_ctx->local.sg_nodes[i]);
                         EXFAIL_OUT(ret);
                     }
 
@@ -440,7 +440,7 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
     int ret=EXSUCCEED;
     ssize_t bytes_written;
     struct flock lock;
-    size_t fsize = sizeof(ndrx_exsinglesv_lockent_t)*CONF_NDRX_NODEID_COUNT*2;
+    size_t fsize = DATA_SIZE*CONF_NDRX_NODEID_COUNT*2;
     ndrx_exsinglesv_lockent_t ent;
     int i, copy;
     char data_block[DATA_SIZE];
@@ -452,8 +452,8 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
      */
     for (copy=0; copy<2; copy++)
     {
-        size_t offset= sizeof(ndrx_exsinglesv_lockent_t) * CONF_NDRX_NODEID_COUNT * copy 
-            + sizeof(ndrx_exsinglesv_lockent_t)*(ndrx_G_exsinglesv_conf.procgrp_lp_no-1);
+        size_t offset= DATA_SIZE * CONF_NDRX_NODEID_COUNT * copy 
+            + DATA_SIZE*(ndrx_G_exsinglesv_conf.procgrp_lp_no-1);
 
         fd = open(ndrx_G_exsinglesv_conf.lockfile_2, O_RDWR | O_CREAT, 0660);
 
@@ -605,18 +605,17 @@ out:
  *   2) if second failed, try first, just in case if first was in progress of write / crashed
  *   3) if second try again first, just in case if first was in progress of write
  * @param copy which copy to read
- * @param procgrp_no process group number from which to get time-stamp
+ * @param nodeid 
  * @param p_ent entry to read
  * @return EXFAIL or UTC epoch lock time, or -2 if CRC error
  */
-exprivate int ndrx_exsinglesv_ping_read_int(int copy, int procgrp_no, ndrx_exsinglesv_lockent_t *p_ent)
+exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsinglesv_lockent_t *p_ent)
 {
     int ret = EXSUCCEED;
     int fd;
     struct flock lock;
     ssize_t bytes_read;
-    size_t offset=sizeof(ndrx_exsinglesv_lockent_t) * CONF_NDRX_NODEID_COUNT * copy  + 
-        sizeof(ndrx_exsinglesv_lockent_t)*(procgrp_no-1)*copy;
+    size_t offset=DATA_SIZE * CONF_NDRX_NODEID_COUNT * copy + DATA_SIZE*(nodeid-1);
     char data_block[DATA_SIZE];
     int64_t crc32_calc;
 
@@ -658,8 +657,8 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int procgrp_no, ndrx_exsin
     } 
     else
     {
-        TP_LOG(log_debug, "copy %d: Read %zd bytes at offset %d: for grp: %d", 
-            copy, bytes_read, offset, procgrp_no);
+        TP_LOG(log_debug, "copy %d: Read %zd bytes at offset %d: for node: %d (file: [%s])", 
+            copy, bytes_read, offset, nodeid, ndrx_G_exsinglesv_conf.lockfile_2);
     }
 
     /* Release the lock and close the file */
@@ -685,8 +684,8 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int procgrp_no, ndrx_exsin
 
     if (p_ent->crc32!=crc32_calc)
     {
-        TP_LOG(log_warn, "copy %d: CRC32 mismatch for group %d (disk: %lx calc: %lx)", copy, procgrp_no,
-            (long)p_ent->crc32, (long)crc32_calc);
+        TP_LOG(log_warn, "copy %d: CRC32 mismatch (disk: %lx calc: %lx) file [%s] offset: %d", copy,
+            (long)p_ent->crc32, (long)crc32_calc, ndrx_G_exsinglesv_conf.lockfile_2, (int)offset);
         ret=PING_READ_CRC_ERR;
     }
 
@@ -701,17 +700,17 @@ out:
 
 /**
  * Try to extract lock entry from file.
- * @param procgrp_no process group number
+ * @param nodeid node id
  * @param p_ent entry to read
  * @return EXFAIL or EXSUCCEED (p_ent loaded with CRC32 validate values)
  */
-expublic int ndrx_exsinglesv_ping_read(int procgrp_no, ndrx_exsinglesv_lockent_t *p_ent)
+expublic int ndrx_exsinglesv_ping_read(int nodeid, ndrx_exsinglesv_lockent_t *p_ent)
 {
     int i, ret;
 
     for (i=0; i<3; i++)
     {
-        ret=ndrx_exsinglesv_ping_read_int(i<2?i:0, procgrp_no, p_ent);
+        ret=ndrx_exsinglesv_ping_read_int(i<2?i:0, nodeid, p_ent);
 
         if (ret!=PING_READ_CRC_ERR)
         {
@@ -720,7 +719,57 @@ expublic int ndrx_exsinglesv_ping_read(int procgrp_no, ndrx_exsinglesv_lockent_t
         }
     }
 
+    /* give some advice if lock file is totally corrupt... */
+    if (PING_READ_CRC_ERR==ret)
+    {
+        TP_LOG(log_error, "Failed to read ping lock file for node %d - corrupted file. "
+            "Shutdown the cluster, remove lock file [%s] and boot again.", 
+            nodeid, ndrx_G_exsinglesv_conf.lockfile_2);
+
+        userlog("Failed to read ping lock file for node %d - corrupted file. "
+            "Shutdown the cluster, remove lock file [%s] and boot again.", 
+            nodeid, ndrx_G_exsinglesv_conf.lockfile_2);
+        EXFAIL_OUT(ret);
+    }
+
 out:
+    return ret;
+}
+
+/**
+ * Read max sequence number from files for all the nodes...
+ * Used during intial lock and pinging...
+ * @return max sequence number as seen in lock files
+ */
+expublic long ndrx_exsinglesv_sg_max_seq(ndrx_locksm_ctx_t *lock_ctx)
+{
+    long ret=EXFAIL;
+    int i;
+    ndrx_exsinglesv_lockent_t ent;
+
+    for (i=0; i<CONF_NDRX_NODEID_COUNT; i++)
+    {
+        if (lock_ctx->local.sg_nodes[i])
+        {
+            TP_LOG(log_debug, "Checking node [%d]...", 
+                    lock_ctx->local.sg_nodes[i]);
+
+            if (EXFAIL==ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
+            {
+                TP_LOG(log_error, "Failed to distinguish current max sequence number for node %d", 
+                    (int)lock_ctx->local.sg_nodes[i]);
+                EXFAIL_OUT(ret);
+            }
+
+            if (ent.sequence > ret)
+            {
+                ret = ent.sequence;
+            }
+        }
+    }
+
+out:
+    NDRX_LOG(log_info, "returns (max sequence) %d", ret);
     return ret;
 }
 

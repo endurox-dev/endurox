@@ -67,13 +67,11 @@ typedef struct
     int chkinterval; /**< Check interval                */
     int locked_wait; /**< Number of check cycles for lock takeover */
     int locked1; /**< Locked                            */
-    int locked2; /**< File segment 1 is locked          */
     int first_boot; /**< Is booting up                  */
     
     int wait_counter;   /**< if this is not first boot, then wait */
     int is_locked;  /**< Is process fully locked        */
     int svc_timeout; /**< Service timeout (for remote calls) */
-
 } ndrx_exsinglesv_conf_t;
 
 /**
@@ -115,7 +113,8 @@ extern int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx);
 extern void ndrx_exsinglesv_set_error_fmt(UBFH *p_ub, long error_code, const char *fmt, ...);
 
 extern int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx);
-extern int ndrx_exsinglesv_ping_read(int procgrp_no, ndrx_exsinglesv_lockent_t *p_ent);
+extern int ndrx_exsinglesv_ping_read(int nodeid, ndrx_exsinglesv_lockent_t *p_ent);
+extern long ndrx_exsinglesv_sg_max_seq(ndrx_locksm_ctx_t *lock_ctx);
 
 /* Local service: */
 extern void SGLOC (TPSVCINFO *p_svc);
