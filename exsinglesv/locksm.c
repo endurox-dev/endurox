@@ -233,102 +233,22 @@ exprivate int ping_lock(void *ctx)
     ndrx_locksm_ctx_t *lock_ctx = (ndrx_locksm_ctx_t *)ctx;
     int ret=ev_ok;
 
-    /* 
-     * ==== PHASE1 (essential transactionality) ====
-     * This ensure that commit activity is proceeded, that we have guarantee
-     * that node has still lock.
-     * 
-     * However the phase1 does not deal fact, that node can be suspended and resumed
-     * and tmsrv and tmqueue is not removed immediately. Event in state of
-     * GPFS "preMount", processes might try to do some activity with FS, but
-     * as FS it available, the script shall killall binaries from the
-     * process group.
-     * =============================================
-     * 
-     * Validate that lock is still functional:
-     * however this is not very useful as GPFS keeps reporting us as a lock
-     * owners after the suspend / resume, however other node has already taken
-     * over.
-     * The refresh time after vm suspend/resume does not help too, as hupervisors
-     * seem to gradually increase the system time, instead of direct leap which
-     * would allow transactions at commit decision to detect that lock is lost.
-     * 
-     * To fix this issue, there could be several ways to do that:
-     * 1. use third time-based arbitration node. If us as lock holder node has
-     * non matching system time against all of the remote nodes, then unlock the group
-     * as we might have been suspended and resumed. Downside for this approach is that
-     * additional server for the cluster is required to do the arbitration.
-     * 
-     * 2. Second option would be that each node at certain ping-file offset writes
-     * node_id, lock_status (0|1), and UTC timestamp, checksum.
-     * Each exsinglesv periodically updates the status in shm (acquires write lock firstly)
-     * and then checks the status of the other nodes. if our node is lagging behind other
-     * nodes clock, then unlock the group. Check all nodes, as some of them can be turned
-     * off.
-     *  2.1 we create new XATMI call tpsgislocked(<sg_id => 0 default>, 0 flags); Function
-     * perofrms following: from the list of nodes in NDRX_SGNODES=2,4,5, performs call
-     * to remote nodes (not our node), to check their lock_status and timestamp. If time
-     * difference for called nodes is less than NDRX_SGREFRESH, then we are good. and we
-     * keep lock status from the shared memory / locked or not.
-     * Network service is advertised by EXISNGLESV, Service name: @EXSINGLESV-<nodeid>-<sg_id>
-     * 2.2 if for some node network is down, then we read other node/SG status from the ping lock
-     * file at given node offset. If checksum is valid, we use that time. If checksums are
-     * invalid, we assume that node is not locked and time is valid our against their.
-     * It is crutial for admins to keep time accurrate.
-     * 
-     * In case if STONITH is provided by the underlaying cluster, these checks may be disabled,
-     * as STONITH shall guarantee that new node gets the lock, if STONITH has switched off
-     * the originally locked node.
-     * 
-     * tpsgislocked() shall be called by:
-     *  - exsinglesv() for getting extneded shared memory lock checks.
-     *  - tmsrv() at point when commit or abort is logged. As at this point it is crutial
-     *  to proceed only we know that we are still locked.
-     * 
-     * ==== tmqueue and tmsrv shall be updated to following (PHASE2), if preMount 
-     * process removal is not supported ====
-     * 
-     * A) Periodically (activated by tmrecoversv/cl):
-     * 
-     * B) tmqueue, collects records with xa_recover. Chek that all transactions are in tmqueue
-     *  transaction registry. If missing, check again file existance (maybe completed) transaction.
-     * If file still exist, process shall restart as concurrent activity has happened.
-     * Tmqueue shall validate that all msgid files exist too. Again check registry/if missing
-     * check file again, if missing restart is required.
-     * 
-     * For TMQ if there is requested for commit, but transaction is not found in the registry, then
-     * check prepared folder, if txn is found, restart is required.
-     * 
-     * C) tmsrv, activated by extra tmrecover call, shall collect all log files, check registry,
-     * if missing check file again (exists). If exists, then restart is required (to reload)
-     * and repocess all transactions. Additionaly check that all memory transactions have
-     * files on disk, if missing, then restart is required (some concurrent activity has
-     * happened).
-     */
     if ( EXSUCCEED!=ndrx_exsinglesv_file_chkpid(NDRX_LOCK_FILE_1, ndrx_G_exsinglesv_conf.lockfile_1) )
     {
         ret=ev_err;
         goto out;
     }
 
-    if (!ndrx_G_exsinglesv_conf.locked2)
+    lock_ctx->new_sequence = lock_ctx->local.sequence + 1;
+    TP_LOG(log_info, "New sequence: %d", lock_ctx->new_sequence);
+
+    /* refresh seq in files... */
+    if (EXSUCCEED!=ndrx_exsinglesv_ping_do(lock_ctx))
     {
-        if (EXSUCCEED!=ndrx_exsinglesv_file_lock(NDRX_LOCK_FILE_2, ndrx_G_exsinglesv_conf.lockfile_2))
-        {
-            ret=ev_err;
-            goto out;
-        }
-        ndrx_G_exsinglesv_conf.locked2=EXTRUE;
+        ret=ev_err;
+        goto out;
     }
-    else
-    {
-        if (EXSUCCEED!=ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_2))
-        {
-            ret=ev_err;
-            goto out;
-        }
-        ndrx_G_exsinglesv_conf.locked2=EXFALSE;
-    }
+    
 out:
     return ret;
 }
@@ -342,7 +262,7 @@ exprivate int shm_refresh(void *ctx)
     int ret=ev_ok;
 
     if (EXSUCCEED!=ndrx_sg_do_refresh(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL,
-        tpgetnodeid(), tpgetsrvid(), lock_ctx->new_refresh))
+        tpgetnodeid(), tpgetsrvid(), lock_ctx->new_refresh, lock_ctx->new_sequence))
     {
         ret=ev_err;
         goto out;
@@ -492,8 +412,22 @@ exprivate int do_lock(void *ctx)
         }
     }
 
+    /* extract the sequence number */
+    lock_ctx->new_sequence = ndrx_exsinglesv_sg_max_seq(lock_ctx);
+
+    if (EXFAIL==lock_ctx->new_sequence)
+    {
+        TP_LOG(log_error, "Failed get current sequence number");
+        ret=ev_err;
+        goto out;
+    }
+
+    TP_LOG(log_warn, "New sequence number is %d (old seq +5)", 
+        lock_ctx->new_sequence+5);
+
     /* mark shm as locked by us too */
     TP_LOG(log_debug, "Lock shared memory...");
+
     if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.procgrp_lp_no, 
             tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME),
             lock_ctx->new_refresh, lock_ctx->new_sequence))

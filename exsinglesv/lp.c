@@ -82,11 +82,6 @@ expublic void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock)
         do_unlock = EXTRUE;
     }
 
-    if (ndrx_G_exsinglesv_conf.locked2)
-    {
-        ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_2);
-    }
-
     if (do_unlock)
     {
         ndrx_sg_shm_t * sg = ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);

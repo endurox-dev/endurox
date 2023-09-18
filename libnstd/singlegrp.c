@@ -146,10 +146,11 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
  * @param srvid server id (also current one, but now known in standard libary)
  * @param chk_lock check lock status (match current lock provider)
  * @param new_last_refresh new refresh time
+ * @param new_sequence new sequence number
  * @return EXSUCCEED if successfull, EXFAIL if failed
 */
 exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg, 
-    short nodeid, int srvid, int chk_lock, time_t new_last_refresh)
+    short nodeid, int srvid, int chk_lock, time_t new_last_refresh, long new_sequence)
 {
     int ret = EXSUCCEED;
     ndrx_sg_shm_t sg_local;
@@ -215,6 +216,7 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
     }
 
     atomic_store(&sg_shm->last_refresh, new_last_refresh);
+    atomic_store(&sg_shm->sequence, new_sequence);
 
 out:
     return ret;
@@ -226,13 +228,14 @@ out:
  * @param nodeid cluster node id (current one, but now known in standard libary)
  * @param srvid server id (also current one, but now known in standard libary)
  * @param new_last_refresh new refresh time
- * @return EXSUCCEED if successfull, EXFAIL if failed
+ * @param new_sequence new sequence number
+ * @return EXSUCCEED if successfull, EXFAIL if failed!
  */
 expublic int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg, 
-    short nodeid, int srvid, time_t new_last_refresh)
+    short nodeid, int srvid, time_t new_last_refresh, long new_sequence)
 {
     return ndrx_sg_do_refresh_int(singlegrp_no, sg, nodeid, srvid, 
-        EXTRUE, new_last_refresh);
+        EXTRUE, new_last_refresh, new_sequence);
 }
 
 /**
@@ -264,7 +267,7 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     }
 
     if (EXSUCCEED != ndrx_sg_do_refresh_int(singlegrp_no, 
-        &sg, nodeid, srvid, EXFALSE, new_last_refresh))
+        &sg, nodeid, srvid, EXFALSE, new_last_refresh, new_sequence))
     {
         EXFAIL_OUT(ret);   
     }
@@ -278,7 +281,6 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     atomic_store(&sg_shm->lockprov_srvid, srvid);
     atomic_store(&sg_shm->is_locked, EXTRUE);
     atomic_store(&sg_shm->reason, 0);
-    atomic_store(&sg_shm->sequence, new_sequence);
 
     NDRX_LOG(log_debug, "Group %d locked", singlegrp_no);
     userlog("Group %d locked", singlegrp_no);

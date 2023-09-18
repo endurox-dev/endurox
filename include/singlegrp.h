@@ -123,7 +123,7 @@ extern NDRX_API int ndrx_sg_init(void);
 extern NDRX_API void ndrx_sg_reset(void);
 
 extern NDRX_API int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg, 
-    short nodeid, int srvid, time_t new_last_refresh);
+    short nodeid, int srvid, time_t new_last_refresh, long new_sequence);
 
 extern NDRX_API int ndrx_sg_is_valid(int singlegrp_no);
 extern NDRX_API void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags);
