@@ -446,7 +446,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         ndrx_G_exsinglesv_conf.locked_wait);
     TP_LOG(log_info, "threads=%d", ndrx_G_exsinglesv_conf.threads);
     TP_LOG(log_info, "svc_timeout=%s", ndrx_G_exsinglesv_conf.svc_timeout);
-    /* TP_LOG(log_info, "clock_tolerance=%s", ndrx_G_exsinglesv_conf.clock_tolerance); 
+    /* TP_LOG(log_info, "clock_tolerance=%s", ndrx_G_exsinglesv_conf.clock_tolerance); */
 
     /* Validate check interval: */
     if (ndrx_G_exsinglesv_conf.chkinterval*MIN_SGREFRESH_CEOFFICIENT > ndrx_sgrefresh)

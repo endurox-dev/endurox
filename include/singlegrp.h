@@ -68,6 +68,9 @@ extern "C" {
 #define NDRX_SG_RSN_NORMAL      5       /**< Normal shutdown             */
 #define NDRX_SG_RSN_LOCKE       6       /**< Locking errro (by exsinglesv)*/
 #define NDRX_SG_RSN_CORRUPT     7       /**< Corrupted structures        */
+#define NDRX_SG_RSN_NETLOCK     8       /**< Locked by network rsp (other node) */
+#define NDRX_SG_RSN_TNETLCK     9       /**< Network time ahead of us (>=)   */
+#define NDRX_SG_RSN_TFLCK       10      /**< Their locktime in file (>=) our lck time    */
 
 #define NDRX_SG_PROCNAMEMAX	16	/**< Max len of the lock process */
 
