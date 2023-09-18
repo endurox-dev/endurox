@@ -101,8 +101,8 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
         {
             long tmp, rsplen;
             char svcnm[MAXTIDENT+1]={EXEOS};
-            /* call server for results */
-            snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SINGL, tpgetnodeid(), grpno_lookup);
+            /* call server for results (local server) */
+            snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGLOC, tpgetnodeid(), grpno_lookup);
 
             p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
 

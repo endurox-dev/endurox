@@ -495,7 +495,8 @@ exprivate int do_lock(void *ctx)
     /* mark shm as locked by us too */
     TP_LOG(log_debug, "Lock shared memory...");
     if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.procgrp_lp_no, 
-            tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME), lock_ctx->new_refresh))
+            tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME),
+            lock_ctx->new_refresh, lock_ctx->new_sequence))
     {
         ret=ev_err;
         goto out;

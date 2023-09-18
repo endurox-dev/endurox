@@ -242,10 +242,11 @@ expublic int ndrx_sg_do_refresh(int singlegrp_no, ndrx_sg_shm_t * sg,
  * @param srvid server id
  * @param procname process name
  * @param new_last_refresh lock time (when checks were started...)
+ * @param new_sequence new sequence number
  * @return EXSUCCEED if successfull, EXFAIL if failed
  */
 expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *procname,
-        time_t new_last_refresh)
+        time_t new_last_refresh, long new_sequence)
 {
     int ret = EXSUCCEED;
     ndrx_sg_shm_t * sg_shm, sg;
@@ -277,6 +278,7 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     atomic_store(&sg_shm->lockprov_srvid, srvid);
     atomic_store(&sg_shm->is_locked, EXTRUE);
     atomic_store(&sg_shm->reason, 0);
+    atomic_store(&sg_shm->sequence, new_sequence);
 
     NDRX_LOG(log_debug, "Group %d locked", singlegrp_no);
     userlog("Group %d locked", singlegrp_no);
@@ -300,6 +302,7 @@ expublic void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
     sg->is_clt_booted = atomic_load(&sg_shm->is_clt_booted);
     sg->flags = atomic_load(&sg_shm->flags);
     sg->last_refresh = atomic_load(&sg_shm->last_refresh);
+    sg->sequence = atomic_load(&sg_shm->sequence);
     sg->lockprov_nodeid = atomic_load(&sg_shm->lockprov_nodeid);
     sg->lockprov_pid = atomic_load(&sg_shm->lockprov_pid);
     sg->lockprov_srvid = atomic_load(&sg_shm->lockprov_srvid);
@@ -638,7 +641,6 @@ expublic unsigned short ndrx_sg_flags_get(int singlegrp_no)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
     return atomic_load(&sg->flags);
-
 }
 
 /**

@@ -299,6 +299,7 @@ EX_COMMAND                  700         string -       generic command code
 EX_TSTAMP                   701         long   -       UTC timestamp
 EX_LCKSTATUS                702         char   -       Lock status
 EX_PROCGRP_NO               703         long   -       Process group number
+EX_SEQUENCE                 704         long   -       Sequence number (e.g. lock)
 
 $#endif
 

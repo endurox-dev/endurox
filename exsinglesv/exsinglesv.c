@@ -61,69 +61,13 @@
 #define PROGSECTION "@exsinglesv"
 #define MIN_SGREFRESH_CEOFFICIENT   3 /**< Minimum devider to use faults            */
 #define DEFAULT_CHECK_INTERVAL      5 /**< Default lock refresh interval            */
-#define DEFAULT_THREADS             5 /**< Default number of threads                */
 #define DEFAULT_SVCTOUT             3 /**< Default timeout for svc to disk fallback */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 expublic ndrx_exsinglesv_conf_t ndrx_G_exsinglesv_conf; /**< Configuration */
-
-exprivate int M_init_ok_thpool = EXFALSE;      /**< is init ok? */
 /*---------------------------Prototypes---------------------------------*/
-
-/**
- * Un-init procedure.
- * Close any open lock files.
- * @param normal_unlock shall we perform normal unlock (i.e. we were locked)
- * @param force_unlock shall we force unlock (i.e. we were not locked)
- */
-expublic void ndrx_exsinglesv_uninit(int normal_unlock, int force_unlock)
-{
-    int do_unlock=EXFALSE;
-
-    if (ndrx_G_exsinglesv_conf.locked1)
-    {
-        ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_1);
-
-        if (normal_unlock || force_unlock)
-        {
-            do_unlock = EXTRUE;
-        }
-    }
-    else if (force_unlock)
-    {
-        do_unlock = EXTRUE;
-    }
-
-    if (ndrx_G_exsinglesv_conf.locked2)
-    {
-        ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_2);
-    }
-
-    if (do_unlock)
-    {
-        ndrx_sg_shm_t * sg = ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
-
-        if (NULL!=sg)
-        {
-            ndrx_sg_unlock(sg, 
-                force_unlock?NDRX_SG_RSN_LOCKE:NDRX_SG_RSN_NORMAL);
-        }
-    }
-
-    ndrx_G_exsinglesv_conf.is_locked=EXFALSE;
-}
-
-/**
- * Shutdown the thread
- * @param arg
- * @param p_finish_off
- */
-expublic void thread_shutdown(void *ptr, int *p_finish_off)
-{
-    *p_finish_off = EXTRUE;
-}
 
 /**
  * Load error code to UBF buffer
@@ -147,87 +91,6 @@ expublic void ndrx_exsinglesv_set_error_fmt(UBFH *p_ub, long error_code, const c
 }
 
 /**
- * Entry point for service (main thread)
- * @param p_svc
- */
-void EXSINGLE (TPSVCINFO *p_svc)
-{
-    int ret=EXSUCCEED;
-    UBFH *p_ub = (UBFH *)p_svc->data; /* this is auto-buffer */
-    long size;
-    char btype[16];
-    char stype[16];
-    ndrx_thread_server_t *thread_data = NDRX_MALLOC(sizeof(ndrx_thread_server_t));
-    char cmd[NDRX_SGMAX_CMDLEN+1]="";
-    BFLDLEN cmd_bufsz=sizeof(cmd);
-    threadpool pool;
-    void (*p_func)(void*, int *);
-
-
-    if (NULL==thread_data)
-    {
-        userlog("Failed to malloc memory - %s!", strerror(errno));
-        TP_LOG(log_error, "Failed to malloc memory");
-        EXFAIL_OUT(ret);
-    }
-
-    thread_data->buffer = p_svc->data; /*the buffer is not made free by thread */
-    thread_data->cd = p_svc->cd;
-
-    if (Bget(p_ub, EX_COMMAND, 0, (char *)&cmd, &cmd_bufsz))
-    {
-        TP_LOG(log_error, "Failed to read command code!");
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (0==strcmp(NDRX_SGCMD_VERIFY, cmd))
-    {
-        /* local thpool */
-        pool=ndrx_G_exsinglesv_conf.thpool_local;
-        p_func=ndrx_exsingle_local;
-    }
-    else if (0==strcmp(NDRX_SGCMD_QUERY, cmd))
-    {
-        /* remote thpool */
-        pool=ndrx_G_exsinglesv_conf.thpool_remote;
-        p_func=ndrx_exsingle_remote;
-    }
-    else
-    {
-        ndrx_exsinglesv_set_error_fmt((UBFH *)p_svc->data, TPEINVAL, "Unknown command [%s]", cmd);
-        EXFAIL_OUT(ret);
-    }
-
-    if (NULL==(thread_data->context_data = tpsrvgetctxdata()))
-    {
-        TP_LOG(log_error, "Failed to get context data!");
-        EXFAIL_OUT(ret);
-    }
-
-    /* send to pool */
-    ndrx_thpool_add_work(pool, p_func, (void *)thread_data);
-
-out:
-
-    if (EXSUCCEED==ret)
-    {
-        /* serve next.. */
-        tpcontinue();
-    }
-    else
-    {
-        /* return error back */
-        tpreturn(  TPFAIL,
-                0L,
-                (char *)p_ub,
-                0L,
-                0L);
-    }
-
-}
-
-/**
  * Do initialization
  * Have a local MIB & shared MIB
  */
@@ -237,7 +100,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     ndrx_inicfg_t *cfg = NULL;
     ndrx_inicfg_section_keyval_t *params = NULL;
     ndrx_inicfg_section_keyval_t *el, *elt;
-    char *p;
+    char *p, *env_key;
     int ndrx_sgrefresh;
     char svcnm[MAXTIDENT+1]={EXEOS};
 
@@ -245,21 +108,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     char *sections[] = {"@singlesv",
                     NULL};
 
-    if (EXSUCCEED!=ndrx_exsinglesv_sm_comp())
-    {
-        TP_LOG(log_error, "Statemachine error");
-        userlog("Statemachine error");
-        EXFAIL_OUT(ret);
-    }
-
     memset(&ndrx_G_exsinglesv_conf, 0, sizeof(ndrx_G_exsinglesv_conf));
 
     /* set default: */
     ndrx_G_exsinglesv_conf.chkinterval = EXFAIL;
     ndrx_G_exsinglesv_conf.locked_wait = EXFAIL;
-    ndrx_G_exsinglesv_conf.threads = DEFAULT_THREADS;
     ndrx_G_exsinglesv_conf.svc_timeout = DEFAULT_SVCTOUT;
-    ndrx_G_exsinglesv_conf.clock_tolerance = EXFAIL;
     
     if (EXSUCCEED!=ndrx_cconfig_load_sections(&cfg, sections))
     {
@@ -326,31 +180,29 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
        {
             ndrx_G_exsinglesv_conf.locked_wait = atoi(el->val);
        }
-       else if (0==strcmp(el->key, "threads"))
-       {
-            ndrx_G_exsinglesv_conf.threads = atoi(el->val);
-       }
        else if (0==strcmp(el->key, "svctout"))
        {
             ndrx_G_exsinglesv_conf.svc_timeout = atoi(el->val);
-       }/*
-       else if (0==strcmp(el->key, "clock_tolerance"))
-       {
-            ndrx_G_exsinglesv_conf.clock_tolerance = atoi(el->val);
-       }*/
+       }
        else
        {
             TP_LOG(log_debug, "Unknown parameter [%s]", el->key);
             EXFAIL_OUT(ret);
        }
+
     }
 
-    p=getenv(CONF_NDRX_PROCGRP_LP_NO);
+#ifdef NDRX_EXSINGLESV_LP
+    env_key=CONF_NDRX_PROCGRP_LP_NO;
+#else
+    env_key=CONF_NDRX_PROCGRP_NO;
+#endif
+    p=getenv(env_key);
 
     if (NULL==p)
     {
         TP_LOG(log_error, "Missing %s environment variable", 
-            CONF_NDRX_PROCGRP_LP_NO);
+            env_key);
         EXFAIL_OUT(ret);
     }
 
@@ -361,7 +213,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         TP_LOG(log_error, "Invalid singleton process group number [%d], "
             "check %s env setting",
-            ndrx_G_exsinglesv_conf.procgrp_lp_no, CONF_NDRX_PROCGRP_LP_NO);
+            ndrx_G_exsinglesv_conf.procgrp_lp_no, env_key);
         EXFAIL_OUT(ret);
     }
 
@@ -412,25 +264,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         ndrx_G_exsinglesv_conf.locked_wait = ndrx_sgrefresh/ndrx_G_exsinglesv_conf.chkinterval*2;
     }
 
-    if (ndrx_G_exsinglesv_conf.threads<1)
-    {
-        ndrx_G_exsinglesv_conf.threads=DEFAULT_THREADS;
-    }
-
-/*
-    if (ndrx_G_exsinglesv_conf.clock_tolerance < 0 ||
-            ndrx_G_exsinglesv_conf.clock_tolerance >= 
-                (ndrx_G_exsinglesv_conf.locked_wait*ndrx_G_exsinglesv_conf.chkinterval)
-        )
-    {
-        TP_LOG(log_info, "clock_tolerance value %d, defaulting to check interval %d",
-                ndrx_G_exsinglesv_conf.clock_tolerance, ndrx_G_exsinglesv_conf.chkinterval);
-        ndrx_G_exsinglesv_conf.clock_tolerance = ndrx_G_exsinglesv_conf.chkinterval;
-    }
-*/
-    /* call server for results */
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SINGL, tpgetnodeid(), ndrx_G_exsinglesv_conf.procgrp_lp_no);
-
     /* Dump the configuration to the log file */
     TP_LOG(log_info, "svcnm = [%s]", svcnm);
     TP_LOG(log_info, "procgrp_lp_no=%d", ndrx_G_exsinglesv_conf.procgrp_lp_no);
@@ -444,7 +277,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     TP_LOG(log_info, "chkinterval=%d", ndrx_G_exsinglesv_conf.chkinterval);
     TP_LOG(log_info, "locked_wait=%d (number of chkinterval cycles)", 
         ndrx_G_exsinglesv_conf.locked_wait);
-    TP_LOG(log_info, "threads=%d", ndrx_G_exsinglesv_conf.threads);
     TP_LOG(log_info, "svc_timeout=%s", ndrx_G_exsinglesv_conf.svc_timeout);
     /* TP_LOG(log_info, "clock_tolerance=%s", ndrx_G_exsinglesv_conf.clock_tolerance); */
 
@@ -461,32 +293,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 ndrx_G_exsinglesv_conf.chkinterval);
     }
 
-    /* start the threads... */
+#ifdef NDRX_EXSINGLESV_LP
 
-    /* service request handlers */
-    if (NULL==(ndrx_G_exsinglesv_conf.thpool_local = ndrx_thpool_init(ndrx_G_exsinglesv_conf.threads,
-            NULL, NULL, NULL, 0, NULL)))
+    /* compile state machine: */
+    if (EXSUCCEED!=ndrx_exsinglesv_sm_comp())
     {
-        TP_LOG(log_error, "Failed to initialize local thread pool (cnt: %d)!",
-                ndrx_G_exsinglesv_conf.threads);
-        EXFAIL_OUT(ret);
-    }
-
-    if (NULL==(ndrx_G_exsinglesv_conf.thpool_remote = ndrx_thpool_init(ndrx_G_exsinglesv_conf.threads,
-            NULL, NULL, NULL, 0, NULL)))
-    {
-        TP_LOG(log_error, "Failed to initialize remote thread pool (cnt: %d)!",
-                ndrx_G_exsinglesv_conf.threads);
-        EXFAIL_OUT(ret);
-    }
-
-    M_init_ok_thpool = EXTRUE;
-
-    /* advertise our service ... */
-    if (EXSUCCEED!=tpadvertise(svcnm, EXSINGLE))
-    {
-        TP_LOG(log_error, "Failed to advertise service [%s]: %s", 
-            svcnm, tpstrerror(tperrno));
+        TP_LOG(log_error, "Statemachine error");
+        userlog("Statemachine error");
         EXFAIL_OUT(ret);
     }
     
@@ -524,7 +337,32 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* report us as lock provider */
     tpext_configprocgrp_lp (ndrx_G_exsinglesv_conf.procgrp_lp_no);
 
-    M_init_ok_thpool=EXTRUE;
+#elif NDRX_EXSINGLESV_CHK_LOCAL
+
+    /* call server for results */
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGLOC, 
+        tpgetnodeid(), ndrx_G_exsinglesv_conf.procgrp_lp_no);
+
+    /* advertise our service ... */
+    if (EXSUCCEED!=tpadvertise(svcnm, SGLOC))
+    {
+        TP_LOG(log_error, "Failed to advertise service [%s]: %s", 
+            svcnm, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+#else
+    /* call server for results */
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGREM, 
+        tpgetnodeid(), ndrx_G_exsinglesv_conf.procgrp_lp_no);
+
+    /* advertise our service ... */
+    if (EXSUCCEED!=tpadvertise(svcnm, SGREM))
+    {
+        TP_LOG(log_error, "Failed to advertise service [%s]: %s", 
+            svcnm, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+#endif
 
 out:
 
@@ -543,24 +381,11 @@ out:
 
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
-    int i;
 
-    /* un-init thread pool */
-
-    /* Terminate the threads (request) */
-    for (i=0; i<ndrx_G_exsinglesv_conf.threads; i++)
-    {
-        ndrx_thpool_add_work(ndrx_G_exsinglesv_conf.thpool_local, (void *)thread_shutdown, NULL);
-    }
-
-    /* update threads */
-    for (i=0; i<ndrx_G_exsinglesv_conf.threads; i++)
-    {
-        ndrx_thpool_add_work(ndrx_G_exsinglesv_conf.thpool_remote, (void *)thread_shutdown, NULL);
-    }
-
+#ifdef NDRX_EXSINGLESV_LP
     /* unlock the group from SHM and unlock / close the lockfiles */
     ndrx_exsinglesv_uninit(EXTRUE, EXFALSE);
+#endif
     
 }
 

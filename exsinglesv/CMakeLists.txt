@@ -39,7 +39,6 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/libnstd
 					 ${ENDUROX_SOURCE_DIR}/ubftest)
 
-
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
@@ -56,16 +55,38 @@ add_executable (exsinglesv
 		exsinglesv.c
 		filelock.c
 		locksm.c
-		local.c
-		remote.c
+                lp.c
 		../libatmisrv/rawmain_integra.c)
-target_link_libraries (exsinglesv tpadm atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
+
+add_executable (exsingleckl
+        exsinglesv.c
+        filelock.c
+        local.c
+        ../libatmisrv/rawmain_integra.c)
+
+add_executable (exsingleckr
+        exsinglesv.c
+        remote.c
+        ../libatmisrv/rawmain_integra.c)
+
+target_compile_definitions(exsinglesv PRIVATE NDRX_EXSINGLESV_LP)
+target_compile_definitions(exsingleckl PRIVATE NDRX_EXSINGLESV_CHK_LOCAL)
+target_compile_definitions(exsingleckr PRIVATE NDRX_EXSINGLESV_CHK_REMOTE)
+
+target_link_libraries (exsinglesv atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
+target_link_libraries (exsingleckl atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
+target_link_libraries (exsingleckr atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
+
 set_target_properties(exsinglesv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(exsingleckl PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(exsingleckr PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 # Install bin
 install (TARGETS 
     exsinglesv
+    exsingleckl
+    exsingleckr
     DESTINATION bin)
 
 # vim: set ts=4 sw=4 et smartindent:

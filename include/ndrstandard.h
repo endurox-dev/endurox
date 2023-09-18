@@ -486,7 +486,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_SVC_ADMIN    "@ADMINSVC"           /**< Admin service for atmiservices, logical */
 #define NDRX_SVC_REPLY    "@REPLYSVC"           /**< Reply service for atmiservices, logical */
 
-#define NDRX_SVC_SINGL      "@SINGL-%ld-%d"         /**< singleton grp Node_id,srvid */
+#define NDRX_SVC_SGLOC      "@SGLOC-%ld-%d"         /**< singleton grp local checks */
+#define NDRX_SVC_SGREM      "@SGREM-%ld-%d"         /**< singleton grp remote checks */
 
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
 #define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
