@@ -109,6 +109,8 @@ extern int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx);
 extern void ndrx_exsingle_local (void *ptr, int *p_finish_off);
 extern void ndrx_exsingle_remote (void *ptr, int *p_finish_off);
 extern void ndrx_exsinglesv_set_error_fmt(UBFH *p_ub, long error_code, const char *fmt, ...);
+extern long ndrx_exsinglesv_ping_read(int procgrp_no);
+extern int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx);
 
 #ifdef	__cplusplus
 }
