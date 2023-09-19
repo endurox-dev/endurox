@@ -175,8 +175,8 @@ exprivate int get_singlegrp(void *ctx)
      */
     ndrx_realtime_get(&ts);
     lock_ctx->new_refresh = ts.tv_sec;
-
-    lock_status = ndrx_exsinglesv_sg_is_locked(lock_ctx);
+    
+    lock_status = ndrx_exsinglesv_sg_is_locked(lock_ctx, EXTRUE);
 
     if (EXFAIL==lock_status)
     {
@@ -426,6 +426,14 @@ exprivate int do_lock(void *ctx)
     lock_ctx->new_sequence+=SEQUENCE_START;
     TP_LOG(log_warn, "New sequence number is %d (old seq +%d)", 
         lock_ctx->new_sequence, SEQUENCE_START);
+
+    /* write stuff to ping */
+    if (EXSUCCEED!=ndrx_exsinglesv_ping_do(lock_ctx))
+    {
+        TP_LOG(log_error, "Initial ping failed");
+        ret=ev_err;
+        goto out;
+    }
 
     /* mark shm as locked by us too */
     TP_LOG(log_debug, "Lock shared memory...");

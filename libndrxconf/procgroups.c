@@ -264,7 +264,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                 EXFAIL_OUT(ret);
             }
         }
-        else if (0==strcmp((char *)attr->name, "sg_node_verify"))
+        else if (0==strcmp((char *)attr->name, "sg_nodes_verify"))
         {
             /* y/Y */
             if (NDRX_SETTING_TRUE1==*p || NDRX_SETTING_TRUE2==*p)

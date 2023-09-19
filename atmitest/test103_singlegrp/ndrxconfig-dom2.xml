@@ -53,8 +53,8 @@
         <killtime>20</killtime>
     </defaults>
     <procgroups>
-        <procgroup grpno="1" name="OK1" singleton="Y" sg_nodes="1,2"/>
-        <procgroup grpno="2" name="OK2" singleton="Y" sg_nodes="1,2"/> 
+        <procgroup grpno="1" name="OK1" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+        <procgroup grpno="2" name="OK2" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/> 
     </procgroups>
     <servers>
         <!-- OK1 group -->
@@ -63,6 +63,23 @@
             <max>1</max>
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/exsinglesv-dom2.log -r</sysopt>
+            <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
+        </server>
+        <!-- support servers -->
+        <server name="exsingleckl">
+            <min>1</min>
+            <max>1</max>
+            <srvid>15</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckl-dom2.log -r</sysopt>
+            <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
+        </server>
+        <server name="exsingleckr">
+            <min>1</min>
+            <max>1</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckr-dom2.log -r</sysopt>
             <procgrp_lp>OK1</procgrp_lp>
             <cctag>OK1</cctag>
         </server>
@@ -93,6 +110,23 @@
             <max>1</max>
             <srvid>3000</srvid>
             <sysopt>-e ${TESTDIR}/exsinglesv2-dom2.log -r</sysopt>
+            <procgrp_lp>OK2</procgrp_lp>
+            <cctag>OK2</cctag>
+        </server>
+        <!-- support servers -->
+        <server name="exsingleckl">
+            <min>1</min>
+            <max>1</max>
+            <srvid>3005</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckl2-dom2.log -r</sysopt>
+            <procgrp_lp>OK2</procgrp_lp>
+            <cctag>OK2</cctag>
+        </server>
+        <server name="exsingleckr">
+            <min>1</min>
+            <max>1</max>
+            <srvid>3010</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckr2-dom2.log -r</sysopt>
             <procgrp_lp>OK2</procgrp_lp>
             <cctag>OK2</cctag>
         </server>

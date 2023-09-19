@@ -95,7 +95,7 @@ void SGLOC (TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
 
-    ret=ndrx_exsinglesv_sg_is_locked(&lockst);
+    ret=ndrx_exsinglesv_sg_is_locked(&lockst, EXFALSE);
 
     if (EXFAIL==ret)
     {

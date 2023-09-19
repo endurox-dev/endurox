@@ -251,6 +251,8 @@ exprivate int validate_process_groups(config_t *app_config, pm_node_t *process_m
         if (p_pm->conf->procgrp_lp_no > 0 && 
             0!=procgrplps[p_pm->conf->procgrp_lp_no-1])
         {
+/* lp group may have support servers:*/
+#if 0
             NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Lock provider "
                         "[%s]/%d duplicate for process group [%s]. "
                         "Lock already provided by srvid %d",
@@ -260,6 +262,7 @@ exprivate int validate_process_groups(config_t *app_config, pm_node_t *process_m
                         ndrx_ndrxconf_procgroups_resolveno(app_config->procgroups, p_pm->conf->procgrp_lp_no)->grpname, 
                         procgrplps[p_pm->conf->procgrp_lp_no-1]);
             EXFAIL_OUT(ret);
+#endif
         }
         else 
         {
