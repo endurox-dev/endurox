@@ -230,9 +230,11 @@ out:
 
 /**
  * Extended group check.
+ * @param lock_ctx lock context
+ * @param chk_files check files (do not call remote at all)
  * @return EXFAIL/EXTRUE/EXFALSE
  */
-expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
+expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force_chk)
 {
     int ret=EXFALSE;
     UBFH *p_ub = NULL;
@@ -260,9 +262,10 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
     ret = ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL, 0);
     /* check all remote */
 
-    if (EXTRUE==ret && (lock_ctx->local.flags & NDRX_SG_VERIFY))
+    if (EXTRUE==ret && (lock_ctx->local.flags & NDRX_SG_VERIFY || force_chk))
     {
         int i;
+        ret=EXSUCCEED;
         for (i=0; i<CONF_NDRX_NODEID_COUNT; i++)
         {
             int locked_by_stat=EXFALSE;
@@ -270,6 +273,10 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
 
             if (lock_ctx->local.sg_nodes[i])
             {
+                if (lock_ctx->local.sg_nodes[i]==G_atmi_env.our_nodeid)
+                {
+                    continue;
+                }
                 TP_LOG(log_debug, "Checking node [%d]...", 
                         lock_ctx->local.sg_nodes[i]);
 
@@ -279,34 +286,38 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                     p_ub = NULL;
                 }
 
-                p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+                /* do call if verify flag is set */
+                if (lock_ctx->local.flags & NDRX_SG_VERIFY)
+                {                
+                    p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
 
-                if (NULL==p_ub)
-                {
-                    TP_LOG(log_error, "Failed to allocate UBF");
-                    EXFAIL_OUT(ret);
+                    if (NULL==p_ub)
+                    {
+                        TP_LOG(log_error, "Failed to allocate UBF");
+                        EXFAIL_OUT(ret);
+                    }
+
+                    /* load query buffer */
+
+                    tmp = ndrx_G_exsinglesv_conf.procgrp_lp_no;
+                    if (EXSUCCEED!=Bchg(p_ub, EX_COMMAND, 0, NDRX_SGCMD_QUERY, 0L)
+                        || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)&tmp, 0L))
+                    {
+                        TP_LOG(log_error, "Failed to setup request buffer: %s", 
+                            Bstrerror(Berror));
+                        EXFAIL_OUT(ret);
+                    }
+
+                    tpsblktime(ndrx_G_exsinglesv_conf.svc_timeout, TPBLK_NEXT);
+
+                    /* call server for results */
+                    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGREM, (long)lock_ctx->local.sg_nodes[i], 
+                        ndrx_G_exsinglesv_conf.procgrp_lp_no);
+                    TP_LOG(log_debug, "Checking with [%s] group %d lock status", svcnm, 
+                        ndrx_G_exsinglesv_conf.procgrp_lp_no);
+
+                    ret = tpcall(svcnm, (char*)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTRAN);
                 }
-
-                /* load query buffer */
-
-                tmp = ndrx_G_exsinglesv_conf.procgrp_lp_no;
-                if (EXSUCCEED!=Bchg(p_ub, EX_COMMAND, 0, NDRX_SGCMD_QUERY, 0L)
-                    || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)&tmp, 0L))
-                {
-                    TP_LOG(log_error, "Failed to setup request buffer: %s", 
-                        Bstrerror(Berror));
-                    EXFAIL_OUT(ret);
-                }
-
-                tpsblktime(ndrx_G_exsinglesv_conf.svc_timeout, TPBLK_NEXT);
-
-                /* call server for results */
-                snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGREM, (long)lock_ctx->local.sg_nodes[i], 
-                    ndrx_G_exsinglesv_conf.procgrp_lp_no);
-                TP_LOG(log_debug, "Checking with [%s] group %d lock status", svcnm, 
-                    ndrx_G_exsinglesv_conf.procgrp_lp_no);
-
-                ret = tpcall(svcnm, (char*)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTRAN);
 
                 /* 
                     * if have their lock status & their are locked.
@@ -321,9 +332,12 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                     * if not, we have lost the lock and return the error.
                     * (unlock the shm)
                     */
-                if (EXSUCCEED!=ret)
+                if (EXSUCCEED!=ret || !(lock_ctx->local.flags & NDRX_SG_VERIFY))
                 {
                     int log_lev = log_error;
+
+                    /*  succeed anyway */
+                    ret=EXSUCCEED;
 
                     if (TPESVCFAIL==tperrno)
                     {
@@ -419,17 +433,36 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx)
                 /* array is sorted out of linked nodes */
                 break;
             }
+
+
         }
+
+        /* if we are here, then we are locked fine */
+
+        ret=EXTRUE;
+    }
+    else
+    {
+        /* keep the status (false or fail)*/
+        goto out;
     }
 
     /* if any fail, check local */
 out:
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
     return ret;
 }
 
 /**
  * read 16 bytes for each of the nodes in the file
- * 8 bytes=> lock time, 8 bytes => crc32 (to match the E/X lib)
+ * 8 bytes=> lock time, 8 bytes => crc32 (to match the E/X lib).
+ * Note that no parallel locks are allowed. If any lock
+ * is found on the file, it shall be reported as error.
  */
 expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
 {
@@ -648,12 +681,16 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsingles
     lock.l_start = 0;
     lock.l_len = 0;
 
-    if (fcntl(fd, F_SETLK, &lock) == EXFAIL)
+    TP_LOG(log_debug, "Acquring read lock on fd %d", fd);
+
+    if (fcntl(fd, F_SETLKW, &lock) == EXFAIL)
     {
         TP_LOG(log_error, "copy %d: Failed to read lock [%s] (fd=%d) file: %s", 
             copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
         EXFAIL_OUT(ret);
     }
+
+    TP_LOG(log_debug, "Read locked on fd %d", fd);
 
     if (lseek(fd, offset, SEEK_SET) == -1)
     {
@@ -736,7 +773,11 @@ expublic int ndrx_exsinglesv_ping_read(int nodeid, ndrx_exsinglesv_lockent_t *p_
         {
             continue;
         }
-
+        else
+        {
+            /* we have a verified result */
+            break;
+        }
     }
 
     /* give some advice if lock file is totally corrupt... */
@@ -754,7 +795,7 @@ expublic int ndrx_exsinglesv_ping_read(int nodeid, ndrx_exsinglesv_lockent_t *p_
 
 out:
 
-    TP_LOG(log_error, "returns %d", ret);
+    TP_LOG(log_error, "%s returns %d", __FUNCTION__, ret);
     return ret;
 }
 
@@ -766,7 +807,8 @@ out:
  */
 expublic long ndrx_exsinglesv_sg_max_seq(ndrx_locksm_ctx_t *lock_ctx)
 {
-    long ret=EXSUCCEED;
+    int ret=EXSUCCEED;
+    long seq_max=0;
     int i;
     ndrx_exsinglesv_lockent_t ent;
 
@@ -793,16 +835,24 @@ expublic long ndrx_exsinglesv_sg_max_seq(ndrx_locksm_ctx_t *lock_ctx)
                 EXFAIL_OUT(ret);
             }
 
-            if (ent.sequence > ret)
+            if (ent.sequence > seq_max)
             {
-                ret = ent.sequence;
+                seq_max = ent.sequence;
             }
         }
     }
 
 out:
-    TP_LOG(log_info, "returns (max sequence) %d", ret);
-    return ret;
+    TP_LOG(log_info, "returns %d, max sequence %ld", ret, seq_max);
+
+    if (EXSUCCEED==ret)
+    {
+        return seq_max;
+    }
+    else
+    {
+        return ret;
+    }   
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

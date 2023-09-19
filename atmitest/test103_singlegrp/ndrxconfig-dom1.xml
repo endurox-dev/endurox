@@ -27,8 +27,8 @@
         <brrefresh>5</brrefresh>
     </appconfig>
     <procgroups>
-        <procgroup grpno="1" name="OK1" singleton="Y" noorder="Y" sg_nodes="1,2"/>
-        <procgroup grpno="2" name="OK2" singleton="Y" noorder="Y" sg_nodes="1,2"/>
+        <procgroup grpno="1" name="OK1" singleton="Y" noorder="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+        <procgroup grpno="2" name="OK2" singleton="Y" noorder="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
     </procgroups>
     <defaults>
         <min>1</min>
@@ -66,19 +66,37 @@
             <procgrp_lp>OK1</procgrp_lp>
             <cctag>OK1</cctag>
         </server>
+
+        <!-- support servers, remote -->
+        <server name="exsingleckl">
+            <min>1</min>
+            <max>1</max>
+            <srvid>15</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckl-dom1.log -r</sysopt>
+            <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
+        </server>
+        <server name="exsingleckr">
+            <min>1</min>
+            <max>1</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckr-dom1.log -r</sysopt>
+            <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
+        </server>
         <server name="atmi.sv103">
             <min>1</min>
             <max>1</max>
             <srvid>50</srvid>
             <!-- server waits on boot -->
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -- -w10</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -- -w10</sysopt>
             <procgrp>OK1</procgrp>
         </server>
         <server name="atmi.sv103">
             <min>10</min>
             <max>10</max>
             <srvid>100</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r </sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r </sysopt>
             <procgrp>OK1</procgrp>
         </server>
         <server name="tpbridge">
@@ -96,18 +114,35 @@
             <procgrp_lp>OK2</procgrp_lp>
             <cctag>OK2</cctag>
         </server>
+        <!-- support servers -->
+        <server name="exsingleckl">
+            <min>1</min>
+            <max>1</max>
+            <srvid>3005</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckl2-dom1.log -r</sysopt>
+            <procgrp_lp>OK2</procgrp_lp>
+            <cctag>OK2</cctag>
+        </server>
+        <server name="exsingleckr">
+            <min>1</min>
+            <max>1</max>
+            <srvid>3010</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckr2-dom1.log -r</sysopt>
+            <procgrp_lp>OK2</procgrp_lp>
+            <cctag>OK2</cctag>
+        </server>
         <server name="atmi103_v2">
             <min>5</min>
             <max>5</max>
             <srvid>4000</srvid>
-            <sysopt>-e ${TESTDIR}/atmi103_v2-dom2.log -r </sysopt>
+            <sysopt>-e ${TESTDIR}/atmi103_v2-dom1.log -r </sysopt>
             <procgrp>OK2</procgrp>
         </server>
         <server name="cpmsrv">
             <min>1</min>
             <max>1</max>
             <srvid>9999</srvid>
-            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom2.log -r -- -k3 -i1</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom1.log -r -- -k3 -i1</sysopt>
         </server>
     </servers>
     <clients>

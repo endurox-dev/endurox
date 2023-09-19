@@ -100,7 +100,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     ndrx_inicfg_t *cfg = NULL;
     ndrx_inicfg_section_keyval_t *params = NULL;
     ndrx_inicfg_section_keyval_t *el, *elt;
-    char *p, *env_key;
+    char *p;
     int ndrx_sgrefresh;
     char svcnm[MAXTIDENT+1]={EXEOS};
 
@@ -192,17 +192,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     }
 
-#ifdef NDRX_EXSINGLESV_LP
-    env_key=CONF_NDRX_PROCGRP_LP_NO;
-#else
-    env_key=CONF_NDRX_PROCGRP_NO;
-#endif
-    p=getenv(env_key);
+    p=getenv(CONF_NDRX_PROCGRP_LP_NO);
 
     if (NULL==p)
     {
         TP_LOG(log_error, "Missing %s environment variable", 
-            env_key);
+            CONF_NDRX_PROCGRP_LP_NO);
         EXFAIL_OUT(ret);
     }
 
@@ -213,7 +208,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         TP_LOG(log_error, "Invalid singleton process group number [%d], "
             "check %s env setting",
-            ndrx_G_exsinglesv_conf.procgrp_lp_no, env_key);
+            ndrx_G_exsinglesv_conf.procgrp_lp_no, CONF_NDRX_PROCGRP_LP_NO);
         EXFAIL_OUT(ret);
     }
 

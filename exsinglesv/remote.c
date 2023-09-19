@@ -93,7 +93,7 @@ void SGREM (TPSVCINFO *p_svc)
     if (EXSUCCEED!=Bchg(p_ub, EX_TSTAMP, 0, (char *)&lck_time, 0)
         || EXSUCCEED!=Bchg(p_ub, EX_SEQUENCE, 0, (char *)&local.sequence, 0)
         || EXSUCCEED!=Bchg(p_ub, EX_LCKSTATUS, 0, (char *)&local.is_locked, 0)
-        || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)procgrp_no, 0))
+        || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)&procgrp_no, 0))
     {
         TP_LOG(log_error, "Failed to set EX_TSTAMP/EX_SEQUENCE/EX_LCKSTATUS/EX_PROCGRP_NO");
         ndrx_exsinglesv_set_error_fmt(p_ub, TPESYSTEM, "Failed to set UBF values: %s",

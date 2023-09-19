@@ -471,8 +471,12 @@ exprivate inline int x_ctonet(cproto_t *fld, char *c_buf_in,
             
             proto_buf[*proto_buf_offset] = *tmp;
             proto_buf[*proto_buf_offset+1] = 0; /* later for strcpy */
-            
+
+            /* -> what if 0x00 byte? Isn't it more correct just to use len 1?
             len = strlen(&(proto_buf[*proto_buf_offset]));
+            */
+            len = 1;
+
             *proto_buf_offset += len;
             
         }
