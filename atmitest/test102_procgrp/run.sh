@@ -155,7 +155,8 @@ cp ndrxconfig-dom1-lp_changed.xml ndrxconfig-dom1-lp_tmp.xml.tmp
 validate_invalid_config_reload "NDRXD_EREBBINARYRUN" "Lock provider [exsinglesv]/10 must be shutdown prior changing locking group (from 12 to 13)"
 
 # load config tests:
-validate_invalid_config "ndrxconfig-dom1-dup_lp.xml" "NDRXD_ECFGINVLD" "Lock provider [exsinglesv]/11 duplicate for process group [OK]. Lock already provided by srvid 10"
+# # no dup checks, as we might have support server ckr, ckl
+#validate_invalid_config "ndrxconfig-dom1-dup_lp.xml" "NDRXD_ECFGINVLD" "Lock provider [exsinglesv]/11 duplicate for process group [OK]. Lock already provided by srvid 10"
 validate_invalid_config "ndrxconfig-dom1-singlegrp_inval1.xml" "NDRXD_EINVAL" "Invalid \`singleton' setting [X] in <procgroup>"
 validate_invalid_config "ndrxconfig-dom1-noorder_inval.xml" "NDRXD_EINVAL" "Invalid \`noorder' setting [X] in <procgroup>"
 validate_invalid_config "ndrxconfig-dom1-no-name.xml" "NDRXD_ECFGINVLD" "\`name' not set in <procgroup> section"

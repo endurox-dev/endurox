@@ -59,13 +59,20 @@ export NDRX_SILENT=Y
 # 20 sec lock take over time
 export NDRX_SGREFRESH=10
 
+export NDRX_TEST_CASE=0
+
 #
 # Domain 1 - here client will live
 #
 set_dom1() {
     echo "Setting domain 1"
     . ../dom1.sh
-    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
+
+    if [ "$NDRX_TEST_CASE" == "1" ]; then
+        export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1-niv.xml
+    else
+        export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
+    fi
     export NDRX_CCONFIG=$TESTDIR/app-dom1.ini
     export NDRX_DMNLOG=$TESTDIR/ndrxd-dom1.log
     export NDRX_LOG=$TESTDIR/ndrx-dom1.log
@@ -79,7 +86,13 @@ set_dom1() {
 set_dom2() {
     echo "Setting domain 2"
     . ../dom2.sh    
-    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2.xml
+
+    if [ "$NDRX_TEST_CASE" == "1" ]; then
+        export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2-niv.xml
+    else
+        export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2.xml
+    fi
+
     export NDRX_CCONFIG=$TESTDIR/app-dom2.ini
     export NDRX_DMNLOG=$TESTDIR/ndrxd-dom2.log
     export NDRX_LOG=$TESTDIR/ndrx-dom2.log
@@ -184,27 +197,36 @@ TAG3/- - running pid [0-9]+ .*"
     fi
 }
 
+# lets start with Domain 2. While the Domain 1 is in cold state...
+
+#
+# first test is without sg_verify_nodes="Y"
+#
+for test_no in 0 1; do
+
+################################################################################
+echo ">>> TEST LOOP $test_no"
+################################################################################
+NDRX_TEST_CASE=$test_no
+
 # clean up some old stuff
 rm *.log 2>/dev/null
 rm lock_* 2>/dev/null
 rm ULOG* 2>/dev/null
 rm -f *.status 2>/dev/null
-
-# Any bridges that are live must be killed!
 xadmin killall tpbridge
 
-#set_dom1;
-#xadmin down -y
-#xadmin start -y || go_out 1
+set_dom1;
+xadmin down -y
+set |grep NDRX_CONFIG
 
-# lets start with Domain 2. While the Domain 1 is in cold state...
+set_dom2;
+xadmin down -y
+set |grep NDRX_CONFIG
 
 ################################################################################
 echo ">>> Basic tests of no lock at the boot"
 ################################################################################
-
-set_dom2;
-xadmin down -y
 CMD="xadmin start -y 2>&1"
 echo "$CMD"
 OUT=`$CMD 2>&1`
@@ -563,10 +585,15 @@ CMD="xadmin psg"
 echo "$CMD"
 OUT=`$CMD 2>&1`
 
+flag="ni"
+if [ "$test_no" == "1" ]; then
+    flag="niv"
+fi
+
 PATTERN="SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
 ---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
-   1 Y    N    Y     Y          10[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 niv[[:space:]]*
-   2 Y    N    Y     Y        3000[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 niv[[:space:]]*"
+   1 Y    N    Y     Y          10[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 $flag[[:space:]]*
+   2 Y    N    Y     Y        3000[[:space:]]+[0-9]+ exsinglesv[[:space:]]+.*   0 $flag[[:space:]]*"
 
 echo "got output [$OUT]"
 
@@ -620,6 +647,9 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"
     RET=-2
 fi
+
+# master loop of the test case
+done
 
 go_out $RET
 

@@ -1312,17 +1312,18 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
                 EXFAIL_OUT(ret);
             }
 
-            /* verify is singleton group still locked...
-             * so that if there were server freeze, we do not proceed with the decision, if
-             * file modification date was in future or log file is missing at all
+            /* if we are in singleton group mode, validate that we still 
+             * own the lock
              */
-
-            if (G_tmsrv_cfg.singlegrp_no>0 &&
-                !ndrx_sg_is_locked(G_tmsrv_cfg.singlegrp_no,
-                    (G_tmsrv_cfg.sg_chk_log?p_tl->fname:NULL), 0))
+            if (G_tmsrv_cfg.singlegrp_no
+                && EXTRUE!=tpsgislocked(G_tmsrv_cfg.singlegrp_no, TPACK))
             {
-                NDRX_LOG(log_error, "Singleton process group %d lost lock -> cannot continue");
-                exit(-1);
+                NDRX_LOG(log_error, "Singleton group %d lock lost - exit(-1)",
+                    G_tmsrv_cfg.singlegrp_no);
+                userlog("Singleton group %d lock lost - exit(-1)",
+                    G_tmsrv_cfg.singlegrp_no);
+                /* !!!! */
+                exit(EXFAIL);
             }
         }
     }

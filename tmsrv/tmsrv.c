@@ -478,7 +478,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmsrv_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:X")) != -1)
+    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:")) != -1)
     {
 
         if (optarg)
@@ -492,9 +492,6 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
-            case 'X':
-                G_tmsrv_cfg.sg_chk_log=EXTRUE;
-                break;
             case 'n':
                 G_tmsrv_cfg.vnodeid = atol(optarg);
                 NDRX_LOG(log_info, "Virtual Enduro/X Cluster Node ID set to %ld",
@@ -603,10 +600,6 @@ int tpsvrinit(int argc, char **argv)
 
     NDRX_LOG(log_debug, "Singleton group: %d",
                             G_tmsrv_cfg.singlegrp_no);
-
-    NDRX_LOG(log_debug, "Check log file (for singleton group mode): %d",
-                            G_tmsrv_cfg.sg_chk_log);
-
     
     NDRX_LOG(log_debug, "About to initialize XA!");
     
