@@ -11,10 +11,9 @@
         -->
         <checkpm>5</checkpm>
         <!--  <sanity> timer, end -->
-
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-        <!-- Do process reset after 2 sec -->
-        <restart_min>2</restart_min>
+        <!-- Do process reset after 1 sec -->
+        <restart_min>1</restart_min>
         <!-- If restart fails, then boot after +5 sec of previous wait time -->
         <restart_step>10</restart_step>
         <!-- If still not started, then max boot time is a 30 sec. -->
@@ -27,6 +26,10 @@
         <!-- Send full service table every 5 seconds -->
         <brrefresh>5</brrefresh>
     </appconfig>
+    <procgroups>
+        <procgroup grpno="1" name="OK1" singleton="Y" noorder="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+        <procgroup grpno="2" name="OK2" singleton="Y" noorder="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+    </procgroups>
     <defaults>
         <min>1</min>
         <max>1</max>
@@ -35,13 +38,14 @@
         <respawn>1</respawn>
         <!-- The maximum time while process can hang in 'starting' state i.e.
         have not completed initialisation, sec -->
-        <start_max>40</start_max>
+        <start_max>20</start_max>
         <!--
-        Ping server in every X sanity checks
+        Ping server in every X sanity units
         -->
         <pingtime>9</pingtime>
         <!--
         Max number of sanity units in which server must respond.
+        The granularity is sanity time.
         -->
         <ping_max>40</ping_max>
         <!--
@@ -52,17 +56,31 @@
         to process until it have been terminated. -->
         <killtime>20</killtime>
     </defaults>
-    <procgroups>
-        <procgroup grpno="1" name="OK1" singleton="Y" sg_nodes="1,2" sg_nodes_verify="N"/>
-        <procgroup grpno="2" name="OK2" singleton="Y" sg_nodes="1,2" sg_nodes_verify="N"/> 
-    </procgroups>
     <servers>
         <!-- OK1 group -->
         <server name="exsinglesv">
-            <min>0</min>
+            <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/exsinglesv-dom2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/exsinglesv-dom1.log -r</sysopt>
+            <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
+        </server>
+
+        <!-- support servers, remote -->
+        <server name="exsingleckl">
+            <min>1</min>
+            <max>1</max>
+            <srvid>15</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckl-dom1.log -r</sysopt>
+            <procgrp_lp>OK1</procgrp_lp>
+            <cctag>OK1</cctag>
+        </server>
+        <server name="exsingleckr">
+            <min>1</min>
+            <max>1</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckr-dom1.log -r</sysopt>
             <procgrp_lp>OK1</procgrp_lp>
             <cctag>OK1</cctag>
         </server>
@@ -71,28 +89,45 @@
             <max>1</max>
             <srvid>50</srvid>
             <!-- server waits on boot -->
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -- -w10</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -- -w10</sysopt>
             <procgrp>OK1</procgrp>
         </server>
         <server name="atmi.sv103">
             <min>10</min>
             <max>10</max>
             <srvid>100</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r </sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r </sysopt>
             <procgrp>OK1</procgrp>
         </server>
         <server name="tpbridge">
             <max>1</max>
-            <srvid>2300</srvid>
-            <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
-            <appopt>-f -n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0</appopt>
+            <srvid>201</srvid>
+            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
         </server>
         <!-- ensure that we boot at startup -->
         <server name="exsinglesv">
             <min>1</min>
             <max>1</max>
             <srvid>3000</srvid>
-            <sysopt>-e ${TESTDIR}/exsinglesv2-dom2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/exsinglesv2-dom1.log -r</sysopt>
+            <procgrp_lp>OK2</procgrp_lp>
+            <cctag>OK2</cctag>
+        </server>
+        <!-- support servers -->
+        <server name="exsingleckl">
+            <min>1</min>
+            <max>1</max>
+            <srvid>3005</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckl2-dom1.log -r</sysopt>
+            <procgrp_lp>OK2</procgrp_lp>
+            <cctag>OK2</cctag>
+        </server>
+        <server name="exsingleckr">
+            <min>1</min>
+            <max>1</max>
+            <srvid>3010</srvid>
+            <sysopt>-e ${TESTDIR}/exsingleckr2-dom1.log -r</sysopt>
             <procgrp_lp>OK2</procgrp_lp>
             <cctag>OK2</cctag>
         </server>
@@ -100,14 +135,14 @@
             <min>5</min>
             <max>5</max>
             <srvid>4000</srvid>
-            <sysopt>-e ${TESTDIR}/atmi103_v2-dom2.log -r </sysopt>
+            <sysopt>-e ${TESTDIR}/atmi103_v2-dom1.log -r </sysopt>
             <procgrp>OK2</procgrp>
         </server>
         <server name="cpmsrv">
             <min>1</min>
             <max>1</max>
             <srvid>9999</srvid>
-            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom2.log -r -- -k3 -i1</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom1.log -r -- -k3 -i1</sysopt>
         </server>
     </servers>
     <clients>
@@ -115,10 +150,9 @@
             <exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/sleep-1.log"/>
             <exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_ULOG}/sleep-2.log"/>
         </client>
-        <client cmdline="atmiclt103 grp_verif 2" procgrp="OK2">
+        <client cmdline="sleep 999" procgrp="OK2">
             <exec tag="TAG3" autostart="Y" log="${NDRX_ULOG}/sleep-3.log"/>
         </client>
     </clients>
 </endurox>
-
 
