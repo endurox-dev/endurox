@@ -467,7 +467,6 @@ int tpsvrinit(int argc, char **argv)
     int ret=EXSUCCEED;
     signed char c;
     char *p;
-    int singlegrp_no;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
     
@@ -478,7 +477,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmsrv_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:")) != -1)
+    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:X:")) != -1)
     {
 
         if (optarg)
@@ -492,6 +491,15 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'X':
+                G_tmsrv_cfg.chkdisk_time=atoi(optarg);
+
+                if (G_tmsrv_cfg.chkdisk_time)
+                {
+                    NDRX_LOG(log_info, "Check disk logs set to %d sec",
+                                G_tmsrv_cfg.chkdisk_time);
+                }
+                break;
             case 'n':
                 G_tmsrv_cfg.vnodeid = atol(optarg);
                 NDRX_LOG(log_info, "Virtual Enduro/X Cluster Node ID set to %ld",
@@ -598,9 +606,6 @@ int tpsvrinit(int argc, char **argv)
     NDRX_LOG(log_debug, "Housekeep time for corrupted logs: [%d] (sec)",
                             G_tmsrv_cfg.housekeeptime);
 
-    NDRX_LOG(log_debug, "Singleton group: %d",
-                            G_tmsrv_cfg.singlegrp_no);
-    
     NDRX_LOG(log_debug, "About to initialize XA!");
     
     if (EXSUCCEED!=atmi_xa_init()) /* will open next... */
@@ -635,33 +640,6 @@ int tpsvrinit(int argc, char **argv)
     else
     {
         NDRX_LOG(log_info, "DB PING disabled (-P not set)");
-    }
-
-    if (NULL!=(p=getenv(CONF_NDRX_PROCGRP_NO)))
-    {
-        singlegrp_no = atoi(p);
-
-        /* validate the group */
-        if (0!=singlegrp_no)
-        {
-            unsigned short flags;
-            if (!ndrx_sg_is_valid(singlegrp_no))
-            {
-                NDRX_LOG(log_error, "Invalid %s env passed (value %d) -> not valid singleton process group",
-                        CONF_NDRX_PROCGRP_NO, singlegrp_no);
-                EXFAIL_OUT(ret);
-            }
-
-            flags=ndrx_sg_flags_get(singlegrp_no);
-
-            if (flags & NDRX_SG_IN_USE)
-            {
-                G_tmsrv_cfg.singlegrp_no=singlegrp_no;
-                NDRX_LOG(log_info, "Process is part of sinleton group %d",
-                            G_tmsrv_cfg.singlegrp_no);
-            }
-        }
-
     }
 
     /* we should open the XA  */

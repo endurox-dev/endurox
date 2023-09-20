@@ -243,7 +243,10 @@ extern void tmq_set_tmqueue(
     , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags)
     , int (*p_tmq_dum_add)(char *tmxid)
-    , int (*p_tmq_unlock_msg)(union tmq_upd_block *b));
+    , int (*p_tmq_unlock_msg)(union tmq_upd_block *b)
+    , void (**p_tmq_chkdisk_th)(void *ptr, int *p_finish_off)
+    , int (*p_tmq_msgid_exists)(char *msgid_str)
+    , void (*p_tpexit)(void));
     
 /* From storage driver: */
 extern size_t tmq_get_block_len(char *data);
@@ -261,6 +264,9 @@ extern int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname,
    
 extern int tmq_sort_queues(void);
 extern int tmq_lock_msg(char *msgid);
+
+extern long tmq_chkdisk_stopwatch_get_delta_sec(void);
+extern void tmq_chkdisk_stopwatch_reset(void);
 
 #ifdef	__cplusplus
 }

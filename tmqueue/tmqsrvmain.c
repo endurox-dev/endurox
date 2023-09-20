@@ -49,6 +49,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+expublic void (*G_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
 /*---------------------------Statics------------------------------------*/
 /* Auto generated system advertise table */
 expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
@@ -68,7 +69,8 @@ int main( int argc, char** argv )
      * So what let to do for others is just to start the transaction
      * join for other is just ignored.
      */
-    tmq_set_tmqueue(EXTRUE, tmq_setup_cmdheader_dum, tmq_dum_add, tmq_unlock_msg);
+    tmq_set_tmqueue(EXTRUE, tmq_setup_cmdheader_dum, tmq_dum_add, tmq_unlock_msg,
+        &G_tmq_chkdisk_th, tmq_msgid_exists, tpexit);
     /* do late join, to avoid deadlock betweem tmsrv registration and same tmsrv
      * tran compleation via notifications channel
      */
