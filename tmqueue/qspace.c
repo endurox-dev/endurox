@@ -121,6 +121,23 @@ expublic tmq_qconfig_t *G_qconf = NULL;
 exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
 
 /**
+ * Check that message ID exists in memory store
+ * @param msgid_str message id string
+ * @return  EXTRUE/EXFALSE
+ */
+expublic int tmq_msgid_exists(char *msgid_str)
+{
+    tmq_memmsg_t *ret;
+
+    MUTEX_LOCK_V(M_q_lock);   
+    EXHASH_FIND_STR( G_msgid_hash, msgid_str, ret);
+    MUTEX_UNLOCK_V(M_q_lock);
+    
+    return (NULL!=ret)?EXTRUE:EXFALSE;
+}
+
+
+/**
  * Process message blocks on disk read (after cold startup)
  * @param tmxid serialized trnasaction id
  * @param p_block

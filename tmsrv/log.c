@@ -118,6 +118,30 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
     
     return EXSUCCEED;
 }
+
+/**
+ * Check that memory based log entry exists.
+ * @param tmxid - serialized XID
+ * @return NULL or log entry
+ */
+expublic int tms_log_exists_entry(char *tmxid)
+{
+    atmi_xa_log_t *r = NULL;
+    
+    MUTEX_LOCK_V(M_tx_hash_lock);
+    EXHASH_FIND_STR( M_tx_hash, tmxid, r);
+    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    
+    if (NULL!=r)
+    {
+        return EXTRUE;
+    }
+    else
+    {
+        return EXFALSE;
+    }
+}
+
 /**
  * Get the log entry of the transaction
  * Now we should lock it for thread.

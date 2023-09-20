@@ -27,6 +27,10 @@
  *   To post the updates to proper TMQ, it should advertise QSPACE.[SERVER_ID]
  *   In case of Active-Active env, servers only on node shall be run.
  *   On the other node we could put in standby qspace+server_id on the same shared dir.
+ * ----------
+ *   TODO: needs to consider to splitting this into two:
+ *   1) generic XA switch communicating with Qspace via minicall
+ *   2) Qspace server which servers as a backend for XA commands.
  *
  * @file qdisk_xa.c
  */
@@ -111,6 +115,14 @@ exprivate  int (*M_p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname,
         short nodeid, short srvid, char *qspace, long flags);
 exprivate int (*M_p_tmq_dum_add)(char *tmxid);
 exprivate int (*M_p_tmq_unlock_msg)(union tmq_upd_block *b);
+
+exprivate int (*M_p_tmq_msgid_exists)(char *msgid_str);
+exprivate void (*M_p_tpexit)(void);
+
+/** stopwatch for triggering disk checks */
+exprivate ndrx_stopwatch_t M_chkdisk_stopwatch;
+exprivate MUTEX_LOCKDECL(M_chkdisk_stopwatch_lock);   /**< init lock      */
+
 /*---------------------------Prototypes---------------------------------*/
 
 expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -157,6 +169,7 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags);
 exprivate int xa_prepare_entry_tmq(char *tmxid, long flags);
 exprivate int xa_commit_entry_tmq(char *tmxid, long flags);
 exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_diag);
+exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -202,16 +215,28 @@ expublic void tmq_set_tmqueue(
         short nodeid, short srvid, char *qspace, long flags)
     , int (*p_tmq_dum_add)(char *tmxid)
     , int (*p_tmq_unlock_msg)(union tmq_upd_block *b)
+    , void (**p_tmq_chkdisk_th)(void *ptr, int *p_finish_off)
+    , int (*p_tmq_msgid_exists)(char *msgid_str)
+    , void (*p_tpexit)(void)
 )
 {
     M_is_tmqueue = setting;
     M_p_tmq_setup_cmdheader_dum = p_tmq_setup_cmdheader_dum;
     M_p_tmq_dum_add = p_tmq_dum_add;
     M_p_tmq_unlock_msg = p_tmq_unlock_msg;
+
+    M_p_tmq_msgid_exists=p_tmq_msgid_exists;
+    M_p_tpexit=p_tpexit;
     
     NDRX_LOG(log_debug, "qdisk_xa config: M_is_tmqueue=%d "
-        "M_p_tmq_setup_cmdheader_dum=%p M_p_tmq_dum_add=%p M_p_tmq_unlock_msg=%p",
-        M_is_tmqueue, M_p_tmq_setup_cmdheader_dum, M_p_tmq_dum_add, M_p_tmq_unlock_msg);
+        "M_p_tmq_setup_cmdheader_dum=%p M_p_tmq_dum_add=%p M_p_tmq_unlock_msg=%p "
+        "M_p_tmq_msgid_exists=%p M_p_tpexit=%p",
+        M_is_tmqueue, M_p_tmq_setup_cmdheader_dum, M_p_tmq_dum_add, M_p_tmq_unlock_msg,
+        M_p_tmq_msgid_exists, M_p_tpexit);
+
+    /* Return some functions from our scope back */
+    *p_tmq_chkdisk_th = tmq_chkdisk_th;
+
 }
 
 /**
@@ -1061,6 +1086,30 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
         case TMQ_CMD_COMMITRAN:
             ret = xa_commit_entry_tmq(tmxid, 0);
             break;
+        case TMQ_CMD_CHK_MEMLOG:
+        case TMQ_CMD_CHK_MEMLOG2:
+
+            ret = tmq_log_exists_entry(tmxid);
+
+            if (EXTRUE==ret)
+            {
+                ret=XA_OK;
+            }
+            else
+            {
+                ret=XAER_NOTA;
+            }
+
+            if (TMQ_CMD_CHK_MEMLOG2==cmd)
+            {
+                NDRX_LOG(log_error, "Expected transaction to exist in "
+                    "log [%s] but not found - restarting", tmxid);
+                userlog("Expected transaction to exist in "
+                    "log [%s] but not found - restarting", tmxid);
+                M_p_tpexit();
+            }
+            
+            break;
         default:
             NDRX_LOG(log_error, "Invalid command code [%c]", cmd);
             ret = XAER_INVAL;
@@ -1474,6 +1523,49 @@ out:
 }
 
 /**
+ * check the prepard transaction file status
+ * @param tmxid transaction id
+ * @return EXTRUE if exists, EXFAIL on error, EXFALSE(EXSUCCEED) no file exists
+ */
+exprivate int tmq_check_prepared_exists_on_disk(char *tmxid)
+{
+    char tmp[PATH_MAX+1];
+    int i;
+    int ret=EXSUCCEED;
+    DIR *dir=NULL;
+    struct dirent *entry;
+    int len;
+
+    dir = opendir(M_folder_prepared);
+
+    if (dir == NULL) {
+
+        NDRX_LOG(log_error, "opendir [%s] failed: %s", M_folder_prepared, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+    snprintf(tmp, sizeof(tmp), "%s-", tmxid);
+    len = strlen(tmp);
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (0==strncmp(entry->d_name, tmp, len))
+        {
+            ret=EXTRUE;
+            break;
+        }
+    }
+
+out:
+    if (NULL!=dir)
+    {
+        closedir(dir);
+    }
+
+    return ret;
+}
+
+/**
  * Commit the transaction.
  * Move messages from prepared folder to files names with msgid
  * @param tmxid serialized branch xid
@@ -1491,7 +1583,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
     qtran_log_t * p_tl = NULL;
     int ret = XA_OK;
     qtran_log_cmd_t *el, *elt;
-    
+
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - XA not open!");
@@ -1513,9 +1605,37 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
         }
         else
         {
-            NDRX_LOG(log_error, "Q transaction [%s] does not exists", tmxid);
-            ret=XAER_NOTA;
-            goto out;
+            NDRX_LOG(log_error, "Q transaction [%s] does not exists (in mem log)", tmxid);
+            
+            ret=tmq_check_prepared_exists_on_disk(tmxid);
+
+            if (EXTRUE==ret)
+            {
+                /* it really failure here. transaction must not exists
+                 * on the disk if log does not exists.
+                 * possible concurrent run.
+                 * Restart now...
+                 */
+               NDRX_LOG(log_error, "Integrity problem, transaction [%s] "
+                    "exists on disk, but not in mem-log - restarting", tmxid);
+                userlog("Integrity problem, transaction [%s] "
+                    "exists on disk, but not in mem-log - restarting", tmxid);
+
+                ret=XAER_RMFAIL;
+
+                M_p_tpexit();
+                goto out;
+            }
+            else if (EXFAIL==ret)
+            {
+                ret=XAER_RMFAIL;
+                goto out;
+            }
+            else
+            {
+                ret=XAER_NOTA;
+                goto out;
+            }
         }
     }
     
@@ -2611,6 +2731,44 @@ exprivate void dirent_free(struct dirent **namelist, int n)
     NDRX_FREE(namelist);
 }
 
+/**
+ * Verify that:
+ * - Prepared must exist in the log. If it does not exist,
+ *  then verify that file is removed from disk (some concurrent commit...)
+ *  if file still exist, then we got a problem and basically we shall
+ *  shutdown, as integrity is broken.
+ * @param tmxid transaction id
+ * @param fname file on disk
+ */
+expublic int tmq_check_prepared(char *tmxid, char *fname)
+{
+    int ret = EXSUCCEED;
+    char tmp[PATH_MAX+1];
+
+    /* Check entry by ndrx_xa_qminicall TMQ_CMD_CHK_MEMLOG */
+
+    if (XA_OK!=(ret=ndrx_xa_qminicall(tmxid, TMQ_CMD_CHK_MEMLOG)))
+    {
+        snprintf(tmp, sizeof(tmp), "%s/%s", M_folder_prepared, fname);
+
+        /* any concurrent task excluded could complete the log*/
+        if (ndrx_file_exists(tmp) &&
+            EXFALSE==ndrx_xa_qminicall(tmxid, TMQ_CMD_CHK_MEMLOG2))
+        {
+            NDRX_LOG(log_error, "Storage integrity problem. File [%s] exists, "
+                "but transaction not - XAER_RMFAIL (tmqueue server will reboot)!", 
+                    tmp);
+            userlog("Integrity problem. File [%s] exists, "
+                "but transaction not - XAER_RMFAIL (tmqueue server will reboot)!", 
+                    tmp);
+
+            EXFAIL_OUT(ret);
+        }
+    }
+out:
+    return ret;
+}
+
 /** continue with dirent free */
 #define RECOVER_CONTINUE \
             NDRX_FREE(G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]);\
@@ -2648,6 +2806,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
     int err;
     XID xtmp;
     char *p, *fname;
+    char fname_full[PATH_MAX+1];
     int current_unload_pos=0; /* where to unload the stuff.. */
     
     if (!G_atmi_tls->qdisk_is_open)
@@ -2726,6 +2885,8 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             RECOVER_CONTINUE;
         }
                 
+        NDRX_STRCPY_SAFE(fname_full, fname);
+
         /* terminate so that we have good name */
         *p = EXEOS;
         p++;
@@ -2735,7 +2896,17 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             NDRX_LOG(log_error, "Failed to deserialize xid: %s - skip", fname);
             RECOVER_CONTINUE;
         }
-        
+
+        /* ensure that have a log entry 
+         * probably will not work... as all stuff must go through
+         * the Qspace...?
+         */
+        if (EXSUCCEED!=tmq_check_prepared(fname, fname_full))
+        {
+            ret=XAER_RMFAIL;
+            goto out;
+        }
+
         /* TODO: if we will support several RMIDs in the same folder
          * then we need to read the file block and check the RMID
          * currently file blocks does not contain RMID. Thus that would
@@ -2757,7 +2928,6 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             
         /* Okey unload the xid finally */
         memcpy(&xid[current_unload_pos], &xtmp, sizeof(XID));
-        
         
         NDRX_LOG(log_debug, "Xid [%s] unload to position %d", fname, current_unload_pos);
         ret++;
@@ -2917,4 +3087,120 @@ expublic int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flag
 {
     return xa_complete_entry(&ndrxqdynsw, handle, retval, rmid, flags);
 }
+
+/**
+ * Reset message check stopwatch
+ */
+expublic void tmq_chkdisk_stopwatch_reset(void)
+{
+    MUTEX_LOCK_V(M_chkdisk_stopwatch_lock);
+    ndrx_stopwatch_reset(&M_chkdisk_stopwatch);
+    MUTEX_UNLOCK_V(M_chkdisk_stopwatch_lock);
+    
+}
+
+/**
+ * Get stopwatch delta in seconds
+ * @return current stopwatch value in seconds
+ */
+expublic long tmq_chkdisk_stopwatch_get_delta_sec(void)
+{
+    long ret;
+
+    MUTEX_LOCK_V(M_chkdisk_stopwatch_lock);
+    ret=ndrx_stopwatch_get_delta_sec(&M_chkdisk_stopwatch);
+    MUTEX_UNLOCK_V(M_chkdisk_stopwatch_lock);
+
+    return ret;
+}
+
+
+/**
+ * Verify that all committed messages on the disk, actually are present
+ * in the memory...
+ */
+exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off)
+{
+    static int volatile into_func = EXFALSE;
+    int *p_chkdisk_time = (int *)ptr;
+
+    char tmp[PATH_MAX+1];
+    int i;
+    int ret=EXSUCCEED;
+    DIR *dir=NULL;
+    struct dirent *entry;
+    int len;
+    char tranmask[256];
+
+    if (EXTRUE==into_func)
+    {
+        /* already in function, avoid duplicate run */
+        return;
+    }
+
+    /* Check that any enqueue was in pool, but last call
+     * finished and did reset
+     */
+    if ( tmq_chkdisk_stopwatch_get_delta_sec() <= *p_chkdisk_time)
+    {
+        /* no time from last run... */
+        return;
+    }
+
+    dir = opendir(M_folder_committed);
+
+    if (dir == NULL) {
+
+        NDRX_LOG(log_error, "opendir [%s] failed: %s", 
+            M_folder_committed, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        /* for performance reasons which check
+         * any file (even if several Q spaces works on the same
+         * directory). with -X flag it is mandatory that
+         * any Q space have it's own directory of work
+         * otherwise it will just regulary restart due to
+         * unknown messages found. Message IDs does not encode
+         * Q space name, thus cannot filter our file or not from the
+         * filename.
+         */
+        if (entry->d_name[0] == '.')
+        {
+            continue;
+        }
+
+        /* try to lookup in message hash */
+        if (!M_p_tmq_msgid_exists(entry->d_name))
+        {
+            snprintf(tmp, sizeof(tmp), "%s/%s", 
+                M_folder_committed, entry->d_name);
+
+            if (ndrx_file_exists(tmp))
+            {
+                NDRX_LOG(log_error, "ERROR: Unkown message file "
+                        "exists [%s] (duplicate processes or two Q "
+                        "spaces works in the same directory) - restarting...",
+                    tmp);
+                userlog("ERROR: Unkown message file exists"
+                        " [%s] (duplicate processes or two Q "
+                        "spaces works in the same directory) - restarting...",
+                    tmp);
+                M_p_tpexit();
+                break;
+            }
+        }
+    }
+
+out:
+    if (NULL!=dir)
+    {
+        closedir(dir);
+    }
+
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */

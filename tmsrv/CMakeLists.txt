@@ -64,8 +64,6 @@ add_library (objtms OBJECT
                     btid.c
                     statedrv.c)
 
-
-
 # shared libraries need PIC
 set_property(TARGET objtms PROPERTY POSITION_INDEPENDENT_CODE 1)
 
