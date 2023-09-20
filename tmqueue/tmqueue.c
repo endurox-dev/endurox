@@ -635,7 +635,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmqueue_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:Nn:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:Nn:X:")) != -1)
     {
         if (optarg)
         {
