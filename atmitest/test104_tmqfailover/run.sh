@@ -82,6 +82,29 @@ else
     export NDRX_LIBEXT="so"
 fi
 
+UNAME=`uname`
+
+#
+# Get the crash lib...
+#
+case $UNAME in
+
+  Darwin)
+    export NDRX_PLUGINS=libt86_lcf.dylib
+    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$TESTDIR/../test086_tmqlimit
+    ;;
+
+  AIX)
+    export NDRX_PLUGINS=libt86_lcf.so
+    export LIBPATH=$LIBPATH:$TESTDIR/../test086_tmqlimit
+    ;;
+
+  *)
+    export NDRX_PLUGINS=libt86_lcf.so
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TESTDIR/../test086_tmqlimit
+    ;;
+esac
+
 #
 # Common configuration between the domains
 #
@@ -267,6 +290,9 @@ do
     fi
 
     ((counter++))
+
+    # TODO: call crashlib for lock loss & parallel operations
+
 
 done
 
