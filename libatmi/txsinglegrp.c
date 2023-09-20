@@ -68,7 +68,6 @@
 expublic int ndrx_tpsgislocked(int grpno, long flags)
 {
     int ret;
-    int grpno_lookup;
     ndrx_sg_shm_t *p_shm, local;
     UBFH *p_ub=NULL;
 
@@ -79,16 +78,18 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
      */
     if (0==grpno)
     {
-        grpno_lookup = G_atmi_env.procgrp_no;
+        grpno = G_atmi_env.procgrp_no;
     }
 
-    p_shm = ndrx_sg_get(grpno_lookup);
+    NDRX_LOG(log_debug, "Checking if group %d is locked", grpno);
+
+    p_shm = ndrx_sg_get(grpno);
 
     if (NULL==p_shm)
     {
         /* set error */
         ndrx_TPset_error_fmt(TPEINVAL,  "Process group not found in shared memory %d",
-                grpno_lookup);
+                grpno);
         EXFAIL_OUT(ret);
     }
 
@@ -102,7 +103,7 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
             long tmp, rsplen;
             char svcnm[MAXTIDENT+1]={EXEOS};
             /* call server for results (local server) */
-            snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGLOC, tpgetnodeid(), grpno_lookup);
+            snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGLOC, tpgetnodeid(), grpno);
 
             p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
 
@@ -112,7 +113,7 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
                 EXFAIL_OUT(ret);
             }
 
-            tmp = grpno_lookup;
+            tmp = grpno;
             if (EXSUCCEED!=Bchg(p_ub, EX_COMMAND, 0, NDRX_SGCMD_VERIFY, 0L)
                 || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)&tmp, 0L))
             {
@@ -171,11 +172,11 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
         else
         {
             /* read directly from shm */
-            ret=ndrx_sg_is_locked_int(grpno_lookup, p_shm, NULL, 0);
+            ret=ndrx_sg_is_locked_int(grpno, p_shm, NULL, 0);
 
             if (EXFAIL==ret)
             {
-                NDRX_LOG(log_error, "Local group %d check failed", grpno_lookup);
+                NDRX_LOG(log_error, "Local group %d check failed", grpno);
             }
         }
     }
@@ -183,7 +184,7 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
     {
         /* not singleton group */
         ndrx_TPset_error_fmt(TPEPROTO,  "Process group %d is not singleton",
-                grpno_lookup);
+                grpno);
         EXFAIL_OUT(ret);
     }
 
@@ -192,7 +193,7 @@ out:
     {
         tpfree((char *)p_ub);
     }
-    NDRX_LOG(log_info, "lock check grpno=%d ret = %d", grpno_lookup, ret);
+    NDRX_LOG(log_info, "lock check grpno=%d ret = %d", grpno, ret);
     return ret;
 }
 
