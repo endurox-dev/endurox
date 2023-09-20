@@ -249,10 +249,8 @@ do
         xadmin mqlq
     fi
 
-
     # periodically freeze the active tmsrv (this will
     # simulate the case when )
-
     if [ "$(($counter % 6))" == "0" ]; then
 
         echo "Node freeze test...."

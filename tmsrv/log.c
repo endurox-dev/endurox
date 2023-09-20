@@ -118,6 +118,30 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
     
     return EXSUCCEED;
 }
+
+/**
+ * Check that memory based log entry exists.
+ * @param tmxid - serialized XID
+ * @return NULL or log entry
+ */
+expublic int tms_log_exists_entry(char *tmxid)
+{
+    atmi_xa_log_t *r = NULL;
+    
+    MUTEX_LOCK_V(M_tx_hash_lock);
+    EXHASH_FIND_STR( M_tx_hash, tmxid, r);
+    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    
+    if (NULL!=r)
+    {
+        return EXTRUE;
+    }
+    else
+    {
+        return EXFALSE;
+    }
+}
+
 /**
  * Get the log entry of the transaction
  * Now we should lock it for thread.
@@ -1315,13 +1339,13 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             /* if we are in singleton group mode, validate that we still 
              * own the lock
              */
-            if (G_tmsrv_cfg.singlegrp_no
-                && EXTRUE!=tpsgislocked(G_tmsrv_cfg.singlegrp_no, TPACK))
+            if (G_atmi_env.procgrp_no
+                && EXTRUE!=tpsgislocked(G_atmi_env.procgrp_no, TPACK))
             {
                 NDRX_LOG(log_error, "Singleton group %d lock lost - exit(-1)",
-                    G_tmsrv_cfg.singlegrp_no);
+                    G_atmi_env.procgrp_no);
                 userlog("Singleton group %d lock lost - exit(-1)",
-                    G_tmsrv_cfg.singlegrp_no);
+                    G_atmi_env.procgrp_no);
                 /* !!!! */
                 exit(EXFAIL);
             }

@@ -147,6 +147,28 @@ out:
     
 }
 
+
+/**
+ * Check that log entry exists (lock or not, does not matter)
+ * @return EXFAIL/EXFALSE/EXTRUE
+ */
+expublic int tmq_log_exists_entry(char *tmxid)
+{
+    int ret = EXFALSE;
+    qtran_log_t *r = NULL;
+
+    MUTEX_LOCK_V(M_qtran_hash_lock);
+    EXHASH_FIND_STR( M_qtran_hash, tmxid, r);
+    MUTEX_UNLOCK_V(M_qtran_hash_lock);
+
+    if (NULL!=r)
+    {
+        ret = EXTRUE;
+    }
+
+    return ret;
+}
+
 /**
  * Get the log entry of the transaction
  * Now we should lock it for thread.
