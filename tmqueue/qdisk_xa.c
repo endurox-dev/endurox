@@ -2751,8 +2751,6 @@ expublic int tmq_check_prepared(char *tmxid, char *fname)
     {
         snprintf(tmp, sizeof(tmp), "%s/%s", M_folder_prepared, fname);
 
-        NDRX_LOG(log_error, "YOPT!!! [%s]", tmp);
-        
         if (ndrx_file_exists(tmp))
         {
             /* Request the service to restart if log is missing (it will) */

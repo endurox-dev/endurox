@@ -79,7 +79,6 @@ typedef struct
     
     int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
     long vnodeid;            /**< Node id, command id used for failovers    */
-    int singlegrp_no;        /**< Actual singlelton group number            */
 
     int chkdisk_time;     /**< Check against duplicate process runs, sec     */
     
