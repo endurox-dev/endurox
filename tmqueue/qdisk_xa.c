@@ -2751,10 +2751,13 @@ expublic int tmq_check_prepared(char *tmxid, char *fname)
     {
         snprintf(tmp, sizeof(tmp), "%s/%s", M_folder_prepared, fname);
 
-        /* any concurrent task excluded could complete the log*/
-        if (ndrx_file_exists(tmp) &&
-            EXFALSE==ndrx_xa_qminicall(tmxid, TMQ_CMD_CHK_MEMLOG2))
+        NDRX_LOG(log_error, "YOPT!!! [%s]", tmp);
+        
+        if (ndrx_file_exists(tmp))
         {
+            /* Request the service to restart if log is missing (it will) */
+            ndrx_xa_qminicall(tmxid, TMQ_CMD_CHK_MEMLOG2);
+
             NDRX_LOG(log_error, "Storage integrity problem. File [%s] exists, "
                 "but transaction not - XAER_RMFAIL (tmqueue server will reboot)!", 
                     tmp);
@@ -2763,6 +2766,10 @@ expublic int tmq_check_prepared(char *tmxid, char *fname)
                     tmp);
 
             EXFAIL_OUT(ret);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "File [%s] does not exists any more", tmp);
         }
     }
 out:
@@ -2897,16 +2904,6 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             RECOVER_CONTINUE;
         }
 
-        /* ensure that have a log entry 
-         * probably will not work... as all stuff must go through
-         * the Qspace...?
-         */
-        if (EXSUCCEED!=tmq_check_prepared(fname, fname_full))
-        {
-            ret=XAER_RMFAIL;
-            goto out;
-        }
-
         /* TODO: if we will support several RMIDs in the same folder
          * then we need to read the file block and check the RMID
          * currently file blocks does not contain RMID. Thus that would
@@ -2928,6 +2925,16 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             
         /* Okey unload the xid finally */
         memcpy(&xid[current_unload_pos], &xtmp, sizeof(XID));
+
+        /* ensure that have a log entry 
+         * probably will not work... as all stuff must go through
+         * the Qspace...?
+         */
+        if (EXSUCCEED!=tmq_check_prepared(fname, fname_full))
+        {
+            ret=XAER_RMFAIL;
+            goto out;
+        }
         
         NDRX_LOG(log_debug, "Xid [%s] unload to position %d", fname, current_unload_pos);
         ret++;
