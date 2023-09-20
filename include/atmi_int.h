@@ -522,6 +522,7 @@ struct atmi_lib_env
     char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
     ndrx_env_priv_t integpriv;    /**< integration  private data                */
     char    rtgrp[NDRX_DDR_GRP_MAX+1]; /**< routing grup setting                */
+
     /**
      * Special flags needed for QA
      * @defgroup qa_handlers
@@ -532,6 +533,11 @@ struct atmi_lib_env
     int    test_tmsrv_commit_crash; /**< Simualte commit crash                 */
     void (*test_advertise_crash)(void); /**< XATMI server crash before reaching ndrxd */
     
+    /** Simulate what happens if lock provider losses source lock,
+     * also contains number of seconds to sleep after unlocked the master
+     * lock.
+     */
+    int    test_lockloss; 
     /**@}*/
 
     int procgrp_no;                 /**< Process group number for the curret bin */
