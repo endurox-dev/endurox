@@ -249,6 +249,15 @@ exprivate int ping_lock(void *ctx)
         ret=ev_err;
         goto out;
     }
+
+    /* if test point is set down here unlock main file */
+    if (G_atmi_env.test_lockloss > 0)
+    {
+        NDRX_LOG(log_error, "Simulating lock loss for file 1 (sleep after %d)",
+            G_atmi_env.test_lockloss);
+        ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_1);
+        sleep(G_atmi_env.test_lockloss);
+    }
     
 out:
     return ret;
