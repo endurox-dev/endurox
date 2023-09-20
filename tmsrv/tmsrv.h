@@ -80,6 +80,8 @@ typedef struct
     int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
     long vnodeid;            /**< Node id, command id used for failovers    */
     int singlegrp_no;        /**< Actual singlelton group number            */
+
+    int chkdisk_time;     /**< Check against duplicate process runs, sec     */
     
 } tmsrv_cfg_t;
 
@@ -105,6 +107,7 @@ extern tmsrv_cfg_t G_tmsrv_cfg;
 extern void atmi_xa_new_xid(XID *xid);
 
 extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
+extern int tms_log_exists_entry(char *tmxid);
 extern atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait, int *is_tout);
 extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
 extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 

@@ -70,8 +70,9 @@ expublic int G_bacground_req_shutdown = EXFALSE;    /* Is shutdown request? */
 exprivate MUTEX_LOCKDECL(M_wait_mutex);
 exprivate pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 
-
 exprivate MUTEX_LOCKDECL(M_background_lock); /* Background operations sync        */
+
+exprivate ndrx_stopwatch_t M_chkdisk_stopwatch;    /**< Check disk logs watch */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -205,6 +206,69 @@ expublic void background_wakeup(void)
 }
 
 /**
+ * Read the logs directory and verify
+ * that we have all the logs in the memory.
+ */
+expublic int background_chkdisk(void)
+{
+    char tmp[PATH_MAX+1];
+    int i;
+    int ret=EXSUCCEED;
+    DIR *dir=NULL;
+    struct dirent *entry;
+    int len;
+    char tranmask[256];
+
+    snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid, 
+            G_atmi_env.xa_rmid, G_server_conf.srv_id);
+    len = strlen(tranmask);
+
+    dir = opendir(G_tmsrv_cfg.tlog_dir);
+
+    if (dir == NULL) {
+
+        NDRX_LOG(log_error, "opendir [%s] failed: %s", 
+            G_tmsrv_cfg.tlog_dir, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (0==strncmp(entry->d_name, tranmask, len))
+        {
+            /* extract transaction id  */
+            NDRX_STRCPY_SAFE(tmp, entry->d_name+len);
+
+            if (!tms_log_exists_entry(tmp))
+            {
+                snprintf(tmp, sizeof(tmp), "%s/%s", G_tmsrv_cfg.tlog_dir, 
+                        entry->d_name);
+                if (ndrx_file_exists(tmp))
+                {
+                    NDRX_LOG(log_error, "ERROR: Unkown transaction log file "
+                            "exists [%s] (duplicate processes?) - restarting...", 
+                        tmp);
+                    userlog("ERROR: Unkown transaction log file exists"
+                            " [%s] (duplicate processes?) - restarting...", 
+                        tmp);
+                    tpexit();
+                    break;
+                }
+            }
+        }
+    }
+
+out:
+    if (NULL!=dir)
+    {
+        closedir(dir);
+    }
+
+    return ret;
+
+}
+
+/**
  * Continues transaction background loop..
  * Try to complete the transactions.
  * @return  SUCCEED/FAIL
@@ -218,6 +282,8 @@ expublic int background_loop(void)
     atmi_xa_log_t *p_tl;
     
     memset(&xai, 0, sizeof(xai));
+
+    ndrx_stopwatch_reset(&M_chkdisk_stopwatch);
     
     while(!G_bacground_req_shutdown)
     {
@@ -225,6 +291,18 @@ expublic int background_loop(void)
         if (G_tmsrv_cfg.ping_time > 0)
         {
             tm_ping_db(NULL, NULL);
+        }
+
+        /* Check against any logs that we are not aware of
+         * in that case process reloads (restart) and perform fresh start actions.
+         * so that we protect us from duplicate runs.
+         */
+        if (G_tmsrv_cfg.chkdisk_time > 0 && 
+                ndrx_stopwatch_get_delta_sec(&M_chkdisk_stopwatch) > G_tmsrv_cfg.chkdisk_time)
+        {
+            /* reset is initiated by the func (if required) */
+            background_chkdisk();
+            ndrx_stopwatch_reset(&M_chkdisk_stopwatch);
         }
         
         /* Check the list of transactions (iterate over...) 

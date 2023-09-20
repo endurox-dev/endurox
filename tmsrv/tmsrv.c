@@ -478,7 +478,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmsrv_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:")) != -1)
+    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:X:")) != -1)
     {
 
         if (optarg)
@@ -492,6 +492,15 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'X':
+                G_tmsrv_cfg.chkdisk_time=atoi(optarg);
+
+                if (G_tmsrv_cfg.chkdisk_time)
+                {
+                    NDRX_LOG(log_info, "Check disk logs set to %d sec",
+                                G_tmsrv_cfg.chkdisk_time);
+                }
+                break;
             case 'n':
                 G_tmsrv_cfg.vnodeid = atol(optarg);
                 NDRX_LOG(log_info, "Virtual Enduro/X Cluster Node ID set to %ld",

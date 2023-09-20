@@ -116,6 +116,8 @@ typedef struct
     int no_chkrun;           /**< If set to true, do not trigger queue run  */
 
     long vnodeid;            /**< Node id, command id used for failovers    */
+
+    int chkdisk_time;        /**< Time by which disk checking shall be excuted (enabled if > 0) */
     
 } tmqueue_cfg_t;
 
@@ -262,6 +264,7 @@ struct fwd_msg {
 
 /*---------------------------Globals------------------------------------*/
 extern tmqueue_cfg_t G_tmqueue_cfg;
+extern void (*G_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -301,6 +304,9 @@ extern tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long *d
 extern tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *diagnostic, 
         char *diagmsg, size_t diagmsgsz, int *int_diag);
 extern int tmq_unlock_msg_by_msgid(char *msgid, int chkrun);
+
+extern int tmq_msgid_exists(char *msgid_str);
+
 extern int tmq_load_msgs(void);
 extern fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def);
 extern int tmq_qconf_get_with_default_static(char *qname, tmq_qconfig_t *qconf_out);
