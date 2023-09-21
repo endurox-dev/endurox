@@ -533,11 +533,6 @@ struct atmi_lib_env
     int    test_tmsrv_commit_crash; /**< Simualte commit crash                 */
     void (*test_advertise_crash)(void); /**< XATMI server crash before reaching ndrxd */
     
-    /** Simulate what happens if lock provider losses source lock,
-     * also contains number of seconds to sleep after unlocked the master
-     * lock.
-     */
-    int    test_lockloss; 
     /**@}*/
 
     int procgrp_no;                 /**< Process group number for the curret bin */

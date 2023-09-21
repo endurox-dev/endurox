@@ -48,6 +48,10 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic int ndrx_G_systest_enabled = EXFALSE;    /**< Is system tests enbld ?*/
+
+/* Test hook points: */
+expublic int ndrx_G_systest_lockloss = 0;    /**<  Is lock loss test in progress ? */
+
 /*---------------------------Statics------------------------------------*/
 
 exprivate char *M_modebuf = NULL;       /**< Mode buffer of system tests */

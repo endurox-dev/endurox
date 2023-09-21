@@ -105,6 +105,7 @@ void SGLOC (TPSVCINFO *p_svc)
     }
 
     lock_status=(char)ret;
+    ret=EXSUCCEED;
 
     if (EXSUCCEED!=Bchg(p_ub, EX_LCKSTATUS, 0, &lock_status, 9))
     {

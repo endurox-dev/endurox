@@ -84,7 +84,14 @@ expublic void ndrx_exsinglesv_set_error_fmt(UBFH *p_ub, long error_code, const c
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
 
-    TP_LOG(log_error, "Setting error %ld: [%s]", error_code, msg);
+    if (TPMINVAL==error_code)
+    {
+        TP_LOG(log_debug, "approving request %ld: [%s]", error_code, msg);
+    }
+    else
+    {
+        TP_LOG(log_error, "Setting error %ld: [%s]", error_code, msg);
+    }
 
     Bchg(p_ub, EX_TPERRNO, 0, (char *)&error_code, 0L);
     Bchg(p_ub, EX_TPSTRERROR, 0, msg, 0L);

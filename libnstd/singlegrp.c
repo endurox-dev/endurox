@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 #include <sys_unix.h>
 #include <sys/time.h>
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -129,7 +130,12 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
 {
     unsigned char is_locked = atomic_load(&sg->is_locked);
     
-    if (is_locked)
+    /* QA testing: */
+    if (ndrx_G_systest_lockloss > 0)
+    {
+        NDRX_LOG(log_error, "SYSTEST: no-unlock (lockloss)");
+    }
+    else if (is_locked)
     {
         atomic_store(&sg->is_srv_booted, EXFALSE);
         atomic_store(&sg->is_clt_booted, EXFALSE);

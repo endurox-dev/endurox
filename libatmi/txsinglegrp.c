@@ -67,7 +67,7 @@
  */
 expublic int ndrx_tpsgislocked(int grpno, long flags)
 {
-    int ret;
+    int ret=EXSUCCEED;
     ndrx_sg_shm_t *p_shm, local;
     UBFH *p_ub=NULL;
 
@@ -154,7 +154,7 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
             }
             else
             {
-                short lock_stat;
+                char lock_stat;
 
                 ndrx_debug_dump_UBF(log_info, "reply buffer:", p_ub);
 

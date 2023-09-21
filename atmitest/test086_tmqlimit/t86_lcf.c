@@ -42,6 +42,7 @@
 #include <sys_unix.h>
 #include <test.fd.h>
 #include <lcf.h>
+#include <sys_test.h>
 
 #include "atmi_int.h"
 /*---------------------------Externs------------------------------------*/
@@ -141,9 +142,7 @@ exprivate int custom_advcrash(ndrx_lcf_command_t *cmd, long *p_flags)
  */
 exprivate int custom_lockloss(ndrx_lcf_command_t *cmd, long *p_flags)
 {
-
-    G_atmi_env.test_lockloss = atoi(cmd->arg_a);
-
+    ndrx_G_systest_lockloss = atoi(cmd->arg_a);
     /* seems having some issues with ASAN */
     sleep(1);
     return 0;

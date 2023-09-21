@@ -52,6 +52,7 @@
 #include <singlegrp.h>
 #include <lcfint.h>
 #include "exsinglesv.h"
+#include <sys_test.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -251,12 +252,12 @@ exprivate int ping_lock(void *ctx)
     }
 
     /* if test point is set down here unlock main file */
-    if (G_atmi_env.test_lockloss > 0)
+    if (ndrx_G_systest_lockloss > 0)
     {
-        NDRX_LOG(log_error, "Simulating lock loss for file 1 (sleep after %d)",
-            G_atmi_env.test_lockloss);
+        NDRX_LOG(log_error, "SYSTEST: Simulating lock loss for file 1 (sleep after %d)",
+            ndrx_G_systest_lockloss);
         ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_1);
-        sleep(G_atmi_env.test_lockloss);
+        sleep(ndrx_G_systest_lockloss);
     }
     
 out:
