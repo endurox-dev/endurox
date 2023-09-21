@@ -242,16 +242,16 @@ do
         #
         
         set_dom1;
-        xadmin lcf lockloss -A5 -a
+        xadmin lcf lockloss -A0 -a
         xadmin lcf
         xadmin start -s exsingleckr
 
         set_dom2;
-        xadmin lcf lockloss -A5 -a
+        xadmin lcf lockloss -A0 -a
         xadmin lcf
         xadmin start -s exsingleckr
         
-        sleep 15
+        sleep 30
         xadmin psc
         xadmin ppm
 
