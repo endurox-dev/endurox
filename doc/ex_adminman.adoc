@@ -1910,7 +1910,7 @@ available in Enduro/X.
 
 === Available features
 
-Enduro/X is cluster-aware and salable across several instances. Out of the box
+Enduro/X is cluster-aware and scalable across several instances. Out of the box
 Enduro/X provides the following cluster aware functions:
 
 - *tpbridge(8)* process ensures that XATMI services are shared across the connected
@@ -1922,7 +1922,7 @@ service usage.
 
 - Enduro/X smart cache can replicate cache records across the linked machines. With
 limitation, that if the link is lost between machines, the cache records might fork,
-as currently no mechanisms are provided to synchronize caches while the link is restored.
+as currently no mechanisms are provided to synchronise caches while the link is restored.
 
 - Process groups, which can be configured in singleton mode, thus it is possible
 to configure that set of processes in a cluster of several machines run only on one

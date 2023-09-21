@@ -292,11 +292,16 @@ echo ">>> Corrupted ping file -> all groups down"
 # the 0 content would fail the CRC32 test thus all groups of all nodes shall go down...
 dd if=/dev/zero of=$TESTDIR/lock_GRP2_2 bs=1 count=2048
 # let the exsinglesv to detect the situation
+
+set_dom1;
+xadmin stop -s exsingleckr
+set_dom2;
+xadmin stop -s exsingleckr
 sleep 5
 
 set_dom1;
 # avoid exsinglesv feed from services:
-xadmin stop -s exsingleckr
+xadmin ppm
 CNT=`xadmin ppm | grep tmqueue | grep 'runok runok' | wc | awk '{print $1}'`
 if [ "$CNT" -ne "0" ]; then
     echo "Expected tmqueue down (0) on dom1, but got $CNT"
@@ -304,7 +309,7 @@ if [ "$CNT" -ne "0" ]; then
 fi
 
 set_dom2;
-xadmin stop -s exsingleckr
+xadmin ppm
 CNT=`xadmin ppm | grep tmqueue | grep 'runok runok' | wc | awk '{print $1}'`
 if [ "$CNT" -ne "0" ]; then
     echo "Expected tmqueue down (0) on dom2, but got $CNT"
