@@ -55,13 +55,14 @@ export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
 export NDRX_SILENT=Y
+export NDRX_SGREFRESH=10
 
 ################################################################################
 # 6 gives:
 # lock expire if not refreshed in 6 seconds
 # lock take over by other node if file unlocked: 12 sec
 # exsinglesv periodic scans / locks 2 sec
-export NDRX_SGREFRESH=6
+export NDRX_SGREFRESH=30
 ################################################################################
 
 if [ "$(uname)" == "Darwin" ]; then
@@ -175,7 +176,7 @@ xadmin psc
 ################################################################################
 echo ">>> Loop enqueue + crash"
 ################################################################################
-NUM=60
+NUM=200
 
 counter=0
 while [ $counter -lt $NUM ]
@@ -192,23 +193,67 @@ do
     fi
 
     # plock loss simulation
-    if [ "$(($counter % 6))" == "0" ]; then
+    if [ "$(($counter % 20))" == "0" ]; then
 
         echo "Node freeze test...."
         # for active node, we will suspend tmsrv...
         # that shall cause failover...
 
         set_dom1;
+        DOM_NUM=2
 
-        if [[ "X`xadmin ppm | grep 'wait  runok'`" != "X" ]]; then
-            echo "domain 2 is active"
-            set_dom2;
-        else
-            echo "domain 1 is active"
-        fi
+        #if [[ "X`xadmin ppm | grep 'wait  runok'`" != "X" ]]; then
+        #    echo "domain 2 is active"
+        #    set_dom2;
+        #    xadmin stop -s exsingleckr
+        #else
+        #    echo "domain 1 is active"
+        #    xadmin stop -s exsingleckr
+        #    DOM_NUM=1
+        #fi
+
+        set_dom1;
+        xadmin lcf lockloss -A5 -a
+        xadmin lcf
+        xadmin stop -s exsingleckr
+        xadmin dsleep 15
+
+        set_dom2;
+        xadmin lcf lockloss -A5 -a
+        xadmin lcf
+        xadmin stop -s exsingleckr
+        xadmin dsleep 15
 
         echo "Let to failover tmsrvs... (sleep 15)"
         sleep 15
+        
+        # restore original domain...
+        #if [[ "$DOM_NUM" == "2" ]]; then
+        #    echo "domain 2 is active"
+        #    set_dom2;
+        #    xadmin start -s exsingleckr
+        #else
+        #    echo "domain 1 is active"
+        #    xadmin start -s exsingleckr
+        #fi
+
+        # let system to clear up
+        #xadmin lcf lockloss -A0 -a
+        #
+        
+        set_dom1;
+        xadmin lcf lockloss -A5 -a
+        xadmin lcf
+        xadmin start -s exsingleckr
+
+        set_dom2;
+        xadmin lcf lockloss -A5 -a
+        xadmin lcf
+        xadmin start -s exsingleckr
+        
+        sleep 15
+        xadmin psc
+        xadmin ppm
 
     fi
 

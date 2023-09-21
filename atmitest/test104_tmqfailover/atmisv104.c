@@ -63,7 +63,7 @@ void QFWD1 (TPSVCINFO *p_svc)
 
     if (EXSUCCEED!=tpenqueue("TESTSP", "Q2", &ctl, (char *)p_ub, 0, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: tpenqueue() to `QFWD2' failed %s diag: %d:%s",
+        NDRX_LOG(log_error, "tpenqueue() to `QFWD2' failed %s diag: %d:%s",
                         tpstrerror(tperrno), ctl.diagnostic, ctl.diagmsg);
                 EXFAIL_OUT(ret);
         EXFAIL_OUT(ret);
@@ -87,7 +87,8 @@ void QFWD2 (TPSVCINFO *p_svc)
 
     if (EXSUCCEED!=tpenqueue("TESTSP", "Q1", &ctl, (char *)p_ub, 0, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: tpenqueue() to `QFWD2' failed %s diag: %d:%s",
+        /* DO NOT TRIGGER TESTERROR, as for auto-q might happen the crash */
+        NDRX_LOG(log_error, "tpenqueue() to `QFWD2' failed %s diag: %d:%s",
                         tpstrerror(tperrno), ctl.diagnostic, ctl.diagmsg);
                 EXFAIL_OUT(ret);
         EXFAIL_OUT(ret);

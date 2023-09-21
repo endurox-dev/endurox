@@ -41,9 +41,9 @@ extern "C" {
 #include <ndrx_config.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API int ndrx_G_systest_enabled;
+extern NDRX_API int ndrx_G_systest_lockloss;
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_SYSTEST_ENBLD      (NDRX_UNLIKELY(ndrx_G_systest_enabled))
-
 
 /** 
  * Do not commit
