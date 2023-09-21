@@ -161,6 +161,35 @@ for the <server> tag in *ndrxconfig.xml(5)* used by tmqueue matches the
 failed nodes <srvid> value. At event of group failover to other Enduor/X node,
 if Node ID or Server ID does not match, existing stored messages would be ignored.
 
+[*-X* 'NR_OF_SECONDS']::
+Number of seconds for periodic verification of the committed message directory. Functionality
+is enabled in case if value is greater than *0*. Granularity of the flag
+is set by *-s* parameter. Processing of committed directory scans are done
+by notification thread (from the thread pool, setting *-u*).
+Verification process ensures that all messages on the disk are loaded into
+memory, which is normal operation of the *tmqueue*. If any unregistered
+message is found on the disk, that triggers *tmqueue* to restart (load all
+messages from the disk and continue operations. Note that restart would
+abort any active *tmqueue* transactions) and for restart period of time
+(including time needed for queue space message reading and loading from
+the disk to memory), the queue space would not be available.
+Normally setting is not required, however with singleton failover groups
+if in the cluster STONITH device is not used with the shared file system,
+for certain activate/locked node failure and node removal from the cluster scenarios
+(such as node suspend, timeout, other node takes the lock, and then
+failed node is resumed), for small period of time duplicate runs of the
+*tmqueue* processes might be possible. During this duplicate run there
+is small chance that message is moved to committed directory by the
+lock lost *tmqueue* instance and that new activate instance would not see
+that message. To protect against such cases, flag *-X* is recommended,
+however the value shall not trigger checks very often, as directory listing
+operations on large shared file systems might be slow and may take resources
+from the processing. The value such as *120* (once per two minutes) or
+greater would be recommended, however this depends on system criticality
+and requirements of the message availability, as if such chance of
+unregistered committed message happens, the *tmqueue* during the
+operations would not be able to dequeue or forwards the message.
+
 LIMITATIONS
 -----------
 When commit is performed for several enqueued messages within a global transaction,

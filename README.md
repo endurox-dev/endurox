@@ -653,7 +653,7 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 - Version 8.0.8 prepared on 19/09/2023 (stable) Bug #789, Feature #792, Bug #794, Support #795, Bug #796, Bug #149,
 Bug #798, Bug #738, Support #448, Bug #125, Bug #202, Bug #799, Bug #801, Support #802, Support #806
 
-- Version 8.0.10 prepared on 10/08/2023 (stable) Bug #810, Bug #811
+- Version 8.0.10 prepared on 10/08/2023 (stable) Bug #810, Bug #811, Bug #812
 
 # Build configurations
 

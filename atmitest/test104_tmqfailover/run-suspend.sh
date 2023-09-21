@@ -176,7 +176,7 @@ xadmin psc
 ################################################################################
 echo ">>> Loop enqueue + crash"
 ################################################################################
-NUM=200
+NUM=400
 
 counter=0
 while [ $counter -lt $NUM ]
@@ -193,7 +193,7 @@ do
     fi
 
     # plock loss simulation
-    if [ "$(($counter % 20))" == "0" ]; then
+    if [ "$(($counter % 40))" == "0" ]; then
 
         echo "Node freeze test...."
         # for active node, we will suspend tmsrv...
@@ -251,7 +251,10 @@ do
         xadmin lcf
         xadmin start -s exsingleckr
         
-        sleep 30
+        sleep 15
+        xadmin psc
+        xadmin ppm
+        set_dom1;
         xadmin psc
         xadmin ppm
 
@@ -283,10 +286,29 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-RET=$?
+################################################################################
+echo ">>> Corrupted ping file -> all groups down"
+################################################################################
+# the 0 content would fail the CRC32 test thus all groups of all nodes shall go down...
+dd if=/dev/zero of=$TESTDIR/lock_GRP2_2 bs=1 count=2048
+# let the exsinglesv to detect the situation
+sleep 5
 
-if [[ "X$RET" != "X0" ]]; then
-    go_out $RET
+set_dom1;
+# avoid exsinglesv feed from services:
+xadmin stop -s exsingleckr
+CNT=`xadmin ppm | grep tmqueue | grep 'runok runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "0" ]; then
+    echo "Expected tmqueue down (0) on dom1, but got $CNT"
+    go_out -1
+fi
+
+set_dom2;
+xadmin stop -s exsingleckr
+CNT=`xadmin ppm | grep tmqueue | grep 'runok runok' | wc | awk '{print $1}'`
+if [ "$CNT" -ne "0" ]; then
+    echo "Expected tmqueue down (0) on dom2, but got $CNT"
+    go_out -1
 fi
 
 # Catch is there is test error!!!

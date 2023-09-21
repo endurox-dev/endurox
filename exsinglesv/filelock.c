@@ -433,12 +433,9 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
                 /* array is sorted out of linked nodes */
                 break;
             }
-
-
         }
 
         /* if we are here, then we are locked fine */
-
         ret=EXTRUE;
     }
     else
@@ -503,9 +500,9 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
         /* Lock the entire file */
         lock.l_len = 0;
 
-        if (fcntl(fd, F_SETLK, &lock) == -1)
+        if (fcntl(fd, F_SETLKW, &lock) == -1)
         {
-            TP_LOG(log_error, "copy %d: Failed to write lock [%s] (fd=%d) file: %s", 
+            TP_LOG(log_error, "copy %d: Failed to write-lock [%s] (fd=%d) file: %s", 
                 copy, ndrx_G_exsinglesv_conf.lockfile_2, fd, strerror(errno));
             EXFAIL_OUT(ret);
         }
