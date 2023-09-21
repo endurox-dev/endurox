@@ -76,7 +76,7 @@ void SGREM (TPSVCINFO *p_svc)
     long lck_time;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
-    ndrx_debug_dump_UBF(log_info, "ndrx_exsingle_local buffer:", p_ub);
+    tplogprintubf(log_info, "SGREM request buffer:", p_ub);
 
     /* just get the group + lock status (our local one)
      * and return entry...
@@ -105,11 +105,9 @@ void SGREM (TPSVCINFO *p_svc)
     ndrx_exsinglesv_set_error_fmt(p_ub, TPMINVAL, "Succeed");
     
 out:
-    /* again read the command code and perform the action:
-     * if local -> get local, group, if locked call remote stuff
-     *  - including reading the disk...
-     * if get current local group, load the status to buffer and reply.
-     */
+
+    tplogprintubf(log_info, "SGREM reply buffer:", p_ub);
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,

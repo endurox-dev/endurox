@@ -232,20 +232,21 @@ the *ex_env(5)*, it must match with failed node's *NDRX_XA_RES_ID* setting.
 In case if parameters does not match, the log entries from shared storage are
 silently ignored.
 
-[*-X*]::
-If working in singleton process group, after the commit or abort decision
-logging, ensure that group still holds the lock, by doing additional 
-check on transaction log file existence and that file modification date is not in the future.
-If this flag is not set, then only time-based check is executed, that 
-singleton group lock provider has refreshed the group in time.
-The *-X* can be used as an extra precaution to detect real-time clock skew
-and that node thinks that it still holds the lock, 
-however, the other node has already taken over. In any case if lock is lost,
-*tmsrv* will exit immediately with logging the error message to log file
-and ULOG. See more ex_adminman(guides)(Enduro/X Administration Manual, Active-Active considerations) section.
-The downside for this flag is, that it uses a system call to check the file
-the presence (stat() function). To detect clock skew, additionally *FSYNC* 
-(instead of *FDATASYNC*) flag in *NDRX_XA_FLAGS* shall be used.
+[*-X* 'NR_OF_SECONDS']::
+Number of seconds for periodic verification of the transaction log files. Check verifies
+that there aren't any not yet loaded transaction logs on the disk. Normally
+that shall never happen. However if working with singleton groups
+and infrastructure is not using STONITH device, then at the failover
+and a coincidence of circumstances (such as failed machine
+suspend/resume cycle), at small period of time there is chance of the
+duplicate runs of the *tmsrv* processes, which for the currently active
+*tmsrv* might introduce unknown transaction log files. When setting *-X* is
+enabled (is greater than *0*), then with *-s* granularity, it scans the
+log file directory. If any unknown log is found, *tmsrv* terminates. Afterwards
+*ndrxd(8)* starts process back, it loads all transactions from the
+disk and continues with normal processing. Note that after the restart
+any activate transactions aborted. And for restart period of time,
+transaction manager is unavailable.
 
 XA RECOVER SETTINGS FOR ORACLE DB
 ---------------------------------

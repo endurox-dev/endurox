@@ -27,10 +27,12 @@ SYNOPSIS
     </appconfig>
     <procgroups>
         <defaults name="PROCGROUP_NAME_DEF" grpno="PROCGROUP_GRPNO_DEF" 
-            noorder="PROCGROUP_NOORDER_DEF" singleton="PROCGROUP_SINGLETON_DEF"  />
+            noorder="PROCGROUP_NOORDER_DEF" singleton="PROCGROUP_SINGLETON_DEF"  
+            sg_nodes="PROCGROUP_SINGLETON_NODES_DEF" sg_nodes_verify="PROCGROUP_SINGLETON_NODES_VERIFY_DEF"/>
         ...
         <procgroup name="PROCGROUP_NAME" grpno="PROCGROUP_GRPNO" 
-            noorder="PROCGROUP_NOORDER" singleton="PROCGROUP_SINGLETON" />
+            noorder="PROCGROUP_NOORDER" singleton="PROCGROUP_SINGLETON" 
+            sg_nodes="PROCGROUP_SINGLETON_NODES" sg_nodes_verify="PROCGROUP_SINGLETON_NODES_VERIFY"/>
         ...
     </procgroups>
     <defaults>
@@ -769,6 +771,35 @@ PARAMETERS
     normally on the local node.
     If value is not specified, then the value is taken from 'PROCGROUP_SINGLETON_DEF' value.
 
+'PROCGROUP_SINGLETON_NODES'::
+    Defines list of Enduro/X Node IDs which are part of the singleton group (i.e. nodes
+    which provides failover). List is encoded in Enduro/X standard configuration string format
+    (e.g. comma separated values). Current Enduro/X Node ID is added automatically to
+    this list. Nodes are used for lock checks, to perform extra verification
+    on other node statuses. It is recommended to correctly fill this list of
+    participant nodes, so that lock providers promptly can detect any animalities within the
+    Enduro/X cluster.
+    If value is not specified, then the value is taken from 'PROCGROUP_SINGLETON_NODES_DEF' value.
+
+'PROCGROUP_SINGLETON_NODES_VERIFY'::
+    If set to 'y'/'Y', enables checks for cluster consistency at critical
+    points of the distributed transaction processing. Might impact performance
+    for the distributed transactions. When enabled, full lock status is checked against
+    *@SGLOC* and *@SGREM* XATMI services
+    (provided by *exsingleckl(8)* and *exsingleckr(8)* respectivly), if available
+    over the *tpbridge(8)*. If network is not available,
+    checks are done against ping lock file, to detect that current node still holds
+    the valid lock (and no other nodes in cluster indicate that they hold the lock).
+    Setting applies to transaction managers configured in the given singleton process
+    group. Default setting is 'N' (or 'n'), which means that only local checks (against
+    shared memory lock status provided by *exsinglesv(8)* is performed).
+    For underlaying infrastructure shared file system clusters which does not
+    use STONITH device for fcntl() lock release/failover, this is
+    mandatory to be set to 'Y' with correctly filled 'sg_nodes' attribute.
+    Otherwise transaction consistency might be affected.
+    If value is not specified, then the value is taken from
+    'PROCGROUP_SINGLETON_NODES_VERIFY_DEF' value.
+
 VARIABLE SUBSTITUTION
 ---------------------
 Several parameters in the ndrxconfig.xml file are processed via substitution 
@@ -1150,7 +1181,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*,
-*exencrypt(8)*
+*exencrypt(8)* *exsinglesv(8)*
 
 COPYING
 -------
