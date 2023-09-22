@@ -41,6 +41,7 @@
 #include <sys_unix.h>
 #include <sys/time.h>
 #include <sys_test.h>
+#include <exatomic.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -128,7 +129,7 @@ expublic void ndrx_sg_reset(void)
  */
 expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
 {
-    unsigned char is_locked = atomic_load(&sg->is_locked);
+    unsigned char is_locked = NDRX_ATOMIC_LOAD(&sg->is_locked);
     
     /* QA testing: */
     if (ndrx_G_systest_lockloss > 0)
@@ -137,10 +138,10 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
     }
     else if (is_locked)
     {
-        atomic_store(&sg->is_srv_booted, EXFALSE);
-        atomic_store(&sg->is_clt_booted, EXFALSE);
-        atomic_store(&sg->is_locked, EXFALSE);
-        atomic_store(&sg->reason, reason);
+        NDRX_ATOMIC_STORE(&sg->is_srv_booted, EXFALSE);
+        NDRX_ATOMIC_STORE(&sg->is_clt_booted, EXFALSE);
+        NDRX_ATOMIC_STORE(&sg->is_locked, EXFALSE);
+        NDRX_ATOMIC_STORE(&sg->reason, reason);
     }
 }
 
@@ -221,8 +222,8 @@ exprivate int ndrx_sg_do_refresh_int(int singlegrp_no, ndrx_sg_shm_t * sg,
         }
     }
 
-    atomic_store(&sg_shm->last_refresh, new_last_refresh);
-    atomic_store(&sg_shm->sequence, new_sequence);
+    NDRX_ATOMIC_STORE(&sg_shm->last_refresh, new_last_refresh);
+    NDRX_ATOMIC_STORE(&sg_shm->sequence, new_sequence);
 
 out:
     return ret;
@@ -282,11 +283,11 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     ndrx_volatile_strcpy(sg_shm->lockprov_procname, procname, sizeof(sg.lockprov_procname));
     __sync_synchronize();
 
-    atomic_store(&sg_shm->lockprov_nodeid, nodeid);
-    atomic_store(&sg_shm->lockprov_pid, getpid());
-    atomic_store(&sg_shm->lockprov_srvid, srvid);
-    atomic_store(&sg_shm->is_locked, EXTRUE);
-    atomic_store(&sg_shm->reason, 0);
+    NDRX_ATOMIC_STORE(&sg_shm->lockprov_nodeid, nodeid);
+    NDRX_ATOMIC_STORE(&sg_shm->lockprov_pid, getpid());
+    NDRX_ATOMIC_STORE(&sg_shm->lockprov_srvid, srvid);
+    NDRX_ATOMIC_STORE(&sg_shm->is_locked, EXTRUE);
+    NDRX_ATOMIC_STORE(&sg_shm->reason, 0);
 
     NDRX_LOG(log_debug, "Group %d locked", singlegrp_no);
     userlog("Group %d locked", singlegrp_no);
@@ -304,22 +305,22 @@ out:
 expublic void ndrx_sg_load(ndrx_sg_shm_t * sg, ndrx_sg_shm_t * sg_shm)
 {
     /* atomic load multi-byte fields */
-    sg->is_locked = atomic_load(&sg_shm->is_locked);
-    sg->is_mmon = atomic_load(&sg_shm->is_mmon);
-    sg->is_srv_booted = atomic_load(&sg_shm->is_srv_booted);
-    sg->is_clt_booted = atomic_load(&sg_shm->is_clt_booted);
-    sg->flags = atomic_load(&sg_shm->flags);
-    sg->last_refresh = atomic_load(&sg_shm->last_refresh);
-    sg->sequence = atomic_load(&sg_shm->sequence);
-    sg->lockprov_nodeid = atomic_load(&sg_shm->lockprov_nodeid);
-    sg->lockprov_pid = atomic_load(&sg_shm->lockprov_pid);
-    sg->lockprov_srvid = atomic_load(&sg_shm->lockprov_srvid);
+    sg->is_locked = NDRX_ATOMIC_LOAD(&sg_shm->is_locked);
+    sg->is_mmon = NDRX_ATOMIC_LOAD(&sg_shm->is_mmon);
+    sg->is_srv_booted = NDRX_ATOMIC_LOAD(&sg_shm->is_srv_booted);
+    sg->is_clt_booted = NDRX_ATOMIC_LOAD(&sg_shm->is_clt_booted);
+    sg->flags = NDRX_ATOMIC_LOAD(&sg_shm->flags);
+    sg->last_refresh = NDRX_ATOMIC_LOAD(&sg_shm->last_refresh);
+    sg->sequence = NDRX_ATOMIC_LOAD(&sg_shm->sequence);
+    sg->lockprov_nodeid = NDRX_ATOMIC_LOAD(&sg_shm->lockprov_nodeid);
+    sg->lockprov_pid = NDRX_ATOMIC_LOAD(&sg_shm->lockprov_pid);
+    sg->lockprov_srvid = NDRX_ATOMIC_LOAD(&sg_shm->lockprov_srvid);
     ndrx_volatile_strcpy(sg->lockprov_procname, sg_shm->lockprov_procname,
         sizeof(sg->lockprov_procname));
 
     ndrx_volatile_memcy(sg->sg_nodes, sg_shm->sg_nodes, sizeof(sg->sg_nodes));
 
-    sg->reason = atomic_load(&sg_shm->reason);
+    sg->reason = NDRX_ATOMIC_LOAD(&sg_shm->reason);
 }
 
 /**
@@ -575,7 +576,7 @@ expublic void ndrx_sg_get_lock_snapshoot(int *lock_status_out, int *lock_status_
 expublic void ndrx_sg_bootflag_clt_set(int singlegrp_no)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-    atomic_store(&sg->is_clt_booted, EXTRUE);
+    NDRX_ATOMIC_STORE(&sg->is_clt_booted, EXTRUE);
 }
 
 /**
@@ -585,7 +586,7 @@ expublic void ndrx_sg_bootflag_clt_set(int singlegrp_no)
 expublic unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-    return atomic_load(&sg->is_clt_booted);
+    return NDRX_ATOMIC_LOAD(&sg->is_clt_booted);
 }
 
 /**
@@ -597,7 +598,7 @@ expublic unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no)
 expublic void ndrx_sg_bootflag_srv_set(int singlegrp_no)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-    atomic_store(&sg->is_srv_booted, EXTRUE);
+    NDRX_ATOMIC_STORE(&sg->is_srv_booted, EXTRUE);
 }
 
 /**
@@ -607,7 +608,7 @@ expublic void ndrx_sg_bootflag_srv_set(int singlegrp_no)
 expublic unsigned char ndrx_sg_bootflag_srv_get(int singlegrp_no)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-    return atomic_load(&sg->is_srv_booted);
+    return NDRX_ATOMIC_LOAD(&sg->is_srv_booted);
 }
 
 /**
@@ -638,7 +639,7 @@ out:
 expublic void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-    atomic_store(&sg->flags, flags);
+    NDRX_ATOMIC_STORE(&sg->flags, flags);
 }
 
 /**
@@ -648,7 +649,7 @@ expublic void ndrx_sg_flags_set(int singlegrp_no, unsigned short flags)
 expublic unsigned short ndrx_sg_flags_get(int singlegrp_no)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
-    return atomic_load(&sg->flags);
+    return NDRX_ATOMIC_LOAD(&sg->flags);
 }
 
 /**
