@@ -43,7 +43,6 @@ extern "C" {
 #include <limits.h>
 #include <sys/types.h>
 #include <nstopwatch.h>
-#include <stdatomic.h>
 #include <sys/types.h>
 #include <exatomic.h>
 
