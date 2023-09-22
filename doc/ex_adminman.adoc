@@ -1968,16 +1968,17 @@ The maximum number of processes in the process group is limited by the
 is *99999*.
 
 Singleton process groups do not guarantee 100% probability that processes
-will run only at the same time on one Enduro/X node instance. There could
+will run in one copy only at the same time on any Enduro/X node instance. There could
 be cases, such as VM suspends and resumes when the current node was removed from
 the shard FS cluster fcntl lock removes, the other node gets 
 the shared file system lock and the group is booted on the new node.
 Meanwhile, for some reason VM on the old node was resumed,
 the old node *exsinglesv*/*ndrxd*/*cpmsrv* will detect that group lock was
-lost and group processes will be killed, but this detection requires at least
-about *2* sanity cycles of *ndrxd*/*cpmsrv*, meaning that during that time
-singleton processes will run on two nodes at the same time. To ensure that
-this never happens, the *STONITH* device must be configured. For example *GFS2*
+lost and group processes will be killed, but this detection requires at
+run of full *exsinglesv* check cycle (and shared FS shall not freeze the access)
+and over that, additional *2* sanity cycles of *ndrxd*/*cpmsrv*.
+Meaning that during this time singleton processes will run on two nodes at the same time.
+To ensure that this never happens, the *STONITH* device must be configured. For example *GFS2*
 requires *STONITH* as part of the shared file system installation. For
 other shared file system clusters, please consult with the corresponding vendor.
 
@@ -1988,31 +1989,38 @@ the *exsinglesv* task is periodically refreshes the time-stamp in shared memory.
 If processes such as *ndrxd* and *cpmsrv* detect at sanity cycles that
 time-stamp refresh has not happened in the given time (*NDRX_SGREFRESH* from
 *ex_env(5)*), the group in shared memory is unlocked, and *ndrxd*/*cpmsrv*
-proceeds with killing all the group processes. For non-Linux based systems,
-for time-stamping *CLOCK_REALTIME* clock is used,
-which reports to the system real-time, inactivity or
-system freezes can be detected by this clock.
+proceeds with killing all the group processes.
 
-However, the *CLOCK_REALTIME* clock value can be manually
-changed by the system administrator, or it can be changed by NTP.
-In such cases, if clock changes are done with large gaps of time,
-larger than the time specified in *NDRX_SGREFRESH* parameter,
-then groups will be unlocked and failover will
-happen. To keep the server time accurate, it is recommended to perform NTP
-clock synchronization on a regular basis with small check/sync intervals
-(e.g. several times per hour - depending on the hardware and software environment).
-Additionally, NTP shall not set large fcntl
+- *exsinglesv* regularly verifies the lock status. Checks include
+either requests to other nodes via *tpbridge(8)*, if *exsingleckl(8)* and
+and *exsingleckr(8)* services are configured. If these services are not
+used, then checks are done against ping file (to detect the highest lock
+counter of all involved nodes). If locked node detects that other nodes
+has higher counter value, then given nodes performs unlock and after that
+*ndrxd* and *cpmsrv* steps in to kill the group processes.
 
-For Linux systems, *CLOCK_BOOTTIME* is used, which is not affected by
-adjustment problem.
+- For distributed transaction *tmsrv(8)* after commit decsion logged,
+verifies that it is still the locked node. By default it only verifies
+local node singleton group lock status. However, if *STONITH* device
+is not used for the cluster (which guarantees that fcntl() on new
+node does not get the lock unless *STONITH* of broken node has happened),
+settings *sg_nodes_verify* must set be to *Y*, so that lock status
+is checked cluster wide. As parallel runs of *tmsrv* may affect
+the global transaction consistency.
 
-- *exsinglesv* regularly verifies the lock status on shard FS and additionally
-employs the second "ping" lock file, which regularly is locked and
-unlocked. If fore some reason there is an issue with the lock check or "ping" lock
-sequences, the singleton process group is unlocked and *ndrxd*/*cpmsrv* will
-proceed with kill group binaries.
+- If *STONITH* device is not used in the cluster, *tmsrv* and *tmqueue*
+processes have new CLI setting *-X<seconds>*. This setting is used
+to detect parallel run of the *tmsrv* and *tmqueue* processes, to
+rocover from cases when for newly activated node, due to parallel
+run, new transactions or enqueued messages are not detected. If
+flag is enabled, processes periodically scan the data folders,
+and if such condition is found, processes reboot to perform
+full data read from the disks. By default setting is not applied,
+but if *STONITH* is not used, setting shall be enabled. Read
+more about them (full meaning and recommended values)
+in corresponding process man pages.
 
-Additionally, when operating with process groups, it is not recommended to
+WARNING: when operating with process groups, it is not recommended to
 store the *ndrxd*, *cpmsrv* and *exsinglesv* process logs on the shared
 file system, as in case of shared file system failure, the processes or may
 get killed, leading to fact that singleton groups will not be unlocked locally,
@@ -2058,6 +2066,12 @@ without a delay. Orphans may happen if Enduro/X cluster node crashes during the
 prepare phase of the distributed transaction, as at that time for performance reasons,
 guarantee transaction log file storage is not used.
 
+It is recommended to put another *tmrecoversv* instance at the end of the application
+configuration on each node, which runs periodically. That will allow to housekeep
+any invalid prepared transactions, which in case of missing *STONITH* device, might
+cause lock-loosed node for small period of time to generated such transactions
+for whom activate node is unaware.
+
 *tmsrv(8)* shall be configured to use *FSYNC* (or *FDATASYNC*) and *DSYNC* flags
 in the *NDRX_XA_FLAGS* env, so that the commit decision is fully logged to the storage
 device. In case if planning to use *tmsrv(8)* *-X* flag for clock skew detection
@@ -2065,19 +2079,6 @@ against the log files, then *FSYNC* and *DSYNC* shall be used, instead of the *F
 and *O_DSYNC*, as *FDATASYNC* does not flush log file modification dates to the
 file system. However, *FSYNC* and *-X* parameter may have a performance impact on the
 system transaction throughput.
-
-To guarantee that transaction consistency even if *STONITH* is not configured, *tmsrv(8)*
-has following features implemented:
-
-- *tmsrv(8)* after the commit decision logged, *tmsrv* check's its singleton group
-lock status (which includes the refresh time-stamp verfication). If the group was
-not refreshed in the given time *tmsrv(8)* terminates with the failure, as there
-might be other node which have picked up the transaction for completion.
-
-- *tmsrv(8)* has implemented additional flag *-X* which verifies the presence of the
-transaciton log file (it must exist) and file modification date. If log file
-does not exist, or modification date is in future (i.e. )
-
 
 ==== tmqueue limitations
 
