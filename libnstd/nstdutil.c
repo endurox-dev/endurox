@@ -2588,6 +2588,7 @@ expublic int ndrx_rand(void)
 expublic int ndrx_realtime_get(struct timespec *tp)
 {
     int ret = EXSUCCEED;
+#if 0
     clockid_t clk_id=CLOCK_REALTIME;
 
 #ifdef EX_OS_LINUX
@@ -2595,6 +2596,8 @@ expublic int ndrx_realtime_get(struct timespec *tp)
 #endif
 
     if (EXSUCCEED!=clock_gettime(clk_id, tp))
+#endif
+    if (EXSUCCEED!=clock_gettime(CLOCK_MONOTONIC, tp))
     {
         ret = EXFAIL;
     }
