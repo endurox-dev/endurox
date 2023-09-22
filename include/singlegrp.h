@@ -45,6 +45,7 @@ extern "C" {
 #include <nstopwatch.h>
 #include <stdatomic.h>
 #include <sys/types.h>
+#include <exatomic.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -82,19 +83,19 @@ extern "C" {
  */
 typedef struct
 {
-    _Atomic unsigned char volatile is_locked;       /**< Is group locked? */
-    _Atomic unsigned char volatile is_mmon;         /**< Is maintenace mode ON? */
-    _Atomic unsigned char volatile is_srv_booted;   /**< Is servers booted, when group locked? */
-    _Atomic unsigned char volatile is_clt_booted;   /**< Is clients boooted, when group locked? */
-    _Atomic unsigned short volatile flags;          /**< Flags for given entry */
-    _Atomic time_t last_refresh;                    /**< Last lock refresh time */
-    _Atomic long sequence;                          /**< Current ping lock seuqence */
-    _Atomic int volatile lockprov_srvid;            /**< Lock provder server id */  
-    _Atomic short volatile lockprov_nodeid;         /**< Lock provider E/X cluster node id */
-    _Atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
+    ndrx_atomic unsigned char volatile is_locked;       /**< Is group locked? */
+    ndrx_atomic unsigned char volatile is_mmon;         /**< Is maintenace mode ON? */
+    ndrx_atomic unsigned char volatile is_srv_booted;   /**< Is servers booted, when group locked? */
+    ndrx_atomic unsigned char volatile is_clt_booted;   /**< Is clients boooted, when group locked? */
+    ndrx_atomic unsigned short volatile flags;          /**< Flags for given entry */
+    ndrx_atomic time_t last_refresh;                    /**< Last lock refresh time */
+    ndrx_atomic long sequence;                          /**< Current ping lock seuqence */
+    ndrx_atomic int volatile lockprov_srvid;            /**< Lock provder server id */  
+    ndrx_atomic short volatile lockprov_nodeid;         /**< Lock provider E/X cluster node id */
+    ndrx_atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
     char volatile lockprov_procname[NDRX_SG_PROCNAMEMAX+1];  /**< Lock provider name */
     char volatile sg_nodes[CONF_NDRX_NODEID_COUNT]; /**< Group nodes (full list us + them) */
-    _Atomic int reason;                             /**< Reason code for unlock */     
+    ndrx_atomic int reason;                             /**< Reason code for unlock */     
 
 } ndrx_sg_shm_t;
 
