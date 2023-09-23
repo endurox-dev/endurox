@@ -69,16 +69,16 @@
         </server>
         <!-- support servers, remote -->
         <server name="exsingleckl">
-            <min>1</min>
-            <max>1</max>
+            <min>3</min>
+            <max>3</max>
             <srvid>15</srvid>
             <sysopt>-e ${TESTDIR}/exsingleckl-dom2.log -r</sysopt>
             <procgrp_lp>GRP1</procgrp_lp>
             <cctag>GRP1</cctag>
         </server>
         <server name="exsingleckr">
-            <min>1</min>
-            <max>1</max>
+            <min>3</min>
+            <max>3</max>
             <srvid>20</srvid>
             <sysopt>-e ${TESTDIR}/exsingleckr-dom2.log -r</sysopt>
             <procgrp_lp>GRP1</procgrp_lp>

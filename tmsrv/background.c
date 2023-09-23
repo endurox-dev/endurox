@@ -227,12 +227,16 @@ expublic int background_read_log(void)
                {
                    NDRX_LOG(log_error, "Failed to resume transaction: [%s]", 
                        fnamefull);
-                   NDRX_FREE(namelist[n]); /* mem leak fixes */
                    /* ret=EXFAIL; ??? */
 
                     /* Do not pick up this anymore... */
-                    if (EXSUCCEED!=ndrx_tms_file_registry_add(namelist[n]->d_name+len, 
-                            NDRX_TMS_FILE_STATE_IGNORE))
+
+                    ret=ndrx_tms_file_registry_add(namelist[n]->d_name+len,
+                            NDRX_TMS_FILE_STATE_IGNORE);
+
+                    NDRX_FREE(namelist[n]); /* mem leak fixes */
+
+                    if (EXSUCCEED!=ret)
                     {
                         NDRX_LOG(log_error, "Failed to add tmxid: [%s] to registry (malloc err?)", 
                             namelist[n]->d_name+len);
