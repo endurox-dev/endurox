@@ -168,6 +168,10 @@ validate_invalid_config "ndrxconfig-dom1-defaults-dup_no.xml" "NDRXD_EINVAL" "is
 validate_invalid_config "ndrxconfig-dom1-defaults-dup_name.xml" "NDRXD_EINVAL" "is duplicate in <procgroup> section"
 validate_invalid_config "ndrxconfig-dom1-bad-no.xml" "NDRXD_EINVAL" "Invalid \`grpno'"
 validate_invalid_config "ndrxconfig-dom1-bad-name.xml" "NDRXD_EINVAL" "invalid characters used in"
+
+validate_invalid_config "ndrxconfig-dom1-no-def-procgrp.xml" "NDRXD_ENOENT" "Failed to resolve procgrp"
+validate_invalid_config "ndrxconfig-dom1-no-def-procgrp_lp.xml" "NDRXD_ENOENT" "Failed to resolve procgrp_lp"
+
 # in this case config is OK, config was loaded
 validate_invalid_config "ndrxconfig-dom1-ok-name.xml" "NDRXD_ECFGLDED" "NDRXD_ECFGLDED"
 

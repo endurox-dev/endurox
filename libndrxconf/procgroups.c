@@ -101,9 +101,9 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
     ndrx_procgroup_t *p_grp=NULL;
     ndrx_procgroup_t local;
     char *p;
+    char tmp[PATH_MAX+1];
     
     /* service shall not be defined */
-    
     if (is_defaults)
     {
         p_grp=p_defaults;
@@ -173,8 +173,11 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
         else if (0==strcmp((char *)attr->name, "sg_nodes"))
         {
             ndrx_stdcfgstr_t *parsed=NULL, *el;
+            /* allow envs to nodes*/
+            NDRX_QENV_SUBST(tmp, p);
+
             /* process singleton group node_ids */
-            if (EXSUCCEED!=ndrx_stdcfgstr_parse(p, &parsed))
+            if (EXSUCCEED!=ndrx_stdcfgstr_parse(tmp, &parsed))
             {
                 snprintf(err->error_msg, sizeof(err->error_msg), 
                     "(%s) Failed to parse `sg_nodes' %s in <procgroup> section near line %d", 
@@ -379,6 +382,9 @@ expublic int ndrx_ndrxconf_procgroups_parse(ndrx_procgroups_t **config,
 
     memset(&default_opt, 0, sizeof(default_opt));
 
+    /* Check nodes by default */
+    default_opt.flags|=NDRX_SG_VERIFY;
+
     /* set defaults:*/
 
     /* our node is always in the group...*/
@@ -434,7 +440,7 @@ expublic ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolvenm(ndrx_procgroups_t 
 {
     ndrx_procgroup_t *ret;
 
-    if (NULL==name || EXEOS==name[0])
+    if (NULL==name || EXEOS==name[0] || NULL==handle)
     {
         return NULL;
     }
@@ -480,22 +486,22 @@ out:
  */
 expublic ndrx_procgroup_t* ndrx_ndrxconf_procgroups_resolveno(ndrx_procgroups_t *handle, int procgrpno)
 {
-    ndrx_procgroup_t *ret;
-    if (procgrpno<1 || procgrpno>ndrx_G_libnstd_cfg.pgmax)
+    ndrx_procgroup_t *ret=NULL;
+
+    if (procgrpno<1 || procgrpno>ndrx_G_libnstd_cfg.pgmax|| NULL==handle)
     {
-        return NULL;
+        goto out;
     }
 
     ret=&handle->groups_by_no[procgrpno-1];
 
-    if (ret->flags & NDRX_SG_IN_USE)
+    if (!(ret->flags & NDRX_SG_IN_USE))
     {
-        return ret;
+        ret=NULL;
     }
-    else
-    {
-        return NULL;
-    }
+
+out:
+    return ret;
 }
 
 /**

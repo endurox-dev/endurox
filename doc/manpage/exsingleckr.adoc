@@ -1,0 +1,9 @@
+EXSINGLECKR(8)
+==============
+:doctype: manpage
+
+NAME
+----
+exsingleckr - Support server for allowing remote nodes to inquiry local node lock status
+
+include::exsinglesv-common.adoc[]
