@@ -6,9 +6,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This is a special XATMI server used for providing lock services
-for singleton process groups. Several copies of the process can be started,
-one for each singleton process group.
+*exsinglesv* is a special XATMI server used for providing lock services
+for singleton process groups. For each singleton group, one copy of the server
+is required to be configured.
 
 The lock server supports file system-based fnctl() locking. When process
 acquires such lock, it reports the status to the shared memory, so that
@@ -62,7 +62,8 @@ any resources it locked and exits with failure.
 *exsingleckl* provides cluster consistency check service used by *tmsrv(8)*,
 in case if in *ndrxconfig.xml(5)* tag *<procgroups>/<procgroup>* attribute
 *sg_nodes_verify* is set to *Y*. For load balancing service can be started in
-multiple copies.
+multiple copies. Separate process instances are required for each of the
+singleton groups. 
 
 Advertised service name is "@SGLOC-<node_id>-<grpno>". When request is received
 by the service, it check the if local node process group is locked, and if
@@ -73,16 +74,17 @@ The current group must have the highest counter number for the whole cluster.
 If that is not met, the group is unlocked and service reports group not locked.
 
 *exsingleckr* provides remote check services for the locks. Requests are
-received from *exsingleckl* and *exsinglesv* servers
-working on other cluster nodes (i.e. invocation is done via *tpbridge(8)* cluster link).
-Remote check services read local
-shared memory and provides singleton process group status back to caller.
+received from *exsinglesv* and *exsingleckl* servers.
+Remote check service read local shared memory singleton process group table
+and provides group status back to caller.
 Service name "@SGREM-<node_id>-<grpno>" is advertised. Several instances of
-the server can be started. This service is optional, however it is recommended
-to be configured, regardless of the *sg_nodes_verify* attribute value.
+the server can be started. This service is optional, however for performance reasons,
+it is recommended to configure *exsinglegrp*, regardless of the *sg_nodes_verify* attribute value.
+ Separate process instances are required for each of the
+singleton groups. 
 
 Binaries *exsinglesv*, *exsingleckl* and *exsingleckr* uses the same
-configuration section and settings. For these XATMI servers, tag
+configuration section. For these XATMI servers, tag
 *<procgrp_lp>* must be set to group name to which they provide
 locking services.
 
@@ -154,19 +156,89 @@ Failure
 EXAMPLE
 -------
 
+This section demonstrates simple configuration for one group. Note that
+such configuration shall match an all involved cluster nodes which
+serves the given singleton group.
 
-*ndrxconfig.xml*
+*ndrxconfig.xml* demonstrates configuration for the group named "GRPV":
 
 ---------------------------------------------------------------------
 <?xml version="1.0" ?>
 <endurox>
     <procgroups>
-        <procgroup grpno="1" name="GRP1" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
-        <procgroup grpno="5" name="GRP_V" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+        <procgroup grpno="5" name="GRPV" singleton="Y" sg_nodes="1,4" sg_nodes_verify="Y"/>
     </procgroups>
     <servers>
+
+        <!-- lock provider for group 5 -->
+        <server name="exsinglesv">
+            <!-- only one lock provider for the group! -->
+            <min>1</min>
+            <max>1</max>
+            <srvid>10</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exsinglesv.log -r</sysopt>
+            <procgrp_lp>GRPV</procgrp_lp>
+            <cctag>GRPVCCT</cctag>
+        </server>
+
+        <!-- support servers, local -->
+        <server name="exsingleckl">
+            <min>3</min>
+            <max>3</max>
+            <srvid>15</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exsingleckl.log -r</sysopt>
+            <procgrp_lp>GRPV</procgrp_lp>
+            <cctag>GRPVCCT</cctag>
+        </server>
+
+        <!-- support servers, remote -->
+        <server name="exsingleckr">
+            <min>3</min>
+            <max>3</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exsingleckr.log -r</sysopt>
+            <procgrp_lp>GRPV</procgrp_lp>
+            <cctag>GRPVCCT</cctag>
+        </server>
+        
+        <!-- banksv1 is configured as singleton in the cluster -->
+        <server name="banksv1">
+            <min>1</min>
+            <max>1</max>
+            <srvid>120</srvid>
+            <sysopt>-e ${NDRX_ULOG}/banksv1.log -r</sysopt>
+            <procgrp>GRPV</procgrp>
+        </server>
+        
+        ...
+
+        <!-- for demo purposes, we show configuration for client daemon processes too -->
+        <server name="cpmsrv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>9999</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv.log -r -- -k3 -i1</sysopt>
+        </server>
+        
     </servers>
+    <clients>
+        <!-- bankcl is also singleton in the cluster -->
+        <client cmdline="bankcl" procgrp="GRPV">
+            <exec tag="BANK1" subsect="1" autostart="Y" log="${NDRX_ULOG}/bankcl-1.log"/>
+        </client>
+        ...
+    </clients>
 </endurox>
+---------------------------------------------------------------------
+
+*app.ini*
+
+---------------------------------------------------------------------
+...
+[@exsinglesv/GRPVCCT]
+lockfile_1=/path/to/shared/file/system/GRPV_lock_1
+lockfile_2=/path/to/shared/file/system/GRPV_lock_2
+...
 ---------------------------------------------------------------------
 
 BUGS
