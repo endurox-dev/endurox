@@ -42,6 +42,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
 #include <exthpool.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */
@@ -92,6 +93,17 @@ struct thread_server
 };
 /* note we must malloc this struct too. */
 typedef struct thread_server thread_server_t;
+
+/**
+ * hash register of unknown
+ * transaction files.
+ */
+typedef struct
+{
+    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
+    int state;
+    EX_hash_handle hh;              /**< hash handle                    */
+} ndrx_tms_file_registry_t;
 
 /*---------------------------Prototypes---------------------------------*/
 /* init */
@@ -169,6 +181,11 @@ extern void background_wakeup(void);
 extern int background_process_init(void);
 extern void background_lock(void);
 extern void background_unlock(void);
+
+extern ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(const char *tmxid);
+extern int ndrx_tms_file_registry_add(const char *tmxid, int state);
+extern int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t *ent);
+extern void ndrx_tms_file_registry_free(void);
 
 /* Admin functions */
 extern int tm_tpprinttrans(UBFH *p_ub, int cd);

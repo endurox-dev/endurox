@@ -92,7 +92,6 @@
 /*---------------------------Globals------------------------------------*/
 exprivate atmi_xa_log_t *M_tx_hash = NULL; 
 exprivate MUTEX_LOCKDECL(M_tx_hash_lock); /* Operations with hash list            */
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *fmt, ...);
@@ -896,7 +895,7 @@ out:
             {
                 tms_close_logfile(*pp_tl);
             }
-            
+
             tms_remove_logfree(*pp_tl, EXFALSE);
             *pp_tl = NULL;
         }

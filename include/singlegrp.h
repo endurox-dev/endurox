@@ -82,16 +82,16 @@ extern "C" {
  */
 typedef struct
 {
-    ndrx_atomic unsigned char volatile is_locked;       /**< Is group locked? */
-    ndrx_atomic unsigned char volatile is_mmon;         /**< Is maintenace mode ON? */
-    ndrx_atomic unsigned char volatile is_srv_booted;   /**< Is servers booted, when group locked? */
-    ndrx_atomic unsigned char volatile is_clt_booted;   /**< Is clients boooted, when group locked? */
-    ndrx_atomic unsigned short volatile flags;          /**< Flags for given entry */
+    ndrx_atomic unsigned char is_locked;       /**< Is group locked? */
+    ndrx_atomic unsigned char is_mmon;         /**< Is maintenace mode ON? */
+    ndrx_atomic unsigned char is_srv_booted;   /**< Is servers booted, when group locked? */
+    ndrx_atomic unsigned char is_clt_booted;   /**< Is clients boooted, when group locked? */
+    ndrx_atomic unsigned short flags;          /**< Flags for given entry */
     ndrx_atomic time_t last_refresh;                    /**< Last lock refresh time */
     ndrx_atomic long sequence;                          /**< Current ping lock seuqence */
-    ndrx_atomic int volatile lockprov_srvid;            /**< Lock provder server id */  
-    ndrx_atomic short volatile lockprov_nodeid;         /**< Lock provider E/X cluster node id */
-    ndrx_atomic pid_t volatile lockprov_pid;            /**< Lock provider pid */
+    ndrx_atomic int lockprov_srvid;            /**< Lock provder server id */  
+    ndrx_atomic short lockprov_nodeid;         /**< Lock provider E/X cluster node id */
+    ndrx_atomic pid_t lockprov_pid;            /**< Lock provider pid */
     char volatile lockprov_procname[NDRX_SG_PROCNAMEMAX+1];  /**< Lock provider name */
     char volatile sg_nodes[CONF_NDRX_NODEID_COUNT]; /**< Group nodes (full list us + them) */
     ndrx_atomic int reason;                             /**< Reason code for unlock */     
