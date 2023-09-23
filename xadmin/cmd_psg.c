@@ -127,7 +127,7 @@ expublic int cmd_psg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     if (print_page_2)
     {
         /* print header: */
-        fprintf(stderr, "SGID CNODES                             SEQUENCE\n");
+        fprintf(stderr, "SGID                           CNODES   SEQUENCE\n");
         fprintf(stderr, "---- -------------------------------- ----------\n");
     }
     else

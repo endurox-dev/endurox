@@ -1,0 +1,10 @@
+EXSINGLECKL(8)
+==============
+:doctype: manpage
+
+NAME
+----
+exsingleckl - Support server for checking local node singleton process group lock status
+
+include::exsinglesv-common.adoc[]
+
