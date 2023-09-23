@@ -254,7 +254,7 @@ exprivate int ping_lock(void *ctx)
     /* if test point is set down here unlock main file */
     if (ndrx_G_systest_lockloss > 0)
     {
-        NDRX_LOG(log_error, "SYSTEST: Simulating lock loss for file 1 (sleep after %d)",
+        TP_LOG(log_error, "SYSTEST: Simulating lock loss for file 1 (sleep after %d)",
             ndrx_G_systest_lockloss);
         ndrx_exsinglesv_file_unlock(NDRX_LOCK_FILE_1);
         sleep(ndrx_G_systest_lockloss);

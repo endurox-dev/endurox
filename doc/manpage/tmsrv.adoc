@@ -242,11 +242,10 @@ suspend/resume cycle), at small period of time there is chance of the
 duplicate runs of the *tmsrv* processes, which for the currently active
 *tmsrv* might introduce unknown transaction log files. When setting *-X* is
 enabled (is greater than *0*), then with *-s* granularity, it scans the
-log file directory. If any unknown log is found, *tmsrv* terminates. Afterwards
-*ndrxd(8)* starts process back, it loads all transactions from the
-disk and continues with normal processing. Note that after the restart
-any activate transactions aborted. And for restart period of time,
-transaction manager is unavailable.
+log file directory. If any unknown log is found, *tmsrv* marks that
+transaction log file for loading at the next check cycle. If log fails
+to load, it marked for ignore, and further check cycles ignores such
+broken transaction logs.
 
 XA RECOVER SETTINGS FOR ORACLE DB
 ---------------------------------

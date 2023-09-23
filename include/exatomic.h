@@ -49,7 +49,7 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
     
 #ifdef EX_HAVE_STDATOMIC
-#define ndrx_atomic _Atomic
+#define ndrx_atomic _Atomic volatile
 #else
 #define ndrx_atomic volatile
 #endif

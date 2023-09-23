@@ -487,7 +487,7 @@ expublic int ndrx_exsinglesv_ping_do(ndrx_locksm_ctx_t *lock_ctx)
 
         if (EXFAIL==fd)
         {
-            NDRX_LOG(log_error, "copy %d: Failed to open [%s]: %s", 
+            TP_LOG(log_error, "copy %d: Failed to open [%s]: %s", 
                 copy, ndrx_G_exsinglesv_conf.lockfile_2, strerror(errno));
             EXFAIL_OUT(ret);
         }
@@ -660,7 +660,7 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsingles
     fd = open(ndrx_G_exsinglesv_conf.lockfile_2, O_RDONLY);
     if (EXFAIL==fd)
     {
-        NDRX_LOG(log_error, "Failed to open [%s]: %s", 
+        TP_LOG(log_error, "Failed to open [%s]: %s", 
             ndrx_G_exsinglesv_conf.lockfile_2, strerror(errno));
 
         /* if file is not found, return PING_NO_FILE */
