@@ -107,10 +107,18 @@ void SGLOC (TPSVCINFO *p_svc)
     lock_status=(char)ret;
     ret=EXSUCCEED;
 
-    if (EXSUCCEED!=Bchg(p_ub, EX_LCKSTATUS, 0, &lock_status, 9))
+    if (EXSUCCEED!=Bchg(p_ub, EX_LCKSTATUS, 0, &lock_status, 0))
     {
         TP_LOG(log_error, "Failed to set EX_LCKSTATUS: %s", Bstrerror(Berror));
         ndrx_exsinglesv_set_error_fmt(p_ub, TPESYSTEM, "Failed to set EX_LCKSTATUS: %s",
+            Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=Bchg(p_ub, EX_SEQUENCE, 0, (char *)&lockst.local.sequence, 0))
+    {
+        TP_LOG(log_error, "Failed to set EX_SEQUENCE: %s", Bstrerror(Berror));
+        ndrx_exsinglesv_set_error_fmt(p_ub, TPESYSTEM, "Failed to set EX_SEQUENCE: %s",
             Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }

@@ -433,9 +433,9 @@ exprivate int do_lock(void *ctx)
         goto out;
     }
 
-    lock_ctx->new_sequence+=SEQUENCE_START;
+    lock_ctx->new_sequence+=G_atmi_env.sglockinc;
     TP_LOG(log_warn, "New sequence number is %d (old seq +%d)", 
-        lock_ctx->new_sequence, SEQUENCE_START);
+        lock_ctx->new_sequence, lock_ctx->new_sequence);
 
     /* write stuff to ping */
     if (EXSUCCEED!=ndrx_exsinglesv_ping_do(lock_ctx))
