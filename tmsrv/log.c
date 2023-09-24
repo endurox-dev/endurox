@@ -1194,6 +1194,7 @@ out:
         int err=errno;
         userlog("ERROR! Failed to fflush(): %s", strerror(err));
         NDRX_LOG(log_error, "ERROR! Failed to fflush(): %s", strerror(err));
+	ret=EXFAIL;
     }
     /*fsync(fileno(p_tl->f));*/
     return ret;
