@@ -95,7 +95,7 @@ expublic long ndrx_tpsgislocked(int grpno, long flags, long *grp_flags)
     if (NULL!=grp_flags)
     {
         /* NDRX_SG flag values matches TPPG_ flags values */
-        *grp_flags = (local.flags & NDRX_SG_SINGLETON);
+        *grp_flags = ((long)local.flags & NDRX_SG_SINGLETON);
     }
     
     /* check is group singleton? */

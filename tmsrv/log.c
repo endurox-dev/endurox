@@ -1496,8 +1496,22 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
     /* In case ... if we are committing, there will be no abort.
     * and vice versa. that's in case if doing failover
     * the first state shall live on...
+    * --- not true...
+    * we could go to commit, but just right before logging
+    * other node took over... starts to abort.
+    * and first one wakes up and tries to write the commit stage...
+    * thus we shall allow to go down from commit to abort.
     */
     stage=(short)atoi(p);
+
+    if (stage <= p_tl->txstage)
+    {
+        NDRX_LOG(log_error, "Stage for [%s] downgrade was %hd, read %hd",
+                p_tl->tmxid, p_tl->txstage, stage);
+        userlog("Stage for [%s] downgrade was %hd, read %hd",
+                p_tl->tmxid, p_tl->txstage, stage);
+    }
+
     if (p_tl->txstage>=XA_TX_STAGE_ABORTING &&
         p_tl->txstage<=XA_TX_STAGE_ABFORGOT_HEU)
     {
@@ -1514,9 +1528,12 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
                 p_tl->tmxid, p_tl->txstage, stage);
         }
     }
+#if 0
     else if (p_tl->txstage>=XA_TX_STAGE_COMMITTING &&
         p_tl->txstage<=XA_TX_STAGE_COMFORGOT_HEU)
     {
+
+        /* if there was commit, we allow abort too.. */
         if (stage>=XA_TX_STAGE_COMMITTING &&
             stage<=XA_TX_STAGE_COMFORGOT_HEU)
         {
@@ -1530,6 +1547,7 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
                 p_tl->tmxid, p_tl->txstage, stage);
         }
     }
+#endif
     else
     {
         p_tl->txstage = stage;
