@@ -266,9 +266,9 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
 
     if (sg.is_locked)
     {
-        NDRX_LOG(log_error, "ERROR: Group %d already locked by Node %d, PID %d, Procname [%s] - terminating",
+        NDRX_LOG(log_error, "ERROR: Group %d already locked by Node %hd, PID %d, Procname [%s] - terminating",
                 singlegrp_no, sg.lockprov_nodeid, sg.lockprov_pid, sg.lockprov_procname);
-        userlog("ERROR: Group %d already locked by Node %d, PID %d, Procname [%s] - terminating",
+        userlog("ERROR: Group %d already locked by Node %hd, PID %d, Procname [%s] - terminating",
                 singlegrp_no, sg.lockprov_nodeid, sg.lockprov_pid, sg.lockprov_procname);
         EXFAIL_OUT(ret);
     }
@@ -289,8 +289,8 @@ expublic int ndrx_sg_do_lock(int singlegrp_no, short nodeid, int srvid, char *pr
     NDRX_ATOMIC_STORE(&sg_shm->is_locked, EXTRUE);
     NDRX_ATOMIC_STORE(&sg_shm->reason, 0);
 
-    NDRX_LOG(log_debug, "Group %d locked", singlegrp_no);
-    userlog("Group %d locked", singlegrp_no);
+    NDRX_LOG(log_debug, "Group %d locked on node %hd", singlegrp_no, nodeid);
+    userlog("Group %d locked on node %hd", singlegrp_no, nodeid);
 
 out:
     return ret;

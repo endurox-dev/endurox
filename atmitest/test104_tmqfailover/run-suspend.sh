@@ -250,6 +250,7 @@ do
         xadmin lcf lockloss -A0 -a
         xadmin lcf
         xadmin start -s exsingleckr
+        xadmin killall exsinglesv
         
         sleep 15
         xadmin psc
