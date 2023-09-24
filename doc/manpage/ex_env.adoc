@@ -470,6 +470,21 @@ Mandatory Env. Variables
     (*exsinglesv(8)*) must refresh (updated timestamp) in s hared memory
     to indicate that the group lock is verified and still valid.
     Default value is *60* seconds.
+*NDRX_SGLOCKINC*='NUMBER'::
+    Number by which *exsinglesv(8)* would increment ping lock
+    counters. If group is normally locked, it increments on every
+    check by *1*. Thus if using *tmsrv(8)* in the singleton group
+    *NDRX_SGLOCKINC* parameter value multiplied by *exsinglesv(8)* configuration
+    parameter value *chkinterval*, sets the upper limit for global transaction
+    time to stay in active/un-committed state, as when global transaction
+    is started, ping lock counter is read, and at commit point,
+    ping lock counter is also read from the group ping lock file. The counter
+    difference must be less than *NDRX_SGLOCKINC*. Such check ensures
+    that no parallel run of the *tmsrv* runs has happened during
+    the transaction life-cycle. Default value is *3600*. Note that
+    too large value could spend the lock counters too fast, however
+    counter is stored as *long* value having 31 or 61 bits of storage
+    (depending on the platform).
 *NDRX_PROCGRP_NO*='PROCESS_GROUP_NUMBER'::
     For XATMI server process or XATMI client process value is set to
     process group number, if process is part of process group.
