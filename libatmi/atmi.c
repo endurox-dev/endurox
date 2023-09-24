@@ -2314,11 +2314,11 @@ out:
  * Check is given singleton process group locked.
  * @param grpno singleton group number
  * @param flags TPACK
- * @return EXAIL/EXFALSE/EXTRUE
+ * @return EXAIL/EXFALSE/>0 locked, seqno
  */
-expublic int tpsgislocked(int grpno, long flags)
+expublic long tpsgislocked(int grpno, long flags)
 {
-    int ret = EXSUCCEED;
+    long ret = EXSUCCEED;
     
     ndrx_TPunset_error();
     

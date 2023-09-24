@@ -648,7 +648,7 @@ extern NDRX_API int tpgprio(void);
 extern NDRX_API int tpsblktime(int tout,long flags);
 extern NDRX_API int tpgblktime(long flags);
 
-extern NDRX_API int tpsgislocked(int grpno, long flags);
+extern NDRX_API long tpsgislocked(int grpno, long flags);
 
 extern NDRX_API struct xa_switch_t* ndrx_xa_sw_get(void);
 

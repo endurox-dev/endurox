@@ -64,6 +64,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
+#define SGLOCKINC_DFLT 86400
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -466,6 +467,20 @@ expublic int ndrx_load_common_env(void)
         /* no group */
         G_atmi_env.procgrp_no = 0;
     }
+
+    p = getenv(CONF_NDRX_SGLOCKINC);
+
+    if (NULL!=p)
+    {
+        G_atmi_env.sglockinc = atol(p);
+    }
+    else
+    {
+        G_atmi_env.sglockinc = SGLOCKINC_DFLT;
+    }
+
+    NDRX_LOG(log_debug, "%s set to %ld",
+                CONF_NDRX_SGLOCKINC, G_atmi_env.sglockinc);
     
     /* <XA Protocol configuration - currently optional...> */
     
