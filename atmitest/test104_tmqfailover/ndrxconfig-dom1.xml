@@ -111,9 +111,16 @@
         <server name="tmrecoversv">
             <min>1</min>
             <max>1</max>
-            <srvid>250</srvid>
-            <procgrp>GRP1</procgrp>
+            <srvid>225</srvid>
             <sysopt>-e ${NDRX_ULOG}/tmrecoversv-dom1.log -r -- -i</sysopt>
+	    <procgrp>GRP1</procgrp>
+        </server>
+
+        <server name="tmrecoversv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>250</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmrecoversv2-dom1.log -r -- -p -s5</sysopt>
         </server>
 
         <!-- have null group for server too... -->
