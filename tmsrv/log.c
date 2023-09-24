@@ -219,6 +219,68 @@ restart:
 }
 
 /**
+ * set current lock sequence number
+ * @param p_tl log entry
+ */
+exprivate void tms_log_setseq(atmi_xa_log_t *p_tl)
+{
+    /* if we are in singleton group mode, validate that we still
+     * own the lock
+     */
+    if (G_atmi_env.procgrp_no
+        && (p_tl->sg_sequence=tpsgislocked(G_atmi_env.procgrp_no, TPACK)) <= 0)
+    {
+        NDRX_LOG(log_error, "Singleton group %d lock lost (at start) - exit(-1)",
+            G_atmi_env.procgrp_no);
+        userlog("Singleton group %d lock lost (at start) - exit(-1)",
+            G_atmi_env.procgrp_no);
+        /* !!!! */
+        exit(EXFAIL);
+    }
+
+}
+
+/**
+ * run checkpoint on transaction
+ * @param p_tl transaction log
+ */
+expublic void tms_log_checkpointseq(atmi_xa_log_t *p_tl)
+{
+    long seq;
+    /* if we are in singleton group mode, validate that we still
+     * own the lock
+     */
+    if (G_atmi_env.procgrp_no)
+    {
+        if ((seq=tpsgislocked(G_atmi_env.procgrp_no, TPACK)) <=0)
+        {
+            NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost - exit(-1)",
+                G_atmi_env.procgrp_no, tpgetnodeid());
+            userlog("Singleton group %d on node %ld lock lost - exit(-1)",
+                G_atmi_env.procgrp_no, tpgetnodeid());
+            /* !!!! */
+            exit(EXFAIL);
+        }
+
+        /* failover has happened during transaction processing
+            * thus cannot proceed with decsion, only after restart
+            */
+        if (seq - p_tl->sg_sequence >= G_atmi_env.sglockinc)
+        {
+            NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+            userlog("Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+            /* !!!! */
+            exit(EXFAIL);
+        }
+
+        /* we are safe to continue... */
+        p_tl->sg_sequence=seq;
+    }
+}
+
+/**
  * Log transaction as started
  * @param xai - XA Info struct
  * @param txtout - transaction timeout
@@ -251,7 +313,8 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     tmp->txtout = txtout;
     tmp->log_version = LOG_VERSION_2;   /**< Now with CRC32 groups */
     ndrx_stopwatch_reset(&tmp->ttimer);
-    
+    tms_log_setseq(tmp);
+
     /* lock for us, yet it is not shared*/
     tmp->lockthreadid = ndrx_gettid();
     
@@ -616,6 +679,9 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     NDRX_STRCPY_SAFE((*pp_tl)->tmxid, tmxid);
     /* we start with active... */
     (*pp_tl)->txstage = XA_TX_STAGE_ACTIVE;
+
+    /* set lock sequence number, if in singleton group */
+    tms_log_setseq(*pp_tl);
 
     /* Open the file */
     if (EXSUCCEED!=tms_open_logfile(*pp_tl, "r+"))
@@ -1338,17 +1404,9 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             /* if we are in singleton group mode, validate that we still 
              * own the lock
              */
-            if (G_atmi_env.procgrp_no
-                && EXTRUE!=tpsgislocked(G_atmi_env.procgrp_no, TPACK))
-            {
-                NDRX_LOG(log_error, "Singleton group %d lock lost - exit(-1)",
-                    G_atmi_env.procgrp_no);
-                userlog("Singleton group %d lock lost - exit(-1)",
-                    G_atmi_env.procgrp_no);
-                /* !!!! */
-                exit(EXFAIL);
-            }
-        }
+            tms_log_checkpointseq(p_tl);
+
+        } /* new stage commit or abort */
     }
     
 out:
