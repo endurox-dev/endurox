@@ -256,6 +256,7 @@ do
         xadmin lcf lockloss -A0 -a
         xadmin lcf
         xadmin start -s exsingleckr
+        xadmin killall exsinglesv
         
 	# longer as more threads?
         sleep 30

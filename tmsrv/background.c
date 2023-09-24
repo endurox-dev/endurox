@@ -460,6 +460,8 @@ expublic int background_loop(void)
                 NDRX_LOG(log_info, "XID: [%s] try counter increased to: %d",
                         el->p_tl.tmxid, p_tl->trycount);
                 
+                /* run checkpoint here on the log... */
+                tms_log_checkpointseq(p_tl);
                 XA_TX_COPY((&xai), p_tl);
 
                 /* If we have transaction in background, then do something with it

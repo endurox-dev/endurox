@@ -63,11 +63,11 @@
  * contact with other cluster members or shared disk to check
  * time skew.
  * @param grpno group number
- * @return -1 on FAIL, 0 not locked, 1 locked
+ * @return -1 on FAIL, 0 not locked, > 0 (sequence of the lock)
  */
-expublic int ndrx_tpsgislocked(int grpno, long flags)
+expublic long ndrx_tpsgislocked(int grpno, long flags)
 {
-    int ret=EXSUCCEED;
+    long ret=EXSUCCEED;
     ndrx_sg_shm_t *p_shm, local;
     UBFH *p_ub=NULL;
 
@@ -167,6 +167,13 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
                 }
 
                 ret=lock_stat;
+
+                if (EXTRUE==ret && EXSUCCEED!=Bget(p_ub, EX_SEQUENCE, 0, (char *)&ret, 0L))
+                {
+                    NDRX_LOG(log_error, "Missing EX_SEQUENCE: %s", Bstrerror(Berror));
+                    ndrx_TPset_error_fmt(TPESYSTEM,  "Missing EX_SEQUENCE: %s", Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
             }
         }
         else
@@ -177,6 +184,13 @@ expublic int ndrx_tpsgislocked(int grpno, long flags)
             if (EXFAIL==ret)
             {
                 NDRX_LOG(log_error, "Local group %d check failed", grpno);
+                goto out;
+            }
+
+            if (EXTRUE==ret)
+            {
+                /* return current sequence */
+                ret=p_shm->sequence;
             }
         }
     }
@@ -193,7 +207,7 @@ out:
     {
         tpfree((char *)p_ub);
     }
-    NDRX_LOG(log_info, "lock check grpno=%d ret = %d", grpno, ret);
+    NDRX_LOG(log_info, "lock check grpno=%d ret = %ld", grpno, ret);
     return ret;
 }
 

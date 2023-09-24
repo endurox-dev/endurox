@@ -536,7 +536,15 @@ struct atmi_lib_env
     /**@}*/
 
     int procgrp_no;                 /**< Process group number for the curret bin */
-    long xa_fsync_flags;            /**< Special tmqueue flags                  */
+
+    /** Increment for singleton-group at lock. Used for transaction lifecycle
+     * management. I.e. txn must be completed (from start to commit/abort decision)
+     * within this given time. Otherwise tmsrv will reboot, as it does not
+     * know was there lock/lost/lock gain during the transaction processing.
+     */
+    long sglockinc;
+
+    long xa_fsync_flags;            /**< Special tmqueue flags                   */
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 
@@ -1041,7 +1049,7 @@ extern NDRX_API int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, ch
         long *olen, long flags, long mflags);
 
 extern NDRX_API void ndrx_mbuf_Bnext_ptr_first(UBFH *p_ub, Bnext_state_t *state);
-extern NDRX_API int ndrx_tpsgislocked(int grpno, long flags);
+extern NDRX_API long ndrx_tpsgislocked(int grpno, long flags);
 
 
 #ifdef	__cplusplus

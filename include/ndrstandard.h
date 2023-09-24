@@ -390,6 +390,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_RTGRP          "NDRX_RTGRP"          /**< Routing group                                */
 #define CONF_NDRX_PGMAX          "NDRX_PGMAX"          /**< Max number of process groups (incl singleton)*/
 #define CONF_NDRX_SGREFRESH      "NDRX_SGREFRESH"      /**< Expected maximum singleton-group refresh time*/
+#define CONF_NDRX_SGLOCKINC      "NDRX_SGLOCKINC"      /**< Counter increment for taking the lock        */
 #define CONF_NDRX_PROCGRP_NO     "NDRX_PROCGRP_NO"     /**< Process group number (if set)                */
 #define CONF_NDRX_PROCGRP_LP_NO  "NDRX_PROCGRP_LP_NO"  /**< Process group's lock provider                */
 #define CONF_NDRX_RESPAWN        "NDRX_RESPAWN"        /**< Gives hint to the process that it was rebooted*/
