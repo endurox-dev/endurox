@@ -461,7 +461,10 @@ expublic int background_loop(void)
                         el->p_tl.tmxid, p_tl->trycount);
                 
                 /* run checkpoint here on the log... */
-                tms_log_checkpointseq(p_tl);
+                if (EXSUCCEED!=tms_log_checkpointseq(p_tl))
+                {
+                    EXFAIL_OUT(ret);
+                }
                 XA_TX_COPY((&xai), p_tl);
 
                 /* If we have transaction in background, then do something with it

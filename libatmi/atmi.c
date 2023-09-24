@@ -2314,21 +2314,22 @@ out:
  * Check is given singleton process group locked.
  * @param grpno singleton group number
  * @param flags TPACK
+ * @arpam grp_flags group flags (output)
  * @return EXAIL/EXFALSE/>0 locked, seqno
  */
-expublic long tpsgislocked(int grpno, long flags)
+expublic long tpsgislocked(int grpno, long flags, long *grp_flags)
 {
     long ret = EXSUCCEED;
     
     ndrx_TPunset_error();
     
-     if ( (flags & ~TPACK) !=0 )
+     if ( (flags & ~ (TPPG_SGVERIFY|TPPG_NONSGSUCC)) !=0 )
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Unsupported flags %ld", flags);
         EXFAIL_OUT(ret);
     }
 
-    ret = ndrx_tpsgislocked(grpno, flags);
+    ret = ndrx_tpsgislocked(grpno, flags, grp_flags);
 
 out:
     return ret;

@@ -161,6 +161,16 @@ extern "C" {
 
 /** @} */ /* end of callinfoflags */
 
+/**
+ * @defgroup procgroupflag flags for process group handling XATMI level e.g. tpsgislocked()
+ * @{
+ */
+#define TPPG_NONSGSUCC    0x00001000 /**< Do not generate error if group is not singleton */
+#define TPPG_SGVERIFY     0x00002000 /**< Do node verification, if configured */
+#define TPPG_SINGLETON    0x00000020  /**< Set if group is singleton          */
+
+/** @} */ /* end of callinfoflags */
+
 /* 
  * used by tpconvert()
  */
@@ -648,7 +658,7 @@ extern NDRX_API int tpgprio(void);
 extern NDRX_API int tpsblktime(int tout,long flags);
 extern NDRX_API int tpgblktime(long flags);
 
-extern NDRX_API long tpsgislocked(int grpno, long flags);
+extern NDRX_API long tpsgislocked(int grpno, long flags, long *grp_flags);
 
 extern NDRX_API struct xa_switch_t* ndrx_xa_sw_get(void);
 

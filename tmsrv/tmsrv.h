@@ -187,7 +187,7 @@ extern ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(const char *tmxid);
 extern int ndrx_tms_file_registry_add(const char *tmxid, int state);
 extern int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t *ent);
 extern void ndrx_tms_file_registry_free(void);
-extern void tms_log_checkpointseq(atmi_xa_log_t *p_tl);
+extern int tms_log_checkpointseq(atmi_xa_log_t *p_tl);
 
 /* Admin functions */
 extern int tm_tpprinttrans(UBFH *p_ub, int cd);

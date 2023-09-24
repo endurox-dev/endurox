@@ -1049,7 +1049,7 @@ extern NDRX_API int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, ch
         long *olen, long flags, long mflags);
 
 extern NDRX_API void ndrx_mbuf_Bnext_ptr_first(UBFH *p_ub, Bnext_state_t *state);
-extern NDRX_API long ndrx_tpsgislocked(int grpno, long flags);
+extern NDRX_API long ndrx_tpsgislocked(int grpno, long flags, long *grp_flags);
 
 
 #ifdef	__cplusplus

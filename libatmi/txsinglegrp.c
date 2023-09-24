@@ -59,13 +59,10 @@
 
 /**
  * Extended lock verificaiton, if enabled on.
- * This sends query to EXSINGLESV which would
- * contact with other cluster members or shared disk to check
- * time skew.
  * @param grpno group number
  * @return -1 on FAIL, 0 not locked, > 0 (sequence of the lock)
  */
-expublic long ndrx_tpsgislocked(int grpno, long flags)
+expublic long ndrx_tpsgislocked(int grpno, long flags, long *grp_flags)
 {
     long ret=EXSUCCEED;
     ndrx_sg_shm_t *p_shm, local;
@@ -94,11 +91,17 @@ expublic long ndrx_tpsgislocked(int grpno, long flags)
     }
 
     ndrx_sg_load(&local, p_shm);
+
+    if (NULL!=grp_flags)
+    {
+        /* NDRX_SG flag values matches TPPG_ flags values */
+        *grp_flags = (local.flags & NDRX_SG_SINGLETON);
+    }
     
     /* check is group singleton? */
     if (local.flags & NDRX_SG_SINGLETON)
     {
-        if ( (local.flags & NDRX_SG_VERIFY) && (flags & TPACK) )
+        if ( (local.flags & NDRX_SG_VERIFY) && (flags & TPPG_SGVERIFY) )
         {
             long tmp, rsplen;
             char svcnm[MAXTIDENT+1]={EXEOS};
@@ -193,6 +196,11 @@ expublic long ndrx_tpsgislocked(int grpno, long flags)
                 ret=p_shm->sequence;
             }
         }
+    }
+    else if (flags & TPPG_NONSGSUCC)
+    {
+        NDRX_LOG(log_debug, "grpno=%d is not singleton", grpno);
+        ret=EXSUCCEED;
     }
     else
     {
