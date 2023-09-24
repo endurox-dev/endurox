@@ -184,6 +184,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                     config_file_short, p, cur->line);
                 err->error_code = NDRXD_EINVAL;
                 NDRX_LOG(log_error, "%s", err->error_msg);
+		ndrx_stdcfgstr_free(parsed);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
@@ -206,6 +207,7 @@ expublic int ndrx_appconfig_procgroup(ndrx_procgroups_t **config,
                     EXFAIL_OUT(ret);
                 }
 
+                ndrx_stdcfgstr_free(parsed);
                 /* set group as used */
                 p_grp->sg_nodes[nodeid-1]=nodeid;
             }
