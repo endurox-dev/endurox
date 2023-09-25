@@ -205,9 +205,6 @@ expublic int tpext_delperiodcb(void)
     return _tpext_delperiodcb();
 }
 
-
-
-
 /**
  * Add before poll check
  * @param fd
@@ -258,8 +255,21 @@ expublic void tpext_configbrige
     G_server_conf.nodeid = nodeid;
     G_server_conf.p_qmsg = p_qmsg;
     NDRX_LOG(log_debug, "Bridge %d, flags set to: %d, p_qmsg=%p", 
-            nodeid, flags, p_qmsg);
+            nodeid, flags, p_qmsg);   
+}
+
+/**
+ * Mark current process as singleton group lock provider
+ * @param singlegrp group number to which locks are provided
+ */
+expublic void tpext_configprocgrp_lp (int procgrp_lp_no)
+{
+    ndrx_TPunset_error();
+    G_server_conf.procgrp_lp_no=procgrp_lp_no;
+    G_server_conf.flags |= SRV_KEY_FLAGS_PROCGRPLP;
     
+    NDRX_LOG(log_debug, "Singleton procerss group %d lock provder", 
+            procgrp_lp_no);
 }
 
 /**

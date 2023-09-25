@@ -324,21 +324,6 @@ expublic void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
     return;
 }
 
-#if 0
-/**
- * Convert call to xai (only data copy, does not register)
- * @param call
- * @return 
- */
-expublic void atmi_xa_xai_from_call(atmi_xa_tx_info_t * p_xai, tp_command_call_t *p_call)
-{
-    strcpy(p_xai->tmxid, p_call->tmxid);
-    p_xai->tmrmid = p_call->tmrmid;
-    p_xai->tmnodeid = p_call->tmnodeid;
-    p_xai->tmsrvid = p_call->tmsrvid;
-}
-#endif
-
 /*************************** Transaction info manipulation ********************/
 
 /**
@@ -776,10 +761,6 @@ expublic UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_a
     }
     else if (call_any)
     {
-        /* Any entry of TM */
-        /*
-        sprintf(svcnm, NDRX_SVC_TM, G_atmi_env.our_nodeid, G_atmi_env.xa_rmid);
-         */
         snprintf(svcnm, sizeof(svcnm), NDRX_SVC_RM, G_atmi_env.xa_rmid);
     }
     else

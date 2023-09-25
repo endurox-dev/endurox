@@ -33,7 +33,7 @@
 ##
 
 # Set a minimum version
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 
 # Add debug options
@@ -56,45 +56,45 @@ include(pscript)
 set(SCRIPTS "")
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
-    pscript_embed(scripts/provision.pscript provision)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/provision.pscript provision)
     list(APPEND SCRIPTS provision.c)
 
-    pscript_embed(scripts/gen_go_server.pscript gen_go_server)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_go_server.pscript gen_go_server)
     list(APPEND SCRIPTS gen_go_server.c)
 
-    pscript_embed(scripts/gen_go_client.pscript gen_go_client)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_go_client.pscript gen_go_client)
     list(APPEND SCRIPTS gen_go_client.c)
 
-    pscript_embed(scripts/gen_ubf_tab.pscript gen_ubf_tab)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_ubf_tab.pscript gen_ubf_tab)
     list(APPEND SCRIPTS gen_ubf_tab.c)
 
-    pscript_embed(scripts/gen_c_client.pscript gen_c_client)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_c_client.pscript gen_c_client)
     list(APPEND SCRIPTS gen_c_client.c)
 
-    pscript_embed(scripts/gen_c_server.pscript gen_c_server)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_c_server.pscript gen_c_server)
     list(APPEND SCRIPTS gen_c_server.c)
 
-    pscript_embed(scripts/gen_java_client.pscript gen_java_client)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_java_client.pscript gen_java_client)
     list(APPEND SCRIPTS gen_java_client.c)
 
-    pscript_embed(scripts/gen_java_server.pscript gen_java_server)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_java_server.pscript gen_java_server)
     list(APPEND SCRIPTS gen_java_server.c)
 
-    pscript_embed(scripts/gen_test_local.pscript gen_test_local)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_test_local.pscript gen_test_local)
     list(APPEND SCRIPTS gen_test_local.c)
 
-    pscript_embed(scripts/gen_python_client.pscript gen_python_client)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_python_client.pscript gen_python_client)
     list(APPEND SCRIPTS gen_python_client.c)
 
-    pscript_embed(scripts/gen_python_server.pscript gen_python_server)
+    pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_python_server.pscript gen_python_server)
     list(APPEND SCRIPTS gen_python_server.c)
 
 ENDIF()
 
 add_custom_command(
   OUTPUT Exfields.c
-  COMMAND exembedfile ../include/Exfields Exfields
-  DEPENDS ../include/Exfields)
+  COMMAND exembedfile ${CMAKE_CURRENT_SOURCE_DIR}/../include/Exfields Exfields
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../include/Exfields)
 
 add_custom_command(
   OUTPUT ndrx_config.c
@@ -118,7 +118,7 @@ add_executable (xadmin xadmin.c exec.c config.c
     cmd_cs.c cmd_cd.c cmd_ci.c
     cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c cmd_util.c
     cmd_appconfig.c cmd_dping.c linenoise.c cmd_tranlocal.c
-    cmd_tmib.c taboutput.c cmd_lcf.c cmd_prtsvc.c)
+    cmd_tmib.c taboutput.c cmd_lcf.c cmd_prtsvc.c cmd_psg.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

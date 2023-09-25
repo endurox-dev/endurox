@@ -94,6 +94,7 @@ EX_CPMOUTPUT    101     string   -       CPM output
 EX_CPMTAG       102     string   -       Tag
 EX_CPMSUBSECT   103     string   -       Sub-section
 EX_CPMWAIT      104     long     -       Wait milliseconds after batch processing
+EX_CPMPROCGRP   105     string   -       Process group name
 
 # Generic fields
 EX_CLTID        	150	string	-	client identifier for originating client
@@ -289,6 +290,16 @@ EX_CACHE_HITS               663         long -         Number of times cache was
 EX_CACHE_NRDEL              664         long -         Number of records deleted
 EX_CACHE_NRDUPDEL           665         long -         Number of duplicates deleted
 EX_CACHE_BUFLEN             667         long -         Data len, bytes
+
+################################################################################
+# Sintleton group support + some generics
+################################################################################
+
+EX_COMMAND                  700         string -       generic command code
+EX_TSTAMP                   701         long   -       UTC timestamp
+EX_LCKSTATUS                702         char   -       Lock status
+EX_PROCGRP_NO               703         long   -       Process group number
+EX_SEQUENCE                 704         long   -       Sequence number (e.g. lock)
 
 $#endif
 

@@ -164,7 +164,6 @@ expublic void ndrx_ddr_install(void)
             ndrx_G_shmcfg->ddr_page = page;
         }
     }
-    
 }
 
 /**
@@ -771,7 +770,6 @@ exprivate ndrx_routcrit_hash_t * ndrx_criterion_get(config_t *config, char *crit
 out:
     return ret;
 }
-
 
 /**
  * Parse one route entry

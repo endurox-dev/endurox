@@ -42,6 +42,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
 #include <exthpool.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */
@@ -74,10 +75,13 @@ typedef struct
     int xa_retries;
     
     int ping_time; /**< Number of seconds for interval of doing "pings" to db */
-    int ping_mode_jointran; /**< PING with join non existent transaction */
+    int ping_mode_jointran; /**< PING with join non existent transaction    */
     threadpool thpool;
     
     int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
+    long vnodeid;            /**< Node id, command id used for failovers    */
+
+    int chkdisk_time;     /**< Check against duplicate process runs, sec     */
     
 } tmsrv_cfg_t;
 
@@ -89,6 +93,17 @@ struct thread_server
 };
 /* note we must malloc this struct too. */
 typedef struct thread_server thread_server_t;
+
+/**
+ * hash register of unknown
+ * transaction files.
+ */
+typedef struct
+{
+    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
+    int state;
+    EX_hash_handle hh;              /**< hash handle                    */
+} ndrx_tms_file_registry_t;
 
 /*---------------------------Prototypes---------------------------------*/
 /* init */
@@ -103,6 +118,7 @@ extern tmsrv_cfg_t G_tmsrv_cfg;
 extern void atmi_xa_new_xid(XID *xid);
 
 extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
+extern int tms_log_exists_entry(char *tmxid);
 extern atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait, int *is_tout);
 extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
 extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 
@@ -165,6 +181,13 @@ extern void background_wakeup(void);
 extern int background_process_init(void);
 extern void background_lock(void);
 extern void background_unlock(void);
+
+/* singleton group related */
+extern ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(const char *tmxid);
+extern int ndrx_tms_file_registry_add(const char *tmxid, int state);
+extern int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t *ent);
+extern void ndrx_tms_file_registry_free(void);
+extern int tms_log_checkpointseq(atmi_xa_log_t *p_tl);
 
 /* Admin functions */
 extern int tm_tpprinttrans(UBFH *p_ub, int cd);

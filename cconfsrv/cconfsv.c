@@ -633,7 +633,6 @@ exprivate int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
     }
     
 
-    
 out:
                     
     if (NULL!=sections)

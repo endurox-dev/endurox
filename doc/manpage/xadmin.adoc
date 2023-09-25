@@ -65,19 +65,20 @@ COMMANDS
     only possible changing is with reinstalling other Enduro/X build.
 *ldcf*::
     Load configuration
-*start* [-y] [-s <server>] [-i <srvid>]::
+*start* [-y] [(-s <server>) | (-i <srvid>) | (-g <procgrp>)]::
     Start application domain. If config not loaded, it loads
-    configuration automatically. '-y' means do not ask for confirmation. '-s' means
+    configuration automatically. *-y* means do not ask for confirmation. *-s* means
     ATMI servers binary name to be started, instead of whole application domain.
-    '-i' means start specific server instance. In case if *ndrxd(8)* was busy
+    *-i* means start specific server instance. In case if *ndrxd(8)* was busy
     with other session tasks (other terminal start/stop or internal server reload
     on limited memory use), the xadmin will re-attempt to send message to *ndrxd*
     before giving up. The number of attempts are configured in *NDRX_NORMWAITMAX*
     environment variable (default is 60), between attempts 1 second sleep is done.
-    see *ex_env(5)*.
+    see *ex_env(5)*. Parameter *-g* allows to start all startable processes from the
+    process group.
 *psc*::
     Print services
-*stop* [-y] [-s <server>] [-i <srvid>] [-k] [-f] [-l]::
+*stop* [-y] [(-s <server>) | (-i <srvid>) | (-g <procgrp>)] [-k] [-f] [-l]::
     Stop application domain. *-y* means do not ask for confirmation. *-s* means
     ATMI servers binary name to be stopped, instead of whole application domain.
     *-i* means stop specific server instance. *-k* flag will keep *ndrxd* running,
@@ -96,14 +97,16 @@ COMMANDS
     required (env setting NDRX_LCFMAX), then run *xadmin down* and then start
     the application, it will create shm. If after the shutdown commands shall
     be kept, then use *-l* option, it will leave LCF memory as is without setting
-    to disable.
-*sreload* [-y] [-s <server>] [-i <srvid>]::
+    to disable. Parameter *-g* allows to stop all processes from the
+    process group.
+*sreload* [-y]  [(-s <server>) | (-i <srvid>) | (-g <procgrp>)]::
     Reload application domain - restart server instance by instance.
     Configuration be loaded prior.
-    '-y' means do not ask for confirmation. '-s' means ATMI servers binary name 
+    *-y* means do not ask for confirmation. *-s* means ATMI servers binary name 
     to be reloaded, instead of whole application domain.
-    '-i' means restart specific server instance. This affects only those server
-    instances which were marked for start.
+    *-i* means restart specific server instance. This affects only those server
+    instances which were marked for start. Parameter *-g* allows to reload
+    all processes within the process group.
 *sr*::
     Alias for 'sreload'
 *psc* [-s] ::
@@ -127,18 +130,20 @@ COMMANDS
 *readv* -i server_id -s service_name::
     Re-advertise service. Might be usable if service Q was unlinked.
     '-i'  is server id, '-s' is service name to be re-advertised.
-*restart* [-y] [-s <server>] [-i <srvid>]::
-    Restart app or service (invokes start & stop with same args!). '-y'
-    makes to not to ask for confirmation. '-s' is server/binary name. '-i' is server ID.
+*restart* [-y]  [(-s <server>) | (-i <srvid>) | (-g <procgrp>)]::
+    Restart app or service (invokes start & stop with same args!). *-y*
+    makes to not to ask for confirmation. *-s* is server/binary name. *-i* is server ID.
+    Parameter *-g* allows to restart all processes within the process group.
 *r*::
     Alias for 'restart'
 *-v*::
     Print version info.
 *ver*::
     Alias for '-v'
-*ppm* [-2]::
-    Print process model. The argument -2 show second page of process model
-    attributes.
+*ppm* [-2] [-3]::
+    Print process model. The argument *-2* show second page of process model
+    attributes. Argument *-3* prints process group information related to the
+    processes.
 *psvc* [-r]::
     Shared mem, print services. '-r' used for System V and Poll modes where
     resource identifiers are printed (either msgid (for System V) or pid for
@@ -205,7 +210,7 @@ COMMANDS
     Unset environment variable
 *pc*::
     Print client processes. This sends command to Client Process Monitor server ('cpmsrv').
-*bc* -t <process_tag> [-s <sub_section>] [-w <wait_time>]::
+*bc* (-t <process_tag> [-s <sub_section>]) | (-g <procgrp>) [-w <wait_time>]::
     Boot client process. This sends command to Client Process Monitor server ('cpmsrv').
     Processes are registered in 'ndrxconfig.xml' '<clients>' section. If sub section
     is not specified, then default value is minus sign ('-'). The 'process_tag'
@@ -214,8 +219,9 @@ COMMANDS
     When running in batch mode 'wait_time' is time in milliseconds to sleep after
     each matched process is marked for start. Note that 'wait_time' shall be less
     than global timeout specified in 'NDRX_TOUT' env variable (or cconfig '[@global]'
-    section).
-*sc* -t <process_tag> [-s <sub_section>] [-w <wait time in milliseconds>]::
+    section). Parameter *-g* allows to start all startable clients within the
+    process group.
+*sc* (-t <process_tag> [-s <sub_section>]) | (-g <procgrp>) [-w <wait time in milliseconds>]::
     Stop client process. This sends command to Client Process Monitor server ('cpmsrv').
     The process is stopped by 'process_tag' and optional 'sub_section'. If sub section
     is not specified, then default value is minus sign ('-'). The 'process_tag'
@@ -226,7 +232,8 @@ COMMANDS
     than global timeout specified in 'NDRX_TOUT' env variable (or cconfig '[@global]'
     section). Also time needed for stopping shall be counted in. If the timeout
     occurs, cpmsrv will complete the operation anyway.
-*rc* -t <process_tag> [-s <sub_section>] [-w <wait time in milliseconds>]::
+    Parameter *-g* allows to stop all the clients within the process group.
+*rc* (-t <process_tag> [-s <sub_section>]) | (-g <procgrp>) [-w <wait time in milliseconds>]::
     Reload client process. This sends command to Client Process Monitor server ('cpmsrv').
     The process is reloaded (stopped/marked for start) by 'process_tag' and 
     optional 'sub_section'. If sub section is not specified, 
@@ -243,6 +250,7 @@ COMMANDS
     time ('-i' flag) because for start operation binary is only marked for 
     boot and not the booted. Basically this executes sc/bc for each of the 
     matched processes.
+    Parameter *-g* allows to restart all the clients within the process group.
 *mqlc*::
     List queue configuration. This broadcasts the requests of config listing to all 
     'tmqueue' servers. If flags column contains 'D' flag, then it means that queue
@@ -372,10 +380,12 @@ COMMANDS
     Print System V queue identifiers allocated for current user. Command outputs
     Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
     printed only. If parameter *-k* is set, only keys are printed.
+
 *svsemids* [-i] [-k]::
     Print System V semaphore identifiers allocated for current user. Command outputs
     Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
     printed only. If parameter *-k* is set, only keys are printed.
+
 *lcf* [COMMAND] [-p <PID>] [-b <BINARY>] [-r] [-a] [-n] [-e] [-s <SLOT>] [-A <ARG_A>] [-B <ARG_B>]::
     This is administrative interface to Latent Command Framework. When command
     is run without arguments, it prints *page 1* information. Build in commands 
@@ -393,6 +403,7 @@ COMMANDS
     LCF commands are listed bellow. Under this xadmin command new commands might
     appear if plugins are registering them with *ndrx_lcf_xadmin_add(3)* API
     calls.
+
 *shmcfg*::
     Command is used to print the shared memory configuration information. The
     memory segment is the same as for *LCF*, but these settings are used for
@@ -400,13 +411,35 @@ COMMANDS
     with each command publication. *use_ddr* set to *1* if data-dependent-routing used
     or per service settings are published. *ddr_page* - current page number used
     by settings *0* or *1* as double buffering is used for lock-less operations.
-    *ddr_ver1* version number of current DDR setting.
+    *ddr_ver1* version number of current DDR setting. *is_mmode* - set to *1*
+    in case if singleton process groups are in maintenance mode, i.e. 
+    groups will not failover to this node, even if lock can be acquired.
+    *0* - maintance mode disabled.
 
 *prtsvc*::
     Print routing services from current shared memory page. Flags *-a* means
     all slots of linear hash. *-i* only used slots. *-w* slots which was in
     use. By default only used slots are printed.
 
+*psg* [-a]::
+    Print information about singleton process groups. By default command
+    prints the information about used groups. However to see all groups
+    including unused, specify parameter *-a*.
+
+*mmon*::
+    Put local Enduro/X not into maintenance mode. Such mode means that
+    none of the singleton process group lock providers (i.e. *exsinglesv(8)*)
+    would not try to acquire the lock. However, this mode does not affedt
+    any currently locked groups. Current maintenance mode status can
+    be inspected with *shmcfg* command, parameter *is_mmon*. By default
+    maintenance mode is off. The maintenance mode flag can be enabled
+    before booting the instance, effectively allowing to start with
+    all singleton process group staying in *wait* state.  The mode
+    is automatically disabled when Enduro/X instance is shutdown.
+
+*mmoff*::
+    Disable local Enduro/X instance maintenance mode, which previously
+    was set by *mmon* command.
 
 ENDURO/X LCF COMMANDS
 ---------------------

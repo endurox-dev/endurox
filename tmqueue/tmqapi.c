@@ -208,7 +208,7 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     
     /* Build up the message. */
     tmq_setup_cmdheader_newmsg(&p_msg->hdr, p_msg->hdr.qname, 
-            tpgetnodeid(), G_server_conf.srv_id, ndrx_G_qspace, p_msg->qctl.flags);
+            G_tmqueue_cfg.vnodeid, G_server_conf.srv_id, ndrx_G_qspace, p_msg->qctl.flags);
     
     /* Return the message id. */
     memcpy(qctl_out.msgid, p_msg->hdr.msgid, TMMSGIDLEN);
@@ -530,7 +530,7 @@ expublic int tmq_mqlq(UBFH *p_ub, int cd)
     int ret = EXSUCCEED;
     long revent;
     fwd_qlist_t *el, *tmp, *list;
-    short nodeid = tpgetnodeid();
+    short nodeid = G_tmqueue_cfg.vnodeid;
     short srvid = tpgetsrvid();
     char *fn = "tmq_printqueue";
     /* Get list of queues */
@@ -603,7 +603,7 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
     int ret = EXSUCCEED;
     long revent;
     fwd_qlist_t *el, *tmp, *list;
-    short nodeid = tpgetnodeid();
+    short nodeid = G_tmqueue_cfg.vnodeid;
     short srvid = tpgetsrvid();
     char *fn = "tmq_mqlc";
     char qdef[TMQ_QDEF_MAX];
@@ -683,7 +683,7 @@ expublic int tmq_mqlm(UBFH *p_ub, int cd)
     int ret = EXSUCCEED;
     long revent;
     tmq_memmsg_t *el = NULL, *tmp = NULL, *list = NULL;
-    short nodeid = tpgetnodeid();
+    short nodeid = G_tmqueue_cfg.vnodeid;
     short srvid = tpgetsrvid();
     char *fn = "tmq_mqlm";
     char qname[TMQNAMELEN+1];

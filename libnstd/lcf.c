@@ -48,13 +48,17 @@
 #include <lcfint.h>
 #include "exsha1.h"
 #include <exatomic.h>
+#include <singlegrp.h>
+#include <lcfint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_LCFMAX_DFLT         20      /**< Default max commands       */
 #define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
 #define MAX_LCFREADERS_DFLT     1000    /**< Lcf readers max this is priority */
 #define MAX_LCFSTARTMAX_DFLT    60      /**< Apply 60 seconds old commands */
-
+#define SGMREFRESHMAX_DFLT      30      /**< Number of sec. in which lock stamp must be refreshed */
+#define PGMAX_DFLT              64      /**< Maximum number of singleton groups */
+#define PGMAX_MAX               99999   /**< Upper limit of number of process groups */
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -275,6 +279,41 @@ expublic int ndrx_lcf_init(void)
     NDRX_LOG_EARLY(log_info, "%s set to %s", CONF_NDRX_QPREFIX, 
             ndrx_G_libnstd_cfg.qprefix);
 
+    /* Read maximum number of singleton groups */
+    tmp = getenv(CONF_NDRX_PGMAX);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.pgmax = PGMAX_DFLT;
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.pgmax = atol(tmp);
+    }
+
+    if (ndrx_G_libnstd_cfg.pgmax > PGMAX_MAX)
+    {
+        NDRX_LOG_EARLY(log_error, "%s value %d exceeds hard limit %d, defaulting to %d",
+            CONF_NDRX_PGMAX, ndrx_G_libnstd_cfg.pgmax, PGMAX_MAX, PGMAX_MAX);
+        ndrx_G_libnstd_cfg.pgmax=PGMAX_MAX;
+    }
+
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_PGMAX,
+            ndrx_G_libnstd_cfg.pgmax);
+
+    /* Read the SG refresh time */
+    tmp = getenv(CONF_NDRX_SGREFRESH);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.sgrefreshmax = SGMREFRESHMAX_DFLT;
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.sgrefreshmax = atol(tmp);
+    }
+
+    NDRX_LOG_EARLY(log_debug, "%s set to %d", CONF_NDRX_SGREFRESH, 
+            ndrx_G_libnstd_cfg.sgrefreshmax);
+
     /* get number of concurrent threads */
     tmp = getenv(CONF_NDRX_SVQREADERSMAX);
     if (NULL==tmp)
@@ -288,7 +327,6 @@ expublic int ndrx_lcf_init(void)
     NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_SVQREADERSMAX, 
             ndrx_G_libnstd_cfg.svqreadersmax);
     
-    
     /* get number of concurrent threads */
     tmp = getenv(CONF_NDRX_LCFREADERSMAX);
     if (NULL==tmp)
@@ -301,7 +339,6 @@ expublic int ndrx_lcf_init(void)
     }
     NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_LCFREADERSMAX, 
             ndrx_G_libnstd_cfg.lcfreadersmax);
-    
     
     /* Max number of LCF commands */
     tmp = getenv(CONF_NDRX_LCFMAX);
@@ -341,10 +378,10 @@ expublic int ndrx_lcf_init(void)
     }
     else
     {
-	int tmpkey;
+	    int tmpkey;
         
         sscanf(tmp, "%x", &tmpkey);
-	ndrx_G_libnstd_cfg.ipckey = tmpkey;
+	    ndrx_G_libnstd_cfg.ipckey = tmpkey;
 
         NDRX_LOG_EARLY(log_info, "(sysv queues): SystemV IPC Key set to: [%x]",
                             ndrx_G_libnstd_cfg.ipckey);
@@ -374,9 +411,11 @@ expublic int ndrx_lcf_init(void)
     M_lcf_shm.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SHM_LCF_KEYOFSZ;
     
     /* calculate the size of the LCF */
-    M_lcf_shm.size = sizeof(ndrx_lcf_shmcfg_t) + sizeof(ndrx_lcf_command_t) * 
-            ndrx_G_libnstd_cfg.lcfmax;
-    
+    M_lcf_shm.size = sizeof(ndrx_lcf_shmcfg_t) 
+        /* LCF command segment */
+        + sizeof(ndrx_lcf_command_t) * ndrx_G_libnstd_cfg.lcfmax 
+        /*  Singleton group segment */
+        + sizeof(ndrx_sg_shm_t) * ndrx_G_libnstd_cfg.pgmax;
     
     snprintf(M_lcf_shm.path,  sizeof(M_lcf_shm.path), NDRX_SHM_LCF,  ndrx_G_libnstd_cfg.qprefix);
     
@@ -453,6 +492,12 @@ expublic int ndrx_lcf_init(void)
     
     ndrx_lcf_func_add_int(&creg);
     
+    if (EXSUCCEED!=ndrx_sg_init())
+    {
+        NDRX_LOG_EARLY(log_error, "Singleton group init failed");
+        EXFAIL_OUT(ret);
+    }
+
 out:
     
     if (EXSUCCEED!=ret)
@@ -897,6 +942,7 @@ expublic void ndrx_lcf_remove(key_t ipckeybase, char *q_prefix)
     snprintf(M_lcf_shm.path,  sizeof(M_lcf_shm.path), NDRX_SHM_LCF,  q_prefix);
     
     ndrx_shm_remove(&M_lcf_shm);
+    ndrx_G_shmcfg=NULL;
     /* remove semaphores.. */
     ndrx_sem_remove(&M_lcf_sem, EXTRUE);
      
@@ -942,9 +988,7 @@ expublic void ndrx_lcf_reset(void)
     /* clean the thing... */
     memset(ndrx_G_shmcfg->commands, 0, sizeof(ndrx_G_shmcfg->commands[0])*ndrx_G_libnstd_cfg.lcfmax);
     
-    
     ndrx_sem_rwunlock(&M_lcf_sem, 0, NDRX_SEM_TYP_WRITE);
-    
     
     ndrx_G_shmcfg->use_ddr = EXFALSE;
     ndrx_G_shmcfg->ddr_page=0;

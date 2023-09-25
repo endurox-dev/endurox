@@ -49,6 +49,7 @@ extern "C" {
 #include <libxml/xmlreader.h>
 #include <ndrx_ddr.h>
 #include <signal.h>
+#include <libndrxconf.h>
 /*---------------------------Externs------------------------------------*/
 extern sigset_t ndrx_G_org_mask;    /**< original process mask          */
 /*---------------------------Macros-------------------------------------*/
@@ -125,6 +126,8 @@ struct conf_server_node
     int mindispatchthreads; /**< minimum dispatch threads                     */
     int maxdispatchthreads; /**< maximum dispatch threads                     */
     int threadstacksize;    /**< thread stack size in KB, 0 - default         */
+    int procgrp_no;          /**< process group number, 0 - not used          */
+    int procgrp_lp_no;       /**< group number, for which process provides lock, 0 - not used */
     
     /* have entries for environment */
     
@@ -195,6 +198,7 @@ struct pm_node
     int reloadonchange_cksum; /**< Checksum code of the binary                */
     char binary_path[PATH_MAX+1]; /**< Path were binary lives...              */
     int resid;              /**< Res id to be installed in shm for poll & sysv*/
+    int procgrp_lp_no;      /**< Group number for lock provider, actually reported */
     /* Linked list */
     pm_node_t *prev;
     pm_node_t *next;
@@ -285,6 +289,8 @@ typedef struct
     int default_mindispatchthreads; /**< minimum dispatch threads             */
     int default_maxdispatchthreads; /**< maximum dispatch threads             */
     int default_threadstacksize;    /**< thread stack size in KB, 0 - default */
+    int default_procgrp_no;         /**< Default process group number          */
+    int default_procgrp_lp_no;      /**< Default process group number, used by lockprov */
     
     /** Environment group hash */
     ndrx_env_group_t *envgrouphash;
@@ -300,7 +306,9 @@ typedef struct
     
     /** malloc'd an compiled routing blocks             */
     char *routing_block;
-    
+
+    /** process groups */
+    ndrx_procgroups_t *procgroups;
     
 } config_t;
 
@@ -425,6 +433,7 @@ extern int app_startup(command_startstop_t *call,
 extern int is_srvs_down(void);
 
 extern int ndrxd_unlink_pid_file(int second_call);
+extern void ndrx_mark_singlegrp_srv_booted(int nrgrps, int *sg_groups);
 
 /* Error handling API */
 extern void NDRXD_error (char *str);

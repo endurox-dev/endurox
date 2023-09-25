@@ -251,9 +251,9 @@ out:
         {
             if (NULL!=thread_data->buf)
             {
-                NDRX_FREE(thread_data->buf);
+                NDRX_SYSBUF_FREE(thread_data->buf);
             }
-            NDRX_FREE(thread_data);
+            NDRX_FPFREE(thread_data);
         }
     }
     return ret;

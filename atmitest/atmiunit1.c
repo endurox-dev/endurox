@@ -799,6 +799,41 @@ Ensure(test101_dupsrv)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test102_procgrp)
+{
+    int ret;
+    ret=system_dbg("test102_procgrp/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test103_singlegrp)
+{
+    int ret;
+    ret=system_dbg("test103_singlegrp/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test104_tmqfailover)
+{
+    int ret;
+    ret=system_dbg("test104_tmqfailover/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test105_respawn)
+{
+    int ret;
+    ret=system_dbg("test105_respawn/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test106_periodcb)
+{
+    int ret;
+    ret=system_dbg("test106_periodcb/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -950,9 +985,10 @@ TestSuite *atmi_test_all(void)
  * if crash testing is performed
  */
 #ifndef EX_USE_EMQ
+    /* EMQ does not support Q struct lock recovery from crashes */
     add_test(suite, test086_tmqlimit);
-#endif
     add_test(suite, test087_tmsrv);
+#endif
     add_test(suite, test088_addlog);
     add_test(suite, test089_tmrecover);
     add_test(suite, test090_tuxmig);
@@ -980,6 +1016,11 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test099_callbuflen);
     add_test(suite, test100_svstdout);
     add_test(suite, test101_dupsrv);
+    add_test(suite, test102_procgrp);
+    add_test(suite, test103_singlegrp);
+    add_test(suite, test104_tmqfailover);
+    add_test(suite, test105_respawn);
+    add_test(suite, test106_periodcb);
     
     return suite;
 }

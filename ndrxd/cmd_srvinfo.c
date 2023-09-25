@@ -80,6 +80,7 @@ exprivate void start_start_info(pm_node_t * p_pm, srv_status_t * srvinfo)
     p_pm->exec_seq_try = 0;  /* Reset counter as we are good */
     p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
     p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
+    p_pm->procgrp_lp_no = srvinfo->srvinfo.procgrp_lp_no; /**< Reported singleton group... */
 }
 /**
  * Process Server Info request.

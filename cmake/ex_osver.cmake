@@ -32,7 +32,7 @@
 ## -----------------------------------------------------------------------------
 ##
 
-cmake_minimum_required (VERSION 3.1) 
+cmake_minimum_required (VERSION 3.5) 
 
 #
 # Required includes for macro package
@@ -149,7 +149,8 @@ macro(ex_osver)
         # Common for RHEL based linux:
         set(LSB_RELEASE_OUTPUT_OS "el")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
-    elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "sles")
+    elseif ( (${LSB_RELEASE_OUTPUT_OS} STREQUAL "sles") OR
+            (${LSB_RELEASE_OUTPUT_OS} STREQUAL "suse") )
         # Common for suse linux:
         set(LSB_RELEASE_OUTPUT_OS "sl")
         set(LSB_RELEASE_OUTPUT_VER ${EX_LSB_RELEASE_VER_MAJOR})
@@ -160,11 +161,14 @@ macro(ex_osver)
     elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "AIX")
         set(LSB_RELEASE_OUTPUT_OS "aix")
         set(LSB_RELEASE_OUTPUT_VER "${EX_LSB_RELEASE_VER_MAJOR}${EX_LSB_RELEASE_VER_MINOR}")
-    elseif (${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_solaris")
+    elseif ( (${LSB_RELEASE_OUTPUT_OS} STREQUAL "oracle_solaris") )
         set(LSB_RELEASE_OUTPUT_OS "solaris")
         if (LSB_RELEASE_OUTPUT_VER MATCHES "^([0-9]+).*$")
             set(LSB_RELEASE_OUTPUT_VER ${CMAKE_MATCH_1})
         endif()
+    elseif ( (${LSB_RELEASE_OUTPUT_OS} STREQUAL "SUNOS") AND ${EX_LSB_RELEASE_VER_MAJOR} STREQUAL "5")
+        set(LSB_RELEASE_OUTPUT_OS "solaris")
+        set(LSB_RELEASE_OUTPUT_VER "${EX_LSB_RELEASE_VER_MINOR}")
     endif()
 
     message("LSB_RELEASE OS  = ${LSB_RELEASE_OUTPUT_OS}")
@@ -201,8 +205,12 @@ macro(ex_cpuarch)
         set(EX_CPU_ARCH "x86_64")
     elseif(${EX_CPU_ARCH} STREQUAL "powerpc_64")
         set(EX_CPU_ARCH "ppc64")
+    elseif(${EX_CPU_ARCH} STREQUAL "arm64_64")
+        set(EX_CPU_ARCH "arm64")
     elseif(${EX_CPU_ARCH} STREQUAL "powerpc")
         set(EX_CPU_ARCH "ppc")
+    elseif(${EX_CPU_ARCH} STREQUAL "sparc_64")
+        set(EX_CPU_ARCH "sparc64")
     endif()
 
 endmacro(ex_cpuarch)

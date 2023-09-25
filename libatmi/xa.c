@@ -236,7 +236,6 @@ exprivate MUTEX_LOCKDECL(M_is_xa_init_lock);
 exprivate int atmi_xa_init_thread(int do_open);
 exprivate int ndrx_xa_join_fail(int *did_abort, int force_abort);
 
-
 /******************************************************************************/
 /*                          LIB INIT                                          */
 /******************************************************************************/
@@ -284,7 +283,6 @@ expublic void atmi_xa_uninit(void)
         G_atmi_tls->M_is_curtx_init = EXFALSE;
     }
 }
-
 
 /**
  * Initialize the XA drivers
@@ -739,7 +737,6 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int silent_err)
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_start_entry(xid, 
                                     G_atmi_env.xa_rmid, flags)))
     {
-        
         if ((flags & TMJOIN || flags & TMRESUME) && XAER_NOTA==ret)
         {
             need_retry = EXFALSE;
@@ -1086,9 +1083,6 @@ out:
 /******************************************************************************/
 /*                          ATMI API                                          */
 /******************************************************************************/
-
-
-
 
 /**
  * Begin the global transaction.
@@ -1543,8 +1537,6 @@ out_no_reset:
         tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
         ndrx_TPrestore_error(&err);
     }
-
-
 
     return ret;
 }

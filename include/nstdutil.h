@@ -449,6 +449,7 @@ extern NDRX_API void ndrx_str_trim_left_single(char *input, char symb);
 extern NDRX_API void ndrx_str_unescape(char *input, char *symbs);
 extern NDRX_API char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs);
 extern NDRX_API int ndrx_str_valid_cid(char *str, int max_len);
+extern NDRX_API int ndrx_str_valid_alphanumeric_(char *str, int max_len);
 extern NDRX_API int ndrx_str_ends_with(char *str, char *needle);
 extern NDRX_API long ndrx_file_age(char *fname);
 extern NDRX_API char *ndrx_file_read(char *fname, size_t *bytes_loaded);
@@ -481,6 +482,10 @@ extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
 
 extern NDRX_API void ndrx_cid_generate(unsigned char prefix, exuuid_t out);
 
+extern NDRX_API int ndrx_realtime_get(struct timespec *tp);
+extern NDRX_API char * ndrx_basename(char *path);
+extern NDRX_API void ndrx_volatile_strcpy(volatile char *dest, const volatile char *src, size_t dest_size);
+extern NDRX_API void ndrx_volatile_memcy(volatile char *dest, const volatile char *src, size_t n);
 #ifdef	__cplusplus
 }
 #endif

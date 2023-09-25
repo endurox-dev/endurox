@@ -52,7 +52,10 @@
 #include "cpmsrv.h"
 #include "userlog.h"
 #include <exregex.h>
-  
+#include <exhash.h>
+#include <singlegrp.h>
+#include <lcfint.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -85,7 +88,6 @@ void CPMSVC (TPSVCINFO *p_svc)
     BFLDLEN len = sizeof(cmd);
     
     p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 4096);
-    
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMCOMMAND, 0, cmd, &len))
     {
@@ -293,9 +295,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, "tpsvrdone called - shutting down client processes...");
     
     cpm_killall();
-    
     cpm_sigchld_uninit();
-    
     ndrx_cltshm_detach();
     ndrx_cltshm_remove(EXFALSE);
 
@@ -309,10 +309,13 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 exprivate int cpm_callback_timer(void)
 {
     int ret = EXSUCCEED;
+    int i;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     static int first = EXTRUE;
     static ndrx_stopwatch_t t;
+    int nrgrps = ndrx_G_libnstd_cfg.pgmax;
+    int sg_groups[nrgrps];
     
     if (first)
     {
@@ -327,9 +330,15 @@ exprivate int cpm_callback_timer(void)
     
     ndrx_stopwatch_reset(&t);
     
-    
     NDRX_LOG(log_debug, "cpm_callback_timer() enter");
-            
+
+    /* Take a group snapshoot
+     * Check lock here only once, as spawning is quick (no wait on status...)
+     * if in-order group, check that servers are booted in first place and only then
+     * boot this group of clients.
+     */
+    ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, NDRX_SG_SRVBOOTCHK);
+
     /* Mark config as not refreshed */
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
@@ -337,11 +346,30 @@ exprivate int cpm_callback_timer(void)
                 c->tag, c->subsect, c->dyn.req_state, c->dyn.cur_state);
         
         if ((CLT_STATE_NOTRUN==c->dyn.cur_state ||
-                CLT_STATE_STARTING==c->dyn.cur_state)  &&
+                CLT_STATE_STARTING==c->dyn.cur_state ||
+                CLT_STATE_WAIT==c->dyn.cur_state)  &&
                 CLT_STATE_STARTED==c->dyn.req_state)
         {
-            /* Try to boot the process... */
-            cpm_exec(c);
+            /* check the group state... */
+            if (c->stat.procgrp_no > 0 
+                && ndrx_ndrxconf_procgroups_is_singleton(ndrx_G_procgroups_config
+                    , c->stat.procgrp_no)
+                && !sg_groups[c->stat.procgrp_no-1])
+            {
+                if (CLT_STATE_WAIT!=c->dyn.cur_state)
+                {
+                    /* can do without lock, as no threads may set
+                     * other status, as process is not running
+                     */
+                    c->dyn.cur_state=CLT_STATE_WAIT;
+                    cpm_set_cur_time(c);
+                }
+            }
+            else
+            {
+                /* Try to boot the process... */
+                cpm_exec(c);
+            }
         }
         else if (CLT_STATE_STARTED==c->dyn.cur_state && 
                 (EXFAIL!=c->stat.rssmax || EXFAIL!=c->stat.vszmax)
@@ -419,9 +447,19 @@ exprivate int cpm_callback_timer(void)
             
         } /* started & require mem test... */
        
-        cpm_pidtest(c);
+        cpm_pidtest(c, sg_groups);
        
     } /* hash loop */
+
+    /* mark groups as booted.. */
+    for (i=0; i<nrgrps; i++)
+    {
+        if (sg_groups[i] && !ndrx_sg_bootflag_clt_get(i+1))
+        {
+            NDRX_LOG(log_debug, "Marking singleton group %d as clients booted", i);
+            ndrx_sg_bootflag_clt_set(i+1);
+        }
+    }
     
 out:
     return EXSUCCEED;
@@ -489,7 +527,7 @@ exprivate int cpm_sc_obj(UBFH *p_ub, int cd, char *tag, char *subsect,
         
         if (CLT_STATE_STARTED ==  c->dyn.cur_state)
         {
-            if (EXSUCCEED==cpm_kill(c))
+            if (EXSUCCEED==cpm_kill(c)) 
             {
                 snprintf(debug, sizeof(debug), "Client process %s/%s stopped", 
                         tag, subsect);
@@ -657,9 +695,10 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     int ret = EXSUCCEED;
     char msg[256];
     cpm_process_t *c = NULL, *ct = NULL;
-    
-    char tag[CPM_TAG_LEN+1];
-    char subsect[CPM_SUBSECT_LEN+1];
+    BFLDLEN tmp_len;
+    char tag[CPM_TAG_LEN+1]={EXEOS};
+    char subsect[CPM_SUBSECT_LEN+1]={EXEOS};
+    char procgrp[MAXTIDENT+1]={EXEOS};
     
     char regex_tag[CPM_TAG_LEN * 2 + 2 + 1]; /* all symbols can be escaped, 
                                             * have ^$ start/end and EOS */
@@ -673,10 +712,11 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     
     int nr_proc = 0;
     
-    if (EXSUCCEED!=Bget(p_ub, EX_CPMTAG, 0, tag, 0L))
-    {
-        NDRX_LOG(log_error, "Missing EX_CPMTAG!");
-    }
+    tmp_len=sizeof(tag);
+    Bget(p_ub, EX_CPMTAG, 0, tag, &tmp_len);
+
+    tmp_len=sizeof(procgrp);
+    Bget(p_ub, EX_CPMPROCGRP, 0, procgrp, &tmp_len);
     
     if (EXSUCCEED!=Bget(p_ub, EX_CPMSUBSECT, 0, subsect, 0L))
     {
@@ -684,8 +724,50 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     }
     
     Bget(p_ub, EX_CPMWAIT, 0, (char *)&twait, 0L);
-    
-    if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
+    if (EXEOS!=procgrp[0])
+    {
+        /* resolve process group */
+        ndrx_procgroup_t* p_grp=ndrx_ndrxconf_procgroups_resolvenm(ndrx_G_procgroups_config, 
+            procgrp);
+
+        if (NULL==p_grp)
+        {
+            snprintf(msg, sizeof(msg), "Process group [%s] not found", procgrp);
+            cpm_send_msg(p_ub, cd, msg);
+            EXFAIL_OUT(ret);
+        }
+
+        /* loop over, match & execute... */
+        EXHASH_ITER(hh, G_clt_config, c, ct)
+        {
+            if (c->stat.procgrp_no==p_grp->grpno)
+            {
+                int cur_nr_proc = nr_proc;
+                NDRX_LOG(log_debug, "[%s]/[%s] procgrp_no %d - matched", 
+                    c->tag, c->subsect, c->stat.procgrp_no);
+                
+                if (EXSUCCEED!=p_func(p_ub, cd, c->tag, c->subsect, c, &nr_proc))
+                {
+                    NDRX_LOG(log_error, "Matched process [%s]/[%s] procgrp_no %d failed to start/stop",
+                            c->tag, c->subsect, c->stat.procgrp_no);
+                }
+
+                if (cur_nr_proc!=nr_proc && twait > 0)
+                {
+                    NDRX_LOG(log_debug, "Sleeping %d millisec", twait);
+                    usleep(twait*1000);
+                }
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "[%s]/[%s] procgrp_no %d - NOT matched group %d", 
+                    c->tag, c->subsect, c->stat.procgrp_no, p_grp->grpno);
+            }
+        }
+        snprintf(msg, sizeof(msg), "%d client(s) %s.", nr_proc, finish_msg);
+        cpm_send_msg(p_ub, cd, msg);
+    }
+    else if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
     {
         c = cpm_client_get(tag, subsect);
         /* Bug #428 */
@@ -699,7 +781,6 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
         }
         else
         {
-        
             snprintf(msg, sizeof(msg), "Client process %s/%s not found",
                     tag, subsect);
             cpm_send_msg(p_ub, cd, msg);
@@ -719,7 +800,6 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
             cpm_send_msg(p_ub, cd, msg);
         }
         r_comp_tag_alloc=EXTRUE;
-        
         
         ndrx_regasc_cpyesc(regex_subsect, subsect, '^', '$', '%', ".*");
         NDRX_LOG(log_debug, "Got regex subsect: [%s]", subsect);
@@ -742,7 +822,6 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
             {
                 int cur_nr_proc = nr_proc;
                 NDRX_LOG(log_debug, "[%s]/[%s] - matched", c->tag, c->subsect);
-                
                 
                 if (EXSUCCEED!=p_func(p_ub, cd, c->tag, c->subsect, c, &nr_proc))
                 {
@@ -820,16 +899,36 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
     char output[256];
     char buffer [80];
     struct tm timeinfo;
+    int len;
     
     NDRX_LOG(log_info, "cpm_pc: listing clients");
     /* Remove dead un-needed processes (killed & not in new config) */
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
-        
         NDRX_LOG(log_info, "cpm_pc: %s/%s", c->tag, c->subsect);
         
+        buffer[0]=EXEOS;
+
+        if (c->stat.procgrp_no > 0)
+        {
+            ndrx_procgroup_t* p_grp=ndrx_ndrxconf_procgroups_resolveno(ndrx_G_procgroups_config, 
+                c->stat.procgrp_no);
+
+            NDRX_STRCPY_SAFE(buffer, "process group");
+            /* can be null, as for existing processes config validity of cpmsrv is not enforced */
+            if (NULL!=p_grp)
+            {
+                len = strlen(buffer);
+                snprintf(buffer+len, sizeof(buffer)-len, " %s ", p_grp->grpname);
+            }
+
+            len = strlen(buffer);
+            snprintf(buffer+len, sizeof(buffer)-len, "(no %d), ", c->stat.procgrp_no);
+        }
+
+        len = strlen(buffer);
         localtime_r (&c->dyn.stattime, &timeinfo);
-        strftime (buffer, 80, "%c", (&timeinfo));
+        strftime (buffer+len, sizeof(buffer)-len, "%c", (&timeinfo));
     
         if (CLT_STATE_STARTED == c->dyn.cur_state)
         {
@@ -840,6 +939,12 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
                 c->dyn.req_state != CLT_STATE_NOTRUN)
         {
             snprintf(output, sizeof(output), "%s/%s - starting (%s)",c->tag, 
+                    c->subsect, buffer);
+        }
+        else if (CLT_STATE_WAIT == c->dyn.cur_state && 
+                c->dyn.req_state != CLT_STATE_NOTRUN)
+        {
+            snprintf(output, sizeof(output), "%s/%s - waiting on group lock (%s)",c->tag, 
                     c->subsect, buffer);
         }
         else if (c->dyn.was_started && (c->dyn.req_state == CLT_STATE_STARTED) )

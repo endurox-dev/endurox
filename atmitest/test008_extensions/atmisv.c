@@ -150,6 +150,7 @@ int poll_connect_22(int fd, uint32_t events, void *ptr1)
         else if (sz==0)
         {
             NDRX_LOG(log_debug,"peer disconnected");
+            sleep(1);
         }
         else
         {

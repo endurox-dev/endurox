@@ -58,8 +58,10 @@
 #include <bridge_int.h>
 #include <atmi_shm.h>
 #include <sys_unix.h>
-#include <exenvapi.h>
+#include <libndrxconf.h>
 #include <ndrxdiag.h>
+#include <lcfint.h>
+#include <singlegrp.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -847,7 +849,7 @@ exprivate int wait_for_status(pm_node_t *p_pm, long *p_processes_started, int *d
     int ret = EXSUCCEED;
     ndrx_stopwatch_t timer;
     int finished = EXFALSE;
-    
+
     /* this is parent for child - sleep some seconds, then check for PID... */
     /* TODO: Replace sleep with wait call from service - wait for message? */
     /*usleep(250000);  250 milli seconds */
@@ -903,13 +905,18 @@ out:
  * Start single process...
  * TODO: Add SIGCHLD handler here!
  * @param pm
+ * @param do_wait - wait for process startup results
+ * @param sg_snapshoot - snapshoot of the singleton groups
+ * @param is_respawn - did process restart after the crash?
  * @return SUCCEED/FAIL
  */
 expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
-            int no_wait,
-            int *doabort)
+            int do_wait,
+            int *doabort,
+            int *sg_snapshoot,
+            int is_respawn)
 {
     int ret=EXSUCCEED;
     pid_t pid;
@@ -954,11 +961,34 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
          */
         was_starting=EXTRUE;
     }
+    else if (   p_pm->conf->procgrp_no > 0
+                /* group is singleton: */
+                && ndrx_ndrxconf_procgroups_is_singleton(G_app_config->procgroups, 
+                    p_pm->conf->procgrp_no)
+                /* and group is not locked by snapshoot or current data */
+        &&  (  (NULL!=sg_snapshoot && !sg_snapshoot[p_pm->conf->procgrp_no-1])
+            || EXTRUE!=ndrx_sg_is_locked(p_pm->conf->procgrp_no, NULL, 0)
+            ))
+    {
+        NDRX_LOG(log_warn, " %s/%d Not staring as singleton process group %d is not locked",
+                                    p_pm->binary_name, p_pm->srvid, p_pm->conf->procgrp_no);
+
+        if (NULL!=p_startup_progress)
+            p_startup_progress(cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STARTING);
+
+        if (NDRXD_PM_WAIT!=p_pm->state)
+        {
+            p_pm->state = NDRXD_PM_WAIT;
+            p_pm->reqstate = NDRXD_PM_RUNNING_OK;
+            p_pm->state_changed = SANITY_CNT_START;
+        }
+        goto progress_out;
+    }
     else
     {
         p_pm->state = NDRXD_PM_STARTING;
     }
-    
+
     p_pm->state_changed = SANITY_CNT_START;
 
     if (NULL!=p_startup_progress)
@@ -968,7 +998,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     {
         NDRX_LOG(log_info, "Binary was restarted and startup was requested, sync");
         
-        if (!no_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
+        if (do_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
         {
             EXFAIL_OUT(ret);
         }
@@ -1083,6 +1113,24 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             NDRX_PM_SET_ENV(CONF_NDRX_THREADSTACKSIZE, tmp);
         }
 
+        /* export process groups */
+        if (p_pm->conf->procgrp_lp_no > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->procgrp_lp_no);
+            NDRX_PM_SET_ENV(CONF_NDRX_PROCGRP_LP_NO, tmp);
+        }
+
+        if (p_pm->conf->procgrp_no > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->procgrp_no);
+            NDRX_PM_SET_ENV(CONF_NDRX_PROCGRP_NO, tmp);
+        }
+
+        if (is_respawn)
+        {
+            NDRX_PM_SET_ENV(CONF_NDRX_RESPAWN, "1");
+        }
+
         alloc_args = 0;
         REALLOC_CMD;
         
@@ -1165,9 +1213,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 exit(1);
             }
         }
-        
+
         /* process env variables defined in ndrxconfig.xml */
-        
         if (EXSUCCEED!=ndrx_ndrxconf_envs_applyall(p_pm->conf->envgrouplist,
                 p_pm->conf->envlist))
         {
@@ -1272,12 +1319,19 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         }
         
         /* Do bellow stuff only if we can wait! */
-        if (!no_wait)
+        if (do_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
         {
-            if (EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
-            {
-                EXFAIL_OUT(ret);
-            }
+            EXFAIL_OUT(ret);
+        }
+
+        /* if was started, and given process provides singleton group lock,
+         * update the snapshoot, as normally lock provider would come first
+         */
+        if (NULL!=sg_snapshoot 
+            && p_pm->procgrp_lp_no > 0
+            && EXTRUE==ndrx_sg_is_locked(p_pm->procgrp_lp_no, NULL, 0))
+        {
+            sg_snapshoot[p_pm->procgrp_lp_no-1] = EXTRUE;
         }
     }
     else
@@ -1441,6 +1495,24 @@ out:
 }
 
 /**
+ * Mark group as booted
+ * @param nrgrps number of groups
+ * @param sg_groups array of groups
+ */
+expublic void ndrx_mark_singlegrp_srv_booted(int nrgrps, int *sg_groups)
+{
+    int i;
+    for (i=0; i<nrgrps; i++)
+    {
+        if (sg_groups[i] && !ndrx_sg_bootflag_srv_get(i+1))
+        {
+            NDRX_LOG(log_debug, "Marking singleton group %d as servers booted", i);
+            ndrx_sg_bootflag_srv_set(i+1);
+        }
+    }
+}
+
+/**
  * Start whole application. If configuration is not loaded, then this will
  * initiate configuration load.
  * @return SUCCEED/FAIL
@@ -1451,6 +1523,7 @@ expublic int app_startup(command_startstop_t *call,
 {
     int ret=EXSUCCEED;
     pm_node_t *p_pm;
+    ndrx_procgroup_t *p_procgrp;
     int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
 
@@ -1467,6 +1540,17 @@ expublic int app_startup(command_startstop_t *call,
     /* OK, now loop through the stuff */
     G_sys_config.stat_flags |= NDRXD_STATE_DOMSTART;
 
+    if (EXEOS!=call->procgrp[0])
+    {
+        p_procgrp =  ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
+        if (NULL==p_procgrp)
+        {
+            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
+            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
+            EXFAIL_OUT(ret);
+        }
+    }
+
     if (EXFAIL!=call->srvid)
     {
         /* Check the servid... */
@@ -1477,7 +1561,7 @@ expublic int app_startup(command_startstop_t *call,
             if (NULL!=p_pm_srvid)
             {
                 start_process(call, p_pm_srvid, p_startup_progress,
-                                    p_processes_started, EXFALSE, &abort);
+                                    p_processes_started, EXTRUE, &abort, NULL, EXFALSE);
             }
             else
             {
@@ -1491,10 +1575,15 @@ expublic int app_startup(command_startstop_t *call,
     }
     else /* process this if request for srvnm or full startup... */
     {
+        int nrgrps = ndrx_G_libnstd_cfg.pgmax;
+        int sg_groups[nrgrps];
+
         if (EXEOS==call->binary_name[0])
         {
             G_sys_config.fullstart=EXTRUE;
         }
+
+        ndrx_sg_get_lock_snapshoot(sg_groups, &nrgrps, 0);
         
         DL_FOREACH(G_process_model, p_pm)
         {
@@ -1504,22 +1593,27 @@ expublic int app_startup(command_startstop_t *call,
              * Only autostart instances needs to be booted.
              */
             if (p_pm->autostart &&
-                    ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    /* Do full startup if requested autostart! */
-                    (EXEOS==call->binary_name[0] ))) /* or If full shutdown requested */
+                    ( (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+                      (EXEOS!=call->procgrp[0] && p_pm->conf->procgrp_no == p_procgrp->grpno) ||
+                      (EXEOS!=call->procgrp[0] && (call->flags & NDRXD_CALL_FLAGS_LP2GRP) && 
+                        p_pm->conf->procgrp_lp_no == p_procgrp->grpno) ||
+                      /* Do full startup if requested autostart! */
+                      (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0])
+                    )) /* or If full shutdown requested */
             {
                 start_process(call, p_pm, p_startup_progress, 
-                        p_processes_started, EXFALSE, &abort);
+                        p_processes_started, EXTRUE, &abort, sg_groups, EXFALSE);
                 
                 if (abort)
                 {
                     NDRX_LOG(log_warn, "Aborting app domain startup!");
                     NDRXD_set_error_fmt(NDRXD_EABORT, "App domain startup aborted!");
-                    ret=EXFAIL;
-                    goto out;
+                    EXFAIL_OUT(ret);
                 }
             }
         } /* DL_FORACH pm. */
+
+        ndrx_mark_singlegrp_srv_booted(nrgrps, sg_groups);
         
         if (G_sys_config.fullstart)
         {
@@ -1544,10 +1638,29 @@ expublic int app_shutdown(command_startstop_t *call,
     int ret=EXSUCCEED;
     int abort=EXFALSE;
     pm_node_t *p_pm;
+    ndrx_procgroup_t *p_procgrp;
     
     NDRX_LOG(log_warn, "Stopping application domain");
 
+    if (EXEOS!=call->procgrp[0])
+    {
+        if (NULL==G_app_config)
+        {
+            NDRX_LOG(log_error, "Configuration not loaded!");
+            NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "Configuration not loaded!");
+            ret=EXFAIL;
+            goto out;
+        }
 
+        p_procgrp =  ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
+        if (NULL==p_procgrp)
+        {
+            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
+            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     /* OK, now loop throught the stuff 
     G_sys_config.stat_flags |= NDRXD_STATE_SHUTDOWN;
 */
@@ -1579,8 +1692,13 @@ expublic int app_shutdown(command_startstop_t *call,
         DL_REVFOREACH(G_process_model, p_pm, i)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    (EXEOS==call->binary_name[0] &&  /* or If full shutdown requested */
+            if (  
+                    (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+                    (EXEOS!=call->procgrp[0] && (p_pm->conf->procgrp_no==p_procgrp->grpno)) ||
+                    (EXEOS!=call->procgrp[0] && (call->flags & NDRXD_CALL_FLAGS_LP2GRP) && 
+                        p_pm->conf->procgrp_lp_no == p_procgrp->grpno) ||
+                    (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0] &&  
+                    /* or If full shutdown requested */
                     /* is if binary is not protected, or we run complete shutdown... */
                     (!p_pm->conf->isprotected || call->complete_shutdown))) 
             {
@@ -1642,14 +1760,26 @@ expublic int app_sreload(command_startstop_t *call,
     int ret=EXSUCCEED;
     pm_node_t *p_pm;
     int abort = EXFALSE;
-    NDRX_LOG(log_warn, "Starting application domain");
+    ndrx_procgroup_t *p_procgrp;
+    NDRX_LOG(log_warn, "Reloading application domain");
     
     if (NULL==G_app_config)
     {
-        NDRX_LOG(log_error, "No configuration loaded!");
-        NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "No configuration loaded!");
+        NDRX_LOG(log_error, "Configuration not loaded!");
+        NDRXD_set_error_fmt(NDRXD_ENOCFGLD, "Configuration not loaded!");
         ret=EXFAIL;
         goto out;
+    }
+
+    if (EXEOS!=call->procgrp[0])
+    {
+        p_procgrp = ndrx_ndrxconf_procgroups_resolvenm(G_app_config->procgroups, call->procgrp);
+        if (NULL==p_procgrp)
+        {
+            NDRX_LOG(log_warn, "Process group [%s] is not defined!", call->procgrp);
+            NDRXD_set_error_fmt(NDRXD_ENOENT, "Process group [%s] is not defined!", call->procgrp);
+            EXFAIL_OUT(ret);
+        }
     }
 
     /* OK, now loop throught the stuff 
@@ -1682,7 +1812,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm_srvid, p_startup_progress,
-                                        p_processes_started, EXFALSE, &abort);
+                                        p_processes_started, EXTRUE, &abort, NULL, EXFALSE);
                 }
                 
                 if (abort)
@@ -1708,12 +1838,15 @@ expublic int app_sreload(command_startstop_t *call,
     {
         DL_FOREACH(G_process_model, p_pm)
         {
-            if ( ((EXEOS!=call->binary_name[0] 
-                    && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
-                    (EXEOS==call->binary_name[0] && p_pm->autostart))
-                    /* start only those binaries which were requested for start: */
-                    && (PM_RUNNING(p_pm->reqstate))
-                    )
+            if ( (  (EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+                    (EXEOS!=call->procgrp[0] && p_pm->conf->procgrp_no==p_procgrp->grpno) ||
+                    (EXEOS!=call->procgrp[0] && (call->flags & NDRXD_CALL_FLAGS_LP2GRP) && 
+                        p_pm->conf->procgrp_lp_no == p_procgrp->grpno) ||
+                    (EXEOS==call->binary_name[0] && EXEOS==call->procgrp[0] && p_pm->autostart)
+                )
+                /* start only those binaries which were requested for start: */
+                && (PM_RUNNING(p_pm->reqstate))
+                )
             {
                 
                 stop_process(call, p_pm, p_shutdown_progress, 
@@ -1722,7 +1855,7 @@ expublic int app_sreload(command_startstop_t *call,
                 if (!abort)
                 {
                     start_process(call, p_pm, p_startup_progress, 
-                            p_processes_started, EXFALSE, &abort);
+                            p_processes_started, EXTRUE, &abort, NULL, EXFALSE);
                 }
                 
                 if (abort)

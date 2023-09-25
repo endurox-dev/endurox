@@ -73,8 +73,8 @@ expublic void reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *
     pm_info->state = pm->state;
     pm_info->pid = pm->pid;
 
-    NDRX_LOG(log_debug, "magic: %ld, pid: %d",
-                            pm_info->rply.magic, pm_info->pid);
+    NDRX_LOG(log_debug, "magic: %ld, pid: %d, state: %ld",
+                            pm_info->rply.magic, pm_info->pid, pm_info->state);
 }
 
 /**
@@ -124,7 +124,6 @@ expublic int cmd_start (command_call_t * call, char *data, size_t len, int conte
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
     
-    
     NDRX_LOG(log_warn, "cmd_start returns with status %d", ret);
     
 out:
@@ -153,6 +152,7 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
 
     if (NULL!=pm_pid)
     {
+        int org_state = pm_pid->p_pm->state;
         int srvid = pm_pid->p_pm->srvid;
         
         /* Bug #214 */
@@ -184,13 +184,22 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
             /* so that we do no try again to wake it up! */
             pm_pid->p_pm->state=NDRXD_PM_EXIT;
         }
+
+        /* reset state change counter */
+        if (pm_pid->p_pm->state!=org_state)
+        {
+            pm_pid->p_pm->state_changed = SANITY_CNT_START;
+        }
+
+        /* reset PM fields */
+        pm_pid->p_pm->procgrp_lp_no=0;
         
         NDRX_LOG(log_warn, "Removing resources allocated "
                             "for process [%s]", pm_pid->p_pm->binary_name);
         
         /* Find .the pm_p & remove failed process! */
 
-	/* TODO: If the PID if different one than for srvid, then we remove 
+	    /* TODO: If the PID if different one than for srvid, then we remove 
          * this thing from
          * pidhash only!!!! - Yeah right this must be fixed.
          * we had an incident in i2nc, when PID 9862 died, other was started, 

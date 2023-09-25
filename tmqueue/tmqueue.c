@@ -133,7 +133,7 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
      * TPBEGIN...
      */
     int ret=EXSUCCEED;
-    thread_server_t *thread_data = (thread_server_t *)ptr;
+    ndrx_thread_server_t *thread_data = (ndrx_thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
     int int_diag = 0;
@@ -247,6 +247,8 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
         case TMQ_CMD_ABORTTRAN:
         case TMQ_CMD_PREPARETRAN:
         case TMQ_CMD_COMMITRAN:
+        case TMQ_CMD_CHK_MEMLOG:
+        case TMQ_CMD_CHK_MEMLOG2:
             
             /* start Q space transaction */
             if (XA_OK!=ndrx_xa_qminiservce(p_ub, cmd))
@@ -293,7 +295,7 @@ out:
  * (will be done by threadpoll)
  * @return 
  */
-exprivate void tx_tout_check_th(void *ptr)
+exprivate void tx_tout_check_th(void *ptr, int *p_finish_off)
 {
     long tspent;
     qtran_log_list_t *tx_list;
@@ -424,16 +426,32 @@ exprivate int tm_tout_check(void)
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
     
     /* Check transaction timeouts only if session timeout is not disabled */
-    if (NULL==M_shutdown_ind && G_tmqueue_cfg.ses_timeout > 0)
+    if (NULL==M_shutdown_ind)
     {
-        /* no shutdown requested... yet... */
-        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
+
+        if (G_tmqueue_cfg.ses_timeout > 0)
+        {
+            /* no shutdown requested... yet... */
+            ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
+        }
+
+        /* trigger disk checks */
+        if (G_tmqueue_cfg.chkdisk_time > 0 &&
+            tmq_chkdisk_stopwatch_get_delta_sec() >=G_tmqueue_cfg.chkdisk_time )
+        {
+            /* pass th ptr to func, so that it can reset it at the end of the run? */
+            ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)G_tmq_chkdisk_th, 
+                &G_tmqueue_cfg.chkdisk_time);
+
+            /* reset stopwatch to avoid false runs (i.e. if check run is long...) */
+            tmq_chkdisk_stopwatch_reset();
+        }
+
     }
     else if (M_shutdown_ok)
     {
         ndrx_sv_do_shutdown("Async shutdown", M_shutdown_ind);
     }
-    
     
     return EXSUCCEED;
 }
@@ -450,7 +468,7 @@ void TMQUEUE (TPSVCINFO *p_svc)
     long size;
     char btype[16];
     char stype[16];
-    thread_server_t *thread_data = NDRX_MALLOC(sizeof(thread_server_t));
+    ndrx_thread_server_t *thread_data = NDRX_MALLOC(sizeof(ndrx_thread_server_t));
     char cmd = EXEOS;
     
     if (NULL==thread_data)
@@ -489,7 +507,9 @@ void TMQUEUE (TPSVCINFO *p_svc)
     if (cmd==TMQ_CMD_STARTTRAN||
             cmd==TMQ_CMD_PREPARETRAN||
             cmd==TMQ_CMD_ABORTTRAN||
-            cmd==TMQ_CMD_COMMITRAN)
+            cmd==TMQ_CMD_COMMITRAN || 
+            cmd==TMQ_CMD_CHK_MEMLOG || 
+            cmd==TMQ_CMD_CHK_MEMLOG2)
     {
         ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
@@ -612,9 +632,10 @@ int tpsvrinit(int argc, char **argv)
      * which in case of tmqueue forward enqueue failures will hang the transaction
      */
     G_tmqueue_cfg.ses_timeout=EXFAIL;
+    G_tmqueue_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:N")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:Nn:X:")) != -1)
     {
         if (optarg)
         {
@@ -627,6 +648,17 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'X':
+                G_tmqueue_cfg.chkdisk_time=atoi(optarg);
+
+                NDRX_LOG(log_info, "Check disk messages set to %d sec",
+                                G_tmqueue_cfg.chkdisk_time);
+                break;
+            case 'n':
+                G_tmqueue_cfg.vnodeid = atol(optarg);
+                NDRX_LOG(log_info, "Virtual Enduro/X Cluster Node ID set to %ld",
+                            G_tmqueue_cfg.vnodeid);
+                break;
             case 'N':
                 G_tmqueue_cfg.no_chkrun = EXTRUE;
                 NDRX_LOG(log_info, "Will not forward trigger queue run.");
@@ -776,7 +808,7 @@ int tpsvrinit(int argc, char **argv)
      * Also.. when we will recover from disk we will have to ensure the correct order
      * of the enqueued messages. We can use time-stamp for doing ordering.
      */
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TMQ, tpgetnodeid(), tpgetsrvid());
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TMQ, G_tmqueue_cfg.vnodeid, tpgetsrvid());
     
     if (EXSUCCEED!=tpadvertise(svcnm, TMQUEUE))
     {
@@ -852,6 +884,8 @@ int tpsvrinit(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialize fwd process thread");
         EXFAIL_OUT(ret);
     }
+
+    tmq_chkdisk_stopwatch_reset();
 
     /* Bug #565 */
     M_init_ok=EXTRUE;

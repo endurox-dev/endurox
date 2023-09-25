@@ -46,7 +46,8 @@
 #include <sys/types.h>
 #include <nstdutil.h>
 #include <exenv.h>
-#include <exenvapi.h>
+#include <libndrxconf.h>
+#include <singlegrp.h>
 
 #include "cpmsrv.h"
 /*---------------------------Externs------------------------------------*/
@@ -65,6 +66,11 @@ expublic cpm_process_t *G_clt_config=NULL;
  * Global environment groups
  */
 exprivate ndrx_env_group_t * M_envgrouphash = NULL;
+
+/**
+ * Actual process group configuration
+ */
+expublic ndrx_procgroups_t * ndrx_G_procgroups_config = NULL;
 
 exprivate MUTEX_LOCKDECL(M_config_lock);
 /*---------------------------Statics------------------------------------*/
@@ -203,7 +209,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     int i, genloop;
     char *token;
     char tmp_command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
-    
+    ndrx_procgroup_t *p_grp;
     memset(&cltproc, 0, sizeof(cpm_process_t));
     
     cltproc.stat.flags |= CPM_F_KILL_LEVEL_DEFAULT;
@@ -332,6 +338,25 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     cltproc.stat.flags&=~CPM_F_KILL_LEVEL_HIGH;
                     cltproc.stat.flags&=~CPM_F_KILL_LEVEL_LOW;
             }
+
+            xmlFree(p);
+        }
+        else if (0==strcmp((char *)attr->name, "procgrp"))
+        {
+            /* singleton group no */
+            p = (char *)xmlNodeGetContent(attr->children);
+            p_grp = ndrx_ndrxconf_procgroups_resolvenm(ndrx_G_procgroups_config, p);
+
+            if (NULL==p_grp)
+            {
+                NDRX_LOG(log_error, "Process group not defined: [%s]", p);
+                userlog("Process group not defined: [%s]", p);
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
+
+            cltproc.stat.procgrp_no=p_grp->grpno;
+            NDRX_LOG(log_debug, "procgrp_no %d", cltproc.stat.procgrp_no);
 
             xmlFree(p);
         }
@@ -519,13 +544,32 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
                     xmlFree(p);
                 }
+                else if (0==strcmp((char *)attr->name, "procgrp"))
+                {
+                    /* singleton group no */
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    p_grp = ndrx_ndrxconf_procgroups_resolvenm(ndrx_G_procgroups_config, p);
+
+                    if (NULL==p_grp)
+                    {
+                        NDRX_LOG(log_error, "Process group not defined: [%s]", p);
+                        userlog("Process group not defined: [%s]", p);
+                        xmlFree(p);
+                        EXFAIL_OUT(ret);
+                    }
+
+                    p_cltproc->stat.procgrp_no=p_grp->grpno;
+                    NDRX_LOG(log_debug, "procgrp_no %d", p_cltproc->stat.procgrp_no);
+
+                    xmlFree(p);
+                }
             }
             
             NDRX_LOG(log_debug, "klevel = low=%d high=%d", 
                     p_cltproc->stat.flags & CPM_F_KILL_LEVEL_LOW,
                     p_cltproc->stat.flags & CPM_F_KILL_LEVEL_HIGH
                     );
-            
+
             /* Check the client config... */
             if (EXEOS==p_cltproc->tag[0])
             {
@@ -636,30 +680,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                         sizeof(p_cltproc->stat.log_stderr));
                 
                 /* update the process name / hint */
-#if 0
-                /* TODO: Use strtokblk engine to extract first token ... */
-                //
-                p = strpbrk (p_cltproc->stat.command_line, separators);
-                
-                if (p > 0)
-                {
-                    /* get the len */
-                    len = p - p_cltproc->stat.command_line;
-                }
-                else
-                {
-                    len = strlen(p_cltproc->stat.command_line);
-                }
 
-                
-                if (len > sizeof(p_cltproc->stat.procname)-1)
-                {
-                    len = sizeof(p_cltproc->stat.procname)-1;
-                }
-                
-                strncpy(p_cltproc->stat.procname, p_cltproc->stat.command_line, len);
-                p_cltproc->stat.procname[len] = EXEOS;
-#endif
                 NDRX_STRCPY_SAFE(tmp_command_line, p_cltproc->stat.command_line);
                 
                 token = ndrx_strtokblk(tmp_command_line, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
@@ -804,7 +825,6 @@ out:
     {
        ndrx_ndrxconf_envs_groups_free(&M_envgrouphash);
     }
-
     
     return ret;
 }
@@ -812,12 +832,16 @@ out:
 /**
  * Parse config out...
  * @param doc
+ * @param cur
+ * @param config_file_short configuration file name
  * @return
  */
-exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
+exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur, char *config_file_short)
 {
     int ret=EXSUCCEED;
-    
+    ndrx_procgroups_t *tmp_conf=NULL;
+    ndrx_ndrxconf_err_t err;
+
     if (NULL==cur)
     {
         NDRX_LOG(log_error, "Empty config?");
@@ -834,11 +858,36 @@ exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
         {
             EXFAIL_OUT(ret);
         }
+        else if (0==strcmp((char*)cur->name, "procgroups"))
+        {
+            ret=ndrx_ndrxconf_procgroups_parse(&tmp_conf,
+                    doc, cur->children,
+                    config_file_short, &err);
+
+            if (EXSUCCEED!=ret)
+            {
+                EXFAIL_OUT(ret);
+            }
+
+            /* apply new configuration */
+            if (NULL!=ndrx_G_procgroups_config)
+            {
+                ndrx_ndrxconf_procgroups_free(ndrx_G_procgroups_config);
+            }
+
+            ndrx_G_procgroups_config=tmp_conf;
+            tmp_conf=NULL;
+        }
         
         cur=cur->next;
     } while (cur);
     
 out:
+
+    if (NULL!=tmp_conf)
+    {
+        ndrx_ndrxconf_procgroups_free(tmp_conf);
+    }
     
     return ret;
 }
@@ -873,7 +922,7 @@ expublic int load_xml_config(char *config_file)
     }
 
     /* Step into first childer */
-    ret=parse_config(doc, root->children);
+    ret=parse_config(doc, root->children, ndrx_basename(config_file));
     
 out:
 
@@ -936,14 +985,12 @@ expublic int load_config(void)
         goto out;
     }
     
-    
     /* Mark config as not refreshed */
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         c->is_cfg_refresh = EXFALSE;
     }
 
-    
     /* Lock so that background thread cannot access the 
      * config during the changes in struct... 
      * Bug #108 01/04/2015, mvitolin
@@ -959,7 +1006,6 @@ expublic int load_config(void)
     }
     
     /* Remove dead un-needed processes (killed & not in new config) */
-    
     EXHASH_ITER(hh, G_clt_config, c, ct)
     {
         if (!c->is_cfg_refresh && CLT_STATE_NOTRUN==c->dyn.cur_state)

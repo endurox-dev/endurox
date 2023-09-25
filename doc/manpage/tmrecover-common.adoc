@@ -56,6 +56,12 @@ any bridges to connect, thus allowing to collect orphans from cluster nodes.
 [*-p*]::
 Perform scans periodically. By default *tmrecoversv* performs scan only once.
 
+[*-i*]::
+Perform first scan during the boot time of the process. The default mode
+is to perform first scan after the *-s* specified scan time (parameter is off).
+If *-i* is specified, and *-p* is not, then condition renders parameter
+*-s* unused, as no deferred operations will be done.
+
 EXIT STATUS
 -----------
 *0*::

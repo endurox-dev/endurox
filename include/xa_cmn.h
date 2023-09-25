@@ -327,6 +327,8 @@ struct atmi_xa_log
     uint64_t    lockthreadid;   /**< Thread ID, locked the log entry */
     
     int log_version;            /**< Log file version number*/
+
+    long sg_sequence;           /**< sequence number of singleton group lock */
     
     EX_hash_handle hh;          /**< makes this structure hashable */
 };

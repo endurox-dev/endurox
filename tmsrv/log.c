@@ -65,6 +65,7 @@
 #include <exhash.h>
 #include <unistd.h>
 #include <Exfields.h>
+#include <singlegrp.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define LOG_MAX         1024
@@ -91,7 +92,6 @@
 /*---------------------------Globals------------------------------------*/
 exprivate atmi_xa_log_t *M_tx_hash = NULL; 
 exprivate MUTEX_LOCKDECL(M_tx_hash_lock); /* Operations with hash list            */
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *fmt, ...);
@@ -117,6 +117,30 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
     
     return EXSUCCEED;
 }
+
+/**
+ * Check that memory based log entry exists.
+ * @param tmxid - serialized XID
+ * @return NULL or log entry
+ */
+expublic int tms_log_exists_entry(char *tmxid)
+{
+    atmi_xa_log_t *r = NULL;
+    
+    MUTEX_LOCK_V(M_tx_hash_lock);
+    EXHASH_FIND_STR( M_tx_hash, tmxid, r);
+    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    
+    if (NULL!=r)
+    {
+        return EXTRUE;
+    }
+    else
+    {
+        return EXFALSE;
+    }
+}
+
 /**
  * Get the log entry of the transaction
  * Now we should lock it for thread.
@@ -195,6 +219,96 @@ restart:
 }
 
 /**
+ * set current lock sequence number
+ * @param p_tl log entry
+ */
+exprivate int tms_log_setseq(atmi_xa_log_t *p_tl)
+{
+    int ret= EXSUCCEED;
+    long grp_flags=0;
+    /* if we are in singleton group mode, validate that we still
+     * own the lock
+     */
+    if (G_atmi_env.procgrp_no)
+    {
+        p_tl->sg_sequence=tpsgislocked(G_atmi_env.procgrp_no
+            , TPPG_SGVERIFY|TPPG_NONSGSUCC
+            , &grp_flags);
+
+        if (EXFAIL==p_tl->sg_sequence)
+        {
+            NDRX_LOG(log_error, "tpsgislocked failed %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (grp_flags & TPPG_SINGLETON && p_tl->sg_sequence<=0)
+        {
+            NDRX_LOG(log_error, "Singleton group %d lock lost (at start) - exit(-1)",
+                G_atmi_env.procgrp_no);
+            userlog("Singleton group %d lock lost (at start) - exit(-1)",
+                G_atmi_env.procgrp_no);
+            /* !!!! */
+            exit(EXFAIL);
+        }
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * run checkpoint on transaction
+ * @param p_tl transaction log
+ */
+expublic int tms_log_checkpointseq(atmi_xa_log_t *p_tl)
+{
+    int ret=EXSUCCEED;
+    long seq;
+    long grp_flags=0;
+    /* if we are in singleton group mode, validate that we still
+     * own the lock
+     */
+    if (G_atmi_env.procgrp_no)
+    {
+        seq=tpsgislocked(G_atmi_env.procgrp_no, TPPG_SGVERIFY|TPPG_NONSGSUCC, &grp_flags);
+
+        if (seq < 0)
+        {
+            NDRX_LOG(log_error, "tpsgislocked returns %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        if ((grp_flags & TPPG_SINGLETON) && 0==seq)
+        {
+            NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost - exit(-1)",
+                G_atmi_env.procgrp_no, tpgetnodeid());
+            userlog("Singleton group %d on node %ld lock lost - exit(-1)",
+                G_atmi_env.procgrp_no, tpgetnodeid());
+            /* !!!! */
+            exit(EXFAIL);
+        }
+
+        /* failover has happened during transaction processing
+         * thus cannot proceed with decsion, only after restart
+         */
+        if ( (grp_flags & TPPG_SINGLETON) && (seq - p_tl->sg_sequence >= G_atmi_env.sglockinc))
+        {
+            NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+            userlog("Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+            /* !!!! */
+            exit(EXFAIL);
+        }
+
+        /* we are safe to continue... */
+        p_tl->sg_sequence=seq;
+    }
+out:
+    return ret;
+}
+
+/**
  * Log transaction as started
  * @param xai - XA Info struct
  * @param txtout - transaction timeout
@@ -227,7 +341,12 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     tmp->txtout = txtout;
     tmp->log_version = LOG_VERSION_2;   /**< Now with CRC32 groups */
     ndrx_stopwatch_reset(&tmp->ttimer);
-    
+
+    if (EXSUCCEED!=tms_log_setseq(tmp))
+    {
+        EXFAIL_OUT(ret);
+    }
+
     /* lock for us, yet it is not shared*/
     tmp->lockthreadid = ndrx_gettid();
     
@@ -503,7 +622,7 @@ out_nolock:
 exprivate void tms_get_file_name(atmi_xa_log_t *p_tl)
 {
     snprintf(p_tl->fname, sizeof(p_tl->fname), "%s/TRN-%ld-%hd-%d-%s", 
-            G_tmsrv_cfg.tlog_dir, tpgetnodeid(), G_atmi_env.xa_rmid, 
+            G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid, 
             G_server_conf.srv_id, p_tl->tmxid);
 }
 
@@ -592,6 +711,12 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     NDRX_STRCPY_SAFE((*pp_tl)->tmxid, tmxid);
     /* we start with active... */
     (*pp_tl)->txstage = XA_TX_STAGE_ACTIVE;
+
+    /* set lock sequence number, if in singleton group */
+    if (EXSUCCEED!=tms_log_setseq(*pp_tl))
+    {
+        EXFAIL_OUT(ret);
+    }
 
     /* Open the file */
     if (EXSUCCEED!=tms_open_logfile(*pp_tl, "r+"))
@@ -871,7 +996,7 @@ out:
             {
                 tms_close_logfile(*pp_tl);
             }
-            
+
             tms_remove_logfree(*pp_tl, EXFALSE);
             *pp_tl = NULL;
         }
@@ -1104,6 +1229,7 @@ out:
         int err=errno;
         userlog("ERROR! Failed to fflush(): %s", strerror(err));
         NDRX_LOG(log_error, "ERROR! Failed to fflush(): %s", strerror(err));
+	ret=EXFAIL;
     }
     /*fsync(fileno(p_tl->f));*/
     return ret;
@@ -1209,7 +1335,7 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
     TOKEN_READ("info", "tmnodeid");
     TOKEN_READ("info", "tmsrvid");
     p_tl->tmrmid = G_atmi_env.xa_rmid;
-    p_tl->tmnodeid = tpgetnodeid();
+    p_tl->tmnodeid = G_tmsrv_cfg.vnodeid;
     p_tl->tmsrvid = G_server_conf.srv_id;
     
     TOKEN_READ("info", "txtout");
@@ -1287,7 +1413,7 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             G_atmi_env.test_tmsrv_write_fail=EXTRUE;
             make_crash=EXTRUE;
         }
-        
+
         /* no write & report error */
         if (stage > 0 && crash_class==CRASH_CLASS_NO_WRITE && stage == crash_stage)
         {
@@ -1303,12 +1429,23 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         }
 
         /* in case if switching to committing, we must sync the log & directory */
-        if ( ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage)) &&
-            (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) || 
-                EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags)))
+        if ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage))
         {
-            EXFAIL_OUT(ret);
-        }
+            if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
+                EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags))
+            {
+                EXFAIL_OUT(ret);
+            }
+
+            /* if we are in singleton group mode, validate that we still 
+             * own the lock
+             */
+            if (EXSUCCEED!=tms_log_checkpointseq(p_tl))
+            {
+                EXFAIL_OUT(ret);
+            }
+
+        } /* new stage commit or abort */
     }
     
 out:
@@ -1346,18 +1483,78 @@ out:
  */
 exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
 {
-   int ret = EXSUCCEED;
-   TOKEN_READ_VARS;
-   
-   TOKEN_READ("stage", "tstamp");
-   p_tl->t_update = atol(p);
-   TOKEN_READ("info", "cmdid");
-   
-   TOKEN_READ("stage", "txstage");
-   p_tl->txstage = (short)atoi(p);
+    int ret = EXSUCCEED;
+    short stage;
+    TOKEN_READ_VARS;
+
+    TOKEN_READ("stage", "tstamp");
+    p_tl->t_update = atol(p);
+    TOKEN_READ("info", "cmdid");
+
+    TOKEN_READ("stage", "txstage");
+
+    /* In case ... if we are committing, there will be no abort.
+    * and vice versa. that's in case if doing failover
+    * the first state shall live on...
+    * --- not true...
+    * we could go to commit, but just right before logging
+    * other node took over... starts to abort.
+    * and first one wakes up and tries to write the commit stage...
+    * thus we shall allow to go down from commit to abort.
+    */
+    stage=(short)atoi(p);
+
+    if (stage <= p_tl->txstage)
+    {
+        NDRX_LOG(log_error, "Stage for [%s] downgrade was %hd, read %hd",
+                p_tl->tmxid, p_tl->txstage, stage);
+        userlog("Stage for [%s] downgrade was %hd, read %hd",
+                p_tl->tmxid, p_tl->txstage, stage);
+    }
+
+    if (p_tl->txstage>=XA_TX_STAGE_ABORTING &&
+        p_tl->txstage<=XA_TX_STAGE_ABFORGOT_HEU)
+    {
+        if (stage>=XA_TX_STAGE_ABORTING &&
+            stage<=XA_TX_STAGE_ABFORGOT_HEU)
+        {
+            p_tl->txstage = stage;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Invalid stage for [%s] was %hd (abort range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+            userlog("Invalid stage for [%s] was %hd (abort range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+        }
+    }
+#if 0
+    else if (p_tl->txstage>=XA_TX_STAGE_COMMITTING &&
+        p_tl->txstage<=XA_TX_STAGE_COMFORGOT_HEU)
+    {
+
+        /* if there was commit, we allow abort too.. */
+        if (stage>=XA_TX_STAGE_COMMITTING &&
+            stage<=XA_TX_STAGE_COMFORGOT_HEU)
+        {
+            p_tl->txstage = stage;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+            userlog("Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
+                p_tl->tmxid, p_tl->txstage, stage);
+        }
+    }
+#endif
+    else
+    {
+        p_tl->txstage = stage;
+    }
    
 out:
-   return ret;
+    return ret;
 }
 
 /**

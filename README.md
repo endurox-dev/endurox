@@ -4,11 +4,12 @@
 
 | OS   |      Status      | OS       |      Status   |OS       |      Status   |
 |----------|:-------------:|----------|:-------------:|----------|:-------------:|
-| AIX 7.1 |  [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-aix7_1)](http://www.silodev.com:9090/jenkins/job/endurox-aix7_1/) |Centos 6|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-centos6)](http://www.silodev.com:9090/jenkins/job/endurox-centos6/)|FreeBSD 11|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-freebsd11)](http://www.silodev.com:9090/jenkins/job/endurox-freebsd11/)|
-|Oracle Linux 7|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol7)](http://www.silodev.com:9090/jenkins/job/endurox-ol7/)|OSX 11.4|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-osx11_4)](http://www.silodev.com:9090/jenkins/job/endurox-osx11_4/)|raspbian10_arv7l|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-raspbian10_arv7l)](http://www.silodev.com:9090/jenkins/job/endurox-raspbian10_arv7l/)|
+| AIX 7.3 |  [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-aix7_3)](http://www.silodev.com:9090/jenkins/job/endurox-aix7_3/) |Centos 6|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-centos6)](http://www.silodev.com:9090/jenkins/job/endurox-centos6/)|FreeBSD 11|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-freebsd11)](http://www.silodev.com:9090/jenkins/job/endurox-freebsd11/)|
+|Oracle Linux 7|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol7)](http://www.silodev.com:9090/jenkins/job/endurox-ol7/)|OSX 11.4|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-osx11_4)](http://www.silodev.com:9090/jenkins/job/endurox-osx11_4/)|raspbian11_arv7l|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-raspbian10_arv7l)](http://www.silodev.com:9090/jenkins/job/endurox-raspbian10_arv7l/)|
 |SLES 12|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles12)](http://www.silodev.com:9090/jenkins/job/endurox-sles12/)|SLES 15|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles15)](http://www.silodev.com:9090/jenkins/job/endurox-sles15/)|Solaris 10|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris10-sparc)](http://www.silodev.com:9090/jenkins/job/endurox-solaris10-sparc/)|
 |Solaris 11| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris11_x86)](http://www.silodev.com:9090/jenkins/job/endurox-solaris11_x86/)|Ubuntu 14.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu14)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu14/)|Ubuntu 18.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu18)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu18/)|
 |RHEL/Oracle Linux 8| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol8)](http://www.silodev.com:9090/jenkins/job/endurox-ol8/)|AIX 7.2| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-aix7_2)](http://www.silodev.com:9090/jenkins/job/endurox-aix7_2/)|Ubuntu 20.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu20)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu20/)|
+|RHEL/Oracle Linux 9| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol9)](http://www.silodev.com:9090/jenkins/job/endurox-ol9/)|Ubuntu 22.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu22)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu22/)| | |
 
 ## Overview
 
@@ -649,8 +650,10 @@ Feature #226, Bug #601, Feature #518, Support #622, Feature #517, Support #599, 
 
 - Version 8.0.6 prepared on 07/03/2022 (stable) Feature #767, Support #768, Support #769, Bug #771, Feature #772, Bug #774, Bug #775
 
-- Version 8.0.8 prepared on 07/11/2022 (stable) Bug #789, Feature #792, Bug #794, Support #795, Bug #796, Bug #149,
+- Version 8.0.8 prepared on 19/09/2023 (stable) Bug #789, Feature #792, Bug #794, Support #795, Bug #796, Bug #149,
 Bug #798, Bug #738, Support #448, Bug #125, Bug #202, Bug #799, Bug #801, Support #802, Support #806
+
+- Version 8.0.10 prepared on 10/08/2023 (stable) Bug #810, Bug #811, Bug #812
 
 # Build configurations
 

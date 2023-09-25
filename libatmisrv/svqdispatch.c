@@ -1420,7 +1420,14 @@ expublic int sv_wait_for_request(void)
         /* moved here as tout might change by callback api */
         if (G_server_conf.periodcb_sec)
         {
-            tout = G_server_conf.periodcb_sec*1000;
+            tout = G_server_conf.periodcb_sec*1000
+                - ndrx_stopwatch_get_delta(&periodic_cb);
+
+            if (tout<0)
+            {
+                tout=0;
+            }
+
         }
         else
         {
@@ -1474,18 +1481,23 @@ expublic int sv_wait_for_request(void)
             len = msgsize_max;
         }
         
-        nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
-                G_server_conf.max_events, tout, &msg_buf, &len);
-        
-        /* Print stuff if there is no timeout set or there is some value out there */
-        
-        if (nfds || EXFAIL==tout)
+        if (0==tout)
         {
-            NDRX_LOG(log_debug, "Poll says: %d len: %d", nfds, len);
+            /* process the period callback... */
+            nfds=EXFAIL;
+        }
+        else
+        {
+            /* wait for messages or timeout... */
+            nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
+                G_server_conf.max_events, tout, &msg_buf, &len);
+
+            /* Print stuff if there is no timeout set or there is some value out there */
+            NDRX_LOG(log_debug, "Poll says: %d len: %d tout: %d", nfds, len, tout);
         }
         
         /* If there are zero FDs &  */
-        if (EXFAIL==nfds)
+        if (EXFAIL==nfds && 0!=tout)
         {
             int err = errno;
             ndrx_TPset_error_fmt(TPEOS, "epoll_pwait failed: %s", 
@@ -1498,8 +1510,11 @@ expublic int sv_wait_for_request(void)
             
             EXFAIL_OUT(ret);
         }
+
         /* We should use timer here because, if there are service requests at
-         * constant time (less than poll time), then callback will be never called! */
+         * constant time (less than poll time), then callback will be never called! 
+         * perform stopwatch only when timed out, otherwise 
+         */
         else if (EXFAIL!=tout && 
                 ndrx_stopwatch_get_delta_sec(&periodic_cb) >= G_server_conf.periodcb_sec)
         {

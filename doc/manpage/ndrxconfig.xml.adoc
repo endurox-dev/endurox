@@ -25,6 +25,16 @@ SYNOPSIS
         <rqaddrttl>RQADDRTTL</rqaddrttl>
         <ddrreload>DDRRELOAD</ddrreload>
     </appconfig>
+    <procgroups>
+        <defaults name="PROCGROUP_NAME_DEF" grpno="PROCGROUP_GRPNO_DEF" 
+            noorder="PROCGROUP_NOORDER_DEF" singleton="PROCGROUP_SINGLETON_DEF"  
+            sg_nodes="PROCGROUP_SINGLETON_NODES_DEF" sg_nodes_verify="PROCGROUP_SINGLETON_NODES_VERIFY_DEF"/>
+        ...
+        <procgroup name="PROCGROUP_NAME" grpno="PROCGROUP_GRPNO" 
+            noorder="PROCGROUP_NOORDER" singleton="PROCGROUP_SINGLETON" 
+            sg_nodes="PROCGROUP_SINGLETON_NODES" sg_nodes_verify="PROCGROUP_SINGLETON_NODES_VERIFY"/>
+        ...
+    </procgroups>
     <defaults>
         <min>MIN_SERVERS_DEFAULT</min>
         <max>MAX_SERVERS_DEFAULT</max>
@@ -59,6 +69,8 @@ SYNOPSIS
         <envs group="SVGRP_ENV_GROUP_NAME_N">
             ...
         </envs>
+        <procgrp>SRV_PROCGRP_DEFAULT</procgrp>
+        <procgrp_lp>SRV_PROCGRP_LP_DEFAULT</procgrp_lp>
     </defaults>
     <servers>
         <server name="SERVER_BINARY_NAME">
@@ -100,6 +112,8 @@ SYNOPSIS
                 ...
                 <env name="SVPROC_ENV_VARIABLE_NAME_N">SVPROC_ENV_VARIABLE_VALUE_N</env>
             </envs>
+            <procgrp>SRV_PROCGRP</procgrp>
+            <procgrp_lp>SRV_PROCGRP_LP</procgrp_lp>
         </server>
         ...
         <server name="SERVER_BINARY_NAME_N">
@@ -130,8 +144,8 @@ SYNOPSIS
             vszmax="CLT_VSZMAX"
             subsectfrom="CLT_SUBSECTFROM"
             subsectto="CLT_SUBSECTTO"
+            procgrp="CLT_PROCGRP"
             >
-
             <envs>
                 <usegroup>CLTGRP_ENV_GROUP_NAME</usegroup>
                 ...
@@ -141,7 +155,6 @@ SYNOPSIS
                 ...
                 <env name="CLPROC_ENV_VARIABLE_NAME_N">CLTPROC_ENV_VARIABLE_VALUE_N</env>
             </envs>
-
             <exec tag="CLT_TAG_EXEC" 
                 subsect="CLT_SUBSECT_EXEC" 
                 log="CLT_LOG_EXEC" 
@@ -156,6 +169,7 @@ SYNOPSIS
                 vszmax="CLT_VSZMAX_EXEC"
                 subsectfrom="CLT_SUBSECTFROM_EXEC"
                 subsectto="CLT_SUBSECTTO_EXEC"
+                procgrp="CLT_PROCGRP_EXEC"
                 />
             <exec tag="CLT_TAG_EXEC2" 
                 subsect="CLT_SUBSECT2_EXEC2" 
@@ -195,9 +209,9 @@ DESCRIPTION
 -----------
 
 'ndrxconfig.xml' holds the application domain configuration. It describes the ATMI
-servers which needs to be started. Counts of the, how much to start. Also it
+servers that need to be started. Counts of the, how much to start. Also, it
 describes sanity times i.e. period after which system sanity checks should be made.
-Also it describes time frames in which ATMI server should start or stop.
+Also, it describes time frames in which ATMI server should start or stop.
 Internal server ping can be configured here too.
 
 
@@ -208,22 +222,27 @@ PARAMETERS
     Number of seconds in which perform system periodic sanity checks. Next cycle time
     is measured from the finish of the last sanity checks, meaning that in absolute
     terms, depending on the system performance, the next sanity check would be
-    performed after a slightly longer period of the time than specified
+    performed after a slightly longer period than specified
     in 'SANITY_SECONDS'. The minimum value for the setting is *1*.
 'CHECKPM_STY'::
-    This is number of sanity cycles into which check dead processes from the
-    process model. This makes the actual checking of th PID existence system.
-    Thus if ndrxd is started in learning mode and will not receive signals
-    of the dead servers, then by setting it will discover exited processes.
+    The number of the sanity cycles into which to perform check for dead server processes.
+    This check is a backup mechanism for catching dead servers, as the primary
+    mechanism is based on waitpid() system call in the separate thread within *ndrxd(8)*.
+    Check performs proactive verification of the PID existence in the system.
+    This check is useful if ndrxd is restarted in learning mode.
+    In this mode ndrxd is not parent anymore of child servers, thus it cannot collect
+    dead server PIDs with waitpid() call. However, this setting would allows to discover
+    such PIDs and perform any necessary actions.
 'BRIDGE_REFRESH_TIME'::
-    Number of sanity units in which *tpbridge(8)* refresh should be send to other node.
+    The number of sanity units in which *tpbridge(8)* refresh should be sent to other node.
     If for example 'SANITY_SECONDS' is set to 10, and 'BRIDGE_REFRESH_TIME' is set to 2
-    then period between bridge refreshes will be 10*2 = 20 seconds.
-    Default value is *0* - do not send full updates.
+    then the period between bridge refreshes will be 10*2 = 20 seconds.
+    The default value is *0* - do not send full updates.
 'MIN_RESTART_TIME'::
     Number of sanity units in which died server will be tried to start back. This is
-    minimal time, means that this time is applied in case if server was running and died.
-    If it is consecutive try, then 'RESTART_STEP' is applied on this timer.	
+    minimal time, which means that this time is applied in case if server is running 
+    (*tpsvrinit(3)* was success) and dies.
+    If it is a consecutive try, then 'RESTART_STEP' is applied on this timer.	
 'RESTART_STEP'::
     Number to sanity units to apply on 'MIN_RESTART_TIME' in case of consecutive server death.
     Meaning that next try of restart will tried later that previous by this
@@ -364,9 +383,9 @@ PARAMETERS
     Common configuration tag. Loaded into *NDRX_CCTAG* environment variable before
     process is spawned. This can be overridden by *COMMON_CONFIG_TAG*.
 'PROTECTED_SERVER_DEFAULT'::
-    Protected server is one that does not shutdown with stop with *xadmin stop -k*
-    (keep ndrxd running).
-    If doing standard *xadmin stop* parameter then server is shutdown as all others. 
+    Protected server does not shutdown with *xadmin stop -k*
+    (keep ndrxd running) command.
+    If doing the standard *xadmin stop* parameter then server is shutdown as all others. 
     It is possible stop stop it by *xadmin stop -i <srvid>* or by 
     *xadmin stop -s <servernm>*. The *xadmin restart* does not accept *-k* parameter
     thus protected server will be stopped too.
@@ -385,7 +404,7 @@ PARAMETERS
     server reload (sr) command (i.e. gracefully 
     shutdown and start back) to server process if
     particular server process resident memory goes over this defined value. 
-    The value can be override by 'ATMI_SERVER_RSSMAX' for particular server 
+    The value can be overridden by 'ATMI_SERVER_RSSMAX' for the particular server 
     instance.
     This parameter is useful to be used to protect local machine against 
     defective/binaries with memory leaks. The parameter value is 
@@ -396,16 +415,16 @@ PARAMETERS
     means that functionality is not used.
 'VSZMAX_DEFAULT'::
     Maximum Virtual Set Size memory size (the number bytes program have asked to 
-    OS kernel for memory, but does it does *not* mean it is physically used or initialized) 
+    OS kernel for memory, but it does *not* mean it is physically used or initialized) 
     after which *ndrxd(8)* process will issue
     server reload (sr) command (i.e. gracefully shutdown and start back) to
-    server process if particular server's process virtual memory goes 
-    over this defined value. The value can be override by 
+    the server process if a particular server's process virtual memory goes 
+    over this defined value. The value can be overridden by 
     'ATMI_SERVER_VSZMAX' for particular server instance.
     This parameter is useful to be used to protect local machine
     defective/binaries with memory leaks. The parameter value is 
-    expressed in bytes. Configuration file also accepts
-    suffixes such as "T" or "t" for terrabytes, "G" or "g" for gigabytes, "M" or
+    expressed in bytes. The configuration file also accepts
+    suffixes such as "T" or "t" for terabytes, "G" or "g" for gigabytes, "M" or
     "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
     limit resident memory to 10 megabytes. The default value is *-1*, which 
     means that functionality is not used.
@@ -467,8 +486,8 @@ PARAMETERS
     recommended. Services can be masked out from final advertise by
     by *-n* flag. For example *-nSERVICE4* will not be advertised (no matter was it
     advertise or alias). *-n* can be repeated multiple times.
-    When Enduro/X XATMI server is build with integration lib (libatmisrvinteg) 
-    user have ability to alias the functions to service names with 
+    When Enduro/X XATMI server is built with integration lib (libatmisrvinteg) 
+    user can alias the functions to service names with 
     *-S*'<service_name1>/<service_name2>[:<function name>]' flag. Functions are
     passed to *buildserver(8)* at build time or registered in *tmdsptchtbl_t* array
     passed to *_tmstartserver(3)*. If '<function name>' is not specified, then service
@@ -498,16 +517,16 @@ PARAMETERS
     shall include '@<RTGRP>' routing group suffix in service name received by
     service function (i.e. structure *TPSVCINFO* field *name* shall contain full
     service name with the group code, if call was routed to group), 
-    by default group name is not included even if service is routed to group.
+    by default group name is not included even if service is routed to the group.
 'ATMI_SERVER_APPLICATION_OPTIONS'::
-    Application specific command line options. This follows content after sys options as:
+    Application-specific command line options. This follows content after sys options as:
     'system options -- app options'.
 'ATMI_SERVER_EXPORT_SERVICES'::
-    Enduro/X server specific list of services to be exported. This list is only for 
+    Enduro/X server-specific list of services to be exported. This list is only for 
     *tpbridge* servers.
 'ATMI_SERVER_BLACKLIST_SERVICES'::
-    Enduro/X server specific list of services that must not be exported. This list is only for 
-    *tpbridge* servers. Blacklist have higher priority over the Export list.
+    Enduro/X server-specific list of services that must not be exported. This list is only for 
+    *tpbridge* servers. Blacklist has higher priority over the Export list.
 'ATMI_SERVER_FULL_PATH'::
     This is full path of the XATMI server binary. At the process startup this overrides
     the server binary name at 'SERVER_BINARY_NAME'. 'ATMI_SERVER_FULL_PATH' is used only
@@ -518,18 +537,26 @@ PARAMETERS
     of process model checks, the ndrxd will find out that wrapped binary name does not
     contain the 'SERVER_BINARY_NAME', thus will reboot the process.
 'ATMI_SERVER_COMMAND_LINE'::
-    This is alternative command line build by user. From this command line the
+    This is an alternative command line built by the user. From this command line the
     real process name is extracted as first executable (basename). When  building
     custom command line, the env substitution is available at the stage with
-    following processes based envs (not counting the globals): *NDRX_SVSRVID* -
+    following processes-based envs (not counting the globals): *NDRX_SVSRVID* -
     Enduro/X server id, *NDRX_SVPROCNAME* - server process name (defined in XML
     config as 'SERVER_BINARY_NAME' value, *NDRX_SVCLOPT* - standard command
     line options used by Enduro/X. These options are used at stage with ATMI
     server library gets initialized, it will use in case *ndrx_main()* receives
-    less than expected standard argument count. Basically this command line tag
-    is suitable for interpreted languages, like Java, where interpreter needs to
-    be started as stand alone binary, and the Enduro/X is initialized as a library
-    within stand alone process.
+    less than expected standard argument count. This command line tag
+    is suitable for interpreted languages, like Java, where the interpreter needs to
+    be started as a stand-alone binary, and the Enduro/X is initialized as a library
+    within a stand-alone process.
+'SRV_PROCGRP'::
+    Process group name. If used, group must be previously defined at '<procgroups>'.
+    This can be overridden by 'SRV_PROCGRP_DEFAULT' on per server basis.
+'SRV_PROCGRP_LP'::
+    Process group name for which this server functions as a lock provider. Lock provider
+    process distinguishes on which Enduro/X cluster node singleton group will be booted.
+    'SRV_PROCGRP_LP' is only required for singleton groups. Parameter is not required
+    for normal XATMI servers. This can be overridden by 'SRV_PROCGRP_LP_DEFAULT' on per server basis.
 'SVGRP_ENV_GROUP_NAME'::
     Environment variable group name for the servers section. Identifier max length
     is 30 chars. Same group can be used for different server processes. One server
@@ -564,24 +591,24 @@ PARAMETERS
     for subsection substitution. Other env variables available here too.
 'CLT_LOG'::
     Logfile to which stdout and stderr is logged. Can be overridden by 'CLT_LOG_EXEC'
-    for each individual process. Optional attribute.
+    for each process. Optional attribute.
 'CLT_STDOUT'::
     File where to log stdout. Can be overridden by 'CLT_STDOUT_EXEC'
-    for each individual process. Optional attribute.
+    for each process. Optional attribute.
 'CLT_STDERR'::
     File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
-    for each individual process. Optional attribute.
+    for each process. Optional attribute.
 'CLTGRP_ENV'::
     Environment override file. See *ex_envover(5)* for syntax. Can be overridden 
-    by 'CLTGRP_ENV_EXEC' for each individual process. Optional attribute.
+    by 'CLTGRP_ENV_EXEC' for each process. Optional attribute.
 'CLT_CCTAG'::
     ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
-    for each individual process. Optional attribute.
+    for each process. Optional attribute.
 'CLT_WD'::
     Working directory for the process. Can be overridden by 'CLT_WD_EXEC'.
 'CLT_AUTOSTART'::
     Should process be started automatically? 'Y' or 'y' means boot at start.
-    Can be overridden by 'CLT_AUTOSTART_EXEC' for each individual process. 
+    Can be overridden by 'CLT_AUTOSTART_EXEC' for each process. 
     Optional attribute. Default 'n'.
 'CLT_TAG_EXEC'::
     Tagname to be set for process.
@@ -593,10 +620,10 @@ PARAMETERS
     particular client process resident memory goes over this defined value. 
     After killing, the cpmsrv at first check interval will detect that client
     is dead, and at next check interval it will be respawned.
-    The value can be override by 'CLT_RSSMAX_EXEC'.
+    The value can be overridden by 'CLT_RSSMAX_EXEC'.
     This parameter is useful to be used to protect local machine against 
     defective/binaries with memory leaks. The parameter value is 
-    expressed in bytes. Configuration file also accepts
+    expressed in bytes. The configuration file also accepts
     suffixes such as "T" or "t" for terrabytes, "G" or "g" for gigabytes, "M" or
     "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
     limit resident memory to 10 megabytes. The default value is *-1*, which 
@@ -606,7 +633,7 @@ PARAMETERS
     OS kernel for memory, but does it does *not* mean it is physically used or initialized) 
     after which *cpmsrv(8)* process will 
     gracefully kill the client process by signals -2, -15, -9 if
-    particular client process virtual memory goes over this defined value.
+    a particular client process virtual memory goes over this defined value.
     After killing, the cpmsrv at first check interval will detect that client
     is dead, and at next check interval it will be respawned.
     The value can be override by 'CLT_RSSMAX_EXEC'.
@@ -640,6 +667,10 @@ PARAMETERS
     Service name for which settings are being defined. Max service length is
     *30* symbols.
 
+'CLT_PROCGRP'::
+    Process group name. If used, group must be previously defined at '<procgroups>'.
+    This can be overridden by 'CLT_PROCGRP_EXEC'.
+    
 'SVC_PRIO'::
     Service call default priority. If value is not set, then it it is loaded
     from default value 'SVC_PRIO_DEF'. If default is not set, then value *50*
@@ -662,8 +693,8 @@ PARAMETERS
     server will start the transaction automatically. When server process performs
     *tpreturn(3)*, transaction is committed in case if server returns *TPSUCCESS*
     otherwise transaction is aborted. If process performs *tpforward(3)*, then
-    receiving server becomes transaction owner. If parameter is not specified value is
-    taken from previously defined 'SVC_AUTOTRAN_DEF' value. If it was not set,
+    receiving server becomes the transaction owner. If parameter is not specified value is
+    taken from the previously defined 'SVC_AUTOTRAN_DEF' value. If it was not set,
     then default is *N* (no auto global transactions used by server).
     Note that this setting is extracted by XATMI server processes at the startup
     time. If configuration is change, say from *N* to *Y*, particular XATMI server
@@ -671,24 +702,24 @@ PARAMETERS
     for particular XATMI servers.
 
 'SVC_TRANTIME'::
-    Automatic transaction life time. This parameter is used by XATMI servers starting
-    when automatic transactions are started. If value is not specified, then
-    value is taken from previously defined 'SVC_TRANTIME_DEF'. If this value also
-    is not defined, then default value is *30*.
+    Automatic transaction lifetime. This parameter is used by XATMI servers starting
+    when automatic transactions are started. If the value is not specified, then
+    the value is taken from the previously defined 'SVC_TRANTIME_DEF'. If this value also
+    is not defined, then the default value is *30*.
 
 'ROUTE_NAME'::
     This is route name using for data-dependent-routing (DDR). Route name max
     length is *15* symbols.
 
 'ROUTE_FIELD'::
-    This is route field name. Currently Enduro/X only supports UBF buffer routing,
+    This is route field name. Currently, Enduro/X only supports UBF buffer routing,
     thus this field must contain valid/resolvable UBF field definition. Field
     types accepted four routing are *BFLD_SHORT*, *BFLD_CHAR*, *BFLD_LONG*, *BFLD_FLOAT*,
     *BFLD_DOUBLE*, *BFLD_STRING* and *BFLD_CARRAY*.
 
 'ROUTE_RANGES'::
-    Route ranges definition. Which defines the ranges by which destination service
-    group is selected. See section "DATA DEPENDENT ROUTING" bellow for syntax details.
+    Route ranges definition. Defines the ranges by which destination service
+    group is selected. See the section "DATA DEPENDENT ROUTING" below for syntax details.
 
 'ROUTE_BUFFER'::
     Buffer type accepted for routing. Currently supported buffer type is *UBF*.
@@ -706,6 +737,68 @@ PARAMETERS
     *CHAR* is mapped to *STRING*. For UBF routes, this field is optional,
     and if it is not specified, then field type is extracted from UBF field.
     Additionally any *BFLD_CARRAY* is mapped to *STRING*. 
+
+'PROCGROUP_NAME'::
+    Process group name. Identifier may contain following characters: "a-zA-Z0-9_".
+    Max length 30 chars. If a process group name
+    is not defined for the '<procgroup>' tag, then the default name
+    is taken from 'PROCGROUP_NAME_DEF' value. Name is mandatory for the
+    process group being defined in the configuration file. Name must be
+    unique for the process group.
+
+'PROCGROUP_GRPNO'::
+    Process group number. This is used for the process group identification.
+    Value must be unique for the process group. If the value is not specified,
+    then the value is taken from 'PROCGROUP_GRPNO_DEF' value. The value must
+    be in range of 1.. <value of env NDRX_SGREFRESH, which default is 64>.
+
+'PROCGROUP_NOORDER'::
+    Do not use the standard process startup order for starting the process group.
+    If flag is set to 'y' or "Y", when at failover group is activated, no
+    order of the booting is used, all processes in the group are started concurrently 
+    without any specific order. Value 'n' or 'N' disables this flag. Default is 'n'.
+    Flag is effective only for singleton groups (i.e. 'PROCGROUP_SINGLETON' set to 'y'/'Y').
+    If value is not specified, then the value is taken from 'PROCGROUP_NOORDER_DEF' value.
+
+'PROCGROUP_SINGLETON'::
+    Defines given process group as singleton group. Meaning, that if the parameter
+    is set to 'y' or 'Y', then only one set of processes (defined in the '<procgrp>')
+    ar started with thin the Enduro/X cluster. For every singleton group there must
+    be one XATMI server defined which is lock provider. Lock provider for the group
+    is tagged by setting group name in '<progrp_lp>' tag for server. Enduro/X ships
+    with the lock provider process *exsinglesv(8)*. The default value for 'PROCGROUP_SINGLETON'
+    is 'n' (or 'N'), meaning that the process group is not singleton, and will be booted
+    normally on the local node.
+    If value is not specified, then the value is taken from 'PROCGROUP_SINGLETON_DEF' value.
+
+'PROCGROUP_SINGLETON_NODES'::
+    Defines list of Enduro/X Node IDs which are part of the singleton group (i.e. nodes
+    which provides failover). List is encoded in Enduro/X standard configuration string format
+    (e.g. comma separated values). Current Enduro/X Node ID is added automatically to
+    this list. Nodes are used for lock checks, to perform extra verification
+    on other node statuses. It is recommended to correctly fill this list of
+    participant nodes, so that lock providers promptly can detect any animalities within the
+    Enduro/X cluster.
+    If value is not specified, then the value is taken from 'PROCGROUP_SINGLETON_NODES_DEF' value.
+
+'PROCGROUP_SINGLETON_NODES_VERIFY'::
+    If set to 'y'/'Y', enables checks for cluster consistency at critical
+    points of the distributed transaction processing. Might impact performance
+    for the distributed transactions. When enabled, full lock status is checked against
+    *@SGLOC* and *@SGREM* XATMI services
+    (provided by *exsingleckl(8)* and *exsingleckr(8)* respectivly), if available
+    over the *tpbridge(8)*. If network is not available,
+    checks are done against ping lock file, to detect that current node still holds
+    the valid lock (and no other nodes in cluster indicate that they hold the lock).
+    Setting applies to transaction managers configured in the given singleton process
+    group. Default setting is 'N' (or 'n'), which means that only local checks (against
+    shared memory lock status provided by *exsinglesv(8)* is performed).
+    For underlaying infrastructure shared file system clusters which does not
+    use STONITH device for fcntl() lock release/failover, this is
+    mandatory to be set to 'Y' with correctly filled 'sg_nodes' attribute.
+    Otherwise transaction consistency might be affected.
+    If value is not specified, then the value is taken from
+    'PROCGROUP_SINGLETON_NODES_VERIFY_DEF' value.
 
 VARIABLE SUBSTITUTION
 ---------------------
@@ -807,7 +900,7 @@ Ranges value are validated and processed as indicated by field typ.
 
 --------------------------------------------------------------------------------
 
-For *DOUBLE* decimal separator is *.*. Also to check the equality is 
+For *DOUBLE* decimal separator is *.*. Also to check that equality is 
 checked with precision of 0.000001.
 
 *STRING* values may contain any printable character including newline.
@@ -878,26 +971,26 @@ changes are deferred to certain amount of time. See 'DDRRELOAD'.
 COMMAND LINE ARGUMENT ESCAPE
 ----------------------------
 Process command line arguments normally may contain spaces or tables in their values.
-As Enduro/X processes needs to prepare arguments for exec, at prepare phase clear
+As Enduro/X processes need to prepare arguments for exec, at the prepare phase clear
 distinguishing must be made between multiple arguments and argument values.
-Thus Enduro/X employs parser to split CLI strings into arguments. Blocks with
-spaces or tabs inside must be quoted. The logic is similar to way how shall performs
+Thus Enduro/X employs a parser to split CLI strings into arguments. Blocks with
+spaces or tabs inside must be quoted. The logic is similar to the way how shall perform
 quote processing.
 
-Following rules applies :
+The following rules apply:
 
-. Blocks can be quoted either with single quote or double quote.
+. Blocks can be quoted either with a single quote or a double quote.
 . Quote symbols are stripped from the start and the end of the value.
-. To have quote symbol in block value, use backslash.
-. To have backslash in any part of CLI string, use double backslash.
-. If block is started with single quotes, and value contains backlash and double quotes
+. To have a quote symbol in block value, use backslash.
+. To have a backslash in any part of CLI string, use double backslash.
+. If a block is started with single quotes, and the value contains backlash and double quotes
     then backlash and double quotes are put in value. This works in vice versa if starting
     value with double quotes and escaping single quotes.
-. If quoted string contains non tab or space separated values before or after
+. If a quoted string contains non-tab or space-separated values before or after
 the quotes, then values are joined to block value. Leading and trailing quotes
 are stripped.
 . Alone escape values between tab or space separators are eliminated from value.
-. Unterminated quotes produces single value till the end of string.
+. Unterminated quotes produce a single value till the end of the string.
 
 Samples:
 --------------------------------------------------------------------------------
@@ -1088,7 +1181,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*,
-*exencrypt(8)*
+*exencrypt(8)* *exsinglesv(8)*
 
 COPYING
 -------

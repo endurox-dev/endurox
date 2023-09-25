@@ -31,7 +31,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
@@ -48,11 +48,11 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 
 add_custom_command(
-  DEPENDS ../../viewc/viewc
+  DEPENDS ${PROJECT_SOURCE_DIR}/viewc/viewc
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT t40.h t40.V t40_2.h t40_2.V
-  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t40.v_in t40_2.v_in
-  DEPENDS t40.v_in t40_2.v_in)
+  COMMAND ${PROJECT_SOURCE_DIR}/viewc/viewc -n -L "${PROJECT_SOURCE_DIR}/libatmi:${PROJECT_SOURCE_DIR}/libatmiclt:${PROJECT_SOURCE_DIR}/libnstd:${PROJECT_SOURCE_DIR}/libubf" -b "${PROJECT_SOURCE_DIR}/buildtools/buildclient -a '${CMAKE_C_FLAGS} -I${PROJECT_SOURCE_DIR}/include -L${PROJECT_SOURCE_DIR}/libatmi -L${PROJECT_SOURCE_DIR}/libatmiclt -L${PROJECT_SOURCE_DIR}/libnstd -L${PROJECT_SOURCE_DIR}/libubf'" ${CMAKE_CURRENT_SOURCE_DIR}/t40.v_in ${CMAKE_CURRENT_SOURCE_DIR}/t40_2.v_in
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/t40.v_in ${CMAKE_CURRENT_SOURCE_DIR}/t40_2.v_in)
 
 
 add_custom_target(t40vhdrs DEPENDS t40.h t40.V t40_2.h t40_2.V)
@@ -68,7 +68,7 @@ add_executable (viewunit1 viewunit1.c shared.c vaccget.c vaccutil.c
 			vaccset.c t40.h t40.V t40_2.h t40_2.V)
 add_dependencies(viewunit1 t40vhdrs)
 
-add_executable (atmisv40 atmisv40.c shared.c ../../libatmisrv/rawmain_integra.c t40.h t40.V t40_2.h t40_2.V)
+add_executable (atmisv40 atmisv40.c shared.c ${PROJECT_SOURCE_DIR}/libatmisrv/rawmain_integra.c t40.h t40.V t40_2.h t40_2.V)
 add_dependencies(atmisv40 t40vhdrs)
 
 add_executable (atmiclt40 atmiclt40.c shared.c t40.h t40.V t40_2.h t40_2.V)

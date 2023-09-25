@@ -1,5 +1,5 @@
 /**
- * @brief Linear memory hashing routines
+ * @brief Linear memory hashing routines (a.k.a Open Addressing with Linear Probing)
  *
  * @file linearhash.c
  */

@@ -70,6 +70,7 @@
 #include <exthpool.h>
 #include <ubfutil.h>
 #include <sys_test.h>
+#include <singlegrp.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -465,20 +466,21 @@ int tpsvrinit(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     signed char c;
+    char *p;
     char svcnm[MAXTIDENT+1];
     NDRX_LOG(log_debug, "tpsvrinit called");
-    int nodeid;
     
     memset(&G_tmsrv_cfg, 0, sizeof(G_tmsrv_cfg));
     
     G_tmsrv_cfg.ping_mode_jointran = EXTRUE;
     G_tmsrv_cfg.housekeeptime = TMSRV_HOUSEKEEP_DEFAULT;
+    G_tmsrv_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "P:t:s:l:c:m:p:r:Rh:")) != -1)
+    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:X:")) != -1)
     {
 
-	if (optarg)
+        if (optarg)
         {
             NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         }
@@ -489,6 +491,20 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'X':
+                G_tmsrv_cfg.chkdisk_time=atoi(optarg);
+
+                if (G_tmsrv_cfg.chkdisk_time)
+                {
+                    NDRX_LOG(log_info, "Check disk logs set to %d sec",
+                                G_tmsrv_cfg.chkdisk_time);
+                }
+                break;
+            case 'n':
+                G_tmsrv_cfg.vnodeid = atol(optarg);
+                NDRX_LOG(log_info, "Virtual Enduro/X Cluster Node ID set to %ld",
+                            G_tmsrv_cfg.vnodeid);
+                break;
             case 't': 
                 G_tmsrv_cfg.dflt_timeout = atol(optarg);
                 NDRX_LOG(log_debug, "Default transaction time-out "
@@ -589,7 +605,7 @@ int tpsvrinit(int argc, char **argv)
     
     NDRX_LOG(log_debug, "Housekeep time for corrupted logs: [%d] (sec)",
                             G_tmsrv_cfg.housekeeptime);
-    
+
     NDRX_LOG(log_debug, "About to initialize XA!");
     
     if (EXSUCCEED!=atmi_xa_init()) /* will open next... */
@@ -625,7 +641,7 @@ int tpsvrinit(int argc, char **argv)
     {
         NDRX_LOG(log_info, "DB PING disabled (-P not set)");
     }
-    
+
     /* we should open the XA  */
     
     NDRX_LOG(log_debug, "About to Open XA Entry!");
@@ -641,14 +657,6 @@ int tpsvrinit(int argc, char **argv)
         ret = EXSUCCEED;
     }
                 
-    /* All OK, about to advertise services */
-    nodeid = tpgetnodeid();
-    if (nodeid<1)
-    {
-        NDRX_LOG(log_error, "Failed to get current node_id");
-        EXFAIL_OUT(ret);
-    }
-    
     /* very generic version/only Resource ID known */
     
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_RM, G_atmi_env.xa_rmid);
@@ -660,7 +668,7 @@ int tpsvrinit(int argc, char **argv)
     }
     
     /* generic instance: */
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM, nodeid, G_atmi_env.xa_rmid);
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM, (int)G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid);
     
     if (EXSUCCEED!=tpadvertise(svcnm, TPTMSRV))
     {
@@ -669,7 +677,7 @@ int tpsvrinit(int argc, char **argv)
     }
     
     /* specific instance */
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM_I, nodeid, G_atmi_env.xa_rmid, 
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TM_I, (int)G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid, 
             G_server_conf.srv_id);
     
     if (EXSUCCEED!=tpadvertise(svcnm, TPTMSRV))

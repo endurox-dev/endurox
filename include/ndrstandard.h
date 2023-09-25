@@ -310,6 +310,15 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_MAX_ID_SIZE    96      /**< pfx + binary name + server id + pid + nodeid */
 #define NDRX_MAX_KEY_SIZE   128     /**< Key size for random key                      */
 #define NDRX_QDIAG_MSG_SIZE 256     /**< Q diagnostic message size                    */
+
+/* Range for cluster ID's
+ * Currently we allow 254 nodes.
+ */
+#define CONF_NDRX_NODEID_MIN        1       /**< Min Node ID                  	*/
+#define CONF_NDRX_NODEID_COUNT 		32 		/*< Total count of cluster nodes 	*/
+/** Max Node ID */
+#define CONF_NDRX_NODEID_MAX        CONF_NDRX_NODEID_COUNT
+
 /* List of configuration environment variables */
 #define CONF_NDRX_TOUT           "NDRX_TOUT"
 #define CONF_NDRX_ULOG           "NDRX_ULOG"
@@ -377,9 +386,14 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_SVPPID         "NDRX_SVPPID" 
 /** Server ID */
 #define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
-#define CONF_NDRX_DFLTLOG        "NDRX_DFLTLOG"        /**< Default logging output if none defined conf */
-
+#define CONF_NDRX_DFLTLOG        "NDRX_DFLTLOG"        /**< Default logging output if none defined conf  */
 #define CONF_NDRX_RTGRP          "NDRX_RTGRP"          /**< Routing group                                */
+#define CONF_NDRX_PGMAX          "NDRX_PGMAX"          /**< Max number of process groups (incl singleton)*/
+#define CONF_NDRX_SGREFRESH      "NDRX_SGREFRESH"      /**< Expected maximum singleton-group refresh time*/
+#define CONF_NDRX_SGLOCKINC      "NDRX_SGLOCKINC"      /**< Counter increment for taking the lock        */
+#define CONF_NDRX_PROCGRP_NO     "NDRX_PROCGRP_NO"     /**< Process group number (if set)                */
+#define CONF_NDRX_PROCGRP_LP_NO  "NDRX_PROCGRP_LP_NO"  /**< Process group's lock provider                */
+#define CONF_NDRX_RESPAWN        "NDRX_RESPAWN"        /**< Gives hint to the process that it was rebooted*/
 
 /** 
  * pre-process variable for not using POLLEXCL flag for svapoll
@@ -472,6 +486,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_SVC_CCONF    "@CCONF"              /**< Common-config server */
 #define NDRX_SVC_ADMIN    "@ADMINSVC"           /**< Admin service for atmiservices, logical */
 #define NDRX_SVC_REPLY    "@REPLYSVC"           /**< Reply service for atmiservices, logical */
+
+#define NDRX_SVC_SGLOC      "@SGLOC-%ld-%d"         /**< singleton grp local checks */
+#define NDRX_SVC_SGREM      "@SGREM-%ld-%d"         /**< singleton grp remote checks */
 
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
 #define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
@@ -588,6 +605,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_MSGPRIO_MIN                1  /**< Minimum priority                               */
 #define NDRX_MSGPRIO_MAX                100 /**< Max priority                                  */
 #define NDRX_MSGPRIO_NOTIFY             60 /**< Notification is higher prio                    */
+
 
 #ifdef	__cplusplus
 }

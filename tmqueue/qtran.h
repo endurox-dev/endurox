@@ -116,6 +116,7 @@ struct qtran_log_list
 /*---------------------------Prototypes---------------------------------*/
 
 extern qtran_log_t * tmq_log_get_entry(char *tmxid, int dowait, int *locke);
+extern int tmq_log_exists_entry(char *tmxid);
 extern int tmq_log_start(char *tmxid);
 extern qtran_log_t * tmq_log_start_or_get(char *tmxid);
 extern void tmq_log_set_abort_only(char *tmxid);

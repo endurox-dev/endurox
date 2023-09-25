@@ -161,6 +161,16 @@ extern "C" {
 
 /** @} */ /* end of callinfoflags */
 
+/**
+ * @defgroup procgroupflag flags for process group handling XATMI level e.g. tpsgislocked()
+ * @{
+ */
+#define TPPG_NONSGSUCC    0x00001000 /**< Do not generate error if group is not singleton */
+#define TPPG_SGVERIFY     0x00002000 /**< Do node verification, if configured */
+#define TPPG_SINGLETON    0x00000020  /**< Set if group is singleton          */
+
+/** @} */ /* end of callinfoflags */
+
 /* 
  * used by tpconvert()
  */
@@ -202,13 +212,6 @@ extern "C" {
 #define XATMI_SUBTYPE_LEN           33      /**< Max sub-type len             */
 #define XATMI_EVENT_MAX             42      /**< Max len of event to bcast    */
      
-/* Range for cluster ID's
- * Currently we allow 254 nodes.
- */
-#define CONF_NDRX_NODEID_MIN        1       /**< Min Node ID                  */
-#define CONF_NDRX_NODEID_MAX        33      /**< Max Node ID                  */
-/* Total count of cluster nodes */
-#define CONF_NDRX_NODEID_COUNT (CONF_NDRX_NODEID_MAX-CONF_NDRX_NODEID_MIN)
 #define CONF_NDRX_MAX_SRVIDS_XADMIN 512    /**< max number of server IDs for 
                                                xadmin printing in poll mode */
     
@@ -654,6 +657,8 @@ extern NDRX_API int tpgprio(void);
 
 extern NDRX_API int tpsblktime(int tout,long flags);
 extern NDRX_API int tpgblktime(long flags);
+
+extern NDRX_API long tpsgislocked(int grpno, long flags, long *grp_flags);
 
 extern NDRX_API struct xa_switch_t* ndrx_xa_sw_get(void);
 

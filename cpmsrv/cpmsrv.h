@@ -46,6 +46,7 @@ extern "C" {
 #include <cpm.h>
 #include <cconfig.h>
 #include <exenv.h>
+#include <libndrxconf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -67,6 +68,7 @@ extern "C" {
 #define CLT_STATE_NOTRUN            0   /**< Not running                  */
 #define CLT_STATE_STARTING          1   /**< Starting...                  */
 #define CLT_STATE_STARTED           2   /**< Started                      */
+#define CLT_STATE_WAIT              3   /**< Waiting on group lock        */
     
 #define CLT_CHK_INTERVAL_DEFAULT    15  /**< Do the checks every 15 sec   */
 #define CLT_KILL_INTERVAL_DEFAULT    30  /**< Default kill interval       */
@@ -102,6 +104,7 @@ struct cpm_static_info
     
     long subsectfrom;         /**< sub-section from                     */
     long subsectto;           /**< sub-section to                       */
+    int procgrp_no;           /**< Process group number                 */
     
     /** list of process specific environment variables */
     ndrx_env_list_t *envs;
@@ -163,6 +166,7 @@ typedef struct cpmsrv_config cpmsrv_config_t;
 /*---------------------------Globals------------------------------------*/
 extern cpmsrv_config_t G_config;
 extern cpm_process_t *G_clt_config;
+extern ndrx_procgroups_t *ndrx_G_procgroups_config;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int load_config(void);
@@ -172,7 +176,7 @@ extern cpm_process_t * cpm_client_get(char *tag, char *subsect);
 extern int cpm_sigchld_init(void);
 extern void cpm_sigchld_uninit(void);
 
-extern void cpm_pidtest(cpm_process_t *c);
+extern void cpm_pidtest(cpm_process_t *c, int *sg_groups);
 extern int cpm_kill(cpm_process_t *c);
 extern int cpm_killall(void);
 extern cpm_process_t * cpm_start_all(void);

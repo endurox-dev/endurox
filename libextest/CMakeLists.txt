@@ -33,7 +33,7 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -43,18 +43,16 @@ ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-
 add_custom_command(
   DEPENDS ../viewc/viewc
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT test_view.h test_view.V
-  COMMAND ../viewc/viewc -n -L "../libatmi:../libatmiclt:../libnstd:../libubf" 
-        -b "../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../include -L../libatmi -L../libatmiclt -L../libnstd -L../libubf'" 
-        test_view.v_in
-  DEPENDS test_view.v_in)
+  COMMAND ../viewc/viewc -n -L "${PROJECT_SOURCE_DIR}/libatmi:${PROJECT_SOURCE_DIR}/libatmiclt:${PROJECT_SOURCE_DIR}/libnstd:${PROJECT_SOURCE_DIR}/libubf" 
+        -b "../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I${PROJECT_SOURCE_DIR}/include -L${PROJECT_SOURCE_DIR}/libatmi -L${PROJECT_SOURCE_DIR}/libatmiclt -L${PROJECT_SOURCE_DIR}/libnstd -L${PROJECT_SOURCE_DIR}/libubf'" 
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_view.v_in
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test_view.v_in)
 
 add_custom_target(ubftestvhdrs DEPENDS test_view.h test_view.V)
-
 
 # Make sure the compiler can find include files from our UBF library.
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)

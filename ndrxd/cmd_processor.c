@@ -308,7 +308,7 @@ exprivate void get_cmd_wait_time(struct timespec *abs_timeout)
     ndrx_stopwatch_t *w;
 
     gettimeofday (&timeval, NULL);
-    memset(abs_timeout, 0, sizeof(abs_timeout));
+    memset(abs_timeout, 0, sizeof(struct timespec));
     w=ndrx_get_santiy_stopwatch();
 
     if (NULL!=w)

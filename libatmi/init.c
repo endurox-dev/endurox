@@ -64,6 +64,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
+#define SGLOCKINC_DFLT              3600 /**< upper limit singleton group txn to reach commit, 1h */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -351,11 +352,11 @@ expublic int ndrx_load_common_env(void)
     }
     else
     {
-	int tmpkey;
+	    int tmpkey;
 
-	/* bsd warning of long: */
+	    /* bsd warning of long: */
         sscanf(p, "%x", &tmpkey);
-	G_atmi_env.ipckey = tmpkey;
+	    G_atmi_env.ipckey = tmpkey;
 
         NDRX_LOG(log_debug, "SystemV SEM IPC Key set to: [%x]",
                             G_atmi_env.ipckey);
@@ -443,6 +444,43 @@ expublic int ndrx_load_common_env(void)
     
     NDRX_LOG(log_debug, "ndrxd normal wait set to: %d attempts", 
                 G_atmi_env.max_normwait);
+
+    p = getenv(CONF_NDRX_PROCGRP_NO);
+
+    if (NULL!=p)
+    {
+        G_atmi_env.procgrp_no = atoi(p);
+
+        /* validate the value */
+        if (G_atmi_env.procgrp_no<1 || G_atmi_env.procgrp_no>ndrx_G_libnstd_cfg.pgmax)
+        {
+            NDRX_LOG(log_error, "ERROR: config key %s value %d out of range 1..%d", 
+                CONF_NDRX_PROCGRP_NO, G_atmi_env.procgrp_no, ndrx_G_libnstd_cfg.pgmax);
+            userlog("ERROR: config key %s value %d out of range 1..%d", 
+                CONF_NDRX_PROCGRP_NO, G_atmi_env.procgrp_no, ndrx_G_libnstd_cfg.pgmax);
+            ret=EXFAIL;
+            goto out;
+        }
+    }
+    else
+    {
+        /* no group */
+        G_atmi_env.procgrp_no = 0;
+    }
+
+    p = getenv(CONF_NDRX_SGLOCKINC);
+
+    if (NULL!=p)
+    {
+        G_atmi_env.sglockinc = atol(p);
+    }
+    else
+    {
+        G_atmi_env.sglockinc = SGLOCKINC_DFLT;
+    }
+
+    NDRX_LOG(log_debug, "%s set to %ld",
+                CONF_NDRX_SGLOCKINC, G_atmi_env.sglockinc);
     
     /* <XA Protocol configuration - currently optional...> */
     

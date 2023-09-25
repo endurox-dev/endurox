@@ -32,13 +32,13 @@
 ## -----------------------------------------------------------------------------
 ##
 
-cmake_minimum_required (VERSION 3.1) 
+cmake_minimum_required (VERSION 3.5) 
 project (ENDUROX)
 
 include(cmake/ex_osver.cmake)
 include(cmake/ex_comp.cmake)
 
-set(VERSION "8.0.8")
+set(VERSION "8.0.10")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -242,7 +242,13 @@ OPTION(DEFINE_DISABLEPSCRIPT "Disable Platform Script" OFF)
 
 ################################################################################
 # Option to disable documentation build (dos are enabled by default)
-OPTION(DEFINE_DISABLEDOC "Disable documentation generation" OFF) 
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # not working on mac by default...
+    OPTION(DEFINE_DISABLEDOC "Disable documentation generation" ON) 
+else()
+    OPTION(DEFINE_DISABLEDOC "Disable documentation generation" OFF) 
+endif()
 ################################################################################
 
 ################################################################################
@@ -286,6 +292,7 @@ ENDIF()
 add_subdirectory (viewc) # View compiler
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (tpadmsv) # Enduro/X Admin API Server
+add_subdirectory (exsinglesv) # Enduro/X Singleton Lock provider
 add_subdirectory (migration) # Migration tools
 add_subdirectory (xadmin) # Enduro X command line interface
 add_subdirectory (buildtools) # buildserver,buildclient,buildtms
