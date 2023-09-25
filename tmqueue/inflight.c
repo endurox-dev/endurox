@@ -69,7 +69,7 @@ int ndrx_infl_addmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
     if ( mmsg->flags & NDRX_TMQ_LOC_FUTQ )
     {
         /* add message only in future queue */
-        // mmsg->cur = ndrx_rbt_insert(&qhash->q_fut, mmsg->cur, &isNew);
+        mmsg->cur = ndrx_rbt_insert(qhash->q_fut, mmsg->cur, &isNew);
     }
 
     return ret;
