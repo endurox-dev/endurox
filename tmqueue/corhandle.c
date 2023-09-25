@@ -159,10 +159,11 @@ expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memm
     }
     
     // CDL_APPEND(corhash->corq, mmsg);
-    // ndrx_rbt_insert(&corhash->corq, &mmsg->cor, &isNew);
-
+    
     /* add backref */
     mmsg->corhash = corhash;
+
+    ndrx_rbt_insert(corhash->corq, (ndrx_rbt_node_t *)mmsg, &isNew);
     
 out:
     return ret;
