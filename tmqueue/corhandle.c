@@ -112,21 +112,9 @@ expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
      * remove msg from CDL
      */
     tmq_corhash_t * corhash = mmsg->corhash;
-    ndrx_rbt_tree_iterator_t iter;
 
     /* remove correlator from hash if empty */
-    // ndrx_rbt_delete(&corhash->corq, &mmsg->cor);
-
-    /* check iteration over empty tree */
-    // ndrx_rbt_begin_iterate(&corhash->corq, RightLeftWalk, &iter);
-    if (NULL==ndrx_rbt_iterate(&iter))
-    {
-        NDRX_LOG(log_debug, "Removing corrid_str [%s] %p",
-            corhash->corrid_str, corhash);
-        /* remove empty hash node */
-        EXHASH_DEL(qhash->corhash, corhash);
-        NDRX_FPFREE(corhash);
-    }
+    ndrx_rbt_delete(corhash->corq, mmsg->cor);
 
     mmsg->corhash = NULL;
 

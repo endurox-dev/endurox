@@ -1171,12 +1171,12 @@ out:
         /* remove messages hashes, due to failure */
         MUTEX_LOCK_V(M_q_lock);
         
+#if 0
         if (hashed)
         {
             EXHASH_DEL( G_msgid_hash, mmsg);
         }
         
-#if 0
         if (hashedcor)
         {
             tmq_cor_msg_del(qhash, mmsg);
@@ -1604,10 +1604,13 @@ exprivate void tmq_remove_msg(tmq_memmsg_t *mmsg)
     {
         qhash->numdeq++;
         
+#if 0
         /* Add the message to end of the queue */
         CDL_DELETE(qhash->q_infligh, mmsg);    
+#endif
     }
     
+#if 0
     /* Add the hash of IDs */
     EXHASH_DEL( G_msgid_hash, mmsg);
     
@@ -1615,6 +1618,8 @@ exprivate void tmq_remove_msg(tmq_memmsg_t *mmsg)
     {
         tmq_cor_msg_del(qhash, mmsg);
     }
+#endif
+    ndrx_infl_delmsg(qhash, mmsg);
     
     NDRX_FREE(mmsg->msg);
     NDRX_FREE(mmsg);
