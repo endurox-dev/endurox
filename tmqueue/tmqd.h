@@ -52,7 +52,6 @@ extern "C" {
 extern pthread_t G_forward_thread;
 extern int volatile G_forward_req_shutdown;          /**< Is shutdown request? */
 extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   */
-
 /*---------------------------Macros-------------------------------------*/
 #define SCAN_TIME_DFLT          10  /**< Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /**< Try count for transaction completion */
@@ -88,7 +87,7 @@ extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   *
 #define NDRX_TMQ_LOC_FUTQ       0x0002  /**< Future queue                   */
 #define NDRX_TMQ_LOC_CURQ       0x0004  /**< Current queue                  */
 #define NDRX_TMQ_LOC_CORQ       0x0008  /**< Correlator queue               */
-
+#define NDRX_TMQ_LOC_MSGIDHASH  0x0010  /**< Message id hash                */
 /**
  * Extract tmq_memmsg_t from the correltion tree node 
  */
@@ -178,7 +177,8 @@ struct tmq_memmsg
  * 
  * 
  */
-    short flags;
+    /* where are we? */
+    short qstate;
 };
 
 /**
@@ -307,6 +307,7 @@ struct fwd_msg {
 
 /*---------------------------Globals------------------------------------*/
 extern tmqueue_cfg_t G_tmqueue_cfg;
+extern tmq_memmsg_t *G_msgid_hash;
 extern void (*G_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -389,9 +390,9 @@ extern void tmq_fwd_sync_wait(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_notify(fwd_msg_t *fwd);
 
 /* inflight routines */
-extern int ndrx_infl_addmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern int ndrx_infl_mov2cur(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern int ndrx_infl_mov2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 
 #ifdef	__cplusplus
