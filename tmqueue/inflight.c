@@ -43,7 +43,7 @@
 
 #include "tmqd.h"
 #include <utlist.h>
-
+#include <rbtree.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -53,59 +53,42 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Add message to inflight or (cur + cor )/fut (depending on p_msg->lockthreadid)
+ * @brief Add message to inflight or (cur + cor )/fut (depending on p_msg->flags)
+ *
+ * @param qhash queue hash
  * @param p_msg message to add
+ *
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_infl_addmsg(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg)
+int ndrx_infl_addmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
+    int isNew = EXFALSE;
 
-    
-}
-
-/** 
- * Move message from (cur+cor)/fut to inflight. 
- * This removes message from cur/fut+cor and adds to inflight
- * @param p_msg message to move
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg)
-{
-    int ret = EXSUCCEED;
-
-}
-
-/**
- * Move message from inflight to (cur+cor)/fut (in case if doing rollback) 
- * @param p_msg message to move
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_infl_mov2cur(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg)
-{
-    int ret = EXSUCCEED;
-
-}
-
-/**
- * Remove message from inflight / (cur+cor)/fut depending on context 
- * @param p_msg message to remove
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg)
-{
-    int ret = EXSUCCEED;
-
-    /* Delete message from infligth queue */
-    if (p_mmsg->flags & NDRX_TMQ_LOC_INFL)
+    /* check if message is for future time */
+    if ( p_msg->flags & NDRX_TMQ_LOC_FUT )
     {
-        CDL_DELETE(qhash->q_infligh, p_mmsg);
+        /* add message only in future queue */
+        mmsg->cur = ndrx_rbt_insert(&qhash->q_fut, mmsg->cur, &isNew);
     }
 
-    /* Delete current message rbt node from qhash rbt q tree */
-    if (p_mmsg->flags & NDRX_TMQ_LOC_CURQ)
-    {
-        // ndrx_rbt_delete(qhash->q, &p_mmsg->cur);
-    }
+    return ret;
+}
+
+int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+{
+    int ret = EXSUCCEED;
+    return ret;
+}
+
+int ndrx_infl_mov2cur(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+{
+    int ret = EXSUCCEED;
+    return ret;
+}
+
+int ndrx_infl_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+{
+    int ret = EXSUCCEED;
     return ret;
 }
