@@ -42,6 +42,7 @@
 #include "qcommon.h"
 #include "tmqd.h"
 #include <utlist2.h>
+#include <rbtree.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -90,7 +91,7 @@ expublic tmq_corhash_t * tmq_cor_add(tmq_qhash_t *qhash, char *corrid_str)
     EXHASH_ADD_STR( qhash->corhash, corrid_str, corhash);
 
     /* setup red-black trees */
-    ndrx_rbt_init(&corhash->corq, tmq_rbt_cmp_cur, tmq_rbt_combine_cor, NULL, corhash);
+    // ndrx_rbt_init(&corhash->corq, tmq_rbt_cmp_cor, tmq_rbt_combine_cor, NULL, corhash);
 
     NDRX_LOG(log_debug, "Added corrid_str [%s] %p",
             corhash->corrid_str, corhash);
@@ -111,10 +112,14 @@ expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
      * remove msg from CDL
      */
     tmq_corhash_t * corhash = mmsg->corhash;
-   
-    /* remove from CDL. */
-    CDL_DELETE(corhash->corq, mmsg);
-    if (NULL==corhash->corq)
+    ndrx_rbt_tree_iterator_t iter;
+
+    /* remove correlator from hash if empty */
+    // ndrx_rbt_delete(&corhash->corq, &mmsg->cor);
+
+    /* check iteration over empty tree */
+    // ndrx_rbt_begin_iterate(&corhash->corq, RightLeftWalk, &iter);
+    if (NULL==ndrx_rbt_iterate(&iter))
     {
         NDRX_LOG(log_debug, "Removing corrid_str [%s] %p",
             corhash->corrid_str, corhash);
@@ -138,6 +143,7 @@ expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
+    int isNew = EXFALSE;
     
     tmq_corhash_t * corhash =  tmq_cor_find(qhash, mmsg->corrid_str);
     
@@ -152,7 +158,9 @@ expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memm
         goto out;
     }
     
-    CDL_APPEND(corhash->corq, mmsg);
+    // CDL_APPEND(corhash->corq, mmsg);
+    // ndrx_rbt_insert(&corhash->corq, &mmsg->cor, &isNew);
+
     /* add backref */
     mmsg->corhash = corhash;
     
@@ -173,7 +181,8 @@ expublic void tmq_cor_sort_queues(tmq_qhash_t *q)
     EXHASH_ITER(hh, (q->corhash), el, elt)
     {
         /* sort the correlated message according to insert timestamp */
-        CDL_SORT(el->corq, q_msg_sort);
+        /* message are already sorted by insert */
+        // CDL_SORT(el->corq, q_msg_sort);
     }
 }
 

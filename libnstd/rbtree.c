@@ -321,6 +321,31 @@ ndrx_rbt_node_t *ndrx_rbt_leftmost(ndrx_rbt_tree_t *rbt)
     return NULL;
 }
 
+/*
+ * rbt_rightmost: fetch the rightmost (largest valued) tree node.
+ * Returns NULL if tree is empty.
+ *
+ * Note: in the original implementation this included an unlink step, but
+ * that's a bit awkward.  Just call rbt_delete on the result if that's what
+ * you want.
+ */
+ndrx_rbt_node_t *ndrx_rbt_rightmost(ndrx_rbt_tree_t *rbt)
+{
+    ndrx_rbt_node_t *node = rbt->root;
+    ndrx_rbt_node_t *rightmost = rbt->root;
+
+    while (node != RBTNIL)
+    {
+        rightmost = node;
+        node = node->right;
+    }
+
+    if (rightmost != RBTNIL)
+        return rightmost;
+
+    return NULL;
+}
+
 /**********************************************************************
  *                              Insertion                                  *
  **********************************************************************/
