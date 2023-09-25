@@ -582,8 +582,8 @@ Ensure(test_nstd_compare)
 
     assert_true(ndrx_compare4(0,0,0,0, 0,0,0,1)<0);
     assert_true(ndrx_compare4(0,0,0,1, 0,0,0,0)>0);
-
-    
+}
+/**
  * Test standard libary, file handling routines
  */
 Ensure(test_nstd_file_handling)
