@@ -138,9 +138,9 @@ function validate_OK1_lock_loss {
     echo "$CMD"
     OUT=`$CMD 2>&1`
 
-    PATTERN="TAG1/SUBSECTION1 - waiting on group lock \(process group OK1 \(no 1\), .*
-TAG2/SUBSECTION2 - waiting on group lock \(process group OK1 \(no 1\), .*
-TAG3/- - running pid [0-9]+ .*"
+    PATTERN="TAG1\/SUBSECTION1 - waiting on group lock \(process group OK1 \(no 1\), .*
+TAG2\/SUBSECTION2 - waiting on group lock \(process group OK1 \(no 1\), .*
+TAG3\/- - running pid [0-9]+ .*"
 
     echo "got output [$OUT]"
 
@@ -165,12 +165,12 @@ function validate_OK1_recovery {
     # we shall still wait on lock, as exsignlesv was restarted
     CNT=`xadmin ppm | grep atmi.sv1 | grep 'wait  runok' | wc | awk '{print $1}'`
     if [ "$CNT" -ne "11" ]; then
-        echo "Expected 11 atmi.sv103 processes in wait state, got [$CNT] (after the lock lost)"
+        echo "Expected 11 atmi.sv103 processes in wait state, got [$CNT] (after the recovery lost)"
         go_out -1
     fi
 
-    echo "Wait 30 (lock regain + wait) check locked_wait + boot order booted all processes..."
-    sleep 30
+    echo "Wait 40 (lock regain + wait) check locked_wait + boot order booted all processes..."
+    sleep 40
     xadmin ppm
     xadmin psg
 
@@ -185,9 +185,9 @@ function validate_OK1_recovery {
     echo "$CMD"
     OUT=`$CMD 2>&1`
 
-    PATTERN="TAG1/SUBSECTION1 - running pid [0-9]+ .*
-TAG2/SUBSECTION2 - running pid [0-9]+ .*
-TAG3/- - running pid [0-9]+ .*"
+    PATTERN="TAG1\/SUBSECTION1 - running pid [0-9]+ .*
+TAG2\/SUBSECTION2 - running pid [0-9]+ .*
+TAG3\/- - running pid [0-9]+ .*"
 
     echo "got output [$OUT]"
 
@@ -462,7 +462,7 @@ kill -SIGSTOP $LOCK_PID
 # -> killall processes -> 1sec
 # -> try boot processes -> 1 sec
 # -> + 2 sec buffer
-sleep 15
+sleep 17
 validate_OK1_lock_loss;
 kill -SIGCONT $LOCK_PID
 validate_OK1_recovery;
@@ -553,7 +553,9 @@ echo ">>> Node 2 shutdown: no-order group wait long wait server booted fully"
 ################################################################################
 
 # wait for locks to establish
-sleep 20
+# seems needs longer time for AIX...
+# however having issues with boot order checks...
+sleep 25
 
 # all process shall be running, expect that long booting, shall be still in start
 # state
