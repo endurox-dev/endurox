@@ -72,7 +72,7 @@ expublic int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_mem
         mmsg->qstate = NDRX_TMQ_LOC_INFL;
     }
     else if ( (mmsg->msg->qctl.flags & TPQTIME_ABS) && 
-            (mmsg->msg->qctl.deq_time >= (long)time(NULL)))
+            (mmsg->msg->qctl.deq_time > (long)time(NULL)))
     {
         ndrx_rbt_insert(qhash->q_fut, (ndrx_rbt_node_t *)mmsg, &isNew);
         mmsg->qstate = NDRX_TMQ_LOC_FUTQ;
@@ -99,19 +99,109 @@ expublic int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_mem
             mmsg->qstate |= NDRX_TMQ_LOC_CORQ;
         }
     }
+    /* add message to G_msgid_hash */
+
+    /*  mmsg->msgid_str must be setup too! */
+    EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
+    mmsg->qstate |= NDRX_TMQ_LOC_MSGIDHASH;
+
 out:
     return ret;
 }
 
-int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+/**
+ * Move message from current/cur/fut to inflight
+ * NOTE that context must be with M_q_lock locked.
+ */
+expublic int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
+
+    if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
+    {
+        ndrx_rbt_delete(qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+        mmsg->qstate &= ~NDRX_TMQ_LOC_FUTQ;
+    }
+    else if (mmsg->qstate & NDRX_TMQ_LOC_CURQ)
+    {
+        ndrx_rbt_delete(qhash->q, (ndrx_rbt_node_t *)mmsg);
+        mmsg->qstate &= ~NDRX_TMQ_LOC_CURQ;
+
+        /* remove from correlator too */
+        if (mmsg->qstate & NDRX_TMQ_LOC_CORQ)
+        {
+            tmq_cor_msg_del(qhash, mmsg);
+            mmsg->qstate &= ~NDRX_TMQ_LOC_CORQ;
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Message [%s] is not in cur/fut queue!",
+                mmsg->msgid_str);
+        userlog("Cannot move to inflight Q: messsage [%s] is not in cur/fut queue (state=%hd)!",
+                mmsg->msgid_str, mmsg->qstate);
+        EXFAIL_OUT(ret);
+    }
+
+    /* add message to inflight */
+    CDL_APPEND(qhash->q_infligh, mmsg);
+    mmsg->qstate |= NDRX_TMQ_LOC_INFL;
+
+out:
     return ret;
 }
 
-int ndrx_infl_mov2cur(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+/**
+ * Move message from inflight to current/cur/fut
+ * NOTE that context must be with M_q_lock locked.
+ * @param qhash queue hash
+ * @param mmsg message to move
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_infl_mov2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
+
+    if (mmsg->qstate & NDRX_TMQ_LOC_INFL)
+    {
+        CDL_DELETE(qhash->q_infligh, mmsg);
+        mmsg->qstate &= ~NDRX_TMQ_LOC_INFL;
+
+        /* enqueue to cur/cor or fut */
+        if ( (mmsg->msg->qctl.flags & TPQTIME_ABS) && 
+                (mmsg->msg->qctl.deq_time > (long)time(NULL)))
+        {
+            ndrx_rbt_insert(qhash->q_fut, (ndrx_rbt_node_t *)mmsg, NULL);
+            mmsg->qstate |= NDRX_TMQ_LOC_FUTQ;
+        }
+        else
+        {
+            /* insert to cur */
+            ndrx_rbt_insert(qhash->q, (ndrx_rbt_node_t *)mmsg, NULL);
+            mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
+
+            if (mmsg->msg->qctl.flags & TPQCORRID)
+            {
+                if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
+                {
+                    NDRX_LOG(log_error, "Failed to add msg [%s] to corhash!",
+                            mmsg->msgid_str);
+                    EXFAIL_OUT(ret);
+                }
+                mmsg->qstate |= NDRX_TMQ_LOC_CORQ;
+            }
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Message [%s] is not in inflight queue!",
+                mmsg->msgid_str);
+        userlog("Cannot move to cur Q: messsage [%s] is not in inflight queue (state=%hd)!",
+                mmsg->msgid_str, mmsg->qstate);
+        EXFAIL_OUT(ret);
+    }
+
+out:
     return ret;
 }
 
@@ -128,6 +218,11 @@ expublic int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
     {
         /* remove from correlator Q */
         tmq_cor_msg_del(qhash, mmsg);
+    }
+
+    if (mmsg->qstate & NDRX_TMQ_LOC_MSGIDHASH)
+    {
+        EXHASH_DEL(G_msgid_hash, mmsg);
     }
 
     if (mmsg->qstate & NDRX_TMQ_LOC_INFL)
