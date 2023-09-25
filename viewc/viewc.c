@@ -192,7 +192,7 @@ int main(int argc, char **argv)
         
         /* get the base name of output file */
         
-        NDRX_STRCPY_SAFE(basename, argv[i]);
+        NDRX_STRCPY_SAFE(basename, ndrx_basename(argv[i]));
         p = strrchr(basename, '.');
         
         if (NULL!=p)
@@ -238,9 +238,7 @@ int main(int argc, char **argv)
         
         ndrx_view_deleteall();
         
-        
         NDRX_LOG(log_info, ">>> [%s] COMPILED & TESTED OK!", Vfile);
-        
     }
     
     if (!was_file)

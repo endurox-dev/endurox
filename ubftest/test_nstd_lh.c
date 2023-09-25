@@ -32,6 +32,7 @@
  * -----------------------------------------------------------------------------
  */
 
+/*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <cgreen/cgreen.h>
@@ -216,9 +217,6 @@ Ensure(test_nstd_lh_have_space)
         found=ndrx_lh_position_get(&conf, &i, sizeof(i), O_CREAT, &pos, 
                 &have_value, "lhtest");
         assert_equal(found, EXTRUE);
-        
-        
-        
     }
 }
 

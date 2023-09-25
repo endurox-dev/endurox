@@ -322,6 +322,10 @@ extern "C" {
         } \
     }
 
+#define NDRX_SGCMD_VERIFY           "VERIFY" /**< Verfy the lock i   */
+#define NDRX_SGCMD_QUERY            "QUERY"  /**< Query lock status` */
+#define NDRX_SGMAX_CMDLEN            16      /**< command code buffer sz */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -518,6 +522,7 @@ struct atmi_lib_env
     char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
     ndrx_env_priv_t integpriv;    /**< integration  private data                */
     char    rtgrp[NDRX_DDR_GRP_MAX+1]; /**< routing grup setting                */
+
     /**
      * Special flags needed for QA
      * @defgroup qa_handlers
@@ -529,8 +534,17 @@ struct atmi_lib_env
     void (*test_advertise_crash)(void); /**< XATMI server crash before reaching ndrxd */
     
     /**@}*/
-    
-    long xa_fsync_flags;            /** Special tmqueue flags                  */
+
+    int procgrp_no;                 /**< Process group number for the curret bin */
+
+    /** Increment for singleton-group at lock. Used for transaction lifecycle
+     * management. I.e. txn must be completed (from start to commit/abort decision)
+     * within this given time. Otherwise tmsrv will reboot, as it does not
+     * know was there lock/lost/lock gain during the transaction processing.
+     */
+    long sglockinc;
+
+    long xa_fsync_flags;            /**< Special tmqueue flags                   */
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 
@@ -832,6 +846,17 @@ struct ndrx_expbufctl
 
 typedef struct ndrx_expbufctl ndrx_expbufctl_t;
 
+/**
+ * Server thread struct. Used for internal multi-threading
+ */
+struct ndrx_thread_server
+{
+    char *context_data; /* malloced by enduro/x */
+    int cd;
+    char *buffer; /* buffer data, managed by enduro/x */
+};
+typedef struct ndrx_thread_server ndrx_thread_server_t;
+
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
 extern NDRX_API int G_srv_id;
@@ -946,6 +971,7 @@ extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flag
 
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char **buf, int len, char msg_type));
+extern NDRX_API void tpext_configprocgrp_lp(int singlegrp);
 
 extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Object *data_object);
@@ -1023,6 +1049,8 @@ extern NDRX_API int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, ch
         long *olen, long flags, long mflags);
 
 extern NDRX_API void ndrx_mbuf_Bnext_ptr_first(UBFH *p_ub, Bnext_state_t *state);
+extern NDRX_API long ndrx_tpsgislocked(int grpno, long flags, long *grp_flags);
+
 
 #ifdef	__cplusplus
 }

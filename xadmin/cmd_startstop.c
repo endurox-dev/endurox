@@ -47,6 +47,8 @@
 #include <gencall.h>
 #include <nclopt.h>
 #include <lcfint.h>
+#include <singlegrp.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -77,6 +79,7 @@ exprivate char *proc_state_to_str(long state, short msg_type)
     static char *eenv= "Environment setup failure";
     static char *esys= "System failure";
     static char *restart= "Restarting";
+    static char *ewait= "Waiting on group lock";
     static char unknown[256];
     char *ret;
 
@@ -131,6 +134,9 @@ exprivate char *proc_state_to_str(long state, short msg_type)
             break;
         case NDRXD_PM_RESTART:
             ret = restart;
+            break;
+        case NDRXD_PM_WAIT:
+            ret = ewait;
             break;
         default:
             snprintf(unknown, sizeof(unknown), "Unknown state (%ld)", state);
@@ -202,15 +208,23 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     command_startstop_t call;
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
+    char procgrp[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
     short keep_running_ndrxd;
-    
+    int ids=0;
+    short include_lp=EXFALSE;
+
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server ID"},
         {'s', BFLD_STRING, (void *)srvnm, sizeof(srvnm), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
+        {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
+                                NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
         {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
@@ -220,7 +234,7 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRCPY_SAFE(srvnm, argv[1]);
+	    NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {
@@ -233,14 +247,30 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     }
     
     memset(&call, 0, sizeof(call));
-    
-    if (EXFAIL!=srvid && EXEOS!=srvnm[0])
+
+    if (EXFAIL!=srvid)
     {
-        fprintf(stderr, "-i and -s cannot be combined!\n");
+        ids++;
+    }
+
+    if (EXEOS!=srvnm[0])
+    {
+        ids++;
+    }
+
+    if (EXEOS!=procgrp[0])
+    {
+        ids++;
+    }
+
+    if (ids>1)
+    {
+        fprintf(stderr, "-i, -s and -g cannot be combined!\n");
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
+    /* ask for -y for -g too: */
+    if (EXFAIL==srvid && EXEOS==srvnm[0] && EXEOS==procgrp[0] &&
           !ndrx_chk_confirm("Are you sure you want to start application?", confirm))
     {
         EXFAIL_OUT(ret);
@@ -249,7 +279,13 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     /* prepare for call */
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
-    
+    NDRX_STRCPY_SAFE(call.procgrp, procgrp);
+
+    if (include_lp)
+    {
+        call.flags|=NDRXD_CALL_FLAGS_LP2GRP;
+    }
+
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
                         (command_call_t *)&call, sizeof(call),
@@ -283,12 +319,16 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     command_startstop_t call;
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
+    char procgrp[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
     short keep_running_ndrxd = EXFALSE;
     short force_off = EXFALSE;  /* force shutdown (for malfunction/no pid instances) */
     short dummy;
     short keep_lcf=EXFALSE;
     pid_t pid = EXFAIL;
+    int ids=0;
+    short include_lp=EXFALSE;
+
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -297,6 +337,11 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+        {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
+                                NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'c', BFLD_SHORT, (void *)&dummy, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Left for compatibility"},
         {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
@@ -311,7 +356,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRCPY_SAFE(srvnm, argv[1]);
+	    NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {
@@ -325,18 +370,33 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     
     memset(&call, 0, sizeof(call));
     
-    if (EXFAIL!=srvid && EXEOS!=srvnm[0])
+    if (EXFAIL!=srvid)
     {
-        fprintf(stderr, "-i and -s cannot be combined!\n");
+        ids++;
+    }
+
+    if (EXEOS!=srvnm[0])
+    {
+        ids++;
+    }
+
+    if (EXEOS!=procgrp[0])
+    {
+        ids++;
+    }
+
+    if (ids>1)
+    {
+        fprintf(stderr, "-i, -s and -g cannot be combined!\n");
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL!=srvid || EXEOS!=srvnm[0])
+    if (EXFAIL!=srvid || EXEOS!=srvnm[0] || EXEOS!=procgrp[0])
     {
         keep_running_ndrxd = EXTRUE;
     }
     
-    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] && EXEOS==procgrp[0] &&
           !ndrx_chk_confirm("Are you sure you want to stop application?", confirm))
     {
         EXFAIL_OUT(ret);
@@ -367,6 +427,11 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
+    NDRX_STRCPY_SAFE(call.procgrp, procgrp);
+    if (include_lp)
+    {
+        call.flags|=NDRXD_CALL_FLAGS_LP2GRP;
+    }
 
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                     NDRXD_CALL_TYPE_GENERIC,
@@ -421,7 +486,11 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         {
             ndrx_lcf_reset();
         }
+
+        /* Reset all singlegrp infos */
+        ndrx_sg_reset();
     }
+
 out:
     return ret;
 }
@@ -440,9 +509,12 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     int ret=EXSUCCEED;
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
+    char procgrp[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
     short keep_running_ndrxd = EXFALSE;
-    
+    int ids=0;
+    short include_lp=EXFALSE;
+
     /* just verify that content is ok: */
     ncloptmap_t clopt[] =
     {
@@ -450,10 +522,13 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server ID"},
         {'s', BFLD_STRING, (void *)srvnm, sizeof(srvnm), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
-                                
+        {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
+                                NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
-                                
         {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {0}
@@ -461,7 +536,7 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRCPY_SAFE(srvnm, argv[1]);
+	    NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {
@@ -485,13 +560,6 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         strcpy(argv[0], "start"); 
         ret=process_command_buffer(EXFALSE);
     }
-    
-#if 0
-    if (EXFAIL!=srvid || EXEOS!=srvnm[0])
-    {
-        keep_running_ndrxd = EXTRUE;
-    }
-#endif
     
 out:
     return ret;
@@ -548,14 +616,21 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     command_startstop_t call;
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
+    char procgrp[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
+    int ids=0;
+    short include_lp=EXFALSE;
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server ID"},
         {'s', BFLD_STRING, (void *)srvnm, sizeof(srvnm), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
-                                
+        {'g', BFLD_STRING, (void *)procgrp, sizeof(procgrp), 
+                                NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Process group"},
+        {'L', BFLD_SHORT,  (void *)&include_lp, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, 
+                                "Include lock provider of the process group"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
         {0}
@@ -563,7 +638,7 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRCPY_SAFE(srvnm, argv[1]);
+	    NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {
@@ -577,13 +652,28 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     
     memset(&call, 0, sizeof(call));
     
-    if (EXFAIL!=srvid && EXEOS!=srvnm[0])
+    if (EXFAIL!=srvid)
     {
-        fprintf(stderr, "-i and -s cannot be combined!\n");
+        ids++;
+    }
+
+    if (EXEOS!=srvnm[0])
+    {
+        ids++;
+    }
+
+    if (EXEOS!=procgrp[0])
+    {
+        ids++;
+    }
+
+    if (ids>1)
+    {
+        fprintf(stderr, "-i, -s and -g cannot be combined!\n");
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==srvid && EXEOS==srvnm[0] &&
+    if (EXFAIL==srvid && EXEOS==srvnm[0] && EXEOS==procgrp[0] &&
           !ndrx_chk_confirm("Are you sure you want to start application?", confirm))
     {
         EXFAIL_OUT(ret);
@@ -592,7 +682,13 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     /* prepare for call */
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
-    
+    NDRX_STRCPY_SAFE(call.procgrp, procgrp);
+
+    if (include_lp)
+    {
+        call.flags|=NDRXD_CALL_FLAGS_LP2GRP;
+    }
+
     ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
                         (command_call_t *)&call, sizeof(call),

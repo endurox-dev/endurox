@@ -33,7 +33,7 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 find_package(LibXml2 REQUIRED)
 
@@ -50,7 +50,7 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
             ${LIBXML2_INCLUDE_DIR})
 
 add_library (ndrxconf STATIC
-   	        envapi.c)
+   	        envapi.c procgroups.c)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(ndrxconf atmi nstd)

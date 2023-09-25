@@ -50,7 +50,7 @@
 #include <ndrstandard.h>
 #include <userlog.h>
 #include <atmi.h>
-#include <exenvapi.h>
+#include <libndrxconf.h>
 #include <ndrxdiag.h>
 
 #include "cpmsrv.h"
@@ -284,9 +284,26 @@ out:
 /**
  * Perform test on PID
  * @param c client process
+ * @param sg_groups singleton groups
  */
-expublic void cpm_pidtest(cpm_process_t *c)
+expublic void cpm_pidtest(cpm_process_t *c, int *sg_groups)
 {
+    /* 
+     * if group lock is lost, kill immediatelly 
+     */
+    if (NULL!=sg_groups 
+        && c->stat.procgrp_no>0 
+        && ndrx_ndrxconf_procgroups_is_singleton(ndrx_G_procgroups_config, 
+                c->stat.procgrp_no)
+        && !sg_groups[c->stat.procgrp_no-1] && 
+            CLT_STATE_STARTED==c->dyn.cur_state)
+    {
+        NDRX_LOG(log_error, "Singleton process group %d lock lost for "
+                "%s/%s pid %d, killing immediatelly", 
+                c->stat.procgrp_no, c->tag, c->subsect, (int)c->dyn.pid);
+        kill(c->dyn.pid, SIGKILL);
+    }
+
     if (CLT_STATE_STARTED==c->dyn.cur_state && c->dyn.shm_read)
     {
         /* check the pid status, as we might be booted with existing
@@ -343,7 +360,7 @@ expublic int cpm_killall(void)
             /* 
              * still check the pid, not? If running from shared mem blocks?
              */
-            cpm_pidtest(c);
+            cpm_pidtest(c, NULL);
             
             if (CLT_STATE_STARTED==c->dyn.cur_state)
             {
@@ -471,7 +488,7 @@ expublic int cpm_kill(cpm_process_t *c)
     {
         /* if running from shared memory, do the check... */
         
-        cpm_pidtest(c);
+        cpm_pidtest(c, NULL);
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
@@ -492,7 +509,6 @@ expublic int cpm_kill(cpm_process_t *c)
     /* if we kill with -9, then kill all children too
      * this is lengthly operation, thus only for emergency kill only 
      */
-    
     
     if (c->stat.flags & CPM_F_KILL_LEVEL_LOW)
     {
@@ -546,6 +562,7 @@ expublic int cpm_exec(cpm_process_t *c)
     int fd_stderr;
     int fd;
     int ret = EXSUCCEED;
+    char tmp[256];
 
     NDRX_LOG(log_warn, "*********processing for startup %s *********", 
             c->stat.command_line);
@@ -563,7 +580,7 @@ expublic int cpm_exec(cpm_process_t *c)
     {
         /* close parent resources... Bug #176 
          * this will be closed by ndrx_atfork handler
-	atmisrv_un_initialize(EXTRUE);*/
+	    atmisrv_un_initialize(EXTRUE);*/
         
         /* reset signal handler so that for new processes there is scratch start */
         signal(SIGCHLD, SIG_DFL);
@@ -600,7 +617,20 @@ expublic int cpm_exec(cpm_process_t *c)
                     NDRX_CLTSUBSECT, c->subsect, strerror(errno));
             exit(1);
         }
-        
+
+        if (c->stat.procgrp_no > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", c->stat.procgrp_no);
+            if (EXSUCCEED!=setenv(CONF_NDRX_PROCGRP_NO, tmp, EXTRUE))
+            {
+                NDRX_LOG(log_error, "Cannot set [%s] to [%s]: %s", 
+                        CONF_NDRX_PROCGRP_NO, c->tag, strerror(errno));
+                userlog("Cannot set [%s] to [%s]: %s", 
+                        CONF_NDRX_PROCGRP_NO, c->tag, strerror(errno));
+                exit(1);
+            }
+        }
+
         NDRX_STRCPY_SAFE(cmd_str, c->stat.command_line);
 
         token = ndrx_strtokblk(cmd_str, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);

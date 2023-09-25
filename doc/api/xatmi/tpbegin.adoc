@@ -41,11 +41,14 @@ in given call context, then this new transaction from *tpreturn(3)* and
 i.e. *tpreturn(3)* would finish it correspondingly and *tpforward(3)* would
 receive initiator of the auto-tran.
 
+If *tmsrv* is started in the singleton process groups, the upper limit
+for 'timeout' is by *NDRX_SGLOCKINC* env parameter value, multiplied by
+*exsinglesv(8)* parameter *chkinterval*.
+
 RETURN VALUE
 ------------
 On success, *tpbegin()* return zero; on error, -1 is returned, with *tperrno* 
 set to indicate the error.
-
 
 ERRORS
 ------

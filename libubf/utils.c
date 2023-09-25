@@ -258,7 +258,6 @@ expublic void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
     }
 }
 
-
 /**
  * Dump the UBF buffer to log file, UBF logger
  * @param lev - debug level

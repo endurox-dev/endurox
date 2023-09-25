@@ -69,6 +69,7 @@
 #define	EX_CPMTAG	((BFLDID32)167772362)	/* number: 202	 type: string */
 #define	EX_CPMSUBSECT	((BFLDID32)167772363)	/* number: 203	 type: string */
 #define	EX_CPMWAIT	((BFLDID32)33554636)	/* number: 204	 type: long */
+#define	EX_CPMPROCGRP	((BFLDID32)167772365)	/* number: 205	 type: string */
 #define	EX_CLTID	((BFLDID32)167772410)	/* number: 250	 type: string */
 #define	EX_DATA	((BFLDID32)201326843)	/* number: 251	 type: carray */
 #define	EX_DATA_BUFTYP	((BFLDID32)252)	/* number: 252	 type: short */
@@ -186,5 +187,10 @@
 #define	EX_CACHE_NRDEL	((BFLDID32)33555196)	/* number: 764	 type: long */
 #define	EX_CACHE_NRDUPDEL	((BFLDID32)33555197)	/* number: 765	 type: long */
 #define	EX_CACHE_BUFLEN	((BFLDID32)33555199)	/* number: 767	 type: long */
+#define	EX_COMMAND	((BFLDID32)167772960)	/* number: 800	 type: string */
+#define	EX_TSTAMP	((BFLDID32)33555233)	/* number: 801	 type: long */
+#define	EX_LCKSTATUS	((BFLDID32)67109666)	/* number: 802	 type: char */
+#define	EX_PROCGRP_NO	((BFLDID32)33555235)	/* number: 803	 type: long */
+#define	EX_SEQUENCE	((BFLDID32)33555236)	/* number: 804	 type: long */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -128,6 +128,23 @@ expublic tmq_qconfig_t *G_qconf = NULL;
 exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);
 
 /**
+ * Check that message ID exists in memory store
+ * @param msgid_str message id string
+ * @return  EXTRUE/EXFALSE
+ */
+expublic int tmq_msgid_exists(char *msgid_str)
+{
+    tmq_memmsg_t *ret;
+
+    MUTEX_LOCK_V(M_q_lock);   
+    EXHASH_FIND_STR( G_msgid_hash, msgid_str, ret);
+    MUTEX_UNLOCK_V(M_q_lock);
+    
+    return (NULL!=ret)?EXTRUE:EXFALSE;
+}
+
+
+/**
  * Process message blocks on disk read (after cold startup)
  * @param tmxid serialized trnasaction id
  * @param p_block
@@ -219,7 +236,7 @@ expublic int tmq_load_msgs(void)
     
     NDRX_LOG(log_info, "Reading messages from disk...");
     /* populate all queues - from XA source */
-    if (EXSUCCEED!=tmq_storage_get_blocks(process_block,  (short)tpgetnodeid(), 
+    if (EXSUCCEED!=tmq_storage_get_blocks(process_block,  (short)G_tmqueue_cfg.vnodeid, 
             (short)tpgetsrvid()))
     {
         EXFAIL_OUT(ret);
@@ -247,7 +264,7 @@ expublic int tmq_dum_add(char *tmxid)
      * Note that we might not be in transaction mode, in case if
      * doing prepare and we find that there is nothing to prepare.
      */
-    tmq_setup_cmdheader_dum(&dum.hdr, NULL, tpgetnodeid(), 0, ndrx_G_qspace, 0);
+    tmq_setup_cmdheader_dum(&dum.hdr, NULL, G_tmqueue_cfg.vnodeid, 0, ndrx_G_qspace, 0);
     dum.hdr.command_code = TMQ_STORCMD_DUM;
     
     /* this adds transaction to log: */
@@ -326,7 +343,7 @@ out:
 expublic void tmq_msgid_gen(char *msgid)
 {
     exuuid_t uuid_val;
-    short node_id = (short) ndrx_get_G_atmi_env()->our_nodeid;
+    short node_id = (short) G_tmqueue_cfg.vnodeid;
     short srv_id = (short) G_srv_id;
    
     memset(msgid, 0, TMMSGIDLEN);

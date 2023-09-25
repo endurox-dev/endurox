@@ -32,7 +32,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
@@ -160,6 +160,11 @@ add_subdirectory (test098_svqhkeep)
 add_subdirectory (test099_callbuflen)
 add_subdirectory (test100_svstdout)
 add_subdirectory (test101_dupsrv)
+add_subdirectory (test102_procgrp)
+add_subdirectory (test103_singlegrp)
+add_subdirectory (test104_tmqfailover)
+add_subdirectory (test105_respawn)
+add_subdirectory (test106_periodcb)
 
 ################################################################################
 # Master test case drivere

@@ -2362,6 +2362,35 @@ expublic int ndrx_str_valid_cid(char *str, int max_len)
 }
 
 /**
+ * May contain [a-zA-Z0-9_]+
+ * @param str string to check
+ * @param max_len max allowed len
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_str_valid_alphanumeric_(char *str, int max_len)
+{ 
+    int i;
+    int len = strlen(str);
+    
+    if (len < 1 || len > max_len)
+    {
+        return EXFALSE;
+    }
+
+    for (i = 0; i < len; i++)
+    { 
+        if (!((str[i] >= 'a' && str[i] <= 'z') 
+              || (str[i] >= 'A' && str[i] <= 'Z') 
+              || (str[i] >= '0' && str[i] <= '9') 
+              || str[i] == '_')) 
+        return EXFALSE;
+    } 
+  
+    return EXTRUE;
+}
+
+
+/**
  * Check that str ends with needle
  * @param str string
  * @param needle what to search for str trailing
@@ -2575,6 +2604,82 @@ expublic int ndrx_rand(void)
     }
     
     return rand_r(&G_nstd_tls->rand_seed);
+}
+
+/**
+ * Get the real-time reading (best guess of real time)
+ */
+expublic int ndrx_realtime_get(struct timespec *tp)
+{
+    int ret = EXSUCCEED;
+#if 0
+    clockid_t clk_id=CLOCK_REALTIME;
+
+#ifdef EX_OS_LINUX
+    clk_id=CLOCK_BOOTTIME;
+#endif
+
+    if (EXSUCCEED!=clock_gettime(clk_id, tp))
+#endif
+    if (EXSUCCEED!=clock_gettime(CLOCK_MONOTONIC, tp))
+    {
+        ret = EXFAIL;
+    }
+
+    return ret;
+}
+
+/**
+ * Non modifying basename() version
+ * @param path path to get basename from (filename)
+ * @return extract filename
+ */
+expublic char * ndrx_basename(char *path)
+{
+    char *p = strrchr(path, '/');
+    
+    if (NULL!=p)
+    {
+        return p+1;
+    }
+    else
+    {
+        return path;
+    }
+}
+
+
+/**
+ * Copy string to volatile char array.
+ * @param dest destination volatile array
+ * @param src source buffer
+ * @param dest_size destination buffer size
+ */
+expublic void ndrx_volatile_strcpy(volatile char *dest, const volatile char *src, size_t dest_size)
+{
+    size_t i;
+
+    for (i = 0; i < dest_size - 1 && src[i] != '\0'; ++i)
+    {
+        dest[i] = src[i];
+    }
+    dest[i] = '\0';
+}
+
+/**
+ * Copy volatile memory
+ * @param dest destination buffer
+ * @param src source buffer
+ * @param n number of bytes to copy
+ */
+expublic void ndrx_volatile_memcy(volatile char *dest, const volatile char *src, size_t n)
+{
+    size_t i;
+
+    for (i=0; i<n; i++)
+    {
+        dest[i] = src[i];
+    }
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

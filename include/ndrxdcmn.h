@@ -210,7 +210,8 @@ extern "C" {
 #define NDRXD_ESYNTAX            23         /**< Syntax error during parsing  */
 #define NDRXD_ESYSTEM            24         /**< E/X system failure           */
 #define NDRXD_ENOCFGLD           25         /**< Configuartion not loaded     */
-#define NDRXD_EMAXVAL            25
+#define NDRXD_ENOENT             26         /**< No entry found               */
+#define NDRXD_EMAXVAL            26
 
 /* This section list call types */
 #define NDRXD_CALL_TYPE_GENERIC         0   /**< Generic call type        */
@@ -265,6 +266,7 @@ extern "C" {
 #define NDRXD_PM_EARGSLIM           8       /**< Arguments or env too long  */
 #define NDRXD_PM_ESYSTEM            9       /**< Bad executable             */
 #define NDRXD_PM_RESTART            10      /**< stop & start back again    */
+#define NDRXD_PM_WAIT               11      /**< Process waits on group     */
 #define NDRXD_PM_MAX_EXIT           19      /**< Maximum dead process       */
     
 #define NDRXD_PM_MIN_RUNNING        20      /**< Minimum running process    */
@@ -288,14 +290,16 @@ extern "C" {
 #define NDRXD_SVC_STATUS_BUSY           1       /**< Service is busy          */
 
     
-#define NDRXD_CALL_FLAGS_DEADQ          0x0001  /**< Reply queue is dead....! */
-#define NDRXD_CALL_FLAGS_PAGE2          0x0002  /**< Second page from call    */
-#define NDRXD_CALL_FLAGS_RSPHAVE_MORE   0x0004	/**< Have more stuff to wait for */
+#define NDRXD_CALL_FLAGS_DEADQ          0x0001  /**< Reply queue is dead....!   */
+#define NDRXD_CALL_FLAGS_PAGE2          0x0002  /**< Second page from call      */
+#define NDRXD_CALL_FLAGS_RSPHAVE_MORE   0x0004	/**< Have more stuff to wait for*/
+#define NDRXD_CALL_FLAGS_PAGE3          0x0008	/**< Third page                 */
+#define NDRXD_CALL_FLAGS_LP2GRP         0x0010  /**< Lock provider bind to group*/
 
 #define SRV_KEY_FLAGS_BRIDGE            0x0001  /**< This server is bridge server                 */
 #define SRV_KEY_FLAGS_SENDREFERSH       0x0002  /**< Bridge requires that we send refersh to them */
 #define SRV_KEY_FLAGS_CONNECTED         0x0004  /**< Is bridge connected?                         */
-    
+#define SRV_KEY_FLAGS_PROCGRPLP         0x0008  /**< Singleton group lock providers               */   
     
 /*
  *  values for bridge_refresh_svc_t.mode
@@ -460,6 +464,8 @@ typedef struct
     short complete_shutdown;            /**< Id of the server */
     int srvid;
     char binary_name[MAXTIDENT+1];
+    char procgrp[MAXTIDENT+1];  /**< process group to shutdown        */
+    long flags;                 /**< Additional flags for the command */
 
 } command_startstop_t;
 
@@ -739,7 +745,12 @@ typedef struct
     long state_changed;     /**< Timer for state changed       */
     int flags;              /**< Flags sent by server info     */
     short   nodeid;         /**< other node id, if this is bridge */
-    
+    int procgrp_no;         /**< Sinlegron group of the process */
+    int procgrp_lp_no;      /**< Defined lock provider for group no */
+    int procgrp_lp_no_act;  /**< Actual number of lock provider (reported) */
+    char procgrp[MAXTIDENT+1];   /**< Sinlegron group of the process, name */
+    char procgrp_lp[MAXTIDENT+1];/**< Defined lock provider for group name*/
+
 } command_reply_ppm_t;
 
 /**
@@ -851,7 +862,8 @@ typedef struct
     */
    char rqaddress[NDRX_MAX_Q_SIZE+1];
    
-   int resid;             /**< Resource id server id for poll, qid for sysv   */
+   int resid;               /**< Resource id server id for poll, qid for sysv   */
+   int procgrp_lp_no;       /**< Singleton process group lock provider          */
    
 } srv_key_t;
 

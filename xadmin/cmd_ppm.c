@@ -83,7 +83,8 @@ M_descr [] =
     {NDRXD_PM_STARTING,    "start"},
     {NDRXD_PM_RUNNING_OK,  "runok"},
     {NDRXD_PM_STOPPING,    "stop"},
-    {NDRXD_PM_RESTART,     "rsta"}
+    {NDRXD_PM_RESTART,     "rsta"},
+    {NDRXD_PM_WAIT,        "wait"},
 };
 /*---------------------------Prototypes---------------------------------*/
 
@@ -105,6 +106,14 @@ exprivate void print_hdr2(void)
     fprintf(stderr, "-------- -------- ----- -------- -------- -----------------------\n");
 }
 
+/**
+ * Print header, 3
+ */
+exprivate void print_hdr3(void)
+{
+    fprintf(stderr, "BINARY   SRVID      PID    SVPID PROCGRP   PGNO PROCGRPL PGLNO PGNLA\n");
+    fprintf(stderr, "-------- ----- -------- -------- -------- ----- -------- ----- -----\n");
+}
 
 /**
  * Get 
@@ -135,25 +144,31 @@ out:
 /**
  * Decode binary flags
  */
-exprivate char *decode_flags(int flags)
+exprivate char *decode_flags(command_reply_ppm_t * ppm_info)
 {
     static char buf[10];
     
     buf[0] = EXEOS;
     
-    if (flags & SRV_KEY_FLAGS_BRIDGE)
+    if (ppm_info->flags & SRV_KEY_FLAGS_BRIDGE)
     {
         strcat(buf, "B");
     }
     
-    if (flags & SRV_KEY_FLAGS_SENDREFERSH)
+    if (ppm_info->flags & SRV_KEY_FLAGS_SENDREFERSH)
     {
         strcat(buf, "r");
     }
     
-    if (flags & SRV_KEY_FLAGS_CONNECTED)
+    if (ppm_info->flags & SRV_KEY_FLAGS_CONNECTED)
     {
         strcat(buf, "C");
+    }
+
+    /* This is lock provider... */
+    if (ppm_info->flags & SRV_KEY_FLAGS_PROCGRPLP)
+    {
+        strcat(buf, "L");
     }
     
     return buf;
@@ -192,6 +207,52 @@ expublic int ppm_rsp_process2(command_reply_t *reply, size_t reply_len)
  * @param reply_len
  * @return
  */
+expublic int ppm_rsp_process3(command_reply_t *reply, size_t reply_len)
+{
+    char binary[9+1];
+    char procgrp[8+1];
+    char procgrp_lp[8+1];
+    
+    if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
+    {
+        command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
+        FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
+        FIX_NM(ppm_info->procgrp, procgrp, (sizeof(procgrp)-1));
+
+        if (EXEOS==procgrp[0])
+        {
+            NDRX_STRCPY_SAFE(procgrp, "-");
+        }
+
+        FIX_NM(ppm_info->procgrp_lp, procgrp_lp, (sizeof(procgrp_lp)-1));
+
+        if (EXEOS==procgrp_lp[0])
+        {
+            NDRX_STRCPY_SAFE(procgrp_lp, "-");
+        }
+
+        fprintf(stdout, "%-8.8s %5d %8d %8d %-8.8s %5d %-8.8s %5d %5d\n", 
+                ppm_info->binary_name,
+                ppm_info->srvid,
+                ppm_info->pid, 
+                ppm_info->svpid,
+                procgrp,
+                ppm_info->procgrp_no,
+                procgrp_lp,
+                ppm_info->procgrp_lp_no,
+                ppm_info->procgrp_lp_no_act
+            );
+    }
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Process response back.
+ * @param reply
+ * @param reply_len
+ * @return
+ */
 expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     char binary[9+1];
@@ -199,6 +260,10 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
     if (reply->flags & NDRXD_CALL_FLAGS_PAGE2)
     {
         return ppm_rsp_process2(reply, reply_len);
+    }
+    else if (reply->flags & NDRXD_CALL_FLAGS_PAGE3)
+    {
+        return ppm_rsp_process3(reply, reply_len);
     }
 
     if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
@@ -220,7 +285,7 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
                 ndrx_decode_num(ppm_info->last_sig, 3, 0, 1), 
                 ppm_info->autokill, 
                 ndrx_decode_num(ppm_info->state_changed, 4, 0, 1), 
-                decode_flags(ppm_info->flags)
+                decode_flags(ppm_info)
                 );
     }
     
@@ -239,11 +304,14 @@ expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     int ret = EXSUCCEED;
     command_call_t call;
     short print_2nd = EXFALSE;
+    short print_3rd = EXFALSE;
     
     ncloptmap_t clopt[] =
     {
         {'2', BFLD_SHORT, (void *)&print_2nd, 0, 
                                 NCLOPT_OPT | NCLOPT_TRUEBOOL, "Print page 2"},
+        {'3', BFLD_SHORT, (void *)&print_3rd, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Print page 3"},
         {0}
     };
     
@@ -259,8 +327,13 @@ expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     {
         /* Print header at first step! */
         print_hdr2();
-        
         call.flags|=NDRXD_CALL_FLAGS_PAGE2;
+    }
+    else if (print_3rd)
+    {
+        /* Print header at first step! */
+        print_hdr3();
+        call.flags|=NDRXD_CALL_FLAGS_PAGE3;
     }
     else
     {

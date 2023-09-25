@@ -31,7 +31,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 find_program(A2X_EXECUTABLE NAMES a2x)
 
@@ -44,7 +44,7 @@ set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            edb_dump edb_copy edb_stat edb_load tpcachebtsv tpcached tpcachesv
            libndrxxapq libndrxxaecpg libndrxxawsmqs libndrxxaoras tpadmsv libndrxxanulls
            libndrxxatmsx exbenchcl exbenchsv libndrxxaqdisks
-           tmrecovercl tmrecoversv ubb2ex)
+           tmrecovercl tmrecoversv ubb2ex exsinglesv exsingleckl exsingleckr)
 
 set(HTML_FILES ${MAN5_NAMES} ${MAN8_NAMES})
 

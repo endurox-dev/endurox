@@ -52,7 +52,6 @@ extern "C" {
 #define NDRX_LCFCNT_DEFAULT            20   /**< Default count of LCF commands                                 */
 #define NDRX_LCF_STARTCMDEXP           60   /**< Number of secs for exiting command to be expired for new proc */
 
-    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -66,13 +65,17 @@ typedef struct
 {
     char *qprefix;      /**< Queue prefix used by mappings  */
     long queuesmax;     /**< Max number of queues           */
+
+    int  pgmax;         /**< Max number of singleton-groups */
+    int  sgrefreshmax;  /**< Expected maximums singleton-group refresh time */
+
     int  svqreadersmax;    /**< Max number of concurrent lckrds*/
     int  lcfreadersmax; /**< Max number of concurrent lckrds*/
     
     int  lcfmax;        /**< Max number of LCF commands     */
     key_t ipckey;       /**< Semphoare key                  */
     int  startcmdexp;   /**< Startup command delay          */
-    int lcf_norun;    /**< LCF is disabled                */
+    int lcf_norun;      /**< LCF is disabled                */
 } ndrx_nstd_libconfig_t;
 
 /**
@@ -98,9 +101,12 @@ typedef struct
     unsigned char ddr_page;          /**< DDR page number  0 or 1, version not changes, using long for align */
     unsigned char ddr_ver1;          /**< DDR Version when we prepare to install data        */
     char reserved[NDRX_LCF_RESVR];  /**< reserved space for future updates             */
+    unsigned char is_mmon;   /**< Is maintenace mode ON? */
     
     /**< Array of LCF commands */
     ndrx_lcf_command_t commands[0];
+
+    /** Opaque ndrx_sg_shm_t follows */
 } ndrx_lcf_shmcfg_t;
 
 /**
@@ -129,7 +135,6 @@ extern NDRX_API ndrx_lcf_shmcfg_t *ndrx_G_shmcfg;
 extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 
 extern NDRX_API int ndrx_lcf_init(void);
 extern NDRX_API void ndrx_lcf_detach(void);

@@ -48,17 +48,34 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
+#ifdef EX_HAVE_STDATOMIC
+#define ndrx_atomic _Atomic volatile
+#else
+#define ndrx_atomic volatile
+#endif
 /**
  * Increment value atomically (where platform allows this)
  * @param OBJ value to increment (pointer to)
  * @param ARG increment by
  */
-#if defined(EX_HAVE_STDATOMIC)   
+#if defined(EX_HAVE_STDATOMIC)
+
+#define NDRX_ATOMIC_STORE(OBJ, ARG)   atomic_store((OBJ), (ARG))
 #define NDRX_ATOMIC_ADD(OBJ, ARG)   atomic_fetch_add((OBJ), (ARG))
+#define NDRX_ATOMIC_LOAD(OBJ)   atomic_load((OBJ))
+
 #elif defined(EX_HAVE_SYNCFETCHADD)    
+
+#define NDRX_ATOMIC_STORE(OBJ, ARG)   __sync_lock_test_and_set((OBJ), (ARG))
 #define NDRX_ATOMIC_ADD(OBJ, ARG)   __sync_fetch_and_add((OBJ), (ARG))
+#define NDRX_ATOMIC_LOAD(OBJ)   __sync_fetch_and_add((OBJ), 0)
+
 #else                                   
-#define NDRX_ATOMIC_ADD(OBJ, ARG) *(OBJ) = *(OBJ) + *(ARG)
+
+#define NDRX_ATOMIC_STORE(OBJ, ARG) *(OBJ) = (ARG)
+#define NDRX_ATOMIC_ADD(OBJ, ARG) *(OBJ) = *(OBJ) + (ARG)
+#define NDRX_ATOMIC_LOAD(OBJ)  *(OBJ)
+
 #endif
 
 /*---------------------------Enums--------------------------------------*/

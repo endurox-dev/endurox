@@ -1,0 +1,10 @@
+EXSINGLESV(8)
+=============
+:doctype: manpage
+
+NAME
+----
+exsinglesv - Singleton process group lock provider. XATMI server.
+
+include::exsinglesv-common.adoc[]
+

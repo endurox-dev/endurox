@@ -1269,7 +1269,6 @@ expublic void ndrx_init_debug(void)
      */
     lcf_status = ndrx_lcf_init();
     
-    
     G_ndrx_debug_first = EXFALSE;
     
     ndrx_dbg_intlock_unset(&do_reply);

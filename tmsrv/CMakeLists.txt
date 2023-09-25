@@ -31,7 +31,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
@@ -63,8 +63,6 @@ add_library (objtms OBJECT
                     tmapi.c
                     btid.c
                     statedrv.c)
-
-
 
 # shared libraries need PIC
 set_property(TARGET objtms PROPERTY POSITION_INDEPENDENT_CODE 1)

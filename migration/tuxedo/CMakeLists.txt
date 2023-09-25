@@ -33,7 +33,7 @@
 ##
 
 # Set a minimum version
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -49,8 +49,9 @@ include(pscript)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/include)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-pscript_embed(ubb2ex.pscript ubb2ex_bytecode)
+pscript_embed(${CMAKE_CURRENT_SOURCE_DIR}/ubb2ex.pscript ubb2ex_bytecode)
 
 BISON_TARGET(EXPRPARSER ubb.y ${CMAKE_CURRENT_BINARY_DIR}/ubb.tab.c)
 FLEX_TARGET(EXPRSCANNER ubb.l ${CMAKE_CURRENT_BINARY_DIR}/ubb.lex.c)
