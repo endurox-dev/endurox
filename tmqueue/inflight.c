@@ -66,10 +66,10 @@ int ndrx_infl_addmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
     int isNew = EXFALSE;
 
     /* check if message is for future time */
-    if ( p_msg->flags & NDRX_TMQ_LOC_FUT )
+    if ( mmsg->flags & NDRX_TMQ_LOC_FUTQ )
     {
         /* add message only in future queue */
-        mmsg->cur = ndrx_rbt_insert(&qhash->q_fut, mmsg->cur, &isNew);
+        // mmsg->cur = ndrx_rbt_insert(&qhash->q_fut, mmsg->cur, &isNew);
     }
 
     return ret;
