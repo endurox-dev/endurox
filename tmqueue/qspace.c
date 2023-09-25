@@ -1078,6 +1078,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
     hashed=EXTRUE;
 
+#if 0
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
         tmq_msgid_serialize((*msg)->qctl.corrid, corrid_str);
@@ -1090,6 +1091,14 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
             EXFAIL_OUT(ret);
         }
         hashedcor=EXTRUE;
+    }
+#endif
+
+    /* add message to correspoding Q */
+    if (EXSUCCEED!=(ret=ndrx_infl_addmsg(qconf, qhash, mmsg)))
+    {
+        NDRX_LOG(log_error, "ndrx_infl_addmsg failed with %d", ret);
+        goto out;
     }
     /* have to unlock here, because tmq_storage_write_cmd_newmsg() migth callback to
      * us and that might cause stall.
@@ -1167,6 +1176,7 @@ out:
             EXHASH_DEL( G_msgid_hash, mmsg);
         }
         
+#if 0
         if (hashedcor)
         {
             tmq_cor_msg_del(qhash, mmsg);
@@ -1176,7 +1186,11 @@ out:
         {
            CDL_DELETE(qhash->q_infligh, mmsg);
         }
-        
+#endif
+
+        /* remove from infliht structures */
+        ndrx_infl_delmsg(qhash, mmsg);
+
         MUTEX_UNLOCK_V(M_q_lock);
         
         NDRX_FREE(mmsg);

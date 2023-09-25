@@ -178,7 +178,8 @@ struct tmq_memmsg
  * 
  * 
  */
-    short flags;
+    /* where are we? */
+    short qstate;
 };
 
 /**
@@ -389,7 +390,7 @@ extern void tmq_fwd_sync_wait(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_notify(fwd_msg_t *fwd);
 
 /* inflight routines */
-extern int ndrx_infl_addmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern int ndrx_infl_mov2cur(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
