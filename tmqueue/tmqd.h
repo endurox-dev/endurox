@@ -80,8 +80,19 @@ extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   *
 #define TMQ_ARGS_COMMIT         "Cc"    /**< Sync after commit              */
 
 #define TMQ_SYNC_NONE           0       /**< NO sync needed                 */
-#define TMQ_SYNC_TPACALL        1       /**< Sync on tpacall                */       
+#define TMQ_SYNC_TPACALL        1       /**< Sync on tpacall                */
 #define TMQ_SYNC_TPCOMMIT       2       /**< Sync on tpcommit () if auto=T  */
+
+#define NDRX_TMQ_LOC_UNKNOWN    0x0000  /**< Unknown location               */
+#define NDRX_TMQ_LOC_INFL       0x0001  /**< Inflight queue                 */
+#define NDRX_TMQ_LOC_FUTQ       0x0002  /**< Future queue                   */
+#define NDRX_TMQ_LOC_CURQ       0x0004  /**< Current queue                  */
+#define NDRX_TMQ_LOC_CORQ       0x0008  /**< Correlator queue               */
+
+/**
+ * Extract tmq_memmsg_t from the correltion tree node 
+ */
+#define TMQ_COR_GETMSG(ptr) ((tmq_memmsg_t *)((char *)ptr - EXOFFSET(tmq_memmsg_t, cor)))
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -155,6 +166,27 @@ struct tmq_memmsg
     tmq_corhash_t *corhash;
 
     tmq_msg_t *msg;
+/**
+ * NDRX_TMQ_LOC_UNK  0x0000
+ * NDRX_TMQ_LOC_INFL 0x0001
+ * NDRX_TMQ_LOC_FUT  0x0002
+ * NDRX_TMQ_LOC_CUR  0x0004
+ * NDRX_TMQ_LOC_COR  0x0008
+ * 
+ * flags|=NDRX_TMQ_LOC_INFL;
+ * 
+ * flags&=~NDRX_TMQ_LOC_CUR;
+ * flags&=~NDRX_TMQ_LOC_COR;
+ * flags&=~NDRX_TMQ_LOC_FUT;
+ * 
+ * 
+ * delete:
+ *  if flags & NDRX_TMQ_LOC_INFL=> delete from NDRX_TMQ_LOC_INFL
+ *  if flags & NDRX_TMQ_LOC_FUT=> delete from fut;
+ * 
+ * 
+ */
+    short flags;
 };
 
 /**
@@ -164,9 +196,9 @@ struct tmq_cormsg
 {
     char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
     /** queue by correlation, CDL, next2, prev2 
-    tmq_memmsg_t *corq;*/
+    tmq_memmsg_t *corq; */
 
-    ndrx_rbt_tree_t corq; /**< queue uses standard sorting (insert time)      */
+    ndrx_rbt_tree_t *corq; /**< queue uses standard sorting (insert time)      */
 
     EX_hash_handle hh; /**< makes this structure hashable        */
 };
@@ -195,7 +227,7 @@ struct tmq_qhash
      */
     tmq_memmsg_t *q_infligh;
 
-    tmq_corhash_t *corhash; /**< has of correlators                */
+    tmq_corhash_t *corhash; /**< hash of correlators                */
 };
 
 /**
@@ -332,7 +364,7 @@ extern tmq_memmsg_t *tmq_get_msglist(char *qname);
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
 extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);
 extern int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2);
-extern void tmq_cor_sort_queues(tmq_qhash_t *q);
+// extern void tmq_cor_sort_queues(tmq_qhash_t *q);
 extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
@@ -360,7 +392,12 @@ extern int tmq_fwd_sync_cmp(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_wait(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_notify(fwd_msg_t *fwd);
 
-    
+/* inflight routines */
+extern int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg);
+extern int ndrx_infl_mov2cur(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg);
+extern int ndrx_infl_addmsg(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg);
+extern int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *p_mmsg);
+
 #ifdef	__cplusplus
 }
 #endif

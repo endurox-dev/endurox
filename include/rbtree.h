@@ -97,6 +97,7 @@ extern ndrx_rbt_node_t *ndrx_rbt_find_less(ndrx_rbt_tree_t *rbt,
                                             const ndrx_rbt_node_t *data, 
                                             int equal_match);
 extern ndrx_rbt_node_t *ndrx_rbt_leftmost(ndrx_rbt_tree_t *rbt);
+extern ndrx_rbt_node_t *ndrx_rbt_rightmost(ndrx_rbt_tree_t *rbt);
 
 extern ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, 
                                         ndrx_rbt_node_t *data, int *isNew);
