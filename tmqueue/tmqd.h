@@ -142,8 +142,8 @@ typedef struct tmq_cormsg tmq_corhash_t;
 typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
-    ndrx_rbt_node_t cur;    /**< handle in future or now list */
-    ndrx_rbt_node_t cor;    /**< handle in correlator list    */
+    ndrx_rbt_node_t *cur;    /**< handle in future or now list */
+    ndrx_rbt_node_t *cor;    /**< handle in correlator list    */
 
     char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
     char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator              */
@@ -210,8 +210,8 @@ struct tmq_qhash
 
     EX_hash_handle hh; /**< makes this structure hashable        */
 
-    ndrx_rbt_tree_t q; /**< Currently available messages        */
-    ndrx_rbt_tree_t q_fut; /**< future messages (not yet ready for proc) */
+    ndrx_rbt_tree_t *q; /**< Currently available messages        */
+    ndrx_rbt_tree_t *q_fut; /**< future messages (not yet ready for proc) */
 
     /** 
      * in-flight messages (in process) 
