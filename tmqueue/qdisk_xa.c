@@ -92,6 +92,7 @@
 #include <xa_cmn.h>
 #include <ubfutil.h>
 #include "qtran.h"
+#include <singlegrp.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -990,6 +991,7 @@ exprivate int ndrx_xa_qminicall(char *tmxid, char cmd)
     long rsplen;
     UBFH *p_ub = NULL;
     long ret = XA_OK;
+    short nodeid = (short)tpgetnodeid();
    
     p_ub = (UBFH *)tpalloc("UBF", "", 1024 );
     
@@ -1010,6 +1012,13 @@ exprivate int ndrx_xa_qminicall(char *tmxid, char cmd)
     if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
     {
         NDRX_LOG(log_error, "Failed to setup TMXID!");
+        ret = XAER_RMERR;
+        goto out;
+    }
+
+    if (EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to setup TMNODEID!");
         ret = XAER_RMERR;
         goto out;
     }
@@ -1062,6 +1071,7 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
 {
     long ret = XA_OK;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
+    short nodeid, nodeid_loc;
     
     BFLDLEN len = sizeof(tmxid);
     
@@ -1071,6 +1081,32 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
         ret = XAER_INVAL;
         goto out;
     }
+    
+    if (EXSUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&nodeid, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to get TMNODEID!");
+        ret = XAER_INVAL;
+        goto out;
+    }
+
+#if 0
+    /* are we in singleton group ? */
+    if (G_atmi_env.procgrp_no && ndrx_sg_is_singleton(G_atmi_env.procgrp_no))
+    {
+        nodeid_loc = tpgetnodeid();
+        if (nodeid!=nodeid_loc)
+        {
+            NDRX_LOG(log_error, "Unexpected node id %hd (accepting only from %ld)!",
+                nodeid, nodeid_loc);
+            userlog("Unexpected node id %hd (accepting only from %ld)!",
+                nodeid, nodeid_loc);
+            ret = XAER_RMFAIL;
+            goto out;
+        }
+    }
+#endif
+
+    /* check caller node id, in case if group singleton...*/
     
     switch (cmd)
     {

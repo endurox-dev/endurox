@@ -1422,10 +1422,45 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             goto out;
         }
         /* </Crash testing> */
-        else if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
+        else
         {
-            ret=EXFAIL;
-            goto out;
+            /* in case if ... there was failover and concurrent write of commit
+             * which might overwrite the given abort position, lets write abort
+             * states few times more, so that recovery processes would finally
+             * see that abort has started...
+             * Note that other tmsrv will not go further than last commit entry
+             * as after that there is check is that tmsrv still on locked node.
+             */
+            int w_cnt=1, i;
+
+            if (XA_TX_STAGE_ABORTING==stage)
+            {
+                w_cnt=3;
+            }
+            else if (XA_TX_STAGE_COMMITTING==stage)
+            {
+                /* ensure that we are still locked, as we are going to write
+                 * commit message down. If the abort was in progress,
+                 * then our previous prepares might have overwritten  their
+                 * abort state. Thus if we are ok here, then there will be
+                 * 1x commit at given position, but if after then or before
+                 * the actual disk write take over, they will put 3x aborts
+                 * and then recovery process shall pick that up
+                 */
+                if (EXSUCCEED!=tms_log_checkpointseq(p_tl))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+
+            for (i=0; i<w_cnt; i++)
+            {
+                if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
+                {
+                    ret=EXFAIL;
+                    goto out;
+                }
+            }
         }
 
         /* in case if switching to committing, we must sync the log & directory */
