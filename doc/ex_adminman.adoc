@@ -2099,9 +2099,391 @@ file system, as in case of shared file system failure, the processes or may
 get killed, leading to fact that singleton groups will not be unlocked locally,
 and processes form singleton groups would not be removed.
 
-==== Sample configuration of the Active-Active setup with singleton groups
+=== Sample configuration of the Active-Active setup with singleton groups
 
-This chapter provides example on configuring
+This chapter provides sample configuration for having cluster of two machines,
+which uses Enduro/X persist message queue. On each machine two queue spaces
+are located, each in it's own singleton process group. Groups would be
+named as GRP_A (with no *5*) and GRP_B (with no *7*). Groups will be served on
+Enduro/X cluster nodes *1* and *2*.
+
+
+==== INI configuration part
+
+For demonstration purposes common configuration file for common-configuring
+enviroment will be defined here. Additional configuration file for each
+node instance can be pulled in by setting file name in *NDRX_CCONFIG1*:
+
+*app-common.ini* (shall be copied on both nodes)
+
+Let's define debug settings, lock providers and message queue definitions.
+
+--------------------------------------------------------------------------------
+
+################################################################################
+# queues for each of the queues spaces
+################################################################################
+
+[@debug]
+exsinglesv=tp=5 file=
+exsingleckl=tp=5 file=
+exsingleckr=tp=5 file=
+tmrecoversv=ndrx=5 file=
+
+################################################################################
+# Lock providers
+################################################################################
+
+# settings for singleton group GRP_A, note that CCTAG here used is the same
+# as the group name, but these are two different identifiers, just used
+# with the same name for convenience.
+[@exsinglesv/GRP_A]
+lockfile_1=/path/to/shared/storage/GRP_A/lock_1
+lockfile_2=/path/to/shared/storage/GRP_A/lock_2
+
+[@exsinglesv/GRP_B]
+lockfile_1=/path/to/shared/storage/GRP_B/lock_1
+lockfile_2=/path/to/shared/storage/GRP_B/lock_2
+
+################################################################################
+# queues for each of the queues spaces
+################################################################################
+
+[@queue/GRP_A]
+Q1=svcnm=QFWD1,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=5
+Q2=svcnm=QFWD2,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=5
+
+[@queue/GRP_B]
+Q1=svcnm=QYY1,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=5
+Q2=svcnm=QYY2,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=5
+
+
+################################################################################
+# XA driver configuration
+################################################################################
+
+[@global/GRP_A]
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=datadir="/path/to/shared/storage/qsp/ASPACE",qspace="ASPACE"
+NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
+NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+NDRX_XA_LAZY_INIT=0
+
+[@global/GRP_B]
+NDRX_XA_RES_ID=2
+NDRX_XA_OPEN_STR=datadir="/path/to/shared/storage/qsp/BSPACE",qspace="BSPACE"
+NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
+NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+NDRX_XA_LAZY_INIT=0
+
+--------------------------------------------------------------------------------
+
+==== XML configuration part
+
+*ndrxconfig-dom1.xml* and *ndrxconfig-dom2.xml*. Configuration file instances
+mostly are the same for all involved nodes, thus only one template will be
+prepared in this guide:
+
+--------------------------------------------------------------------------------
+<?xml version="1.0" ?>
+<endurox>
+	<appconfig>
+		...
+		<sanity>1</sanity>
+		...
+	</appconfig>
+	<procgroups>
+		<procgroup grpno="5" name="GRP_A" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+		<procgroup grpno="7" name="GRP_B" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+	</procgroups>
+	<defaults>
+	...
+	</defaults>
+	<servers>
+	...
+		<---------------------->
+		<-- the group A setup-->
+		<---------------------->
+
+		<server name="exsinglesv">
+			<min>1</min>
+			<max>1</max>
+			<srvid>10</srvid>
+			<sysopt>-e ${NDRX_ULOG}/exsinglesv-a.log -r</sysopt>
+			<!-- set as lock provider -->
+			<procgrp_lp>GRP_A</procgrp_lp>
+			<cctag>GRP_A</cctag>
+		</server>
+
+		<!-- support servers, local -->
+		<server name="exsingleckl">
+			<min>3</min>
+			<max>3</max>
+			<srvid>15</srvid>
+			<sysopt>-e ${NDRX_ULOG}/exsingleckl-a.log -r</sysopt>
+			<procgrp_lp>GRP_A</procgrp_lp>
+			<cctag>GRP_A</cctag>
+		</server>
+
+		<!-- support servers, remote -->
+		<server name="exsingleckr">
+			<min>3</min>
+			<max>3</max>
+			<srvid>20</srvid>
+			<sysopt>-e ${NDRX_ULOG}/exsingleckr-a.log -r</sysopt>
+			<procgrp_lp>GRP_A</procgrp_lp>
+			<cctag>GRP_A</cctag>
+		</server>
+
+		<server name="tmsrv">
+			<min>2</min>
+			<max>2</max>
+			<srvid>50</srvid>
+			<cctag>GRP_A</cctag>
+			<procgrp>GRP_A</procgrp>
+			<!-- shared node id set to 2 (i.e. -n2). Check logs on the disk every 6 seconds    -->
+			<sysopt>-e ${NDRX_ULOG}/TM1-a.log -r -- -t60 -l /space/to/shared/storage/tmlogs/rm1 -m10 -n2 -s3 -X6</sysopt>
+		</server>
+
+		<server name="tmqueue">
+			<min>1</min>
+			<max>1</max>
+			<srvid>60</srvid>
+			<cctag>GRP_A</cctag>
+			<procgrp>GRP_A</procgrp>
+			<sysopt>-e ${NDRX_ULOG}/tmqueue-a.log -r -- -s1</sysopt>
+		</server>
+
+		<!-- run transaction recovery after the tmqueue boot -->
+		<server name="tmrecoversv">
+			<min>1</min>
+			<max>1</max>
+			<srvid>250</srvid>
+			<procgrp>GRP_A</procgrp>
+			<sysopt>-e ${NDRX_ULOG}/tmrecoversv-a.log -r -- -i</sysopt>
+		</server>
+
+		<server name="banksv_a">
+			<min>1</min>
+			<max>1</max>
+			<srvid>100</srvid>
+			<procgrp>GRP_A</procgrp>
+			<sysopt>-e ${NDRX_ULOG}/banksv-a.log -r -- -s1</sysopt>
+		</server>
+
+		... other GRP_A servers here ...
+
+		<---------------------->
+		<-- the group B setup-->
+		<---------------------->
+
+		<!-- Singleton process group GRP_B -->
+		<server name="exsinglesv">
+			<min>1</min>
+			<max>1</max>
+			<srvid>200</srvid>
+			<sysopt>-e ${NDRX_ULOG}/exsinglesv-a.log -r</sysopt>
+			<!-- set as lock provider -->
+			<procgrp_lp>GRP_B</procgrp_lp>
+			<cctag>GRP_B</cctag>
+		</server>
+
+		<!-- support servers, local -->
+		<server name="exsingleckl">
+			<min>3</min>
+			<max>3</max>
+			<srvid>250</srvid>
+			<sysopt>-e ${NDRX_ULOG}/exsingleckl-b.log -r</sysopt>
+			<procgrp_lp>GRP_B</procgrp_lp>
+			<cctag>GRP_B</cctag>
+		</server>
+
+		<!-- support servers, remote -->
+		<server name="exsingleckr">
+			<min>3</min>
+			<max>3</max>
+			<srvid>300</srvid>
+			<sysopt>-e ${NDRX_ULOG}/exsingleckr-b.log -r</sysopt>
+			<procgrp_lp>GRP_B</procgrp_lp>
+			<cctag>GRP_B</cctag>
+		</server>
+
+		<server name="tmsrv">
+			<min>2</min>
+			<max>2</max>
+			<srvid>350</srvid>
+			<cctag>GRP_B</cctag>
+			<procgrp>GRP_B</procgrp>
+			<!-- shared node id set to 2 (i.e. -n2). Check logs on the disk every 6 seconds    -->
+			<sysopt>-e ${NDRX_ULOG}/TM2-b.log -r -- -t60 -l /space/to/shared/storage/tmlogs/rm2 -m10 -s3 -n2 -X6</sysopt>
+		</server>
+
+		<server name="tmqueue">
+			<min>1</min>
+			<max>1</max>
+			<srvid>400</srvid>
+			<cctag>GRP_B</cctag>
+			<procgrp>GRP_B</procgrp>
+			<!-- Every 60 seconds, check for Q space consistency on the dis.
+				 use "2" as virtual node id, so that each Enduro/X instance can regonize
+				 the Q files
+			-->
+			<sysopt>-e ${NDRX_ULOG}/tmqueue-b.log -r -- -s1 -n2 -X60</sysopt>
+		</server>
+
+		<!-- run transaction recovery after the tmqueue activation.
+		     For other resources may put the tmrecoversv right
+			 after the tmsrv.
+		 -->
+		<server name="tmrecoversv">
+			<min>1</min>
+			<max>1</max>
+			<srvid>450</srvid>
+			<procgrp>GRP_A</procgrp>
+			<sysopt>-e ${NDRX_ULOG}/tmrecoversv-a.log -r -- -i</sysopt>
+		</server>
+
+		<server name="banksv_b">
+			<min>1</min>
+			<max>1</max>
+			<srvid>420</srvid>
+			<procgrp>GRP_A</procgrp>
+			<sysopt>-e ${NDRX_ULOG}/banksv-b.log</sysopt>
+		</server>
+
+		... other GRP_A servers here ...
+
+		<!-- establish link bweteen nodes 1 & 2 (so transaction
+			 checks run faster)
+	     -->
+
+		<server name="tpbridge">
+            <max>1</max>
+            <srvid>500</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.log</sysopt
+            <appopt>-f -n<other_node_id> -r -i <binding_or_host_ip> -p <binding_or_host_port> -t<A_for_client_B_for_server> -z30</appopt>
+        </server>
+        ...
+		<server name="tmrecoversv">
+			<min>1</min>
+			<max>1</max>
+			<srvid>4000</srvid>
+			<sysopt>-e ${NDRX_ULOG}/tmrecoversv-periodic.log -r -- -p</sysopt>
+		</server>
+
+		<!-- for demonstration purposes client process will be also attached
+			 to the singleton group
+		-->
+
+        <server name="cpmsrv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>9999</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom1.log -r -- -k3 -i1</sysopt>
+        </server>
+    </servers>
+
+	<clients>
+        <client cmdline="restincl" cctag="GRP_A" procgrp="GRP_A">
+            <exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/restincl-a.log"/>
+        </client>
+    </clients>
+
+</endurox>
+
+
+--------------------------------------------------------------------------------
+
+Once groups are defined, Enduro/X instances can be started. Each group will
+be booted only on one of the nodes *1* or *2*. Processes which are not booted,
+are put in the "wait" state. For example having following node 1 start:
+
+--------------------------------------------------------------------------------
+
+$ xadmin start -y
+
+$ xadmin pc
+
+--------------------------------------------------------------------------------
+
+When node 2 is started, following output is expected from the system:
+
+--------------------------------------------------------------------------------
+
+$ xadmin start -y
+
+$ xadmin pc
+
+--------------------------------------------------------------------------------
+
+Additionally following useful commands are available in Enduro/X for support
+of process/singleton groups.
+
+==== Group based process startup / stopping / restart
+
+Processes in process groups (including singleton process groups), additionally
+can be controlled by follwoing commands:
+
+*XATMI servers:*
+
+- $ xadmin start -g <group name>
+
+- $ xadmin stop -g <group name>
+
+- $ xadmin sreload -g <group name>
+
+- $ xadmin restart -g <group name>
+
+
+*Client processes:*
+
+- $ xadmin bc -g <group name>
+
+- $ xadmin sc -g <group name>
+
+- $ xadmin rc -g <group name>
+
+
+==== System maintenance
+
+To avoid intiation of the failover (good node takes bad node's lock and boots the group),
+Enduro/X has following commands:
+
+- xadmin mmon
+
+- xadmin mmoff
+
+*mmon* command enables maintenance mode for given node where command is executed.
+After enabling such command, node will not take new locks / perform failover.
+This might be useful if planned shutdown of currently active node shall be done,
+and failover to other working nodes is not required.
+
+*mmoff* command put node back to normal.
+
+current state of the maintenance mode can be checked by:
+
+- $ xadmin shmcfg
+
+For example
+
+--------------------------------------------------------------------------------
+
+$ xadmin shmcfg
+
+shmcfgver_lcf = 0
+use_ddr = 0
+ddr_page = 0
+ddr_ver1 = 0
+is_mmon = 1
+
+--------------------------------------------------------------------------------
+
+indicates that mode is enabled (is_mmon is *1*). Setting is stored in shared memory, and can be
+enabled before given node startup.
+
+At shutdown if it was set, the node is set back to *0*.
 
 == Standard configuration strings
 
