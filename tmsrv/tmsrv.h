@@ -119,6 +119,7 @@ extern void atmi_xa_new_xid(XID *xid);
 
 extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
 extern int tms_log_exists_entry(char *tmxid);
+extern int tms_log_exists_file(char *tmxid);
 extern atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait, int *is_tout);
 extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
 extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 

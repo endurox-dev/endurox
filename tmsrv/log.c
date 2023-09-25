@@ -98,6 +98,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
 exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl);
+exprivate void tms_gen_file_name(char *fname, size_t fnamesz, char *tmxid);
 
 /**
  * Unlock transaction
@@ -116,6 +117,38 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
     return EXSUCCEED;
+}
+
+/**
+ * Check that log file actually exists on the disk.
+ * @param tmxid transaction
+ * @return EXTRUE/EXFALSE/EXFAIL
+ */
+expublic int tms_log_exists_file(char *tmxid)
+{
+    char fname[PATH_MAX+1];
+    int err=0;
+
+    tms_gen_file_name(fname, sizeof(fname), tmxid);
+
+    if (EXSUCCEED == access(fname, 0))
+    {
+        return EXTRUE;
+    }
+
+    err=errno;
+
+    if (ENOENT==err)
+    {
+        return EXFALSE;
+    }
+
+    NDRX_LOG(log_error, "Failed to check file [%s] presence: %s",
+        fname, strerror(err));
+    userlog("Failed to check file [%s] presence: %s",
+        fname, strerror(err));
+
+    return EXFAIL;
 }
 
 /**
@@ -613,6 +646,18 @@ out_nolock:
     return ret;
 }
 
+/**
+ * Generate logfile path + name for transaction
+ * @param fname output buffer
+ * @param fnamesz output buffer size
+ * @param tmxid transaction id (str)
+ */
+exprivate void tms_gen_file_name(char *fname, size_t fnamesz, char *tmxid)
+{
+        snprintf(fname, fnamesz, "%s/TRN-%ld-%hd-%d-%s",
+            G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid,
+            G_server_conf.srv_id, tmxid);
+}
 
 /**
  * Get the log file name for particular transaction
@@ -621,9 +666,7 @@ out_nolock:
  */
 exprivate void tms_get_file_name(atmi_xa_log_t *p_tl)
 {
-    snprintf(p_tl->fname, sizeof(p_tl->fname), "%s/TRN-%ld-%hd-%d-%s", 
-            G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid, 
-            G_server_conf.srv_id, p_tl->tmxid);
+    tms_gen_file_name(p_tl->fname, sizeof(p_tl->fname), p_tl->tmxid);
 }
 
 /**
