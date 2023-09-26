@@ -146,46 +146,13 @@ expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memm
         goto out;
     }
     
-    // CDL_APPEND(corhash->corq, mmsg);
-    
     /* add backref */
     mmsg->corhash = corhash;
 
-    ndrx_rbt_insert(corhash->corq, (ndrx_rbt_node_t *)mmsg, &isNew);
+    ndrx_rbt_insert(corhash->corq, (ndrx_rbt_node_t *)&mmsg->cor, &isNew);
     
 out:
     return ret;
-    
-}
-
-/**
- * Sort the prev2/next2
- * @param q where the corhash lives. Loop over corhash and sort
- *  each sub-queue.
- */
-expublic void tmq_cor_sort_queues(tmq_qhash_t *q)
-{
-    tmq_corhash_t  *el, *elt;
-
-    EXHASH_ITER(hh, (q->corhash), el, elt)
-    {
-        /* sort the correlated message according to insert timestamp */
-        /* message are already sorted by insert */
-        // CDL_SORT(el->corq, q_msg_sort);
-    }
-}
-
-/**
- * Get first available message from queue according to correlator
- * in FIFO/LIFO order as by queue config
- * @param qconf queue configuration
- * @param qhash queue entry
- * @param corrid_str serialized correlator
- * @return unlocked message or NULL if no msg found
- */
-expublic tmq_memmsg_t * tmq_cor_dequeue(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, char *corrid_str)
-{
-    return NULL;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

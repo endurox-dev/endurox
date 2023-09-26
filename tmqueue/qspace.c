@@ -242,9 +242,6 @@ expublic int tmq_load_msgs(void)
         EXFAIL_OUT(ret);
     }
     
-    /* sort all queues (by submission time) */
-    // tmq_sort_queues();
-    
 out:
     NDRX_LOG(log_info, "tmq_load_msgs return %d", ret);
     return ret;
@@ -1275,7 +1272,6 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     tmq_qhash_t *qhash;
     tmq_corhash_t *corhash;
     tmq_memmsg_t *node = NULL;
-    tmq_memmsg_t *start = NULL;
     tmq_msg_t * ret = NULL;
     tmq_msg_del_t block;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -1317,7 +1313,8 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         goto out;
     }
 
-/* checck future and move from future 2 cur|cor */
+/* TODO checck future and move from future 2 cur|cor */
+
 
     NDRX_LOG(log_debug, "mode corrid_str[%s]: %s", corrid_str?corrid_str:"N/A",
                TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
@@ -1342,23 +1339,12 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         /* LIFO mode */
         if (NULL!=corrid_str)
         {
-            /* we do not have empty hashes,
-             * thus msg must be in there.
-            */
-
             /* get latest corhash msg from RBT */
             node = TMQ_COR_GETMSG(ndrx_rbt_rightmost(corhash->corq));
-            start = NULL;
-
-
-            /* TODO */
-            // node = corhash->corq->prev2;
-            // start = corhash->corq->prev2;
         }
-        else if (NULL!=qhash->q_infligh)
+        else
         {
-            node = qhash->q_infligh->prev;
-            start = qhash->q_infligh->prev;
+           node = (tmq_memmsg_t*)ndrx_rbt_rightmost(qhash->q);
         }
     }
     else
@@ -1366,62 +1352,37 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         /* FIFO */
         if (NULL!=corrid_str)
         {
-            /* TODO */
-            // node = corhash->corq;
-            // start = corhash->corq;
+            /* get first corhash msg from RBT */
+            node = TMQ_COR_GETMSG(ndrx_rbt_leftmost(corhash->corq));
         }
         else
         {
-            node = qhash->q_infligh;
-            start = qhash->q_infligh;
+           node = (tmq_memmsg_t*)ndrx_rbt_leftmost(qhash->q);
         }
     }
-            
-    do
+
+#if 0
+    if (NULL!=node)
     {
-        if (NULL!=node)
-        {
-            NDRX_LOG(log_debug, "Testing: msg_str: [%s] locked: %llu is_auto: %d",
+        NDRX_LOG(log_debug, "Testing: msg_str: [%s] locked: %llu is_auto: %d",
                     tmq_msgid_serialize(node->msg->hdr.msgid, msgid_str),
-                    node->msg->lockthreadid,
-                    is_auto
-                    );
-            if (!node->msg->lockthreadid && (!is_auto || 
-                    tmq_is_auto_valid_for_deq(node, qconf)))
-            {
-                ret = node->msg;
-                break;
-            }
-            if (TMQ_MODE_LIFO == qconf->mode)
-            {
-                /* LIFO mode */
-                if (NULL!=corrid_str)
-                {
-                    /* TODO */
-                    // node = node->prev2;
-                }
-                else
-                {
-                    node = node->prev;
-                }
-            }
-            else
-            {
-                /* default to FIFO */
-                if (NULL!=corrid_str)
-                {
-                    /* TODO */
-                    // node = node->next2;
-                }
-                else
-                {
-                    node = node->next;
-                }
-            }
-        } /* if (NULL!=node) */
+                    node->msg->lockthreadid, is_auto );
+
+        if (!node->msg->lockthreadid && (!is_auto)
+        {
+                // todo
+                //CHECK THIS FUNC (forward Q):
+                // Q forwmard retries shall be calcualted
+                // as new absolute time for message + add ABS_TIME flag
+                tmq_is_auto_valid_for_deq(node, qconf)))
+        }
+#endif 
+
+    if (NULL!=node)
+    {
+        ret=node->msg;
     }
-    while (NULL!=node && node!=start);
-    
+
     if (NULL==ret)
     {
         NDRX_LOG(log_debug, "Q [%s] is empty or all msgs locked", qname);
@@ -1436,7 +1397,15 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
-    
+    if (EXSUCCEED!=ndrx_infl_mov2infl(qhash, node))
+    {
+        NDRX_LOG(log_error, "Failed to move msg to inflight!");
+        ret = NULL;
+        *diagnostic=QMEOS;
+        NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
+        goto out;
+    }
+
     MUTEX_UNLOCK_V(M_q_lock);
     is_locked=EXFALSE;
     
@@ -1453,7 +1422,11 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
             MUTEX_LOCK_V(M_q_lock);
+            
             ret->lockthreadid = 0;
+            ndrx_infl_mov2cur(qconf, qhash, node);
+
+            //move to cur/cor/fut
             MUTEX_UNLOCK_V(M_q_lock);
             
             ret = NULL;
@@ -1921,34 +1894,6 @@ out:
     MUTEX_UNLOCK_V(M_q_lock);
     return ret;
 }
-
-// /**
-//  * Sort Qs
-//  * @return SUCCEED/FAIL 
-//  */
-// expublic int tmq_sort_queues(void)
-// {
-//     int ret = EXSUCCEED;
-//     tmq_qhash_t *q, *qtmp;
-    
-//     MUTEX_LOCK_V(M_q_lock);
-    
-//     /* iterate over Q hash & and sort them by Q time */
-//     EXHASH_ITER(hh, G_qhash, q, qtmp)
-//     {
-//         /* standard q sorting ... */
-//         CDL_SORT(q->q, q_msg_sort);
-
-//         /* correlator q sorting... */
-//         tmq_cor_sort_queues(q);
-//     }   
-    
-// out:
-            
-//     MUTEX_UNLOCK_V(M_q_lock);
-
-//     return ret;
-// }
 
 /**
  * Update queue statistics

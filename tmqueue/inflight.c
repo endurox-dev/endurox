@@ -55,6 +55,7 @@
 /**
  * @brief Add message to inflight or (cur + cor )/fut (depending on p_msg->flags)
  *
+ * @param qconf queue config
  * @param qhash queue hash
  * @param p_msg message to add
  *
@@ -140,7 +141,8 @@ expublic int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
                 mmsg->msgid_str);
         userlog("Cannot move to inflight Q: messsage [%s] is not in cur/fut queue (state=%hd)!",
                 mmsg->msgid_str, mmsg->qstate);
-        EXFAIL_OUT(ret);
+        /*EXFAIL_OUT(ret);*/
+        abort();
     }
 
     /* add message to inflight */
@@ -154,9 +156,10 @@ out:
 /**
  * Move message from inflight to current/cur/fut
  * NOTE that context must be with M_q_lock locked.
+ * @param qconf queue config
  * @param qhash queue hash
  * @param mmsg message to move
- * @return EXSUCCEED/EXFAIL
+ * @return EXSUCCEED/EXFAIL 
  */
 expublic int ndrx_infl_mov2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 {
@@ -198,7 +201,7 @@ expublic int ndrx_infl_mov2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_me
                 mmsg->msgid_str);
         userlog("Cannot move to cur Q: messsage [%s] is not in inflight queue (state=%hd)!",
                 mmsg->msgid_str, mmsg->qstate);
-        EXFAIL_OUT(ret);
+        abort();
     }
 
 out:
@@ -208,6 +211,8 @@ out:
 
 /**
  * Remove message from Qs
+ * @param qhash queue hash
+ * @param mmsg message to remove
  * NOTE that context must be with M_q_lock locked.
  */
 expublic int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
@@ -233,10 +238,48 @@ expublic int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
     {
         ndrx_rbt_delete(qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
     }
-    else if (mmsg->qstate & NDRX_TMQ_LOC_CURQ)
-    {
-        ndrx_rbt_delete(qhash->q, (ndrx_rbt_node_t *)mmsg);
-    }
 
+    return ret;
+}
+
+/**
+ * Move message from future to cur or/and cor
+ * @param qconf queue config
+ * @param qhash queue hash
+ */
+expublic int ndrx_infl_fut2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash)
+{
+    int ret = EXSUCCEED;
+    tmq_memmsg_t *mmsg = NULL;
+    long isNew = EXFALSE;
+
+    /* read from q_fut tree with smallest dec_time */
+    mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(qhash->q_fut);
+
+    /* enqueue to cur and cor if needed */
+    if ( (mmsg->msg->qctl.flags & TPQTIME_ABS) 
+        && (mmsg->msg->qctl.deq_time <= (long)time(NULL)) )
+    {
+        /* delete from q_fut */
+        ret = ndrx_infl_delmsg(qhash, mmsg);
+        mmsg->qstate &= ~NDRX_TMQ_LOC_CURQ;
+
+        /* insert to cur */
+        ndrx_rbt_insert(qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
+        mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
+
+        if (mmsg->msg->qctl.flags & TPQCORRID)
+        {
+            /* insert to cor */
+            if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
+            {
+                NDRX_LOG(log_error, "Failed to add msg [%s] to corhash!",
+                        mmsg->msgid_str);
+                EXFAIL_OUT(ret);
+            }
+            mmsg->qstate |= NDRX_TMQ_LOC_CORQ;
+        }
+    }
+out:
     return ret;
 }
