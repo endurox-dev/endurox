@@ -369,8 +369,8 @@ if ! [[ "$OUT" =~ $PATTERN ]]; then
     go_out -1
 fi
 
-echo ">>> wait 25 for full boot..."
-sleep 25
+echo ">>> wait 30 for full boot..."
+sleep 30
 xadmin ppm
 
 CNT=`xadmin ppm | grep atmi.sv1 | grep 'runok runok' | wc | awk '{print $1}'`
