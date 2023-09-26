@@ -1053,43 +1053,10 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
                 (*msg)->hdr.qname);
         EXFAIL_OUT(ret);
     }
-    
-    /* todo */
-#if 0
-    if (0==p_msg->lockthreadid)
-    {
-        /* add to fut or cur tree
-         * and add to corhas if needed (msg->qctl.flags & TPQCORRID)
-         */
-        (void)ndrx_infl_mov2cur(qhash, mmsg);
-    }
-    else
-    {
-        /* Add the message to end of the queue */
-        CDL_APPEND(qhash->q_infligh, mmsg);
-        cdl=EXTRUE;
-    }
-#endif
 
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
     EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
     hashed=EXTRUE;
-
-#if 0
-    if (mmsg->msg->qctl.flags & TPQCORRID)
-    {
-        tmq_msgid_serialize((*msg)->qctl.corrid, corrid_str);
-        NDRX_STRCPY_SAFE(mmsg->corrid_str, corrid_str);
-        NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
-            corrid_str, (*msg)->hdr.qname);
-        if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
-        {
-            NDRX_LOG(log_error, "Failed to add msg to corhash!");
-            EXFAIL_OUT(ret);
-        }
-        hashedcor=EXTRUE;
-    }
-#endif
 
     /* add message to correspoding Q */
     if (EXSUCCEED!=(ret=ndrx_infl_addmsg(qconf, qhash, mmsg)))
@@ -1149,8 +1116,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     *msg = NULL;
     
 out:
-     
-                
+
     if (is_locked)
     {
         MUTEX_UNLOCK_V(M_q_lock);
@@ -1167,29 +1133,12 @@ out:
     {
         /* remove messages hashes, due to failure */
         MUTEX_LOCK_V(M_q_lock);
-        
-#if 0
-        if (hashed)
-        {
-            EXHASH_DEL( G_msgid_hash, mmsg);
-        }
-        
-        if (hashedcor)
-        {
-            tmq_cor_msg_del(qhash, mmsg);
-        }
-    
-        if (cdl)
-        {
-           CDL_DELETE(qhash->q_infligh, mmsg);
-        }
-#endif
 
         /* remove from infliht structures */
         ndrx_infl_delmsg(qhash, mmsg);
 
         MUTEX_UNLOCK_V(M_q_lock);
-        
+
         NDRX_FREE(mmsg);
         mmsg=NULL;
     }
@@ -1200,7 +1149,6 @@ out:
         NDRX_FREE((*msg));
         *msg = NULL;
     }
-
 
     return ret;
 }
@@ -1313,9 +1261,6 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         goto out;
     }
 
-/* TODO checck future and move from future 2 cur|cor */
-
-
     NDRX_LOG(log_debug, "mode corrid_str[%s]: %s", corrid_str?corrid_str:"N/A",
                TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");
     
@@ -1330,10 +1275,9 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         goto out;
     }
 
-    /* Start from first one & loop over the list while 
-     * - we get to the first non-locked message
-     * - or we get to the end with no msg, then return FAIL.
-     */
+    /* check q_fut for deq_time and move from future 2 cur|cor */
+    ndrx_infl_fut2cur(qconf, qhash);
+
     if (TMQ_MODE_LIFO == qconf->mode)
     {
         /* LIFO mode */
@@ -1424,9 +1368,9 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
             MUTEX_LOCK_V(M_q_lock);
             
             ret->lockthreadid = 0;
+            /* move to cur/cor/fut */
             ndrx_infl_mov2cur(qconf, qhash, node);
 
-            //move to cur/cor/fut
             MUTEX_UNLOCK_V(M_q_lock);
             
             ret = NULL;
@@ -1576,22 +1520,8 @@ exprivate void tmq_remove_msg(tmq_memmsg_t *mmsg)
     if (NULL!=qhash)
     {
         qhash->numdeq++;
-        
-#if 0
-        /* Add the message to end of the queue */
-        CDL_DELETE(qhash->q_infligh, mmsg);    
-#endif
     }
-    
-#if 0
-    /* Add the hash of IDs */
-    EXHASH_DEL( G_msgid_hash, mmsg);
-    
-    if (TPQCORRID & mmsg->msg->qctl.flags)
-    {
-        tmq_cor_msg_del(qhash, mmsg);
-    }
-#endif
+
     ndrx_infl_delmsg(qhash, mmsg);
     
     NDRX_FREE(mmsg->msg);
@@ -1648,6 +1578,7 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
         case TMQ_STORCMD_UNLOCK:
             NDRX_LOG(log_info, "Unlocking message...");
             mmsg->msg->lockthreadid = 0;
+/* todo - do we need to add/move msg to any Q */
             
             /* wakeup the Q... runner */
             ndrx_forward_chkrun(mmsg);
@@ -1694,8 +1625,9 @@ expublic int tmq_unlock_msg_by_msgid(char *msgid, int chkrun)
     }
     
     mmsg->msg->lockthreadid = 0;
-    /* move from infligth to qur||cor*/
-    
+/* todo - move from infligth to qur||cor*/
+/* requred params qconf, qhash */
+
     if (chkrun)
     {
         ndrx_forward_chkrun(mmsg);
@@ -1734,7 +1666,8 @@ expublic int tmq_lock_msg(char *msgid)
     
     /* Lock the message */
     mmsg->msg->lockthreadid = ndrx_gettid();
-    /* move from cur|cor|fut to infligth */
+/* todo - move from cur|cor|fut to infligth */
+/* need to knov - qhash */
     
 out:
     MUTEX_UNLOCK_V(M_q_lock);
@@ -1934,7 +1867,9 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
     tmq_memmsg_t *node;
 
     MUTEX_LOCK_V(M_q_lock);
-    
+
+/* todo will be enaught to scan infligth msg for statiststics 
+ looks ok if only for locked msg */
     if (NULL!=(q = tmq_qhash_get(qname)))
     {
         // node = q->q;

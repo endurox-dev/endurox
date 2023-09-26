@@ -251,7 +251,10 @@ expublic int ndrx_infl_fut2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash)
 {
     int ret = EXSUCCEED;
     tmq_memmsg_t *mmsg = NULL;
-    long isNew = EXFALSE;
+    int isNew = EXFALSE;
+
+    /* maybe need to interate all tree and move all msg from fut to */
+    /* LIFO ?? */
 
     /* read from q_fut tree with smallest dec_time */
     mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(qhash->q_fut);
