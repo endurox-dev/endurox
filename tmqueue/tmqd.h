@@ -361,7 +361,6 @@ extern tmq_memmsg_t *tmq_get_msglist(char *qname);
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
 extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);
 extern int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2);
-// extern void tmq_cor_sort_queues(tmq_qhash_t *q);
 extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
@@ -394,6 +393,7 @@ extern int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memms
 extern int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern int ndrx_infl_mov2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
 extern int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern int ndrx_infl_fut2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash);
 
 #ifdef	__cplusplus
 }
