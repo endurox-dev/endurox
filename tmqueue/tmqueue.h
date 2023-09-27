@@ -261,8 +261,7 @@ extern int ndrx_xa_qminiservce(UBFH *p_ub, char cmd);
 
 extern int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags);
-   
-// extern int tmq_sort_queues(void);
+
 extern int tmq_lock_msg(char *msgid);
 
 extern long tmq_chkdisk_stopwatch_get_delta_sec(void);
