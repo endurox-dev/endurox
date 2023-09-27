@@ -131,6 +131,7 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
 {
     unsigned char is_locked = NDRX_ATOMIC_LOAD(&sg->is_locked);
     
+#if 0
     /* QA testing: */
     if (ndrx_G_systest_lockloss > 0)
     {
@@ -138,11 +139,14 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
     }
     else if (is_locked)
     {
+#endif
         NDRX_ATOMIC_STORE(&sg->is_srv_booted, EXFALSE);
         NDRX_ATOMIC_STORE(&sg->is_clt_booted, EXFALSE);
         NDRX_ATOMIC_STORE(&sg->is_locked, EXFALSE);
         NDRX_ATOMIC_STORE(&sg->reason, reason);
+#if 0
     }
+#endif
 }
 
 /**
