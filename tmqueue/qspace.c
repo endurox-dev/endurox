@@ -1307,22 +1307,6 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
 
     if (NULL!=node)
     {
-        NDRX_LOG(log_debug, "Testing: msg_str: [%s] locked: %llu is_auto: %d",
-                    tmq_msgid_serialize(node->msg->hdr.msgid, msgid_str),
-                    node->msg->lockthreadid, is_auto );
-
-        if (!node->msg->lockthreadid && (!is_auto))
-        {
-                // todo
-                //CHECK THIS FUNC (forward Q):
-                // Q forwmard retries shall be calcualted
-                // as new absolute time for message + add ABS_TIME flag
-                // && tmq_is_auto_valid_for_deq(node, qconf) )
-        }
-    }
-
-    if (NULL!=node)
-    {
         ret=node->msg;
     }
 
