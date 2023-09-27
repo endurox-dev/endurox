@@ -1305,22 +1305,21 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         }
     }
 
-#if 0
     if (NULL!=node)
     {
         NDRX_LOG(log_debug, "Testing: msg_str: [%s] locked: %llu is_auto: %d",
                     tmq_msgid_serialize(node->msg->hdr.msgid, msgid_str),
                     node->msg->lockthreadid, is_auto );
 
-        if (!node->msg->lockthreadid && (!is_auto)
+        if (!node->msg->lockthreadid && (!is_auto))
         {
                 // todo
                 //CHECK THIS FUNC (forward Q):
                 // Q forwmard retries shall be calcualted
                 // as new absolute time for message + add ABS_TIME flag
-                tmq_is_auto_valid_for_deq(node, qconf)))
+                // && tmq_is_auto_valid_for_deq(node, qconf) )
         }
-#endif 
+    }
 
     if (NULL!=node)
     {
@@ -1444,9 +1443,9 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
 
-    /* todo - move to inflygth */
-    (void)ndrx_infl_mov2infl(NULL, mmsg);
-    
+/* todo required parameter is qhash */
+    ndrx_infl_mov2infl(NULL, mmsg);
+
     /* release the lock.. */
     MUTEX_UNLOCK_V(M_q_lock);
     is_locked=EXFALSE;
@@ -1578,8 +1577,8 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
         case TMQ_STORCMD_UNLOCK:
             NDRX_LOG(log_info, "Unlocking message...");
             mmsg->msg->lockthreadid = 0;
-/* todo - do we need to add/move msg to any Q */
-            
+/* todo requred parameter qconf, qhash */
+            ndrx_infl_mov2cur(NULL, NULL, mmsg);
             /* wakeup the Q... runner */
             ndrx_forward_chkrun(mmsg);
             
@@ -1625,8 +1624,8 @@ expublic int tmq_unlock_msg_by_msgid(char *msgid, int chkrun)
     }
     
     mmsg->msg->lockthreadid = 0;
-/* todo - move from infligth to qur||cor*/
-/* requred params qconf, qhash */
+/* todo requred parameter qconf, qhash */
+    ndrx_infl_mov2cur(NULL, NULL, mmsg);
 
     if (chkrun)
     {
@@ -1666,9 +1665,9 @@ expublic int tmq_lock_msg(char *msgid)
     
     /* Lock the message */
     mmsg->msg->lockthreadid = ndrx_gettid();
-/* todo - move from cur|cor|fut to infligth */
-/* need to knov - qhash */
-    
+/* todo required parameter qhash */
+    ndrx_infl_mov2infl(NULL, mmsg);
+
 out:
     MUTEX_UNLOCK_V(M_q_lock);
     return ret;
@@ -1868,11 +1867,8 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
 
     MUTEX_LOCK_V(M_q_lock);
 
-/* todo will be enaught to scan infligth msg for statiststics 
- looks ok if only for locked msg */
     if (NULL!=(q = tmq_qhash_get(qname)))
     {
-        // node = q->q;
         node = q->q_infligh;
         do
         {
@@ -1888,7 +1884,6 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
             }
 
         }
-        // while (NULL!=node && node!=q->q);
         while (NULL!=node && node!=q->q_infligh);
     }
     

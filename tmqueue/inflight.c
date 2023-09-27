@@ -253,15 +253,11 @@ expublic int ndrx_infl_fut2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash)
     tmq_memmsg_t *mmsg = NULL;
     int isNew = EXFALSE;
 
-    /* maybe need to interate all tree and move all msg from fut to */
-    /* LIFO ?? */
-
     /* read from q_fut tree with smallest dec_time */
     mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(qhash->q_fut);
 
     /* enqueue to cur and cor if needed */
-    if ( (mmsg->msg->qctl.flags & TPQTIME_ABS) 
-        && (mmsg->msg->qctl.deq_time <= (long)time(NULL)) )
+    if ( mmsg->msg->qctl.deq_time <= (long)time(NULL) )
     {
         /* delete from q_fut */
         ret = ndrx_infl_delmsg(qhash, mmsg);
