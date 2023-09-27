@@ -2812,7 +2812,6 @@ out:
 
 /** continue with dirent free */
 #define RECOVER_CONTINUE \
-            NDRX_FREE(G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]);\
             continue;\
    
 /** Close cursor */
@@ -2987,6 +2986,14 @@ out:
 
     /* terminate the scan */
     NDRX_LOG(log_debug, "recover: count=%ld, ret=%d", count, ret);
+
+    /* clean up scandir... */
+    if (NULL!=G_atmi_tls->qdisk_tls->recover_namelist)
+    {
+        dirent_free(G_atmi_tls->qdisk_tls->recover_namelist,
+            G_atmi_tls->qdisk_tls->recover_i);
+        G_atmi_tls->qdisk_tls->recover_namelist=NULL;
+    }
 
     if (    ret>=0 
             && ( (flags & TMENDRSCAN)  || ret < count)

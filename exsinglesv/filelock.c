@@ -336,21 +336,24 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
                 {
                     int log_lev = log_error;
 
+                    /* previous was service call... */
+                    if (EXSUCCEED!=ret)
+                    {
+                        if (TPESVCFAIL==tperrno)
+                        {
+                            /* dump the reply buffer... */
+                            ndrx_tplogprintubf(log_error, "svc error response", p_ub);
+                        }
+                        else  if (TPENOENT==tperrno)
+                        {
+                            log_lev = log_debug;
+                        }
+
+                        TP_LOG(log_lev, "Failed to call [%s]: %s - falling back to disk check", 
+                            svcnm, tpstrerror(tperrno));
+                    }
                     /*  succeed anyway */
                     ret=EXSUCCEED;
-
-                    if (TPESVCFAIL==tperrno)
-                    {
-                        /* dump the reply buffer... */
-                        ndrx_tplogprintubf(log_error, "svc error response", p_ub);
-                    }
-                    else  if (TPENOENT==tperrno)
-                    {
-                        log_lev = log_debug;
-                    }
-
-                    TP_LOG(log_lev, "Failed to call [%s]: %s - falling back to disk check", 
-                        svcnm, tpstrerror(tperrno));
 
                     /* read the node entry from the disk */
                     if (EXSUCCEED!=ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
@@ -365,7 +368,7 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
                     /* load the values down.. */
                     last_refresh = ent.lock_time;
                     their_sequence = ent.sequence;
-
+                    is_net_rply=EXFALSE;
                 }
                 else
                 {
