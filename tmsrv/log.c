@@ -388,7 +388,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
      */
     
     /* Open log file */
-    if (EXSUCCEED!=tms_open_logfile(tmp, "w"))
+    if (EXSUCCEED!=tms_open_logfile(tmp, "a"))
     {
         NDRX_LOG(log_error, "Failed to create transaction log file");
         userlog("Failed to create transaction log file");
@@ -762,7 +762,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     }
 
     /* Open the file */
-    if (EXSUCCEED!=tms_open_logfile(*pp_tl, "r+"))
+    if (EXSUCCEED!=tms_open_logfile(*pp_tl, "a+"))
     {
         NDRX_LOG(log_error, "Failed to open transaction file!");
         EXFAIL_OUT(ret);
