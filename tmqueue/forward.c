@@ -885,6 +885,21 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         }
         else
         {
+            msg->qctl.flags |= TPQTIME_ABS;
+            if ( 0 == msg->trycounter )
+            {
+                msg->qctl.deq_time = time(NULL) + qconf.waitinit;
+            }
+            else 
+            {
+                int retry_inc = qconf.waitretry * msg->trycounter;
+                if ( retry_inc > qconf.waitretrymax )
+                {
+                    retry_inc = qconf.waitretrymax;
+                }
+                msg->qctl.deq_time = time(NULL) + retry_inc;
+            }
+
             /* We need to update the message */
             UPD_MSG((&cmd_block.upd), msg);
         
