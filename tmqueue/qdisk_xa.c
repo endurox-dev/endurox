@@ -2966,6 +2966,8 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
          */
         if (EXSUCCEED!=tmq_check_prepared(fname, fname_full))
         {
+            /* having some issues with leaks: */
+            NDRX_FREE(G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]);
             ret=XAER_RMFAIL;
             goto out;
         }
