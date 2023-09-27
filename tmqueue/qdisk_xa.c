@@ -171,6 +171,7 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags);
 exprivate int xa_commit_entry_tmq(char *tmxid, long flags);
 exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_diag);
 exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off);
+exprivate int tmq_check_prepared_exists_on_disk(char *tmxid);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -1258,6 +1259,7 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
     union tmq_upd_block b;
     char *fn = "xa_rollback_entry_tmq";
     qtran_log_cmd_t *el, *elt;
+    int ret=XA_OK;
     
     int locke = EXFALSE;
     qtran_log_t * p_tl = NULL;
@@ -1283,7 +1285,34 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
         else
         {
             NDRX_LOG(log_error, "Q transaction [%s] does not exists", tmxid);
-            return XAER_NOTA;
+            /* return XAER_NOTA; */
+
+            /* TODO: verify the disk... (only in case) sinelgrp ... */
+            ret=tmq_check_prepared_exists_on_disk(tmxid);
+
+            if (EXTRUE==ret)
+            {
+                /* it really failure here. transaction must not exists
+                 * on the disk if log does not exists.
+                 * possible concurrent run.
+                 * Restart now...
+                 */
+               NDRX_LOG(log_error, "(rollback) Integrity problem, transaction [%s] "
+                    "exists on disk, but not in mem-log - restarting", tmxid);
+                userlog("(rollback) Integrity problem, transaction [%s] "
+                    "exists on disk, but not in mem-log - restarting", tmxid);
+
+                M_p_tpexit();
+                return XAER_RMFAIL;
+            }
+            else if (EXFAIL==ret)
+            {
+                return XAER_RMFAIL;
+            }
+            else
+            {
+                return XAER_NOTA;
+            }
         }
     }
     
@@ -1652,9 +1681,9 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
                  * possible concurrent run.
                  * Restart now...
                  */
-               NDRX_LOG(log_error, "Integrity problem, transaction [%s] "
+               NDRX_LOG(log_error, "(commit) Integrity problem, transaction [%s] "
                     "exists on disk, but not in mem-log - restarting", tmxid);
-                userlog("Integrity problem, transaction [%s] "
+                userlog("(commit) Integrity problem, transaction [%s] "
                     "exists on disk, but not in mem-log - restarting", tmxid);
 
                 ret=XAER_RMFAIL;
@@ -2963,7 +2992,11 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         /* ensure that have a log entry 
          * probably will not work... as all stuff must go through
          * the Qspace...?
+         * however we can choose not to do this. As xa_rollback will bypass these and 
+         * would be cleaned up at the next boot.
+         * if going for commit, then tmq will reboot, as no tlog, but file exists on disk.
          */
+#if 0
         if (EXSUCCEED!=tmq_check_prepared(fname, fname_full))
         {
             /* having some issues with leaks: */
@@ -2971,6 +3004,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             ret=XAER_RMFAIL;
             goto out;
         }
+#endif
         
         NDRX_LOG(log_debug, "Xid [%s] unload to position %d", fname, current_unload_pos);
         ret++;
