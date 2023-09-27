@@ -116,10 +116,10 @@ validate_exec_seq 2
 sleep 17
 validate_exec_seq 3
 
-sleep 22
+sleep 25
 validate_exec_seq 4
 
-sleep 22
+sleep 25
 validate_exec_seq 5
 
 RET=$?
