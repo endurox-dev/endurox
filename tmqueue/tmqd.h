@@ -226,8 +226,8 @@ struct tmq_qhash
 
     EX_hash_handle hh; /**< makes this structure hashable        */
 
-    ndrx_rbt_tree_t *q; /**< Currently available messages        */
-    ndrx_rbt_tree_t *q_fut; /**< future messages (not yet ready for proc) */
+    ndrx_rbt_tree_t q;     /**< Currently available messages        */
+    ndrx_rbt_tree_t q_fut; /**< future messages (not yet ready for proc) */
 
     /** 
      * in-flight messages (in process) 
