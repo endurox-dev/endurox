@@ -118,6 +118,18 @@ expublic void tmq_cor_msg_del(tmq_memmsg_t *mmsg)
 
     mmsg->corhash = NULL;
 
+    /* if sub-Q is empty, remove correlator */
+    if (ndrx_rbt_is_empty(&corhash->corq))
+    {
+
+        NDRX_LOG(log_debug, "Removing corrid_str [%s] %p",
+            corhash->corrid_str, corhash);
+
+        /* remove empty hash node */
+        EXHASH_DEL(mmsg->qhash->corhash, corhash);
+        NDRX_FPFREE(corhash);
+    }
+
     return;
 }
 
@@ -130,8 +142,9 @@ expublic int tmq_cor_msg_add(tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
     int isNew = EXFALSE;
-    
-    tmq_corhash_t * corhash =  tmq_cor_find(mmsg->qhash, mmsg->corrid_str);
+    tmq_corhash_t * corhash;
+
+    corhash = tmq_cor_find(mmsg->qhash, mmsg->corrid_str);
     
     if (NULL==corhash)
     {

@@ -1055,6 +1055,14 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
 
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
 
+    if (mmsg->msg->qctl.flags & TPQCORRID)
+    {
+        tmq_msgid_serialize((*msg)->qctl.corrid, corrid_str);
+        NDRX_STRCPY_SAFE(mmsg->corrid_str, corrid_str);
+        NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
+            corrid_str, (*msg)->hdr.qname);
+    }
+
     /* add message to correspoding Q */
     if (EXSUCCEED!=(ret=ndrx_infl_addmsg(qconf, qhash, mmsg)))
     {
