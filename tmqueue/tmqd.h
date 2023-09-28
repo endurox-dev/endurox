@@ -135,8 +135,20 @@ typedef struct
 /** correlator message queue hash */
 typedef struct tmq_cormsg tmq_corhash_t;
 
+/** hash of queues */
+typedef struct tmq_qhash tmq_qhash_t;
+
+/** queue configuration */
+typedef struct tmq_qconfig tmq_qconfig_t;
+
 /**
  * Memory based message.
+ * Includes all the links to keep track of the message in the queues.
+ * such as:
+ *  - red-black tree of current/future run messages
+ *  - linked list of in-flight messages (message locked, not available for dequeue)
+ *  - red-black tree of correlator based messages
+ * Structure is built every time message is enqueued or read from disk.
  */
 typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
@@ -156,7 +168,11 @@ struct tmq_memmsg
     /** backlink to correlator q, so that we know where to remove             */
     tmq_corhash_t *corhash;
 
-    tmq_msg_t *msg;
+    tmq_qconfig_t *qconf;   /**< configuration used for this message Q        */
+    tmq_qhash_t *qhash;     /**< queue entry                                  */
+
+    tmq_msg_t *msg;         /**< disk message                                 */
+    
 /**
  * NDRX_TMQ_LOC_UNK  0x0000
  * NDRX_TMQ_LOC_INFL 0x0001
@@ -179,6 +195,7 @@ struct tmq_memmsg
  */
     /* where are we? */
     short qstate;
+
 };
 
 /**
@@ -198,7 +215,6 @@ struct tmq_cormsg
 /**
  * List of queues (for queued messages)
  */
-typedef struct tmq_qhash tmq_qhash_t;
 struct tmq_qhash
 {
     char qname[TMQNAMELEN+1];
@@ -227,7 +243,6 @@ struct tmq_qhash
  * There will be special Q: "@DEFAULT" which contains the settings for default
  * (unknown queue)
  */
-typedef struct tmq_qconfig tmq_qconfig_t;
 struct tmq_qconfig
 {
     char qname[TMQNAMELEN+1];
@@ -361,11 +376,10 @@ extern tmq_memmsg_t *tmq_get_msglist(char *qname);
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
 extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);
 extern int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2);
-extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+
+extern int tmq_cor_msg_add(tmq_memmsg_t *mmsg);
+extern void tmq_cor_msg_del(tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
-extern int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf);
-extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);
 
 /* Red-black tree support: */
 extern void tmq_rbt_combine_cur(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *newdata, void *arg);
@@ -380,20 +394,20 @@ extern void tmq_fwd_busy_inc(fwd_stats_t *p_stats);
 extern void tmq_fwd_busy_dec(fwd_stats_t *p_stats);
 extern int tmq_fwd_stat_init(void);
 
-
 extern void tmq_fwd_sync_add(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_del(fwd_msg_t *fwd);
 extern int tmq_fwd_sync_cmp(fwd_msg_t *fwd);
+extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);;
 
 extern void tmq_fwd_sync_wait(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_notify(fwd_msg_t *fwd);
 
 /* inflight routines */
 extern int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern int ndrx_infl_mov2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern int ndrx_infl_fut2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash);
+extern int ndrx_infl_mov2infl(tmq_memmsg_t *mmsg);
+extern int ndrx_infl_mov2cur(tmq_memmsg_t *mmsg);
+extern int ndrx_infl_delmsg(tmq_memmsg_t *mmsg);
+extern int ndrx_infl_fut2cur(tmq_qhash_t *qhash);
 
 #ifdef	__cplusplus
 }

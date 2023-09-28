@@ -67,6 +67,9 @@ expublic int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_mem
     int isNew = EXFALSE;
     char corrid_str[TMCORRIDLEN_STR+1];
 
+    mmsg->qconf=qconf;
+    mmsg->qhash=qhash;
+
     if (mmsg->msg->lockthreadid)
     {
         CDL_APPEND(qhash->q_infligh, mmsg);
@@ -92,7 +95,7 @@ expublic int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_mem
             NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
                 corrid_str,mmsg->msg->hdr.qname);
 
-            if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
+            if (EXSUCCEED!=tmq_cor_msg_add(mmsg))
             {
                 NDRX_LOG(log_error, "Failed to add msg to corhash!");
                 EXFAIL_OUT(ret);
@@ -114,24 +117,24 @@ out:
  * Move message from current/cur/fut to inflight
  * NOTE that context must be with M_q_lock locked.
  */
-expublic int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+expublic int ndrx_infl_mov2infl(tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
 
     if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
     {
-        ndrx_rbt_delete(qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+        ndrx_rbt_delete(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
         mmsg->qstate &= ~NDRX_TMQ_LOC_FUTQ;
     }
     else if (mmsg->qstate & NDRX_TMQ_LOC_CURQ)
     {
-        ndrx_rbt_delete(qhash->q, (ndrx_rbt_node_t *)mmsg);
+        ndrx_rbt_delete(mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg);
         mmsg->qstate &= ~NDRX_TMQ_LOC_CURQ;
 
         /* remove from correlator too */
         if (mmsg->qstate & NDRX_TMQ_LOC_CORQ)
         {
-            tmq_cor_msg_del(qhash, mmsg);
+            tmq_cor_msg_del(mmsg);
             mmsg->qstate &= ~NDRX_TMQ_LOC_CORQ;
         }
     }
@@ -146,7 +149,7 @@ expublic int ndrx_infl_mov2infl(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
     }
 
     /* add message to inflight */
-    CDL_APPEND(qhash->q_infligh, mmsg);
+    CDL_APPEND(mmsg->qhash->q_infligh, mmsg);
     mmsg->qstate |= NDRX_TMQ_LOC_INFL;
 
 out:
@@ -161,31 +164,31 @@ out:
  * @param mmsg message to move
  * @return EXSUCCEED/EXFAIL 
  */
-expublic int ndrx_infl_mov2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+expublic int ndrx_infl_mov2cur(tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
 
     if (mmsg->qstate & NDRX_TMQ_LOC_INFL)
     {
-        CDL_DELETE(qhash->q_infligh, mmsg);
+        CDL_DELETE(mmsg->qhash->q_infligh, mmsg);
         mmsg->qstate &= ~NDRX_TMQ_LOC_INFL;
 
         /* enqueue to cur/cor or fut */
         if ( (mmsg->msg->qctl.flags & TPQTIME_ABS) && 
                 (mmsg->msg->qctl.deq_time > (long)time(NULL)))
         {
-            ndrx_rbt_insert(qhash->q_fut, (ndrx_rbt_node_t *)mmsg, NULL);
+            ndrx_rbt_insert(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg, NULL);
             mmsg->qstate |= NDRX_TMQ_LOC_FUTQ;
         }
         else
         {
             /* insert to cur */
-            ndrx_rbt_insert(qhash->q, (ndrx_rbt_node_t *)mmsg, NULL);
+            ndrx_rbt_insert(mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, NULL);
             mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
 
             if (mmsg->msg->qctl.flags & TPQCORRID)
             {
-                if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
+                if (EXSUCCEED!=tmq_cor_msg_add(mmsg))
                 {
                     NDRX_LOG(log_error, "Failed to add msg [%s] to corhash!",
                             mmsg->msgid_str);
@@ -215,14 +218,14 @@ out:
  * @param mmsg message to remove
  * NOTE that context must be with M_q_lock locked.
  */
-expublic int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+expublic int ndrx_infl_delmsg(tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
 
     if (mmsg->qstate & NDRX_TMQ_LOC_CORQ)
     {
         /* remove from correlator Q */
-        tmq_cor_msg_del(qhash, mmsg);
+        tmq_cor_msg_del(mmsg);
     }
 
     if (mmsg->qstate & NDRX_TMQ_LOC_MSGIDHASH)
@@ -232,11 +235,11 @@ expublic int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 
     if (mmsg->qstate & NDRX_TMQ_LOC_INFL)
     {
-        CDL_DELETE(qhash->q_infligh, mmsg);
+        CDL_DELETE(mmsg->qhash->q_infligh, mmsg);
     }
     else if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
     {
-        ndrx_rbt_delete(qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+        ndrx_rbt_delete(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
     }
 
     return ret;
@@ -244,33 +247,36 @@ expublic int ndrx_infl_delmsg(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 
 /**
  * Move message from future to cur or/and cor
- * @param qconf queue config
  * @param qhash queue hash
  */
-expublic int ndrx_infl_fut2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash)
+expublic int ndrx_infl_fut2cur(tmq_qhash_t *qhash)
 {
     int ret = EXSUCCEED;
     tmq_memmsg_t *mmsg = NULL;
     int isNew = EXFALSE;
 
     /* read from q_fut tree with smallest dec_time */
-    mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(qhash->q_fut);
+    mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(mmsg->qhash->q_fut);
 
     /* enqueue to cur and cor if needed */
     if ( mmsg->msg->qctl.deq_time <= (long)time(NULL) )
     {
-        /* delete from q_fut */
-        ret = ndrx_infl_delmsg(qhash, mmsg);
-        mmsg->qstate &= ~NDRX_TMQ_LOC_CURQ;
+        NDRX_LOG(log_debug, "Moving [%s] from future message list",
+                mmsg->msgid_str);
+
+        /* remove from future */
+        ndrx_rbt_delete(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+        mmsg->qstate &= ~NDRX_TMQ_LOC_FUTQ;
 
         /* insert to cur */
-        ndrx_rbt_insert(qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
+        ndrx_rbt_insert(mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
         mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
 
+        /* do the correlator too... if needed */
         if (mmsg->msg->qctl.flags & TPQCORRID)
         {
             /* insert to cor */
-            if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
+            if (EXSUCCEED!=tmq_cor_msg_add(mmsg))
             {
                 NDRX_LOG(log_error, "Failed to add msg [%s] to corhash!",
                         mmsg->msgid_str);
@@ -282,3 +288,5 @@ expublic int ndrx_infl_fut2cur(tmq_qconfig_t * qconf, tmq_qhash_t *qhash)
 out:
     return ret;
 }
+
+/* vim: set ts=4 sw=4 et smartindent: */
