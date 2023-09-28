@@ -89,12 +89,6 @@ expublic int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_mem
 
         if (mmsg->msg->qctl.flags & TPQCORRID)
         {
-            tmq_msgid_serialize(mmsg->msg->qctl.corrid, corrid_str);
-            NDRX_STRCPY_SAFE(mmsg->corrid_str, corrid_str);
-
-            NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
-                corrid_str,mmsg->msg->hdr.qname);
-
             if (EXSUCCEED!=tmq_cor_msg_add(mmsg))
             {
                 NDRX_LOG(log_error, "Failed to add msg to corhash!");

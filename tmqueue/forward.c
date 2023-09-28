@@ -113,7 +113,6 @@ expublic int volatile ndrx_G_fwd_force_wake = EXFALSE;
  */
 expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
 {
-    tmq_qconfig_t *conf;
     fwd_stats_t *p_stats;
     
     /* nothing todo */
@@ -154,7 +153,7 @@ expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
             || mmsg->qstate & NDRX_TMQ_LOC_FUTQ && (mmsg->msg->qctl.flags &TPQTIME_ABS)
                 && mmsg->msg->qctl.deq_time <= time(NULL) )  
             /* Ignore error of cnt... */
-            &&conf->workers > tmq_fwd_busy_cnt(mmsg->msg->hdr.qname, &p_stats))
+            &&mmsg->qconf->workers > tmq_fwd_busy_cnt(mmsg->msg->hdr.qname, &p_stats))
     {
         
         ndrx_G_fwd_force_wake=EXTRUE;

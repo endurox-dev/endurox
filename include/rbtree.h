@@ -109,4 +109,6 @@ extern void ndrx_rbt_begin_iterate(ndrx_rbt_tree_t *rbt,
 
 extern ndrx_rbt_node_t *ndrx_rbt_iterate(ndrx_rbt_tree_iterator_t *iter);
 
+extern int ndrx_rbt_is_empty(ndrx_rbt_tree_t *rbt);
+
 #endif                            /* RBTREE_H */

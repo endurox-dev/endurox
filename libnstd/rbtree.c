@@ -209,6 +209,22 @@ ndrx_rbt_tree_t *ndrx_rbt_init(ndrx_rbt_tree_t *tree,
  *                          Search                                      *
  **********************************************************************/
 
+/**
+ * Test is tree empty
+ * @param rbt tree to test
+ * @return 0 - false, 1 - true
+ */
+int ndrx_rbt_is_empty(ndrx_rbt_tree_t *rbt)
+{
+
+   if (RBTNIL==rbt->root)
+   {
+       return 1;
+   }
+
+   return 0;
+}
+
 /*
  * rbt_find: search for a value in an RBTree
  *
