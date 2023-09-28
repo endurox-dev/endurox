@@ -1154,31 +1154,6 @@ out:
 }
 
 /**
- * Tests is auto message valid for dequeue (calculate the counters).
- * Message must have set qctl.deq_time. Either this is retry
- * or new message, for forwarder it must
- * @param node
- * @return EXFALSE/EXTRUE
- */
-expublic int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node)
-{
-    int ret = EXFALSE;
-
-    if (node->msg->qctl.deq_time<=time(NULL))
-    {
-        NDRX_LOG(log_debug, "Message accepted for dequeue...");
-        ret=EXTRUE;
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "Message NOT accepted for dequeue...");
-    }
-    
-out:
-    return ret;
-}
-
-/**
  * Get the fifo message from Q
  * @param qname queue to lookup.
  * @param diagnostic specific queue error code
