@@ -1135,7 +1135,7 @@ out:
         MUTEX_LOCK_V(M_q_lock);
 
         /* remove from infliht structures */
-        ndrx_infl_delmsg(qhash, mmsg);
+        ndrx_infl_delmsg(mmsg);
 
         MUTEX_UNLOCK_V(M_q_lock);
 
@@ -1150,59 +1150,6 @@ out:
         *msg = NULL;
     }
 
-    return ret;
-}
-
-/**
- * Tests is auto message valid for dequeue (calculate the counters)
- * @param node
- * @return 
- */
-expublic int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
-{
-    int ret = EXFALSE;
-    int retry_inc;
-    unsigned long long next_try;
-    long utc_sec, utc_usec;
-    
-    if (0==node->msg->trycounter)
-    {
-        next_try = node->msg->trytstamp + 
-                ((unsigned long long)qconf->waitinit);
-        
-        NDRX_LOG(log_debug, "First try, sleep %d sec", qconf->waitinit);
-    }
-    else 
-    {
-        retry_inc = qconf->waitretry*node->msg->trycounter;
-    
-        if (retry_inc > qconf->waitretrymax)
-        {
-            retry_inc = qconf->waitretrymax;
-        }
-        
-        NDRX_LOG(log_debug, "Try no %d, sleep %d sec", 
-                node->msg->trycounter, retry_inc);
-        
-        next_try = node->msg->trytstamp + 
-                retry_inc;
-    }
-    
-    ndrx_utc_tstamp2(&utc_sec, &utc_usec);
-    NDRX_LOG(log_debug, "Next try at: %ld current clock: %ld",
-            next_try, utc_sec);
-            
-    if (next_try<=utc_sec)
-    {
-        NDRX_LOG(log_debug, "Message accepted for dequeue...");
-        ret=EXTRUE;
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "Message NOT accepted for dequeue...");
-    }
-    
-out:
     return ret;
 }
 
@@ -1276,7 +1223,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     }
 
     /* check q_fut for deq_time and move from future 2 cur|cor */
-    ndrx_infl_fut2cur(qconf, qhash);
+    ndrx_infl_fut2cur(qhash);
 
     if (TMQ_MODE_LIFO == qconf->mode)
     {
@@ -1324,7 +1271,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
-    if (EXSUCCEED!=ndrx_infl_mov2infl(qhash, node))
+    if (EXSUCCEED!=ndrx_infl_mov2infl(node))
     {
         NDRX_LOG(log_error, "Failed to move msg to inflight!");
         ret = NULL;
@@ -1352,7 +1299,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
             
             ret->lockthreadid = 0;
             /* move to cur/cor/fut */
-            ndrx_infl_mov2cur(qconf, qhash, node);
+            ndrx_infl_mov2cur(node);
 
             MUTEX_UNLOCK_V(M_q_lock);
             
@@ -1428,7 +1375,7 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
     ret->lockthreadid = ndrx_gettid();
 
 /* todo required parameter is qhash */
-    ndrx_infl_mov2infl(NULL, mmsg);
+    ndrx_infl_mov2infl(mmsg);
 
     /* release the lock.. */
     MUTEX_UNLOCK_V(M_q_lock);
@@ -1505,7 +1452,7 @@ exprivate void tmq_remove_msg(tmq_memmsg_t *mmsg)
         qhash->numdeq++;
     }
 
-    ndrx_infl_delmsg(qhash, mmsg);
+    ndrx_infl_delmsg(mmsg);
     
     NDRX_FREE(mmsg->msg);
     NDRX_FREE(mmsg);
@@ -1561,8 +1508,8 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
         case TMQ_STORCMD_UNLOCK:
             NDRX_LOG(log_info, "Unlocking message...");
             mmsg->msg->lockthreadid = 0;
-/* todo requred parameter qconf, qhash */
-            ndrx_infl_mov2cur(NULL, NULL, mmsg);
+            /* todo requred parameter qconf, qhash */
+            ndrx_infl_mov2cur(mmsg);
             /* wakeup the Q... runner */
             ndrx_forward_chkrun(mmsg);
             
@@ -1608,8 +1555,7 @@ expublic int tmq_unlock_msg_by_msgid(char *msgid, int chkrun)
     }
     
     mmsg->msg->lockthreadid = 0;
-/* todo requred parameter qconf, qhash */
-    ndrx_infl_mov2cur(NULL, NULL, mmsg);
+    ndrx_infl_mov2cur(mmsg);
 
     if (chkrun)
     {
@@ -1649,8 +1595,7 @@ expublic int tmq_lock_msg(char *msgid)
     
     /* Lock the message */
     mmsg->msg->lockthreadid = ndrx_gettid();
-/* todo required parameter qhash */
-    ndrx_infl_mov2infl(NULL, mmsg);
+    ndrx_infl_mov2infl(mmsg);
 
 out:
     MUTEX_UNLOCK_V(M_q_lock);

@@ -108,6 +108,7 @@ expublic int volatile ndrx_G_fwd_force_wake = EXFALSE;
 
 /**
  * We assume we are locked.
+ * and check run against time.
  * @param mmsg which was enqueued
  */
 expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
@@ -137,27 +138,36 @@ expublic void ndrx_forward_chkrun(tmq_memmsg_t *mmsg)
     {
         return;
     }
-    
-    conf =  tmq_qconf_get_with_default(mmsg->msg->hdr.qname, NULL);
-    if (NULL!=conf)
+
+    /* if it's not auto, nothing to check & run */
+    if (!TMQ_AUTOQ_ISAUTO(mmsg->qconf->autoq))
     {
-        if (tmq_is_auto_valid_for_deq(mmsg, conf) && 
-                /* Ignore error of cnt... */
-                conf->workers > tmq_fwd_busy_cnt(mmsg->msg->hdr.qname, &p_stats))
+        return;
+    }
+
+    /*
+     * we can run the message, if it is in the current list
+     * or in future, but, it's time has come.
+     */
+    if ( (mmsg->qstate & NDRX_TMQ_LOC_CURQ
+
+            || mmsg->qstate & NDRX_TMQ_LOC_FUTQ && (mmsg->msg->qctl.flags &TPQTIME_ABS)
+                && mmsg->msg->qctl.deq_time <= time(NULL) )  
+            /* Ignore error of cnt... */
+            &&conf->workers > tmq_fwd_busy_cnt(mmsg->msg->hdr.qname, &p_stats))
+    {
+        
+        ndrx_G_fwd_force_wake=EXTRUE;
+        
+        if (ndrx_G_fwd_into_sleep)
         {
-            
-            ndrx_G_fwd_force_wake=EXTRUE;
-            
-            if (ndrx_G_fwd_into_sleep)
-            {
-                /* wakup from main sleep */
-                pthread_cond_signal(&M_wait_cond);
-            }
-            else if (ndrx_G_fwd_into_poolsleep)
-            {
-                /* wakup from pool sleep */
-                ndrx_thpool_signal_one(G_tmqueue_cfg.fwdthpool);
-            }
+            /* wakup from main sleep */
+            pthread_cond_signal(&M_wait_cond);
+        }
+        else if (ndrx_G_fwd_into_poolsleep)
+        {
+            /* wakup from pool sleep */
+            ndrx_thpool_signal_one(G_tmqueue_cfg.fwdthpool);
         }
     }
 }
@@ -885,6 +895,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         }
         else
         {
+            /* schedule next run of the msg */
             msg->qctl.flags |= TPQTIME_ABS;
             if ( 0 == msg->trycounter )
             {

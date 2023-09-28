@@ -216,7 +216,6 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
 
-    
     ndrx_utc_tstamp2(&p_msg->msgtstamp, &p_msg->msgtstamp_usec);
     
     MUTEX_LOCK_V(M_tstamp_lock);
