@@ -1004,7 +1004,6 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     tmq_qconfig_t * qconf;
     char msgid_str[TMMSGIDLEN_STR+1];
     char corrid_str[TMCORRIDLEN_STR+1];
-    int hashed=EXFALSE, hashedcor=EXFALSE, cdl=EXFALSE;
     
     MUTEX_LOCK_V(M_q_lock);
     is_locked = EXTRUE;
@@ -1055,8 +1054,6 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     }
 
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
-    EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
-    hashed=EXTRUE;
 
     /* add message to correspoding Q */
     if (EXSUCCEED!=(ret=ndrx_infl_addmsg(qconf, qhash, mmsg)))
