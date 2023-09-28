@@ -237,10 +237,19 @@ expublic int ndrx_infl_delmsg(tmq_memmsg_t *mmsg)
     {
         CDL_DELETE(mmsg->qhash->q_infligh, mmsg);
     }
-    else if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
+
+    if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
     {
         ndrx_rbt_delete(&mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
     }
+
+    if (mmsg->qstate & NDRX_TMQ_LOC_CURQ)
+    {
+        /* really shall not happenn.... firstly it shall go to inflight... */
+        ndrx_rbt_delete(&mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg);
+    }
+
+    mmsg->qstate=0;
 
     return ret;
 }
