@@ -153,8 +153,8 @@ typedef struct tmq_qconfig tmq_qconfig_t;
 typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
-    ndrx_rbt_node_t *cur;    /**< handle in future or now list */
-    ndrx_rbt_node_t *cor;    /**< handle in correlator list    */
+    ndrx_rbt_node_t cur;    /**< handle in future or now list */
+    ndrx_rbt_node_t cor;    /**< handle in correlator list    */
 
     char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
     char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator              */
@@ -207,7 +207,7 @@ struct tmq_cormsg
     /** queue by correlation, CDL, next2, prev2 
     tmq_memmsg_t *corq; */
 
-    ndrx_rbt_tree_t *corq; /**< queue uses standard sorting (insert time)      */
+    ndrx_rbt_tree_t corq; /**< queue uses standard sorting (insert time)      */
 
     EX_hash_handle hh; /**< makes this structure hashable        */
 };

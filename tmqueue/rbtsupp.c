@@ -66,7 +66,7 @@ expublic void tmq_rbt_combine_cur(ndrx_rbt_node_t *existing, const ndrx_rbt_node
     char tmp[256];
 
     /* NOTE: Clock skew might happen, time is moved backwards and we get duplicate sequeuences. */
-    snprintf(tmp, sizeof(tmp), "ERROR ! Two messages with the same key in current Q! "
+    snprintf(tmp, sizeof(tmp), "ERROR ! (cur) Two messages with the same key in current Q! "
             "Existing msgid [%s] new msgid [%s] dup key: msgtstamp=%ld, "
             "msgtstamp_usec=%ld, msgtstamp_cntr=%d. Clock skew?",
             existing_msg->msgid_str, newdata_msg->msgid_str, existing_msg->msg->msgtstamp, 
@@ -86,7 +86,7 @@ expublic void tmq_rbt_combine_fut(ndrx_rbt_node_t *existing, const ndrx_rbt_node
     tmq_memmsg_t *existing_msg = (tmq_memmsg_t *)existing;
     tmq_memmsg_t *newdata_msg = (tmq_memmsg_t *)newdata;
     char tmp[256];
-    snprintf(tmp, sizeof(tmp), "ERROR ! Two messages with the same key in future Q! "
+    snprintf(tmp, sizeof(tmp), "ERROR ! (fut) Two messages with the same key in future Q! "
             "Existing msgid [%s] new msgid [%s] dup key: deq_time=%ld, msgtstamp=%ld, "
             "msgtstamp_usec=%ld, msgtstamp_cntr=%d. Clock skew?",
             existing_msg->msgid_str, newdata_msg->msgid_str, 
@@ -107,7 +107,7 @@ expublic void tmq_rbt_combine_cor(ndrx_rbt_node_t *existing, const ndrx_rbt_node
     tmq_memmsg_t *existing_msg = TMQ_COR_GETMSG(existing);
     tmq_memmsg_t *newdata_msg = TMQ_COR_GETMSG(newdata);
     char tmp[256];
-    snprintf(tmp, sizeof(tmp), "ERROR ! Two messages with the same key in correlation Q! "
+    snprintf(tmp, sizeof(tmp), "ERROR ! (cor) Two messages with the same key in correlation Q! "
             "Existing msgid [%s] new msgid [%s] dup key: msgtstamp=%ld, msgtstamp_usec=%ld, "
             "msgtstamp_cntr=%d. Clock skew?",
             existing_msg->msgid_str, newdata_msg->msgid_str, existing_msg->msg->msgtstamp, 
@@ -127,7 +127,7 @@ expublic int tmq_rbt_cmp_cur(const ndrx_rbt_node_t *a, const ndrx_rbt_node_t *b,
     tmq_memmsg_t *bb = (tmq_memmsg_t *)b;
 
     return ndrx_compare3(aa->msg->msgtstamp, aa->msg->msgtstamp_usec, aa->msg->msgtstamp_cntr,
-            bb->msg->msgtstamp, aa->msg->msgtstamp_usec, aa->msg->msgtstamp_cntr);
+            bb->msg->msgtstamp, bb->msg->msgtstamp_usec, bb->msg->msgtstamp_cntr);
 }
 
 /**
