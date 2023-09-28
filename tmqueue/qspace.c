@@ -977,8 +977,8 @@ exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
     EXHASH_ADD_STR( G_qhash, qname, ret );
 
     /* setup red-black trees */
-    ret->q = ndrx_rbt_init(ret->q, tmq_rbt_cmp_cur, tmq_rbt_combine_cur, NULL, ret);
-    ret->q_fut = ndrx_rbt_init(ret->q_fut, tmq_rbt_cmp_fut, tmq_rbt_combine_cor, NULL, ret);
+    ndrx_rbt_init(&ret->q, tmq_rbt_cmp_cur, tmq_rbt_combine_cur, NULL, ret);
+    ndrx_rbt_init(&ret->q_fut, tmq_rbt_cmp_fut, tmq_rbt_combine_cor, NULL, ret);
 
 out:
     return ret;
@@ -1235,7 +1235,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         }
         else
         {
-           node = (tmq_memmsg_t*)ndrx_rbt_rightmost(qhash->q);
+           node = (tmq_memmsg_t*)ndrx_rbt_rightmost(&qhash->q);
         }
     }
     else
@@ -1248,7 +1248,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         }
         else
         {
-           node = (tmq_memmsg_t*)ndrx_rbt_leftmost(qhash->q);
+           node = (tmq_memmsg_t*)ndrx_rbt_leftmost(&qhash->q);
         }
     }
 
