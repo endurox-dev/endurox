@@ -106,7 +106,7 @@ out:
  * @param mmsg remove from CDL, remove from hash, if CDL is free, remove HASH
  *  entry
  */
-expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+expublic void tmq_cor_msg_del(tmq_memmsg_t *mmsg)
 {
     /* find the corhash entry, if have one remove from from hash
      * remove msg from CDL
@@ -123,21 +123,19 @@ expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
 
 /**
  * Add message to corelator hash / linked list
- * @param qconf queue configuration
- * @param qhash queue entry (holds the ptr to cor hash)
  * @param mmsg message to add
  * @return Qerror code 
  */
-expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+expublic int tmq_cor_msg_add(tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
     int isNew = EXFALSE;
     
-    tmq_corhash_t * corhash =  tmq_cor_find(qhash, mmsg->corrid_str);
+    tmq_corhash_t * corhash =  tmq_cor_find(mmsg->qhash, mmsg->corrid_str);
     
     if (NULL==corhash)
     {
-        corhash=tmq_cor_add(qhash, mmsg->corrid_str);
+        corhash=tmq_cor_add(mmsg->qhash, mmsg->corrid_str);
     }
     
     if (NULL==corhash)
