@@ -209,6 +209,22 @@ ndrx_rbt_tree_t *ndrx_rbt_init(ndrx_rbt_tree_t *tree,
  *                          Search                                      *
  **********************************************************************/
 
+/**
+ * Test is tree empty
+ * @param rbt tree to test
+ * @return 0 - false, 1 - true
+ */
+int ndrx_rbt_is_empty(ndrx_rbt_tree_t *rbt)
+{
+
+   if (RBTNIL==rbt->root)
+   {
+       return 1;
+   }
+
+   return 0;
+}
+
 /*
  * rbt_find: search for a value in an RBTree
  *
@@ -564,7 +580,10 @@ ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *data, in
              * Found node with given key.  Apply combiner.
              */
             rbt->combiner(current, data, rbt->arg);
-            *isNew = EXFALSE;
+            if (NULL!=isNew)
+            {
+                *isNew = EXFALSE;
+            }
             return current;
         }
         parent = current;
@@ -574,7 +593,10 @@ ndrx_rbt_node_t *ndrx_rbt_insert(ndrx_rbt_tree_t *rbt, ndrx_rbt_node_t *data, in
     /*
      * Value is not present, so create a new node containing data.
      */
-    *isNew = EXTRUE;
+    if (NULL!=isNew)
+    {
+        *isNew = EXTRUE;
+    }
 
     /* x = rbt->allocfunc(rbt->arg); */
     data->color = RBTRED;
