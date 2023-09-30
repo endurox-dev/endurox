@@ -571,6 +571,16 @@ fi
 
 test_empty_qspace;
 
+echo "Running: future fifo TPQTIME_ABS tests"
+(./atmiclt28 futfifoabs 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
