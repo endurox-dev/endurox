@@ -36,3 +36,9 @@ CORAUTO,svcnm=-,autoq=y,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,errorq=C
 # correlator error q
 #
 CORERR,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n
+
+#
+# future tests
+#
+FUT_FIFO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n
+FUT_LIFO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,mode=lifo

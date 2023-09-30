@@ -73,6 +73,7 @@ exprivate int basic_autoq_deadq(void);
 exprivate int basic_rndfail(void);
 exprivate int noabort_q_test(void);
 
+exprivate int basic_q_fut_rel_fifo_test(void);
 
 int main(int argc, char** argv)
 {
@@ -173,6 +174,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "noabort"))
     {
         return noabort_q_test();
+    }
+    else if (0==strcmp(argv[1], "futfifoabs"))
+    {
+        return basic_q_fut_rel_fifo_test();
     }
     else
     {
@@ -1896,4 +1901,156 @@ out:
 out:
     return ret;
 }
+
+/**
+ * Test message get from future queue
+ * - Load normal messages
+ * - Load messages with future reltive time 
+ * - Fetch messages normal messages 
+ * - Fetch messages with future relative time
+ */
+exprivate int basic_q_fut_rel_fifo_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    int test;
+    time_t deq_time;
+    int i;
+    long len;
+    char *buf = tpalloc("CARRAY", "", 3);
+        
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* enqueue messages to fifo q / fut & non fut */
+    /* 0 - add msg to fut Q and not fut Q. Load from not fut Q and from fut Q
+    *  1 - add msg to fut Q and not fut Q. Lod after delay from fut Q and from not fut Q
+    */
+    for (test=0; test<2; test++)
+    {
+        /* load future and non future msgs... */
+        for (i=0; i<500; i++)
+        {
+            sprintf(buf, "%03d", i);
+                
+            memset(&qc1, 0, sizeof(qc1));
+            qc1.flags|=TPQTIME_REL;
+            qc1.deq_time = 60; /* time now + 60 ms*/
+            
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "FUT_FIFO", &qc1, buf, 3, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+
+            /* Normal msg 500 + i */
+            sprintf(buf, "%03d", 500 + i);
+
+            memset(&qc1, 0, sizeof(qc1));
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "FUT_FIFO", &qc1, buf, 3, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* set delay to 100msec */
+        if (1==test)
+        {
+            /* sleep 100 msec */
+            usleep(100000);
+        }
+
+        /* Now fetch first message, shall be from non future Q */
+        memset(&qc1, 0, sizeof(qc1));
+        len=3;
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, &buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        /* it shall be msg without relative time */
+        // NDRX_ASSERT_VAL_OUT((buf==500 && len==3 && !(qc1.flags & TPQTIME_REL)), 
+                // "Invalid buffer %d %ld %lx", 
+                // (int)buf, len, qc1.flags);
+
+
+        /* Download normal msgs (500 + i)... */
+        i = (1==test)?0:500;
+
+        for (; i<1000; i++)
+        {
+            /* load msgs.from Q it shall be from not future Q. 
+             */
+            memset(&qc1, 0, sizeof(qc1));
+            len=3;
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, &buf, &len, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* validate the msg */
+            // NDRX_ASSERT_VAL_OUT((buf==[%d] && len==3 ), 
+                    // "Invalid buffer %d (exp %d) %ld %lx", 
+                    // (int)buf, i, len, qc1.flags);
+            
+        }
+
+        /* wait and load futured msg */
+        if (0==test)
+        {
+            /* sleep 100 msec */
+            usleep(100000);
+            for (i = 0; i<500; i++)
+            {
+                /* load msgs.from Q it shall be from future Q. 
+                */
+                memset(&qc1, 0, sizeof(qc1));
+                len=3;
+                if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, &buf, &len, 0))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* validate the msg */
+                // NDRX_ASSERT_VAL_OUT((buf=[%d] && len==3 ), 
+                //         "Invalid buffer %d (exp %d) %ld %lx", 
+                //         (int)buf, i, len, qc1.flags);
+                
+            }
+        }
+
+    }
+
+out:
+
+    /* finish it off */
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
+    if (EXSUCCEED!=tpterm())
+    {
+        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
+
