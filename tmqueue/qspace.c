@@ -977,8 +977,8 @@ exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
     EXHASH_ADD_STR( G_qhash, qname, ret );
 
     /* setup red-black trees */
-    ret->q = ndrx_rbt_init(ret->q, tmq_rbt_cmp_cur, tmq_rbt_combine_cur, NULL, ret);
-    ret->q_fut = ndrx_rbt_init(ret->q_fut, tmq_rbt_cmp_fut, tmq_rbt_combine_cor, NULL, ret);
+    ndrx_rbt_init(&ret->q, tmq_rbt_cmp_cur, tmq_rbt_combine_cur, NULL, ret);
+    ndrx_rbt_init(&ret->q_fut, tmq_rbt_cmp_fut, tmq_rbt_combine_fut, NULL, ret);
 
 out:
     return ret;
@@ -1004,7 +1004,6 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     tmq_qconfig_t * qconf;
     char msgid_str[TMMSGIDLEN_STR+1];
     char corrid_str[TMCORRIDLEN_STR+1];
-    int hashed=EXFALSE, hashedcor=EXFALSE, cdl=EXFALSE;
     
     MUTEX_LOCK_V(M_q_lock);
     is_locked = EXTRUE;
@@ -1055,8 +1054,14 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     }
 
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
-    EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
-    hashed=EXTRUE;
+
+    if (mmsg->msg->qctl.flags & TPQCORRID)
+    {
+        tmq_msgid_serialize((*msg)->qctl.corrid, corrid_str);
+        NDRX_STRCPY_SAFE(mmsg->corrid_str, corrid_str);
+        NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
+            corrid_str, (*msg)->hdr.qname);
+    }
 
     /* add message to correspoding Q */
     if (EXSUCCEED!=(ret=ndrx_infl_addmsg(qconf, qhash, mmsg)))
@@ -1231,11 +1236,11 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         if (NULL!=corrid_str)
         {
             /* get latest corhash msg from RBT */
-            node = TMQ_COR_GETMSG(ndrx_rbt_rightmost(corhash->corq));
+            node = TMQ_COR_GETMSG(ndrx_rbt_rightmost(&corhash->corq));
         }
         else
         {
-           node = (tmq_memmsg_t*)ndrx_rbt_rightmost(qhash->q);
+           node = (tmq_memmsg_t*)ndrx_rbt_rightmost(&qhash->q);
         }
     }
     else
@@ -1244,11 +1249,11 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         if (NULL!=corrid_str)
         {
             /* get first corhash msg from RBT */
-            node = TMQ_COR_GETMSG(ndrx_rbt_leftmost(corhash->corq));
+            node = TMQ_COR_GETMSG(ndrx_rbt_leftmost(&corhash->corq));
         }
         else
         {
-           node = (tmq_memmsg_t*)ndrx_rbt_leftmost(qhash->q);
+           node = (tmq_memmsg_t*)ndrx_rbt_leftmost(&qhash->q);
         }
     }
 
@@ -1702,6 +1707,9 @@ expublic tmq_memmsg_t *tmq_get_msglist(char *qname)
     tmq_memmsg_t * ret = NULL;
     tmq_memmsg_t * tmp = NULL;
     tmq_msg_t * msg = NULL;
+    ndrx_rbt_tree_iterator_t iter;
+    ndrx_rbt_tree_t *rbt_trees[2];
+    int i;
     
     NDRX_LOG(log_debug, "tmq_get_msglist listing for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
@@ -1750,7 +1758,41 @@ expublic tmq_memmsg_t *tmq_get_msglist(char *qname)
         }
     }
     while (NULL!=node && node!=qhash->q_infligh);
-    
+
+    /* List all messages from qhash->cur and qhash-> fut */
+    rbt_trees[0] = &qhash->q;
+    rbt_trees[1] = &qhash->q_fut;
+    for (i=0; i<2; i++)
+    {
+        ndrx_rbt_begin_iterate(rbt_trees[i], LeftRightWalk, &iter);
+        while (NULL!=(node=(tmq_memmsg_t *)ndrx_rbt_iterate(&iter)))
+        {
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(tmq_memmsg_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                ret = NULL;
+                goto out;
+            }
+
+            if (NULL==(msg = NDRX_MALLOC(sizeof(tmq_msg_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                ret = NULL;
+                goto out;
+            }
+
+            memcpy(msg, node->msg, sizeof(tmq_msg_t));
+            tmp->msg = msg;
+
+            DL_APPEND(ret, tmp);
+
+        }
+    }
+
 out:
     MUTEX_UNLOCK_V(M_q_lock);
     return ret;

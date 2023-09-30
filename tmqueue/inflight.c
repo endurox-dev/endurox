@@ -78,23 +78,17 @@ expublic int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_mem
     else if ( (mmsg->msg->qctl.flags & TPQTIME_ABS) && 
             (mmsg->msg->qctl.deq_time > (long)time(NULL)))
     {
-        ndrx_rbt_insert(qhash->q_fut, (ndrx_rbt_node_t *)mmsg, &isNew);
+        ndrx_rbt_insert(&qhash->q_fut, (ndrx_rbt_node_t *)mmsg, &isNew);
         mmsg->qstate = NDRX_TMQ_LOC_FUTQ;
     }
     else
     {
         /* insert to cur */
-        ndrx_rbt_insert(qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
+        ndrx_rbt_insert(&qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
         mmsg->qstate = NDRX_TMQ_LOC_CURQ;
 
         if (mmsg->msg->qctl.flags & TPQCORRID)
         {
-            tmq_msgid_serialize(mmsg->msg->qctl.corrid, corrid_str);
-            NDRX_STRCPY_SAFE(mmsg->corrid_str, corrid_str);
-
-            NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
-                corrid_str,mmsg->msg->hdr.qname);
-
             if (EXSUCCEED!=tmq_cor_msg_add(mmsg))
             {
                 NDRX_LOG(log_error, "Failed to add msg to corhash!");
@@ -123,12 +117,12 @@ expublic int ndrx_infl_mov2infl(tmq_memmsg_t *mmsg)
 
     if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
     {
-        ndrx_rbt_delete(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+        ndrx_rbt_delete(&mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
         mmsg->qstate &= ~NDRX_TMQ_LOC_FUTQ;
     }
     else if (mmsg->qstate & NDRX_TMQ_LOC_CURQ)
     {
-        ndrx_rbt_delete(mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg);
+        ndrx_rbt_delete(&mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg);
         mmsg->qstate &= ~NDRX_TMQ_LOC_CURQ;
 
         /* remove from correlator too */
@@ -177,13 +171,13 @@ expublic int ndrx_infl_mov2cur(tmq_memmsg_t *mmsg)
         if ( (mmsg->msg->qctl.flags & TPQTIME_ABS) && 
                 (mmsg->msg->qctl.deq_time > (long)time(NULL)))
         {
-            ndrx_rbt_insert(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg, NULL);
+            ndrx_rbt_insert(&mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg, NULL);
             mmsg->qstate |= NDRX_TMQ_LOC_FUTQ;
         }
         else
         {
             /* insert to cur */
-            ndrx_rbt_insert(mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, NULL);
+            ndrx_rbt_insert(&mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, NULL);
             mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
 
             if (mmsg->msg->qctl.flags & TPQCORRID)
@@ -237,10 +231,19 @@ expublic int ndrx_infl_delmsg(tmq_memmsg_t *mmsg)
     {
         CDL_DELETE(mmsg->qhash->q_infligh, mmsg);
     }
-    else if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
+
+    if (mmsg->qstate & NDRX_TMQ_LOC_FUTQ)
     {
-        ndrx_rbt_delete(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+        ndrx_rbt_delete(&mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
     }
+
+    if (mmsg->qstate & NDRX_TMQ_LOC_CURQ)
+    {
+        /* really shall not happenn.... firstly it shall go to inflight... */
+        ndrx_rbt_delete(&mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg);
+    }
+
+    mmsg->qstate=0;
 
     return ret;
 }
@@ -256,7 +259,13 @@ expublic int ndrx_infl_fut2cur(tmq_qhash_t *qhash)
     int isNew = EXFALSE;
 
     /* read from q_fut tree with smallest dec_time */
-    mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(mmsg->qhash->q_fut);
+    mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(&qhash->q_fut);
+
+    /* no message in future */
+    if (NULL==mmsg)
+    {
+        goto out;
+    }
 
     /* enqueue to cur and cor if needed */
     if ( mmsg->msg->qctl.deq_time <= (long)time(NULL) )
@@ -265,11 +274,11 @@ expublic int ndrx_infl_fut2cur(tmq_qhash_t *qhash)
                 mmsg->msgid_str);
 
         /* remove from future */
-        ndrx_rbt_delete(mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+        ndrx_rbt_delete(&mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
         mmsg->qstate &= ~NDRX_TMQ_LOC_FUTQ;
 
         /* insert to cur */
-        ndrx_rbt_insert(mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
+        ndrx_rbt_insert(&mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
         mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
 
         /* do the correlator too... if needed */
