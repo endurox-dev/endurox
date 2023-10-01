@@ -1018,7 +1018,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test101_dupsrv);
     add_test(suite, test102_procgrp);
     add_test(suite, test103_singlegrp);
+#ifndef EX_USE_EMQ
     add_test(suite, test104_tmqfailover);
+#endif
     add_test(suite, test105_respawn);
     add_test(suite, test106_periodcb);
     
