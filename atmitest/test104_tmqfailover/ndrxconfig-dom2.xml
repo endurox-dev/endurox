@@ -75,7 +75,7 @@
             <cctag>NULL</cctag>
             <procgrp>GRP1</procgrp>
             <!-- shared node id set to 2 (i.e. -n2) -->
-            <sysopt>-e ${TESTDIR}/tm1-dom1.log -r -- -t1 -l${TESTDIR}/RM1 -m10 -n2</sysopt>
+            <sysopt>-e ${TESTDIR}/tm1-dom1.log -r -- -t1 -l${TESTDIR}/RM1 -m10 -n2 -X2</sysopt>
         </server>
 
         <server name="atmi.sv104">
@@ -95,7 +95,7 @@
             <cctag>RM2TMQ</cctag>
             <procgrp>GRP1</procgrp>
             <!-- shared node id set to 2 (i.e. -n2) -->
-            <sysopt>-e ${TESTDIR}/tm2-dom2.log -r -- -t1 -l${TESTDIR}/RM2 -m10 -n2</sysopt>
+            <sysopt>-e ${TESTDIR}/tm2-dom2.log -r -- -t1 -l${TESTDIR}/RM2 -m10 -n2 -s2 -X2</sysopt>
         </server>
 
         <server name="tmqueue">
@@ -104,7 +104,7 @@
             <srvid>200</srvid>
             <cctag>RM2TMQ</cctag>
             <procgrp>GRP1</procgrp>
-            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm2-dom2.log -r -- -s1 -n2</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm2-dom2.log -r -- -s1 -n2 -X2</sysopt>
         </server>
 
         <server name="tmrecoversv">

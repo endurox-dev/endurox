@@ -247,6 +247,11 @@ transaction log file for loading at the next check cycle. If log fails
 to load, it marked for ignore, and further check cycles ignores such
 broken transaction logs.
 
+[*-a* 'NR_OF_ATTEMPTS']::
+Number of attempts used by background thread to load incomplete transaction
+log files (left by any crashed process instances and not yet flushed to
+file-system by the OS). Default value is *3*.
+
 XA RECOVER SETTINGS FOR ORACLE DB
 ---------------------------------
 The -R mode might not be enabled in database for user. I.e. user is not allowed

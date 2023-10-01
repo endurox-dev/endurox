@@ -768,6 +768,15 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         EXFAIL_OUT(ret);
     }
 
+    /* On mac and freebsd seem that reading happens at end of the
+     * file if file was opened with a+
+     */
+    if (EXSUCCEED!=fseek((*pp_tl)->f, 0, SEEK_SET))
+    {
+        NDRX_LOG(log_error, "Failed to fseek: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
     /* Read line by line & call parsing functions 
      * we should also parse start of the transaction (date/time)
      */
@@ -1159,7 +1168,6 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
     
     /* Remove the log for hash! */
     tms_remove_logfree(p_tl, hash_rm);
-
 }
 
 /**
@@ -1473,6 +1481,11 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
              * see that abort has started...
              * Note that other tmsrv will not go further than last commit entry
              * as after that there is check is that tmsrv still on locked node.
+             * ------
+             * Also... this might not be 100% safe, as shared FS might become 
+             * corrutped, if stale node starts to write somethink after the
+             * other node took over. Thus hardware based fencing is mandatory
+             * for production failover modes.
              */
             int w_cnt=1, i;
 
@@ -1582,11 +1595,11 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
     */
     stage=(short)atoi(p);
 
-    if (stage <= p_tl->txstage)
+    if (stage < p_tl->txstage)
     {
-        NDRX_LOG(log_error, "Stage for [%s] downgrade was %hd, read %hd",
+        NDRX_LOG(log_error, "Transaction logs recover: stage for [%s] downgrade was %hd, read %hd",
                 p_tl->tmxid, p_tl->txstage, stage);
-        userlog("Stage for [%s] downgrade was %hd, read %hd",
+        userlog("Transaction logs recover: strage for [%s] downgrade was %hd, read %hd",
                 p_tl->tmxid, p_tl->txstage, stage);
     }
 
@@ -1606,26 +1619,6 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
                 p_tl->tmxid, p_tl->txstage, stage);
         }
     }
-#if 0
-    else if (p_tl->txstage>=XA_TX_STAGE_COMMITTING &&
-        p_tl->txstage<=XA_TX_STAGE_COMFORGOT_HEU)
-    {
-
-        /* if there was commit, we allow abort too.. */
-        if (stage>=XA_TX_STAGE_COMMITTING &&
-            stage<=XA_TX_STAGE_COMFORGOT_HEU)
-        {
-            p_tl->txstage = stage;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
-                p_tl->tmxid, p_tl->txstage, stage);
-            userlog("Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
-                p_tl->tmxid, p_tl->txstage, stage);
-        }
-    }
-#endif
     else
     {
         p_tl->txstage = stage;

@@ -51,6 +51,7 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec  */
 #define THREADPOOL_DFLT         10  /* Default number of threads spawned   */
+#define LOGPARSE_ATTEMPTS_DFLT  3   /* Number of attempts to parse unknown logs */
 
 #define XA_RETRIES_DFLT         3   /* number of foreground retries */
 #define TMSRV_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min  */
@@ -64,24 +65,26 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 typedef struct
 {
     long dflt_timeout; /**, how long monitored transaction can be open        */
-    char tlog_dir[PATH_MAX]; /* Where to write tx log files                 */
+    char tlog_dir[PATH_MAX]; /* Where to write tx log files                   */
     int scan_time;      /**< Number of seconds retries */
     long max_tries;      /**< Number of tries for running session for single 
                          * transaction, until stop processing it 
                          * (in this process session) */
-    int tout_check_time; /**< seconds used for detecting transaction timeout   */
+    int tout_check_time; /**< seconds used for detecting transaction timeout  */
     int threadpoolsize; /**< thread pool size */
     /** Number of foreground retries in stage for XA_RETRY */
     int xa_retries;
     
     int ping_time; /**< Number of seconds for interval of doing "pings" to db */
-    int ping_mode_jointran; /**< PING with join non existent transaction    */
+    int ping_mode_jointran; /**< PING with join non existent transaction      */
     threadpool thpool;
     
     int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
-    long vnodeid;            /**< Node id, command id used for failovers    */
+    long vnodeid;            /**< Node id, command id used for failovers      */
 
-    int chkdisk_time;     /**< Check against duplicate process runs, sec     */
+    int chkdisk_time;     /**< Check against duplicate process runs, sec      */
+
+    int logparse_attempts;      /**< Number of attempts to parse unknown logs */
     
 } tmsrv_cfg_t;
 
@@ -102,6 +105,12 @@ typedef struct
 {
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     int state;
+    /**< Number attempts to load the unknown transaction.
+     * Might be useful as transactions, which are not
+     * logged for commit/abort, might have delayed
+     * content appearance in the log file.
+     */
+    int attempts;
     EX_hash_handle hh;              /**< hash handle                    */
 } ndrx_tms_file_registry_t;
 
@@ -184,10 +193,11 @@ extern void background_lock(void);
 extern void background_unlock(void);
 
 /* singleton group related */
-extern ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(const char *tmxid);
-extern int ndrx_tms_file_registry_add(const char *tmxid, int state);
-extern int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t *ent);
-extern void ndrx_tms_file_registry_free(void);
+extern ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(ndrx_tms_file_registry_t ** hash, const char *tmxid);
+extern int ndrx_tms_file_registry_add(ndrx_tms_file_registry_t ** hash, const char *tmxid);
+extern int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t ** hash, ndrx_tms_file_registry_t *ent);
+extern void ndrx_tms_file_registry_free(ndrx_tms_file_registry_t ** hash);
+
 extern int tms_log_checkpointseq(atmi_xa_log_t *p_tl);
 
 /* Admin functions */

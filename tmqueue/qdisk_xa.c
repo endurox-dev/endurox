@@ -1090,25 +1090,6 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
         goto out;
     }
 
-#if 0
-    /* are we in singleton group ? */
-    if (G_atmi_env.procgrp_no && ndrx_sg_is_singleton(G_atmi_env.procgrp_no))
-    {
-        nodeid_loc = tpgetnodeid();
-        if (nodeid!=nodeid_loc)
-        {
-            NDRX_LOG(log_error, "Unexpected node id %hd (accepting only from %ld)!",
-                nodeid, nodeid_loc);
-            userlog("Unexpected node id %hd (accepting only from %ld)!",
-                nodeid, nodeid_loc);
-            ret = XAER_RMFAIL;
-            goto out;
-        }
-    }
-#endif
-
-    /* check caller node id, in case if group singleton...*/
-    
     switch (cmd)
     {
         case TMQ_CMD_STARTTRAN:
