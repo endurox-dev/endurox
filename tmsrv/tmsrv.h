@@ -112,6 +112,7 @@ typedef struct
      */
     int attempts;
     EX_hash_handle hh;              /**< hash handle                    */
+    int housekeepable;              /**< Is housekeepable?              */
 } ndrx_tms_file_registry_t;
 
 /*---------------------------Prototypes---------------------------------*/
@@ -144,7 +145,9 @@ extern int tms_log_info(atmi_xa_log_t *p_tl);
 extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced);
 extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt, 
         char rmstatus, int rmerrorcode, short rmreason);
-extern int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl);
+extern int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
+        int *log_removed, int *housekeepable);
+extern int tms_housekeep(char *logfile);
 extern int tm_chk_tx_status(atmi_xa_log_t *p_tl);
 extern atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode);
 extern void tms_tx_hash_lock(void);
@@ -194,7 +197,8 @@ extern void background_unlock(void);
 
 /* singleton group related */
 extern ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(ndrx_tms_file_registry_t ** hash, const char *tmxid);
-extern int ndrx_tms_file_registry_add(ndrx_tms_file_registry_t ** hash, const char *tmxid);
+extern int ndrx_tms_file_registry_add(ndrx_tms_file_registry_t ** hash, 
+    const char *tmxid, int housekeepable);
 extern int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t ** hash, ndrx_tms_file_registry_t *ent);
 extern void ndrx_tms_file_registry_free(ndrx_tms_file_registry_t ** hash);
 

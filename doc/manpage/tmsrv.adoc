@@ -217,7 +217,9 @@ Enable xa_recover() call for PINGs instead of xa_start(). See *-P* flag descript
 
 [*-h* 'HOUSEKEEP_TIMEOUT']::
 Number of seconds after which corrupted transaction log files are removed at
-tmsrv startup. Default value is *5400* (1 hour 30 min).
+tmsrv startup. Default value is *5400* (1 hour 30 min). In case if flag *-X*
+is enabled, broke log file housekeeping is performed on regular bases,
+instead of the *tmsrv* startup only.
 
 [*-n* 'ENDUROX_NODE_ID']::
 Indicates the virtual Enduro/X cluster node ID. If the parameter is not set, then
