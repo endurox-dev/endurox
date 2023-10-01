@@ -2004,42 +2004,41 @@ which are described in following chapter.
 
 ==== Hardware and software requirements for transaction manager failover
 
-When transaction is about to commit, *tmsrv(8)* write the decsion to persist storage.
-For transaction consistency it is crutial, that if active node did fail,
-and shared file system gave fcntl() singleton-group lock to other node,
-*no write must happen from failed node to shared storage after the failover*.
+When transaction is about to commit, *tmsrv(8)* writes the
+decsion to the persistent storage. For transaction consistency it is crutial that
+*no write happens from the failed node to the shared storage after the failover*.
 If such writes happen, transaction logs might become corrupted and
 Enduro/X transaction manager *may loose transactions*.
 
-Example cases, wgeb write from failed node might happen:
+Example cases, where write to disk from failed node might happen:
 
 - Virtual machine with currently active node is suspended, shared file
-system assumes that node failed and leaved the cluster, the shared file
-system manager gives fcntl() lock (used by singleton groups) to failover
+system assumes that node has failed and leaved the cluster, the shared file
+system cluster gives fcntl() lock (used by singleton groups) to failover
 node which takes over, and then suspended node is resumed.
 
-- Currently active node is so busy of work and becomes unresoponsive,
-that shared file system cluster may decide that node failed, and it does
-the failover. When the failed node load is back to normal, it starts
-to write to disk again.
+- Active node is so busy of work and becomes unresoponsive (basically server overloaded),
+so that shared file system cluster may decide that node failed (unresposive), and it does
+the failover (release locks/give locks to other node). When the failed node 
+load is back to normal, it starts to write to disk again, which may corrupt the data.
 
 To resolve such scenarious, hardware level fencing is required.
-In ideal scenario, *STONITH* shall be eployed, so that if node failed,
+In ideal scenario, *STONITH* shall be employed, so that if node failed,
 it is restarted and only then shared file system gives fcntl() lock
 to failover node. *GFS2* is using this mechanism. *STONITH* is recommend
 way to fence, as that would also ensure that user applicaiton processes are
 terminated immediately and not duplicate run in cluster would be possible.
 
 Other option is to have IO fencing, such as Persistent Reserve (SCSI-3 protocol),
-whcih shall be used by shared file system. In this case, at hardware level
+whcih shall be used by third shared file system. In this case, at hardware level
 shared disk is disconnected from the failed node. For example, IBM *GPFS*
 can use this functionality, however proper disks shall be used for this
 functionality.
 
-Additionally, if not using HW based fencing, that might cause corruption of the
-shared file system by it self. In such case Enduro/X cluster might stop
-to work and loose transactions, including the persistent messages,
-if storing them in shared fs storage.
+Additionally, if not using HW based fencing, that might *cause corruption* of the
+shared file system by it self (i.e. resumed node corrupts shared FS disk structures).
+In such case Enduro/X cluster might stop to work at all on all nodes and might 
+*loose transactions*, persistent messages and other data if storing them in shared fs storage.
 
 *NOTE* that time-based fencing may not always protect from such corrupted
 disk write activity from failed nodes, as for example at VM suspend/resume
