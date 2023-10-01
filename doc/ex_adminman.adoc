@@ -2178,6 +2178,13 @@ file system, as in case of shared file system failure, the processes or may
 get killed, leading to fact that singleton groups will not be unlocked locally,
 and processes form singleton groups would not be removed.
 
+
+Following diagram depict the core functionality of the singleton group
+failover, including distributed transaction and persistent queue
+processing.
+
+image:ex_adminman_failover.png[caption="Figure 13: ", title="Failover processing", alt="failover processing diagram of two nodes"]
+
 === Sample configuration of the failover setup with singleton groups
 
 This chapter provides sample configuration for having cluster of two machines,
@@ -2481,6 +2488,24 @@ indicates that mode is enabled (is_mmon is *1*). Setting is stored in shared mem
 enabled before given node startup.
 
 At shutdown if it was set, the node is set back to *0*.
+
+
+To check singleton group statueses on the given machine, following command may be used:
+
+- xadmin psg
+
+Example:
+
+--------------------------------------------------------------------------------
+$ xadmin psg
+
+SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
+---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
+   1 Y    N    Y     Y          10 24642038 exsinglesv             1s   0 niv
+   2 Y    N    Y     Y        3000 15467248 exsinglesv             3s   0 niv
+
+--------------------------------------------------------------------------------
+
 
 == Standard configuration strings
 
