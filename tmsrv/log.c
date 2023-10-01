@@ -711,13 +711,50 @@ out:
 }
 
 /**
+ * Do housekeeping on log file
+ * @param logfile - path to log file
+ * @return EXTRUE (did remove) / EXFALSE (did not remove)
+ */
+expublic int tms_housekeep(char *logfile)
+{
+    long diff;
+    int err;
+    int ret = EXFALSE;
+
+    /* remove old corrupted logs... */
+    if ((diff=ndrx_file_age(logfile)) > G_tmsrv_cfg.housekeeptime)
+    {
+        NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                logfile, diff, G_tmsrv_cfg.housekeeptime);
+        userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                logfile, diff, G_tmsrv_cfg.housekeeptime);
+
+        if (EXSUCCEED!=unlink(logfile))
+        {
+            err = errno;
+            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
+            userlog("Failed to unlink [%s]: %s", strerror(err));
+        }
+        else
+        {
+            ret=EXTRUE;
+        }
+    }
+
+    return ret;
+}
+
+/**
  * Read the log file from disk
  * @param logfile - path to log file
  * @param tmxid - transaction ID string
  * @param pp_tl - transaction log (double ptr). Returned if all ok.
+ * @param log_removed did we remove log file (housekeep) executed?
+ * @param housekeepable is log file housekeepable?
  * @return SUCCEED/FAIL
  */
-expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
+expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
+    int *log_removed, int *housekeepable)
 {
     int ret = EXSUCCEED;
     int len;
@@ -729,7 +766,10 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     int wrote, err;
     long diff;
     *pp_tl = NULL;
-    
+
+    *log_removed = EXFALSE;
+    *housekeepable = EXFALSE;
+
     if (NULL==(*pp_tl = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
     {
         NDRX_LOG(log_error, "NDRX_CALLOC() failed: %s", strerror(errno));
@@ -862,7 +902,6 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                          logfile, buf, crc32_calc, crc32_got);
                 continue;
             }
-            
         }
         
         switch (*p)
@@ -996,7 +1035,6 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
      */
     (*pp_tl)->is_background = EXTRUE;
     
-    
     /* 
      * If we keep in active state, then timeout will kill the transaction (or it will be finished by in progress 
      *  binary, as maybe transaction is not yet completed). Thought we might loss the infos
@@ -1057,20 +1095,12 @@ out:
     /* clean up corrupted files */
     if (do_housekeep)
     {
-        /* remove old corrupted logs... */
-        if ((diff=ndrx_file_age(logfile)) > G_tmsrv_cfg.housekeeptime)
-        {
-            NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
-                    logfile, diff, G_tmsrv_cfg.housekeeptime);
-            userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
-                    logfile, diff, G_tmsrv_cfg.housekeeptime);
+        *housekeepable=EXTRUE;
 
-            if (EXSUCCEED!=unlink(logfile))
-            {
-                err = errno;
-                NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
-                userlog("Failed to unlink [%s]: %s", strerror(err));
-            }
+        /* so that hashmaps can be cleaned up... */
+        if (tms_housekeep(logfile))
+        {
+            *log_removed=EXTRUE;
         }
     }
 
