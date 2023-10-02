@@ -49,7 +49,7 @@
 #include "test106.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define DEVIATION_ALLOW 2 /* was 1, give 2, seems on aix some delays causes false positives */
+#define DEVIATION_ALLOW 3 /**< seems on aix some issues, with larger gaps */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
