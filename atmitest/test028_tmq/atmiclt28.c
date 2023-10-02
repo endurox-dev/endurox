@@ -73,7 +73,7 @@ exprivate int basic_autoq_deadq(void);
 exprivate int basic_rndfail(void);
 exprivate int noabort_q_test(void);
 
-exprivate int basic_q_fut_rel_fifo_test(void);
+exprivate int basic_q_fut_fifo_test(void);
 
 int main(int argc, char** argv)
 {
@@ -177,7 +177,7 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "futfifoabs"))
     {
-        return basic_q_fut_rel_fifo_test();
+        return basic_q_fut_fifo_test();
     }
     else
     {
@@ -1909,146 +1909,142 @@ out:
  * - Fetch messages normal messages 
  * - Fetch messages with future relative time
  */
-exprivate int basic_q_fut_rel_fifo_test(void)
+exprivate int basic_q_fut_fifo_test(void)
 {
     int ret = EXSUCCEED;
     TPQCTL qc1;
-    int test;
-    time_t deq_time;
-    int i;
-    long len;
-    char *buf = tpalloc("CARRAY", "", 3);
-        
-    if (NULL==buf)
+    long len=0;
+    int test; /* 0 - relative time, 1 - absolute time*/
+    long i, l;
+    long max_msgs = 100;
+
+    for (test = 0; test < 2; test++)
     {
-        NDRX_LOG(log_error, "TESTERROR: failed to malloc 3 bytes: %s",
-                tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
-    }
-    
-    /* enqueue messages to fifo q / fut & non fut */
-    /* 0 - add msg to fut Q and not fut Q. Load from not fut Q and from fut Q
-    *  1 - add msg to fut Q and not fut Q. Lod after delay from fut Q and from not fut Q
-    */
-    for (test=0; test<2; test++)
-    {
-        /* load future and non future msgs... */
-        for (i=0; i<500; i++)
+        for (i=0; i<max_msgs; i++)
         {
-            sprintf(buf, "%03d", i);
-                
+            UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+            if (NULL==buf)
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+
+            if (EXSUCCEED != Bchg(buf, T_LONG_FLD, 0, (char *)&i, 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to set T_LONG_FLD %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+
+            /* enqueue the data buffer */
             memset(&qc1, 0, sizeof(qc1));
-            qc1.flags|=TPQTIME_REL;
-            qc1.deq_time = 60; /* time now + 60 ms*/
-            
-            if (EXSUCCEED!=tpenqueue("MYSPACE", "FUT_FIFO", &qc1, buf, 3, 0))
+
+            /* even to future queue */
+            if (0==i%2)
+            {
+                if (0==test)
+                {
+                    qc1.flags|=TPQTIME_REL;
+                    qc1.deq_time = 10;
+                }
+                else
+                {
+                    qc1.flags|=TPQTIME_ABS;
+                    qc1.deq_time = time(NULL)+10;
+                }
+            }
+
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "FUT_FIFO", &qc1, (char *)buf, 0, 0))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
                 EXFAIL_OUT(ret);
             }
+            tpfree((char *)buf);
+        }
 
-            /* Normal msg 500 + i */
-            sprintf(buf, "%03d", 500 + i);
-
-            memset(&qc1, 0, sizeof(qc1));
-            if (EXSUCCEED!=tpenqueue("MYSPACE", "FUT_FIFO", &qc1, buf, 3, 0))
+        NDRX_LOG(log_debug, "dequeue normal msg!");
+        /* dequeue normal msg */
+        for (i=0; i<max_msgs; i++)
+        {
+            /* even is in future queue */
+            if (0==i%2)
             {
-                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
-                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-                EXFAIL_OUT(ret);
+                continue;
             }
-        }
 
-        /* set delay to 100msec */
-        if (1==test)
-        {
-            /* sleep 100 msec */
-            usleep(100000);
-        }
-
-        /* Now fetch first message, shall be from non future Q */
-        memset(&qc1, 0, sizeof(qc1));
-        len=3;
-        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, &buf, &len, 0))
-        {
-            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
-                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-            EXFAIL_OUT(ret);
-        }
-
-        /* it shall be msg without relative time */
-        // NDRX_ASSERT_VAL_OUT((buf==500 && len==3 && !(qc1.flags & TPQTIME_REL)), 
-                // "Invalid buffer %d %ld %lx", 
-                // (int)buf, len, qc1.flags);
-
-
-        /* Download normal msgs (500 + i)... */
-        i = (1==test)?0:500;
-
-        for (; i<1000; i++)
-        {
-            /* load msgs.from Q it shall be from not future Q. 
-             */
+            UBFH *buf2 = (UBFH *)tpalloc("UBF", "", 1024);
             memset(&qc1, 0, sizeof(qc1));
-            len=3;
-            if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, &buf, &len, 0))
+
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, (char **)&buf2, &len, 0))
             {
                 NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                         tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
                 EXFAIL_OUT(ret);
             }
-            
-            /* validate the msg */
-            // NDRX_ASSERT_VAL_OUT((buf==[%d] && len==3 ), 
-                    // "Invalid buffer %d (exp %d) %ld %lx", 
-                    // (int)buf, i, len, qc1.flags);
-            
-        }
 
-        /* wait and load futured msg */
-        if (0==test)
-        {
-            /* sleep 100 msec */
-            usleep(100000);
-            for (i = 0; i<500; i++)
+            ndrx_debug_dump_UBF(log_debug, "normal msg buf", buf2);
+
+            /* Verify that we have fields in place... */
+            if (EXSUCCEED!=Bget(buf2, T_LONG_FLD, 0, (char *)&l, 0L))
             {
-                /* load msgs.from Q it shall be from future Q. 
-                */
-                memset(&qc1, 0, sizeof(qc1));
-                len=3;
-                if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, &buf, &len, 0))
-                {
-                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
-                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
-                    EXFAIL_OUT(ret);
-                }
-
-                /* validate the msg */
-                // NDRX_ASSERT_VAL_OUT((buf=[%d] && len==3 ), 
-                //         "Invalid buffer %d (exp %d) %ld %lx", 
-                //         (int)buf, i, len, qc1.flags);
-                
+                NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
             }
+            if (l != i )
+            {
+                NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+                EXFAIL_OUT(ret);
+            }
+
+            tpfree((char *)buf2);
         }
 
+        sleep(15); /* should be enough */
+        NDRX_LOG(log_debug, "dequeue future msg!");
+
+        /* dequeue future msg */
+        for (i=0; i<max_msgs; i++)
+        {
+            /* odd is in normal queue */
+            if (0!=i%2)
+            {
+                continue;
+            }
+
+            UBFH *buf3 = (UBFH *)tpalloc("UBF", "", 1024);
+            memset(&qc1, 0, sizeof(qc1));
+
+            if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_FIFO", &qc1, (char **)&buf3, &len, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+
+            ndrx_debug_dump_UBF(log_debug, "fut Q msg buf", buf3);
+
+            /* Verify that we have fields in place... */
+            if (EXSUCCEED!=Bget(buf3, T_LONG_FLD, 0, (char *)&l, 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+            if (l != i )
+            {
+                NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+                EXFAIL_OUT(ret);
+            }
+
+            tpfree((char *)buf3);
+        }
     }
+
 
 out:
-
-    /* finish it off */
-    if (NULL!=buf)
-    {
-        tpfree(buf);
-    }
-
-    if (EXSUCCEED!=tpterm())
-    {
-        NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
-
     return ret;
 }
 

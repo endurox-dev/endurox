@@ -369,7 +369,7 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     long dec_time_org = ctl->deq_time;
     
     NDRX_SYSBUF_MALLOC_WERR_OUT(tmp, tmp_len, ret);
-    
+
     /*
      * Support #403
     if (NULL==data)
@@ -397,7 +397,7 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
         EXFAIL_OUT(ret);
     }
 
-    if ((flags & TPQTIME_ABS) && (flags & TPQTIME_REL))
+    if (ctl->flags & TPQTIME_ABS && ctl->flags & TPQTIME_REL)
     {
         ndrx_TPset_error_fmt(TPEINVAL,  
             "%s: TPQTIME_ABS and TPQTIME_REL are mutually exclusive!", __func__);
@@ -405,9 +405,11 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     }
     
     /* convert time */
-    if (flags & TPQTIME_REL)
+    if (ctl->flags&TPQTIME_REL)
     {
         ctl->deq_time = time(NULL) + ctl->deq_time;
+        ctl->flags&=~TPQTIME_REL;
+        ctl->flags|=TPQTIME_ABS;
     }
 
     ctl->diagnostic=0;

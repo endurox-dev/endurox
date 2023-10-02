@@ -571,7 +571,7 @@ fi
 
 test_empty_qspace;
 
-echo "Running: future fifo TPQTIME_ABS tests"
+echo "Running: future fifo TPQTIME_ABS & TPQTIME_REL tests"
 (./atmiclt28 futfifoabs 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 
