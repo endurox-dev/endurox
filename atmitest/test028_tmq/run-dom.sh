@@ -571,8 +571,18 @@ fi
 
 test_empty_qspace;
 
-echo "Running: future fifo TPQTIME_ABS & TPQTIME_REL tests"
-(./atmiclt28 futfifoabs 2>&1) >> ./atmiclt-dom1.log
+echo "Running: future FIFO (TPQTIME_ABS & TPQTIME_REL) tests"
+(./atmiclt28 futfifotrans 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
+echo "Running: future LIFO (TPQTIME_ABS & TPQTIME_REL) tests"
+(./atmiclt28 futlifotrans 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then
