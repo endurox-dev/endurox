@@ -256,44 +256,40 @@ expublic int ndrx_infl_fut2cur(tmq_qhash_t *qhash)
 {
     int ret = EXSUCCEED;
     tmq_memmsg_t *mmsg = NULL;
-    int isNew = EXFALSE;
+    ndrx_rbt_tree_iterator_t iter;
 
-    /* read from q_fut tree with smallest dec_time */
-    mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(&qhash->q_fut);
-
-    /* no message in future */
-    if (NULL==mmsg)
+    while (NULL != (mmsg = (tmq_memmsg_t*)ndrx_rbt_leftmost(&qhash->q_fut)) )
     {
-        goto out;
-    }
-
-    /* enqueue to cur and cor if needed */
-    if ( mmsg->msg->qctl.deq_time <= (long)time(NULL) )
-    {
-        NDRX_LOG(log_debug, "Moving [%s] from future message list",
-                mmsg->msgid_str);
-
-        /* remove from future */
-        ndrx_rbt_delete(&mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
-        mmsg->qstate &= ~NDRX_TMQ_LOC_FUTQ;
-
-        /* insert to cur */
-        ndrx_rbt_insert(&mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, &isNew);
-        mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
-
-        /* do the correlator too... if needed */
-        if (mmsg->msg->qctl.flags & TPQCORRID)
+        /* do something with mmsg */
+        if ( mmsg->msg->qctl.deq_time <= (long)time(NULL) )
         {
-            /* insert to cor */
-            if (EXSUCCEED!=tmq_cor_msg_add(mmsg))
+            /* remove from future */
+            ndrx_rbt_delete(&mmsg->qhash->q_fut, (ndrx_rbt_node_t *)mmsg);
+            mmsg->qstate &= ~NDRX_TMQ_LOC_FUTQ;
+
+            /* insert to cur */
+            ndrx_rbt_insert(&mmsg->qhash->q, (ndrx_rbt_node_t *)mmsg, NULL);
+            mmsg->qstate |= NDRX_TMQ_LOC_CURQ;
+
+            /* do the correlator too... if needed */
+            if (mmsg->msg->qctl.flags & TPQCORRID)
             {
-                NDRX_LOG(log_error, "Failed to add msg [%s] to corhash!",
-                        mmsg->msgid_str);
-                EXFAIL_OUT(ret);
+                /* insert to cor */
+                if (EXSUCCEED!=tmq_cor_msg_add(mmsg))
+                {
+                    NDRX_LOG(log_error, "Failed to add msg [%s] to corhash!",
+                            mmsg->msgid_str);
+                    EXFAIL_OUT(ret);
+                }
+                mmsg->qstate |= NDRX_TMQ_LOC_CORQ;
             }
-            mmsg->qstate |= NDRX_TMQ_LOC_CORQ;
+        }
+        else
+        {
+            break;
         }
     }
+
 out:
     return ret;
 }
