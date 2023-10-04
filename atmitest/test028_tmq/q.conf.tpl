@@ -46,4 +46,4 @@ FUT_LIFO,svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,mode=li
 # will send delayed messages to CLTBCAST service. Which in turn broadcast
 # message back to the client. One worker to keep the order.
 FUT_FIFO_AUTO,svcnm=CLTBCAST,autoq=y,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,workers=1
-FUT_LIFO_AUTO,svcnm=CLTBCAST,autoq=y,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,workers=1
+FUT_LIFO_AUTO,svcnm=CLTBCAST,autoq=y,waitinit=0,waitretry=0,waitretrymax=0,memonly=n,workers=1,mode=lifo
