@@ -74,6 +74,7 @@ exprivate int noabort_q_test(void);
 
 exprivate int basic_q_fut_fifo_test(void);
 exprivate int basic_q_fut_lifo_test(void);
+exprivate int basic_q_fut_fifo_lifo_auto_test(void);
 
 int main(int argc, char** argv)
 {
@@ -182,6 +183,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "futlifotrans"))
     {
         return basic_q_fut_lifo_test();
+    }
+    else if (0==strcmp(argv[1], "futlifofifoauto"))
+    {
+        return basic_q_fut_fifo_lifo_auto_test();
     }
     else
     {
@@ -2223,7 +2228,7 @@ exprivate int basic_q_fut_lifo_test(void)
             if (l != i )
             {
                 NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
-                // EXFAIL_OUT(ret);
+                EXFAIL_OUT(ret);
             }
 
             tpfree((char *)buf3);
@@ -2231,6 +2236,264 @@ exprivate int basic_q_fut_lifo_test(void)
     }
 
 
+out:
+    return ret;
+}
+
+
+
+/******************************************************************************/
+#define TEST_FUT_FIFO   0
+#define TEST_FUT_LIFO   1
+
+/** is this lifo or fifo test? */
+volatile int M_fut_test_mode=0;
+
+/** 0 marks the start... */
+volatile int M_fut_test_counter=0;
+
+/** number of messages processed */
+volatile int M_fut_nr_proc=0;
+
+#define TEST_FUT_STAGE_CUR      0 /**< expect current messages */
+#define TEST_FUT_STAGE_FUT      1 /**< epxect future messages  */
+#define TEST_FUT_MAX        200
+
+volatile int M_fut_test_stage;
+
+/**
+ * Process callbacks
+ */
+void notification_callback (char *data, long len, long flags)
+{
+    UBFH *buf = (UBFH *)data;
+    long l;
+
+    /* read the counter */
+
+    if (EXSUCCEED!=Bget(buf, T_LONG_FLD, 0, (char *)&l, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                Bstrerror(Berror));
+    }
+
+    /* determine it's sequence */
+    if (TEST_FUT_FIFO==M_fut_test_mode)
+    {
+        /* what's expected: */
+        M_fut_test_counter+=2;
+        if (TEST_FUT_STAGE_CUR==M_fut_test_stage)
+        {
+            /* odd from current Q */
+            if (l%2!=1)
+            {
+                NDRX_LOG(log_error, "TESTERROR: FIFO/CUR Expected odd counter "
+                    "rcved [%d] (M_fut_nr_proc=%d )", l, M_fut_nr_proc);
+            }
+
+            /* read form current Q */
+            if (l==M_fut_test_counter)
+            {
+                NDRX_LOG(log_error, "TESTERROR: FIFO/CUR Expected counter [%d] got [%d] "
+                    "(M_fut_nr_proc=%d )", 
+                        M_fut_test_counter, l, M_fut_nr_proc);
+            }
+
+            /* check the proper increment */
+            M_fut_nr_proc++;
+        }
+        else
+        {
+            /* even form future */
+            if (l%2!=0)
+            {
+                NDRX_LOG(log_error, "TESTERROR: FIFO/FUT Expected rcvd "
+                    "cntr [%d] to be even, but got odd "
+                    "(M_fut_nr_proc=%d )", l, M_fut_nr_proc);
+            }
+
+            /* read form current Q */
+            if (l==M_fut_test_counter)
+            {
+                NDRX_LOG(log_error, "TESTERROR: FIFO/FUT Expected counter [%d] got [%d] "
+                    "(M_fut_nr_proc=%d )", 
+                        M_fut_test_counter+2, l, M_fut_nr_proc);
+            }
+
+            /* check the proper increment */
+            M_fut_nr_proc++;
+        }
+    }
+    else if (TEST_FUT_LIFO==M_fut_test_mode)
+    {
+        /* what's expected: */
+        M_fut_test_counter-=2;
+        if (TEST_FUT_STAGE_CUR==M_fut_test_stage)
+        {
+            /* it be odd from current Q */
+            if (l%2!=1)
+            {
+                NDRX_LOG(log_error, "TESTERROR: LIFO/CUR Expected odd counter "
+                    "rcved [%d] (M_fut_nr_proc=%d )", l, M_fut_nr_proc);
+            }
+
+            /* check the current counter */
+            if (l==M_fut_test_counter)
+            {
+                NDRX_LOG(log_error, "TESTERROR: LIFO/CUR Expected counter [%d] got [%d] "
+                    "(M_fut_nr_proc=%d )", 
+                        M_fut_test_counter, l, M_fut_nr_proc);
+            }
+
+            /* check the proper increment */
+            M_fut_nr_proc++;
+        }
+        else
+        {
+            /* it be odd from current Q */
+            if (l%2!=0)
+            {
+                NDRX_LOG(log_error, "TESTERROR: FIFO/FUT Expected rcvd "
+                    "cntr [%d] to be even, but got odd "
+                    "(M_fut_nr_proc=%d )", l, M_fut_nr_proc);
+            }
+
+            /*  check the message nr */
+            if (l==M_fut_test_counter)
+            {
+                NDRX_LOG(log_error, "TESTERROR: FIFO/FUT Expected counter [%d] got [%d] "
+                    "(M_fut_nr_proc=%d )", 
+                        M_fut_test_counter+2, l, M_fut_nr_proc);
+            }
+
+            /* check the proper increment */
+            M_fut_nr_proc++;
+        }
+    }
+}
+
+/**
+ * Test auto fifo-lifo q processing
+ */
+exprivate int basic_q_fut_fifo_lifo_auto_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    long len=0;
+    int test; /* 0 - relative time, 1 - absolute time*/
+    long i, l, q;
+    long max_msgs = TEST_FUT_MAX;
+    char *qnames[] = {"FUT_FIFO_AUTO", "FUT_LIFO_AUTO"};
+    UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+    ndrx_stopwatch_t w;
+
+    tpsetunsol(notification_callback);
+
+    for (q=0;q<2; q++)
+    {
+        /* mark the test mode for the callback... */
+        M_fut_test_mode=q;
+        M_fut_test_stage=TEST_FUT_STAGE_CUR;
+
+        if (TEST_FUT_FIFO==q)
+        {
+            M_fut_test_counter=-1;
+        }
+        else
+        {
+            M_fut_test_counter=(TEST_FUT_MAX+1);
+        }
+
+        for (test = 0; test < 2; test++)
+        {
+            for (i=0; i<max_msgs; i++)
+            {
+                if (EXSUCCEED != Bchg(buf, T_LONG_FLD, 0, (char *)&i, 0L))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: failed to set T_LONG_FLD %s", 
+                            Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+
+                /* enqueue the data buffer */
+                memset(&qc1, 0, sizeof(qc1));
+
+                /* even to future queue */
+                if (0==i%2)
+                {
+                    if (0==test)
+                    {
+                        qc1.flags|=TPQTIME_REL;
+                        qc1.deq_time = 20+(i%9);
+                    }
+                    else
+                    {
+                        qc1.flags|=TPQTIME_ABS;
+                        qc1.deq_time = time(NULL)+20;
+                    }
+                }
+
+                if (EXSUCCEED!=tpenqueue("MYSPACE", qnames[q], &qc1, (char *)buf, 0, 0))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                            tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+            }
+        }
+
+        ndrx_stopwatch_reset(&w);
+        do
+        {
+            /* download all msgs... */
+            while (tpchkunsol()>0){}
+            sleep(1);
+        } while (ndrx_stopwatch_get_delta_sec(&w) <=10);
+        
+        if (M_fut_nr_proc!=TEST_FUT_MAX/2)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected %d messages, got %d, qname=[%s] (NORMAL)", 
+                TEST_FUT_MAX/2, M_fut_nr_proc, qnames[q]);
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_error, "Expected %d messages, got %d, qname=[%s] (NORMAL) - OK", 
+                TEST_FUT_MAX/2, M_fut_nr_proc, qnames[q]);
+
+        /* prepare for future tests... */
+        M_fut_nr_proc=0;
+        M_fut_test_stage=TEST_FUT_STAGE_FUT;
+
+        if (TEST_FUT_FIFO==q)
+        {
+            /* for even messages */
+            M_fut_test_counter=-2;
+        }
+        else
+        {
+            M_fut_test_counter=(TEST_FUT_MAX);
+        }
+        
+        /* autos shall start to work now */
+        sleep(20);
+
+        ndrx_stopwatch_reset(&w);
+        do
+        {
+            /* download all msgs... */
+            while (tpchkunsol()>0){}
+            sleep(1);
+        } while (ndrx_stopwatch_get_delta_sec(&w) <=10);
+        
+        if (M_fut_nr_proc!=TEST_FUT_MAX/2)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected %d messages, got %d qname=[%s] (FUT)", 
+                TEST_FUT_MAX/2, M_fut_nr_proc, qnames[q]);
+            EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_error, "Expected %d messages, got %d, qname=[%s] (FUT) - OK", 
+                TEST_FUT_MAX/2, M_fut_nr_proc, qnames[q]);
+    }
 out:
     return ret;
 }
