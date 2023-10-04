@@ -281,6 +281,10 @@ echo ">>> Validate $NUM messages"
 xadmin mqch -n2 -i 200 -qQ1,autoq=n
 xadmin mqch -n2 -i 200 -qQ2,autoq=n
 sleep 5
+xadmin mqlq
+# if forwarder started, did timeout to tmsrv and rollback might timed-out too
+# thus 5+5 + 2 for waiting for release
+sleep 12
 # lets Q to complete...
 xadmin mqlc
 xadmin mqlq

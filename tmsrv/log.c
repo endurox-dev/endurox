@@ -66,6 +66,7 @@
 #include <unistd.h>
 #include <Exfields.h>
 #include <singlegrp.h>
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define LOG_MAX         1024
@@ -692,7 +693,7 @@ expublic int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode)
     }
     
     /* Try to open the file */
-    if (NULL==(p_tl->f=NDRX_FOPEN(p_tl->fname, mode)))
+    if (ndrx_G_systest_lockloss || NULL==(p_tl->f=NDRX_FOPEN(p_tl->fname, mode)))
     {
         userlog("Failed to open XA transaction log file: [%s]: %s", 
                 p_tl->fname, strerror(errno));
@@ -729,7 +730,7 @@ expublic int tms_housekeep(char *logfile)
         userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
                 logfile, diff, G_tmsrv_cfg.housekeeptime);
 
-        if (EXSUCCEED!=unlink(logfile))
+        if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(logfile))
         {
             err = errno;
             NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
@@ -1016,7 +1017,14 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
             /* append with \n */
             NDRX_LOG(log_error, "Terminating last line (with out checksum)");
 
-            wrote=fprintf((*pp_tl)->f, "\n");
+	    if (ndrx_G_systest_lockloss)
+	    {
+                wrote=EXFAIL;
+	    }
+	    else
+	    {
+                wrote=fprintf((*pp_tl)->f, "\n");
+	    }
 
             if (wrote!=1)
             {
@@ -1186,7 +1194,7 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
         
     if (have_file)
     {
-        if (EXSUCCEED!=unlink(p_tl->fname))
+        if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(p_tl->fname))
         {
             int err = errno;
             NDRX_LOG(log_debug, "Failed to remove tx log file: %d (%s)", 
@@ -1266,7 +1274,16 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
         {
             exp++;
         }
-        wrote=fprintf(p_tl->f, "%s\n", msg2);
+
+	if (ndrx_G_systest_lockloss)
+	{
+            wrote=EXFAIL;
+	}
+	else
+	{
+            wrote=fprintf(p_tl->f, "%s\n", msg2);
+	}
+
     }
     else
     {
@@ -1279,7 +1296,14 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
             exp++;
         }
         
-        wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
+	if (ndrx_G_systest_lockloss)
+	{
+            wrote=EXFAIL;
+	}
+	else
+	{
+            wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
+	}
     }
     
     if (wrote != exp)
@@ -1305,7 +1329,8 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     
 out:
     /* flush what ever we have */
-    if (EXSUCCEED!=fflush(p_tl->f))
+    /* in case of ndrx_G_systest_lockloss -> IO fence used */
+    if (ndrx_G_systest_lockloss || EXSUCCEED!=fflush(p_tl->f))
     {
         int err=errno;
         userlog("ERROR! Failed to fflush(): %s", strerror(err));
@@ -1552,7 +1577,12 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         /* in case if switching to committing, we must sync the log & directory */
         if ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage))
         {
-            if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
+	    if (ndrx_G_systest_lockloss)
+	    {
+		/*IO fence test */
+	        EXFAIL_OUT(ret);
+	    }
+	    else if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
                 EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags))
             {
                 EXFAIL_OUT(ret);
@@ -1629,7 +1659,7 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
     {
         NDRX_LOG(log_error, "Transaction logs recover: stage for [%s] downgrade was %hd, read %hd",
                 p_tl->tmxid, p_tl->txstage, stage);
-        userlog("Transaction logs recover: strage for [%s] downgrade was %hd, read %hd",
+        userlog("Transaction logs recover: stage for [%s] downgrade was %hd, read %hd",
                 p_tl->tmxid, p_tl->txstage, stage);
     }
 

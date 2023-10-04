@@ -93,6 +93,7 @@
 #include <ubfutil.h>
 #include "qtran.h"
 #include <singlegrp.h>
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -403,7 +404,8 @@ exprivate int file_move(int i, char *from_folder, char *to_folder)
     NDRX_LOG(log_info, "Rename [%s]->[%s]", 
                 f,t);
 
-    if (EXSUCCEED!=rename(f, t))
+    /* ndrx_G_systest_lockloss -> IO fence for test */
+    if (ndrx_G_systest_lockloss || EXSUCCEED!=rename(f, t))
     {
         NDRX_LOG(log_error, "Failed to rename [%s]->[%s]: %s", 
                 f,t,
@@ -489,7 +491,8 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
         {
             NDRX_LOG(log_debug, "Unlinking file [%s]", files[occ]);
 
-            if (EXSUCCEED!=unlink(files[occ]))
+	    /* IO fence test */
+            if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(files[occ]))
             {
                 if (ENOENT!=errno)
                 {
@@ -518,7 +521,8 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
                     *p=EXEOS;
                 }
 
-                if (EXSUCCEED!=ndrx_fsync_dsync(files[occ], G_atmi_env.xa_fsync_flags))
+		/* io fence test */
+                if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(files[occ], G_atmi_env.xa_fsync_flags))
                 {
                     NDRX_LOG(log_error, "Failed to dsync [%s]", files[occ]);
                     ret=XAER_RMERR;
@@ -569,7 +573,8 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
             *p=EXEOS;
         }
 
-        if (EXSUCCEED!=ndrx_fsync_dsync(name2, G_atmi_env.xa_fsync_flags))
+	/* write io fence */
+        if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(name2, G_atmi_env.xa_fsync_flags))
         {
             NDRX_LOG(log_error, "Failed to dsync [%s]", name2);
             ret=XAER_RMERR;
@@ -1076,6 +1081,11 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
     
     BFLDLEN len = sizeof(tmxid);
     
+    /* 
+     * ensure that we are recving requests only from our transaction
+     * manager
+     */
+
     if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, &len))
     {
         NDRX_LOG(log_error, "Failed to get TMXID!");
@@ -1088,6 +1098,25 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
         NDRX_LOG(log_error, "Failed to get TMNODEID!");
         ret = XAER_INVAL;
         goto out;
+    }
+
+    if (G_atmi_env.procgrp_no && ndrx_sg_is_singleton(G_atmi_env.procgrp_no))
+    {
+        /* if we are in singleton group mode, ensure
+         * that our nodeid matches with caller nodeid
+         */
+        nodeid_loc=tpgetnodeid();
+        if (nodeid!=nodeid_loc)
+        {
+            NDRX_LOG(log_error, "ndrx_xa_qminiservce: singleton group tmqueue+tmsrv must be on "
+			"the same node but our node is %hd rcvd call from %hd - XAER_RMFAIL",
+			nodeid_loc, nodeid);
+            userlog("ndrx_xa_qminiservce: singleton group tmqueue+tmsrv must be on "
+			"the same node but our node is %hd rcvd call from %hd - XAER_RMFAIL",
+			nodeid_loc, nodeid);
+            ret = XAER_RMFAIL;
+            goto out;
+        }
     }
 
     switch (cmd)
@@ -1252,7 +1281,7 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
     }
     
     set_filename_base_tmxid(tmxid);
-    
+
     /* Firstly try to locate the tran */
     p_tl = tmq_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME, &locke);
     
@@ -1459,6 +1488,9 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
         p_tl->is_abort_only=EXTRUE;
         goto out;
     }
+
+    /* check lock & sequence */
+    tmq_log_checkpointseq(p_tl);
     
     p_tl->txstage = XA_TX_STAGE_PREPARING;
     
@@ -1509,7 +1541,8 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
     if (did_move)
     {
         /* sync the  */
-        if (EXSUCCEED!=ndrx_fsync_dsync(M_folder_prepared, G_atmi_env.xa_fsync_flags))
+	/* + write io fence */
+        if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(M_folder_prepared, G_atmi_env.xa_fsync_flags))
         {
             NDRX_LOG(log_error, "Failed to dsync [%s]", M_folder_prepared);
             
@@ -1738,7 +1771,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
                     msgid_str));
             NDRX_LOG(log_info, "Updating message file: [%s]", fname_msg);
             
-            if (NULL==(f = NDRX_FOPEN(fname_msg, "r+b")))
+            if (ndrx_G_systest_lockloss || NULL==(f = NDRX_FOPEN(fname_msg, "r+b")))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
@@ -1769,7 +1802,8 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
             UPD_MSG((&msg_to_upd), (&el->b.upd));
             
             /* Write th block */
-            if (sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, 
+	    /* ndrx_G_systest_lockloss -> IO fence for testing */
+            if (ndrx_G_systest_lockloss || sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, 
                     sizeof(msg_to_upd), f)))
             {
                 int err = errno;
@@ -2058,7 +2092,7 @@ exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
     FILE *f = NULL;
     
     *err=0;
-    if (NULL==(f = NDRX_FOPEN(fname, "r+b")))
+    if (ndrx_G_systest_lockloss || NULL==(f = NDRX_FOPEN(fname, "r+b")))
     {
         *err = errno;
         NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
@@ -2084,7 +2118,7 @@ out:
 /** Write th block */
 #define WRITE_TO_DISK(PTR, OFFSET, LEN) \
     ret_len = 0;\
-    if (G_atmi_env.test_qdisk_write_fail || LEN!=(ret_len=fwrite( ((char *)PTR) + OFFSET, 1, LEN, f)))\
+    if (ndrx_G_systest_lockloss || G_atmi_env.test_qdisk_write_fail || LEN!=(ret_len=fwrite( ((char *)PTR) + OFFSET, 1, LEN, f)))\
     {\
         int err = errno;\
         /* For Q/A purposes - simulate no space error, if requested */\
@@ -2107,7 +2141,7 @@ out:
 /** flush changes to disk  */
 #define WRITE_FLUSH \
     ret_len = 0;\
-    if (EXSUCCEED!=fflush(f))\
+    if (ndrx_G_systest_lockloss || EXSUCCEED!=fflush(f))\
     {\
         int err = errno;\
         NDRX_LOG(log_error, "ERROR! fflush() on [%s] failed: %s", \
@@ -2211,7 +2245,8 @@ exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_
     NDRX_LOG(log_info, "Writing command file: [%s] mode: [%s] (seqno: %d)", 
         G_atmi_tls->qdisk_tls->filename_active, mode_str, seqno);
     
-    if (NULL==(f = NDRX_FOPEN(G_atmi_tls->qdisk_tls->filename_active, mode_str)))
+    /* io fence test. */
+    if (ndrx_G_systest_lockloss || NULL==(f = NDRX_FOPEN(G_atmi_tls->qdisk_tls->filename_active, mode_str)))
     {
         int err = errno;
         NDRX_LOG(log_error, "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
@@ -2232,7 +2267,7 @@ exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_
     /* sync the file, if required so... 
      * file updates are optional..
      */
-    if (EXSUCCEED!=ndrx_fsync_fsync(f, G_atmi_env.xa_fsync_flags))
+    if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_fsync(f, G_atmi_env.xa_fsync_flags))
     {
         NDRX_LOG(log_error, "failed to fsync");
         EXFAIL_OUT(ret);
@@ -2258,7 +2293,16 @@ out:
         if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "Unlink: [%s]", G_atmi_tls->qdisk_tls->filename_active);
-            unlink(G_atmi_tls->qdisk_tls->filename_active);
+
+	    /* io fencing test */
+            if (ndrx_G_systest_lockloss 
+			    || EXSUCCEED!=unlink(G_atmi_tls->qdisk_tls->filename_active))
+            {
+                 int err = errno;
+                 NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
+                 userlog("Failed to unlink [%s]: %s", strerror(err));
+            }
+
         }
         
         NDRX_FCLOSE(f);
@@ -2595,7 +2639,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
 
             if (j<2)
             {
-                if (NULL==(f=NDRX_FOPEN(filename, "rb")))
+                if (ndrx_G_systest_lockloss || NULL==(f=NDRX_FOPEN(filename, "rb")))
                 {
                     err = errno;
                     NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 

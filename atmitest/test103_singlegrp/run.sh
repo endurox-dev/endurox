@@ -289,24 +289,33 @@ echo "got output [$OUT]"
 #    go_out -1
 #fi
 
+date
 xadmin psc
+date
 xadmin ppm
 
+date
 ################################################################################
 echo ">>> Basic tests of singleton groups -> group start, check order"
 ################################################################################
 
+date
 xadmin psg -a
+date
 xadmin start -i  10
+date
 # Let processes to lock and boot
 sleep 7
 
+date
 CMD="xadmin ppm"
 echo "$CMD"
 OUT=`$CMD 2>&1`
 
+date
 echo "got output [$OUT]"
 
+date
 # which this is ? 
 CNT=`xadmin ppm | grep atmi.sv1 | grep 'start runok' | wc | awk '{print $1}'`
 if [ "$CNT" -ne "1" ]; then

@@ -94,7 +94,7 @@ expublic void atmi_xa_new_xid(XID *xid)
     xid->bqual_length = MAXBQUALSIZE;
     
     memset(xid->data, 0, XIDDATASIZE); /* this is not necessary, but... */
-    ndrx_cid_generate((unsigned char)node_id, uuid_val);
+    ndrx_cid_generate((unsigned char)tpgetnodeid(), uuid_val);
     memcpy(xid->data, uuid_val, sizeof(exuuid_t));
 
     /*Bug #228 - using incorrect rmid field was using short from env instead of rmid (uchar)*/
