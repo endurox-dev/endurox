@@ -184,7 +184,7 @@ int main(int argc, char** argv)
     {
         return basic_q_fut_lifo_test();
     }
-    else if (0==strcmp(argv[1], "futlifofifoauto"))
+    else if (0==strcmp(argv[1], "futauto"))
     {
         return basic_q_fut_fifo_lifo_auto_test();
     }
