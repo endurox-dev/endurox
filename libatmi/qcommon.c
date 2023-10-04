@@ -345,13 +345,14 @@ expublic char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
 /**
  * Internal version of message enqueue.
  * TODO: forward ATMI error!
+ * In case if time TPQTIME_REL is used then time is converted to absolute unix epoch time
  * 
  * @param qspace service name
  * @param qname queue name
  * @param ctl control data
  * @param data data to enqueue
  * @param len data len
- * @param flags flags (for tpcall)
+ * @param flags flags (for tpcall). TPQTIME_ABS and TPQTIME_REL are mutually exclusive
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
@@ -365,9 +366,10 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     UBFH *p_ub = NULL;
     atmi_error_t errbuf;
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
+    long dec_time_org = ctl->deq_time;
     
     NDRX_SYSBUF_MALLOC_WERR_OUT(tmp, tmp_len, ret);
-    
+
     /*
      * Support #403
     if (NULL==data)
@@ -394,7 +396,22 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
         ndrx_TPset_error_fmt(TPEINVAL,  "%s: NULL ctl!", __func__);
         EXFAIL_OUT(ret);
     }
+
+    if (ctl->flags & TPQTIME_ABS && ctl->flags & TPQTIME_REL)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL,  
+            "%s: TPQTIME_ABS and TPQTIME_REL are mutually exclusive!", __func__);
+        EXFAIL_OUT(ret);
+    }
     
+    /* convert time */
+    if (ctl->flags&TPQTIME_REL)
+    {
+        ctl->deq_time = time(NULL) + ctl->deq_time;
+        ctl->flags&=~TPQTIME_REL;
+        ctl->flags|=TPQTIME_ABS;
+    }
+
     ctl->diagnostic=0;
     
     if (EXFAIL==tptypes(data, NULL, NULL))

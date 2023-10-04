@@ -42,6 +42,7 @@
 #include "qcommon.h"
 #include "tmqd.h"
 #include <utlist2.h>
+#include <rbtree.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -88,6 +89,10 @@ expublic tmq_corhash_t * tmq_cor_add(tmq_qhash_t *qhash, char *corrid_str)
     memset(corhash, 0, sizeof(tmq_corhash_t));
     NDRX_STRCPY_SAFE(corhash->corrid_str, corrid_str);
     EXHASH_ADD_STR( qhash->corhash, corrid_str, corhash);
+
+    /* setup red-black trees */
+    ndrx_rbt_init(&corhash->corq, tmq_rbt_cmp_cor, tmq_rbt_combine_cor, NULL, corhash);
+
     NDRX_LOG(log_debug, "Added corrid_str [%s] %p",
             corhash->corrid_str, corhash);
 
@@ -101,45 +106,49 @@ out:
  * @param mmsg remove from CDL, remove from hash, if CDL is free, remove HASH
  *  entry
  */
-expublic void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+expublic void tmq_cor_msg_del(tmq_memmsg_t *mmsg)
 {
     /* find the corhash entry, if have one remove from from hash
      * remove msg from CDL
      */
     tmq_corhash_t * corhash = mmsg->corhash;
-   
-    /* remove from CDL. */
-    CDL_DELETE(corhash->corq, mmsg);
-    if (NULL==corhash->corq)
-    {
-        NDRX_LOG(log_debug, "Removing corrid_str [%s] %p",
-            corhash->corrid_str, corhash);
-        /* remove empty hash node */
-        EXHASH_DEL(qhash->corhash, corhash);
-        NDRX_FPFREE(corhash);
-    }
+
+    /* remove correlator from hash if empty */
+    ndrx_rbt_delete(&corhash->corq, (ndrx_rbt_node_t *)&mmsg->cor);
 
     mmsg->corhash = NULL;
+
+    /* if sub-Q is empty, remove correlator */
+    if (ndrx_rbt_is_empty(&corhash->corq))
+    {
+
+        NDRX_LOG(log_debug, "Removing corrid_str [%s] %p",
+            corhash->corrid_str, corhash);
+
+        /* remove empty hash node */
+        EXHASH_DEL(mmsg->qhash->corhash, corhash);
+        NDRX_FPFREE(corhash);
+    }
 
     return;
 }
 
 /**
  * Add message to corelator hash / linked list
- * @param qconf queue configuration
- * @param qhash queue entry (holds the ptr to cor hash)
  * @param mmsg message to add
  * @return Qerror code 
  */
-expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg)
+expublic int tmq_cor_msg_add(tmq_memmsg_t *mmsg)
 {
     int ret = EXSUCCEED;
-    
-    tmq_corhash_t * corhash =  tmq_cor_find(qhash, mmsg->corrid_str);
+    int isNew = EXFALSE;
+    tmq_corhash_t * corhash;
+
+    corhash = tmq_cor_find(mmsg->qhash, mmsg->corrid_str);
     
     if (NULL==corhash)
     {
-        corhash=tmq_cor_add(qhash, mmsg->corrid_str);
+        corhash=tmq_cor_add(mmsg->qhash, mmsg->corrid_str);
     }
     
     if (NULL==corhash)
@@ -148,42 +157,13 @@ expublic int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memm
         goto out;
     }
     
-    CDL_APPEND(corhash->corq, mmsg);
     /* add backref */
     mmsg->corhash = corhash;
+
+    ndrx_rbt_insert(&corhash->corq, (ndrx_rbt_node_t *)&mmsg->cor, &isNew);
     
 out:
     return ret;
-    
-}
-
-/**
- * Sort the prev2/next2
- * @param q where the corhash lives. Loop over corhash and sort
- *  each sub-queue.
- */
-expublic void tmq_cor_sort_queues(tmq_qhash_t *q)
-{
-    tmq_corhash_t  *el, *elt;
-
-    EXHASH_ITER(hh, (q->corhash), el, elt)
-    {
-        /* sort the correlated message according to insert timestamp */
-        CDL_SORT(el->corq, q_msg_sort);
-    }
-}
-
-/**
- * Get first available message from queue according to correlator
- * in FIFO/LIFO order as by queue config
- * @param qconf queue configuration
- * @param qhash queue entry
- * @param corrid_str serialized correlator
- * @return unlocked message or NULL if no msg found
- */
-expublic tmq_memmsg_t * tmq_cor_dequeue(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, char *corrid_str)
-{
-    return NULL;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -69,6 +69,7 @@
 #include "nstdutil.h"
 #include "tmqueue.h"
 #include "cconfig.h"
+#include <rbtree.h>
 #include "qtran.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -98,6 +99,12 @@
 
 #define EXHASH_DEL_H2(head,delptr)                                               \
     EXHASH_DELETE(h2,head,delptr)
+
+/**
+ * Extract tmq_memmsg_t from the correltion tree node 
+ */
+#define TMQ_COR_GETMSG(ptr) ((tmq_memmsg_t *)((char *)ptr - EXOFFSET(tmq_memmsg_t, cor)))
+
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -234,9 +241,6 @@ expublic int tmq_load_msgs(void)
     {
         EXFAIL_OUT(ret);
     }
-    
-    /* sort all queues (by submission time) */
-    tmq_sort_queues();
     
 out:
     NDRX_LOG(log_info, "tmq_load_msgs return %d", ret);
@@ -971,7 +975,11 @@ exprivate tmq_qhash_t * tmq_qhash_new(char *qname)
     NDRX_STRCPY_SAFE(ret->qname, qname);
     
     EXHASH_ADD_STR( G_qhash, qname, ret );
-    
+
+    /* setup red-black trees */
+    ndrx_rbt_init(&ret->q, tmq_rbt_cmp_cur, tmq_rbt_combine_cur, NULL, ret);
+    ndrx_rbt_init(&ret->q_fut, tmq_rbt_cmp_fut, tmq_rbt_combine_fut, NULL, ret);
+
 out:
     return ret;
 }
@@ -982,6 +990,7 @@ out:
  * In two phase commit mode, we need to unlock message only when it is enqueued on disk.
  * 
  * @param msg double ptr to message
+ * @param is_recovery is recovery mode (no need to write to disk)
  * @param diag qctl for diag purposes.
  * @param int_diag internal diagnostics, flags
  * @return 
@@ -995,7 +1004,6 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     tmq_qconfig_t * qconf;
     char msgid_str[TMMSGIDLEN_STR+1];
     char corrid_str[TMCORRIDLEN_STR+1];
-    int hashed=EXFALSE, hashedcor=EXFALSE, cdl=EXFALSE;
     
     MUTEX_LOCK_V(M_q_lock);
     is_locked = EXTRUE;
@@ -1044,14 +1052,8 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
                 (*msg)->hdr.qname);
         EXFAIL_OUT(ret);
     }
-    
-    /* Add the message to end of the queue */
-    CDL_APPEND(qhash->q, mmsg);
-    cdl=EXTRUE;
-    
+
     NDRX_STRCPY_SAFE(mmsg->msgid_str, msgid_str);
-    EXHASH_ADD_STR( G_msgid_hash, msgid_str, mmsg);
-    hashed=EXTRUE;
 
     if (mmsg->msg->qctl.flags & TPQCORRID)
     {
@@ -1059,12 +1061,13 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
         NDRX_STRCPY_SAFE(mmsg->corrid_str, corrid_str);
         NDRX_LOG(log_debug, "Adding to corrid_hash [%s] of queue [%s]",
             corrid_str, (*msg)->hdr.qname);
-        if (EXSUCCEED!=tmq_cor_msg_add(qconf, qhash, mmsg))
-        {
-            NDRX_LOG(log_error, "Failed to add msg to corhash!");
-            EXFAIL_OUT(ret);
-        }
-        hashedcor=EXTRUE;
+    }
+
+    /* add message to correspoding Q */
+    if (EXSUCCEED!=(ret=ndrx_infl_addmsg(qconf, qhash, mmsg)))
+    {
+        NDRX_LOG(log_error, "ndrx_infl_addmsg failed with %d", ret);
+        goto out;
     }
     /* have to unlock here, because tmq_storage_write_cmd_newmsg() migth callback to
      * us and that might cause stall.
@@ -1118,8 +1121,7 @@ expublic int tmq_msg_add(tmq_msg_t **msg, int is_recovery, TPQCTL *diag, int *in
     *msg = NULL;
     
 out:
-     
-                
+
     if (is_locked)
     {
         MUTEX_UNLOCK_V(M_q_lock);
@@ -1136,24 +1138,12 @@ out:
     {
         /* remove messages hashes, due to failure */
         MUTEX_LOCK_V(M_q_lock);
-        
-        if (hashed)
-        {
-            EXHASH_DEL( G_msgid_hash, mmsg);
-        }
-        
-        if (hashedcor)
-        {
-            tmq_cor_msg_del(qhash, mmsg);
-        }
-    
-        if (cdl)
-        {
-           CDL_DELETE(qhash->q, mmsg);
-        }
-        
+
+        /* remove from infliht structures */
+        ndrx_infl_delmsg(mmsg);
+
         MUTEX_UNLOCK_V(M_q_lock);
-        
+
         NDRX_FREE(mmsg);
         mmsg=NULL;
     }
@@ -1165,60 +1155,6 @@ out:
         *msg = NULL;
     }
 
-
-    return ret;
-}
-
-/**
- * Tests is auto message valid for dequeue (calculate the counters)
- * @param node
- * @return 
- */
-expublic int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf)
-{
-    int ret = EXFALSE;
-    int retry_inc;
-    unsigned long long next_try;
-    long utc_sec, utc_usec;
-    
-    if (0==node->msg->trycounter)
-    {
-        next_try = node->msg->trytstamp + 
-                ((unsigned long long)qconf->waitinit);
-        
-        NDRX_LOG(log_debug, "First try, sleep %d sec", qconf->waitinit);
-    }
-    else 
-    {
-        retry_inc = qconf->waitretry*node->msg->trycounter;
-    
-        if (retry_inc > qconf->waitretrymax)
-        {
-            retry_inc = qconf->waitretrymax;
-        }
-        
-        NDRX_LOG(log_debug, "Try no %d, sleep %d sec", 
-                node->msg->trycounter, retry_inc);
-        
-        next_try = node->msg->trytstamp + 
-                retry_inc;
-    }
-    
-    ndrx_utc_tstamp2(&utc_sec, &utc_usec);
-    NDRX_LOG(log_debug, "Next try at: %ld current clock: %ld",
-            next_try, utc_sec);
-            
-    if (next_try<=utc_sec)
-    {
-        NDRX_LOG(log_debug, "Message accepted for dequeue...");
-        ret=EXTRUE;
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "Message NOT accepted for dequeue...");
-    }
-    
-out:
     return ret;
 }
 
@@ -1236,7 +1172,6 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     tmq_qhash_t *qhash;
     tmq_corhash_t *corhash;
     tmq_memmsg_t *node = NULL;
-    tmq_memmsg_t *start = NULL;
     tmq_msg_t * ret = NULL;
     tmq_msg_del_t block;
     char msgid_str[TMMSGIDLEN_STR+1];
@@ -1292,25 +1227,20 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         goto out;
     }
 
-    /* Start from first one & loop over the list while 
-     * - we get to the first non-locked message
-     * - or we get to the end with no msg, then return FAIL.
-     */
+    /* check q_fut for deq_time and move from future 2 cur|cor */
+    ndrx_infl_fut2cur(qhash);
+
     if (TMQ_MODE_LIFO == qconf->mode)
     {
         /* LIFO mode */
         if (NULL!=corrid_str)
         {
-            /* we do not have empty hashes,
-             * thus msg must be in there.
-            */
-            node = corhash->corq->prev2;
-            start = corhash->corq->prev2;
+            /* get latest corhash msg from RBT */
+            node = TMQ_COR_GETMSG(ndrx_rbt_rightmost(&corhash->corq));
         }
-        else if (NULL!=qhash->q)
+        else
         {
-            node = qhash->q->prev;
-            start = qhash->q->prev;
+           node = (tmq_memmsg_t*)ndrx_rbt_rightmost(&qhash->q);
         }
     }
     else
@@ -1318,59 +1248,20 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
         /* FIFO */
         if (NULL!=corrid_str)
         {
-            node = corhash->corq;
-            start = corhash->corq;
+            /* get first corhash msg from RBT */
+            node = TMQ_COR_GETMSG(ndrx_rbt_leftmost(&corhash->corq));
         }
         else
         {
-            node = qhash->q;
-            start = qhash->q;
+           node = (tmq_memmsg_t*)ndrx_rbt_leftmost(&qhash->q);
         }
     }
-            
-    do
+
+    if (NULL!=node)
     {
-        if (NULL!=node)
-        {
-            NDRX_LOG(log_debug, "Testing: msg_str: [%s] locked: %llu is_auto: %d",
-                    tmq_msgid_serialize(node->msg->hdr.msgid, msgid_str),
-                    node->msg->lockthreadid,
-                    is_auto
-                    );
-            if (!node->msg->lockthreadid && (!is_auto || 
-                    tmq_is_auto_valid_for_deq(node, qconf)))
-            {
-                ret = node->msg;
-                break;
-            }
-            if (TMQ_MODE_LIFO == qconf->mode)
-            {
-                /* LIFO mode */
-                if (NULL!=corrid_str)
-                {
-                    node = node->prev2;
-                }
-                else
-                {
-                    node = node->prev;
-                }
-            }
-            else
-            {
-                /* default to FIFO */
-                if (NULL!=corrid_str)
-                {
-                    node = node->next2;
-                }
-                else
-                {
-                    node = node->next;
-                }
-            }
-        } /* if (NULL!=node) */
+        ret=node->msg;
     }
-    while (NULL!=node && node!=start);
-    
+
     if (NULL==ret)
     {
         NDRX_LOG(log_debug, "Q [%s] is empty or all msgs locked", qname);
@@ -1385,7 +1276,15 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
     
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
-    
+    if (EXSUCCEED!=ndrx_infl_mov2infl(node))
+    {
+        NDRX_LOG(log_error, "Failed to move msg to inflight!");
+        ret = NULL;
+        *diagnostic=QMEOS;
+        NDRX_STRCPY_SAFE_DST(diagmsg, "tmq_dequeue: disk write error!", diagmsgsz);
+        goto out;
+    }
+
     MUTEX_UNLOCK_V(M_q_lock);
     is_locked=EXFALSE;
     
@@ -1402,7 +1301,11 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto, long 
             NDRX_LOG(log_error, "Failed to remove msg...");
             /* unlock msg... */
             MUTEX_LOCK_V(M_q_lock);
+            
             ret->lockthreadid = 0;
+            /* move to cur/cor/fut */
+            ndrx_infl_mov2cur(node);
+
             MUTEX_UNLOCK_V(M_q_lock);
             
             ret = NULL;
@@ -1465,9 +1368,20 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
 
     NDRX_DUMP(log_debug, "Dequeued message", ret->msg, ret->len);
 
+    /* Message is locked, return that message is not found */
+    if (0!=ret->lockthreadid)
+    {
+        NDRX_LOG(log_error, "Message is busy (locked by thread [%llu])", ret->lockthreadid);
+        ret = NULL;
+        goto out;
+    }
+
     /* Lock the message */
     ret->lockthreadid = ndrx_gettid();
-    
+
+/* todo required parameter is qhash */
+    ndrx_infl_mov2infl(mmsg);
+
     /* release the lock.. */
     MUTEX_UNLOCK_V(M_q_lock);
     is_locked=EXFALSE;
@@ -1541,18 +1455,9 @@ exprivate void tmq_remove_msg(tmq_memmsg_t *mmsg)
     if (NULL!=qhash)
     {
         qhash->numdeq++;
-        
-        /* Add the message to end of the queue */
-        CDL_DELETE(qhash->q, mmsg);    
     }
-    
-    /* Add the hash of IDs */
-    EXHASH_DEL( G_msgid_hash, mmsg);
-    
-    if (TPQCORRID & mmsg->msg->qctl.flags)
-    {
-        tmq_cor_msg_del(qhash, mmsg);
-    }
+
+    ndrx_infl_delmsg(mmsg);
     
     NDRX_FREE(mmsg->msg);
     NDRX_FREE(mmsg);
@@ -1608,7 +1513,8 @@ expublic int tmq_unlock_msg(union tmq_upd_block *b)
         case TMQ_STORCMD_UNLOCK:
             NDRX_LOG(log_info, "Unlocking message...");
             mmsg->msg->lockthreadid = 0;
-            
+            /* todo requred parameter qconf, qhash */
+            ndrx_infl_mov2cur(mmsg);
             /* wakeup the Q... runner */
             ndrx_forward_chkrun(mmsg);
             
@@ -1654,7 +1560,8 @@ expublic int tmq_unlock_msg_by_msgid(char *msgid, int chkrun)
     }
     
     mmsg->msg->lockthreadid = 0;
-    
+    ndrx_infl_mov2cur(mmsg);
+
     if (chkrun)
     {
         ndrx_forward_chkrun(mmsg);
@@ -1693,13 +1600,14 @@ expublic int tmq_lock_msg(char *msgid)
     
     /* Lock the message */
     mmsg->msg->lockthreadid = ndrx_gettid();
-    
+    ndrx_infl_mov2infl(mmsg);
+
 out:
     MUTEX_UNLOCK_V(M_q_lock);
     return ret;
 }
 
-
+#if 0
 /**
  * compare two Q entries, by time + counter
  * @param q1
@@ -1713,7 +1621,7 @@ expublic int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2)
             q2->msg->msgtstamp, q2->msg->msgtstamp_usec, q2->msg->msgtstamp_cntr);
     
 }
-
+#endif
 /**
  * Return list of auto queues
  * @return NULL or list
@@ -1799,6 +1707,9 @@ expublic tmq_memmsg_t *tmq_get_msglist(char *qname)
     tmq_memmsg_t * ret = NULL;
     tmq_memmsg_t * tmp = NULL;
     tmq_msg_t * msg = NULL;
+    ndrx_rbt_tree_iterator_t iter;
+    ndrx_rbt_tree_t *rbt_trees[2];
+    int i;
     
     NDRX_LOG(log_debug, "tmq_get_msglist listing for [%s]", qname);
     MUTEX_LOCK_V(M_q_lock);
@@ -1813,7 +1724,7 @@ expublic tmq_memmsg_t *tmq_get_msglist(char *qname)
      * - we get to the first non-locked message
      * - or we get to the end with no msg, then return FAIL.
      */
-    node = qhash->q;
+    node = qhash->q_infligh;
     
     do
     {
@@ -1846,38 +1757,44 @@ expublic tmq_memmsg_t *tmq_get_msglist(char *qname)
             node = node->next;
         }
     }
-    while (NULL!=node && node!=qhash->q);
-    
-out:
-    MUTEX_UNLOCK_V(M_q_lock);
-    return ret;
-}
+    while (NULL!=node && node!=qhash->q_infligh);
 
-/**
- * Sort Qs
- * @return SUCCEED/FAIL 
- */
-expublic int tmq_sort_queues(void)
-{
-    int ret = EXSUCCEED;
-    tmq_qhash_t *q, *qtmp;
-    
-    MUTEX_LOCK_V(M_q_lock);
-    
-    /* iterate over Q hash & and sort them by Q time */
-    EXHASH_ITER(hh, G_qhash, q, qtmp)
+    /* List all messages from qhash->cur and qhash-> fut */
+    rbt_trees[0] = &qhash->q;
+    rbt_trees[1] = &qhash->q_fut;
+    for (i=0; i<2; i++)
     {
-        /* standard q sorting ... */
-        CDL_SORT(q->q, q_msg_sort);
+        ndrx_rbt_begin_iterate(rbt_trees[i], LeftRightWalk, &iter);
+        while (NULL!=(node=(tmq_memmsg_t *)ndrx_rbt_iterate(&iter)))
+        {
+            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(tmq_memmsg_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                ret = NULL;
+                goto out;
+            }
 
-        /* correlator q sorting... */
-        tmq_cor_sort_queues(q);
-    }   
-    
+            if (NULL==(msg = NDRX_MALLOC(sizeof(tmq_msg_t))))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+                userlog("Failed to alloc: %s", strerror(err));
+                ret = NULL;
+                goto out;
+            }
+
+            memcpy(msg, node->msg, sizeof(tmq_msg_t));
+            tmp->msg = msg;
+
+            DL_APPEND(ret, tmp);
+
+        }
+    }
+
 out:
-            
     MUTEX_UNLOCK_V(M_q_lock);
-
     return ret;
 }
 
@@ -1918,12 +1835,12 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
 {
     tmq_qhash_t  *q;        
     tmq_memmsg_t *node;
+
     MUTEX_LOCK_V(M_q_lock);
-    
+
     if (NULL!=(q = tmq_qhash_get(qname)))
     {
-        node = q->q;
-        
+        node = q->q_infligh;
         do
         {
             if (NULL!=node)
@@ -1938,7 +1855,7 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
             }
 
         }
-        while (NULL!=node && node!=q->q);
+        while (NULL!=node && node!=q->q_infligh);
     }
     
     MUTEX_UNLOCK_V(M_q_lock);

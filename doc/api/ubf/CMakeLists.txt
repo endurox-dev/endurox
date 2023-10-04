@@ -166,6 +166,9 @@ set(MAN3_NAMES
    )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 
+file(MAKE_DIRECTORY 	${CMAKE_CURRENT_BINARY_DIR}/man3
+			${CMAKE_CURRENT_BINARY_DIR}/html)
+
 # Generate MAN3
 set(A2X_OPTS_MAN3 --format=manpage -D man3)
 set(MAN3_FILES)

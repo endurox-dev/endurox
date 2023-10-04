@@ -114,6 +114,27 @@ out:
                 0L);
 }
 
+/**
+ * Broadcast to the message to the client
+ */
+void CLTBCAST(TPSVCINFO *p_svc)
+{
+    int ret=EXFAIL;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    if (EXSUCCEED!=tpbroadcast(NULL, NULL, "atmiclt28", (char *)p_ub, 0L, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to broadcast: %s", tpstrerror(tperrno));
+        goto out;
+    }
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
 /*
  * Do initialization
  */
@@ -141,6 +162,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     else if (EXSUCCEED!=tpadvertise("FAILRND", FAILRND))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize FAILRND!");
+        EXFAIL_OUT(ret);
+    }
+    else if (EXSUCCEED!=tpadvertise("CLTBCAST", CLTBCAST))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to initialize CLTBCAST!");
         EXFAIL_OUT(ret);
     }
     

@@ -86,6 +86,7 @@ install (FILES
     expluginbase.h
     fpalloc.h
     lcf.h
+    rbtree.h
     DESTINATION include)
 
 install (FILES

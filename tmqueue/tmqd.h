@@ -45,13 +45,13 @@ extern "C" {
 #include <atmi.h>
 #include <exhash.h>
 #include <exthpool.h>
+#include <rbtree.h>
 #include "tmqueue.h"
     
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_forward_thread;
 extern int volatile G_forward_req_shutdown;          /**< Is shutdown request? */
 extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   */
-
 /*---------------------------Macros-------------------------------------*/
 #define SCAN_TIME_DFLT          10  /**< Every 10 sec try to complete TXs */
 #define MAX_TRIES_DFTL          100 /**< Try count for transaction completion */
@@ -79,8 +79,19 @@ extern int volatile ndrx_G_forward_req_shutdown_ack; /**< Is shutdown acked?   *
 #define TMQ_ARGS_COMMIT         "Cc"    /**< Sync after commit              */
 
 #define TMQ_SYNC_NONE           0       /**< NO sync needed                 */
-#define TMQ_SYNC_TPACALL        1       /**< Sync on tpacall                */       
+#define TMQ_SYNC_TPACALL        1       /**< Sync on tpacall                */
 #define TMQ_SYNC_TPCOMMIT       2       /**< Sync on tpcommit () if auto=T  */
+
+#define NDRX_TMQ_LOC_UNKNOWN    0x0000  /**< Unknown location               */
+#define NDRX_TMQ_LOC_INFL       0x0001  /**< Inflight queue                 */
+#define NDRX_TMQ_LOC_FUTQ       0x0002  /**< Future queue                   */
+#define NDRX_TMQ_LOC_CURQ       0x0004  /**< Current queue                  */
+#define NDRX_TMQ_LOC_CORQ       0x0008  /**< Correlator queue               */
+#define NDRX_TMQ_LOC_MSGIDHASH  0x0010  /**< Message id hash                */
+/**
+ * Extract tmq_memmsg_t from the correltion tree node 
+ */
+#define TMQ_COR_GETMSG(ptr) ((tmq_memmsg_t *)((char *)ptr - EXOFFSET(tmq_memmsg_t, cor)))
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -124,29 +135,67 @@ typedef struct
 /** correlator message queue hash */
 typedef struct tmq_cormsg tmq_corhash_t;
 
+/** hash of queues */
+typedef struct tmq_qhash tmq_qhash_t;
+
+/** queue configuration */
+typedef struct tmq_qconfig tmq_qconfig_t;
+
 /**
  * Memory based message.
+ * Includes all the links to keep track of the message in the queues.
+ * such as:
+ *  - red-black tree of current/future run messages
+ *  - linked list of in-flight messages (message locked, not available for dequeue)
+ *  - red-black tree of correlator based messages
+ * Structure is built every time message is enqueued or read from disk.
  */
 typedef struct tmq_memmsg tmq_memmsg_t;
 struct tmq_memmsg
 {
+    ndrx_rbt_node_t cur;    /**< handle in future or now list */
+    ndrx_rbt_node_t cor;    /**< handle in correlator list    */
+
     char msgid_str[TMMSGIDLEN_STR+1]; /**< we might store msgid in string format... */
-    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
+    char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator              */
     /** We should have hash handler of message hash                           */
     EX_hash_handle hh; /**< makes this structure hashable (for msgid)         */
 
-    /** We should also have a linked list handler                             */
+    /** handlers for in-flight q (used for current message listing)           */
     tmq_memmsg_t *next;
     tmq_memmsg_t *prev;
-    
-    /** Our position in corq, if any, next. Use utlist2.h in different object */
-    tmq_memmsg_t *next2;
-    /** Our position in corq, if any, prev. Use utlist2.h in different object */
-    tmq_memmsg_t *prev2;
+
     /** backlink to correlator q, so that we know where to remove             */
     tmq_corhash_t *corhash;
 
-    tmq_msg_t *msg;
+    tmq_qconfig_t *qconf;   /**< configuration used for this message Q        */
+    tmq_qhash_t *qhash;     /**< queue entry                                  */
+
+    tmq_msg_t *msg;         /**< disk message                                 */
+    
+/**
+ * NDRX_TMQ_LOC_UNK  0x0000
+ * NDRX_TMQ_LOC_INFL 0x0001
+ * NDRX_TMQ_LOC_FUT  0x0002
+ * NDRX_TMQ_LOC_CUR  0x0004
+ * NDRX_TMQ_LOC_COR  0x0008
+ * 
+ * flags|=NDRX_TMQ_LOC_INFL;
+ * 
+ * flags&=~NDRX_TMQ_LOC_CUR;
+ * flags&=~NDRX_TMQ_LOC_COR;
+ * flags&=~NDRX_TMQ_LOC_FUT;
+ * 
+ * 
+ * delete:
+ *  if flags & NDRX_TMQ_LOC_INFL=> delete from NDRX_TMQ_LOC_INFL
+ *  if flags & NDRX_TMQ_LOC_FUT=> delete from fut;
+ * 
+ * 
+ */
+    /* where are we? */
+    short qstate;
+
 };
 
 /**
@@ -155,16 +204,17 @@ struct tmq_memmsg
 struct tmq_cormsg
 {
     char corrid_str[TMCORRIDLEN_STR+1]; /**< hash for correlator               */
-    /** queue by correlation, CDL, next2, prev2 */
-    tmq_memmsg_t *corq;
+    /** queue by correlation, CDL, next2, prev2 
+    tmq_memmsg_t *corq; */
+
+    ndrx_rbt_tree_t corq; /**< queue uses standard sorting (insert time)      */
+
     EX_hash_handle hh; /**< makes this structure hashable        */
 };
-
 
 /**
  * List of queues (for queued messages)
  */
-typedef struct tmq_qhash tmq_qhash_t;
 struct tmq_qhash
 {
     char qname[TMQNAMELEN+1];
@@ -173,10 +223,19 @@ struct tmq_qhash
     
     long numenq;    /**< Enqueued messages (even locked)         */
     long numdeq;    /**< Dequeued messages (removed, including aborts)     */
-    
+
     EX_hash_handle hh; /**< makes this structure hashable        */
-    tmq_memmsg_t *q;    /**< messages queued                     */
-    tmq_corhash_t *corhash; /**< has of correlators                */
+
+    ndrx_rbt_tree_t q;     /**< Currently available messages        */
+    ndrx_rbt_tree_t q_fut; /**< future messages (not yet ready for proc) */
+
+    /** 
+     * in-flight messages (in process) 
+     * this is linked list head
+     */
+    tmq_memmsg_t *q_infligh;
+
+    tmq_corhash_t *corhash; /**< hash of correlators                */
 };
 
 /**
@@ -184,7 +243,6 @@ struct tmq_qhash
  * There will be special Q: "@DEFAULT" which contains the settings for default
  * (unknown queue)
  */
-typedef struct tmq_qconfig tmq_qconfig_t;
 struct tmq_qconfig
 {
     char qname[TMQNAMELEN+1];
@@ -264,6 +322,7 @@ struct fwd_msg {
 
 /*---------------------------Globals------------------------------------*/
 extern tmqueue_cfg_t G_tmqueue_cfg;
+extern tmq_memmsg_t *G_msgid_hash;
 extern void (*G_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -317,27 +376,39 @@ extern tmq_memmsg_t *tmq_get_msglist(char *qname);
 extern int tmq_update_q_stats(char *qname, long succ_diff, long fail_diff);
 extern void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked);
 extern int q_msg_sort(tmq_memmsg_t *q1, tmq_memmsg_t *q2);
-extern void tmq_cor_sort_queues(tmq_qhash_t *q);
-extern int tmq_cor_msg_add(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
-extern void tmq_cor_msg_del(tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+
+extern int tmq_cor_msg_add(tmq_memmsg_t *mmsg);
+extern void tmq_cor_msg_del(tmq_memmsg_t *mmsg);
 extern tmq_corhash_t * tmq_cor_find(tmq_qhash_t *qhash, char *corrid_str);
-extern int tmq_is_auto_valid_for_deq(tmq_memmsg_t *node, tmq_qconfig_t *qconf);
-extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);
+
+/* Red-black tree support: */
+extern void tmq_rbt_combine_cur(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *newdata, void *arg);
+extern void tmq_rbt_combine_fut(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *newdata, void *arg);
+extern void tmq_rbt_combine_cor(ndrx_rbt_node_t *existing, const ndrx_rbt_node_t *newdata, void *arg);
+extern int tmq_rbt_cmp_cur(const ndrx_rbt_node_t *a, const ndrx_rbt_node_t *b, void *arg);
+extern int tmq_rbt_cmp_cor(const ndrx_rbt_node_t *a, const ndrx_rbt_node_t *b, void *arg);
+extern int tmq_rbt_cmp_fut (const ndrx_rbt_node_t *a, const ndrx_rbt_node_t *b, void *arg);
 
 extern int tmq_fwd_busy_cnt(char *qname, fwd_stats_t **p_stats);
 extern void tmq_fwd_busy_inc(fwd_stats_t *p_stats);
 extern void tmq_fwd_busy_dec(fwd_stats_t *p_stats);
 extern int tmq_fwd_stat_init(void);
 
-
 extern void tmq_fwd_sync_add(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_del(fwd_msg_t *fwd);
 extern int tmq_fwd_sync_cmp(fwd_msg_t *fwd);
+extern void ndrx_forward_chkrun(tmq_memmsg_t *msg);;
 
 extern void tmq_fwd_sync_wait(fwd_msg_t *fwd);
 extern void tmq_fwd_sync_notify(fwd_msg_t *fwd);
 
-    
+/* inflight routines */
+extern int ndrx_infl_addmsg(tmq_qconfig_t * qconf, tmq_qhash_t *qhash, tmq_memmsg_t *mmsg);
+extern int ndrx_infl_mov2infl(tmq_memmsg_t *mmsg);
+extern int ndrx_infl_mov2cur(tmq_memmsg_t *mmsg);
+extern int ndrx_infl_delmsg(tmq_memmsg_t *mmsg);
+extern int ndrx_infl_fut2cur(tmq_qhash_t *qhash);
+
 #ifdef	__cplusplus
 }
 #endif

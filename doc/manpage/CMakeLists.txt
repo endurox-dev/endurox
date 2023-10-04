@@ -48,6 +48,10 @@ set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
 
 set(HTML_FILES ${MAN5_NAMES} ${MAN8_NAMES})
 
+file(MAKE_DIRECTORY 	${CMAKE_CURRENT_BINARY_DIR}/man5
+			${CMAKE_CURRENT_BINARY_DIR}/man8 
+			${CMAKE_CURRENT_BINARY_DIR}/html5
+			${CMAKE_CURRENT_BINARY_DIR}/html8)
 
 # Generate MAN5
 set(A2X_OPTS_MAN5 --format=manpage -D man5)

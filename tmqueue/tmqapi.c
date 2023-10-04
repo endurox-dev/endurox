@@ -99,12 +99,17 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     char *data = NULL;
     BFLDLEN len = 0;
     TPQCTL qctl_out;
+    static volatile int first = EXTRUE;
     int local_tx = EXFALSE;
     
     /* To guarentee unique order in same Q space...: */
     static volatile long t_sec = 0;
     static volatile long t_usec = 0;
-    static volatile int t_cntr = 0;
+    /*
+     * TODO: Could add some start randomisation, in case of clock skew (turn back),
+     * the random could ensure the uniqueness of the message id.
+     */
+    static volatile int t_cntr=0;
     
     /* Add message to Q */
     NDRX_LOG(log_debug, "Into tmq_enqueue()");
@@ -211,10 +216,21 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     
     p_msg->lockthreadid = ndrx_gettid(); /* Mark as locked by thread */
 
-    
     ndrx_utc_tstamp2(&p_msg->msgtstamp, &p_msg->msgtstamp_usec);
     
     MUTEX_LOCK_V(M_tstamp_lock);
+
+    if (first)
+    {
+        /* in case if clock is moved backwards,
+         * this will give lower chance of duplicate message
+         * ids... Alos we are using tstamp_usec, which is also
+         * low probablity to match for message even of clock moved
+         * backwards.
+         */
+        t_cntr = ndrx_rand()%2500000;
+        first=EXFALSE;
+    }
     
     if (p_msg->msgtstamp == t_sec && p_msg->msgtstamp_usec == t_usec)
     {
@@ -224,7 +240,7 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     {
         t_sec = p_msg->msgtstamp;
         t_usec = p_msg->msgtstamp_usec;
-        t_cntr = 0;
+        t_cntr = ndrx_rand()%2500000;
     }
     p_msg->msgtstamp_cntr = t_cntr;
     MUTEX_UNLOCK_V(M_tstamp_lock);
