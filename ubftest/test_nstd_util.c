@@ -554,6 +554,36 @@ Ensure(test_nstd_ndrx_string_hash)
 }
 
 /**
+ * Test compare functions of the standard library
+ */
+Ensure(test_nstd_compare)
+{
+    assert_equal(ndrx_compare3(1,1,1,1,1,1), 0);
+
+    assert_true(ndrx_compare3(0,1,1,1,1,1)<0);
+    assert_true(ndrx_compare3(1,1,1,0,1,1)>0);
+
+    assert_true(ndrx_compare3(0,0,1,0,1,1)<0);
+    assert_true(ndrx_compare3(0,1,1,0,0,1)>0);
+
+    assert_true(ndrx_compare3(0,0,0,1,0,1)<0);
+    assert_true(ndrx_compare3(0,0,1,0,0,0)>0);
+
+    assert_equal(ndrx_compare4(1,1,1,1, 1,1,1,1), 0);
+        
+    assert_true(ndrx_compare4(0,1,1,1, 1,1,1,1)<0);
+    assert_true(ndrx_compare4(1,1,1,1, 0,1,1,1)>0);
+
+    assert_true(ndrx_compare4(0,0,1,1, 0,1,1,1)<0);
+    assert_true(ndrx_compare4(0,1,1,1, 0,0,1,1)>0);
+
+    assert_true(ndrx_compare4(0,0,0,1, 0,0,1,1)<0);
+    assert_true(ndrx_compare4(0,0,1,1, 0,0,0,1)>0);
+
+    assert_true(ndrx_compare4(0,0,0,0, 0,0,0,1)<0);
+    assert_true(ndrx_compare4(0,0,0,1, 0,0,0,0)>0);
+}
+/**
  * Test standard libary, file handling routines
  */
 Ensure(test_nstd_file_handling)
@@ -581,6 +611,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_ndrx_strnlen);
     add_test(suite, test_nstd_ndrx_rand);
     add_test(suite, test_nstd_ndrx_string_hash);
+    add_test(suite, test_nstd_compare);
     add_test(suite, test_nstd_file_handling);
     
     return suite;

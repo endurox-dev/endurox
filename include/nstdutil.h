@@ -351,6 +351,7 @@ extern NDRX_API void ndrx_utc_tstamp2(long *t, long *tusec);
 extern NDRX_API int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2);
 extern NDRX_API char * ndrx_get_strtstamp2(int slot, long t, long tusec);
 extern NDRX_API int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3);
+extern NDRX_API int ndrx_compare4(long a1, long a2, long a3, long a4, long b1, long b2, long b3, long b4);
 
 extern NDRX_API char *ndrx_decode_num(long tt, int slot, int level, int levels);
 extern NDRX_API char *ndrx_decode_str(char *str, char *buf, int buf_sz);

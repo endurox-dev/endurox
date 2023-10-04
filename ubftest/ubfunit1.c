@@ -857,6 +857,8 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_nstd_fsync());
     add_suite(suite, ubf_nstd_cid());
     
+    add_suite(suite, test_rbt_tree());
+
     /*
      * UBF tests
      */
