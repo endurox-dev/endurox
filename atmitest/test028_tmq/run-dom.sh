@@ -168,6 +168,22 @@ fi
 
 test_empty_qspace;
 
+echo "Running: Future FIFO/LIFO AUTO (TPQTIME_ABS & TPQTIME_REL) tests"
+(./atmiclt28 futlifofifoauto 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
+# callback generate test errors...
+if [ "X`grep TESTERROR *.log`" != "X" ]; then
+	echo "Test error detected!"
+	goto_out -1
+fi
+
 echo "Running: enqueue"
 (./atmiclt28 enq 2>&1) > ./atmiclt-dom1.log
 RET=$?
@@ -583,16 +599,6 @@ test_empty_qspace;
 
 echo "Running: future LIFO (TPQTIME_ABS & TPQTIME_REL) tests"
 (./atmiclt28 futlifotrans 2>&1) >> ./atmiclt-dom1.log
-RET=$?
-
-if [[ "X$RET" != "X0" ]]; then
-    go_out $RET
-fi
-
-test_empty_qspace;
-
-echo "Running: Future FIFO/LIFO AUTO (TPQTIME_ABS & TPQTIME_REL) tests"
-(./atmiclt28 futlifofifoauto 2>&1) >> ./atmiclt-dom1.log
 RET=$?
 
 if [[ "X$RET" != "X0" ]]; then
