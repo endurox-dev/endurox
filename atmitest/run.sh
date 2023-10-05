@@ -51,7 +51,7 @@ fi
 . ../sampleconfig/setndrx
 
 # start memcheck
-xmemck -v20 -d40 -s60 -t95 -n 'atmiunit1|tpbridge|tmsrv|convsv21|tmqueue|cpmsrv' -m atmi -d40 -m cpmsrv -d100 -m tpbridge -m tmsrv 2>./memck.log 1>./memck.out & 
+xmemck -v20 -d40 -s60 -t95 -n 'atmisv28|atmiunit1|tpbridge|tmsrv|convsv21|tmqueue|cpmsrv' -m atmi -d40 -m cpmsrv -d100 -m tpbridge -m tmsrv 2>./memck.log 1>./memck.out & 
 
 MEMCK_PID=$!
 echo "Memck pid = $MEMCK_PID"
