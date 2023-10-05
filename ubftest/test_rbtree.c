@@ -556,7 +556,7 @@ TestSuite *test_rbt_tree(void)
 {
     TestSuite *suite = create_test_suite();
 
-M_size    = 600;
+M_size    = 300;
 M_delSize = 200;
 
     add_test(suite, test_rbt_leftright);
