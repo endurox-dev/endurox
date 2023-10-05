@@ -1833,14 +1833,17 @@ out:
  */
 expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
 {
-    tmq_qhash_t  *q;        
+    tmq_qhash_t  *qhash;        
     tmq_memmsg_t *node;
+    ndrx_rbt_tree_iterator_t iter;
+    ndrx_rbt_tree_t *rbt_trees[2];
 
     MUTEX_LOCK_V(M_q_lock);
 
-    if (NULL!=(q = tmq_qhash_get(qname)))
+    if (NULL!=(qhash = tmq_qhash_get(qname)))
     {
-        node = q->q_infligh;
+        node = qhash->q_infligh;
+        /* Count all messages in qhash->q_infligh */
         do
         {
             if (NULL!=node)
@@ -1855,9 +1858,21 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
             }
 
         }
-        while (NULL!=node && node!=q->q_infligh);
+        while (NULL!=node && node!=qhash->q_infligh);
+
+        /* Count all messages in qhash->cur and qhash-> fut */
+        rbt_trees[0] = &qhash->q;
+        rbt_trees[1] = &qhash->q_fut;
+        for (i=0; i<2; i++)
+        {
+            ndrx_rbt_begin_iterate(rbt_trees[i], LeftRightWalk, &iter);
+            while (NULL!=(node=(tmq_memmsg_t *)ndrx_rbt_iterate(&iter)))
+            {
+                *p_msgs = *p_msgs +1 ;
+            }
+        }
     }
-    
+
     MUTEX_UNLOCK_V(M_q_lock);
 }
 
