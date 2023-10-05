@@ -1100,10 +1100,13 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
         goto out;
     }
 
-    if (G_atmi_env.procgrp_no && ndrx_sg_is_singleton(G_atmi_env.procgrp_no))
+    if (G_atmi_env.procgrp_no && ndrx_sg_is_singleton(G_atmi_env.procgrp_no)
+        /* and start transaction from any node */
+        && TMQ_CMD_STARTTRAN!=cmd)
     {
         /* if we are in singleton group mode, ensure
-         * that our nodeid matches with caller nodeid
+         * that our nodeid matches with caller nodeid. To avoid any dead
+         * communication with failed node.
          */
         nodeid_loc=tpgetnodeid();
         if (nodeid!=nodeid_loc)
@@ -1133,6 +1136,7 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
         case TMQ_CMD_COMMITRAN:
             ret = xa_commit_entry_tmq(tmxid, 0);
             break;
+            /* these two are not used: */
         case TMQ_CMD_CHK_MEMLOG:
         case TMQ_CMD_CHK_MEMLOG2:
 
