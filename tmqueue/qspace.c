@@ -1400,6 +1400,7 @@ expublic tmq_msg_t * tmq_msg_dequeue_by_msgid(char *msgid, long flags, long *dia
             /* unlock msg... */
             MUTEX_LOCK_V(M_q_lock);
             ret->lockthreadid = 0;
+	    ndrx_infl_mov2cur(mmsg);
             MUTEX_UNLOCK_V(M_q_lock);
             ret = NULL;
             *diagnostic=QMEOS;
