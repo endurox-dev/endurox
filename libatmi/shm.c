@@ -319,6 +319,8 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     int use_cluster = EXFAIL;
     shm_svcinfo_t *psvcinfo = NULL;
     int chosen_node = EXFAIL;
+    int csrvs;
+    int srvs;
     ATMI_TLS_ENTRY;
     
     *is_bridge=EXFALSE;
@@ -357,20 +359,24 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         EXFAIL_OUT(ret);
     }
     
+    /* read it here, as bellow at modulus %, it can be updated
+     * to 0 by ndrxd, and SIGFPE may be generated
+     */
+    csrvs = psvcinfo->csrvs;
+    srvs = psvcinfo->srvs;
+
     /* Now use the random to chose the service to send to */
-    if (psvcinfo->srvs==psvcinfo->csrvs 
-            && psvcinfo->srvs>0)
+    if (srvs==csrvs && srvs>0)
     {
         use_cluster=EXTRUE;
     }
-    else if (0==psvcinfo->csrvs)
+    else if (0==csrvs)
     {
         use_cluster=EXFALSE;
     }
     
     NDRX_LOG(log_debug, "use_cluster=%d srvs=%d csrvs=%d", 
-            use_cluster, psvcinfo->srvs, 
-            psvcinfo->csrvs);
+            use_cluster, srvs, csrvs);
     
     if (EXFAIL==use_cluster)
     {
@@ -400,14 +406,12 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     }
  
     NDRX_LOG(log_debug, "use_cluster=%d srvs=%d csrvs=%d", 
-        use_cluster, psvcinfo->srvs, 
-            psvcinfo->csrvs);
+        use_cluster, srvs, csrvs);
 
 
     /* So we are using cluster, */
     if (EXTRUE==use_cluster)
     {
-        int csrvs = psvcinfo->csrvs;
         int cluster_node;
         int i;
         int got_node = 0;

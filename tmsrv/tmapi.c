@@ -872,6 +872,20 @@ expublic int tm_status(UBFH *p_ub)
             atmi_xa_set_error_fmt(p_ub, TPETIME, 0, "Lock xid [%s] timed out", 
                     tmxid);
         }
+        /* detect concurrent run (for failover/singleton groups): */
+        else if (EXFALSE!=(ret=tms_log_exists_file(tmxid)))
+        {
+            if (EXTRUE==ret)
+            {
+                atmi_xa_set_error_fmt(p_ub, TPESYSTEM, 0, "Transaction [%s] exists on disk, "
+                    "but not in memory - concurrent run?", tmxid);
+            }
+            else
+            {
+                atmi_xa_set_error_fmt(p_ub, TPEOS, 0, "Transaction [%s] disk "
+                    "log verification failure", tmxid);
+            }
+        }
         else
         {
             atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found [%s]", 

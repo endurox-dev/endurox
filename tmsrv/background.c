@@ -61,8 +61,6 @@
 #include <ndrxdiag.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_TMS_FILE_STATE_INITIAL     0 /**< Intial file check  */
-#define NDRX_TMS_FILE_STATE_IGNORE      1 /**< Broken file, cannot loade (wait for housekeep)  */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -76,37 +74,46 @@ exprivate MUTEX_LOCKDECL(M_background_lock); /* Background operations sync      
 
 exprivate ndrx_stopwatch_t M_chkdisk_stopwatch;    /**< Check disk logs watch */
 
+/** Hash of broken tmxids, which will not be loaded */
 exprivate ndrx_tms_file_registry_t *M_broken_tmxids=NULL;
+
+/** Still try to load list of xid, if OS has not yet flushed contents */
+exprivate ndrx_tms_file_registry_t *M_attempts_tmxids=NULL;
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
 /**
  * Check if file is already monitored
+ * @param hash hashmap into which to look
  * @param tmxid transaction id
  * @return NULL or entry
  */
-expublic ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(const char *tmxid)
+expublic ndrx_tms_file_registry_t *ndrx_tms_file_registry_get(ndrx_tms_file_registry_t ** hash, 
+    const char *tmxid)
 {
     ndrx_tms_file_registry_t *p_ret = NULL;
     
-    EXHASH_FIND_STR(M_broken_tmxids, tmxid, p_ret);
+    EXHASH_FIND_STR((*hash), tmxid, p_ret);
     
     return p_ret;
 }
 
 /**
  * Add file to registry (just a tmxid)
- * @tmxid transaction id
- * @state state of the file
+ * @param hash hashmap to which add entry
+ * @param tmxid transaction id
+ * @param housekeepable can we do houskeep on this entry?
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_tms_file_registry_add(const char *tmxid, int state)
+expublic int ndrx_tms_file_registry_add(ndrx_tms_file_registry_t ** hash, 
+    const char *tmxid, int housekeepable)
 {
     int ret = EXSUCCEED;
     ndrx_tms_file_registry_t *p_ret = NULL;
     
-    p_ret = ndrx_tms_file_registry_get(tmxid);
+    p_ret = ndrx_tms_file_registry_get(hash, tmxid);
     
     if (NULL==p_ret)
     {
@@ -120,19 +127,18 @@ expublic int ndrx_tms_file_registry_add(const char *tmxid, int state)
         }
         
         NDRX_STRCPY_SAFE(p_ret->tmxid, tmxid);
-        p_ret->state = state;
-
-        EXHASH_ADD_STR(M_broken_tmxids, tmxid, p_ret);
+        p_ret->housekeepable=housekeepable;
+        EXHASH_ADD_STR(*hash, tmxid, p_ret);
     }
 out:
     return ret;
 }
 
-expublic int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t *ent)
+expublic int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t ** hash, ndrx_tms_file_registry_t *ent)
 {
     int ret = EXSUCCEED;
     
-    EXHASH_DEL(M_broken_tmxids, ent);
+    EXHASH_DEL(*hash, ent);
     NDRX_FPFREE(ent);
     
     return ret;
@@ -141,13 +147,13 @@ expublic int ndrx_tms_file_registry_del(ndrx_tms_file_registry_t *ent)
 /**
  * Free up the registry
  */
-expublic void ndrx_tms_file_registry_free(void)
+expublic void ndrx_tms_file_registry_free(ndrx_tms_file_registry_t ** hash)
 {
     ndrx_tms_file_registry_t *el, *tmp;
     
-    EXHASH_ITER(hh, M_broken_tmxids, el, tmp)
+    EXHASH_ITER(hh, (*hash), el, tmp)
     {
-        ndrx_tms_file_registry_del(el);
+        ndrx_tms_file_registry_del(hash, el);
     }
 }
 
@@ -183,7 +189,7 @@ expublic int background_read_log(void)
     char tranmask[256];
     char fnamefull[PATH_MAX+1];
     atmi_xa_log_t *pp_tl = NULL;
-    
+
     snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid, 
             G_atmi_env.xa_rmid, G_server_conf.srv_id);
     len = strlen(tranmask);
@@ -209,42 +215,21 @@ expublic int background_read_log(void)
            }
 
            /* If it is transaction then parse & load */
-           
-           /*
-           NDRX_LOG(log_debug, "[%s] vs [%s] %d", 
-                       namelist[n]->d_name, tranmask, len);
-           */
-           
-           if (0==strncmp(namelist[n]->d_name, tranmask, len))
-           {
-               snprintf(fnamefull, sizeof(fnamefull), "%s/%s", G_tmsrv_cfg.tlog_dir, 
-                       namelist[n]->d_name);
-               NDRX_LOG(log_warn, "Resuming transaction: [%s]", 
-                       fnamefull);
-               
-               if (EXSUCCEED!=tms_load_logfile(fnamefull, 
-                       namelist[n]->d_name+len, &pp_tl))
-               {
-                   NDRX_LOG(log_error, "Failed to resume transaction: [%s]", 
-                       fnamefull);
-                   /* ret=EXFAIL; ??? */
+            if (0==strncmp(namelist[n]->d_name, tranmask, len))
+            {
+                snprintf(fnamefull, sizeof(fnamefull), "%s/%s", G_tmsrv_cfg.tlog_dir, 
+                        namelist[n]->d_name);
+                        
+                NDRX_LOG(log_warn, "Resuming transaction: [%s] (enqueue)", 
+                        fnamefull);
 
-                    /* Do not pick up this anymore... */
-
-                    ret=ndrx_tms_file_registry_add(namelist[n]->d_name+len,
-                            NDRX_TMS_FILE_STATE_IGNORE);
-
-                    NDRX_FREE(namelist[n]); /* mem leak fixes */
-
-                    if (EXSUCCEED!=ret)
-                    {
-                        NDRX_LOG(log_error, "Failed to add tmxid: [%s] to registry (malloc err?)", 
-                            namelist[n]->d_name+len);
-                        EXFAIL_OUT(ret);
-                    }
-                   continue;
-               }
-               
+                if (EXSUCCEED!=ndrx_tms_file_registry_add(&M_attempts_tmxids, 
+                    namelist[n]->d_name+len, EXFALSE))
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue tmxid: [%s] to registry (malloc err?)", 
+                        namelist[n]->d_name+len);
+                    EXFAIL_OUT(ret);
+                }
            }
            
            NDRX_FREE(namelist[n]);
@@ -306,6 +291,7 @@ expublic int background_chkdisk(void)
     int len;
     char tranmask[256];
     atmi_xa_log_t *pp_tl = NULL;
+    char *p_name;
 
     snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid, 
             G_atmi_env.xa_rmid, G_server_conf.srv_id);
@@ -313,7 +299,8 @@ expublic int background_chkdisk(void)
 
     dir = opendir(G_tmsrv_cfg.tlog_dir);
 
-    if (dir == NULL) {
+    if (dir == NULL)
+    {
 
         NDRX_LOG(log_error, "opendir [%s] failed: %s", 
             G_tmsrv_cfg.tlog_dir, strerror(errno));
@@ -325,58 +312,41 @@ expublic int background_chkdisk(void)
         if (0==strncmp(entry->d_name, tranmask, len))
         {
             /* extract transaction id  */
-            NDRX_STRCPY_SAFE(tmp, entry->d_name+len);
+            p_name = entry->d_name+len;
+            NDRX_STRCPY_SAFE(tmp, p_name);
 
             if (!tms_log_exists_entry(tmp))
             {
                 ndrx_tms_file_registry_t *p_reg = NULL;
+
                 snprintf(tmp, sizeof(tmp), "%s/%s", G_tmsrv_cfg.tlog_dir, 
                         entry->d_name);
+
                 if (ndrx_file_exists(tmp))
                 {
-                    p_reg=ndrx_tms_file_registry_get(entry->d_name+len);
-
-                    if (NULL==p_reg)
+                    if (NULL!=ndrx_tms_file_registry_get(&M_broken_tmxids, p_name))
                     {
-                        NDRX_LOG(log_error, "ERROR: Unkown transaction log file "
-                                "exists [%s] (duplicate processes?) - enqueue for load", 
-                            tmp);
-
-                        userlog("ERROR: Unkown transaction log file exists"
-                                " [%s] (duplicate processes?) - enqueue for load",
-                            tmp);
-
-                        if (EXSUCCEED!=ndrx_tms_file_registry_add(entry->d_name+len, 
-                                NDRX_TMS_FILE_STATE_INITIAL))
+                        if (tms_housekeep(tmp))
                         {
-                            NDRX_LOG(log_error, "Failed to add tmxid: [%s] to registry (malloc err?)", 
-                                entry->d_name+len);
+                            /* remove file from the M_broken_tmxids */
+                            ndrx_tms_file_registry_del(&M_broken_tmxids, p_reg);
+                        }
+                    }
+                    else if (NULL==ndrx_tms_file_registry_get(&M_attempts_tmxids, p_name))
+                    {
+                        /* enqueue for attempts of loading... */
+                        if (EXSUCCEED!=ndrx_tms_file_registry_add(&M_attempts_tmxids, p_name,
+                            EXFALSE))
+                        {
+                            NDRX_LOG(log_error, "Failed to enqueue tmxid: [%s] to "
+                                "registry (malloc err?)", p_name);
                             EXFAIL_OUT(ret);
                         }
-                    }
-                    else if (NDRX_TMS_FILE_STATE_INITIAL==p_reg->state)
-                    {
-                        NDRX_LOG(log_warn, "Loading transaction log [%s]", tmp);
-                        userlog("Loading transaction log [%s]", tmp);
-
-                        if (EXSUCCEED!=tms_load_logfile(tmp, entry->d_name+len, &pp_tl))
-                        {
-                            NDRX_LOG(log_error, "Failed to load transaction log [%s] - ignore log", tmp);
-                            userlog("Failed to load transaction log [%s] - ignore log", tmp);
-                            /* change state to ignore */
-                            p_reg->state = NDRX_TMS_FILE_STATE_IGNORE;
-                        }
-                        else
-                        {
-                            NDRX_LOG(log_info, "Transaction log [%s] loaded", tmp);
-                            /* remove from hash */
-                            ndrx_tms_file_registry_del(p_reg);
-                        }
-                    }
-                } /* still file exists */
+                    } /* not yet registered */
+                }   
             } /* log not found */
         } /* mask matched */
-    }
+    } /* while readdir() */
 
 out:
     if (NULL!=dir)
@@ -386,6 +356,87 @@ out:
 
     return ret;
 
+}
+
+/**
+ * Iterate over the M_attempts_tmxids and try to load them.
+ * increment counter for them so that we can move those to failed list
+ */
+exprivate int background_load_attempts(void)
+{
+    int ret = EXSUCCEED;
+    ndrx_tms_file_registry_t *el, *tmp;
+    int is_tout;
+    atmi_xa_log_t *p_tl;
+    atmi_xa_tx_info_t xai;
+    char filename[PATH_MAX+1];
+    int log_removed, housekeepable;
+    
+    memset(&xai, 0, sizeof(xai));
+    
+    EXHASH_ITER(hh, M_attempts_tmxids, el, tmp)
+    {
+        snprintf(filename, sizeof(filename), "%s/TRN-%ld-%hd-%d-%s", G_tmsrv_cfg.tlog_dir,
+            G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid, G_server_conf.srv_id, el->tmxid);
+
+        /* try to load the transaction */
+
+        /* check if file still exits, if not, just remove from the
+         * hashmap as no longer need to load it.
+         * otherwise the a+ would create the file if missing.
+         * Also remember that files may be removed by houskeeping processes.
+         */
+        if (0!=access(filename, 0) && ENOENT==errno)
+        {
+            NDRX_LOG(log_debug, "Transaction: [%s] does not exist anymore", 
+                    el->tmxid);
+            ndrx_tms_file_registry_del(&M_attempts_tmxids, el);
+            continue;
+        } /* let other errors to handle standard log loader */
+        else if (EXSUCCEED==tms_load_logfile(filename, el->tmxid, &p_tl, 
+            &log_removed, &housekeepable))
+        {
+            /* remove from the list */
+            NDRX_LOG(log_info, "Transaction: [%s] loaded successfully", 
+                    el->tmxid);
+            ndrx_tms_file_registry_del(&M_attempts_tmxids, el);
+        }
+        else if (log_removed)
+        {
+            /* remove from active lists */
+            ndrx_tms_file_registry_del(&M_attempts_tmxids, el);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to load transaction: [%s]", 
+                    el->tmxid);
+            /* increment the counter */
+            el->attempts++;
+            if (el->attempts>=G_tmsrv_cfg.logparse_attempts)
+            {
+                NDRX_LOG(log_error, "Transaction: [%s] failed to load after %d tries "
+                        "- not loading any more", 
+                        el->tmxid, el->attempts);
+                /* 
+                    * Move to ignore hash, so that we do not attempt to load this 
+                    * again. However needs to think about housekeeping.
+                    * However normally the number shall be low.
+                    */
+                if (EXSUCCEED!=ndrx_tms_file_registry_add(&M_broken_tmxids, 
+                    el->tmxid, housekeepable))
+                {
+                    NDRX_LOG(log_error, "Failed to enqueue tmxid: [%s] to "
+                        "registry (malloc err?)", el->tmxid);
+                    EXFAIL_OUT(ret);
+                }
+
+                ndrx_tms_file_registry_del(&M_attempts_tmxids, el);
+            }
+        } /* did not remove */
+    } /* for each active file */
+
+out:
+    return ret;
 }
 
 /**
@@ -424,6 +475,9 @@ expublic int background_loop(void)
             background_chkdisk();
             ndrx_stopwatch_reset(&M_chkdisk_stopwatch);
         }
+
+        /* process any non-loaded logs... */
+        background_load_attempts();
         
         /* Check the list of transactions (iterate over...) 
          * Seems anyway, we need a list of background ops here...

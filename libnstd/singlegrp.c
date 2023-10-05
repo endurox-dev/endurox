@@ -131,6 +131,7 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
 {
     unsigned char is_locked = NDRX_ATOMIC_LOAD(&sg->is_locked);
     
+#if 0
     /* QA testing: */
     if (ndrx_G_systest_lockloss > 0)
     {
@@ -138,11 +139,14 @@ expublic void ndrx_sg_unlock(ndrx_sg_shm_t * sg, int reason)
     }
     else if (is_locked)
     {
+#endif
         NDRX_ATOMIC_STORE(&sg->is_srv_booted, EXFALSE);
         NDRX_ATOMIC_STORE(&sg->is_clt_booted, EXFALSE);
         NDRX_ATOMIC_STORE(&sg->is_locked, EXFALSE);
         NDRX_ATOMIC_STORE(&sg->reason, reason);
+#if 0
     }
+#endif
 }
 
 /**
@@ -659,6 +663,28 @@ expublic void ndrx_sg_nodes_set(int singlegrp_no, char *sg_nodes)
 {
     ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
     ndrx_volatile_memcy(sg->sg_nodes, sg_nodes, sizeof(sg->sg_nodes));
+}
+
+/**
+ * Test is group singleton...
+ * @param singlegrp_no singleton group number
+ */
+expublic int ndrx_sg_is_singleton(int singlegrp_no)
+{
+    int ret = EXFALSE;
+    if (ndrx_sg_is_valid(singlegrp_no))
+    {
+        unsigned char flags;
+        ndrx_sg_shm_t * sg = NDRX_SG_GET_PTR(singlegrp_no);
+        flags = NDRX_ATOMIC_LOAD(&sg->flags);
+
+        if (flags & NDRX_SG_SINGLETON)
+        {
+            ret=EXTRUE;
+        }
+    }
+
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

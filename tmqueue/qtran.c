@@ -288,6 +288,9 @@ expublic int tmq_log_start(char *tmxid)
     tmp->t_update = ndrx_utc_tstamp();
     NDRX_STRCPY_SAFE(tmp->tmxid, tmxid);
     ndrx_stopwatch_reset(&tmp->ttimer);
+
+    /* get cluster sequence */
+    tmq_log_setseq(tmp);
     
     /* TODO: write initial tran-info message...
      * if we add initial message, we can overwrite this active file
@@ -544,4 +547,97 @@ expublic void tmq_tx_hash_unlock(void)
     MUTEX_UNLOCK_V(M_qtran_hash_lock);
 }
 
+
+/**
+ * set current lock sequence number
+ * @param p_tl log entry
+ */
+expublic int tmq_log_setseq(qtran_log_t *p_tl)
+{
+    int ret= EXSUCCEED;
+    long grp_flags=0;
+    /* if we are in singleton group mode, validate that we still
+     * own the lock
+     */
+    if (G_atmi_env.procgrp_no)
+    {
+        p_tl->sg_sequence=tpsgislocked(G_atmi_env.procgrp_no
+            , TPPG_SGVERIFY|TPPG_NONSGSUCC
+            , &grp_flags);
+
+        if (EXFAIL==p_tl->sg_sequence)
+        {
+            NDRX_LOG(log_error, "tpsgislocked failed %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        if (grp_flags & TPPG_SINGLETON && p_tl->sg_sequence<=0)
+        {
+            NDRX_LOG(log_error, "Singleton group %d lock lost (at start) - exit(-1)",
+                G_atmi_env.procgrp_no);
+            userlog("Singleton group %d lock lost (at start) - exit(-1)",
+                G_atmi_env.procgrp_no);
+            /* !!!! */
+            exit(EXFAIL);
+        }
+    }
+
+out:
+    return ret;
+}
+
+
+/**
+ * Check current sequence (are we still locked on?)
+ */
+expublic int tmq_log_checkpointseq(qtran_log_t *p_tl)
+{
+    int ret=EXSUCCEED;
+    long seq;
+    long grp_flags=0;
+    /* if we are in singleton group mode, validate that we still
+     * own the lock
+     */
+    if (G_atmi_env.procgrp_no)
+    {
+        seq=tpsgislocked(G_atmi_env.procgrp_no, TPPG_SGVERIFY|TPPG_NONSGSUCC, &grp_flags);
+
+        if (seq < 0)
+        {
+            NDRX_LOG(log_error, "tpsgislocked returns %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        if ((grp_flags & TPPG_SINGLETON) && 0==seq)
+        {
+            NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost - exit(-1)",
+                G_atmi_env.procgrp_no, tpgetnodeid());
+            userlog("Singleton group %d on node %ld lock lost - exit(-1)",
+                G_atmi_env.procgrp_no, tpgetnodeid());
+            /* !!!! */
+            exit(EXFAIL);
+        }
+
+        /* failover has happened during transaction processing
+         * thus cannot proceed with decsion, only after restart
+         */
+        if ( (grp_flags & TPPG_SINGLETON) && (seq - p_tl->sg_sequence >= G_atmi_env.sglockinc))
+        {
+            NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+            userlog("Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+            /* !!!! */
+            exit(EXFAIL);
+        }
+
+        /* we are safe to continue... */
+        p_tl->sg_sequence=seq;
+    }
+out:
+    return ret;
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */
+

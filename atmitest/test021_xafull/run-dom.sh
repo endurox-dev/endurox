@@ -458,11 +458,13 @@ if [ ! -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_4 ]; then
     go_out -1
 fi
 
+# let files to become stale
 sleep 17
 
 xadmin restart -s tmsrv
 
-# now logs shall be zapped
+# let background thread to collect the files
+sleep 2
 
 if [ -f ./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_1 ]; then
     echo "./RM1/TRN-1-1-50-THIS_IS_INVALID_TRAN_1 does exist!"

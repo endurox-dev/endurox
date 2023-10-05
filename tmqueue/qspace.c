@@ -346,7 +346,7 @@ expublic void tmq_msgid_gen(char *msgid)
     memset(msgid, 0, TMMSGIDLEN);
     
     /* Do the locking, so that we get unique xids... */
-    ndrx_cid_generate((unsigned char)node_id, uuid_val);
+    ndrx_cid_generate((unsigned char)tpgetnodeid(), uuid_val);
     
     memcpy(msgid, uuid_val, sizeof(exuuid_t));
     /* Have an additional infos for transaction id... */

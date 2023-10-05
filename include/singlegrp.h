@@ -134,6 +134,7 @@ extern NDRX_API unsigned char ndrx_sg_bootflag_clt_get(int singlegrp_no);
 extern NDRX_API void ndrx_sg_bootflag_clt_set(int singlegrp_no);
 extern NDRX_API unsigned char ndrx_sg_bootflag_srv_get(int singlegrp_no);
 extern NDRX_API void ndrx_sg_bootflag_srv_set(int singlegrp_no);
+extern NDRX_API int ndrx_sg_is_singleton(int singlegrp_no);
 
 #if defined(__cplusplus)
 }

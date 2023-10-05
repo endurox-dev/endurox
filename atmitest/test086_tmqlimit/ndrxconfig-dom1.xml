@@ -172,6 +172,14 @@
            <srvid>100</srvid>
            <sysopt>-e ${TESTDIR}/tmqueue-dom1.log -r -- -q ./q.conf -s1 -T45 -f40 </sysopt>
         </server>
+
+        <server name="tmrecoversv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>250</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tmrecoversv-dom1.log -r -- -i -p -s1</sysopt>
+        </server>
+
     </servers>
         
     <services>
