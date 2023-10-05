@@ -475,9 +475,10 @@ int tpsvrinit(int argc, char **argv)
     G_tmsrv_cfg.ping_mode_jointran = EXTRUE;
     G_tmsrv_cfg.housekeeptime = TMSRV_HOUSEKEEP_DEFAULT;
     G_tmsrv_cfg.vnodeid=tpgetnodeid();
+    G_tmsrv_cfg.logparse_attempts=LOGPARSE_ATTEMPTS_DFLT;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:X:")) != -1)
+    while ((c = getopt(argc, argv, "n:P:t:s:l:c:m:p:r:Rh:X:a:")) != -1)
     {
 
         if (optarg)
@@ -491,6 +492,9 @@ int tpsvrinit(int argc, char **argv)
 
         switch(c)
         {
+            case 'a':
+                G_tmsrv_cfg.logparse_attempts=atoi(optarg);
+                break;
             case 'X':
                 G_tmsrv_cfg.chkdisk_time=atoi(optarg);
 
@@ -605,6 +609,9 @@ int tpsvrinit(int argc, char **argv)
     
     NDRX_LOG(log_debug, "Housekeep time for corrupted logs: [%d] (sec)",
                             G_tmsrv_cfg.housekeeptime);
+                            
+    NDRX_LOG(log_debug, "Log parse attempts: [%d]",
+                            G_tmsrv_cfg.logparse_attempts); 
 
     NDRX_LOG(log_debug, "About to initialize XA!");
     

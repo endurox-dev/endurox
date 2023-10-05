@@ -217,7 +217,9 @@ Enable xa_recover() call for PINGs instead of xa_start(). See *-P* flag descript
 
 [*-h* 'HOUSEKEEP_TIMEOUT']::
 Number of seconds after which corrupted transaction log files are removed at
-tmsrv startup. Default value is *5400* (1 hour 30 min).
+tmsrv startup. Default value is *5400* (1 hour 30 min). In case if flag *-X*
+is enabled, broke log file housekeeping is performed on regular bases,
+instead of the *tmsrv* startup only.
 
 [*-n* 'ENDUROX_NODE_ID']::
 Indicates the virtual Enduro/X cluster node ID. If the parameter is not set, then
@@ -246,6 +248,11 @@ log file directory. If any unknown log is found, *tmsrv* marks that
 transaction log file for loading at the next check cycle. If log fails
 to load, it marked for ignore, and further check cycles ignores such
 broken transaction logs.
+
+[*-a* 'NR_OF_ATTEMPTS']::
+Number of attempts used by background thread to load incomplete transaction
+log files (left by any crashed process instances and not yet flushed to
+file-system by the OS). Default value is *3*.
 
 XA RECOVER SETTINGS FOR ORACLE DB
 ---------------------------------

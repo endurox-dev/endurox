@@ -66,6 +66,7 @@
 #include <unistd.h>
 #include <Exfields.h>
 #include <singlegrp.h>
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define LOG_MAX         1024
@@ -98,6 +99,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
 exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl);
+exprivate void tms_gen_file_name(char *fname, size_t fnamesz, char *tmxid);
 
 /**
  * Unlock transaction
@@ -116,6 +118,38 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
     return EXSUCCEED;
+}
+
+/**
+ * Check that log file actually exists on the disk.
+ * @param tmxid transaction
+ * @return EXTRUE/EXFALSE/EXFAIL
+ */
+expublic int tms_log_exists_file(char *tmxid)
+{
+    char fname[PATH_MAX+1];
+    int err=0;
+
+    tms_gen_file_name(fname, sizeof(fname), tmxid);
+
+    if (EXSUCCEED == access(fname, 0))
+    {
+        return EXTRUE;
+    }
+
+    err=errno;
+
+    if (ENOENT==err)
+    {
+        return EXFALSE;
+    }
+
+    NDRX_LOG(log_error, "Failed to check file [%s] presence: %s",
+        fname, strerror(err));
+    userlog("Failed to check file [%s] presence: %s",
+        fname, strerror(err));
+
+    return EXFAIL;
 }
 
 /**
@@ -355,7 +389,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
      */
     
     /* Open log file */
-    if (EXSUCCEED!=tms_open_logfile(tmp, "w"))
+    if (EXSUCCEED!=tms_open_logfile(tmp, "a"))
     {
         NDRX_LOG(log_error, "Failed to create transaction log file");
         userlog("Failed to create transaction log file");
@@ -613,6 +647,18 @@ out_nolock:
     return ret;
 }
 
+/**
+ * Generate logfile path + name for transaction
+ * @param fname output buffer
+ * @param fnamesz output buffer size
+ * @param tmxid transaction id (str)
+ */
+exprivate void tms_gen_file_name(char *fname, size_t fnamesz, char *tmxid)
+{
+        snprintf(fname, fnamesz, "%s/TRN-%ld-%hd-%d-%s",
+            G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid,
+            G_server_conf.srv_id, tmxid);
+}
 
 /**
  * Get the log file name for particular transaction
@@ -621,9 +667,7 @@ out_nolock:
  */
 exprivate void tms_get_file_name(atmi_xa_log_t *p_tl)
 {
-    snprintf(p_tl->fname, sizeof(p_tl->fname), "%s/TRN-%ld-%hd-%d-%s", 
-            G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid, 
-            G_server_conf.srv_id, p_tl->tmxid);
+    tms_gen_file_name(p_tl->fname, sizeof(p_tl->fname), p_tl->tmxid);
 }
 
 /**
@@ -649,7 +693,7 @@ expublic int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode)
     }
     
     /* Try to open the file */
-    if (NULL==(p_tl->f=NDRX_FOPEN(p_tl->fname, mode)))
+    if (ndrx_G_systest_lockloss || NULL==(p_tl->f=NDRX_FOPEN(p_tl->fname, mode)))
     {
         userlog("Failed to open XA transaction log file: [%s]: %s", 
                 p_tl->fname, strerror(errno));
@@ -668,13 +712,50 @@ out:
 }
 
 /**
+ * Do housekeeping on log file
+ * @param logfile - path to log file
+ * @return EXTRUE (did remove) / EXFALSE (did not remove)
+ */
+expublic int tms_housekeep(char *logfile)
+{
+    long diff;
+    int err;
+    int ret = EXFALSE;
+
+    /* remove old corrupted logs... */
+    if ((diff=ndrx_file_age(logfile)) > G_tmsrv_cfg.housekeeptime)
+    {
+        NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                logfile, diff, G_tmsrv_cfg.housekeeptime);
+        userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
+                logfile, diff, G_tmsrv_cfg.housekeeptime);
+
+        if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(logfile))
+        {
+            err = errno;
+            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
+            userlog("Failed to unlink [%s]: %s", strerror(err));
+        }
+        else
+        {
+            ret=EXTRUE;
+        }
+    }
+
+    return ret;
+}
+
+/**
  * Read the log file from disk
  * @param logfile - path to log file
  * @param tmxid - transaction ID string
  * @param pp_tl - transaction log (double ptr). Returned if all ok.
+ * @param log_removed did we remove log file (housekeep) executed?
+ * @param housekeepable is log file housekeepable?
  * @return SUCCEED/FAIL
  */
-expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
+expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
+    int *log_removed, int *housekeepable)
 {
     int ret = EXSUCCEED;
     int len;
@@ -686,7 +767,10 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     int wrote, err;
     long diff;
     *pp_tl = NULL;
-    
+
+    *log_removed = EXFALSE;
+    *housekeepable = EXFALSE;
+
     if (NULL==(*pp_tl = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
     {
         NDRX_LOG(log_error, "NDRX_CALLOC() failed: %s", strerror(errno));
@@ -719,9 +803,18 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
     }
 
     /* Open the file */
-    if (EXSUCCEED!=tms_open_logfile(*pp_tl, "r+"))
+    if (EXSUCCEED!=tms_open_logfile(*pp_tl, "a+"))
     {
         NDRX_LOG(log_error, "Failed to open transaction file!");
+        EXFAIL_OUT(ret);
+    }
+
+    /* On mac and freebsd seem that reading happens at end of the
+     * file if file was opened with a+
+     */
+    if (EXSUCCEED!=fseek((*pp_tl)->f, 0, SEEK_SET))
+    {
+        NDRX_LOG(log_error, "Failed to fseek: %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
 
@@ -810,7 +903,6 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
                          logfile, buf, crc32_calc, crc32_got);
                 continue;
             }
-            
         }
         
         switch (*p)
@@ -925,7 +1017,14 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
             /* append with \n */
             NDRX_LOG(log_error, "Terminating last line (with out checksum)");
 
-            wrote=fprintf((*pp_tl)->f, "\n");
+	    if (ndrx_G_systest_lockloss)
+	    {
+                wrote=EXFAIL;
+	    }
+	    else
+	    {
+                wrote=fprintf((*pp_tl)->f, "\n");
+	    }
 
             if (wrote!=1)
             {
@@ -943,7 +1042,6 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
      * Any transaction will be completed in background.
      */
     (*pp_tl)->is_background = EXTRUE;
-    
     
     /* 
      * If we keep in active state, then timeout will kill the transaction (or it will be finished by in progress 
@@ -1005,20 +1103,12 @@ out:
     /* clean up corrupted files */
     if (do_housekeep)
     {
-        /* remove old corrupted logs... */
-        if ((diff=ndrx_file_age(logfile)) > G_tmsrv_cfg.housekeeptime)
-        {
-            NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
-                    logfile, diff, G_tmsrv_cfg.housekeeptime);
-            userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
-                    logfile, diff, G_tmsrv_cfg.housekeeptime);
+        *housekeepable=EXTRUE;
 
-            if (EXSUCCEED!=unlink(logfile))
-            {
-                err = errno;
-                NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
-                userlog("Failed to unlink [%s]: %s", strerror(err));
-            }
+        /* so that hashmaps can be cleaned up... */
+        if (tms_housekeep(logfile))
+        {
+            *log_removed=EXTRUE;
         }
     }
 
@@ -1104,7 +1194,7 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
         
     if (have_file)
     {
-        if (EXSUCCEED!=unlink(p_tl->fname))
+        if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(p_tl->fname))
         {
             int err = errno;
             NDRX_LOG(log_debug, "Failed to remove tx log file: %d (%s)", 
@@ -1116,7 +1206,6 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
     
     /* Remove the log for hash! */
     tms_remove_logfree(p_tl, hash_rm);
-
 }
 
 /**
@@ -1185,7 +1274,16 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
         {
             exp++;
         }
-        wrote=fprintf(p_tl->f, "%s\n", msg2);
+
+	if (ndrx_G_systest_lockloss)
+	{
+            wrote=EXFAIL;
+	}
+	else
+	{
+            wrote=fprintf(p_tl->f, "%s\n", msg2);
+	}
+
     }
     else
     {
@@ -1198,7 +1296,14 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
             exp++;
         }
         
-        wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
+	if (ndrx_G_systest_lockloss)
+	{
+            wrote=EXFAIL;
+	}
+	else
+	{
+            wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
+	}
     }
     
     if (wrote != exp)
@@ -1224,7 +1329,8 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     
 out:
     /* flush what ever we have */
-    if (EXSUCCEED!=fflush(p_tl->f))
+    /* in case of ndrx_G_systest_lockloss -> IO fence used */
+    if (ndrx_G_systest_lockloss || EXSUCCEED!=fflush(p_tl->f))
     {
         int err=errno;
         userlog("ERROR! Failed to fflush(): %s", strerror(err));
@@ -1422,16 +1528,61 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             goto out;
         }
         /* </Crash testing> */
-        else if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
+        else
         {
-            ret=EXFAIL;
-            goto out;
+            /* in case if ... there was failover and concurrent write of commit
+             * which might overwrite the given abort position, lets write abort
+             * states few times more, so that recovery processes would finally
+             * see that abort has started...
+             * Note that other tmsrv will not go further than last commit entry
+             * as after that there is check is that tmsrv still on locked node.
+             * ------
+             * Also... this might not be 100% safe, as shared FS might become 
+             * corrutped, if stale node starts to write somethink after the
+             * other node took over. Thus hardware based fencing is mandatory
+             * for production failover modes.
+             */
+            int w_cnt=1, i;
+
+            if (XA_TX_STAGE_ABORTING==stage)
+            {
+                w_cnt=3;
+            }
+            else if (XA_TX_STAGE_COMMITTING==stage)
+            {
+                /* ensure that we are still locked, as we are going to write
+                 * commit message down. If the abort was in progress,
+                 * then our previous prepares might have overwritten  their
+                 * abort state. Thus if we are ok here, then there will be
+                 * 1x commit at given position, but if after then or before
+                 * the actual disk write take over, they will put 3x aborts
+                 * and then recovery process shall pick that up
+                 */
+                if (EXSUCCEED!=tms_log_checkpointseq(p_tl))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+
+            for (i=0; i<w_cnt; i++)
+            {
+                if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
+                {
+                    ret=EXFAIL;
+                    goto out;
+                }
+            }
         }
 
         /* in case if switching to committing, we must sync the log & directory */
         if ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage))
         {
-            if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
+	    if (ndrx_G_systest_lockloss)
+	    {
+		/*IO fence test */
+	        EXFAIL_OUT(ret);
+	    }
+	    else if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
                 EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags))
             {
                 EXFAIL_OUT(ret);
@@ -1504,11 +1655,11 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
     */
     stage=(short)atoi(p);
 
-    if (stage <= p_tl->txstage)
+    if (stage < p_tl->txstage)
     {
-        NDRX_LOG(log_error, "Stage for [%s] downgrade was %hd, read %hd",
+        NDRX_LOG(log_error, "Transaction logs recover: stage for [%s] downgrade was %hd, read %hd",
                 p_tl->tmxid, p_tl->txstage, stage);
-        userlog("Stage for [%s] downgrade was %hd, read %hd",
+        userlog("Transaction logs recover: stage for [%s] downgrade was %hd, read %hd",
                 p_tl->tmxid, p_tl->txstage, stage);
     }
 
@@ -1528,26 +1679,6 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
                 p_tl->tmxid, p_tl->txstage, stage);
         }
     }
-#if 0
-    else if (p_tl->txstage>=XA_TX_STAGE_COMMITTING &&
-        p_tl->txstage<=XA_TX_STAGE_COMFORGOT_HEU)
-    {
-
-        /* if there was commit, we allow abort too.. */
-        if (stage>=XA_TX_STAGE_COMMITTING &&
-            stage<=XA_TX_STAGE_COMFORGOT_HEU)
-        {
-            p_tl->txstage = stage;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
-                p_tl->tmxid, p_tl->txstage, stage);
-            userlog("Invalid stage for [%s] was %hd (commit range) read %hd - IGNORE",
-                p_tl->tmxid, p_tl->txstage, stage);
-        }
-    }
-#endif
     else
     {
         p_tl->txstage = stage;

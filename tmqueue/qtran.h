@@ -92,6 +92,8 @@ struct qtran_log
     
     int seqno;                  /**< Sequence counter                   */
     int is_abort_only;          /**< Is transaction broken?             */
+
+    long sg_sequence;		/**< sequence number of signleton group */
     
     qtran_log_cmd_t *cmds;      /**< List of queue commands within tran */
     
@@ -128,6 +130,8 @@ extern void tmq_tx_hash_unlock(void);
 extern int tmq_log_unlock(qtran_log_t *p_tl);
 extern int tmq_log_next(qtran_log_t *p_tl);
 extern int tmq_log_abortall(void);
+extern int tmq_log_setseq(qtran_log_t *p_tl);
+extern int tmq_log_checkpointseq(qtran_log_t *p_tl);
 
 #ifdef	__cplusplus
 }
