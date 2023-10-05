@@ -617,15 +617,15 @@ fi
 
 test_empty_qspace;
 
-# echo "Running: future corrid LIFO (TPQTIME_ABS & TPQTIME_REL) tests"
-# (./atmiclt28 futcorlifotrans 2>&1) >> ./atmiclt-dom1.log
-# RET=$?
+echo "Running: future corrid LIFO tests"
+(./atmiclt28 futcorlifotrans 2>&1) >> ./atmiclt-dom1.log
+RET=$?
 
-# if [[ "X$RET" != "X0" ]]; then
-#     go_out $RET
-# fi
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
 
-# test_empty_qspace;
+test_empty_qspace;
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
