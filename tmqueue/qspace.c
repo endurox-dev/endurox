@@ -1863,7 +1863,7 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
         /* Count all messages in qhash->cur and qhash-> fut */
         rbt_trees[0] = &qhash->q;
         rbt_trees[1] = &qhash->q_fut;
-        for (i=0; i<2; i++)
+        for (int i=0; i<2; i++)
         {
             ndrx_rbt_begin_iterate(rbt_trees[i], LeftRightWalk, &iter);
             while (NULL!=(node=(tmq_memmsg_t *)ndrx_rbt_iterate(&iter)))
