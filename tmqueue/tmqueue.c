@@ -485,20 +485,22 @@ void TMQUEUE (TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
 
+    if (EXSUCCEED!=Bget(p_ub, EX_QCMD, 0, (char *)&cmd, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to read command code!");
+        userlog("Failed to read command code!");
+        ret=EXFAIL;
+        goto out;
+    }
+
     thread_data->buffer = p_svc->data; /*the buffer is not made free by thread */
     thread_data->cd = p_svc->cd;
     
     if (NULL==(thread_data->context_data = tpsrvgetctxdata()))
     {
         NDRX_LOG(log_error, "Failed to get context data!");
+        userlog("Failed to get context data!");
         EXFAIL_OUT(ret);
-    }
-    
-    if (Bget(p_ub, EX_QCMD, 0, (char *)&cmd, 0L))
-    {
-        NDRX_LOG(log_error, "Failed to read command code!");
-        ret=EXFAIL;
-        goto out;
     }
     
     /* submit the job to thread pool: 
