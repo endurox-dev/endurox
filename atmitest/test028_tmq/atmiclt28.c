@@ -75,6 +75,8 @@ exprivate int noabort_q_test(void);
 exprivate int basic_q_fut_fifo_test(void);
 exprivate int basic_q_fut_lifo_test(void);
 exprivate int basic_q_fut_fifo_lifo_auto_test(void);
+exprivate int basic_q_fut_corfifo_test(void);
+exprivate int basic_q_fut_corlifo_test(void);
 
 int main(int argc, char** argv)
 {
@@ -187,6 +189,14 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "futauto"))
     {
         return basic_q_fut_fifo_lifo_auto_test();
+    }
+    else if (0==strcmp(argv[1], "futcorfifotrans"))
+    {
+        return basic_q_fut_corfifo_test();
+    }
+    else if (0==strcmp(argv[1], "futcorlifotrans"))
+    {
+        return basic_q_fut_corlifo_test();
     }
     else
     {
@@ -2030,7 +2040,7 @@ exprivate int basic_q_fut_fifo_test(void)
             "Expected QMENOMSG got %d %ld", tperrno, qc1.diagnostic);
 
 
-        sleep(30); /* should be enough */
+        sleep(40); /* should be enough */
         NDRX_LOG(log_debug, "dequeue future msg!");
 
         /* dequeue future msg */
@@ -2194,7 +2204,7 @@ exprivate int basic_q_fut_lifo_test(void)
         NDRX_ASSERT_VAL_OUT(TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic, 
             "Expected QMENOMSG got %d %ld", tperrno, qc1.diagnostic);
 
-        sleep(30); /* should be enough */
+        sleep(40); /* should be enough */
         NDRX_LOG(log_debug, "dequeue future msg from LIFO !");
 
         /* dequeue future msg */
@@ -2605,6 +2615,978 @@ exprivate int basic_q_fut_fifo_lifo_auto_test(void)
         NDRX_LOG(log_error, "Expected %d messages, got %d, qname=[%s] (FUT, 2nd part) - OK", 
                 TEST_FUT_MAX/2/2, M_fut_nr_proc, qnames[q]);
 
+    }
+out:
+    return ret;
+}
+
+/**
+ * Test future corellated FIFO queue
+ */
+exprivate int basic_q_fut_corfifo_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    long len=0;
+    long i, l;
+    char cor_buf[64];
+
+    for (i=0; i<400; i++)
+    {
+        UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+        if (NULL==buf)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED != Bchg(buf, T_LONG_FLD, 0, (char *)&i, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to set T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (i>=100 && i<200)
+        {
+            qc1.flags|=TPQCORRID;
+            qc1.corrid[0]=1;
+            if (EXSUCCEED != Bchg(buf, T_STRING_FLD, 0, "CORRID=1", 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_FLD %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (i>=200 && i<300)
+        {
+            qc1.flags|=TPQCORRID;
+            qc1.corrid[0]=2;
+            if (EXSUCCEED != Bchg(buf, T_STRING_FLD, 0, "CORRID=2", 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_FLD %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* even to future queue */
+        if (0==i%2)
+        {
+            qc1.flags|=TPQTIME_REL;
+            qc1.deq_time = 15+(i%9);
+        }
+
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "FUT_CORFIFO", &qc1, (char *)buf, 0, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+        tpfree((char *)buf);
+    }
+
+    /* check with wrong corid - queue should be empty */
+    UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    memset(&qc1, 0, sizeof(qc1));
+    qc1.flags|=TPQGETBYCORRID;
+    qc1.corrid[0]=5;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but succeed!");
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_ASSERT_VAL_OUT(TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic, 
+        "Expected QMENOMSG got %d %ld (%s)", tperrno, qc1.diagnostic, tpstrerror(tperrno));
+
+    tpfree((char *)buf);
+
+    NDRX_LOG(log_debug, "dequeue first 100 w/o corid from normal Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=0; i<100; i++)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf2 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf2, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf2);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf2, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf2);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=2 from normal Q");
+    for (i=200; i<300; i++)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf3 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=2;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf3, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf3);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf3, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=2", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=2");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf3, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf3);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=1 from normal Q");
+    for (i=100; i<200; i++)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf4 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=1;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf4, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf4);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf4, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=1", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=1");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf4, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf4);
+    }
+
+    NDRX_LOG(log_debug, "dequeue last 100 w/o corid from normal Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=300; i<400; i++)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf5 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf5, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf5);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf5, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf5);
+    }
+
+    /* queue should be empty */
+    UBFH *buf6 = (UBFH *)tpalloc("UBF", "", 1024);
+    if (NULL==buf6)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&qc1, 0, sizeof(qc1));
+    if (EXSUCCEED==tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf6, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but succeed!");
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_ASSERT_VAL_OUT(TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic, 
+        "Expected QMENOMSG got %d %ld", tperrno, qc1.diagnostic);
+
+    tpfree((char *)buf6);
+
+    sleep(30); /* should be enough */
+
+    NDRX_LOG(log_debug, "dequeue first 100 w/o corid from future Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=0; i<100; i++)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf7 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf7, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf7);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf7, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf7);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=2 from future Q");
+    for (i=200; i<300; i++)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf8 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=2;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf8, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf8);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf8, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=2", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=2");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf8, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf8);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=1 from future Q");
+    for (i=100; i<200; i++)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf9 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=1;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf9, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf9);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf9, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=1", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=1");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf9, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf9);
+    }
+
+    NDRX_LOG(log_debug, "dequeue last 100 w/o corid from future Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=300; i<400; i++)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf10 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORFIFO", &qc1, (char **)&buf10, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf10);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf10, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf10);
+    }
+out:
+    return ret;
+}
+
+/**
+ * Test future corellated LIFO queue
+ */
+exprivate int basic_q_fut_corlifo_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc1;
+    long len=0;
+    long i, l;
+    char cor_buf[64];
+
+    for (i=0; i<400; i++)
+    {
+        UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+        if (NULL==buf)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED != Bchg(buf, T_LONG_FLD, 0, (char *)&i, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to set T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        /* enqueue the data buffer */
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (i>=100 && i<200)
+        {
+            qc1.flags|=TPQCORRID;
+            qc1.corrid[0]=1;
+            if (EXSUCCEED != Bchg(buf, T_STRING_FLD, 0, "CORRID=1", 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_FLD %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (i>=200 && i<300)
+        {
+            qc1.flags|=TPQCORRID;
+            qc1.corrid[0]=2;
+            if (EXSUCCEED != Bchg(buf, T_STRING_FLD, 0, "CORRID=2", 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: failed to set T_STRING_FLD %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+        }
+
+        /* even to future queue */
+        if (0==i%2)
+        {
+            qc1.flags|=TPQTIME_REL;
+            qc1.deq_time = 15+(i%9);
+        }
+
+        if (EXSUCCEED!=tpenqueue("MYSPACE", "FUT_CORLIFO", &qc1, (char *)buf, 0, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+        tpfree((char *)buf);
+    }
+
+    /* check with wrong corid - queue should be empty */
+    UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    memset(&qc1, 0, sizeof(qc1));
+    qc1.flags|=TPQGETBYCORRID;
+    qc1.corrid[0]=5;
+    if (EXSUCCEED==tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but succeed!");
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_ASSERT_VAL_OUT(TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic, 
+        "Expected QMENOMSG got %d %ld (%s)", tperrno, qc1.diagnostic, tpstrerror(tperrno));
+
+    tpfree((char *)buf);
+
+    NDRX_LOG(log_debug, "dequeue first 100 w/o corid from normal Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=399; i>=300; i--)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf2 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf2, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf2);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf2, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf2);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=2 from normal Q");
+    for (i=299; i>=200; i--)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf3 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=2;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf3, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf3);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf3, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=2", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=2");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf3, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf3);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=1 from normal Q");
+    for (i=199; i>=100; i--)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf4 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=1;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf4, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf4);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf4, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=1", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=1");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf4, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf4);
+    }
+
+    NDRX_LOG(log_debug, "dequeue last 100 w/o corid from normal Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=99; i>=0; i--)
+    {
+        /* even is in future queue */
+        if (0==i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf5 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf5, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf5);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf5, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf5);
+    }
+
+    /* queue should be empty */
+    UBFH *buf6 = (UBFH *)tpalloc("UBF", "", 1024);
+    if (NULL==buf6)
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpalloc() failed %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&qc1, 0, sizeof(qc1));
+    if (EXSUCCEED==tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf6, &len, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpdequeue() must fail but succeed!");
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_ASSERT_VAL_OUT(TPEDIAGNOSTIC==tperrno && QMENOMSG==qc1.diagnostic, 
+        "Expected QMENOMSG got %d %ld", tperrno, qc1.diagnostic);
+
+    tpfree((char *)buf6);
+
+    sleep(30); /* should be enough */
+
+    NDRX_LOG(log_debug, "dequeue last 100 w/o corid from future Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=399; i>=300; i--)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf7 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf7, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf7);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf7, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf7);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=2 from future Q");
+    for (i=299; i>=200; i--)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf8 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=2;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf8, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf8);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf8, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=2", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=2");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf8, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf8);
+    }
+
+    NDRX_LOG(log_debug, "dequeue next 100 with corid=1 from future Q");
+    for (i=199; i>=100; i--)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf9 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        qc1.flags|=TPQGETBYCORRID;
+        qc1.corrid[0]=1;
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf9, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf9);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf9, T_STRING_FLD, 0, cor_buf, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_STRING_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        if (0!=strcmp("CORRID=1", cor_buf) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%s] exp [%s]", cor_buf, "CORRID=1");
+            EXFAIL_OUT(ret);
+        }
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf9, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf9);
+    }
+
+    NDRX_LOG(log_debug, "dequeue last 100 w/o corid from future Q");
+    /* dequeue msg from normal Q and cor Q */
+    for (i=99; i>=0; i--)
+    {
+        /* even is in future queue */
+        if (0!=i%2)
+        {
+            continue;
+        }
+
+        UBFH *buf10 = (UBFH *)tpalloc("UBF", "", 1024);
+        memset(&qc1, 0, sizeof(qc1));
+
+        if (EXSUCCEED!=tpdequeue("MYSPACE", "FUT_CORLIFO", &qc1, (char **)&buf10, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                    tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        ndrx_debug_dump_UBF(log_debug, "msg buf", buf10);
+
+        /* Verify that we have fields in place... */
+        if (EXSUCCEED!=Bget(buf10, T_LONG_FLD, 0, (char *)&l, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to get T_LONG_FLD %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        if (l != i )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Invalid value [%d] exp [%d]", l, i);
+            EXFAIL_OUT(ret);
+        }
+
+        tpfree((char *)buf10);
     }
 out:
     return ret;
