@@ -412,7 +412,7 @@ struct shm_svcinfo
     volatile int csrvs;                          /**< Number of advertises in cluster      */
     volatile int totclustered;                   /**< Total clustered nodes                */
     volatile int cnodes_max_id;                  /**< Max id of cluster nodes in list (for fast search) */
-    volatile cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /**< List of cluster nodes */
+    cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /**< List of cluster nodes */
     /**
      * Number of resources, because there could be rqaddr servers, where
      * srvs is large number, but there is only on queue.
@@ -421,7 +421,7 @@ struct shm_svcinfo
     volatile unsigned int resrr;                          /**< round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
-    volatile ndrx_shm_resid_t resids[0];         /**<  Servers id's offering this service */
+    ndrx_shm_resid_t resids[0];         /**<  Servers id's offering this service */
 };
 
 /* Macros for shm service size */
