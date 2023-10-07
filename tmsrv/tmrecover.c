@@ -386,6 +386,27 @@ out:
 }
 
 /**
+ * Check can we bypass tmsrv call error
+ * @param active call descriptor
+ */
+exprivate int can_bypass_tm_err(int cd)
+{
+    int ret = EXFALSE;
+
+    switch (tperrno)
+    {
+        case TPETIME:
+            tpdiscon(cd);
+        case TPENOENT:
+            ret = EXTRUE;
+            break;
+    }
+
+out:
+    return ret;
+}
+
+/**
  * Fill up the growlist of xids from the server.
  * And then process xids one by one, if needed, perform abortlocal
  * @return EXSUCCEED/EXFAIL
@@ -425,7 +446,16 @@ exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
                                     TPRECVONLY)))
     {
         NDRX_LOG(log_error, "Connect error [%s]", tpstrerror(tperrno) );
-        ret = EXFAIL;
+
+        /* generate no error if possible */
+        if (can_bypass_tm_err(cd))
+        {
+            ret = EXSUCCEED;
+        }
+        else
+        {
+            ret = EXFAIL;
+        }
         goto out;
     }
     NDRX_LOG(log_debug, "Connected OK, cd = %d", cd );
@@ -455,7 +485,16 @@ exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
             else
             {
                 NDRX_LOG(log_error, "recv error %d", tp_errno  );
-                EXFAIL_OUT(ret);
+                /* generate no error if possible */
+                if (can_bypass_tm_err(cd))
+                {
+                    ret = EXSUCCEED;
+                }
+                else
+                {
+                    ret = EXFAIL;
+                }
+                goto out;
             }
         }
         else
