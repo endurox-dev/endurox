@@ -2298,15 +2298,16 @@ out:
         {
             NDRX_LOG(log_error, "Unlink: [%s]", G_atmi_tls->qdisk_tls->filename_active);
 
-	    /* io fencing test */
+            /* io fencing test */
             if (ndrx_G_systest_lockloss 
 			    || EXSUCCEED!=unlink(G_atmi_tls->qdisk_tls->filename_active))
             {
                  int err = errno;
-                 NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
-                 userlog("Failed to unlink [%s]: %s", strerror(err));
+                 NDRX_LOG(log_error, "Failed to unlink [%s]: %s",
+                    G_atmi_tls->qdisk_tls->filename_active, strerror(err));
+                 userlog("Failed to unlink [%s]: %s",
+                    G_atmi_tls->qdisk_tls->filename_active, strerror(err));
             }
-
         }
         
         NDRX_FCLOSE(f);
