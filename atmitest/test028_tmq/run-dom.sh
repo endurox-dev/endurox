@@ -556,10 +556,12 @@ xadmin mqlm -s MYSPACE -q LTESTB
 echo ">>>> LTESTC"
 xadmin mqlm -s MYSPACE -q LTESTC
 
-FIRST=`xadmin mqlm -s MYSPACE -q LTESTA  | head -1  | awk '{print($3)}'`
-
-echo "First message in Q"
-xadmin mqdm -n 1 -i 100 -m $FIRST
+# Seems like head -1 generates SIGPIPE, as after read of first line it closes the
+# or terminates, which triggers xadmin to die, and tmqueue would generate
+# TPETIME for tpsend(), as Q is full.
+#FIRST=`xadmin mqlm -s MYSPACE -q LTESTA  | head -1  | awk '{print($3)}'`
+#echo "First message in Q"
+#xadmin mqdm -n 1 -i 100 -m $FIRST
 
 
 LAST=`xadmin mqlm -s MYSPACE -q LTESTA  | tail -1  | awk '{print($3)}'`
