@@ -213,10 +213,11 @@ do
         # some TM already writes the message to disk...
         # remove transaction logs which are not
         sleep 5
+	xadmin ps -a tmsrv
         # prepared...
         if [ "$(($counter % 3))" == "0" ]; then
-            grep -L ":S:50:" $TESTDIR/RM1/* | xargs rm
-            grep -L ":S:50:" $TESTDIR/RM2/* | xargs rm
+            grep -L ":S:50" $TESTDIR/RM1/* | xargs rm
+            grep -L ":S:50" $TESTDIR/RM2/* | xargs rm
         fi
 
         echo "Sleep 15... to bring processes back... (with some buffer for msg read)"
