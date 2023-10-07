@@ -302,7 +302,10 @@ echo ">>> Basic tests of singleton groups -> group start, check order"
 date
 xadmin psg -a
 date
-xadmin start -i  10
+# this might race with respawn checks and we might get all booted:
+# this above shall be documented.
+# however, wolloing might let to bypass the tests:
+xadmin start -i  10 &
 date
 # Let processes to lock and boot
 sleep 7
