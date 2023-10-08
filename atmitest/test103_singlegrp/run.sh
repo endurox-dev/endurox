@@ -459,7 +459,8 @@ LOCK_PID=`xadmin ps -a "exsinglesv -k nZ22K8K7kewKo -i 10" -p`
 kill -9 $LOCK_PID
 
 # let ndrxd to collect the fact
-sleep 5
+# on freebsd for some reason at points it slow...
+sleep 8
 validate_OK1_lock_loss;
 validate_OK1_recovery;
 
