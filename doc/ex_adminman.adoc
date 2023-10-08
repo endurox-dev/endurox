@@ -1954,9 +1954,29 @@ started on the crashed node.
 
 By design, distributed transaction manager *tmsrv(8)* uses file system storage,
 to strong the transaction logs. The first step of configuring failover, the transaction
-manager shall store it's logs on shared file system, for example *GPFS* or *GFS2*
+manager shall store it's logs on shared file system, for example *GFS2*
 or any other FS which has Posix semantics. Logs directory for *tmsrv* is set by
-*-l* parameter.
+*-l* parameter. The Posix semantics here are understood as:
+
+*tmqueue(8)* server uses file-system based storage for storing persistent
+messages. For cluster oriented operations, failover is supported, but in that
+case directory which holds the messages shall be stored on shared file system,
+for example *GFS2*. The share file system shall support Posix semantics, such as:
+
+- fsync() or fdataync() unix calls after the return guarantees that data is written to the file,
+even after the system crash.
+
+- When new file was created, and program did Unix call fsync() on file descriptor there must be
+guarantees, that file appears in directory after the fsync() return results (even after
+the system crash).
+For Linux "DSYNC" Enduro/X flag can be set which opens the
+directory in read only mode and performs fsync() on directory file descriptor.
+For other OS and/or file systems, please consult with the third party vendors, do they support
+such mode.
+
+If above features are not provided by the Operating System or Shared File System,
+at point of crash and failover, this might lead to loss of transactions (i.e.
+partial commit and partial rollback of the transaction branches).
 
 The second step for implementing failover for transaction managers is to configure
 the singleton groups for *tmsrv(8)* instances. Additionally instances on the different
@@ -2005,7 +2025,7 @@ which are described in following chapter.
 ==== Hardware and software requirements for transaction manager failover
 
 When transaction is about to commit, *tmsrv(8)* writes the
-decsion to the persistent storage. For transaction consistency it is crutial that
+decision to the persistent storage. For transaction consistency it is crucial that
 *no write happens from the failed node to the shared storage after the failover*.
 If such writes happen, transaction logs might become corrupted and
 Enduro/X transaction manager *may loose transactions*.
@@ -2017,38 +2037,43 @@ system assumes that node has failed and leaved the cluster, the shared file
 system cluster gives fcntl() lock (used by singleton groups) to failover
 node which takes over, and then suspended node is resumed.
 
-- Active node is so busy of work and becomes unresoponsive (basically server overloaded),
-so that shared file system cluster may decide that node failed (unresposive), and it does
+- Active node is so busy of work and becomes unresponsive (basically server overloaded),
+so that shared file system cluster may decide that node failed (unresponsive), and it does
 the failover (release locks/give locks to other node). When the failed node 
 load is back to normal, it starts to write to disk again, which may corrupt the data.
 
-To resolve such scenarious, hardware level fencing is required.
+To resolve such scenarios, hardware level fencing is required.
 In ideal scenario, *STONITH* shall be employed, so that if node failed,
 it is restarted and only then shared file system gives fcntl() lock
 to failover node. *GFS2* is using this mechanism. *STONITH* is recommend
-way to fence, as that would also ensure that user applicaiton processes are
+way to fence, as that would also ensure that user application processes are
 terminated immediately and not duplicate run in cluster would be possible.
 
 Other option is to have IO fencing, such as Persistent Reserve (SCSI-3 protocol),
-whcih shall be used by third shared file system. In this case, at hardware level
-shared disk is disconnected from the failed node. For example, IBM *GPFS*
-can use this functionality, however proper disks shall be used for this
-functionality.
+which shall be used by third shared file system, if they support such feature.
+In this case, at hardware level shared disk is disconnected from the failed node.
+*Requirement is, that no write happens from the failed node after the node failed.*
+Before shared disk becomes available on failed node for write, the user application must
+be killed, to avoid any accidental writes. The killing can be done by
+issuing "$ sudo xadmin killall <application_user>" command. *Immediately node shall
+be rebooted, right before shared disk becomes mounted.*
 
-Additionally, if not using HW based fencing, that might *cause corruption* of the
+If not using HW based fencing, that might *cause corruption* of the
 shared file system by it self (i.e. resumed node corrupts shared FS disk structures).
 In such case Enduro/X cluster might stop to work at all on all nodes and might 
-*loose transactions*, persistent messages and other data if storing them in shared fs storage.
+*loose transactions*, *loose persistent queue messages* and
+other data if storing them in shared fs storage.
 
 *NOTE* that time-based fencing may not always protect from such corrupted
 disk write activity from failed nodes, as for example at VM suspend/resume
 cycle, the typically VM Hypervisors (tested on VirtualBox or KVM) at resume
 does not report correct time back to VM. i.e. if VM was suspended for
 10 minutes, after resume within the VM, clock difference is reported as few
-seconds, thus failed node cannot detect that its time lease have expire.
+seconds, thus failed node cannot detect that its time lease have expire, it
+it might overwrite disk structures in non-synchronised way, leading to corruption.
 
-Please consult with shared-file system vendors for how to configure
-and at what extend such disk write protection is provided.
+*Please consult with shared-file system vendors for how to configure
+and at what extend such disk write protection is provided.*
 
 Technically Enduro/X transaction manager requirement is that if node has failed,
 then at failed node no writes must happen to shared file system from
@@ -2064,9 +2089,40 @@ stores its log files.
 
 *tmqueue(8)* server uses file-system based storage for storing persistent
 messages. For cluster oriented operations, failover is supported, but in that
-case directory which holds the messages shall be stored on shared file system
-such as *GFPFS*, *GFS2*. Directory for *tmqueue(8)* is configured in the XA
-open string for *libndrxxaqdisks(8)*. Failover for *tmqueue* can be enabled by
+case directory which holds the messages shall be stored on shared file system,
+for example *GFS2*. The share file system shall support Posix semantics, such as:
+
+- fsync() or fdataync() unix calls after the return guarantees that data is written to the file,
+even after the system crash.
+
+- When new file was created, and program did Unix call fsync() on file descriptor there must be
+guarantees, that file appears in directory after the fsync() return results (even after
+the system crash).
+For Linux "DSYNC" Enduro/X flag can be set which opens the
+directory in read only mode and performs fsync() on directory file descriptor.
+For other OS and/or file systems, please consult with the third party vendors, do they support
+such mode.
+
+- When program issues rename() Unix call on the file, operation is automatic and is
+final right after the rename() returns the result. I.e. file has changed location,
+and would be there even after the system crash. For Linux "DSYNC" Enduro/X flag
+ensures that Linux synchronises the directory to the final state. For other OS
+and/or file-systems, please consult with the third party vendors, do they support
+such mode.
+
+- When program issues unlink() Unix call to the file, the operation must be atomic and
+final right after the unlink() returns the result (i.e. file is removed even after
+the system crash). For Linux "DSYNC" Enduro/X flag ensures that Linux synchronises
+the directory to the final state. For other OS and/or file-systems,
+please consult with the third party vendors, do they support such mode.
+
+If above features are not provided by the Operating System or Shared File System,
+at point of crash and failover, this might lead to loss or double of the
+persistent messages. I.e. persistent message in the queue is lost or
+dequeued message from the queue appears back in the queue.
+
+Directory for *tmqueue(8)* is configured in the XA open string for *libndrxxaqdisks(8)*.
+Failover for *tmqueue* can be enabled by
 configuring it in the singleton process group, as described in next chapter.
 
 As message files stored on this disk encodes the original Enduro/X server ID
@@ -2089,7 +2145,7 @@ the server cluster, then singleton process groups can be used for this purpose.
 Each singleton group requires a lock provider *exsinglesv(8)* process instance, which, by
 acquiring the lock, distinguishes on which machine the singleton group is started.
 *exsinglesv(8)* currently works with fcntl(2) Unix locks, meaning that cluster
-file system shall provide such functionality (e.g. *GFS2* or *GPFS*) and it must
+file system shall provide such functionality (e.g. *GFS2*) and it must
 be configured for the Enduro/X nodes to support singleton process groups.
 
 In the event of node failover, the next any available node will acquire
@@ -2153,14 +2209,16 @@ counter of all involved nodes). If locked node detects that other nodes
 has higher counter value, then given node performs unlock and after that
 *ndrxd* and *cpmsrv* steps in to kill the group processes.
 
-- In case if *STONITH* is not used *tmsrv(8)* after each commit decsion logged,
-verifies that it is still the locked node. Verificaiton is done against, shared
+- In case if *STONITH* is not used *tmsrv(8)* after each commit decision logged,
+verifies that it is still the locked node. Verification is done against, shared
 memory entry of the singleton group, additionally *tmsrv* checks the
 status against heartbeat file or performs heartbeat status reading from other
 nodes. If using *STONITH* device, this check optionally can be disabled,
 by setting *ndrxconfig.xml(5)* setting *sg_nodes_verify* to *N*. For
 each transaction, 3x checks are made. On start of the transaction, before
-commit decision logging and right after decsion successfully logged.
+commit decision logging and right after decision successfully logged. For
+TMQ transactions, additional checks are made when when TMQ transaction is
+started and at point where it is being prepared.
 
 - To support non *STONITH* clusters, *tmsrv* and *tmqueue*
 processes have been updated new CLI setting *-X<seconds>*. This setting is used
@@ -2169,14 +2227,13 @@ recover from cases when parallel instances have generate queue messages or
 transactions. *tmsrv* will load un-seen transaction
 logs on the fly, however *tmqueue* will reboot in case if new
 messages appears Q-space disk, so that queue-space on active
-node can be consistnetly read from the disk.
+node can be consistently read from the disk.
 
 WARNING: when operating with process groups, it is not recommended to
 store the *ndrxd*, *cpmsrv* and *exsinglesv* process logs on the shared
 file system, as in case of shared file system failure, the processes or may
 get killed, leading to fact that singleton groups will not be unlocked locally,
 and processes form singleton groups would not be removed.
-
 
 Following diagram depict the core functionality of the singleton group
 failover, including distributed transaction and persistent queue
@@ -2187,15 +2244,21 @@ image:ex_adminman_failover.png[caption="Figure 13: ", title="Failover processing
 === Sample configuration of the failover setup with singleton groups
 
 This chapter provides sample configuration for having cluster of two machines,
-which uses Enduro/X persist message queue. On each machine two queue spaces
-are located, each in it's own singleton process group. Groups would be
-named as GRP_A (with no *5*) and GRP_B (with no *7*). Groups will be served on
-Enduro/X cluster nodes *1* and *2*.
+and for the matter of keeping instructions short, one singleton process group is
+configured, which is located on the both machines. By default *64* process may
+be configured, and they may be configured in the same way as described here.
+
+Process group "RM1TMQ" will be configured in the example, allocate on nodes
+*1* and *2*.
+
+==== Recommended process configuration
+
+TODO: tmqueue/tmsrv flags and group flags
 
 ==== INI configuration part
 
 For demonstration purposes common configuration file for common-configuring
-enviroment will be defined here. Additional configuration file for each
+environment will be defined here. Additional configuration file for each
 node instance can be pulled in by setting file name in *NDRX_CCONFIG1*:
 
 *app-common.ini* (shall be copied on both nodes)
@@ -2209,37 +2272,38 @@ Let's define debug settings, lock providers and message queue definitions.
 ################################################################################
 
 [@debug]
+...
+# lock providers are using "tp" log topic:
 exsinglesv=tp=5 file=
 exsingleckl=tp=5 file=
 exsingleckr=tp=5 file=
-tmrecoversv=ndrx=5 file=
 
 ################################################################################
 # Lock providers
 ################################################################################
 
-# settings for singleton group GRP_A, note that CCTAG here used is the same
+# settings for singleton group RM1TMQ, note that CCTAG here used is the same
 # as the group name, but these are two different identifiers, just used
 # with the same name for convenience.
-[@exsinglesv/GRP_A]
-lockfile_1=/path/to/shared/storage/GRP_A/lock_1
-lockfile_2=/path/to/shared/storage/GRP_A/lock_2
+[@exsinglesv/RM1TMQ]
+lockfile_1=/path/to/shared/storage/RM1TMQ/lock_1
+lockfile_2=/path/to/shared/storage/RM1TMQ/lock_2
 
 ################################################################################
 # queues for each of the queues spaces
 ################################################################################
 
-[@queue/GRP_A]
-Q1=svcnm=QFWD1,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=5
-Q2=svcnm=QFWD2,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=5
+[@queue/RM1TMQ]
+Q1=svcnm=QFWD1,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=1
+Q2=svcnm=QFWD2,autoq=T,tries=3,waitinit=0,waitretry=1,waitretrymax=5,memonly=n,mode=fifo,workers=1
 
 ################################################################################
 # XA driver configuration
 ################################################################################
 
-[@global/GRP_A]
+[@global/RM1TMQ]
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR=datadir="/path/to/shared/storage/qsp/ASPACE",qspace="ASPACE"
+NDRX_XA_OPEN_STR=datadir="/path/to/shared/storage/qsp/SAMPLESPACE",qspace="SAMPLESPACE"
 NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
 NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
 NDRX_XA_RMLIB=libndrxxaqdisk.so
@@ -2262,7 +2326,7 @@ prepared in this guide:
         ...
     </appconfig>
     <procgroups>
-        <procgroup grpno="5" name="GRP_A" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
+        <procgroup grpno="5" name="RM1TMQ" singleton="Y" sg_nodes="1,2" sg_nodes_verify="Y"/>
         ...
     </procgroups>
     <defaults>
@@ -2270,96 +2334,96 @@ prepared in this guide:
     </defaults>
     <servers>
     ...
-
         <!--
-            Start of the group A
+            Start of the group RM1TMQ
         -->
-
         <server name="exsinglesv">
             <min>1</min>
             <max>1</max>
-            <srvid>10</srvid>
+            <srvid>30</srvid>
             <sysopt>-e ${NDRX_ULOG}/exsinglesv-a.log -r</sysopt>
             <!-- set as lock provider -->
-            <procgrp_lp>GRP_A</procgrp_lp>
-            <cctag>GRP_A</cctag>
+            <procgrp_lp>RM1TMQ</procgrp_lp>
+            <cctag>RM1TMQ</cctag>
         </server>
-
-        <!-- support servers, local, for heartbeat checks -->
+        <!-- support servers, local -->
         <server name="exsingleckl">
-            <min>3</min>
-            <max>3</max>
-            <srvid>15</srvid>
+            <min>10</min>
+            <max>10</max>
+            <srvid>40</srvid>
             <sysopt>-e ${NDRX_ULOG}/exsingleckl-a.log -r</sysopt>
-            <procgrp_lp>GRP_A</procgrp_lp>
-            <cctag>GRP_A</cctag>
+            <procgrp_lp>RM1TMQ</procgrp_lp>
+            <cctag>RM1TMQ</cctag>
         </server>
-
-        <!-- support servers, remote, for heartbeat checks -->
+        <!-- support servers, remote -->
         <server name="exsingleckr">
+            <min>10</min>
+            <max>10</max>
+            <srvid>50</srvid>
+            <sysopt>-e ${NDRX_ULOG}/exsingleckr-a.log -r</sysopt>
+            <procgrp_lp>RM1TMQ</procgrp_lp>
+            <cctag>RM1TMQ</cctag>
+        </server>
+        <server name="tmsrv">
             <min>3</min>
             <max>3</max>
-            <srvid>20</srvid>
-            <sysopt>-e ${NDRX_ULOG}/exsingleckr-a.log -r</sysopt>
-            <procgrp_lp>GRP_A</procgrp_lp>
-            <cctag>GRP_A</cctag>
+            <srvid>60</srvid>
+            <cctag>RM1TMQ</cctag>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180</sysopt>
+            <procgrp>RM1TMQ</procgrp>
         </server>
-
-        <server name="tmsrv">
-            <min>2</min>
-            <max>2</max>
-            <srvid>50</srvid>
-            <cctag>GRP_A</cctag>
-            <procgrp>GRP_A</procgrp>
-            <!-- shared node id set to 2 (i.e. -n2). Check logs on the disk every 6 seconds. -->
-            <sysopt>-e ${NDRX_ULOG}/TM1-a.log -r -- -t60 -l /space/to/shared/storage/tmlogs/rm1 -m10 -s3 -n2 -X6</sysopt>
-        </server>
-
         <server name="tmqueue">
             <min>1</min>
             <max>1</max>
-            <srvid>60</srvid>
-            <cctag>GRP_A</cctag>
-            <procgrp>GRP_A</procgrp>
-            <!-- Set virtual node-id to 2, verify message store in every 60 sec -->
-            <sysopt>-e ${NDRX_ULOG}/tmqueue-a.log -r -- -s1 -n2 -X60</sysopt>
-        </server>
+            <srvid>80</srvid>
+            <cctag>RM1TMQ</cctag>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 -f100</sysopt>
+            <procgrp>RM1TMQ</procgrp>
 
-        <!--
-            run transaction recovery after the tmqueue boot
-            or for for other resource-managers, right after the boot
-            of the tmsrv.
-        -->
+            <!-- Increase time for start wait, as there might be lots of messages
+                 to load
+             -->
+            <start_max>100</start_max>
+            <!-- do not start next server within startup time -->
+            <srvstartwait>100</srvstartwait>
+        </server>
         <server name="tmrecoversv">
             <min>1</min>
             <max>1</max>
             <srvid>250</srvid>
-            <procgrp>GRP_A</procgrp>
+            <procgrp>RM1TMQ</procgrp>
             <sysopt>-e ${NDRX_ULOG}/tmrecoversv-a.log -r -- -i</sysopt>
         </server>
 
+        <!-- User specific binaries: -->
+        <server name="testsv.py">
+            <min>3</min>
+            <max>3</max>
+            <srvid>1250</srvid>
+            <sysopt>-e ${NDRX_ULOG}/testsv.py.log -r</sysopt>
+            <procgrp>RM1TMQ</procgrp>
+            <cctag>RM1TMQ</cctag>
+        </server>
         <server name="banksv_a">
             <min>1</min>
             <max>1</max>
-            <srvid>100</srvid>
+            <srvid>1500</srvid>
             <procgrp>GRP_A</procgrp>
             <sysopt>-e ${NDRX_ULOG}/banksv-a.log -r -- -s1</sysopt>
         </server>
-
-        ... other GRP_A servers here ...
-
+        ... other RM1TMQ servers here ...
         <!--
-            End of the group A
+            *** End of the group RM1TMQ ***
         -->
-
         <!--
             Establish link between nodes 1 & 2 (so transaction checks run faster)
         -->
         <server name="tpbridge">
             <max>1</max>
             <srvid>500</srvid>
-            <sysopt>-e ${NDRX_ULOG}/tpbridge.log</sysopt
-            <appopt>-f -n<other_node_id> -r -i <binding_or_host_ip> -p <binding_or_host_port> -t<A_for_client_B_for_server> -z30</appopt>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge.log</sysopt>
+            <!-- using -z5 / -c2 to enable broken connection detect after 10 sec -->
+            <appopt>-f -n<other_node_id> -r -i <binding_or_host_ip> -p <binding_or_host_port> -t<A_for_client_B_for_server> -z5 -c2</appopt>
         </server>
         ...
         <server name="tmrecoversv">
@@ -2368,30 +2432,23 @@ prepared in this guide:
             <srvid>4000</srvid>
             <sysopt>-e ${NDRX_ULOG}/tmrecoversv-periodic.log -r -- -p</sysopt>
         </server>
-
         <!--
             For demonstration purposes client process will be also attached
             to the singleton group
         -->
-
         <server name="cpmsrv">
             <min>1</min>
             <max>1</max>
             <srvid>9999</srvid>
             <sysopt>-e ${NDRX_ULOG}/cpmsrv-dom1.log -r -- -k3 -i1</sysopt>
         </server>
-
     </servers>
-
     <clients>
-
         <!--  client processes linked to process group -->
-        <client cmdline="restincl" procgrp="GRP_A">
+        <client cmdline="restincl" procgrp="RM1TMQ">
             <exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/restincl-a.log"/>
         </client>
-
     </clients>
-
 </endurox>
 
 
@@ -2405,19 +2462,254 @@ are put in the "wait" state. For example having following node 1 start:
 
 $ xadmin start -y
 
-$ xadmin pc
-
 --------------------------------------------------------------------------------
 
-When node 2 is started, following output is expected from the system:
+Test output from commands:
 
 --------------------------------------------------------------------------------
 
 $ xadmin start -y
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 3494
+* ndrxd idle instance started.
+exec cconfsrv -k 0myWI5nu -i 1 -e /home/user1/test/log/cconfsrv.log -r --  :
+	process id=3496 ... Started.
+exec cconfsrv -k 0myWI5nu -i 2 -e /home/user1/test/log/cconfsrv.log -r --  :
+	process id=3497 ... Started.
+exec tpadmsv -k 0myWI5nu -i 10 -e /home/user1/test/log/tpadmsv.log -r --  :
+	process id=3498 ... Started.
+exec tpadmsv -k 0myWI5nu -i 11 -e /home/user1/test/log/tpadmsv.log -r --  :
+	process id=3499 ... Started.
+exec tpevsrv -k 0myWI5nu -i 20 -e /home/user1/test/log/tpevsrv.log -r --  :
+	process id=3500 ... Started.
+exec exsinglesv -k 0myWI5nu -i 30 -e /home/user1/test/log/exsinglesv-a.log -r --  :
+	process id=3501 ... Started.
+exec exsingleckl -k 0myWI5nu -i 40 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=3502 ... Started.
+exec exsingleckl -k 0myWI5nu -i 41 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=3503 ... Started.
+exec exsingleckl -k 0myWI5nu -i 42 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=3504 ... Started.
+exec exsingleckl -k 0myWI5nu -i 43 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=3505 ... Started.
+exec exsingleckl -k 0myWI5nu -i 44 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=3506 ... Started.
+exec exsingleckr -k 0myWI5nu -i 50 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=3507 ... Started.
+exec exsingleckr -k 0myWI5nu -i 51 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=3508 ... Started.
+exec exsingleckr -k 0myWI5nu -i 52 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=3509 ... Started.
+exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=3510 ... Started.
+exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=3511 ... Started.
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h180 --  :
+	process id=3512 ... Started.
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h180 --  :
+	process id=3524 ... Started.
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h180 --  :
+	process id=3536 ... Started.
+exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -X60 -n2 -f100 --  :
+	process id=3548 ... Started.
+exec tmrecoversv -k 0myWI5nu -i 250 -e /home/user1/test/log/tmrecoversv-a.log -r -- -i --  :
+	process id=3711 ... Started.
+exec testsv.py -k 0myWI5nu -i 1250 -e /home/user1/test/log/testsv.py.log -r --  :
+	process id=3712 ... Started.
+exec testsv.py -k 0myWI5nu -i 1251 -e /home/user1/test/log/testsv.py.log -r --  :
+	process id=3713 ... Started.
+exec testsv.py -k 0myWI5nu -i 1252 -e /home/user1/test/log/testsv.py.log -r --  :
+	process id=3714 ... Started.
+exec tpbridge -k 0myWI5nu -i 150 -e /home/user1/test/log/tpbridge_2.log -r -- -n2 -r -i x.x.x.x -p 21003 -tA -z30 :
+	process id=3715 ... Started.
+exec tmrecoversv -k 0myWI5nu -i 9900 -e /home/user1/test/log/tmrecoversv.log -- -p  --  :
+	process id=3722 ... Started.
+exec cpmsrv -k 0myWI5nu -i 9999 -e /home/user1/test/log/cpmsrv.log -r -- -k3 -i1 --  :
+	process id=3723 ... Started.
+Startup finished. 27 processes started.
+
 
 $ xadmin pc
+* Shared resources opened...
+* ndrxd PID (from PID file): 3494
+TAG1/SUBSECTION1 - running pid 3725 (process group RM1TMQ (no 5), Sun Oct  8 07:19:12 2023)
 
 --------------------------------------------------------------------------------
+
+When node 2 is started, following output is expected from the system (sample output):
+
+--------------------------------------------------------------------------------
+
+$ xadmin start -y
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 31862
+* ndrxd idle instance started.
+exec cconfsrv -k 0myWI5nu -i 1 -e /home/user1/test/log/cconfsrv.log -r --  :
+	process id=31864 ... Started.
+exec cconfsrv -k 0myWI5nu -i 2 -e /home/user1/test/log/cconfsrv.log -r --  :
+	process id=31865 ... Started.
+exec tpadmsv -k 0myWI5nu -i 10 -e /home/user1/test/log/tpadmsv.log -r --  :
+	process id=31866 ... Started.
+exec tpadmsv -k 0myWI5nu -i 11 -e /home/user1/test/log/tpadmsv.log -r --  :
+	process id=31867 ... Started.
+exec tpevsrv -k 0myWI5nu -i 20 -e /home/user1/test/log/tpevsrv.log -r --  :
+	process id=31868 ... Started.
+exec exsinglesv -k 0myWI5nu -i 30 -e /home/user1/test/log/exsinglesv-a.log -r --  :
+	process id=31869 ... Started.
+exec exsingleckl -k 0myWI5nu -i 40 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=31870 ... Started.
+exec exsingleckl -k 0myWI5nu -i 41 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=31871 ... Started.
+exec exsingleckl -k 0myWI5nu -i 42 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=31872 ... Started.
+exec exsingleckl -k 0myWI5nu -i 43 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=31873 ... Started.
+exec exsingleckl -k 0myWI5nu -i 44 -e /home/user1/test/log/exsingleckl-a.log -r --  :
+	process id=31874 ... Started.
+exec exsingleckr -k 0myWI5nu -i 50 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=31875 ... Started.
+exec exsingleckr -k 0myWI5nu -i 51 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=31876 ... Started.
+exec exsingleckr -k 0myWI5nu -i 52 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=31877 ... Started.
+exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=31878 ... Started.
+exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
+	process id=31879 ... Started.
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180 --  :
+	process id=0 ... Waiting on group lock.
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180 --  :
+	process id=0 ... Waiting on group lock.
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180 --  :
+	process id=0 ... Waiting on group lock.
+exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 -f100 --  :
+	process id=0 ... Waiting on group lock.
+exec testsv.py -k 0myWI5nu -i 1250 -e /home/user1/test/log/testsv.py.log -r --  :
+	process id=0 ... Waiting on group lock.
+exec testsv.py -k 0myWI5nu -i 1251 -e /home/user1/test/log/testsv.py.log -r --  :
+	process id=0 ... Waiting on group lock.
+exec testsv.py -k 0myWI5nu -i 1252 -e /home/user1/test/log/testsv.py.log -r --  :
+	process id=0 ... Waiting on group lock.
+exec tmrecoversv -k 0myWI5nu -i 250 -e /home/user1/test/log/tmrecoversv-a.log -r -- -i --  :
+	process id=0 ... Waiting on group lock.
+exec tpbridge -k 0myWI5nu -i 150 -e /home/user1/test/log/tpbridge_2.log -r -- -n1 -r -i 0.0.0.0 -p 21003 -tP -z30 :
+	process id=31880 ... Started.
+exec tmrecoversv -k 0myWI5nu -i 9900 -e /home/user1/test/log/tmrecoversv.log -- -p  --  :
+	process id=31887 ... Started.
+exec cpmsrv -k 0myWI5nu -i 9999 -e /home/user1/test/log/cpmsrv.log -r -- -k3 -i1 --  :
+	process id=31888 ... Started.
+Startup finished. 19 processes started.
+
+$ xadmin pc
+* Shared resources opened...
+* ndrxd PID (from PID file): 31862
+TAG1/SUBSECTION1 - waiting on group lock (process group RM1TMQ (no 5), Sun Oct  8 14:19:49 2023)
+
+--------------------------------------------------------------------------------
+
+Group was locked on node *1* and on node *2* processes in group *RM1TMQ* are put
+in the wait state (waiting on lock).
+
+
+After the startup XATMI server process states can be inspected by following
+command:
+
+$ xadmin ppm
+
+Example from 2nd node
+
+--------------------------------------------------------------------------------
+
+
+$ xadmin ppm
+BINARY   SRVID      PID    SVPID STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS
+-------- ----- -------- -------- ----- ----- -- ---- ---- ---- ---- - ---- -----
+cconfsrv     1     5711     5711 runok runok  1    0   61    0   61 1   61
+cconfsrv     2     5712     5712 runok runok  1    0   61    0   61 1   61
+tpadmsv     10     5713     5713 runok runok  1    0   61    0   61 1   61
+tpadmsv     11     5714     5714 runok runok  1    0   61    0   61 1   61
+tpevsrv     20     5715     5715 runok runok  1    0   61    0   61 1   61
+exsingle    30     5716     5716 runok runok  1    0   61    0   61 1   61 L
+exsingle    40     5717     5717 runok runok  1    0   61    0   61 1   61
+exsingle    41     5718     5718 runok runok  1    0   61    0   61 1   61
+exsingle    42     5719     5719 runok runok  1    0   61    0   61 1   61
+exsingle    43     5720     5720 runok runok  1    0   61    0   61 1   61
+exsingle    44     5721     5721 runok runok  1    0   61    0   61 1   61
+exsingle    50     5722     5722 runok runok  1    0   61    0   61 1   61
+exsingle    51     5723     5723 runok runok  1    0   61    0   61 1   61
+exsingle    52     5724     5724 runok runok  1    0   61    0   61 1   61
+exsingle    53     5725     5725 runok runok  1    0   61    0   61 1   61
+exsingle    54     5726     5726 runok runok  1    0   61    0   61 1   61
+tmsrv       60        0        0 wait  runok  1    0   61    0   61 1   61
+tmsrv       61        0        0 wait  runok  1    0   61    0   61 1   61
+tmsrv       62        0        0 wait  runok  1    0   61    0   61 1   61
+tmqueue     80        0        0 wait  runok  1    0   61    0   61 1   61
+testsv.p  1250        0        0 wait  runok  1    0   61    0   61 1   61
+testsv.p  1251        0        0 wait  runok  1    0   61    0   61 1   61
+testsv.p  1252        0        0 wait  runok  1    0   61    0   61 1   61
+tmrecove   250        0        0 wait  runok  1    0   61    0   61 1   61
+tpbridge   150     5727     5727 runok runok  1    0   61    0   61 1   61 BrC
+tmrecove  9900     5734     5734 runok runok  1    0   61    0   61 1   61
+cpmsrv    9999     5735     5735 runok runok  1    0   61    0   61 1   61
+
+
+--------------------------------------------------------------------------------
+
+With following command lock groups can be inspected for the current application
+running:
+
+$ xadmin ppm -3
+
+Example from second node:
+
+--------------------------------------------------------------------------------
+
+$ xadmin ppm -3
+BINARY   SRVID      PID    SVPID PROCGRP   PGNO PROCGRPL PGLNO PGNLA
+-------- ----- -------- -------- -------- ----- -------- ----- -----
+cconfsrv     1     5711     5711 -            0 -            0     0
+cconfsrv     2     5712     5712 -            0 -            0     0
+tpadmsv     10     5713     5713 -            0 -            0     0
+tpadmsv     11     5714     5714 -            0 -            0     0
+tpevsrv     20     5715     5715 -            0 -            0     0
+exsingle    30     5716     5716 -            0 RM1TMQ       5     5
+exsingle    40     5717     5717 -            0 RM1TMQ       5     0
+exsingle    41     5718     5718 -            0 RM1TMQ       5     0
+exsingle    42     5719     5719 -            0 RM1TMQ       5     0
+exsingle    43     5720     5720 -            0 RM1TMQ       5     0
+exsingle    44     5721     5721 -            0 RM1TMQ       5     0
+exsingle    50     5722     5722 -            0 RM1TMQ       5     0
+exsingle    51     5723     5723 -            0 RM1TMQ       5     0
+exsingle    52     5724     5724 -            0 RM1TMQ       5     0
+exsingle    53     5725     5725 -            0 RM1TMQ       5     0
+exsingle    54     5726     5726 -            0 RM1TMQ       5     0
+tmsrv       60        0        0 RM1TMQ       5 -            0     0
+tmsrv       61        0        0 RM1TMQ       5 -            0     0
+tmsrv       62        0        0 RM1TMQ       5 -            0     0
+tmqueue     80        0        0 RM1TMQ       5 -            0     0
+testsv.p  1250        0        0 RM1TMQ       5 -            0     0
+testsv.p  1251        0        0 RM1TMQ       5 -            0     0
+testsv.p  1252        0        0 RM1TMQ       5 -            0     0
+tmrecove   250        0        0 RM1TMQ       5 -            0     0
+tpbridge   150     5727     5727 -            0 -            0     0
+tmrecove  9900     5734     5734 -            0 -            0     0
+cpmsrv    9999     5735     5735 -            0 -            0     0
+
+--------------------------------------------------------------------------------
+
+Where columns explained:
+
+- *PROCGRP* - Process group name set in <procgrp> for the server.
+
+- *PGNO* - Process group number.
+
+- *PROCGRPL* - This process is lock provider for given group (group name).
+
+- *PGLNO* - This process is lock provider for given group (group number).
+
+- *PGNLA* - This is reported group number for which lock provider is serving.
 
 
 === Group based process startup / stopping / restart
@@ -2427,7 +2719,7 @@ of process/singleton groups.
 
 
 Processes in process groups (including singleton process groups), additionally
-can be controlled by follwoing commands:
+can be controlled by following commands:
 
 *XATMI servers:*
 
@@ -2451,7 +2743,7 @@ can be controlled by follwoing commands:
 
 === System maintenance
 
-To avoid intiation of the failover (good node takes bad node's lock and boots the group),
+To avoid initiation of the failover (good node takes bad node's lock and boots the group),
 Enduro/X has following commands:
 
 - xadmin mmon
@@ -2459,7 +2751,7 @@ Enduro/X has following commands:
 - xadmin mmoff
 
 *mmon* command enables maintenance mode for given node where command is executed.
-After enabling such command, node will not take new locks / perform failover.
+After enabling such command, node will not take new locks / perform fail-over.
 This might be useful if planned shutdown of currently active node shall be done,
 and failover to other working nodes is not required.
 
@@ -2489,7 +2781,7 @@ enabled before given node startup.
 At shutdown if it was set, the node is set back to *0*.
 
 
-To check singleton group statueses on the given machine, following command may be used:
+To check singleton group statuses on the given machine, following command may be used:
 
 - xadmin psg
 
@@ -2500,11 +2792,41 @@ $ xadmin psg
 
 SGID LCKD MMON SBOOT CBOOT LPSRVID    LPPID LPPROCNM          REFRESH RSN FLAGS
 ---- ---- ---- ----- ----- ------- -------- ---------------- -------- --- -----
-   1 Y    N    Y     Y          10 24642038 exsinglesv             1s   0 niv
-   2 Y    N    Y     Y        3000 15467248 exsinglesv             3s   0 niv
+   5 Y    N    Y     Y          10 24642038 exsinglesv             1s   0 iv
 
 --------------------------------------------------------------------------------
 
+Where columns explained:
+
+*SGID* - Singleton Process Group id/number. Set in *<endurox>/<procgroups>/<procgroup>*
+attribute *grpno*.
+
+*LCKD* - Is group locked locally. *Y* - locked, *N* - not.
+
+*MMON* - RFU, always *N*.
+
+*SBOOT* - Is server boot completed. *Y* - yes, *N* - no.
+
+*CBOOT* - Is client (in <clients> section) boot completed  *Y* - yes, *N* - no.
+
+*LPSRVID* - *srvid* of the lock provider server.
+
+*LPPID* - Lock provider pid.
+
+*LPPROCNM* - Lock provider process name.
+
+*REFRESH* - Time from last lock provider refresh (i.e. is locked, and verification passed of
+the locks).
+
+*RNS* - Reason for lock loss.  May take following values: *1* - Expired by missing refresh,
+*2*  - PID missing of lock holder, *5* - Normal shutdown. *6* - Locking error (by exsinglesv),
+*7* - Corrupted structures. *8*  - Locked by network rsp (other node has got the lock),
+*9*  - Network sequence ahead of us (>=). *10*  Their - (other node seq) in heartbeat file (lockfile_2)
+(>=) our lck seq.
+
+*FLAGS* - *n* - no order boot enabled (i.e. *noorder* set to *Y* for group),
+*i* - singleton group configured (in-use), *v* - group verification enabled
+(i.e. group *sg_nodes_verify* setting set to *Y*).
 
 == Standard configuration strings
 
