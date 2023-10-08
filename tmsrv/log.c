@@ -383,6 +383,16 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
 
     /* lock for us, yet it is not shared*/
     tmp->lockthreadid = ndrx_gettid();
+
+    /* well... I guess firstly we shall
+     * add transaction to hashmap, and only then open the file
+     * otherwise we can for file, they are found and then
+     * we request to remove the files...
+     */
+    MUTEX_LOCK_V(M_tx_hash_lock);
+    EXHASH_ADD_STR( M_tx_hash, tmxid, tmp);
+    MUTEX_UNLOCK_V(M_tx_hash_lock);
+    hash_added = EXTRUE;
     
     /* TODO: Open the log file & write tms_close_logfile
      * Only question, how long 
@@ -435,14 +445,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
             NDRX_LOG(log_error, "Failed to write RM status to file: %ld", *btid);
             EXFAIL_OUT(ret);
         }
-
     }
-    
-    MUTEX_LOCK_V(M_tx_hash_lock);
-    EXHASH_ADD_STR( M_tx_hash, tmxid, tmp);
-    MUTEX_UNLOCK_V(M_tx_hash_lock);
-    
-    hash_added = EXTRUE;
     
 out:
     
