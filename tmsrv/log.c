@@ -736,8 +736,8 @@ expublic int tms_housekeep(char *logfile)
         if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(logfile))
         {
             err = errno;
-            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", strerror(err));
-            userlog("Failed to unlink [%s]: %s", strerror(err));
+            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", logfile, strerror(err));
+            userlog("Failed to unlink [%s]: %s", logfile, strerror(err));
         }
         else
         {
@@ -1200,10 +1200,10 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
         if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(p_tl->fname))
         {
             int err = errno;
-            NDRX_LOG(log_debug, "Failed to remove tx log file: %d (%s)", 
-                    err, strerror(err));
-            userlog("Failed to remove tx log file: %d (%s)", 
-                    err, strerror(err));
+            NDRX_LOG(log_debug, "Failed to remove tx log file [%s]: %d (%s)", 
+                    p_tl->fname, err, strerror(err));
+            userlog("Failed to remove tx log file [%s]: %d (%s)", 
+                    p_tl->fname, err, strerror(err));
         }
     }
     
