@@ -53,12 +53,12 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
-# we have 15 sec recovery period. Dur that last tmqueue might detect that
+# we have 30 sec recovery period. Dur that last tmqueue might detect that
 # some message on disk found, it would restart, however tmsrv might
 # get timeout on tmqueue (we do not keep currenlty messages in dead Q).
 # thus the recovery time depends on TOUT setting. So lets keep it low
 # now...
-export NDRX_TOUT=5
+export NDRX_TOUT=10
 export NDRX_SILENT=Y
 export NDRX_SGREFRESH=10
 
