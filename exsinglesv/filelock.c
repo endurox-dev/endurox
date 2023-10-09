@@ -245,13 +245,14 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
     long last_refresh;
     long their_sequence;
     int is_net_rply;
+    int i;
     ndrx_exsinglesv_lockent_t ent;
-    /* check local */
 
+    /* check local */
     lock_ctx->pshm=ndrx_sg_get(ndrx_G_exsinglesv_conf.procgrp_lp_no);
     if (NULL==lock_ctx->pshm)
     {
-        TP_LOG(log_error, "Failed to get singleton process group: %s", 
+        TP_LOG(log_error, "Failed to get singleton process group: %d", 
                 ndrx_G_exsinglesv_conf.procgrp_lp_no);
         EXFAIL_OUT(ret);
     }
@@ -260,192 +261,197 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
     ndrx_sg_load(&lock_ctx->local, lock_ctx->pshm);
 
     ret = ndrx_sg_is_locked(ndrx_G_exsinglesv_conf.procgrp_lp_no, NULL, 0);
+
     /* check all remote */
-
-    if (EXTRUE==ret && (lock_ctx->local.flags & NDRX_SG_VERIFY || force_chk))
+    if (EXTRUE!=ret)
     {
-        int i;
-        ret=EXSUCCEED;
-        for (i=0; i<CONF_NDRX_NODEID_COUNT; i++)
+        TP_LOG(log_info, "Group %d is not locked by shm", 
+                ndrx_G_exsinglesv_conf.procgrp_lp_no);
+        goto out;
+    }
+
+    if (!lock_ctx->local.flags & NDRX_SG_VERIFY && !force_chk)
+    {
+        TP_LOG(log_info, "Group %d verification is not required", 
+                ndrx_G_exsinglesv_conf.procgrp_lp_no);
+        goto out;
+    }
+
+    /* do the checks of the nodes */
+    for (i=0; i<CONF_NDRX_NODEID_COUNT; i++)
+    {
+        int locked_by_stat=EXFALSE;
+        last_refresh = 0;
+
+        if (lock_ctx->local.sg_nodes[i])
         {
-            int locked_by_stat=EXFALSE;
-            last_refresh = 0;
-
-            if (lock_ctx->local.sg_nodes[i])
+            if (lock_ctx->local.sg_nodes[i]==G_atmi_env.our_nodeid)
             {
-                if (lock_ctx->local.sg_nodes[i]==G_atmi_env.our_nodeid)
+                continue;
+            }
+            TP_LOG(log_debug, "Checking node [%d]...", 
+                    lock_ctx->local.sg_nodes[i]);
+
+            if (NULL!=p_ub)
+            {
+                tpfree((char *)p_ub);
+                p_ub = NULL;
+            }
+
+            /* Try remote (if not disabled) */
+            if (!ndrx_G_exsinglesv_conf.noremote)
+            {                
+                p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+
+                if (NULL==p_ub)
                 {
-                    continue;
-                }
-                TP_LOG(log_debug, "Checking node [%d]...", 
-                        lock_ctx->local.sg_nodes[i]);
-
-                if (NULL!=p_ub)
-                {
-                    tpfree((char *)p_ub);
-                    p_ub = NULL;
-                }
-
-                /* do call if verify flag is set */
-                if (lock_ctx->local.flags & NDRX_SG_VERIFY)
-                {                
-                    p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
-
-                    if (NULL==p_ub)
-                    {
-                        TP_LOG(log_error, "Failed to allocate UBF");
-                        EXFAIL_OUT(ret);
-                    }
-
-                    /* load query buffer */
-
-                    tmp = ndrx_G_exsinglesv_conf.procgrp_lp_no;
-                    if (EXSUCCEED!=Bchg(p_ub, EX_COMMAND, 0, NDRX_SGCMD_QUERY, 0L)
-                        || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)&tmp, 0L))
-                    {
-                        TP_LOG(log_error, "Failed to setup request buffer: %s", 
-                            Bstrerror(Berror));
-                        EXFAIL_OUT(ret);
-                    }
-
-                    tpsblktime(ndrx_G_exsinglesv_conf.svc_timeout, TPBLK_NEXT);
-
-                    /* call server for results */
-                    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGREM, (long)lock_ctx->local.sg_nodes[i], 
-                        ndrx_G_exsinglesv_conf.procgrp_lp_no);
-                    TP_LOG(log_debug, "Checking with [%s] group %d lock status", svcnm, 
-                        ndrx_G_exsinglesv_conf.procgrp_lp_no);
-
-                    ret = tpcall(svcnm, (char*)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTRAN);
-                }
-
-                /* 
-                    * if have their lock status & their are locked.
-                    * we have lost the lock, return error.
-                    * (unlock the shm). We will reply, however
-                    * ndrxd may kill the group earlier.
-                    */
-
-                /*
-                    * if they are not locked from the service reply,
-                    * our lock time must be newer than theirs.
-                    * if not, we have lost the lock and return the error.
-                    * (unlock the shm)
-                    */
-                if (EXSUCCEED!=ret || !(lock_ctx->local.flags & NDRX_SG_VERIFY))
-                {
-                    int log_lev = log_error;
-
-                    /* previous was service call... */
-                    if (EXSUCCEED!=ret)
-                    {
-                        if (TPESVCFAIL==tperrno)
-                        {
-                            /* dump the reply buffer... */
-                            ndrx_tplogprintubf(log_error, "svc error response", p_ub);
-                        }
-                        else  if (TPENOENT==tperrno)
-                        {
-                            log_lev = log_debug;
-                        }
-
-                        TP_LOG(log_lev, "Failed to call [%s]: %s - falling back to disk check", 
-                            svcnm, tpstrerror(tperrno));
-                    }
-                    /*  succeed anyway */
-                    ret=EXSUCCEED;
-
-                    /* read the node entry from the disk */
-                    if (EXSUCCEED!=ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
-                    {
-                        TP_LOG(log_error, "Failed to ping lock file [%s] for node %d"
-                            , ndrx_G_exsinglesv_conf.lockfile_2, (int)lock_ctx->local.sg_nodes[i]);
-                        userlog("Failed to ping lock file [%s] for node %d"
-                            , ndrx_G_exsinglesv_conf.lockfile_2, (int)lock_ctx->local.sg_nodes[i]);
-                        EXFAIL_OUT(ret);
-                    }
-
-                    /* load the values down.. */
-                    last_refresh = ent.lock_time;
-                    their_sequence = ent.sequence;
-                    is_net_rply=EXFALSE;
-                }
-                else
-                {
-                    ndrx_tplogprintubf(log_debug, "svc response", p_ub);
-                    /* read lock status... */
-                    if (EXSUCCEED!=Bget(p_ub, EX_LCKSTATUS, 0, &lckstatus, 0L) 
-                        || EXSUCCEED!=Bget(p_ub, EX_TSTAMP, 0, (char *)&last_refresh, 0L)
-                        || EXSUCCEED!=Bget(p_ub, EX_SEQUENCE, 0, (char *)&their_sequence, 0L))
-                    {
-                        /* mandatory field is missing in reply */
-                        TP_LOG(log_error, "Failed to get EX_LCKSTATUS/EX_TSTAMP/EX_SEQUENCE from node %d: %s", 
-                            (int)lock_ctx->local.sg_nodes[i], Bstrerror(Berror));
-                        EXFAIL_OUT(ret);
-                    }
-
-                    if (EXTRUE==lckstatus)
-                    {
-                        locked_by_stat=EXTRUE;
-                    }
-
-                    is_net_rply=EXTRUE;
-                }
-
-                /* take the decsion */
-                if (locked_by_stat)
-                {
-                    TP_LOG(log_error, "Node %d is locked according to network status. "
-                        "Their refresh time: %ld, our time: %ld - UNLOCKING local group %d", 
-                        (int)lock_ctx->local.sg_nodes[i], last_refresh, lock_ctx->local.last_refresh,
-                        ndrx_G_exsinglesv_conf.procgrp_lp_no);
-                    userlog("Node %d is locked according to network status. "
-                        "Their refresh time: %ld, our time: %ld - UNLOCKING local group %d", 
-                        (int)lock_ctx->local.sg_nodes[i], last_refresh, lock_ctx->local.last_refresh,
-                        ndrx_G_exsinglesv_conf.procgrp_lp_no);
-
-                    ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_NETLOCK);
+                    TP_LOG(log_error, "Failed to allocate UBF");
                     EXFAIL_OUT(ret);
                 }
 
-                if (their_sequence>=lock_ctx->local.sequence)
+                /* load query buffer */
+
+                tmp = ndrx_G_exsinglesv_conf.procgrp_lp_no;
+                if (EXSUCCEED!=Bchg(p_ub, EX_COMMAND, 0, NDRX_SGCMD_QUERY, 0L)
+                    || EXSUCCEED!=Bchg(p_ub, EX_PROCGRP_NO, 0, (char *)&tmp, 0L))
                 {
-                    TP_LOG(log_error, "Node %d has higher sequence than us. "
-                        "their seq: %ld, our seq: %ld, their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
-                        (int)lock_ctx->local.sg_nodes[i], their_sequence, lock_ctx->local.sequence, last_refresh, lock_ctx->local.last_refresh,
-                        ndrx_G_exsinglesv_conf.procgrp_lp_no, is_net_rply?"network":"disk");
-                    userlog("Node %d has higher sequence than us. "
-                        "their seq: %ld, our seq: %ld, their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
-                        (int)lock_ctx->local.sg_nodes[i], their_sequence, lock_ctx->local.sequence, last_refresh, lock_ctx->local.last_refresh,
-                        ndrx_G_exsinglesv_conf.procgrp_lp_no, is_net_rply?"network":"disk");
-
-                    if (is_net_rply)
-                    {
-                        ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_NETSEQ);
-                    }
-                    else
-                    {
-                        ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_FSEQ);
-                    }
-
+                    TP_LOG(log_error, "Failed to setup request buffer: %s", 
+                        Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
+
+                tpsblktime(ndrx_G_exsinglesv_conf.svc_timeout, TPBLK_NEXT);
+
+                /* call server for results */
+                snprintf(svcnm, sizeof(svcnm), NDRX_SVC_SGREM, (long)lock_ctx->local.sg_nodes[i], 
+                    ndrx_G_exsinglesv_conf.procgrp_lp_no);
+                TP_LOG(log_debug, "Checking with [%s] group %d lock status", svcnm, 
+                    ndrx_G_exsinglesv_conf.procgrp_lp_no);
+
+                ret = tpcall(svcnm, (char*)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTRAN);
+            }
+
+            /* 
+             * if have their lock status & their are locked.
+             * we have lost the lock, return error.
+             * (unlock the shm). We will reply, however
+             * ndrxd may kill the group earlier.
+             */
+
+            /*
+             * if they are not locked from the service reply,
+             * our lock time must be newer than theirs.
+             * if not, we have lost the lock and return the error.
+             * (unlock the shm)
+             */
+            if (EXSUCCEED!=ret)
+            {
+                int log_lev = log_error;
+
+                /* previous was service call... */
+                if (EXSUCCEED!=ret)
+                {
+                    if (TPESVCFAIL==tperrno)
+                    {
+                        /* dump the reply buffer... */
+                        ndrx_tplogprintubf(log_error, "svc error response", p_ub);
+                    }
+                    else  if (TPENOENT==tperrno)
+                    {
+                        log_lev = log_debug;
+                    }
+
+                    TP_LOG(log_lev, "Failed to call [%s]: %s - falling back to disk check", 
+                        svcnm, tpstrerror(tperrno));
+                }
+                /*  succeed anyway */
+                ret=EXSUCCEED;
+
+                /* read the node entry from the disk */
+                if (EXSUCCEED!=ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
+                {
+                    TP_LOG(log_error, "Failed to ping lock file [%s] for node %d"
+                        , ndrx_G_exsinglesv_conf.lockfile_2, (int)lock_ctx->local.sg_nodes[i]);
+                    userlog("Failed to ping lock file [%s] for node %d"
+                        , ndrx_G_exsinglesv_conf.lockfile_2, (int)lock_ctx->local.sg_nodes[i]);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* load the values down.. */
+                last_refresh = ent.lock_time;
+                their_sequence = ent.sequence;
+                is_net_rply=EXFALSE;
             }
             else
             {
-                /* array is sorted out of linked nodes */
-                break;
+                ndrx_tplogprintubf(log_debug, "svc response", p_ub);
+                /* read lock status... */
+                if (EXSUCCEED!=Bget(p_ub, EX_LCKSTATUS, 0, &lckstatus, 0L) 
+                    || EXSUCCEED!=Bget(p_ub, EX_TSTAMP, 0, (char *)&last_refresh, 0L)
+                    || EXSUCCEED!=Bget(p_ub, EX_SEQUENCE, 0, (char *)&their_sequence, 0L))
+                {
+                    /* mandatory field is missing in reply */
+                    TP_LOG(log_error, "Failed to get EX_LCKSTATUS/EX_TSTAMP/EX_SEQUENCE from node %d: %s", 
+                        (int)lock_ctx->local.sg_nodes[i], Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+
+                if (EXTRUE==lckstatus)
+                {
+                    locked_by_stat=EXTRUE;
+                }
+
+                is_net_rply=EXTRUE;
+            }
+
+            /* take the decsion */
+            if (locked_by_stat)
+            {
+                TP_LOG(log_error, "Node %d is locked according to network status. "
+                    "Their refresh time: %ld, our time: %ld - UNLOCKING local group %d", 
+                    (int)lock_ctx->local.sg_nodes[i], last_refresh, lock_ctx->local.last_refresh,
+                    ndrx_G_exsinglesv_conf.procgrp_lp_no);
+                userlog("Node %d is locked according to network status. "
+                    "Their refresh time: %ld, our time: %ld - UNLOCKING local group %d", 
+                    (int)lock_ctx->local.sg_nodes[i], last_refresh, lock_ctx->local.last_refresh,
+                    ndrx_G_exsinglesv_conf.procgrp_lp_no);
+
+                ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_NETLOCK);
+                EXFAIL_OUT(ret);
+            }
+
+            if (their_sequence>=lock_ctx->local.sequence)
+            {
+                TP_LOG(log_error, "Node %d has higher sequence than us. "
+                    "their seq: %ld, our seq: %ld, their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
+                    (int)lock_ctx->local.sg_nodes[i], their_sequence, lock_ctx->local.sequence, last_refresh, lock_ctx->local.last_refresh,
+                    ndrx_G_exsinglesv_conf.procgrp_lp_no, is_net_rply?"network":"disk");
+                userlog("Node %d has higher sequence than us. "
+                    "their seq: %ld, our seq: %ld, their refresh time: %ld, our time: %ld - UNLOCKING local group %d. Source: %s", 
+                    (int)lock_ctx->local.sg_nodes[i], their_sequence, lock_ctx->local.sequence, last_refresh, lock_ctx->local.last_refresh,
+                    ndrx_G_exsinglesv_conf.procgrp_lp_no, is_net_rply?"network":"disk");
+
+                if (is_net_rply)
+                {
+                    ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_NETSEQ);
+                }
+                else
+                {
+                    ndrx_sg_unlock(lock_ctx->pshm, NDRX_SG_RSN_FSEQ);
+                }
+
+                EXFAIL_OUT(ret);
             }
         }
+        else
+        {
+            /* array is sorted out of linked nodes */
+            break;
+        }
+    }
 
-        /* if we are here, then we are locked fine */
-        ret=EXTRUE;
-    }
-    else
-    {
-        /* keep the status (false or fail)*/
-        goto out;
-    }
+    /* if we are here, then we are locked fine */
+    ret=EXTRUE;
 
     /* if any fail, check local */
 out:

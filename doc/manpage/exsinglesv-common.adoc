@@ -38,7 +38,7 @@ Lock provider distinguishes two locking modes:
 1. If the process is started by normal boot (i.e. it does not respawn after crash),
 the process locks the primary file and immediately reports the locking status to the shared memory.
 
-2. If the process is respawned after the crash, it locks the primary file, however, it
+2. If the process is re-spawned after the crash, it locks the primary file, however, it
 does not report the status immediately to the shared memory. Instead, it waits
 for the number of lock health checks (basically time delay) and after that,
 the group becomes locked. This is done for the reason, of letting the
@@ -88,6 +88,9 @@ configuration section. For these XATMI servers, tag
 *<procgrp_lp>* must be set to group name to which they provide
 locking services.
 
+For more detailed setup of the singleton groups, functions and limitations,
+please see more ex_adminman(guides)(Enduro/X Administration Manual, High availability features) section.
+
 CONFIGURATION
 -------------
 
@@ -103,9 +106,12 @@ For distributed servers, path to file must be located on the shared file system,
 such as GPFS, GFS2 or any other shared file system which supports fcntl().
 
 *lockfile_2=*'FILE_PATH'::
-Ping lock file, which periodically (by the *chkinterval*) performs lock/unlock.
-File system shall be writable by the process. If file is missing, it will be created.
-File is expected to point to the same directory where *lockfile_1* is located.
+Heartbeat lock file, which periodically (by the *chkinterval*) performs lock
+counter update to the file. Additionally file is used for checks for remote
+node lock status, in case if remote check service (@SGREM) is not available,
+or *noremote* parameter is set to *1*. File system shall be writable by the process.
+If file is missing, it will be created. File is expected to point to the
+same directory where *lockfile_1* is located.
 
 *exec_on_bootlocked*='FILE_PATH'::
 Optional user exit, which is executed in case if lock was 
@@ -141,8 +147,15 @@ If using all defaults, then this value is set to *6*. This means that after
 the failover, that singleton group depending on this lock provider 
 will be booted only after *60* seconds.
 
-For more detailed setup of the singleton groups, functions and limitations,
-please see more ex_adminman(guides)(Enduro/X Administration Manual, Active-Active considerations) section.
+*noremote*='NO_REMOTE_SETTING'::
+If set to *1*, *exsinglesv* and *exsingleckl* checks cluster lock status
+in heartbeat file, instead of doing remote call to remote machines. For such
+file systems as GPFS, this might give performance benefit (as local checks
+on this file system is faster than doing remote call). Need for setting the flag
+shall be evaluated on test basis for the give system configuration. Default
+value is *0*, meaning that firstly cluster check will attempt to call remote
+services and if that fail, do checks is Heartbeat file.
+
 
 EXIT STATUS
 -----------
@@ -183,8 +196,8 @@ serves the given singleton group.
 
         <!-- support servers, local -->
         <server name="exsingleckl">
-            <min>3</min>
-            <max>3</max>
+            <min>10</min>
+            <max>10</max>
             <srvid>15</srvid>
             <sysopt>-e ${NDRX_ULOG}/exsingleckl.log -r</sysopt>
             <procgrp_lp>GRPV</procgrp_lp>
@@ -195,7 +208,7 @@ serves the given singleton group.
         <server name="exsingleckr">
             <min>3</min>
             <max>3</max>
-            <srvid>20</srvid>
+            <srvid>30</srvid>
             <sysopt>-e ${NDRX_ULOG}/exsingleckr.log -r</sysopt>
             <procgrp_lp>GRPV</procgrp_lp>
             <cctag>GRPVCCT</cctag>

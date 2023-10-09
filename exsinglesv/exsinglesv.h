@@ -59,19 +59,20 @@ extern "C" {
  */
 typedef struct
 {
-    int procgrp_lp_no; /**< Providing lock for this group   */
-    char lockfile_1[PATH_MAX+1]; /**< Lock file 1       */
-    char lockfile_2[PATH_MAX+1]; /**< Lock file 2       */
+    int procgrp_lp_no; /**< Providing lock for this group         */
+    char lockfile_1[PATH_MAX+1]; /**< Lock file 1                 */
+    char lockfile_2[PATH_MAX+1]; /**< Lock file 2                 */
     char exec_on_bootlocked[PATH_MAX+1]; /**< Exec on boot locked */
-    char exec_on_locked[PATH_MAX+1]; /**< Exec on locked*/
-    int chkinterval; /**< Check interval                */
-    int locked_wait; /**< Number of check cycles for lock takeover */
-    int locked1; /**< Locked                            */
-    int first_boot; /**< Is booting up                  */
+    char exec_on_locked[PATH_MAX+1]; /**< Exec on locked          */
+    int chkinterval; /**< Check interval                          */
+    int locked_wait; /**< Number of check cycles for lock takeover*/
+    int locked1; /**< Locked                                      */
+    int first_boot; /**< Is booting up                            */
     
     int wait_counter;   /**< if this is not first boot, then wait */
-    int is_locked;  /**< Is process fully locked        */
-    int svc_timeout; /**< Service timeout (for remote calls) */
+    int is_locked;  /**< Is process fully locked                  */
+    int svc_timeout; /**< Service timeout (for remote calls)      */
+    int noremote;  /**< Do not check remote servers, just HB file */
 } ndrx_exsinglesv_conf_t;
 
 /**
