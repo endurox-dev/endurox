@@ -103,7 +103,6 @@ int tpsvrinit (int argc, char **argv)
     /* Parse command line  */
     while ((c = getopt(argc, argv, "s:pi")) != -1)
     {
-
 	    if (optarg)
         {
             NDRX_LOG(log_debug, "%c = [%s]", c, optarg);

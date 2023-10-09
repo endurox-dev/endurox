@@ -692,154 +692,154 @@ insight on how to configure the system.
 --------------------------------------------------------------------------------
 <?xml version="1.0" ?>
 <endurox>
-	<!--
-		*** For more info see ndrxconfig.xml(5) man page. ***
-	-->
-	<appconfig>
-		<!-- 
-			ALL BELLOW ONES USES <sanity> periodical timer
-			Sanity check time, sec
-		-->
-		<sanity>1</sanity>
-		
-		<!--
-			Seconds in which we should send service refresh to other node.
-		-->
-		<brrefresh>5</brrefresh>
-		
-		<!-- 
-			Do process reset after 1 sec 
-		-->
-		<restart_min>1</restart_min>
-		
-		<!-- 
-			If restart fails, then boot after +5 sec of previous wait time
-		-->
-		<restart_step>1</restart_step>
-		
-		<!-- 
-			If still not started, then max boot time is a 30 sec. 
-		-->
-		<restart_max>5</restart_max>
-		
-		<!--  
-			<sanity> timer, usage end
-		-->
-		
-		<!-- 
-		Time (seconds) after attach when program will start do sanity & respawn checks,
-		starts counting after configuration load 
-		-->
-		<restart_to_check>20</restart_to_check>
-		
-		
-		<!-- 
-			Setting for pq command, should ndrxd collect service 
-			queue stats automatically If set to Y or y, 
-			then queue stats are on. Default is off.
-		-->
-		<gather_pq_stats>Y</gather_pq_stats>
+<!--
+    *** For more info see ndrxconfig.xml(5) man page. ***
+-->
+    <appconfig>
+        <!--
+            ALL BELLOW ONES USES <sanity> periodical timer
+            Sanity check time, sec
+        -->
+        <sanity>1</sanity>
 
-	</appconfig>
-	<defaults>
+        <!--
+            Seconds in which we should send service refresh to other node.
+        -->
+        <brrefresh>5</brrefresh>
 
-		<min>1</min>
-		<max>2</max>
-		<!-- 
-			Kill the process which have not started in <start_max> time
-		-->
-		<autokill>1</autokill>
-		
-		<!-- 
-			The maximum time while process can hang in 'starting' state i.e.
-			have not completed initialization, sec X <= 0 = disabled  
-		-->
-		<start_max>10</start_max>
-		
-		<!--
-			Ping server in every X seconds (step is <sanity>).
-		-->
-		<pingtime>100</pingtime>
-		
-		<!--
-			Max time in seconds in which server must respond.
-			The granularity is sanity time.
-			X <= 0 = disabled 
-		-->
-		<ping_max>800</ping_max>
-		
-		<!--
-			Max time to wait until process should exit on shutdown
-			X <= 0 = disabled 
-		-->
-		<end_max>10</end_max>
-		
-		<!-- 
-			Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
-			to process until it have been terminated.
-		-->
-		<killtime>1</killtime>
-		
-	</defaults>
-	<servers>
-		<server name="cconfsrv">
-			<min>2</min>
-			<max>2</max>
-			<srvid>1</srvid>
-			<sysopt>-e ${NDRX_ULOG}/cconfsrv.log -r</sysopt>
-		</server>
-		<server name="tpevsrv">
-			<min>2</min>
-			<max>2</max>
-			<srvid>20</srvid>
-			<sysopt>-e ${NDRX_ULOG}/tpevsrv.log -r</sysopt>
-		</server>
-		<server name="tmsrv">
-			<min>3</min>
-			<max>3</max>
-			<srvid>40</srvid>
-			<cctag>RM1TMQ</cctag>
-			<sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/tmlogs/rm1</sysopt>
-		</server>
-		<server name="tmqueue">
-			<min>1</min>
-			<max>1</max>
-			<srvid>60</srvid>
-			<cctag>RM1TMQ</cctag>
-			<sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1</sysopt>
-		</server>
-		<server name="tpbridge">
-			<min>1</min>
-			<max>1</max>
-			<srvid>150</srvid>
-			<sysopt>-e ${NDRX_ULOG}/tpbridge_2.log -r</sysopt>
-			<appopt>-f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30</appopt>
-		</server>
-		<server name="cpmsrv">
-			<min>1</min>
-			<max>1</max>
-			<srvid>9999</srvid>
-			<sysopt>-e ${NDRX_ULOG}/cpmsrv.log -r -- -k3 -i1</sysopt>
-		</server>
-	</servers>
-	<!-- 
-		Client section 
-	-->
-	<clients>
-		<!--
-			Test parameter passing to process 
-			- To list clients:$ xadmin pc
-			- To stop client: $ xadmin sc -t TAG1 -s SUBSECTION1
-			- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
-		-->
-		<client cmdline="your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
-			<exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/testbin-1.log"/>
-			<exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_ULOG}/testbin-3.log"/>
-		</client>
-		<client cmdline="your_test_binary2.sh -t ${NDRX_CLTTAG}">
-			<exec tag="TAG3" autostart="Y" log="${NDRX_ULOG}/testbin2-1.log"/>
-		</client>
-	</clients>
+        <!--
+            Do process reset after 1 sec
+        -->
+        <restart_min>1</restart_min>
+
+        <!--
+            If restart fails, then boot after +5 sec of previous wait time
+        -->
+        <restart_step>1</restart_step>
+
+        <!--
+            If still not started, then max boot time is a 30 sec.
+        -->
+        <restart_max>5</restart_max>
+
+        <!--
+            <sanity> timer, usage end
+        -->
+
+        <!--
+        Time (seconds) after attach when program will start do sanity & respawn checks,
+        starts counting after configuration load
+        -->
+        <restart_to_check>20</restart_to_check>
+
+
+        <!--
+            Setting for pq command, should ndrxd collect service
+            queue stats automatically If set to Y or y,
+            then queue stats are on. Default is off.
+        -->
+        <gather_pq_stats>Y</gather_pq_stats>
+
+    </appconfig>
+    <defaults>
+
+        <min>1</min>
+        <max>2</max>
+        <!--
+            Kill the process which have not started in <start_max> time
+        -->
+        <autokill>1</autokill>
+
+        <!--
+            The maximum time while process can hang in 'starting' state i.e.
+            have not completed initialization, sec X <= 0 = disabled
+        -->
+        <start_max>10</start_max>
+
+        <!--
+            Ping server in every X seconds (step is <sanity>).
+        -->
+        <pingtime>100</pingtime>
+
+        <!--
+            Max time in seconds in which server must respond.
+            The granularity is sanity time.
+            X <= 0 = disabled
+        -->
+        <ping_max>800</ping_max>
+
+        <!--
+            Max time to wait until process should exit on shutdown
+            X <= 0 = disabled
+        -->
+        <end_max>10</end_max>
+
+        <!--
+            Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+            to process until it have been terminated.
+        -->
+        <killtime>1</killtime>
+
+    </defaults>
+    <servers>
+        <server name="cconfsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>1</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cconfsrv.log -r</sysopt>
+        </server>
+        <server name="tpevsrv">
+            <min>2</min>
+            <max>2</max>
+            <srvid>20</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpevsrv.log -r</sysopt>
+        </server>
+        <server name="tmsrv">
+            <min>3</min>
+            <max>3</max>
+            <srvid>40</srvid>
+            <cctag>RM1TMQ</cctag>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/tmlogs/rm1</sysopt>
+        </server>
+        <server name="tmqueue">
+            <min>1</min>
+            <max>1</max>
+            <srvid>60</srvid>
+            <cctag>RM1TMQ</cctag>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1</sysopt>
+        </server>
+        <server name="tpbridge">
+            <min>1</min>
+            <max>1</max>
+            <srvid>150</srvid>
+            <sysopt>-e ${NDRX_ULOG}/tpbridge_2.log -r</sysopt>
+            <appopt>-f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30</appopt>
+        </server>
+        <server name="cpmsrv">
+            <min>1</min>
+            <max>1</max>
+            <srvid>9999</srvid>
+            <sysopt>-e ${NDRX_ULOG}/cpmsrv.log -r -- -k3 -i1</sysopt>
+        </server>
+    </servers>
+    <!--
+        Client section
+    -->
+    <clients>
+        <!--
+            Test parameter passing to process
+            - To list clients:$ xadmin pc
+            - To stop client: $ xadmin sc -t TAG1 -s SUBSECTION1
+            - To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
+        -->
+        <client cmdline="your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
+            <exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_ULOG}/testbin-1.log"/>
+            <exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_ULOG}/testbin-3.log"/>
+        </client>
+        <client cmdline="your_test_binary2.sh -t ${NDRX_CLTTAG}">
+            <exec tag="TAG3" autostart="Y" log="${NDRX_ULOG}/testbin2-1.log"/>
+        </client>
+    </clients>
 </endurox>
 
 --------------------------------------------------------------------------------
@@ -863,41 +863,41 @@ look like:
 --------------------------------------------------------------------------------
 <?xml version="1.0" ?>
 <endurox>
-	<appconfig>
-		<sanity>10</sanity>
-		<brrefresh>6</brrefresh>
-		<restart_min>1</restart_min>
-		<restart_step>1</restart_step>
-		<restart_max>5</restart_max>
-		<restart_to_check>20</restart_to_check>
-	</appconfig>
-	<defaults>
-		<min>1</min>
-		<max>2</max>
-		<autokill>1</autokill>
-		<respawn>1<respawn>
-		<start_max>2</start_max>
-		<pingtime>1</pingtime>
-		<ping_max>4</ping_max>
-		<end_max>3</end_max>
-		<killtime>1</killtime>
-	</defaults>
-	<servers>
-		<!-- Connect to cluster node 2, we will wait for call -->
-		<server name="tpbridge">
-			<max>1</max>
-			<srvid>101</srvid>
-			<sysopt>-e /tmp/BRIDGE002 -r</sysopt>
-			<appopt>-n2 -r -i 0.0.0.0 -p 4433 -tP -z30</appopt>
-		</server>
-		<!-- Connect to cluster node 12, we try to connect activetly to it -->
-		<server name="tpbridge">
-			<max>1</max>
-			<srvid>102</srvid>
-			<sysopt>-e /tmp/BRIDGE012 -r</sysopt>
-			<appopt>-n12 -r -i 195.122.24.13 -p 14433 -tA -z30</appopt>
-		</server>
-	</servers>
+    <appconfig>
+        <sanity>10</sanity>
+        <brrefresh>6</brrefresh>
+        <restart_min>1</restart_min>
+        <restart_step>1</restart_step>
+        <restart_max>5</restart_max>
+        <restart_to_check>20</restart_to_check>
+    </appconfig>
+    <defaults>
+        <min>1</min>
+        <max>2</max>
+        <autokill>1</autokill>
+        <respawn>1<respawn>
+        <start_max>2</start_max>
+        <pingtime>1</pingtime>
+        <ping_max>4</ping_max>
+        <end_max>3</end_max>
+        <killtime>1</killtime>
+    </defaults>
+    <servers>
+        <!-- Connect to cluster node 2, we will wait for call -->
+        <server name="tpbridge">
+            <max>1</max>
+            <srvid>101</srvid>
+            <sysopt>-e /tmp/BRIDGE002 -r</sysopt>
+            <appopt>-n2 -r -i 0.0.0.0 -p 4433 -tP -z30</appopt>
+        </server>
+        <!-- Connect to cluster node 12, we try to connect activetly to it -->
+        <server name="tpbridge">
+            <max>1</max>
+            <srvid>102</srvid>
+            <sysopt>-e /tmp/BRIDGE012 -r</sysopt>
+            <appopt>-n12 -r -i 195.122.24.13 -p 14433 -tA -z30</appopt>
+        </server>
+    </servers>
 </endurox>
 --------------------------------------------------------------------------------
 
@@ -1225,67 +1225,65 @@ of the group:
         ...
     </appconfig>
     <defaults>
-	    ...
+        ...
     </defaults>
     <servers>
+        <server name="tmsrv">
+            <srvid>50</srvid>
+            <min>1</min>
+            <max>1</max>
+            <cctag>Group1</cctag>
+            <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm1 </sysopt>
+        </server>
 
-            <server name="tmsrv">
-                <srvid>50</srvid>
-                <min>1</min>
-                <max>1</max>
-                <cctag>Group1</cctag>
-                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm1 </sysopt>
-            </server>
+        <server name="tmsrv">
+            <srvid>150</srvid>
+            <min>1</min>
+            <max>1</max>
+            <cctag>Group2</cctag>
+            <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm2 </sysopt>
+        </server>
 
-            <server name="tmsrv">
-                <srvid>150</srvid>
-                <min>1</min>
-                <max>1</max>
-                <cctag>Group2</cctag>
-                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm2 </sysopt>
-            </server>
+        <server name="tmsrv">
+            <srvid>250</srvid>
+            <min>1</min>
+            <max>1</max>
+            <cctag>Group3</cctag>
+            <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm3 </sysopt>
+        </server>
 
-            <server name="tmsrv">
-                <srvid>250</srvid>
-                <min>1</min>
-                <max>1</max>
-                <cctag>Group3</cctag>
-                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm3 </sysopt>
-            </server>
+        <server name="tmsrv">
+            <srvid>350</srvid>
+            <min>1</min>
+            <max>1</max>
+            <cctag>Group4</cctag>
+            <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm4 </sysopt>
+        </server>
 
-            <server name="tmsrv">
-                <srvid>350</srvid>
-                <min>1</min>
-                <max>1</max>
-                <cctag>Group4</cctag>
-                <sysopt>-e ${NDRX_ULOG}/TM1.log -r -- -t60 -l${NDRX_APPHOME}/tmlogs/rm4 </sysopt>
-            </server>
+        <server name="test_orasv">
+            <srvid>400</srvid>
+            <cctag>Group2</cctag>
+            <sysopt>-e ${NDRX_ULOG}/test_orasv.log -r</sysopt>
+        </server>
 
-            <server name="test_orasv">
-                <srvid>400</srvid>
-                <cctag>Group2</cctag>
-                <sysopt>-e ${NDRX_ULOG}/test_orasv.log -r</sysopt>
-            </server>
+        <server name="test_pgsv">
+            <srvid>500</srvid>
+            <cctag>Group3</cctag>
+            <sysopt>-e ${NDRX_ULOG}/test_pgsv.log -r</sysopt>
+        </server>
 
-            <server name="test_pgsv">
-                <srvid>500</srvid>
-                <cctag>Group3</cctag>
-                <sysopt>-e ${NDRX_ULOG}/test_pgsv.log -r</sysopt>
-            </server>
-
-            <server name="tmqueue">
-                <max>1</max>
-                <srvid>600</srvid>
-                <cctag>Group4</cctag>
-                <sysopt>-e ${NDRX_ULOG}/tmqueue.log -r -- -s1</sysopt>
-            </server>
+        <server name="tmqueue">
+            <max>1</max>
+            <srvid>600</srvid>
+            <cctag>Group4</cctag>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue.log -r -- -s1</sysopt>
+        </server>
     </servers>
-	<clients>
-		<client cmdline="test_nullcl" CCTAG="Group1">
-			<exec tag="NULLCL" autostart="Y" log="${NDRX_ULOG}/testnullbin.log"/>
-		</client>
-	</clients>
-
+    <clients>
+        <client cmdline="test_nullcl" CCTAG="Group1">
+            <exec tag="NULLCL" autostart="Y" log="${NDRX_ULOG}/testnullbin.log"/>
+        </client>
+    </clients>
 </endurox>
 
 --------------------------------------------------------------------------------
@@ -1392,14 +1390,14 @@ In case of CPMSRV, following can be used as configuration:
 
 --------------------------------------------------------------------------------
 ...
-        <!-- Client section -->
-        <clients>
+    <!-- Client section -->
+    <clients>
 ...
-                <client cmdline="/path/to/install/bin/nxagentd -D5 -c/etc/nxagentd.conf" log="/tmp/nxagentd.log">
-                        <exec tag="NXAGENT" autostart="Y" />
-                </client>
+        <client cmdline="/path/to/install/bin/nxagentd -D5 -c/etc/nxagentd.conf" log="/tmp/nxagentd.log">
+                <exec tag="NXAGENT" autostart="Y" />
+        </client>
 ...
-        </clients>
+    </clients>
 --------------------------------------------------------------------------------
 
 
@@ -1548,15 +1546,15 @@ sub NdrxState2Num(parameter)
 {
    v = AgentReadParameter($node, parameter);
 
-   if (null==v)
-	{
-		return 0;
-	}
+    if (null==v)
+    {
+        return 0;
+    }
 
-   if (v=="ACT")
-	{
-		return 1;
-	}
+    if (v=="ACT")
+    {
+        return 1;
+    }
 
     return 0;
 }
@@ -1655,20 +1653,19 @@ t = AgentReadTable($node, "Endurox.ServiceGroups");
 
 if (null==t)
 {
-	return "Table is not found? Is Agent configured for Enduro/X?";
-
+    return "Table is not found? Is Agent configured for Enduro/X?";
 }
 
 for (c : t->columns) {
-	print(c->name . " | ");
+    print(c->name . " | ");
 }
 
 println("");
 
 for (row : t->rows) {
-	for(cell : row->values) {
-		print(cell . " | ");
-	}
+    for(cell : row->values) {
+        print(cell . " | ");
+    }
 
 	println("");
 }
@@ -1713,105 +1710,105 @@ advertised:
 //@return aggregated value
 sub NdrxGet(tableName, keyColName, keyExpr, aggrFunc, aggrCol)
 {
-	ret = 0;
-	t = AgentReadTable($node, tableName);
-	
-	if (null==t)
-	{
-	    return null;
-	}
-	
-	key_col = -1;
-	agg_col = -1;
-	
-	for(i = 0; i < t->columnCount; i++)
-	{
-	    if (t->getColumnName(i) == keyColName)
-	    {
-				chk_col=i;
-	    }
-	    else if (t->getColumnName(i) == aggrCol)
-	    {
-	        agg_col=i;
-	    }
-	
-	}
-	
-	//No column found..
-	if (-1==chk_col)
-	{
-		print("ERROR! Key column not found: ".keyColName."\n");
-		return null;
-	}
-	
-	if (-1==agg_col && (aggrFunc=="min" || aggrFunc=="max" || aggrFunc=="sum" || aggrFunc=="avg"))
-	{
-		print("ERROR! Aggregation column not found: ".aggrCol."\n");
-	   return null;
-	}
-	
-	match_rows = 0;
-	// Process the data...
-	for(i = 0; i < t->rowCount; i++)
-	{
-	    keycolvalue = t->get(i, chk_col);
-	
-	    if (keycolvalue ~= keyExpr)
-	    {
-	    	match_rows++;
-	    
-	    	if (aggrFunc=="cnt")
-	    	{
-	    		ret++;
-	    	}
-	    	else
-	    	{
-				data = t->get(i, agg_col);
-				
-				//print("AGG: ".data."\n");
-				
-		    	if (aggrFunc=="sum" || aggrFunc=="avg")
-		    	{
-		    		ret+=data;
-		    	}
-		    	else if (aggrFunc=="min")
-		    	{
-					if (1==match_rows)
-					{
-						ret = data;
-					}
-					else if( data < ret )
-					{
-						 ret = data;
-					}
-		    	}
-		    	else if (aggrFunc=="max")
-		    	{
-					if (1==match_rows)
-					{
-						ret = data;
-					}
-					else if( data > ret )
-					{
-						ret = data;
-					}
-		    	}
+    ret = 0;
+    t = AgentReadTable($node, tableName);
 
-		    	first=0;
-	    	}
-	    }
-	}
-	
-	if (0==match_rows && (aggrFunc=="min" || aggrFunc=="max" || aggrFunc=="sum" || aggrFunc=="avg"))
-	{
-		ret = null;
-	}
-	else if (aggrFunc=="avg")
-	{
-		ret = ret/match_rows;
-	}
-	
-	return ret;
+    if (null==t)
+    {
+        return null;
+    }
+
+    key_col = -1;
+    agg_col = -1;
+
+    for(i = 0; i < t->columnCount; i++)
+    {
+        if (t->getColumnName(i) == keyColName)
+        {
+                chk_col=i;
+        }
+        else if (t->getColumnName(i) == aggrCol)
+        {
+            agg_col=i;
+        }
+
+    }
+
+    //No column found..
+    if (-1==chk_col)
+    {
+        print("ERROR! Key column not found: ".keyColName."\n");
+        return null;
+    }
+
+    if (-1==agg_col && (aggrFunc=="min" || aggrFunc=="max" || aggrFunc=="sum" || aggrFunc=="avg"))
+    {
+        print("ERROR! Aggregation column not found: ".aggrCol."\n");
+        return null;
+    }
+
+    match_rows = 0;
+    // Process the data...
+    for(i = 0; i < t->rowCount; i++)
+    {
+        keycolvalue = t->get(i, chk_col);
+
+        if (keycolvalue ~= keyExpr)
+        {
+            match_rows++;
+
+            if (aggrFunc=="cnt")
+            {
+                ret++;
+            }
+            else
+            {
+                data = t->get(i, agg_col);
+
+                //print("AGG: ".data."\n");
+
+                if (aggrFunc=="sum" || aggrFunc=="avg")
+                {
+                    ret+=data;
+                }
+                else if (aggrFunc=="min")
+                {
+                    if (1==match_rows)
+                    {
+                        ret = data;
+                    }
+                    else if( data < ret )
+                    {
+                            ret = data;
+                    }
+                }
+                else if (aggrFunc=="max")
+                {
+                    if (1==match_rows)
+                    {
+                        ret = data;
+                    }
+                    else if( data > ret )
+                    {
+                        ret = data;
+                    }
+                }
+
+                first=0;
+            }
+        }
+    }
+
+    if (0==match_rows && (aggrFunc=="min" || aggrFunc=="max" || aggrFunc=="sum" || aggrFunc=="avg"))
+    {
+        ret = null;
+    }
+    else if (aggrFunc=="avg")
+    {
+        ret = ret/match_rows;
+    }
+
+    return ret;
 }
 
 //To test:
@@ -2251,9 +2248,52 @@ be configured, and they may be configured in the same way as described here.
 Process group "RM1TMQ" will be configured in the example, allocate on nodes
 *1* and *2*.
 
-==== Recommended process configuration
+==== Recommended process configuration for failover
 
-TODO: tmqueue/tmsrv flags and group flags
+For *tmsrv* following additional settings shall be used:
+
+.tmsrv - Recommended additional CLI parameters for failover processing
+[width="80%", options="header"]
+|=========================================================
+|Parameter|Description|Recommended value
+|-n<node_id> | Common cluster node id, used for log file recognition|
+Any node id (NDRX_NODEID) used in cluster. Shall be common for all participants in the cluster
+|-X<seconds> | Number of seconds tor run for disk checks
+(i.e. scan for unseen transaction logs, left from other node if had concurrent run). However
+if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|30
+|-r<attempts | Number of retries to try to finish the transaction if resource managers are not working.
+if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|30
+|-h<seconds> | Number of seconds to wait for housekeeping to remove corrupted transaction logs.
+Corrupted logs might happen, if active node just opened transaction log and node crashed.|120
+|=========================================================
+
+.tmqueue - Recommended additional CLI parameters for failover processing
+[width="80%", options="header"]
+|=========================================================
+|Parameter|Description|Recommended value
+|-n<node_id> | Common cluster node id, used for log file recognition|
+Any node id (NDRX_NODEID) used in cluster. Shall be common for all participants in the cluster
+|-X<seconds> | Number of seconds to run for disk checks (i.e. scan for non
+loaded messages, left from other node if had concurrent run). Normally shall not happen,
+if proper fencing is used|60|
+|=========================================================
+
+.tpbridge - Recommended additional CLI parameters for failover processing
+[width="80%", options="header"]
+|=========================================================
+|Parameter|Description|Recommended value
+|-z<zero_snd_time> | Interval into which zero length message is sent to socket to keep the
+activity|5
+|-c<check_time> | Number of seconds for check intervals. This interval checks
+for running -z message sending|2
+|-a<rcv_time> | Number of second into which something must be received from
+the socket, if not received, connection is closed|10
+|=========================================================
+
+Above configuration will ensure, that socket will be reset after 10 seconds,
+in case of failed node cut-off, and services will not be available on the
+survived node.
+
 
 ==== INI configuration part
 
@@ -2369,7 +2409,7 @@ prepared in this guide:
             <max>3</max>
             <srvid>60</srvid>
             <cctag>RM1TMQ</cctag>
-            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h120</sysopt>
             <procgrp>RM1TMQ</procgrp>
         </server>
         <server name="tmqueue">
@@ -2423,7 +2463,7 @@ prepared in this guide:
             <srvid>500</srvid>
             <sysopt>-e ${NDRX_ULOG}/tpbridge.log</sysopt>
             <!-- using -z5 / -c2 to enable broken connection detect after 10 sec -->
-            <appopt>-f -n<other_node_id> -r -i <binding_or_host_ip> -p <binding_or_host_port> -t<A_for_client_B_for_server> -z5 -c2</appopt>
+            <appopt>-f -n<other_node_id> -r -i <binding_or_host_ip> -p <binding_or_host_port> -t<A_for_client_B_for_server> -z5 -c2 -a10</appopt>
         </server>
         ...
         <server name="tmrecoversv">
