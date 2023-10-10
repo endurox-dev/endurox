@@ -104,6 +104,15 @@ esac
 #
 export NDRX_CCONFIG1=$TESTDIR/app-common.ini
 
+# Check if the /etc/os-release file exists
+# slow disks on RPI (sd card..) + avoid wearing out...
+if [ -e /etc/os-release ]; then
+    if grep -q "Raspbian" /etc/os-release; then
+        echo "Raspbian detected - no fsync"
+        export NDRX_CCONFIG1=$TESTDIR/app-common.ini
+    fi
+fi
+
 #
 # Domain 1 - here client will live
 #
