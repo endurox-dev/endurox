@@ -91,6 +91,7 @@ locking services.
 For more detailed setup of the singleton groups, functions and limitations,
 please see more ex_adminman(guides)(Enduro/X Administration Manual, High availability features) section.
 
+
 CONFIGURATION
 -------------
 
@@ -155,6 +156,15 @@ on this file system is faster than doing remote call). Need for setting the flag
 shall be evaluated on test basis for the give system configuration. Default
 value is *0*, meaning that firstly cluster check will attempt to call remote
 services and if that fail, do checks is Heartbeat file.
+
+
+LIMITATIONS
+-----------
+
+If doing manual *xadmin(8)* command based *exsinglesv* start (or restart/sreload)
+on booted application, the return from command might delay, as depending on current
+*ndrxd(8)* sanity cycle, the singleton process group might pass for startup and
+only then xadmin will return results to command line back.
 
 
 EXIT STATUS
