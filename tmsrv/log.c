@@ -322,21 +322,25 @@ expublic int tms_log_checkpointseq(atmi_xa_log_t *p_tl)
             exit(EXFAIL);
         }
 
-        /* failover has happened during transaction processing
-         * thus cannot proceed with decsion, only after restart
-         */
-        if ( (grp_flags & TPPG_SINGLETON) && (seq - p_tl->sg_sequence >= G_atmi_env.sglockinc))
+        /* allow simple lock grou pbased checks */
+        if (NULL!=p_tl)
         {
-            NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
-                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
-            userlog("Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
-                G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
-            /* !!!! */
-            exit(EXFAIL);
-        }
+            /* failover has happened during transaction processing
+            * thus cannot proceed with decsion, only after restart
+            */
+            if ( (grp_flags & TPPG_SINGLETON) && (seq - p_tl->sg_sequence >= G_atmi_env.sglockinc))
+            {
+                NDRX_LOG(log_error, "Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                    G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+                userlog("Singleton group %d on node %ld lock lost (tl seq %ld, cur seq %ld) - exit(-1), ",
+                    G_atmi_env.procgrp_no, tpgetnodeid(), p_tl->sg_sequence, seq);
+                /* !!!! */
+                exit(EXFAIL);
+            }
 
-        /* we are safe to continue... */
-        p_tl->sg_sequence=seq;
+            /* we are safe to continue... */
+            p_tl->sg_sequence=seq;
+        }
     }
 out:
     return ret;
