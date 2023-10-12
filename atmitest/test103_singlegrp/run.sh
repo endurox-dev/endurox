@@ -169,8 +169,8 @@ function validate_OK1_recovery {
         go_out -1
     fi
 
-    echo "Wait 40 (lock regain + wait) check locked_wait + boot order booted all processes..."
-    sleep 40
+    echo "Wait 45 (lock regain + wait) check locked_wait + boot order booted all processes..."
+    sleep 45
     xadmin ppm
     xadmin psg
 
@@ -568,7 +568,7 @@ echo ">>> Node 2 shutdown: no-order group wait long wait server booted fully"
 # wait for locks to establish
 # seems needs longer time for AIX...
 # however having issues with boot order checks...
-sleep 25
+sleep 35
 
 # all process shall be running, expect that long booting, shall be still in start
 # state
