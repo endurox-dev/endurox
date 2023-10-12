@@ -890,6 +890,11 @@ expublic int tm_status(UBFH *p_ub)
         {
             atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found [%s]", 
                     tmxid);
+            /* Verify that we had authority to respond.., as if 
+             * we lost the lock, but other node prepared txn, but not yet synced to
+             * the disk, we may not see the log on the disk, thus needs checkpoint.
+             */
+            tms_log_checkpointseq(NULL);
         }
         EXFAIL_OUT(ret);
     }
