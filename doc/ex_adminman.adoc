@@ -1908,35 +1908,35 @@ in Enduro/X product.
 === Available features
 
 Enduro/X is cluster-aware and scalable across several instances. Out of the box
-Enduro/X provides the following cluster aware functions:
+Enduro/X provides the following cluster-aware functions:
 
 - *tpbridge(8)* process ensures that XATMI services are shared across the connected
 machines (nodes).
 
 - XATMI clients can call the services across the cluster (directly connect nodes)
 and load balancing may be configured to split the network service and local
-service usage. In case if local services becomes unavailable, the network services
-are chosen to fulfill the request. In case local services are not available, call
+service usage. In case local services become unavailable, the network services
+are chosen to fulfill the request. In case local services are not available, the call
 will go to network services.
 
 - Enduro/X smart cache can replicate cache records across the linked machines. With
 limitation, that if the link is lost between machines, the cache records might fork,
-as currently no mechanisms are provided to synchronise caches while the link is restored.
+as currently no mechanisms are provided to synchronize caches while the link is restored.
 
 - Process groups, which can be configured in singleton mode (basically failover mode),
 thus it is possible to configure that set of processes (XATMI clients and servers)
 in a cluster of several machines run only on one machine at a time,
-meanwhile if the active machine goes out of order, then failover happens available machine.
+meanwhile, if the active machine goes out of order, then failover happens available machine.
 
 - In case of failover distributed transaction manager *tmsrv(8)* can be configured
-to automatically recover transaction logs written by other node. However transaction logs
-must be placed on shared file system.
+to automatically recover transaction logs written by another node. However, transaction logs
+must be placed on the shared file system.
 
 - In case of failover, transactional queue *tmqueue(8)* can be configured
-to automatically load messages from the disk processed by other node.
-However message store must be placed on shared file system.
+to automatically load messages from the disk processed by another node.
+However, message store must be placed on the shared file system.
 
-=== Distributed transactions in failover environment
+=== Distributed transactions in a failover environment
 
 The full life-cycle of the transaction is managed by a particular
 transaction manager *tmsrv(8)* instance which starts the particular
@@ -1950,36 +1950,16 @@ becomes unavailable, the other Enduro/X node may take over the transactions
 started on the crashed node.
 
 By design, distributed transaction manager *tmsrv(8)* uses file system storage,
-to strong the transaction logs. The first step of configuring failover, the transaction
-manager shall store it's logs on shared file system, for example *GFS2*
-or any other FS which has Posix semantics. Logs directory for *tmsrv* is set by
-*-l* parameter. The Posix semantics here are understood as:
-
-*tmqueue(8)* server uses file-system based storage for storing persistent
-messages. For cluster oriented operations, failover is supported, but in that
-case directory which holds the messages shall be stored on shared file system,
-for example *GFS2*. The share file system shall support Posix semantics, such as:
-
-- fsync() or fdataync() unix calls after the return guarantees that data is written to the file,
-even after the system crash.
-
-- When new file was created, and program did Unix call fsync() on file descriptor there must be
-guarantees, that file appears in directory after the fsync() return results (even after
-the system crash).
-For Linux "DSYNC" Enduro/X flag can be set which opens the
-directory in read only mode and performs fsync() on directory file descriptor.
-For other OS and/or file systems, please consult with the third party vendors, do they support
-such mode.
-
-If above features are not provided by the Operating System or Shared File System,
-at point of crash and failover, this might lead to loss of transactions (i.e.
-partial commit and partial rollback of the transaction branches).
+to strong the transaction logs. First step of the configuring failover, the transaction
+manager shall store its logs on the shared file system, for example, IBM Spectrum Scale *GPFS* 
+or *GFS2* or any other FS which has Posix semantics. Logs directory for *tmsrv* is set by
+*-l* parameter.
 
 The second step for implementing failover for transaction managers is to configure
-the singleton groups for *tmsrv(8)* instances. Additionally instances on the different
+the singleton groups for *tmsrv(8)* instances. Additionally instances of the different
 Enduro/X nodes shall point to the same transaction log directory on shared fs.
 As transaction logs include information about the Enduro/X cluster node id
-and <srvrid> values on which transaction was started, it is crucial that
+and <srvrid> values on which the transaction was started, it is crucial that
 *tmsrv(8)* on different Enduro/X nodes match following attributes:
 
 - Common virtual Enduro/X cluster node id shall be set for matching *tmsrv(8)* instances.
@@ -2001,14 +1981,14 @@ In case if using *tmsrv* for *tmqueue(8)* group, the *tmrecoversv* shall be put
 right after the *tmqueue* process definition in *ndrxconfig.xml(5)*, instead of the *tmsrv*.
 
 It is recommended to put another *tmrecoversv* instance at the end of the whole application
-configuration on each node, which runs periodically. That will allow to housekeep
-any orphaned prepared transactions, which in case of missing *STONITH* device, might
-be generated by faulty Enduro/X cluster node.
+configuration on each node, which runs periodically. That will allow housekeeping
+any orphaned prepared transactions, which in case of a missing *STONITH* device, might
+be generated by a faulty Enduro/X cluster node.
 
-Additionally, during the failover, the active-state (not yet prepared) transaction
-branches may not be controlled by the *tmsrv* which took over the operation, as
-*tmsrv* for performance reason such info logs to disk with *fflush()* Unix call,
-which means that on node which took over, the transaction data might not be
+Additionally, during the failover, the active-state (not yet prepared according to 2PC) 
+transaction branches may not be controlled by the *tmsrv* which took over the operation,
+as *tmsrv* for performance reason such info logs to disk with *fflush()* Unix call,
+which means that on a node which took over, the transaction data might not be
 available.
 
 *tmsrv(8)* shall be configured to use *FSYNC* (or *FDATASYNC*) and *DSYNC* flags
@@ -2016,107 +1996,233 @@ in the *NDRX_XA_FLAGS* env, so that the commit decision is fully logged to the s
 device.
 
 *WARNING!* To use failover functionality for the distributed transactions, the
-underlaying hardware and software infrastrucutre shall provide certain capaiblities.
-which are described in following chapter.
+underlaying hardware and software infrastructure shall provide certain capabilities.
+which are described in the following chapter.
 
-==== Hardware and software requirements for transaction manager failover
+=== Hardware and software requirements for transaction manager failover and transactional message queue
 
-When transaction is about to commit, *tmsrv(8)* writes the
-decision to the persistent storage. For transaction consistency it is crucial that
+When the transaction is about to commit, *tmsrv(8)* writes the
+decision to the persistent storage. For transaction consistency, it is crucial that
 *no write happens from the failed node to the shared storage after the failover*.
 If such writes happen, transaction logs might become corrupted and
-Enduro/X transaction manager *may loose transactions*.
+Enduro/X transaction manager *may lose transactions*.
+
+For transactional message *tmqueue*, it is mandatory that no writes happen
+to the shared file system (including file rename, unlink), open new handles, write
+*from the failed node to the shared storage after the failover*.
+
+Before the failed node is repaired (automatically or manually) and shared
+fs becomes mounted back in read/write mode, the Enduro/X application
+must be killed (at minimum all *tmsrv* and *tmqueue* processes which
+were using a particular shared file system).
 
 Example cases, where write to disk from failed node might happen:
 
-- Virtual machine with currently active node is suspended, shared file
-system assumes that node has failed and leaved the cluster, the shared file
+- Virtual machine with currently active node is paused, shared file
+system assumes that the node has failed and left the cluster, the shared file
 system cluster gives fcntl() lock (used by singleton groups) to failover
-node which takes over, and then suspended node is resumed.
+node which takes over. After the takeover, the paused node is resumed. In such
+cases, there might be possible shared file system corruption or transaction
+corruption, as concurrent writes to transaction logs are not supported
+by Enduro/X transaction manager.
 
-- Active node is so busy of work and becomes unresponsive (basically server overloaded),
-so that shared file system cluster may decide that node failed (unresponsive), and it does
+- Active node is so busy with work and becomes unresponsive (basically server overloaded),
+so that the shared file system cluster may decide that node failed (unresponsive), and it does
 the failover (release locks/give locks to other node). When the failed node 
 load is back to normal, it starts to write to disk again, which may corrupt the data.
 
-To resolve such scenarios, hardware level fencing is required.
-In ideal scenario, *STONITH* shall be employed, so that if node failed,
-it is restarted and only then shared file system gives fcntl() lock
-to failover node. *GFS2* is using this mechanism. *STONITH* is recommend
-way to fence, as that would also ensure that user application processes are
-terminated immediately and not duplicate run in cluster would be possible.
+To resolve such scenarios, hardware-level fencing is required.
+In an ideal scenario, *STONITH* shall be employed, so that if node fails,
+it is restarted and only then shared file system give fcntl() lock
+to the failover node. *GFS2* is using this mechanism. *STONITH* is recommended
+way to the fence, as that would also ensure that user application processes are
+terminated immediately and not duplicate runs in the cluster would be possible.
 
-Other option is to have IO fencing, such as Persistent Reserve (SCSI-3 protocol),
-which shall be used by third shared file system, if they support such feature.
-In this case, at hardware level shared disk is disconnected from the failed node.
-*Requirement is, that no write happens from the failed node after the node failed.*
-Before shared disk becomes available on failed node for write, the user application must
-be killed, to avoid any accidental writes. The killing can be done by
-issuing "$ sudo xadmin killall <application_user>" command. *Immediately node shall
-be rebooted, right before shared disk becomes mounted.*
+*GPFS* on the other hand, does not use *STONITH*, however, it offers two mechanisms,
+to fence such invalid writes:
 
-If not using HW based fencing, that might *cause corruption* of the
-shared file system by it self (i.e. resumed node corrupts shared FS disk structures).
-In such case Enduro/X cluster might stop to work at all on all nodes and might 
-*loose transactions*, *loose persistent queue messages* and
-other data if storing them in shared fs storage.
+- Time-based leasing. At the driver level *GPFS* detects that failover has happened,
+and time leas has expired, then no writes to disk happen. However, this is not
+always reliable, as, if VM is paused, then resumed the time during
+the pause/resume cycle by some VM hypervisors, time does not move forward during the pause,
+resulting in that time lease is not expired on the failed node, but assumed to be expired by other nodes.
+This might cause corruption of the shared file system, as the failed node at resume
+writes immediately to the disk, which corrupts structures processed by
+other nodes. This might lead to *GPFS* partition being unmounted to all cluster nodes,
+and *mmfsck* on partition might be required to mount the partition back. Additionally,
+after the *mmfsck*, some files might be lost/corrupted.
+The second problem here is, if such writes continue, that might cause Enduro/X
+transaction log corruption. If still deciding to use time-based fencing, then
+risks shall be considered, to what extend such pause/resume or server overload (or
+other such similar kind of errors) actually can happen in the given environment.
 
-*NOTE* that time-based fencing may not always protect from such corrupted
-disk write activity from failed nodes, as for example at VM suspend/resume
-cycle, the typically VM Hypervisors (tested on VirtualBox or KVM) at resume
-does not report correct time back to VM. i.e. if VM was suspended for
-10 minutes, after resume within the VM, clock difference is reported as few
-seconds, thus failed node cannot detect that its time lease have expire, it
-it might overwrite disk structures in non-synchronised way, leading to corruption.
+- Another option which is supported by IBM *GPFS*, is to have IO fencing,
+such as Persistent Reserve (SCSI-3 protocol), In this case, at the hardware level
+shared disk is disconnected from the failed node. This is the recommended way
+to fence the failed node, as it ensures that no writes to the shared file system. However,
+additional configuration is required, that during the partition unmount at the failure
+by the *GPFS* all the Enduro/X application processes are killed. This is needed to
+protect the transaction logs by concurrent writes, after the *GPFS* remounts the
+shared file system, when it re-initializes Persistent Reservation and mounts
+the disk back. Please consult with IBM, about which hardware is supported by the 
+*GPFS* for SCSI-3 Persistent Reservation fencing. Additional benefit from
+this fencing mechanism, is that cluster node loss detected is faster than
+using time leases.
 
-*Please consult with shared-file system vendors for how to configure
-and at what extend such disk write protection is provided.*
+==== Share FS main attributes for transactional operations (applies to tmsrv and tmqueue)
 
-Technically Enduro/X transaction manager requirement is that if node has failed,
-then at failed node no writes must happen to shared file system from
-the file handles which were open at the moment failover. Here failover is
-understood as event shared file system gives lock permissions to other node to
-files which before failover was locked by failed node.
+Following key Posix file system properties must be met by shared file system,
+to have the transaction and persistent queue consistency after the crash:
 
-Additionally, *exsinglesv(8)* lock providers shall be configured to
-use lock files from the same shared file system on which transaction manager
-stores its log files.
+- fsync() or fdataync() Unix calls after the successful return guarantees
+that data is written to the file, even after the system crash.
+
+- When new file is created, and program did Unix call fsync() on file descriptor there must be
+guarantees, that file appears in directory after the fsync() return successful results.
+For Linux "DSYNC" Enduro/X flag can be set which opens the
+directory in read only mode and performs fsync() on directory file descriptor.
+
+- When program issues rename() Unix call on the file, operation is atomic and new path is
+persisted on disk after rename() successfully returns. For Linux "DSYNC" Enduro/X flag
+ensures that Linux synchronises the directory to the final state.
+
+- When program issues unlink() Unix call to the file, the operation must be atomic and
+persisted to the disk after unlink() successfully returns. For Linux 
+"DSYNC" Enduro/X flag ensures that Linux synchronises the directory
+to the final state.
+
+If above features are not provided by the Operating System or Shared File System,
+at point of crash and failover, there might be a chance for transaction
+loss.
+
+==== Additional notes to the IBM Spectrum Scale (GPFS)
+
+To ensure, that Enduro/X application is killed on the shared fs failure,
+GPFS callback script shall be configured. Local event *unmount* is recommended
+for this purpose, and can be configured in the following way:
+
+Firstly let's create the script which will be called on the event. Script
+invokes the Enduro/X xadmin "killall" command which matches 
+the "$ps -ef" pattern in grep style, extracts PIDs, and kills them with -2, -15, -9
+signals, this is done from the *root* user. After that from the application user and
+application environment, the *xadmin down* is called to ensure that all 
+shared resources from the application are released.
+
+--------------------------------------------------------------------------------
+
+$ su - root
+
+# mkdir /opt/app
+
+-- 1) In following command replace "user1" with application user.
+-- 2) Replace "/home/user1/soft/conf/settest1" with environment file of the application.
+
+# cat << EOF > /opt/app/app_cleanup.sh
+#!/bin/bash
+
+#
+# pre-mount script, after the crash ensure that
+# no processes from "user1" are working
+# add to GPFS by mmaddcallback app_cleanup --command=/opt/app/app_cleanup.sh --event unmount --sync
+#
+xadmin killall user1
+su - user1 -c "source /home/user1/soft/conf/settest1; xadmin down -y"
+exit 0
+
+EOF
+
+# chmod +x /opt/app/app_cleanup.sh
+
+--------------------------------------------------------------------------------
+
+When the script is, ready it *must be copied to all the nodes in the cluster*. After that,
+callback can be enabled by:
+
+--------------------------------------------------------------------------------
+$ su - root
+# mmaddcallback app_cleanup --command=/opt/app/app_cleanup.sh --event unmount --sync
+--------------------------------------------------------------------------------
+
+To enable Persistent Reservation for the GPFS, use following command:
+
+--------------------------------------------------------------------------------
+$ su - root
+# mmchconfig usePersistentReserve=yes
+--------------------------------------------------------------------------------
+
+To check the status of the Persistent Reservation enabled:
+
+--------------------------------------------------------------------------------
+$ su - root
+
+# mmlsnsd -X
+
+ Disk name       NSD volume ID      Device          Devtype  Node name or Class       Remarks
+\-------------------------------------------------------------------------------------------------------
+ nsd1            C0A8126F652700FD   /dev/sdb        generic  g7node1                  server node,pr=yes
+ nsd1            C0A8126F652700FD   /dev/sdb        generic  g7node2                  server node,pr=yes
+ nsd1            C0A8126F652700FD   /dev/sdb        generic  g7node3                  server node,pr=yes
+
+--------------------------------------------------------------------------------
+
+*pr=yes*, means that persistent reservation feature is enabled.
+
+==== Cluster configurations for Red-Hat GFS2 and IBM Spectrum Scale GPFS
+
+While technically it is possible to configure *GFS2* an *GPFS* to use two server
+nodes cluster, for simplicity of administration and better fault tolerance,
+three node clusters are recommended. All node shall have access to the shared disk storage.
+
+As for the Enduro/X application it self, it may run on two nodes, and third node
+may be used as a quorum node only.
+
+Typical topology of the Enduro/X cluster would look like following:
+
+image:ex_adminman_failover_hw.png[caption="Figure 13: ", title="Failover hardware", alt="failover hardware of two processing nodes ad quorum node"]
+
+As for the disk connectivity, the shared disk array may be connected via
+*FibreChannel* (FC) or *ISCSI*. FibreChannel method is preferred way of connecting
+disks. For Fibre Channel, link speeds typically would be *16 Gbps* or *31 Gbps*.
+For ISCSI link speed typicall is *10G* or *25G*.
+
+For the performance requirements, disk models, disk array, configuration guides
+and what is supported with chosen shared file system,
+please consult with the corresponding Software and Hardware vendors.
+
+*NOTE:* For IBM Spectrum Scale GPFS, hardware level Persistent Reserve (SCSI-3 protocol)
+fence support, consult with the IBM on which devices on GPFS support given feature.
+
+When choosing the hardware for transaction manager (*tmsrv*) and transactional
+message queue support (*tmqueue*), the key performance aspect for the hardware,
+is the number of fsync() operations per second disk infrastructure is capable of.
+fsync() is command which issues write to disk and returns only when data is actually
+persisted on the disk.
+
+Please ask the enterprise disk vendors, which models they recommend for fast fsync()
+operations (i.e. number of fsync() per second, as pure random write IOPS not
+always correlated with the fsync() numbers). In classic RAID setups,
+it has been shown that Enterprise level battery backed-up RAID controllers has
+better fsync() performance, than drives without battery backup. Enterprise
+level SSD drivers might also show better results, but that depend on the
+vendors, and the results might be significantly different between different
+HW vendors.
+
+Typically Enduro/X has following fsync numbers:
+
+1. 2x fsync() per *tmsrv* transaction completion.
+
+2. 3x fsync() operations per *tmqueue* operation (per msg enqueue or dequeue),
+not counting fsync related to *tmsrv*.
+
+However fsync() is not the only parameters which affects the application
+performance.
 
 === tmqueue queue space in failover environment
 
 *tmqueue(8)* server uses file-system based storage for storing persistent
 messages. For cluster oriented operations, failover is supported, but in that
 case directory which holds the messages shall be stored on shared file system,
-for example *GFS2*. The share file system shall support Posix semantics, such as:
-
-- fsync() or fdataync() unix calls after the return guarantees that data is written to the file,
-even after the system crash.
-
-- When new file was created, and program did Unix call fsync() on file descriptor there must be
-guarantees, that file appears in directory after the fsync() return results (even after
-the system crash).
-For Linux "DSYNC" Enduro/X flag can be set which opens the
-directory in read only mode and performs fsync() on directory file descriptor.
-For other OS and/or file systems, please consult with the third party vendors, do they support
-such mode.
-
-- When program issues rename() Unix call on the file, operation is automatic and is
-final right after the rename() returns the result. I.e. file has changed location,
-and would be there even after the system crash. For Linux "DSYNC" Enduro/X flag
-ensures that Linux synchronises the directory to the final state. For other OS
-and/or file-systems, please consult with the third party vendors, do they support
-such mode.
-
-- When program issues unlink() Unix call to the file, the operation must be atomic and
-final right after the unlink() returns the result (i.e. file is removed even after
-the system crash). For Linux "DSYNC" Enduro/X flag ensures that Linux synchronises
-the directory to the final state. For other OS and/or file-systems,
-please consult with the third party vendors, do they support such mode.
-
-If above features are not provided by the Operating System or Shared File System,
-at point of crash and failover, this might lead to loss or double of the
-persistent messages. I.e. persistent message in the queue is lost or
-dequeued message from the queue appears back in the queue.
+for example *GFS2* or *GPFS*.
 
 Directory for *tmqueue(8)* is configured in the XA open string for *libndrxxaqdisks(8)*.
 Failover for *tmqueue* can be enabled by
@@ -2142,12 +2248,12 @@ the server cluster, then singleton process groups can be used for this purpose.
 Each singleton group requires a lock provider *exsinglesv(8)* process instance, which, by
 acquiring the lock, distinguishes on which machine the singleton group is started.
 *exsinglesv(8)* currently works with fcntl(2) Unix locks, meaning that cluster
-file system shall provide such functionality (e.g. *GFS2*) and it must
+file system shall provide such functionality (e.g. *GFS2* or *GPFS*) and it must
 be configured for the Enduro/X nodes to support singleton process groups.
 
-In the event of node failover, the next any available node will acquire
+In the event of node failover, the next available node will acquire
 the lock and after a certain time delay singleton group will be started on the new node.
-Meanwhile if old node is still active but lost the lock for some technical reason (such as
+Meanwhile, if old node is still active but lost the lock for some technical reason (such as
 shared file system becomes unavailable, or *exsinglesv* was shutdown),
 the processes in groups are killed with signal 9.
 
@@ -2177,10 +2283,10 @@ is *99999*.
 Singleton process groups do not ensure 100% probability that processes
 will run in one copy only at the same time on any Enduro/X node instance. There could
 be cases, such as VM suspends and resumes when the current node was removed from
-the shard FS cluster fcntl lock removes, the other node gets
+the shard FS cluster fcntl lock is removed, the other node gets
 the shared file system lock and the group is booted on the new node.
 Meanwhile, for some reason VM on the old node was resumed,
-the old node *exsinglesv*/*ndrxd*/*cpmsrv* will detect that group lock was
+the old node *exsinglesv*/*ndrxd*/*cpmsrv* will detect that the group lock was
 lost and group processes will be killed, but this detection requires at
 run of full *exsinglesv* check cycle (and shared FS shall not freeze the access)
 and over that, additional *2* sanity cycles of *ndrxd*/*cpmsrv*.
@@ -2236,7 +2342,7 @@ Following diagram depict the core functionality of the singleton group
 failover, including distributed transaction and persistent queue
 processing.
 
-image:ex_adminman_failover.png[caption="Figure 13: ", title="Failover processing", alt="failover processing diagram of two nodes"]
+image:ex_adminman_failover.png[caption="Figure 14: ", title="Failover processing", alt="failover processing diagram of two nodes"]
 
 === Sample configuration of the failover setup with singleton groups
 
@@ -2260,11 +2366,11 @@ For *tmsrv* following additional settings shall be used:
 Any node id (NDRX_NODEID) used in cluster. Shall be common for all participants in the cluster
 |-X<seconds> | Number of seconds tor run for disk checks
 (i.e. scan for unseen transaction logs, left from other node if had concurrent run). However
-if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|30
+if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|*30*
 |-r<attempts | Number of retries to try to finish the transaction if resource managers are not working.
-if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|30
+if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|*30*
 |-h<seconds> | Number of seconds to wait for housekeeping to remove corrupted transaction logs.
-Corrupted logs might happen, if active node just opened transaction log and node crashed.|120
+Corrupted logs might happen, if active node just opened transaction log and node crashed.|*90*
 |=========================================================
 
 .tmqueue - Recommended additional CLI parameters for failover processing
@@ -2275,25 +2381,72 @@ Corrupted logs might happen, if active node just opened transaction log and node
 Any node id (NDRX_NODEID) used in cluster. Shall be common for all participants in the cluster
 |-X<seconds> | Number of seconds to run for disk checks (i.e. scan for non
 loaded messages, left from other node if had concurrent run). Normally shall not happen,
-if proper fencing is used|60|
+if proper fencing is used|*60*
 |=========================================================
+
+Additional notes:
+
+If expecting large number of messages in persistent queue (>5K), please increase
+the process boot time in *<server>* tag for *tmqueue*, for example:
+
+--------------------------------------------------------------------------------
+
+        <server name="tmqueue">
+            ...
+            <start_max>100</start_max>
+            <srvstartwait>100</srvstartwait>
+        </server>
+
+--------------------------------------------------------------------------------
+
+would allow boot sequence to wait for message loading into memory queue space,
+before moving on with next servers to boot.
+Check the settings in *ndrxconfig.xml(5)*.
 
 .tpbridge - Recommended additional CLI parameters for failover processing
 [width="80%", options="header"]
 |=========================================================
 |Parameter|Description|Recommended value
 |-z<zero_snd_time> | Interval into which zero length message is sent to socket to keep the
-activity|5
+activity|*5*
 |-c<check_time> | Number of seconds for check intervals. This interval checks
-for running -z message sending|2
+for running -z message sending|*2*
 |-a<rcv_time> | Number of second into which something must be received from
-the socket, if not received, connection is closed|10
+the socket, if not received, connection is closed|*10*
 |=========================================================
 
 Above configuration will ensure, that socket will be reset after 10 seconds,
 in case of failed node cut-off, and services will not be available on the
 survived node.
 
+.exsinglesv/exsingleckl - Recommended [@exsinglesv/<subsection>] settings
+[width="80%", options="header"]
+|=========================================================
+|Parameter|Description|Recommended value
+|noremote | Disable remote checks, i.e. do not call @SGREM service on
+other node to check the active node lock status, use only @SGLOC, which
+would do the node counter checks in heartbeat file| *1* - is recommended
+for *GPFS* setups, as read file access looks to be faster than network
+access with this shared file system. Default is *0* - disabled (use @SGREM
+for remote node status/counter reading
+|=========================================================
+
+Defaults and recommend values for *exsinglesv* (with default *NDRX_SGREFRESH* env value) are:
+
+- Check interval *10* seconds (chkinterval). However may be reduced, for extra
+safety.
+
+- Maximum refresh time, by which local node will unlock is *30* seconds (NDRX_SGREFRESH).
+I.e. *exsinglesv* must have run at-least one check cycle in this time.
+
+- Other node Enduro/X signleton process group boot, after the failover (shared file system has
+released *lockfile_1* to other node), is *60* seconds (locked_wait). Meaning that
+total time for survived node to boot would depend on shared file system
+re-configuring time-outs/settings, plus additionally this wait time. The wait
+time, shall be at-least two times higher than other node refresh time, as that
+would ensure that if-lock provider lost the lock on the other node for some
+reason, that would give tie *ndrxd*/*cpmsrv* processes to kill the group.
+And only after that time new node would boot the processes back on.
 
 ==== INI configuration part
 
@@ -2409,7 +2562,7 @@ prepared in this guide:
             <max>3</max>
             <srvid>60</srvid>
             <cctag>RM1TMQ</cctag>
-            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h120</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90</sysopt>
             <procgrp>RM1TMQ</procgrp>
         </server>
         <server name="tmqueue">
@@ -2417,7 +2570,7 @@ prepared in this guide:
             <max>1</max>
             <srvid>80</srvid>
             <cctag>RM1TMQ</cctag>
-            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 -f100</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60</sysopt>
             <procgrp>RM1TMQ</procgrp>
 
             <!-- Increase time for start wait, as there might be lots of messages
@@ -2545,11 +2698,11 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=3510 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=3511 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h180 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h90 --  :
 	process id=3512 ... Started.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h180 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h90 --  :
 	process id=3524 ... Started.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h180 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h90 --  :
 	process id=3536 ... Started.
 exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -X60 -n2 -f100 --  :
 	process id=3548 ... Started.
@@ -2618,13 +2771,13 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=31878 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=31879 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h180 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90 --  :
 	process id=0 ... Waiting on group lock.
-exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 -f100 --  :
+exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 --  :
 	process id=0 ... Waiting on group lock.
 exec testsv.py -k 0myWI5nu -i 1250 -e /home/user1/test/log/testsv.py.log -r --  :
 	process id=0 ... Waiting on group lock.
@@ -2924,22 +3077,26 @@ To solve this issue, parameter *max_readers* must be adjusted in Enduro/X ini fi
 In case if error is related to UBF DB  (dynamic UBF field table):
 
 --------------------------------------------------------------------------------
+
 [@ubfdb[/CCTAG]]
 ...
 # Increase the MAX_READERS, for example 5000
 max_readers=5000
 resource=DATABASE_DIRECTORY
 ...
+
 --------------------------------------------------------------------------------
 
 In case if error is related to Enduro/X Smart Cache:
 
 --------------------------------------------------------------------------------
+
 [@cachedb/DBNAME_SECTION]
 
 # Increase the MAX_READERS, for example 5000
 max_readers=5000
 resource=DATABASE_DIRECTORY
+
 --------------------------------------------------------------------------------
 
 The target number of *max_readers* depends on number of processes actually
