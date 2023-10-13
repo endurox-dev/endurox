@@ -169,8 +169,8 @@ function validate_OK1_recovery {
         go_out -1
     fi
 
-    echo "Wait 45 (lock regain + wait) check locked_wait + boot order booted all processes..."
-    sleep 45
+    echo "Wait 55 (lock regain + wait) check locked_wait + boot order booted all processes..."
+    sleep 55
     xadmin ppm
     xadmin psg
 
@@ -381,8 +381,8 @@ if ! [[ "$OUT" =~ $PATTERN ]]; then
     go_out -1
 fi
 
-echo ">>> wait 30 for full boot..."
-sleep 30
+echo ">>> wait 45 for full boot..."
+sleep 45
 xadmin ppm
 
 CNT=`xadmin ppm | grep atmi.sv1 | grep 'runok runok' | wc | awk '{print $1}'`

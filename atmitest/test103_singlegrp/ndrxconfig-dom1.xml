@@ -71,7 +71,7 @@
             <max>1</max>
             <srvid>50</srvid>
             <!-- server waits on boot -->
-            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -- -w20</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -- -w30</sysopt>
             <procgrp>OK1</procgrp>
         </server>
         <server name="atmi.sv103">
