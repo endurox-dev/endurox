@@ -83,6 +83,7 @@ enum
     , st_chk_l_lock
     , st_chk_l_unlock /**< Was local unlocked? */
     , st_ping_lock
+    , st_ping_wait
     , st_shm_refresh
     , st_abort
     , st_abort_unlock
@@ -96,6 +97,7 @@ NDRX_SM_T(ndrx_locksm_t, NR_TRANS);
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+ndrx_locksm_ctx_t M_ctx; /**< Context for SM */
 /*---------------------------Prototypes---------------------------------*/
 
 exprivate int get_singlegrp(void *ctx);
@@ -123,7 +125,13 @@ ndrx_locksm_t M_locksm[st_count] = {
         )
     , NDRX_SM_STATE(st_chk_l_unlock, chk_l_lock,
           NDRX_SM_TRAN      (ev_locked,     st_abort)
+        , NDRX_SM_TRAN      (ev_wait,       st_ping_wait)
         , NDRX_SM_TRAN      (ev_unlocked,   st_chk_mmon)
+        , NDRX_SM_TRAN_END
+        )
+    , NDRX_SM_STATE(st_ping_wait, ping_lock,
+          NDRX_SM_TRAN      (ev_ok,         st_do_lock)
+        , NDRX_SM_TRAN      (ev_err,        st_abort_unlock)
         , NDRX_SM_TRAN_END
         )
     , NDRX_SM_STATE(st_ping_lock, ping_lock,
@@ -216,6 +224,11 @@ exprivate int chk_l_lock(void *ctx)
         /* local process is locked */
         ret = ev_locked;
     }
+    else if (ndrx_G_exsinglesv_conf.locked1)
+    {
+        /* doign recovery start */
+        ret = ev_wait;
+    }
     else
     {
         /* local process is unlocked */
@@ -234,15 +247,17 @@ exprivate int ping_lock(void *ctx)
 {
     ndrx_locksm_ctx_t *lock_ctx = (ndrx_locksm_ctx_t *)ctx;
     int ret=ev_ok;
-
+    long max_seq;
     if ( EXSUCCEED!=ndrx_exsinglesv_file_chkpid(NDRX_LOCK_FILE_1, ndrx_G_exsinglesv_conf.lockfile_1) )
     {
         ret=ev_err;
         goto out;
     }
 
-    lock_ctx->new_sequence = lock_ctx->local.sequence + 1;
-    TP_LOG(log_info, "New sequence: %d", lock_ctx->new_sequence);
+    /* generate new seq */
+    lock_ctx->new_sequence++;
+
+    TP_LOG(log_info, "New sequence: %ld", lock_ctx->new_sequence);
 
     /* refresh seq in files... */
     if (EXSUCCEED!=ndrx_exsinglesv_ping_do(lock_ctx))
@@ -360,6 +375,33 @@ exprivate int do_lock(void *ctx)
 
                 ndrx_G_exsinglesv_conf.locked1=EXTRUE;
 
+                /* update counters if locked, even if we wait afterwards
+                 * the HB/ping will move forward, so that others would see
+                 * that they are not locked..
+                 */
+
+                /* extract the sequence number */
+                lock_ctx->new_sequence = ndrx_exsinglesv_sg_max_seq(lock_ctx);
+
+                if (EXFAIL==lock_ctx->new_sequence)
+                {
+                    TP_LOG(log_error, "Failed get current sequence number");
+                    ret=ev_err;
+                    goto out;
+                }
+
+                lock_ctx->new_sequence+=G_atmi_env.sglockinc;
+                TP_LOG(log_warn, "New sequence number is %ld (old seq +%d)",
+                    lock_ctx->new_sequence, G_atmi_env.sglockinc);
+
+                /* write stuff to ping */
+                if (EXSUCCEED!=ndrx_exsinglesv_ping_do(lock_ctx))
+                {
+                    TP_LOG(log_error, "Initial ping failed");
+                    ret=ev_err;
+                    goto out;
+                }
+
                 break;
             default:
                 ret = ev_err;
@@ -374,15 +416,40 @@ exprivate int do_lock(void *ctx)
     }
     else
     {
+        long max_seq = ndrx_exsinglesv_sg_max_seq(lock_ctx);
+
         ndrx_G_exsinglesv_conf.wait_counter++;
+
+        /* 
+         * Verify that our sequence matches
+         * (no other has booted in cluster)
+         */
+        if (lock_ctx->new_sequence!=max_seq)
+        {
+            NDRX_LOG(log_error, "ERROR: During recovery wait %d/%d, found that "
+                    "our sequence %ld does not matches cluster seq %ld",
+                    ndrx_G_exsinglesv_conf.wait_counter,
+                    ndrx_G_exsinglesv_conf.locked_wait,
+                    lock_ctx->new_sequence,
+                        max_seq);
+            userlog("ERROR: During recovery wait %d/%d, found that "
+                    "our sequence %ld does not matches cluster seq %ld",
+                    ndrx_G_exsinglesv_conf.wait_counter,
+                    ndrx_G_exsinglesv_conf.locked_wait,
+                    lock_ctx->new_sequence,
+                        max_seq);
+            ret=ev_err;
+            goto out;
+        }
     
-        if (ndrx_G_exsinglesv_conf.wait_counter>ndrx_G_exsinglesv_conf.locked_wait)
+        if (ndrx_G_exsinglesv_conf.wait_counter > ndrx_G_exsinglesv_conf.locked_wait)
         {
             /* we have waited enough, lock it */
             ndrx_G_exsinglesv_conf.is_locked=EXTRUE;
         }
         else
         {
+
             /* we have to wait more */
             TP_LOG(log_info, "Waiting after files locked %d/%d",
                 ndrx_G_exsinglesv_conf.wait_counter,
@@ -423,30 +490,8 @@ exprivate int do_lock(void *ctx)
         }
     }
 
-    /* extract the sequence number */
-    lock_ctx->new_sequence = ndrx_exsinglesv_sg_max_seq(lock_ctx);
-
-    if (EXFAIL==lock_ctx->new_sequence)
-    {
-        TP_LOG(log_error, "Failed get current sequence number");
-        ret=ev_err;
-        goto out;
-    }
-
-    lock_ctx->new_sequence+=G_atmi_env.sglockinc;
-    TP_LOG(log_warn, "New sequence number is %d (old seq +%d)", 
-        lock_ctx->new_sequence, lock_ctx->new_sequence);
-
-    /* write stuff to ping */
-    if (EXSUCCEED!=ndrx_exsinglesv_ping_do(lock_ctx))
-    {
-        TP_LOG(log_error, "Initial ping failed");
-        ret=ev_err;
-        goto out;
-    }
-
     /* mark shm as locked by us too */
-    TP_LOG(log_debug, "Lock shared memory...");
+    TP_LOG(log_debug, "Lock to shared memory...");
 
     if (EXSUCCEED!=ndrx_sg_do_lock(ndrx_G_exsinglesv_conf.procgrp_lp_no, 
             tpgetnodeid(), tpgetsrvid(), (char *)(EX_PROGNAME),
@@ -466,9 +511,8 @@ out:
  */
 expublic int ndrx_exsinglesv_sm_run(void)
 {
-    ndrx_locksm_ctx_t ctx;
     return ndrx_sm_run((void *)M_locksm, NR_TRANS, st_get_singlegrp, 
-        (void *)&ctx, LOG_FACILITY_TP);
+        (void *)&M_ctx, LOG_FACILITY_TP);
 }
 
 /**
@@ -477,6 +521,7 @@ expublic int ndrx_exsinglesv_sm_run(void)
  */
 expublic int ndrx_exsinglesv_sm_comp(void)
 {
+    memset(&M_ctx, 0, sizeof(M_ctx));
     return ndrx_sm_comp((void *)M_locksm, st_count, NR_TRANS, st_do_lock);
 }
 /* vim: set ts=4 sw=4 et smartindent: */
