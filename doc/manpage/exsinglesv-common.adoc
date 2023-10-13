@@ -91,6 +91,8 @@ locking services.
 For more detailed setup of the singleton groups, functions and limitations,
 please see more ex_adminman(guides)(Enduro/X Administration Manual, High availability features) section.
 
+Binary is available for Enduro/X version *8.0.10*.
+
 
 CONFIGURATION
 -------------
@@ -164,7 +166,11 @@ LIMITATIONS
 If doing manual *xadmin(8)* command based *exsinglesv* start (or restart/sreload)
 on booted application, the return from command might delay, as depending on current
 *ndrxd(8)* sanity cycle, the singleton process group might pass for startup and
-only then xadmin will return results to command line back.
+only then xadmin will return results to command line back. However this is subject
+to change for future releases, where after the first boot all start/stop operations
+on the *exsinglesv* might be considered as failover recovery. Currently manual start
+stops, are assumed and locked as fresh boot operations (i.e. doing immediate lock
+of the group).
 
 
 EXIT STATUS

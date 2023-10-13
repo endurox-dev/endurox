@@ -1936,6 +1936,8 @@ must be placed on the shared file system.
 to automatically load messages from the disk processed by another node.
 However, the message store must be placed on the shared file system.
 
+Singleton process groups are available from Enduro/X version *8.0.10*.
+
 === Distributed transactions in a failover environment
 
 The full life-cycle of the transaction is managed by a particular

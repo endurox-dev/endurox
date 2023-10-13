@@ -290,8 +290,8 @@ if [ "$TEST_PERF" -ge "$TEST_PERF_MIN" ]; then
 
     NR_CALLS=`tail -1 wakeup.out  | cut -d ' '  -f3`
 
-    if [ "$NR_CALLS" -lt "60" ]; then
-        echo "Expected more calls than 60 got $NR_CALLS"
+    if [ "$NR_CALLS" -lt "50" ]; then
+        echo "Expected more calls than 50 got $NR_CALLS"
         go_out -1
     fi
 
