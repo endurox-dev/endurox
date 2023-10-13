@@ -106,6 +106,7 @@ int main(int argc, char** argv)
         for (j=0; j<2; j++)
         {
             /* read from q1 or q2, if no msg present, then generate error */
+            memset(&qctl, 0, sizeof(qctl));
             while (EXSUCCEED==tpdequeue("TESTSP", q[j], &qctl, (char **)&p_ub, &len, 0))
             {
                 if (EXSUCCEED!=Bget(p_ub, T_SHORT_FLD, 0, (char *)&val, NULL))
@@ -125,7 +126,9 @@ int main(int argc, char** argv)
                     NDRX_LOG(log_error, "TESTERROR: Duplicate message %d in Q [%s]", val, q[j]);
                     EXFAIL_OUT(ret);
                 }
+                NDRX_LOG(log_error, "GOT j=%d, val=%hd", j, val);
                 messages[val] = 1;
+                memset(&qctl, 0, sizeof(qctl));
             }
 
             if (TPEDIAGNOSTIC!=tperrno)
@@ -133,6 +136,9 @@ int main(int argc, char** argv)
                 NDRX_LOG(log_error, "TESTRROR: Expected TPEDIAGNOSTIC, got %s", tpstrerror(tperrno));
                 EXFAIL_OUT(ret);
             }
+
+            NDRX_LOG(log_error, "tpdequeue(%s) failed %s diag: %d:%s", q[j],
+                        tpstrerror(tperrno), qctl.diagnostic, qctl.diagmsg);
         }
 
         for (j=0; j<num; j++)
