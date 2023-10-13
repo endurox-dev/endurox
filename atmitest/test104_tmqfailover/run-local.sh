@@ -114,7 +114,7 @@ export NDRX_CCONFIG1=$TESTDIR/app-common.ini
 if [ -e /etc/os-release ]; then
     if grep -q "Raspbian" /etc/os-release; then
         echo "Raspbian detected - no fsync"
-        export NDRX_CCONFIG1=$TESTDIR/app-common.ini
+        export NDRX_CCONFIG1=$TESTDIR/app-common-no-fsync.ini
     fi
 fi
 
