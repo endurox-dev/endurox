@@ -169,8 +169,8 @@ function validate_OK1_recovery {
         go_out -1
     fi
 
-    echo "Wait 55 (lock regain + wait) check locked_wait + boot order booted all processes..."
-    sleep 55
+    echo "Wait 65 (lock regain + wait) check locked_wait + boot order booted all processes..."
+    sleep 65
     xadmin ppm
     xadmin psg
 
