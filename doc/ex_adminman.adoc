@@ -2442,10 +2442,10 @@ safety.
 I.e. *exsinglesv* must have run at-least one check cycle in this time.
 
 - Another node Enduro/X signleton process group boot, after the failover (shared file system has
-released *lockfile_1* to another node), is *60* seconds (locked_wait). This means that
+released *lockfile_1* to another node), is *6* check cycles (locked_wait). This means that
 total time for the survived node to boot would depend on shared file system
-re-configuring time-outs/settings, plus this wait time. The wait
-time shall be at-least two times higher than other node refresh time, as that
+re-configuring time-outs/settings, plus this wait time (e.g. *6* cycles multiplied by *10* sec).
+The wait time shall be at-least two times higher than other node refresh time, as that
 would ensure that if-lock provider lost the lock on the other node for some
 reason, that would give tie *ndrxd*/*cpmsrv* processes to kill the group.
 And only after that time, new node would boot the processes back on.

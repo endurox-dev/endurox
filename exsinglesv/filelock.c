@@ -270,7 +270,7 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
         goto out;
     }
 
-    if (!lock_ctx->local.flags & NDRX_SG_VERIFY && !force_chk)
+    if (!(lock_ctx->local.flags & NDRX_SG_VERIFY) && !force_chk)
     {
         TP_LOG(log_info, "Group %d verification is not required", 
                 ndrx_G_exsinglesv_conf.procgrp_lp_no);
@@ -299,6 +299,7 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
             }
 
             /* Try remote (if not disabled) */
+            ret=EXSUCCEED;
             if (!ndrx_G_exsinglesv_conf.noremote)
             {                
                 p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
@@ -344,7 +345,7 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
              * if not, we have lost the lock and return the error.
              * (unlock the shm)
              */
-            if (EXSUCCEED!=ret)
+            if (EXSUCCEED!=ret || ndrx_G_exsinglesv_conf.noremote)
             {
                 int log_lev = log_error;
 
@@ -363,9 +364,10 @@ expublic int ndrx_exsinglesv_sg_is_locked(ndrx_locksm_ctx_t *lock_ctx, int force
 
                     TP_LOG(log_lev, "Failed to call [%s]: %s - falling back to disk check", 
                         svcnm, tpstrerror(tperrno));
+
+                    /*  succeed anyway */
+                    ret=EXSUCCEED;
                 }
-                /*  succeed anyway */
-                ret=EXSUCCEED;
 
                 /* read the node entry from the disk */
                 if (EXSUCCEED!=ndrx_exsinglesv_ping_read(lock_ctx->local.sg_nodes[i], &ent))
@@ -801,7 +803,7 @@ expublic int ndrx_exsinglesv_ping_read(int nodeid, ndrx_exsinglesv_lockent_t *p_
 
 out:
 
-    TP_LOG(log_error, "%s returns %d", __FUNCTION__, ret);
+    TP_LOG(log_info, "%s returns %d", __FUNCTION__, ret);
     return ret;
 }
 
