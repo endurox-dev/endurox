@@ -789,7 +789,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         /* Increase the counter */
         msg->trycounter++;
-        NDRX_LOG(log_warn, "Message [%s] tries %ld, max: %ld", 
+        NDRX_LOG(log_warn, "Message [%s] tries %ld, max: %d", 
                 msgid_str, msg->trycounter, qconf.tries);
         ndrx_utc_tstamp2(&msg->trytstamp, &msg->trytstamp_usec);
         
