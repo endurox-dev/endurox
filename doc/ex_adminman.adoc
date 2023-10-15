@@ -2296,6 +2296,10 @@ Meaning that during this time singleton processes will run on two nodes at the s
 To ensure that this never happens, the *STONITH* device must be configured. For example *GFS2*
 requires *STONITH* as part of the shared file system installation. For
 other shared file system clusters, please consult with the corresponding vendor.
+However, if *STONITH* is not available on given shared file system, Enduro/X 
+transaction manager still is able to keep the distributed transaction consistency,
+with requirement, that at event of shared fs cluster failure, fs becomes unavailable
+or read only.
 
 Singleton groups keeps the following health-checks:
 
@@ -2334,7 +2338,7 @@ logs on the fly, however, *tmqueue* will reboot in case if new
 messages appear Q-space disk, so that queue-space on active
 node can be consistently read from the disk.
 
-WARNING: when operating with process groups, it is not recommended to
+*NOTE:* when operating with process groups, it is not recommended to
 store the *ndrxd*, *cpmsrv* and *exsinglesv* process logs on the shared
 file system, as in case of shared file system failure, the processes or may
 get killed, leading to the fact that singleton groups will not be unlocked locally,
@@ -2442,13 +2446,14 @@ Defaults (and recommended) values for *exsinglesv* (with default *NDRX_SGREFRESH
 - Maximum refresh time, by which the local node will unlock is *30* seconds (NDRX_SGREFRESH).
 I.e. *exsinglesv* must have run at-least one check cycle in this time.
 
-- Another node Enduro/X signleton process group boot, after the failover (shared file system has
+- Other Enduro/X node singleton process group boot time, after the failover (shared file system has
 released *lockfile_1* to another node), is *6* check cycles (locked_wait). This means that
 total time for the survived node to boot would depend on shared file system
-re-configuring time-outs/settings, plus this wait time (e.g. *6* cycles multiplied by *10* sec).
+re-configuring time-outs/settings to release fcntl() locks,
+plus this wait time (e.g. *6* cycles multiplied by *10* sec).
 The wait time shall be at-least two times higher than other node refresh time, as that
 would ensure that if-lock provider lost the lock on the other node for some
-reason, that would give tie *ndrxd*/*cpmsrv* processes to kill the group.
+reason, that would give time to *ndrxd*/*cpmsrv* processes to kill the group.
 And only after that time, new node would boot the processes back on.
 
 ==== INI configuration part

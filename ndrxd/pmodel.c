@@ -259,7 +259,7 @@ exprivate void * check_child_exit(void *arg)
 /* seems not working on darwin ... thus just wait for pid.
  * if we do not have any childs, then sleep for 1 sec.
  */
-#ifndef EX_OS_DARWIN
+#if !(EX_OS_DARWIN && EX_LSB_RELEASE_VER_MAJOR < 23)
         LOCKED_DEBUG(log_debug, "about to sigwait()");
         
         /* Wait for notification signal */
@@ -278,10 +278,10 @@ exprivate void * check_child_exit(void *arg)
         
         LOCKED_DEBUG(log_debug, "about to wait()");
         
-#if EX_OS_DARWIN
+#if (EX_OS_DARWIN && EX_LSB_RELEASE_VER_MAJOR < 23)
         /* waitpid cancel enabled...
          * sleep if no childs
-         *  */
+         */
         while (1)
         {
             chldpid = (pid_t)waitpid(-1, &stat_loc, WUNTRACED);
@@ -370,7 +370,7 @@ expublic void ndrxd_sigchld_uninit(void)
      */
     M_shutdown = EXTRUE;
     
-#if EX_OS_DARWIN
+#if (EX_OS_DARWIN && EX_LSB_RELEASE_VER_MAJOR<23)
     if (EXSUCCEED!=pthread_cancel(M_signal_thread))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
