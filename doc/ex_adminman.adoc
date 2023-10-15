@@ -2368,11 +2368,13 @@ For *tmsrv* following additional settings shall be used:
 Any node id (NDRX_NODEID) used in a cluster. Shall be common for all participants in the cluster
 |-X<seconds> | Number of seconds tor run for disk checks
 (i.e. scan for unseen transaction logs, left from another node if had concurrent run). However,
-if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|*30*
+if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|*10*
 |-r<attempts | Number of retries to try to finish the transaction if resource managers are not working.
-if proper fencing is used (STONITH or SCSI-3 Persistent Reserve), this parameter shall have no effect.|*30*
+Higher value is recommended, if *tmsrv* serves for *tmqueue*, which might contains
+large amount of messages of message. The actual completion time is multiplied by *tmsrv*
+background scan time *-s*|*30*
 |-h<seconds> | Number of seconds to wait for housekeeping to remove corrupted transaction logs.
-Corrupted logs might happen, if the active node just opened the transaction log and the node crashed.|*90*
+Corrupted logs might happen, if the active node just opened the transaction log and the node crashed.|*60*
 |=========================================================
 
 .tmqueue - Recommended additional CLI parameters for failover processing
@@ -2381,7 +2383,7 @@ Corrupted logs might happen, if the active node just opened the transaction log 
 |Parameter|Description|Recommended value
 |-n<node_id> | Common cluster node id, used for log file recognition|
 Any node id (NDRX_NODEID) used in a cluster. Shall be common for all participants in the cluster
-|-X<seconds> | Number of seconds to run for disk checks (i.e. scan for nonloaded messages, 
+|-X<seconds> | Number of seconds to run for disk checks (i.e. scan for non-loaded messages,
 left from other node if had concurrent run). Normally shall not happen,
 if proper fencing is used|*60*
 |=========================================================
@@ -2433,10 +2435,10 @@ access with this shared file system. Default is *0* - disabled (use @SGREM
 for remote node status/counter reading
 |=========================================================
 
-Defaults and recommend values for *exsinglesv* (with default *NDRX_SGREFRESH* env value) are:
+Defaults values for *exsinglesv* (with default *NDRX_SGREFRESH* env value) are:
 
-- Check interval *10* seconds (chkinterval). However may be reduced, for extra
-safety.
+- Check interval *10* seconds (*chkinterval*). However may be reduced, for extra
+safety. For example *2*.
 
 - Maximum refresh time, by which the local node will unlock is *30* seconds (NDRX_SGREFRESH).
 I.e. *exsinglesv* must have run at-least one check cycle in this time.
@@ -2564,7 +2566,7 @@ prepared in this guide:
             <max>3</max>
             <srvid>60</srvid>
             <cctag>RM1TMQ</cctag>
-            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t60 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60</sysopt>
             <procgrp>RM1TMQ</procgrp>
         </server>
         <server name="tmqueue">
@@ -2576,7 +2578,7 @@ prepared in this guide:
             <procgrp>RM1TMQ</procgrp>
 
             <!-- Increase time for start wait, as there might be lots of messages
-                 to load
+                 to load*
              -->
             <start_max>100</start_max>
             <!-- do not start next server within startup time -->
@@ -2700,13 +2702,13 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=3510 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=3511 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h90 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -r30 -h60 --  :
 	process id=3512 ... Started.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h90 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -r30 -h60 --  :
 	process id=3524 ... Started.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X2 -n2 -r30 -h90 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -r30 -h60 --  :
 	process id=3536 ... Started.
-exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -X60 -n2 -f100 --  :
+exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -X60 -n2 --  :
 	process id=3548 ... Started.
 exec tmrecoversv -k 0myWI5nu -i 250 -e /home/user1/test/log/tmrecoversv-a.log -r -- -i --  :
 	process id=3711 ... Started.
@@ -2773,11 +2775,11 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=31878 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=31879 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X2 -r30 -h90 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60 --  :
 	process id=0 ... Waiting on group lock.
 exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 --  :
 	process id=0 ... Waiting on group lock.
