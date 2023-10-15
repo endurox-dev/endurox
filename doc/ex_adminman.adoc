@@ -2397,8 +2397,8 @@ the process boot time in *<server>* tag for *tmqueue*, for example:
 
         <server name="tmqueue">
             ...
-            <start_max>100</start_max>
-            <srvstartwait>100</srvstartwait>
+            <start_max>200</start_max>
+            <srvstartwait>200</srvstartwait>
         </server>
 
 --------------------------------------------------------------------------------
@@ -2435,10 +2435,9 @@ access with this shared file system. Default is *0* - disabled (use @SGREM
 for remote node status/counter reading
 |=========================================================
 
-Defaults values for *exsinglesv* (with default *NDRX_SGREFRESH* env value) are:
+Defaults (and recommended) values for *exsinglesv* (with default *NDRX_SGREFRESH* env value) are:
 
-- Check interval *10* seconds (*chkinterval*). However may be reduced, for extra
-safety. For example *2*.
+- Check interval *10* seconds (*chkinterval*).
 
 - Maximum refresh time, by which the local node will unlock is *30* seconds (NDRX_SGREFRESH).
 I.e. *exsinglesv* must have run at-least one check cycle in this time.
