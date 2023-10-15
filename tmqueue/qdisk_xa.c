@@ -1298,7 +1298,7 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
         }
         else
         {
-            NDRX_LOG(log_error, "Q transaction [%s] does not exists", tmxid);
+            NDRX_LOG(log_info, "Q transaction [%s] does not exists", tmxid);
             /* return XAER_NOTA; */
 
             /* TODO: verify the disk... (only in case) sinelgrp ... */

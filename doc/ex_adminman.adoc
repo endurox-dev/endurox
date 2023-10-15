@@ -2183,9 +2183,9 @@ The typical topology of the Enduro/X cluster would look like the following:
 image:ex_adminman_failover_hw.png[caption="Figure 13: ", title="Failover hardware", alt="failover hardware of two processing nodes ad quorum node"]
 
 As for the disk connectivity, the shared disk array may be connected via
-*FibreChannel* (FC) or *ISCSI*. FibreChannel method is the preferred way of connecting
+*FibreChannel* (FC) or *iSCSI*. FibreChannel method is the preferred way of connecting
 disks. For Fibre Channel, link speeds typically would be *16 Gbps* or *31 Gbps*.
-For ISCSI link speed typically is *10G* or *25G*.
+For iSCSI link speed typically is *10G* or *25G*.
 
 For the performance requirements, disk models, disk array, configuration guides
 and what is supported with the chosen shared file system,
