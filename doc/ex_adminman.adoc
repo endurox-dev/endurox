@@ -2079,7 +2079,7 @@ to have the transaction and persistent queue consistency after the crash:
 - fsync() or fdataync() Unix calls after the successful return guarantees
 that data is written to the file, even after the system crash.
 
-- When a new file is created, and the program did Unix call fsync() on file descriptor there must be
+- When a new file is created, and the program did Unix call fsync() on the file descriptor there must be
 guarantees, that file appears in the directory after the fsync() returns successful results.
 For Linux "DSYNC" Enduro/X flag can be set which opens the
 directory in read-only mode and performs fsync() on the directory file descriptor.
@@ -2106,15 +2106,15 @@ for this purpose, and can be configured in the following way:
 Firstly let's create the script which will be called on the event. The script
 invokes the Enduro/X xadmin "killall" command which matches 
 the "$ps -ef" pattern in grep style, extracts PIDs, and kills them with -15, -9
-signals with additoinal *ndrxd* killing first, to avoid respawnwing, 
+signals with additional *ndrxd* killing first, to avoid respawning, 
 this is done from the *root* user. The "xadmin killall" is quicker,
 but it might note remove all processes, thus after that from the application user and
 application environment, the *xadmin down* is called to ensure that all processes and
-shared resources from the application are remove. Note that if disk failure
-happens, the application on broken node is terminated, and shall be booted
+shared resources from the application are removed. Note that if disk failure
+happens, the application on the broken node is terminated, and shall be booted
 back manually. It might be possible to use *mount* callback, to start
-application back, however that's outside of the scope of this document, and
-at such crash as FS loss, server reboot would be recommended, where at startup
+the application back, however, that's outside of the scope of this document, and
+at such a crash as FS loss, server reboot would be recommended, whereas at startup
 server boot scripts would start the application back.
 
 Forced termination script:
@@ -2347,11 +2347,11 @@ processes have been updated new CLI setting *-X<seconds>*. This setting is used
 to detect parallel run of the *tmsrv* and *tmqueue* processes, to
 recover from cases when parallel instances have generated queue messages or
 transactions. *tmsrv* will load un-seen transaction
-logs on the fly, however, *tmqueue* will reboot in case if new
-messages appear Q-space disk, so that queue-space on active
-node can be consistently read from the disk. *-X* setting for
-*tmsrv* also lets to remove expired / broken transactions logs,
-which for some scenarious allows *tmrecoversv(8)* to remove
+logs on the fly, however, *tmqueue* will reboot in case new
+messages appears in Q-space disk so that queue-space on active
+node can be consistently read messages from the disk. *-X* setting for
+*tmsrv* also lets to remove expired/broken transactions logs,
+which for some scenarios allows *tmrecoversv(8)* to remove
 any locked prepared records.
 
 *NOTE:* when operating with process groups, it is not recommended to
@@ -2387,14 +2387,14 @@ For *tmsrv* following additional settings shall be used:
 |-n<node_id> | Common cluster node id, used for log file recognition|
 Any node ID (NDRX_NODEID) used in a cluster. Shall be common for all participants in the cluster
 |-X<seconds> | Number of seconds to run for disk checks
-(i.e. scan for unseen transaction logs or housekeep borken records after their expiry).|*10*
+(i.e. scan for unseen transaction logs or housekeep broken records after their expiry).|*10*
 |-r<attempts | Number of retries to try to finish the transaction if resource managers are not working.
-A higher value is recommended, if *tmsrv* serves for *tmqueue*, which might contains
+A higher value is recommended, if *tmsrv* serves for *tmqueue*, which might contain
 a large amount of messages. The actual completion time is multiplied by *tmsrv*
 background scan time *-s*|*30*
 |-h<seconds> | Number of seconds to wait for housekeeping to remove corrupted transaction logs.
-Corrupted logs might happen if the active node opened the transaction and did not passs till the
-committing phase. On new node, some records in resource (e.g. DB, TMQ) might stuck in prepare
+Corrupted logs might happen if the active node opened the transaction and did not pass till the
+committing phase. On the new node, some records in the resource (e.g. DB, TMQ) might stuck in prepare
 phase, until housekeep happens.|*60*
 |=========================================================
 
@@ -2406,7 +2406,7 @@ phase, until housekeep happens.|*60*
 Any node ID (NDRX_NODEID) used in a cluster. Shall be common for all participants in the cluster
 |-X<seconds> | Number of seconds to run for disk checks (i.e. scan for non-loaded messages,
 left from another node if had concurrent run). Normally shall not happen if proper fencing is used,
-however it is recommended ot leave this setting for any failover setup.|*60*
+however, it is recommended to leave this setting for any failover setup.|*60*
 |=========================================================
 
 Additional notes:
@@ -2470,15 +2470,14 @@ re-configuring timeouts/settings to release fcntl() locks,
 plus this wait time (e.g. *6* cycles multiplied by *10* sec of the *chkinterval*).
 The wait time shall be at least two times higher than other node refresh times, as that
 would ensure that the if lock provider lost the lock on the other node for some
-reason, two times higher value would give time the other node's 
+reason, two times higher value would give time to the other node's 
 *ndrxd*/*cpmsrv* processes to kill the group. And only after that time, 
-new node would boot the processes back on.
+the new node would boot the processes back on.
 
 ==== INI configuration part
 
-For demonstration purposes common configuration file for common-configuring
-environment will be defined here. Settings in in-file lists only new
-entries needed for the singleton group configuration.
+Follwing ini-based common configuration settings for all cluster nodes which
+work for the singleton group would be needed:
 
 --------------------------------------------------------------------------------
 
@@ -2528,9 +2527,9 @@ NDRX_XA_LAZY_INIT=0
 
 ==== XML configuration part
 
-*ndrxconfig-dom1.xml* and *ndrxconfig-dom2.xml*. Configuration file instances
-mostly are the same for all involved nodes, thus only one template will be
-prepared in this guide:
+*ndrxconfig-dom1.xml* (for node 1) and *ndrxconfig-dom2.xml* (for node 2). 
+Configuration file instances mostly are the same for all involved nodes,
+thus only one template will be prepared in this guide:
 
 --------------------------------------------------------------------------------
 <?xml version="1.0" ?>
@@ -2681,7 +2680,7 @@ $ xadmin start -y
 
 --------------------------------------------------------------------------------
 
-Test output from commands:
+The test output from commands:
 
 --------------------------------------------------------------------------------
 
