@@ -174,17 +174,18 @@ abort any active *tmqueue* transactions) and for restart period of time
 (including time needed for queue space message reading and loading from
 the disk to memory), the queue space would not be available.
 Normally setting is not required, however with singleton failover groups
-if in the cluster STONITH device is not used with the shared file system,
-for certain activate/locked node failure and node removal from the cluster scenarios
+if in the cluster STONITH device is not used with the shared file system
+and if shared file system does not become read-only or un-available at the moment of the failure,
+for certain node failures and node removal from the cluster scenarios
 (such as node suspend, timeout, other node takes the lock, and then
 failed node is resumed), for small period of time duplicate runs of the
 *tmqueue* processes might be possible. During this duplicate run there
 is small chance that message is moved to committed directory by the
-lock lost *tmqueue* instance and that new activate instance would not see
+lock lost *tmqueue* instance and that new activated instance would not see
 that message. To protect against such cases, flag *-X* is recommended,
 however the value shall not trigger checks very often, as directory listing
-operations on large shared file systems might be slow and may take resources
-from the processing. The value such as *120* (once per two minutes) or
+operations on large shared file systems might be slow.
+The value such as *60* (once per two minutes) or
 greater would be recommended, however this depends on system criticality
 and requirements of the message availability, as if such chance of
 unregistered committed message happens, the *tmqueue* during the
