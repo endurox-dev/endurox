@@ -238,16 +238,21 @@ silently ignored.
 Number of seconds for periodic verification of the transaction log files. Check verifies
 that there aren't any not yet loaded transaction logs on the disk. Normally
 that shall never happen. However if working with singleton groups
-and infrastructure is not using STONITH device, then at the failover
+and infrastructure is not using STONITH device or shared fs used for logs does not become
+read-only or unavailable at the moment of node failure, then at the failover
 and a coincidence of circumstances (such as failed machine
-suspend/resume cycle), at small period of time there is chance of the
+pause/resume cycle), at small period of time there is chance of the
 duplicate runs of the *tmsrv* processes, which for the currently active
 *tmsrv* might introduce unknown transaction log files. When setting *-X* is
 enabled (is greater than *0*), then with *-s* granularity, it scans the
 log file directory. If any unknown log is found, *tmsrv* marks that
 transaction log file for loading at the next check cycle. If log fails
-to load, it marked for ignore, and further check cycles ignores such
-broken transaction logs.
+to load, it does additional attempts on next cycles (set by *-a*). This 
+parameter also activates periodic housekeeping of the transaction log files
+configured by setting *-h*. Housekeeping is needed to release any
+prepared transactions in resource managers, for whom on disk broken transaction log
+is stored, and that blocks the *tmrecoversv(8)* to zap the prepared
+transactions properly.
 
 [*-a* 'NR_OF_ATTEMPTS']::
 Number of attempts used by background thread to load incomplete transaction
