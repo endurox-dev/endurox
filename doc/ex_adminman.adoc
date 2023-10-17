@@ -2223,7 +2223,9 @@ however in tests with fsync(), Intel S4600 is about 10x faster than Samsung
 counterpart. Probably it is related to the fact that Intel S4600 is an enterprise
 SSD, and might contain some capacitor-backed cache with the drive. In classic RAID setups,
 it has been also shown that Enterprise level battery-backed RAID controllers have
-better fsync() performance, than drives without battery backup.
+better fsync() performance, than drives without battery backup. The disks selection
+in case if no clear information is available from vendors, may be chosen
+on empirical bases, by doing benchmarks on different configurations.
 
 Typically Enduro/X has the following fsync numbers:
 
