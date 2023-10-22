@@ -65,6 +65,7 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 # Override timeout!
 export NDRX_TOUT=30
 export NDRX_SILENT=Y
+export NDRX_ULOG=$TESTDIR
 # Test process count
 PROC_COUNT=100
 #
