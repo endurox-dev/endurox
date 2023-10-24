@@ -51,7 +51,7 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define MAX_TRIES_DFTL          100 /* Try count for transaction completion */
 #define TOUT_CHECK_TIME         1   /* Check for transaction timeout, sec  */
 #define THREADPOOL_DFLT         10  /* Default number of threads spawned   */
-#define LOGPARSE_ATTEMPTS_DFLT  3   /* Number of attempts to parse unknown logs */
+#define LOGPARSE_ATTEMPTS_DFLT  1   /* Number of attempts to parse unknown logs */
 
 #define XA_RETRIES_DFLT         3   /* number of foreground retries */
 #define TMSRV_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min  */

@@ -591,6 +591,100 @@ Ensure(test_nstd_file_handling)
     assert_string_equal(ndrx_basename("/some/hello/string"), "string");
     assert_string_equal(ndrx_basename("string"), "string");
 }
+
+/**
+ * Test file locking functionality.
+ * no wait.
+ */
+Ensure(test_nstd_file_lock_nowait)
+{
+    int fd;
+    pid_t pid;
+    int status;
+    int ret;
+
+    /* open the file */
+    open_test_temp("a+");
+
+    /* fork the process */
+    pid = fork();
+    
+    if (pid==0)
+    {
+        /* lock the stuff */
+        assert_equal(ndrx_file_lock(fileno(M_test_temp_file), EXFALSE), EXSUCCEED);
+        /* child */
+        sleep(3);
+        /* file handle unlcoked automatically */
+        assert_equal(ndrx_file_unlock(fileno(M_test_temp_file)), EXSUCCEED);
+        close_test_temp();
+        exit(0);
+    }
+    else
+    {
+        /* let the forked process to run on */
+        sleep(1);
+        assert_equal(ndrx_file_lock(fileno(M_test_temp_file), EXFALSE), EXFAIL);
+        assert_equal(Nerror, NEBUSY);
+    }
+
+    /* wait for child to complete */
+    waitpid(pid, &status, 0);
+
+    close_test_temp();
+    remove_test_temp();
+
+    /* test system error on bad file handle */
+    assert_equal(ndrx_file_lock(-1, EXFALSE), EXFAIL);
+    assert_equal(Nerror, NEUNIX);
+}
+
+/**
+ * file lock with wait
+ */
+Ensure(test_nstd_file_lock_wait)
+{
+    int fd;
+    ndrx_stopwatch_t w;
+    pid_t pid;
+    int status;
+    int ret;
+    
+    /* open the file */
+    open_test_temp("a+");
+
+    /* fork the process */
+    pid = fork();
+    
+    if (pid==0)
+    {    
+        /* lock the stuff */
+        assert_equal(ndrx_file_lock(fileno(M_test_temp_file), EXFALSE), EXSUCCEED);
+        /* child */
+        sleep(3);
+        /* file handle unlcoked automatically */
+        assert_equal(ndrx_file_unlock(fileno(M_test_temp_file)), EXSUCCEED);
+        close_test_temp();
+        exit(0);
+    }
+    else
+    {
+        ndrx_stopwatch_reset(&w);
+
+        /* let the forked process to run on */
+        sleep(1);
+        assert_equal(ndrx_file_lock(fileno(M_test_temp_file), EXTRUE), EXSUCCEED);
+        assert_true(ndrx_stopwatch_get_delta_sec(&w)>=2);
+    }
+
+    /* wait for child to complete */
+    waitpid(pid, &status, 0);
+
+    assert_equal(ndrx_file_unlock(fileno(M_test_temp_file)), EXSUCCEED);
+    close_test_temp();
+    remove_test_temp();
+
+}
     
 /**
  * Standard library tests
@@ -613,6 +707,9 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_ndrx_string_hash);
     add_test(suite, test_nstd_compare);
     add_test(suite, test_nstd_file_handling);
+    add_test(suite, test_nstd_file_lock_nowait);
+    add_test(suite, test_nstd_file_lock_wait);
+
     
     return suite;
 }

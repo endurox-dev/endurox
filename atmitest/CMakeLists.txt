@@ -165,6 +165,7 @@ add_subdirectory (test103_singlegrp)
 add_subdirectory (test104_tmqfailover)
 add_subdirectory (test105_respawn)
 add_subdirectory (test106_periodcb)
+add_subdirectory (test107_tmsrvhkeep)
 
 ################################################################################
 # Master test case drivere

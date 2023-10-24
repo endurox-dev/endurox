@@ -2218,14 +2218,14 @@ persisted on the disk (i.e. avoids the "cached only" state).
 Please ask the enterprise disk vendors, which models they recommend for fast fsync()
 operations (i.e. number of fsync() per second, as pure random write IOPS not
 always correlated with the fsync() numbers). For example Samsung 980 Pro according to
-specs, has about 500K random write IOPS and Intel S4600 SSDs has 72K random write IOPS,
+specs, has about 500K random write IOPS and Intel S4600 SSDs have 72K random write IOPS,
 however in tests with fsync(), Intel S4600 is about 10x faster than Samsung
 counterpart. Probably it is related to the fact that Intel S4600 is an enterprise
 SSD, and might contain some capacitor-backed cache with the drive. In classic RAID setups,
 it has been also shown that Enterprise level battery-backed RAID controllers have
 better fsync() performance, than drives without battery backup. The disks selection
 in case if no clear information is available from vendors, may be chosen
-on empirical bases, by doing benchmarks on different configurations.
+on an empirical base, by doing benchmarks on different configurations.
 
 Typically Enduro/X has the following fsync numbers:
 
@@ -2314,16 +2314,15 @@ Meaning that during this time singleton processes will run on two nodes at the s
 To ensure that this never happens, the *STONITH* device must be configured. For example *GFS2*
 requires *STONITH* as part of the shared file system installation. For
 other shared file system clusters, please consult with the corresponding vendor.
-However, if *STONITH* is not available on given shared file system, Enduro/X 
+However, if *STONITH* is not available on the given shared file system, Enduro/X 
 transaction manager still can keep the distributed transaction consistency,
-with requirement, that at the event of shared fs cluster failure, fs becomes unavailable
-or read only.
+with the requirement, that in the event of shared fs cluster failure, fs becomes unavailable
+or read-only.
 
 Singleton groups keeps the following health-checks:
 
 - Each group in shared memory keeps the refresh time-stamp interval.
-the *exsinglesv* periodically refreshes the time-stamp in shared memory (monotonic clock
-based time-stamp).
+the *exsinglesv* periodically refreshes the time-stamp in shared memory (monotonic clock-based time-stamp).
 If processes such as *ndrxd* and *cpmsrv* detect at sanity cycles that
 time-stamp refresh has not happened in the configured time (*NDRX_SGREFRESH* from
 *ex_env(5)*), the group in shared memory is unlocked, and *ndrxd*/*cpmsrv*
@@ -2354,9 +2353,9 @@ to detect parallel run of the *tmsrv* and *tmqueue* processes, to
 recover from cases when parallel instances have generated queue messages or
 transactions. *tmsrv* will load un-seen transaction
 logs on the fly, however, *tmqueue* will reboot in case new
-messages appears in Q-space disk so that queue-space on active
+messages appear in Q-space disk so that queue-space on active
 node can be consistently read messages from the disk. *-X* setting for
-*tmsrv* also lets to remove expired/broken transactions logs,
+*tmsrv* also lets to remove expired/broken transaction logs,
 which for some scenarios allows *tmrecoversv(8)* to remove
 any locked prepared records.
 
@@ -2394,14 +2393,11 @@ For *tmsrv* following additional settings shall be used:
 Any node ID (NDRX_NODEID) used in a cluster. Shall be common for all participants in the cluster
 |-X<seconds> | Number of seconds to run for disk checks
 (i.e. scan for unseen transaction logs or housekeep broken records after their expiry).|*10*
-|-r<attempts | Number of retries to try to finish the transaction if resource managers are not working.
-A higher value is recommended, if *tmsrv* serves for *tmqueue*, which might contain
-a large amount of messages. The actual completion time is multiplied by *tmsrv*
-background scan time *-s*|*30*
 |-h<seconds> | Number of seconds to wait for housekeeping to remove corrupted transaction logs.
 Corrupted logs might happen if the active node opened the transaction and did not pass till the
-committing phase. On the new node, some records in the resource (e.g. DB, TMQ) might stuck in prepare
+committing phase. On the new node, some records in the resource (e.g. DB, TMQ) might stuck in the prepare
 phase, until housekeep happens.|*60*
+|-a<nr_tries> | Number of attempts to try to load broken transaction logs.|*3*
 |=========================================================
 
 .tmqueue - Recommended additional CLI parameters for failover processing
@@ -2475,14 +2471,14 @@ total time for the survived node to boot would depend on the shared file system
 re-configuring timeouts/settings to release fcntl() locks,
 plus this wait time (e.g. *6* cycles multiplied by *10* sec of the *chkinterval*).
 The wait time shall be at least two times higher than other node refresh times, as that
-would ensure that the if lock provider lost the lock on the other node for some
+would ensure that the if the lock provider lost the lock on the other node for some
 reason, two times higher value would give time to the other node's 
 *ndrxd*/*cpmsrv* processes to kill the group. And only after that time, 
 the new node would boot the processes back on.
 
 ==== INI configuration part
 
-Follwing ini-based common configuration settings for all cluster nodes which
+Following ini-based common configuration settings for all cluster nodes which
 work for the singleton group would be needed:
 
 --------------------------------------------------------------------------------
@@ -2590,7 +2586,7 @@ thus only one template will be prepared in this guide:
             <srvid>60</srvid>
             <cctag>RM1TMQ</cctag>
             <!-- /kvmpool/data/test/tmlogs/rm1 points to shared folder -->
-            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t60 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t60 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60</sysopt>
             <procgrp>RM1TMQ</procgrp>
         </server>
         <server name="tmqueue">
@@ -2727,11 +2723,11 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=3510 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=3511 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -r30 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h60 --  :
 	process id=3512 ... Started.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -r30 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h60 --  :
 	process id=3524 ... Started.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -r30 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h60 --  :
 	process id=3536 ... Started.
 exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -X60 -n2 --  :
 	process id=3548 ... Started.
@@ -2800,11 +2796,11 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=31878 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=31879 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -r30 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60 --  :
 	process id=0 ... Waiting on group lock.
 exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 --  :
 	process id=0 ... Waiting on group lock.
