@@ -89,7 +89,8 @@ struct err_msg
     {STDE(NEEXEC),        "Failed to execute"}, /* 16 */
     {STDE(NESUPPORT),     "Command not supported"}, /* 17 */
     {STDE(NEEXISTS),      "Element exists"}, /* 18 */
-    {STDE(NEVERSION),     "Invalid version"} /* 19 */
+    {STDE(NEVERSION),     "Invalid version"}, /* 19 */
+    {STDE(NEBUSY),        "Resrouce is busy"} /* 20 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -101,14 +102,18 @@ expublic void N_error (char *str)
 {
     NSTD_TLS_ENTRY;
     if (EXEOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
+    {
         fprintf(stderr, "%s:%d:%s (%s)\n", str, 
                 G_nstd_tls->M_nstd_error, 
                 NSTD_ERROR_DESCRIPTION(G_nstd_tls->M_nstd_error),
                 G_nstd_tls->M_nstd_error_msg_buf);
+    }
     else
+    {
         fprintf(stderr, "%s:%d:%s\n", str, 
                 G_nstd_tls->M_nstd_error, 
                 NSTD_ERROR_DESCRIPTION(G_nstd_tls->M_nstd_error));
+    }
 }
 
 /**

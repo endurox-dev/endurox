@@ -872,8 +872,11 @@ expublic int tm_status(UBFH *p_ub)
             atmi_xa_set_error_fmt(p_ub, TPETIME, 0, "Lock xid [%s] timed out", 
                     tmxid);
         }
-        /* detect concurrent run (for failover/singleton groups): */
-        else if (EXFALSE!=(ret=tms_log_exists_file(tmxid)))
+        /* detect concurrent run (for failover/singleton groups),
+         * only for -X mode
+         * Original E/X logic was to ignore broken logs
+         */
+        else if (G_tmsrv_cfg.chkdisk_time > 0 && EXFALSE!=(ret=tms_log_exists_file(tmxid)))
         {
             if (EXTRUE==ret)
             {

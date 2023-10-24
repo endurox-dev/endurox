@@ -17,8 +17,8 @@ DESCRIPTION
 -----------
 This is a special ATMI server that is used for distributed transaction coordination.
 For transactions started with *tpbegin(3)*, *tmsrv* generates new XID and passes
-XID back to transaction initiator. At the same time transaction is remembered by *tmsrv*
-as active transaction, transaction time-out expiry is checked by background thread.
+XID back to transaction initiator. At the same time, transaction is remembered by *tmsrv*
+as active transaction, transaction time-out expiry is checked by the background thread.
 
 In Enduro/X XA Resource Managers are numeric identifiers, which are allowed to
 be in range of 1..255. Enduro/X's Resource Manager ID (RMID) is same identifier as 
@@ -27,11 +27,11 @@ Group Number or grpno known in other ATMI systems. In one global transaction, ma
 
 If during distributed transaction processing new resource manager is associated
 with transaction, then process notifies initial transaction manager that new
-association must be made.
+the association must be made.
 
-Every transaction is logged to the separate file on the disk. File name contains 
-resource manager ID and transaction XID. All involved resource manager statuses are logged
-to this particular machine readable log file. Once transaction is
+Every transaction is logged to a separate file on the disk. The file name contains 
+the resource manager ID and transaction XID. All involved resource manager statuses are logged
+to this particular machine-readable log file. Once the transaction is
 completed, file is removed. If *tmsrv* has crashed having in-progress transactions,
 transaction log files are read from the disk at the next *tmsrv* startup, 
 and appropriate actions according to two phase commit state machine 
@@ -44,18 +44,18 @@ If several resource managers are used in the single transaction,
 other transaction managers for corresponding resource managers are used as workers 
 for executing prepare/abort/commit actions on the enlisted resource managers. These
 other transaction managers may be located on other cluster nodes, depending on the
-system setup. Cluster setup must be done correctly, because an initiator 
+system setup. Cluster setup must be done correctly because an initiator 
 transaction manager must have direct access (i.e. direct *tpbridge(8)* link) to 
-all enlisted resource manager associated transaction managers (workers).
+all enlisted resource manager-associated transaction managers (workers).
 
-Transaction managers can be load balanced with *ndrxconfig.xml(5)* with min/max attributes.
-In load balanced mode at *tpbegin()* corresponding free transaction manager will be
-selected. Later at transaction processing selected manager is responsible for full life cycle
-of the transaction. Other enlisted transaction/resource managers for this transaction will help for 
-prepare/commit/aborts of other RMs. These other TMs will be selected in load balanced
+Transaction managers can be load-balanced with *ndrxconfig.xml(5)* with min/max attributes.
+In load-balanced mode at *tpbegin()* corresponding free transaction manager will be
+selected. Later at transaction processing selected manager is responsible for the full life cycle
+of the transaction. Other enlisted transaction/resource managers for this transaction will help 
+prepare/commit/abort transaction branches . These other TMs will be selected in load-balanced
 mode.
 
-Every instance of *tmsrv* will advertise following list of services
+Every instance of *tmsrv* will advertise the following list of services
 
 1. '@TM-<Resource Manager ID>'
 
@@ -103,17 +103,17 @@ fully flushed to the disk. If during the recovery process some of the
 lines are invalid, they are ignored, and tmsrv acts with knowledge of last
 known state.
 
-When transaction is started or when new resource manager joins the transaction
-or when commit/abort request is made, logging is mandatory, i.e. if disk is
+When the transaction is started or when a new resource manager joins the transaction
+or when commit/abort request is made, logging is mandatory, i.e. if the disk is
 full or permissions error, the transaction is either not started or state not
 changed.
 
-When transaction is finalized (committed or aborted) the transaction and 
+When the transaction is finalized (committed or aborted) the transaction and 
 resource states are logged optionally, thus write errors are ignored 
 (but logged to ULOG). Thus if recovery is necessary at this stage, 
-transaction would be finalized according to any last valid data logged.
+the transaction would be finalized according to any last valid data logged.
 
-If after crash recovery some transaction still exist in Resource Manager
+If after crash recovery some transactions still exist in Resource Manager
 as not completed, following *xadmin(8)* commands may be used to finish them at
 particular Resource Manager level:
 
@@ -141,7 +141,7 @@ persist the data. This call submits the message only to Operating System kernel,
 but does not guarantee that data is written to disk. Thus if power outage happens
 some transaction information may be lost. Thus for critical systems it is
 recommended to use special flags which instruct the *tmsrv* to perform disk
-synchronization when commit decision have been taken. These flags shall be
+synchronization when commit decisions have been taken. These flags shall be
 set in *NDRX_XA_FLAGS*: *FSYNC* or *FDATASYNC* and *DSYNC*. The *FSYNC* or 
 *FDATASYNC* corresponds to *fsync()* and *fdatasync()* unix calls to flush
 the transaction log data to disk. *DSYNC* ensures that log file directory structure 
@@ -159,25 +159,25 @@ OPTIONS
 started with 'timeout' *0*.
 
 *-l* 'LOG_DIR'::
-'LOG_DIR' is full path to transaction log file directory. Process at startup
+'LOG_DIR' is a full path to the transaction log file directory. The process at startup
 scans the directory for transaction files. The format of the file name
-is following: 'TRN-<Cluster Node ID>-<RMID>-<Server ID>'. To move transaction
-to different transaction manager. The log file should be renamed accordingly.
+is the following: 'TRN-<Cluster Node ID>-<RMID>-<Server ID>'. To move transactions
+to different transaction managers. The log file should be renamed accordingly.
 
 [*-s* 'SCAN_TIME']::
-Time in seconds for one cycle to perform transaction actions for background thread.
+Time in seconds for one cycle to perform transaction actions for the background thread.
 I.e. the background thread does the sleep of this time on every loop. Default is set to '10'.
 
 [*-c* 'TIME_OUT_CHECK']::
 This is periodic timer for doing active transactions time-out checks. Default is set to '1'
 
 [*-m* 'MAX_TRIES']::
-Max tries to complete whole transaction by background thread. If the counter is reached,
+Max tries to complete the whole transaction by background thread. If the counter is reached,
 then no more attempts to complete the transaction are done. The counter is restarted at
-*tmsrv* reboot. Default is set to '100'.
+*tmsrv* reboot. The default is set to '100'.
 
 [*-r* 'XA_RETRIES']::
-This is number of attempts on resource manager when it returns *XA_RETRY* or *XAER_RMFAIL* 
+This is the number of attempts on the resource manager when it returns *XA_RETRY* or *XAER_RMFAIL* 
 during the commit or other type of operations (in case of *XAER_RMFAIL*). 
 So lets say we have issued *tpcommit()* and some involved database is returning 
 *XA_RETRY*. If '-r' is set above 2, then during the processing
@@ -190,23 +190,23 @@ be multiplied by '-r' attempts. Default value is set to '3'.
 [*-p* 'THREAD_POOL_SIZE']::
 This is the number of threads processing incoming requests. If all threads are busy, then
 job is internally queued. It is known that some databases slowly process some of 
-the XA operations, for example 'xa_rollback'. Thus multiple threads can handle this
-more efficiently. *Default threadpool size is set to 10*. For more load balancing it
+the XA operations, for example, 'xa_rollback'. Thus multiple threads can handle this
+more efficiently. *Default thread pool size is set to 10*. For more load balancing it
 is recommended to start multiple *tmsrv* processes for same RMID.
 Note that *tmsrv* run with multiple threads, thus for Oracle DB flag '+Threads=true' 
 *MUST* be set in *NDRX_XA_OPEN_STR*. 
-Otherwise unexpected core dumps can be received from *tmsrv*.
+Otherwise, unexpected core dumps can be received from *tmsrv*.
 
 [*-P* 'PING_SECONDS']::
 Number of seconds to perform database pings by either xa_start+TMJOIN flag or
 by xa_recover+TMSTARTRSCAN and TMENDRSCAN flags. The xa_recover is enabled by
-*-R* parameter. The *default* is xa_start. In case of xa_start from database it
+*-R* parameter. The *default* is xa_start. In the case of xa_start from the database, it
 is expected error code XAER_NOTA (transaction not found) as the scan is performed
-for non existent XID, generated for each worker thread. For xa_recover it is 
-expected that operation succeeds. If the operations goes out of the normal 
-behavior, then re-connection procedure is set in *NDRX_XA_FLAGS* - tag *RECON*
+for a nonexistent XID, generated for each worker thread. For xa_recover it is 
+expected that the operation succeeds. If the operations go out of the normal 
+behavior, then the re-connection procedure is set in *NDRX_XA_FLAGS* - tag *RECON*
 i.e. thread will perform xa_close() and xa_open() and retry operation. See the
-*ex_env(5)* manpage for the details. But for quick reference you may use value
+*ex_env(5)* manpage for the details. But for quick reference, you may use value
 'RECON:*:3:100' which will perform 3x attempts on any error by sleeping 100 ms in
 between attempts. The *NDRX_XA_FLAGS* must be set in CC config or environment 
 and the attempts must be greater that 1. Other with the *tmsrv* will not boot
@@ -216,53 +216,56 @@ with *-P* flag set.
 Enable xa_recover() call for PINGs instead of xa_start(). See *-P* flag description.
 
 [*-h* 'HOUSEKEEP_TIMEOUT']::
-Number of seconds after which corrupted transaction log files are removed at
-tmsrv startup. Default value is *5400* (1 hour 30 min). In case if flag *-X*
-is enabled, broke log file housekeeping is performed on regular bases,
-instead of the *tmsrv* startup only.
+The number of seconds after which corrupted transaction log files are removed at
+tmsrv startup or later load attempts set by *-a*. the default value is *5400* (1 hour 30 min).
+In case flag *-X* is enabled, the broken log file housekeeping is performed regularly.
 
 [*-n* 'ENDUROX_NODE_ID']::
 Indicates the virtual Enduro/X cluster node ID. If the parameter is not set, then
-given paramter matches the local application domain node ID set in *NDRX_NODEID*
-environment variable. Parameter normally is set to some common cluster node id
+the given parameter matches the local application domain node ID set in *NDRX_NODEID*
+environment variable. The parameter normally is set to some common cluster node ID
 number for singleton process group operations. So that in case of group failover,
 the tmsrv server from shared storage would read, recognize and process 
-failed (other) node's transaction logs. Additionally it is required that <srvid>
+failed (other) node's transaction logs. Additionally, it is required that <srvid>
 for the <server> tag in *ndrxconfig.xml(5)* used by tmsrv instance matches the 
 failed nodes <srvid> value. The same applies to *NDRX_XA_RES_ID* setting from
-the *ex_env(5)*, it must match with failed node's *NDRX_XA_RES_ID* setting.
-In case if parameters does not match, the log entries from shared storage are
+the *ex_env(5)*, it must match with the failed node's *NDRX_XA_RES_ID* setting.
+In case if parameters do not match, the log entries from shared storage are
 silently ignored.
 
 [*-X* 'NR_OF_SECONDS']::
 Number of seconds for periodic verification of the transaction log files. Check verifies
 that there aren't any not yet loaded transaction logs on the disk. Normally
-that shall never happen. However if working with singleton groups
+that shall never happen. However, if working with singleton groups
 and infrastructure is not using STONITH device or shared fs used for logs does not become
 read-only or unavailable at the moment of node failure, then at the failover
 and a coincidence of circumstances (such as failed machine
-pause/resume cycle), at small period of time there is chance of the
+pause/resume cycle), at small period there is chance of the
 duplicate runs of the *tmsrv* processes, which for the currently active
 *tmsrv* might introduce unknown transaction log files. When setting *-X* is
 enabled (is greater than *0*), then with *-s* granularity, it scans the
 log file directory. If any unknown log is found, *tmsrv* marks that
-transaction log file for loading at the next check cycle. If log fails
-to load, it does additional attempts on next cycles (set by *-a*). This 
-parameter also activates periodic housekeeping of the transaction log files
+transaction log file for loading at the next check cycle. If the log fails
+to load, it makes additional attempts to load the log file on
+the next cycles (set by *-a*). This parameter also activates
+periodic housekeeping of the transaction log files
 configured by setting *-h*. Housekeeping is needed to release any
-prepared transactions in resource managers, for whom on disk broken transaction log
+prepared transactions in resource managers, for whom on the disk broken transaction log
 is stored, and that blocks the *tmrecoversv(8)* to zap the prepared
-transactions properly.
+transactions properly. If the parameter is disabled and if a broken log file exists
+on the disk, that does not block *tmrecoversv(8)* to zap the prepared transaction.
+The default parameter value is *0* (disabled).
 
 [*-a* 'NR_OF_ATTEMPTS']::
-Number of attempts used by background thread to load incomplete transaction
+The number of attempts used by the background thread to load an incomplete transaction
 log files (left by any crashed process instances and not yet flushed to
-file-system by the OS). Default value is *3*.
+the file system by the OS). The default value is *1*. During the attempts
+processing, additionally, housekeeping is performed on the files (configured by the *-h* flag).
 
 XA RECOVER SETTINGS FOR ORACLE DB
 ---------------------------------
-The -R mode might not be enabled in database for user. I.e. user is not allowed
-to see open transactions. Thus must be enabled by following commands on DB user
+The -R mode might not be enabled in a database for the user. I.e. user is not allowed
+to see open transactions. Thus must be enabled by following commands on the DB user
 set in XA open string:
 
 --------------------------------------------------------------------------------
@@ -276,9 +279,9 @@ grant execute on dbms_xa to <database_user>; (If using Oracle 10.2)
 
 ORACLE RAC SETTINGS
 -------------------
-If planing to use Oracle RAC, to successfully process distributed transaction
+If planning to use Oracle RAC, to successfully process the distributed transaction
 across binaries which are connected to different RAC nodes, Oracle RAC Singleton 
-Service must be configured, so that only one node actively serves the transactions,
+Service must be configured so that only one node actively serves the transactions,
 and this ensures XA affinity.
 
 Typically on gird infrastructure, that can be configured as:
@@ -290,7 +293,7 @@ $ srvctl add service -db RACDB -service XARAC -preferred RAC1
 
 --------------------------------------------------------------------------------
 
-For policy based RAC cluster management, use:
+For policy-based RAC cluster management, use:
 
 --------------------------------------------------------------------------------
 
@@ -301,10 +304,10 @@ $ srvctl add service -db RACDB -service XARAC -serverpool xa_pool
 
 *NOTE:* *-dtp*  option shall be leaved to default, which is *FALSE*.
 
-If this above is not configured and say two binaries are working with same XA
-transaction, one binary is connected to first RAC node and other binary with second RAC node,
+If this above is not configured and say two binaries are working with the same XA
+transaction, one binary is connected to the first RAC node and another binary with the second RAC node,
 the transaction will not work, as XA API will not see the transaction on other
-node than where it was started, and following error would be generated:
+node than where it was started and the following error would be generated:
 
 --------------------------------------------------------------------------------
 
@@ -322,19 +325,19 @@ LIMITATIONS
 When using dynamic registration xa switches with the *RECON* XA flag functionality,
 to keep the process working in case if communications are lost while executing non XA AP code
 e.g. SQL statements, the process by it self must perform *tpclose(3)*/*tpopen(3)* until
-it succeeds, or process shall perform exit so that Enduro/X would restart it. 
+it succeeds, or the process shall perform exit so that Enduro/X would restart it. 
 This extra logic is needed due to fact, that if outside of XA API communications are lost, 
 the Enduro/X by it self would not see that comms status have changed because ax_start() 
 is executed only when resource is modified by the application. 
 If comms are not working in the application, the resource is not modified and 
 thus ax_start() is not invoked.
 
-When process joins the transaction (either initiator or participating XATMI server), firstly
+When the process joins the transaction (either initiator or participating XATMI server), firstly
 it register with *tmsrv* and only then performs xa_start() API call. If transaction
-at *tmsrv* expires concurrently while joining process have not yet called the xa_start(),
-there is possibility that orphan transaction may be created (i.e. created active transaction 
-in the resource, but transaction is not managed by Enduro/X as already rolled back). 
-To overcome this limitation, careful transaction timeout planing shall be performed which
+at *tmsrv* expires concurrently while the joining process has not yet called the xa_start(),
+there is the possibility that an orphan transaction may be created (i.e. created active transaction 
+in the resource, but the transaction is not managed by Enduro/X as already rolled back). 
+To overcome this limitation, careful transaction timeout planning shall be performed which
 applies to tpbegin() setting and timeout setting at the resource for inactive transactions.
 
 If transaction expires at *tmsrv*, this fact does not terminate any *tpcall(3)* operations,

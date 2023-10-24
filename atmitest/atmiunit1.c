@@ -834,6 +834,13 @@ Ensure(test106_periodcb)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test107_tmsrvhkeep)
+{
+    int ret;
+    ret=system_dbg("test107_tmsrvhkeep/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -1023,6 +1030,8 @@ TestSuite *atmi_test_all(void)
 #endif
     add_test(suite, test105_respawn);
     add_test(suite, test106_periodcb);
+    add_test(suite, test107_tmsrvhkeep);
+    
     
     return suite;
 }

@@ -63,7 +63,8 @@ extern "C" {
 #define NESUPPORT          17 /**< Command not supported */
 #define NEEXISTS           18 /**< Duplicate action */
 #define NEVERSION          19 /**< API version conflict */
-#define NMAXVAL            19 /**< max error */
+#define NEBUSY             19 /**< Resource is busy */
+#define NMAXVAL            20 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 

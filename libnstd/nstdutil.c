@@ -61,6 +61,7 @@
 /*---------------------------Macros-------------------------------------*/
 #define _MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define NDRX_TEMP_ATTEMPTS  1000 /**< Number of attempts for looking for tmp file */
+#define API_ENTRY {_Nunset_error();}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -2682,4 +2683,82 @@ expublic void ndrx_volatile_memcy(volatile char *dest, const volatile char *src,
     }
 }
 
+
+/**
+ * Advisory lock, entire file (write exclusive)
+ * @param fd file descriptor to lock
+ * @param do_wait shall process wait for the lock or return NEBUSY
+ * @return EXSUCCEED/EXFAIL(nerror set)
+ */
+expublic int ndrx_file_lock(int fd, int do_wait)
+{
+    int ret=EXSUCCEED;
+    struct flock fl;
+    int cmd=F_SETLK;
+    API_ENTRY;
+
+    if (do_wait)
+    {
+        cmd=F_SETLKW;
+    }
+
+    fl.l_type = F_WRLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start = 0;
+    fl.l_len = 0; /* Lock the entire file */
+
+    if (fcntl(fd, cmd, &fl) == -1)
+    {
+        int err=errno;
+
+        NDRX_LOG(log_error, "Error acquiring write lock (cmd=%d): %s",
+            cmd, strerror(err));
+
+        if (EACCES==err || EAGAIN==err)
+        {
+            _Nset_error_fmt(NEBUSY, "failed to lock fd=%d, cmd=%d: %s", fd, cmd, strerror(err));
+        }
+        else
+        {
+            _Nset_error_fmt(NEUNIX, "failed to lock fd=%d, cmd=%d: %s", fd, cmd, strerror(err));
+        }
+        
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_info, "fd %d locked for writing", fd);
+
+out:
+    return ret;
+}
+
+/**
+ * Unlock the previously locked file (with full contents lock)
+ * @param fd file descriptor
+ * @return EXSUCCEED/EXFAIL (nerror set)
+ */
+expublic int ndrx_file_unlock(int fd)
+{
+    int ret = EXSUCCEED;
+    struct flock fl;
+    API_ENTRY;
+
+    fl.l_type = F_UNLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start = 0;
+    fl.l_len = 0; /* Lock the entire file */
+
+    if (EXFAIL==fcntl(fd, F_SETLK, &fl))
+    {
+        int err=errno;
+        NDRX_LOG(log_error, "Error unlocking fd %d: %s",
+            fd, strerror(err));
+        _Nset_error_fmt(NEUNIX, "failed to unlock fd %d: %s", fd, strerror(err));
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
+

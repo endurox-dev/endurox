@@ -366,6 +366,8 @@ extern NDRX_API int ndrx_isint(char *str);
 extern NDRX_API int ndrx_isempty(const char *s);
 extern NDRX_API int ndrx_nr_chars(char *str, char chkchar);
 
+extern NDRX_API int ndrx_file_lock(int fd, int do_wait);
+extern NDRX_API int ndrx_file_unlock(int fd);
 extern NDRX_API int ndrx_file_exists(char *filename);
 extern NDRX_API int ndrx_file_touch(char *filename);
 extern NDRX_API int ndrx_file_regular(char *path);
@@ -457,7 +459,6 @@ extern NDRX_API int ndrx_chk_confirm(char *message, short is_confirmed);
 
 extern NDRX_API void ndrx_stdcfgstr_free(ndrx_stdcfgstr_t* stdcfg);
 extern NDRX_API int ndrx_stdcfgstr_parse(const char *input, ndrx_stdcfgstr_t** parsed);
-
 
 extern NDRX_API int ndrx_rand(void);
 extern NDRX_API void ndrx_rand_seedset(unsigned int *seed);

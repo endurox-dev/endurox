@@ -82,7 +82,7 @@ exprivate ndrx_tms_file_registry_t *M_attempts_tmxids=NULL;
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
+exprivate int background_load_attempts(void);
 
 /**
  * Check if file is already monitored
@@ -238,6 +238,15 @@ expublic int background_read_log(void)
        NDRX_FREE(namelist);
        namelist = NULL;
     }
+
+    /* do the attempts too (i.e. proceed only when logs are loaded... 
+     * as for normal cases then race with background thread, might
+     * give chance for tmrecover to remove good transactions
+     */
+    if (EXSUCCEED!=background_load_attempts())
+    {
+        EXFAIL_OUT(ret);
+    }
     
 out:
     if (NULL!=namelist)
@@ -324,7 +333,7 @@ expublic int background_chkdisk(void)
 
                 if (ndrx_file_exists(tmp))
                 {
-                    if (NULL!=ndrx_tms_file_registry_get(&M_broken_tmxids, p_name))
+                    if (NULL!=(p_reg=ndrx_tms_file_registry_get(&M_broken_tmxids, p_name)))
                     {
                         if (tms_housekeep(tmp))
                         {
@@ -475,13 +484,6 @@ expublic int background_loop(void)
             background_chkdisk();
             ndrx_stopwatch_reset(&M_chkdisk_stopwatch);
         }
-
-        /* process any non-loaded logs... */
-        background_load_attempts();
-        
-        /* Check the list of transactions (iterate over...) 
-         * Seems anyway, we need a list of background ops here...
-         */
         
         /* Lock for processing... (cose xadmin might want to do some stuff in middle
          * Might want to think something better (so that it does not lock all process)
@@ -542,6 +544,11 @@ expublic int background_loop(void)
         
         if (!G_bacground_req_shutdown)
             thread_sleep(G_tmsrv_cfg.scan_time);
+
+        /* process any non-loaded logs... 
+         * (only after the sleep as initial load already did this)
+         */
+        background_load_attempts();
     }
     
 out:
