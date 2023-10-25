@@ -104,7 +104,6 @@ typedef struct thread_server thread_server_t;
 typedef struct
 {
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
-    int state;
     /**< Number attempts to load the unknown transaction.
      * Might be useful as transactions, which are not
      * logged for commit/abort, might have delayed
