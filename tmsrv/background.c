@@ -128,6 +128,7 @@ expublic int ndrx_tms_file_registry_add(ndrx_tms_file_registry_t ** hash,
         
         NDRX_STRCPY_SAFE(p_ret->tmxid, tmxid);
         p_ret->housekeepable=housekeepable;
+        p_ret->attempts=0;
         EXHASH_ADD_STR(*hash, tmxid, p_ret);
     }
 out:
