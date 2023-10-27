@@ -47,6 +47,12 @@ find_package(LibXml2 REQUIRED)
 
 ex_comp_find_flexbison()
 
+
+# some issues on Solaris 10, cmake 3.14, and LIBXML2_LIBRARY specified in cmake command
+if(NOT LIBXML2_LIBRARIES STREQUAL "")
+    set(LIBXML2_LIBRARIES "xml2")
+ENDIF()
+
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
                         ${ENDUROX_SOURCE_DIR}/libatmi
