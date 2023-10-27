@@ -665,7 +665,7 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsingles
     ssize_t bytes_read;
     size_t offset=DATA_SIZE * CONF_NDRX_NODEID_COUNT * copy + DATA_SIZE*(nodeid-1);
     char data_block[DATA_SIZE];
-    int64_t crc32_calc;
+    uint64_t crc32_calc;
 
     /* Open the file for reading */
     fd = open(ndrx_G_exsinglesv_conf.lockfile_2, O_RDONLY);
@@ -741,7 +741,7 @@ exprivate int ndrx_exsinglesv_ping_read_int(int copy, int nodeid, ndrx_exsingles
     p_ent->sequence = ntohll(p_ent->sequence);
 
     TP_LOG(log_info, "copy %d: got nodeid=%d group=%d "
-            "refresh=%ld sequence=%ld crc32=%lx", 
+            "refresh=%lu sequence=%lu crc32=%lx", 
             copy, nodeid, ndrx_G_exsinglesv_conf.procgrp_lp_no, 
             (long)p_ent->lock_time, (long)p_ent->sequence, (long)p_ent->crc32);
 

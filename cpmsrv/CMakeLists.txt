@@ -44,6 +44,11 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
                                          ${LIBXML2_INCLUDE_DIR})
 
 
+# some issues on Solaris 10, cmake 3.14
+if(NOT LIBXML2_LIBRARIES STREQUAL "")
+    set(LIBXML2_LIBRARIES "xml2")
+ENDIF()
+
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})

@@ -95,9 +95,9 @@ typedef struct
  */
 typedef struct
 {
-    int64_t lock_time;  /**< lock time in UTC epoch */
-    int64_t sequence;   /**< sequence counted on    */
-    int64_t crc32;     /**< crc32 of the lock time */
+    uint64_t lock_time;  /**< lock time in UTC epoch */
+    uint64_t sequence;   /**< sequence counted on    */
+    uint64_t crc32;     /**< crc32 of the lock time */
 } ndrx_exsinglesv_lockent_t;
 
 /*---------------------------Globals------------------------------------*/
