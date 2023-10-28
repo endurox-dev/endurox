@@ -161,7 +161,6 @@ exprivate int get_xid_status(char *xid_str, unsigned char rmid_start, short node
             /* nothing more to do here... */
             goto out;
         }
-        
     }
 
     /* dump the response buffer... */
@@ -180,7 +179,6 @@ exprivate int get_xid_status(char *xid_str, unsigned char rmid_start, short node
     /* OK got the final result: */
     NDRX_LOG(log_debug, "Transaction [%s] service [%s] reported status: %d - %s",
             xid_str, svcnm, ret, (TPEMATCH==ret?"tx not found":"tx found or error"));
-    
     
     /* cache the result */
     stat = NDRX_FPMALLOC(sizeof(*stat), 0);

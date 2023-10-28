@@ -491,7 +491,7 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
         {
             NDRX_LOG(log_debug, "Unlinking file [%s]", files[occ]);
 
-	    /* IO fence test */
+            /* IO fence test */
             if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(files[occ]))
             {
                 if (ENOENT!=errno)
@@ -521,7 +521,7 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
                     *p=EXEOS;
                 }
 
-		/* io fence test */
+                /* io fence test */
                 if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(files[occ], G_atmi_env.xa_fsync_flags))
                 {
                     NDRX_LOG(log_error, "Failed to dsync [%s]", files[occ]);
@@ -544,7 +544,8 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
         NDRX_LOG(log_debug, "About to rename: [%s] -> [%s]",
                 name1, name2);
 
-        if (EXSUCCEED!=rename(name1, name2))
+        /* wth io fence test: */
+        if (ndrx_G_systest_lockloss|| EXSUCCEED!=rename(name1, name2))
         {
             int err = errno;
             
@@ -573,7 +574,7 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
             *p=EXEOS;
         }
 
-	/* write io fence */
+        /* write io fence */
         if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(name2, G_atmi_env.xa_fsync_flags))
         {
             NDRX_LOG(log_error, "Failed to dsync [%s]", name2);

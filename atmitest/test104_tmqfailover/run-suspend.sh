@@ -255,7 +255,7 @@ do
         #xadmin lcf lockloss -A0 -a
         #
         
-	echo "Restore domains to normal...`date`"
+        echo "Restore domains to normal...`date`"
         set_dom1;
         xadmin lcf lockloss -A0 -a
         xadmin lcf
