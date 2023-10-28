@@ -44,8 +44,8 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
                                          ${LIBXML2_INCLUDE_DIR})
 
 
-# some issues on Solaris 10, cmake 3.14
-if(NOT LIBXML2_LIBRARIES STREQUAL "")
+# some issues on Solaris 10, cmake 3.14, and LIBXML2_LIBRARY specified in cmake command
+if( (CMAKE_SYSTEM_NAME STREQUAL "SunOS") AND (NOT LIBXML2_LIBRARIES STREQUAL ""))
     set(LIBXML2_LIBRARIES "xml2")
 ENDIF()
 
