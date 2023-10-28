@@ -1744,7 +1744,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
     }
     
     /* allow to retry... */
-    if (XA_TX_STAGE_PREPARED!=p_tl->txstage ||
+    if (XA_TX_STAGE_PREPARED!=p_tl->txstage &&
         XA_TX_STAGE_COMMITTING!=p_tl->txstage)
     {
         NDRX_LOG(log_error, "Q transaction [%s] expected stage %hd (prepared) or %hd (committing) got %hd",
