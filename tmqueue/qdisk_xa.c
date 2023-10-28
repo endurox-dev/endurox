@@ -1730,10 +1730,12 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
         goto out;
     }
     
-    if (XA_TX_STAGE_PREPARED!=p_tl->txstage)
+    /* allow to retry... */
+    if (XA_TX_STAGE_PREPARED!=p_tl->txstage ||
+        XA_TX_STAGE_COMMITTING!=p_tl->txstage)
     {
-        NDRX_LOG(log_error, "Q transaction [%s] expected stage %hd (prepared) got %hd",
-                tmxid, XA_TX_STAGE_PREPARED, p_tl->txstage);
+        NDRX_LOG(log_error, "Q transaction [%s] expected stage %hd (prepared) or %hd (committing) got %hd",
+                tmxid, XA_TX_STAGE_PREPARED, XA_TX_STAGE_COMMITTING, p_tl->txstage);
         
         ret = XAER_RMERR;
         p_tl->is_abort_only=EXTRUE;

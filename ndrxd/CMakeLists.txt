@@ -47,9 +47,8 @@ find_package(LibXml2 REQUIRED)
 
 ex_comp_find_flexbison()
 
-
 # some issues on Solaris 10, cmake 3.14, and LIBXML2_LIBRARY specified in cmake command
-if(NOT LIBXML2_LIBRARIES STREQUAL "")
+if( (CMAKE_SYSTEM_NAME STREQUAL "SunOS") AND (NOT LIBXML2_LIBRARIES STREQUAL ""))
     set(LIBXML2_LIBRARIES "xml2")
 ENDIF()
 
