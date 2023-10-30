@@ -96,6 +96,7 @@
 #include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+/* #define TXN_TRACE */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -1334,11 +1335,23 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
     p_tl->txstage = XA_TX_STAGE_ABORTING;
     p_tl->is_abort_only=EXTRUE;
     
+#ifdef TXN_TRACE
+    userlog("ABORT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
+    NDRX_LOG(log_error, "ABORT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
+#endif
+
     /* Process files according to the log... */
     DL_FOREACH_SAFE(p_tl->cmds, el, elt)
     {
         char *fname = NULL;
         
+#ifdef TXN_TRACE
+        userlog("ABORT_ENT: tmxid=[%s] command_code=[%c]",
+            tmxid, el->b.hdr.command_code);
+        NDRX_LOG(log_error, "ABORT_ENT: tmxid=[%s] command_code=[%c]",
+            tmxid, el->b.hdr.command_code);
+#endif
+
         if (XA_RM_STATUS_ACTIVE==el->cmd_status)
         {
             /* run on active folder */
@@ -1731,7 +1744,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
     }
     
     /* allow to retry... */
-    if (XA_TX_STAGE_PREPARED!=p_tl->txstage ||
+    if (XA_TX_STAGE_PREPARED!=p_tl->txstage &&
         XA_TX_STAGE_COMMITTING!=p_tl->txstage)
     {
         NDRX_LOG(log_error, "Q transaction [%s] expected stage %hd (prepared) or %hd (committing) got %hd",
@@ -1744,12 +1757,36 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
     
     p_tl->txstage = XA_TX_STAGE_COMMITTING;
     
-     /* process command by command to stage to prepared ... */
+    /* process command by command to stage to prepared ... */
+#ifdef TXN_TRACE
+    /* Enable these commands (and for ABORT: too), to trace down
+     * transaction loss. I.e. defective transaction is in case,
+     * if we see in the log COMMIT: and ABORT:. There
+     * shall be only one of these, not both
+     *
+     * To post-process, say run-suspend.sh of test 104:
+     * extract the xids:
+     * $ grep ":COMMIT:" ULOG.20231028  | cut -d '[' -f 2 | cut -d ']' -f1 > commit.xids
+     *
+     * verify that there aren't any aborts:
+     * $ cat commit.xids | xargs -i grep {} ULOG.20231028 | grep --color=auto ABORT
+     *
+     */
+    userlog("COMMIT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
+    NDRX_LOG(log_error, "COMMIT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
+#endif
     DL_FOREACH_SAFE(p_tl->cmds, el, elt)
     {
         /* run on prepared folder */
         fname = get_filename_i(el->seqno, M_folder_prepared, 0);
             
+#ifdef TXN_TRACE
+        userlog("COMMIT_ENT: tmxid=[%s] command_code=[%c] fname=[%s]",
+            tmxid, el->b.hdr.command_code, fname);
+        NDRX_LOG(log_error, "COMMIT_ENT: tmxid=[%s] command_code=[%c] fname=[%s]",
+            tmxid, el->b.hdr.command_code, fname);
+#endif
+
         /* Do the task... */
         if (TMQ_STORCMD_NEWMSG == el->b.hdr.command_code)
         {
