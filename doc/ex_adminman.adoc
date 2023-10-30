@@ -2130,7 +2130,7 @@ $ su - root
 # mkdir /opt/app
 
 -- 1) In the following command replace "user1" with application user.
--- 2) Replace "/home/user1/soft/conf/settest1" with environment file of the application.
+-- 2) Replace "/home/user1/test/conf/settest1" with environment file of the application.
 
 # cat << EOF > /opt/app/app_cleanup.sh
 #!/bin/bash
@@ -2141,7 +2141,7 @@ $ su - root
 # add to GPFS by mmaddcallback app_cleanup --command=/opt/app/app_cleanup.sh --event unmount --sync
 #
 xadmin killall ndrxd user1
-su - user1 -c "source /home/user1/soft/conf/settest1; xadmin down -y"
+su - user1 -c "source /home/user1/test/conf/settest1; xadmin down -y"
 exit 0
 
 EOF
