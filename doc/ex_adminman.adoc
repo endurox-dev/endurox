@@ -1278,6 +1278,7 @@ of the group:
             <cctag>Group4</cctag>
             <sysopt>-e ${NDRX_ULOG}/tmqueue.log -r -- -s1</sysopt>
         </server>
+
     </servers>
     <clients>
         <client cmdline="test_nullcl" CCTAG="Group1">
@@ -1984,7 +1985,7 @@ right after the *tmqueue* process definition in *ndrxconfig.xml(5)*, instead of 
 
 Another instance of *tmrecoversv* shall be configured at the end of the whole application
 for each Enduro/X node. Such *tmrecoversv* shall run periodically. That will allow of housekeeping
-any orphaned prepared transactions for whom corrupted transactions logs
+any orphaned prepared transactions for whom corrupted transaction logs
 were left on the disk after the failover.
 
 Additionally, during the failover, the active-state (not yet prepared according to 2PC) 
@@ -1994,7 +1995,7 @@ which means that on a node that took over, the transaction data might not be
 available, and active transactions in resource manages cannot be rolled back by Enduro/X
 tools. However developer may use *exec_on_bootlocked* or *exec_on_locked* user exit points
 and develop scripts for collecting activate transactions from the resource managers.
-Additional details for working with specific resource managers are outside of scope
+Additional details for working with specific resource managers are outside of the scope
 of this guide.
 
 *tmsrv(8)* shall be configured to use *FSYNC* (or *FDATASYNC*) and *DSYNC* flags
@@ -2396,7 +2397,7 @@ Any node ID (NDRX_NODEID) used in a cluster. Shall be common for all participant
 |-h<seconds> | Number of seconds to wait for housekeeping to remove corrupted transaction logs.
 Corrupted logs might happen if the active node opened the transaction and did not pass till the
 committing phase. On the new node, some records in the resource (e.g. DB, TMQ) might stuck in the prepare
-phase, until housekeep happens.|*60*
+phase, until housekeep happens.|*30*
 |-a<nr_tries> | Number of attempts to try to load broken transaction logs.|*3*
 |=========================================================
 
@@ -2409,6 +2410,13 @@ Any node ID (NDRX_NODEID) used in a cluster. Shall be common for all participant
 |-X<seconds> | Number of seconds to run for disk checks (i.e. scan for non-loaded messages,
 left from another node if had concurrent run). Normally shall not happen if proper fencing is used,
 however, it is recommended to leave this setting for any failover setup.|*60*
+|-t<seconds> | Default timout for automatic/forward transactions. Due to fact
+that for example, *GPFS* may freeze the working node, if not-active node leaves
+the cluster, the transaction timeout shall be set to a reasonable value, so
+that the transaction is not rolled during the cluster reconfiguation.
+This generally applies to any global tansactions used in the application.
+In case of *GPFS*, during the tests it is shown, that for good node,
+share fs may freeze for about to *30* sec.|*60*
 |=========================================================
 
 Additional notes:
@@ -2471,7 +2479,7 @@ total time for the survived node to boot would depend on the shared file system
 re-configuring timeouts/settings to release fcntl() locks,
 plus this wait time (e.g. *6* cycles multiplied by *10* sec of the *chkinterval*).
 The wait time shall be at least two times higher than other node refresh times, as that
-would ensure that the if the lock provider lost the lock on the other node for some
+would ensure that if the lock provider lost the lock on the other node for some
 reason, two times higher value would give time to the other node's 
 *ndrxd*/*cpmsrv* processes to kill the group. And only after that time, 
 the new node would boot the processes back on.
@@ -2586,7 +2594,7 @@ thus only one template will be prepared in this guide:
             <srvid>60</srvid>
             <cctag>RM1TMQ</cctag>
             <!-- /kvmpool/data/test/tmlogs/rm1 points to shared folder -->
-            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t60 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmsrv-rm1.log -r -- -t60 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h30 -a3</sysopt>
             <procgrp>RM1TMQ</procgrp>
         </server>
         <server name="tmqueue">
@@ -2594,7 +2602,7 @@ thus only one template will be prepared in this guide:
             <max>1</max>
             <srvid>80</srvid>
             <cctag>RM1TMQ</cctag>
-            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60</sysopt>
+            <sysopt>-e ${NDRX_ULOG}/tmqueue-rm1.log -r -- -s1 -n2 -X60 -t60</sysopt>
             <procgrp>RM1TMQ</procgrp>
 
             <!-- Increase time for start wait, as there might be lots of messages
@@ -2723,13 +2731,13 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=3510 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=3511 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h30 -a3 --  :
 	process id=3512 ... Started.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h30 -a3 --  :
 	process id=3524 ... Started.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -X10 -n2 -h30 -a3 --  :
 	process id=3536 ... Started.
-exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -X60 -n2 --  :
+exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -n2 -X60 -t60 --  :
 	process id=3548 ... Started.
 exec tmrecoversv -k 0myWI5nu -i 250 -e /home/user1/test/log/tmrecoversv-a.log -r -- -i --  :
 	process id=3711 ... Started.
@@ -2796,13 +2804,13 @@ exec exsingleckr -k 0myWI5nu -i 53 -e /home/user1/test/log/exsingleckr-a.log -r 
 	process id=31878 ... Started.
 exec exsingleckr -k 0myWI5nu -i 54 -e /home/user1/test/log/exsingleckr-a.log -r --  :
 	process id=31879 ... Started.
-exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 60 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h30 -a3 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 61 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h30 -a3 --  :
 	process id=0 ... Waiting on group lock.
-exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h60 --  :
+exec tmsrv -k 0myWI5nu -i 62 -e /home/user1/test/log/tmsrv-rm1.log -r -- -t1 -l/kvmpool/data/test/tmlogs/rm1 -n2 -X10 -h30 -a3 --  :
 	process id=0 ... Waiting on group lock.
-exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -p30 -u30 -n2 -X60 --  :
+exec tmqueue -k 0myWI5nu -i 80 -e /home/user1/test/log/tmqueue-rm1.log -r -- -s1 -n2 -X60 -t60 --  :
 	process id=0 ... Waiting on group lock.
 exec testsv.py -k 0myWI5nu -i 1250 -e /home/user1/test/log/testsv.py.log -r --  :
 	process id=0 ... Waiting on group lock.
