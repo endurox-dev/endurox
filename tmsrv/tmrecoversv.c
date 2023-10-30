@@ -142,10 +142,13 @@ int tpsvrinit (int argc, char **argv)
         {
             EXFAIL_OUT(ret);
         }
-        if (EXSUCCEED!=ndrx_tmrecover_do())
+
+        /* this returns >=0 for success (nr of rolled back) */
+        if (ndrx_tmrecover_do()<0)
         {
             EXFAIL_OUT(ret);
         }
+
     }
 
     /* register extension only if periodic or deffered scanning is enabled. */

@@ -545,7 +545,7 @@ out:
  * Scan all the TMSRVs for transaction
  * Check the status of transaction (base branch tid 0) by the originator
  * if TPEMATCH, then abort transaction & cache the result
- * @return EXSUCCEED/EXFAIL
+ * @return >=0 count of aborted (succeed)/EXFAIL
  */
 expublic int ndrx_tmrecover_do(void)
 {
