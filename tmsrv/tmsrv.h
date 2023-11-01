@@ -114,6 +114,130 @@ typedef struct
     int housekeepable;              /**< Is housekeepable?              */
 } ndrx_tms_file_registry_t;
 
+
+typedef struct ndrx_tms_storage ndrx_tms_storage_t;
+
+/**
+ * Data store interface
+ */
+struct ndrx_tms_storage
+{
+    char magic[4];      /**< magic indicator of the plugin struct */
+    int sw_version;      /**< switch version number */
+    void *custom_block; /**< custom data storage, used by switch  */
+    
+    /** init interface 
+     * @param sw storage interface
+     * @param p_tmsrv_cfg Configuration used by TM.
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_init)(ndrx_tms_storage_t *sw, tmsrv_cfg_t *p_tmsrv_cfg);
+
+    /** 
+     * un-init the interface
+     * @param sw switch
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_uninit)(ndrx_tms_storage_t *sw);
+
+    /**
+     * open transaction path
+     * @param sw switch
+     * @param p_tl transaction log (struct)
+     * @param fname transaction file name. For no DB, will contain <connref>/TRN-<vnodeid>-<rmid>-<srvid>-<txid>
+     * @param mode open mode, "a" for new transaction, "a+" for recovery
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_open)(ndrx_tms_storage_t  *sw, atmi_xa_log_t* p_tl, char *fname, char *mode);
+
+    /**
+     * close storage file
+     * @param sw switch
+     * @param p_tl transaction log (struct)
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_close)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+
+    /**
+     * Remove transaction log
+     * @param sw switch
+     * @param p_tl transaction log (struct)
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_unlink)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+
+    /**
+     * write async to file. No guarantees are made
+     * that records will persist.
+     * @param sw switch
+     * @param p_tl transaction log (struct)
+     * @param cmdid command id
+     * @param tstamp timestamp
+     * @param buf status buffer to write
+     * @param sync if 1, then sync to disk
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_write)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
+        char cmdid, long long tstamp, char *buf, int sync);
+
+    /** 
+     * Start reading of the transaction log for the given file name.
+     * @param sw switch
+     * @param p_tl transaction log (struct). The fname must be filled in the log struct
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_read_start)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+
+    /**
+     * Read next record from the transaction log
+     * @param sw switch
+     * @param p_tl transaction log (struct)
+     * @return 0 >= succeed (number of bytes read), -1 on error (Nerror is set
+     */
+    int (*pf_storage_read_next)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, char *buf, size_t bufsz);
+
+    /**
+     * End reading of the transaction log
+     * @param sw switch
+     * @param p_tl transaction log (struct)
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_read_end)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+
+    /** 
+     * list transactions in the storage, start
+     * @param sw switch
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_list_start)(ndrx_tms_storage_t *sw);
+
+    /** 
+     * list transactions in the storage, next
+     * This returns file names of the transactions
+     * @param sw switch
+     * @param buf buffer to write the transaction name
+     * @param bufsz size of the buffer
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_list_next)(ndrx_tms_storage_t *sw, char *buf, size_t bufsz);
+
+    /** 
+     * list transactions in the storage, end
+     * @param sw switch
+     * @return 0 on success, -1 on error (Nerror is set)
+     */
+    int (*pf_storage_list_end)(ndrx_tms_storage_t *sw);
+
+    /**
+     * Check if storage file exists
+     * @param sw switch
+     * @param fname file name
+     * @return 1 - exists, 0 on false (ok, but does not exist), -1 on error (Nerror is set)
+     */
+    int (*pf_storage_exists)(ndrx_tms_storage_t *sw, char *fname);
+
+};
+
 /*---------------------------Prototypes---------------------------------*/
 /* init */
 extern void tm_thread_init(void);

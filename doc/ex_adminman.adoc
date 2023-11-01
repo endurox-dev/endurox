@@ -1043,11 +1043,11 @@ protection. Enduro/X can be configured to limit the max number of new records in
 group, after which any new non existing data element lookup in group will make
 request buffer to reject with configured tperrno, user return code and buffer.
 
-. Records in cache can be cross-invalidated. Meaning that "hooks" can be put on
-certain service calls in order to invalidate - zap contents of some other
+. Records in the cache can be cross-invalidated. Meaning that "hooks" can be put on
+certain service calls to invalidate - zap contents of some other
 cache.
 
-. Cache supports refresh conditions. So that in case if specific condition over
+. Cache supports refresh conditions. So that in case if specific conditions over
 the data is true, the cached data not returned, but service invocation is performed
 and re-cached (old data overwritten).
 
