@@ -85,12 +85,14 @@ struct err_msg
     {STDE(NENOSPACE),     "No space to store output buffer"}, /* 12 */
     {STDE(NEINVALKEY),    "Probably invalid encryption key"}, /* 13 */
     {STDE(NENOENT),       "No such file or directory"}, /* 14 */
-    {STDE(NEWRITE),       "Failed to opten/write to file"}, /* 15 */
+    {STDE(NEWRITE),       "Failed to open/write to file"}, /* 15 */
     {STDE(NEEXEC),        "Failed to execute"}, /* 16 */
     {STDE(NESUPPORT),     "Command not supported"}, /* 17 */
     {STDE(NEEXISTS),      "Element exists"}, /* 18 */
     {STDE(NEVERSION),     "Invalid version"}, /* 19 */
-    {STDE(NEBUSY),        "Resrouce is busy"} /* 20 */
+    {STDE(NEBUSY),        "Resrouce is busy"}, /* 20 */
+    {STDE(NESTALE),       "Resrouce is stale"}, /* 21 */
+    {STDE(NEEOF),         "EOF error occurred"} /* 22 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -206,7 +208,7 @@ expublic int * _Nget_Nerror_addr (void)
 expublic void _Nset_error(int error_code)
 {
     NSTD_TLS_ENTRY;
-    if (!G_nstd_tls->M_nstd_error)
+    if (G_nstd_tls->nstd_error_clear)
     {
 /*
         NDRX_LOG(log_warn, "_Nset_error: %d (%s)", 
@@ -214,6 +216,10 @@ expublic void _Nset_error(int error_code)
  */
         G_nstd_tls->M_nstd_error_msg_buf[0] = EXEOS;
         G_nstd_tls->M_nstd_error = error_code;
+
+        /* no more overwrite, we want first message in buffer */
+        G_nstd_tls->nstd_error_clear=EXFALSE;
+
     }
 }
 
@@ -229,7 +235,7 @@ expublic void _Nset_error_msg(int error_code, char *msg)
     int err_len;
     NSTD_TLS_ENTRY;
     
-    if (!G_nstd_tls->M_nstd_error)
+    if (G_nstd_tls->nstd_error_clear)
     {
         msg_len = strlen(msg);
         err_len = (msg_len>MAX_ERROR_LEN)?MAX_ERROR_LEN:msg_len;
@@ -237,6 +243,10 @@ expublic void _Nset_error_msg(int error_code, char *msg)
         G_nstd_tls->M_nstd_error_msg_buf[0] = EXEOS;
         strncat(G_nstd_tls->M_nstd_error_msg_buf, msg, err_len);
         G_nstd_tls->M_nstd_error = error_code;
+
+        /* no more overwrite, we want first message in buffer */
+        G_nstd_tls->nstd_error_clear=EXFALSE;
+
     }
 }
 
@@ -253,7 +263,7 @@ expublic void _Nset_error_fmt(int error_code, const char *fmt, ...)
     va_list ap;
     NSTD_TLS_ENTRY;
 
-    if (!G_nstd_tls->M_nstd_error)
+    if (G_nstd_tls->nstd_error_clear)
     {
         va_start(ap, fmt);
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -261,7 +271,10 @@ expublic void _Nset_error_fmt(int error_code, const char *fmt, ...)
 
         NDRX_STRCPY_SAFE(G_nstd_tls->M_nstd_error_msg_buf, msg);
         G_nstd_tls->M_nstd_error = error_code;
-        
+
+        /* no more overwrite, we want first message in buffer */
+        G_nstd_tls->nstd_error_clear=EXFALSE;
+
     }
 }
 
@@ -271,8 +284,13 @@ expublic void _Nset_error_fmt(int error_code, const char *fmt, ...)
 expublic void _Nunset_error(void)
 {
     NSTD_TLS_ENTRY;
+    /*
     G_nstd_tls->M_nstd_error_msg_buf[0]=EXEOS;
     G_nstd_tls->M_nstd_error = BMINVAL;
+    */
+   /* this allows to overwrite the error in buffer */
+    G_nstd_tls->nstd_error_clear = EXTRUE;
+
 }
 /**
  * Return >0 if error is set
@@ -298,6 +316,67 @@ expublic void _Nappend_error_msg(char *msg)
     free_space = MAX_ERROR_LEN-strlen(G_nstd_tls->M_nstd_error_msg_buf);
     n = free_space<app_error_len?free_space:app_error_len;
     strncat(G_nstd_tls->M_nstd_error_msg_buf, msg, n);
+}
+
+/**
+ * Convert errno code to closest
+ * Nerror code.
+ * @param err errno based error code
+ * @return translated error number
+ */
+expublic int ndrx_Nerrno2nerror(int err)
+{
+    int ret;
+
+    switch (ret)
+    {
+        case 0:
+            ret = 0;
+            break;
+        case EINVAL:
+            ret = NEINVAL;
+            break;
+        case ENOENT:
+            ret = NENOENT;
+            break;
+        case EACCES:
+            ret = NEWRITE;
+            break;
+        case EEXIST:
+            ret = NEEXISTS;
+            break;
+        case ENOSPC:
+            ret = NENOSPACE;
+            break;
+        case EAGAIN:
+            ret = NEBUSY;
+            break;
+        case ENOMEM:
+            ret = NEMALLOC;
+            break;
+#ifdef ESTALE
+        case ESTALE:
+            ret = NESTALE;
+            break;
+#endif
+        case ETIMEDOUT:
+        case ETIME:
+            ret = NETOUT;
+            break;
+        default:
+            /* may be alias of the error code, thus cannot case: */
+            if (ret==EWOULDBLOCK)
+            {
+                ret=NEBUSY;
+            }
+            else
+            {
+                ret = NEUNIX;
+            }
+            break;
+    }
+
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

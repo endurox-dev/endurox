@@ -180,6 +180,8 @@ expublic void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
     tls->magic = NSTD_TLS_MAGIG;
     tls->M_threadnr = 0;
     tls->M_nstd_error = 0;
+    tls->M_nstd_error_msg_buf[0]=EXEOS;
+    tls->nstd_error_clear = EXTRUE;
     tls->M_last_err = 0;
     tls->M_last_err_msg[0] = EXEOS;
     tls->rand_init = EXFALSE;

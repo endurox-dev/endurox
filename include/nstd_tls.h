@@ -70,6 +70,7 @@ typedef struct
     char M_nstd_error_msg_buf[MAX_ERROR_LEN+1];
     int M_nstd_error;
     char errbuf[MAX_ERROR_LEN+1];
+    int nstd_error_clear; /**< was the error cleared (allow new set) */
     
     /* nstdutil.c */
     char util_buf1[20][20];

@@ -124,8 +124,12 @@ struct ndrx_tms_storage
 {
     char magic[4];      /**< magic indicator of the plugin struct */
     int sw_version;      /**< switch version number */
-    void *custom_block; /**< custom data storage, used by switch  */
     
+    void *custom_block1; /**< custom data storage, used by switch  */
+    void *custom_block2; /**< custom data storage, used by switch  */
+    void *custom_block3; /**< custom data storage, used by switch  */
+    void *custom_block4; /**< custom data storage, used by switch  */
+
     /** init interface 
      * @param sw storage interface
      * @param p_tmsrv_cfg Configuration used by TM.

@@ -53,8 +53,23 @@
 #include "../libatmisrv/srv_int.h"
 #include <xa_cmn.h>
 #include <atmi_int.h>
+#include <sys_test.h>
+#include <userlog.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/**
+ * Simualte error, if we have to
+ */
+#define NDRX_TEST_LOCKLOSS do {\
+        if (ndrx_G_systest_lockloss)\
+        {\
+            _Nset_error_fmt(NESTALE, "Stale file handle");\
+            EXFAIL_OUT(ret);\
+        }\
+    } while (0)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -69,7 +84,7 @@
  */
 expublic int ndrx_tms_file_storage_init(ndrx_tms_storage_t *sw, tmsrv_cfg_t *p_tmsrv_cfg)
 {
-    return EXFAIL;
+    return EXSUCCEED;
 }
 
 /** 
@@ -79,11 +94,11 @@ expublic int ndrx_tms_file_storage_init(ndrx_tms_storage_t *sw, tmsrv_cfg_t *p_t
  */
 expublic int ndrx_tms_file_storage_uninit(ndrx_tms_storage_t *sw)
 {
-    return EXFAIL;
+    return EXSUCCEED;
 }
 
 /**
- * open transaction path
+ * open transaction file
  * @param sw switch
  * @param p_tl transaction log (struct)
  * @param fname transaction file name. For no DB, will contain <connref>/TRN-<vnodeid>-<rmid>-<srvid>-<txid>
@@ -93,7 +108,23 @@ expublic int ndrx_tms_file_storage_uninit(ndrx_tms_storage_t *sw)
 expublic int ndrx_tms_file_storage_open(ndrx_tms_storage_t  *sw, 
     atmi_xa_log_t* p_tl, char *fname, char *mode)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+
+    /* reset error handle 
+     * this allows to overwrite last error
+     */
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+
+    if (NULL==(p_tl->f=NDRX_FOPEN(p_tl->fname, mode)))
+    {
+        _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "fopen() errno=%d: %s", errno, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
 }
 
 /**
@@ -104,7 +135,23 @@ expublic int ndrx_tms_file_storage_open(ndrx_tms_storage_t  *sw,
  */
 expublic int ndrx_tms_file_storage_close(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+
+    if (NULL!=p_tl->f)
+    {
+        if (0!=NDRX_FCLOSE(p_tl->f))
+        {
+            _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "fclose() errno=%d: %s", errno, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        p_tl->f = NULL;
+    }
+
+out:
+    return ret;
 }
 
 /**
@@ -115,7 +162,20 @@ expublic int ndrx_tms_file_storage_close(ndrx_tms_storage_t *sw, atmi_xa_log_t* 
  */
 expublic int ndrx_tms_file_storage_unlink(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+
+    if (EXSUCCEED!=unlink(p_tl->fname))
+    {
+        _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "unlink() errno=%d: %s", errno, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    p_tl->f = NULL;
+
+out:
+    return ret;
 }
 
 /**
@@ -126,13 +186,38 @@ expublic int ndrx_tms_file_storage_unlink(ndrx_tms_storage_t *sw, atmi_xa_log_t*
  * @param cmdid command id
  * @param tstamp timestamp
  * @param buf status buffer to write
+ * @param len number of bytes to write
  * @param sync if 1, then sync to disk
- * @return 0 on success, -1 on error (Nerror is set)
+ * @return nr bytes wrote, -1 on error (Nerror is set)
  */
 expublic int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
-        char cmdid, long long tstamp, char *buf, int sync)
+        char cmdid, long long tstamp, char *buf, size_t len, int sync)
 {
-    return EXFAIL;
+    int ret=EXSUCCEED;
+
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+    
+    ret = fwrite(buf, 1, len, p_tl->f);
+
+    if (ret!=len)
+    {
+        _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "fwrite() fail errno=%d: %s", errno, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+    /* flush the stuff... */
+    if (EXSUCCEED!=fflush(p_tl->f))
+    {
+        int err=errno;
+        userlog("ERROR! Failed to fflush(): %s", strerror(err));
+        _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "fflush() fail errno=%d: %s", errno, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
 }
 
 /** 
@@ -143,7 +228,22 @@ expublic int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* 
  */
 expublic int ndrx_tms_file_storage_read_start(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+
+    _Nunset_error();
+
+    /* On mac and freebsd seem that reading happens at end of the
+     * file if file was opened with a+
+     */
+    if (EXSUCCEED!=fseek(p_tl->f, 0, SEEK_SET))
+    {
+        _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "fseek() fail errno=%d: %s", 
+            errno, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
 }
 
 /**
@@ -155,7 +255,30 @@ expublic int ndrx_tms_file_storage_read_start(ndrx_tms_storage_t *sw, atmi_xa_lo
 expublic int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
     char *buf, size_t bufsz)
 {
-    return EXFAIL;   
+    int ret = EXSUCCEED;
+    char *ret_read = fgets(buf, bufsz, p_tl->f);
+
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+
+    if (NULL==ret_read)
+    {
+        if (feof(p_tl->f))
+        {
+            _Nset_error_fmt(NEEOF, "EOF reached of %p", p_tl->f);
+        }
+        else
+        {
+            int err = errno;
+            _Nset_error_fmt(ndrx_Nerrno2nerror(err), "fgets() fail errno=%d: %s", 
+                errno, strerror(err));
+        }
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
 }
 
 /**
@@ -166,7 +289,8 @@ expublic int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_log
  */
 expublic int ndrx_tms_file_storage_read_end(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
 {
-    return EXFAIL;
+    _Nunset_error();
+    return EXSUCCEED;
 }
 
 /** 
@@ -176,7 +300,15 @@ expublic int ndrx_tms_file_storage_read_end(ndrx_tms_storage_t *sw, atmi_xa_log_
  */
 expublic int ndrx_tms_file_storage_list_start(ndrx_tms_storage_t *sw)
 {
-    return EXFAIL;
+    
+    dir = opendir(M_folder_prepared);
+
+    if (dir == NULL) {
+
+        NDRX_LOG(log_error, "opendir [%s] failed: %s", M_folder_prepared, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
 }
 
 /** 
@@ -206,9 +338,11 @@ expublic int ndrx_tms_file_storage_list_end(ndrx_tms_storage_t *sw)
  * Check if storage file exists
  * @param sw switch
  * @param fname file name
+ * @param p_tl return basic parameters of the transaction (such as creation time and update time).
+ *  optional, may be NULL.
  * @return 1 - exists, 0 on false (ok, but does not exist), -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname)
+expublic int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname,  atmi_xa_log_t* p_tl)
 {
     return EXFAIL;
 }

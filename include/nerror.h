@@ -63,8 +63,10 @@ extern "C" {
 #define NESUPPORT          17 /**< Command not supported */
 #define NEEXISTS           18 /**< Duplicate action */
 #define NEVERSION          19 /**< API version conflict */
-#define NEBUSY             19 /**< Resource is busy */
-#define NMAXVAL            20 /**< max error */
+#define NEBUSY             20 /**< Resource is busy */
+#define NESTALE            21 /**< Resource is stale */
+#define NEEOF              22 /**< EOF error */
+#define NMAXVAL            22 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 
@@ -89,6 +91,7 @@ extern NDRX_API void _Nappend_error_msg(char *msg);
 extern NDRX_API void _Nunset_error(void);
 
 extern NDRX_API int * _Nget_Nerror_addr (void);
+extern NDRX_API int ndrx_Nerrno2nerror(int err);
 
 #ifdef	__cplusplus
 }
