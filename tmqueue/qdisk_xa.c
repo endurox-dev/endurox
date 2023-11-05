@@ -1704,6 +1704,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
         {
             NDRX_LOG(log_error, "Q transaction [%s] does not exists (in mem log)", tmxid);
             
+            /* TODO: perform checks only, if using singleton group. */
             ret=tmq_check_prepared_exists_on_disk(tmxid);
 
             if (EXTRUE==ret)
