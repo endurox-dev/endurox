@@ -1025,7 +1025,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
             /* append with \n */
             NDRX_LOG(log_error, "Terminating last line (with out checksum)");
             if (EXFAIL==ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, 
-                    *pp_tl, 0, 0, "\n", 1, EXFALSE))
+                    *pp_tl, 0, "\n", 1, EXFALSE))
             {
                 userlog("TMSRV log file [%s] failed to terminate line: %s", 
                         logfile, Nstrerror(Nerror));
@@ -1190,26 +1190,15 @@ expublic void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm)
 expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
 {
     int have_file = EXFALSE;
-    
-    if (tms_is_logfile_open(p_tl))
+
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_unlink(ndrx_G_tmsrv_storage, p_tl->fname))
     {
-        have_file = EXTRUE;
-        tms_close_logfile(p_tl);
-    }/* Check for file existance, if was not open */
-    else if (0 == access(p_tl->fname, 0))
-    {
-        have_file = EXTRUE;
-    }
-        
-    if (have_file)
-    {
-        if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(p_tl->fname))
+        if (NENOENT!=Nerror)
         {
-            int err = errno;
-            NDRX_LOG(log_debug, "Failed to remove tx log file [%s]: %d (%s)", 
-                    p_tl->fname, err, strerror(err));
             userlog("Failed to remove tx log file [%s]: %d (%s)", 
-                    p_tl->fname, err, strerror(err));
+                    p_tl->fname, Nerror, Nstrerror(Nerror));
+            NDRX_LOG(log_debug, "Failed to remove tx log file [%s]: %d (%s)", 
+                    p_tl->fname, Nerror, Nstrerror(Nerror));
         }
     }
     
@@ -1279,20 +1268,15 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
         NDRX_LOG(log_debug, "Log format: v%d", p_tl->log_version);
         
         exp = len+1;
+
         if (make_error)
         {
             exp++;
         }
 
-	if (ndrx_G_systest_lockloss)
-	{
-        wrote=EXFAIL;
-	}
-	else
-	{
-        wrote=fprintf(p_tl->f, "%s\n", msg2);
-	}
+        /* prepare final message */
 
+	    NDRX_STRCAT_S(msg2, sizeof(msg2), "\n");
     }
     else
     {
@@ -1304,49 +1288,36 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
             crc32+=1;
             exp++;
         }
-        
-        if (ndrx_G_systest_lockloss)
-        {
-            wrote=EXFAIL;
-        }
-        else
-        {
-            wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
-        }
+    
+        /* append buffer 
+        wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
+        */
+       len=strlen(msg2);
+       snprintf(msg2+len, sizeof(msg2)-len, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
     }
+
+    wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, exp, EXTRUE);
     
     if (wrote != exp)
     {
-        int err = errno;
+        int err = Nerror;
         
         /* For Q/A purposes - simulate no space error, if requested */
         if (make_error)
         {
             NDRX_LOG(log_error, "QA point: make_error TRUE");
-            err = ENOSPC;
+            _Nset_error(NENOSPACE);
         }
         
         NDRX_LOG(log_error, "ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
-                exp, wrote, strerror(err));
+                exp, wrote, Nstrerror(err));
         userlog("ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
-                exp, wrote, strerror(err));
+                exp, wrote, Nstrerror(err));
         
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
-    
     
 out:
-    /* flush what ever we have */
-    /* in case of ndrx_G_systest_lockloss -> IO fence used */
-    if (ndrx_G_systest_lockloss || EXSUCCEED!=fflush(p_tl->f))
-    {
-        int err=errno;
-        userlog("ERROR! Failed to fflush(): %s", strerror(err));
-        NDRX_LOG(log_error, "ERROR! Failed to fflush(): %s", strerror(err));
-	    ret=EXFAIL;
-    }
-    /*fsync(fileno(p_tl->f));*/
     return ret;
 }
 

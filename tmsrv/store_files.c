@@ -83,7 +83,7 @@ exprivate int ndrx_tms_file_storage_open(ndrx_tms_storage_t  *sw,
 exprivate int ndrx_tms_file_storage_close(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
 exprivate int ndrx_tms_file_storage_unlink(ndrx_tms_storage_t *sw, char *fname);
 exprivate int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
-        char cmdid, long long tstamp, char *buf, size_t len, int sync);
+        char cmdid, char *buf, size_t len, int sync);
 exprivate int ndrx_tms_file_storage_read_start(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
 exprivate int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
     char *buf, size_t bufsz);
@@ -223,14 +223,13 @@ out:
  * @param sw switch
  * @param p_tl transaction log (struct)
  * @param cmdid command id
- * @param tstamp timestamp
  * @param buf status buffer to write
  * @param len number of bytes to write
  * @param sync if 1, then sync to disk
  * @return nr bytes wrote, -1 on error (Nerror is set)
  */
 exprivate int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
-        char cmdid, long long tstamp, char *buf, size_t len, int sync)
+        char cmdid, char *buf, size_t len, int sync)
 {
     int ret=EXSUCCEED;
 

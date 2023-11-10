@@ -182,13 +182,13 @@ struct ndrx_tms_storage
      * @param sw switch
      * @param p_tl transaction log (struct)
      * @param cmdid command id
-     * @param tstamp timestamp
      * @param buf status buffer to write
+     * @param len number of bytes to write
      * @param sync if 1, then sync to disk
      * @return 0 on success, -1 on error (Nerror is set)
      */
     int (*pf_storage_write)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
-        char cmdid, long long tstamp, char *buf, size_t len, int sync);
+        char cmdid, char *buf, size_t len, int sync);
 
     /** 
      * Start reading of the transaction log for the given file name.
