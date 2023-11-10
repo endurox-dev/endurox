@@ -209,7 +209,7 @@ static void show_failed(TestReporter *reporter, const char *file, int line, cons
            "       <NamedMeasurement type=\"text/string\" name=\"Command Line\"><Value>%s</Value></NamedMeasurement>\n"
            "       <Measurement>\n"
            "        <Value>", exectime, name);
-    vsprintf(buffer, (message == NULL ? "Problem" : message), arguments);
+    vsnprintf(buffer, sizeof(buffer), (message == NULL ? "Problem" : message), arguments);
     memo->printer(memo->f_reporter, "%s", buffer);
     memo->printer(memo->f_reporter, "</Value>\n"
            "       </Measurement>\n"

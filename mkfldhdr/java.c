@@ -62,7 +62,7 @@
  * Get the java lang output file name
  * @param data
  */
-expublic void java_get_fullname(char *data)
+expublic void java_get_fullname(char *data, size_t datasz)
 {
     /* For java we shall strip off the file extension
      * as it might cause problems with the class name...
@@ -76,7 +76,7 @@ expublic void java_get_fullname(char *data)
         *p=EXEOS;
     }
 
-    sprintf(data, "%s/%s.java", G_output_dir, G_active_file);
+    snprintf(data, sizeof(data), "%s/%s.java", G_output_dir, G_active_file);
 }
 
 /**

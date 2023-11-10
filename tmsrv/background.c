@@ -184,60 +184,54 @@ expublic void background_unlock(void)
 expublic int background_read_log(void)
 {
     int ret=EXSUCCEED;
-    struct dirent **namelist = NULL;
     int n, cnt;
     int len;
-    char tranmask[256];
     char fnamefull[PATH_MAX+1];
+    char entry[PATH_MAX+1];
+    char tranmask[256];
+    int tranmask_len;
+
     atmi_xa_log_t *pp_tl = NULL;
 
-    snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid, 
-            G_atmi_env.xa_rmid, G_server_conf.srv_id);
-    len = strlen(tranmask);
-    /* List the files here. */
-    cnt = scandir(G_tmsrv_cfg.tlog_dir, &namelist, 0, alphasort);
-    if (cnt < 0)
+    NDRX_LOG(log_info, "About to recover transaction logs from [%s]", 
+            G_tmsrv_cfg.tlog_dir);
+
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_list_start(ndrx_G_tmsrv_storage))
     {
-       NDRX_LOG(log_error, "Failed to scan [%s]: %s", 
-               G_tmsrv_cfg.tlog_dir, strerror(errno));
-       ret=EXFAIL;
-       goto out;
+        NDRX_LOG(log_error, "Failed to start storage listing at [%s]: %s",
+            G_tmsrv_cfg.tlog_dir, Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
     }
-    else 
+
+    snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid,
+            G_atmi_env.xa_rmid, G_server_conf.srv_id);
+
+    tranmask_len = strlen(tranmask);
+
+    while (EXTRUE==(ret=ndrx_G_tmsrv_storage->pf_storage_list_next(ndrx_G_tmsrv_storage, 
+        entry, sizeof(entry))))
     {
-       for (n=0; n<cnt; n++)
-       {
-           if (0==strcmp(namelist[n]->d_name, ".") || 
-                       0==strcmp(namelist[n]->d_name, ".."))
-           {
-               /* memory leak fixes... */
-               NDRX_FREE(namelist[n]);
-               continue;
-           }
+        snprintf(fnamefull, sizeof(fnamefull), "%s/%s", G_tmsrv_cfg.tlog_dir, 
+                entry);
+                
+        NDRX_LOG(log_warn, "Resuming transaction: [%s] (enqueue)", 
+            fnamefull);
 
-           /* If it is transaction then parse & load */
-            if (0==strncmp(namelist[n]->d_name, tranmask, len))
-            {
-                snprintf(fnamefull, sizeof(fnamefull), "%s/%s", G_tmsrv_cfg.tlog_dir, 
-                        namelist[n]->d_name);
-                        
-                NDRX_LOG(log_warn, "Resuming transaction: [%s] (enqueue)", 
-                        fnamefull);
+        if (EXSUCCEED!=ndrx_tms_file_registry_add(&M_attempts_tmxids, 
+            entry+tranmask_len, EXFALSE))
+        {
+            NDRX_LOG(log_error, "Failed to enqueue tmxid: [%s] to registry (malloc err?)", 
+                entry+tranmask_len);
+            EXFAIL_OUT(ret);
+        }
+    }
 
-                if (EXSUCCEED!=ndrx_tms_file_registry_add(&M_attempts_tmxids, 
-                    namelist[n]->d_name+len, EXFALSE))
-                {
-                    NDRX_LOG(log_error, "Failed to enqueue tmxid: [%s] to registry (malloc err?)", 
-                        namelist[n]->d_name+len);
-                    EXFAIL_OUT(ret);
-                }
-           }
-           
-           NDRX_FREE(namelist[n]);
-       }
-       
-       NDRX_FREE(namelist);
-       namelist = NULL;
+    /* verify that we are still good... */
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "Failed to list next storage at [%s]: %s",
+            G_tmsrv_cfg.tlog_dir, Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
     }
 
     /* do the attempts too (i.e. proceed only when logs are loaded... 
@@ -250,10 +244,14 @@ expublic int background_read_log(void)
     }
     
 out:
-    if (NULL!=namelist)
+
+    /* terminate the list, can ignore the error anyway */
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_list_end(ndrx_G_tmsrv_storage))
     {
-       NDRX_FREE(namelist);
+        NDRX_LOG(log_error, "Failed to end storage listing at [%s]: %s",
+            G_tmsrv_cfg.tlog_dir, Nstrerror(Nerror));
     }
+
     return ret;
 }
 
@@ -294,35 +292,29 @@ expublic void background_wakeup(void)
 expublic int background_chkdisk(void)
 {
     char tmp[PATH_MAX+1];
-    int i;
+    char entry[PATH_MAX+1];
     int ret=EXSUCCEED;
-    DIR *dir=NULL;
-    struct dirent *entry;
     int len;
     char tranmask[256];
-    atmi_xa_log_t *pp_tl = NULL;
     char *p_name;
 
     snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid, 
             G_atmi_env.xa_rmid, G_server_conf.srv_id);
     len = strlen(tranmask);
 
-    dir = opendir(G_tmsrv_cfg.tlog_dir);
-
-    if (dir == NULL)
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_list_start(ndrx_G_tmsrv_storage))
     {
-
-        NDRX_LOG(log_error, "opendir [%s] failed: %s", 
-            G_tmsrv_cfg.tlog_dir, strerror(errno));
+        NDRX_LOG(log_error, "Failed to start storage listing at [%s]: %s",
+            G_tmsrv_cfg.tlog_dir, Nstrerror(Nerror));
         EXFAIL_OUT(ret);
     }
 
-    while ((entry = readdir(dir)) != NULL)
+    while ((ret=ndrx_G_tmsrv_storage->pf_storage_list_next(ndrx_G_tmsrv_storage, entry, sizeof(entry))))
     {
-        if (0==strncmp(entry->d_name, tranmask, len))
+        if (0==strncmp(entry, tranmask, len))
         {
             /* extract transaction id  */
-            p_name = entry->d_name+len;
+            p_name = entry+len;
             NDRX_STRCPY_SAFE(tmp, p_name);
 
             if (!tms_log_exists_entry(tmp))
@@ -330,7 +322,7 @@ expublic int background_chkdisk(void)
                 ndrx_tms_file_registry_t *p_reg = NULL;
 
                 snprintf(tmp, sizeof(tmp), "%s/%s", G_tmsrv_cfg.tlog_dir, 
-                        entry->d_name);
+                        entry);
 
                 if (ndrx_file_exists(tmp))
                 {
@@ -359,9 +351,12 @@ expublic int background_chkdisk(void)
     } /* while readdir() */
 
 out:
-    if (NULL!=dir)
+
+    /* terminate the list, can ignore the error anyway */
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_list_end(ndrx_G_tmsrv_storage))
     {
-        closedir(dir);
+        NDRX_LOG(log_error, "Failed to end storage listing at [%s]: %s",
+            G_tmsrv_cfg.tlog_dir, Nstrerror(Nerror));
     }
 
     return ret;

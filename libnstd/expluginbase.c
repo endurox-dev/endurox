@@ -85,6 +85,10 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
     /* UBF log print hooking */
     ,.p_ndrx_tplogprintubf_hook = NULL
     ,.ndrx_tplogprintubf_hook_provider = "none"
+
+    /* TMSRV storage engine hook */
+    ,.p_ndrx_tms_store = NULL
+    ,.ndrx_tms_sotre_provider = "none"
     };
 
 /*---------------------------Statics------------------------------------*/

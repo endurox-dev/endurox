@@ -75,9 +75,9 @@ expublic void br_dump_nodestack(char *stack, char *msg)
     {
         nodeid = stack[i];
         if (i+1!=len)
-            sprintf(tmp, "%d->", nodeid);
+            snprintf(tmp, sizeof(tmp), "%d->", nodeid);
         else
-            sprintf(tmp, "%d", nodeid);
+            snprintf(tmp, sizeof(tmp), "%d", nodeid);
         strcat(node_stack_str, tmp);
     }
     NDRX_LOG(log_info, "%s: [%s]", msg, node_stack_str);

@@ -71,12 +71,15 @@
 #include <ubfutil.h>
 #include <sys_test.h>
 #include <singlegrp.h>
+#include <expluginbase.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic tmsrv_cfg_t G_tmsrv_cfg;
+/** set the default storege engine: */
+expublic ndrx_tms_storage_t *ndrx_G_tmsrv_storage=&ndrx_G_tms_store_files;
 /*---------------------------Statics------------------------------------*/
 exprivate int M_init_ok = EXFALSE;
 
@@ -649,8 +652,24 @@ int tpsvrinit(int argc, char **argv)
         NDRX_LOG(log_info, "DB PING disabled (-P not set)");
     }
 
+    /* configure storage engine */
+
+    if (NULL!=ndrx_G_plugins.p_ndrx_tms_store)
+    {
+        ndrx_G_tmsrv_storage = ndrx_G_plugins.p_ndrx_tms_store;
+    }
+
+    NDRX_LOG(log_warn, "Transaction logs storage engine: [%s]", 
+                ndrx_G_tmsrv_storage->name);
+
+    /* init the storage engine */
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_init(ndrx_G_tmsrv_storage, &G_tmsrv_cfg))
+    {
+        NDRX_LOG(log_error, "Failed to initialize storage engine: %s", Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+
     /* we should open the XA  */
-    
     NDRX_LOG(log_debug, "About to Open XA Entry!");
     ret = atmi_xa_open_entry();
     if( XA_OK != ret )
@@ -665,7 +684,6 @@ int tpsvrinit(int argc, char **argv)
     }
                 
     /* very generic version/only Resource ID known */
-    
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_RM, G_atmi_env.xa_rmid);
     
     if (EXSUCCEED!=tpadvertise(svcnm, TPTMSRV))
@@ -751,7 +769,16 @@ void tpsvrdone(void)
         ndrx_thpool_destroy(G_tmsrv_cfg.thpool);
     }
     atmi_xa_close_entry(EXFALSE);
-    
+
+    /* close the storage engine */
+    if (NULL!=ndrx_G_tmsrv_storage)
+    {
+        if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_uninit(ndrx_G_tmsrv_storage))
+        {
+            NDRX_LOG(log_error, "Failed to uninitialize storage engine: %s", Nstrerror(Nerror));
+        }
+    }
+
 }
 
 /**

@@ -115,7 +115,7 @@ static void assert_failed(TestReporter *reporter, const char *file, int line,
                 get_current_from_breadcrumb(
                         (CgreenBreadcrumb *) reporter->breadcrumb));
         memo->printer(" %s:%d ", file, line);
-        vsprintf(buffer, (message == NULL ? "Problem" : message), arguments);
+        vsnprintf(buffer, sizeof(buffer), (message == NULL ? "Problem" : message), arguments);
         memo->printer("%s\n", buffer);
         memo->previous_error = 1;
     }

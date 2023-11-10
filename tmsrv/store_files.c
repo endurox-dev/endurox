@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
+#include <dirent.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -75,6 +76,45 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+exprivate int ndrx_tms_file_storage_init(ndrx_tms_storage_t *sw, tmsrv_cfg_t *p_tmsrv_cfg);
+exprivate int ndrx_tms_file_storage_uninit(ndrx_tms_storage_t *sw);
+exprivate int ndrx_tms_file_storage_open(ndrx_tms_storage_t  *sw, 
+    atmi_xa_log_t* p_tl, char *mode);
+exprivate int ndrx_tms_file_storage_close(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+exprivate int ndrx_tms_file_storage_unlink(ndrx_tms_storage_t *sw, char *fname);
+exprivate int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
+        char cmdid, long long tstamp, char *buf, size_t len, int sync);
+exprivate int ndrx_tms_file_storage_read_start(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+exprivate int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
+    char *buf, size_t bufsz);
+exprivate int ndrx_tms_file_storage_read_end(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+exprivate int ndrx_tms_file_storage_list_start(ndrx_tms_storage_t *sw);
+exprivate int ndrx_tms_file_storage_list_next(ndrx_tms_storage_t *sw, char *buf, size_t bufsz);
+exprivate int ndrx_tms_file_storage_list_end(ndrx_tms_storage_t *sw);
+exprivate int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname);
+exprivate long ndrx_tms_file_storage_age(ndrx_tms_storage_t *sw, char *fname);
+
+/** File store switch */
+expublic ndrx_tms_storage_t ndrx_G_tms_store_files =
+{
+    .magic = STOREIF_MAGIC,
+    .name = "file system",
+    .sw_version = TMREGISTER,
+    .pf_storage_init = ndrx_tms_file_storage_init,
+    .pf_storage_uninit = ndrx_tms_file_storage_uninit,
+    .pf_storage_open = ndrx_tms_file_storage_open,
+    .pf_storage_close = ndrx_tms_file_storage_close,
+    .pf_storage_unlink = ndrx_tms_file_storage_unlink,
+    .pf_storage_write = ndrx_tms_file_storage_write,
+    .pf_storage_read_start = ndrx_tms_file_storage_read_start,
+    .pf_storage_read_next = ndrx_tms_file_storage_read_next,
+    .pf_storage_read_end = ndrx_tms_file_storage_read_end,
+    .pf_storage_list_start = ndrx_tms_file_storage_list_start,
+    .pf_storage_list_next=ndrx_tms_file_storage_list_next,
+    .pf_storage_list_end=ndrx_tms_file_storage_list_end,
+    .pf_storage_exists=ndrx_tms_file_storage_exists,
+    .pf_storage_get_age=ndrx_tms_file_storage_age
+};
 
 /** 
  * init interface 
@@ -82,7 +122,7 @@
  * @param p_tmsrv_cfg Configuration used by TM.
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_init(ndrx_tms_storage_t *sw, tmsrv_cfg_t *p_tmsrv_cfg)
+exprivate int ndrx_tms_file_storage_init(ndrx_tms_storage_t *sw, tmsrv_cfg_t *p_tmsrv_cfg)
 {
     return EXSUCCEED;
 }
@@ -92,7 +132,7 @@ expublic int ndrx_tms_file_storage_init(ndrx_tms_storage_t *sw, tmsrv_cfg_t *p_t
  * @param sw switch
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_uninit(ndrx_tms_storage_t *sw)
+exprivate int ndrx_tms_file_storage_uninit(ndrx_tms_storage_t *sw)
 {
     return EXSUCCEED;
 }
@@ -105,8 +145,8 @@ expublic int ndrx_tms_file_storage_uninit(ndrx_tms_storage_t *sw)
  * @param mode open mode, "a" for new transaction, "a+" for recovery
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_open(ndrx_tms_storage_t  *sw, 
-    atmi_xa_log_t* p_tl, char *fname, char *mode)
+exprivate int ndrx_tms_file_storage_open(ndrx_tms_storage_t  *sw, 
+    atmi_xa_log_t* p_tl, char *mode)
 {
     int ret = EXSUCCEED;
 
@@ -133,7 +173,7 @@ out:
  * @param p_tl transaction log (struct)
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_close(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
+exprivate int ndrx_tms_file_storage_close(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
 {
     int ret = EXSUCCEED;
     _Nunset_error();
@@ -157,22 +197,21 @@ out:
 /**
  * Remove transaction log
  * @param sw switch
- * @param p_tl transaction log (struct)
+ * @param fname transaction logfile name
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_unlink(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
+exprivate int ndrx_tms_file_storage_unlink(ndrx_tms_storage_t *sw, char *fname)
 {
     int ret = EXSUCCEED;
     _Nunset_error();
 
     NDRX_TEST_LOCKLOSS;
 
-    if (EXSUCCEED!=unlink(p_tl->fname))
+    if (EXSUCCEED!=unlink(fname))
     {
         _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "unlink() errno=%d: %s", errno, strerror(errno));
         EXFAIL_OUT(ret);
     }
-    p_tl->f = NULL;
 
 out:
     return ret;
@@ -190,7 +229,7 @@ out:
  * @param sync if 1, then sync to disk
  * @return nr bytes wrote, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
+exprivate int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
         char cmdid, long long tstamp, char *buf, size_t len, int sync)
 {
     int ret=EXSUCCEED;
@@ -216,6 +255,14 @@ expublic int ndrx_tms_file_storage_write(ndrx_tms_storage_t *sw, atmi_xa_log_t* 
         EXFAIL_OUT(ret);
     }
 
+    /* Do the sync if required */
+    if (sync && (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
+        EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags)))
+    {
+         _Nset_error_fmt(NESYNC, "fsync() fail");
+        EXFAIL_OUT(ret);
+    }
+
 out:
     return ret;
 }
@@ -226,7 +273,7 @@ out:
  * @param p_tl transaction log (struct). The fname must be filled in the log struct
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_read_start(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
+exprivate int ndrx_tms_file_storage_read_start(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
 {
     int ret = EXSUCCEED;
 
@@ -252,7 +299,7 @@ out:
  * @param p_tl transaction log (struct)
  * @return 0 >= succeed (number of bytes read), -1 on error (Nerror is set
  */
-expublic int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
+exprivate int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
     char *buf, size_t bufsz)
 {
     int ret = EXSUCCEED;
@@ -287,7 +334,7 @@ out:
  * @param p_tl transaction log (struct)
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_read_end(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
+exprivate int ndrx_tms_file_storage_read_end(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl)
 {
     _Nunset_error();
     return EXSUCCEED;
@@ -298,17 +345,25 @@ expublic int ndrx_tms_file_storage_read_end(ndrx_tms_storage_t *sw, atmi_xa_log_
  * @param sw switch
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_list_start(ndrx_tms_storage_t *sw)
+exprivate int ndrx_tms_file_storage_list_start(ndrx_tms_storage_t *sw)
 {
-    
-    dir = opendir(M_folder_prepared);
+    int ret=EXSUCCEED;
+    _Nunset_error();
 
-    if (dir == NULL) {
+    NDRX_TEST_LOCKLOSS;
 
-        NDRX_LOG(log_error, "opendir [%s] failed: %s", M_folder_prepared, strerror(errno));
+    sw->custom_block1=(void *)opendir(G_tmsrv_cfg.tlog_dir);
+
+    if (sw->custom_block1 == NULL)
+    {
+        int err=errno;
+        _Nset_error_fmt(ndrx_Nerrno2nerror(err), "fgets() fail errno=%d: %s", 
+                errno, strerror(err));
         EXFAIL_OUT(ret);
     }
 
+out:
+    return ret;
 }
 
 /** 
@@ -317,11 +372,45 @@ expublic int ndrx_tms_file_storage_list_start(ndrx_tms_storage_t *sw)
  * @param sw switch
  * @param buf buffer to write the transaction name
  * @param bufsz size of the buffer
- * @return 0 on success, -1 on error (Nerror is set)
+ * @return 1 on success (loaded dir), 0 (success, EOF), -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_list_next(ndrx_tms_storage_t *sw, char *buf, size_t bufsz)
+exprivate int ndrx_tms_file_storage_list_next(ndrx_tms_storage_t *sw, char *buf, size_t bufsz)
 {
-    return EXFAIL;
+    int ret = EXFALSE;
+    struct dirent *entry;
+
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+
+    errno=0;
+
+    do
+    {        
+        if (NULL==(entry=readdir((DIR *)sw->custom_block1)))
+        {
+            if (0!=errno)
+            {
+                int err=errno;
+                _Nset_error_fmt(ndrx_Nerrno2nerror(err), "readdir() fail errno=%d: %s", 
+                        errno, strerror(err));
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (0==strcmp(entry->d_name, ".") || 0==strcmp(entry->d_name, ".."))
+        {
+            /* skip . and .. */
+            continue;
+        }
+        else
+        {
+            ret=EXTRUE;
+            NDRX_STRCPY_SAFE_DST(buf, entry->d_name, bufsz);
+        }
+    } while (0);
+
+out:
+    return ret;
 }
 
 /** 
@@ -329,9 +418,24 @@ expublic int ndrx_tms_file_storage_list_next(ndrx_tms_storage_t *sw, char *buf, 
  * @param sw switch
  * @return 0 on success, -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_list_end(ndrx_tms_storage_t *sw)
+exprivate int ndrx_tms_file_storage_list_end(ndrx_tms_storage_t *sw)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    _Nunset_error();
+
+    if (NULL!=sw->custom_block1)
+    {
+        if (0!=closedir((DIR *)sw->custom_block1))
+        {
+            int err=errno;
+            _Nset_error_fmt(ndrx_Nerrno2nerror(err), "closedir() fail errno=%d: %s", 
+                    errno, strerror(err));
+            EXFAIL_OUT(ret);
+        }
+        sw->custom_block1 = NULL;
+    }
+out:
+    return ret;
 }
 
 /**
@@ -342,9 +446,60 @@ expublic int ndrx_tms_file_storage_list_end(ndrx_tms_storage_t *sw)
  *  optional, may be NULL.
  * @return 1 - exists, 0 on false (ok, but does not exist), -1 on error (Nerror is set)
  */
-expublic int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname,  atmi_xa_log_t* p_tl)
+exprivate int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname)
 {
-    return EXFAIL;
+    int ret = EXTRUE;
+
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+
+    ret = access(fname, 0);
+
+    if (EXSUCCEED!=ret && ENOENT==errno)
+    {
+        ret=EXFALSE;
+        goto out;
+    }
+
+    if (EXSUCCEED!=ret)
+    {
+        _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "access() fail errno=%d: %s", 
+                errno, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * How old record (file) is?
+ * Used by record housekeeping
+ * @param sw switch
+ * @param fname file name
+ * @return age in seconds, -1 on error (Nerror is set)
+ */
+exprivate long ndrx_tms_file_storage_age(ndrx_tms_storage_t *sw, char *fname)
+{
+    long ret = EXSUCCEED;
+    long age = -1;
+
+    _Nunset_error();
+
+    NDRX_TEST_LOCKLOSS;
+
+    ret = ndrx_file_age(fname);
+
+    if (ret<0)
+    {
+        _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "stat() fail errno=%d: %s", 
+                errno, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

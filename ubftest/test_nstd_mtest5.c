@@ -73,8 +73,8 @@ Ensure(test_nstd_mtest5)
 	fprintf(stderr, "Adding %d values\n", count);
 	for (i=0;i<count;i++) {
 		if (!(i & 0x0f))
-			sprintf(kval, "%03x", values[i]);
-		sprintf(sval, "%03x %d foo bar", values[i], values[i]);
+			snprintf(kval, sizeof(kval), "%03x", values[i]);
+		snprintf(sval, sizeof(sval), "%03x %d foo bar", values[i], values[i]);
 		if (RES(EDB_KEYEXIST, edb_cursor_put(cursor, &key, &data, EDB_NODUPDATA)))
 			j++;
 	}
@@ -100,8 +100,8 @@ Ensure(test_nstd_mtest5)
 		j++;
 		txn=NULL;
 		E(edb_txn_begin(env, NULL, 0, &txn));
-		sprintf(kval, "%03x", values[i & ~0x0f]);
-		sprintf(sval, "%03x %d foo bar", values[i], values[i]);
+		snprintf(kval, sizeof(kval), "%03x", values[i & ~0x0f]);
+		snprintf(sval, sizeof(sval), "%03x %d foo bar", values[i], values[i]);
 		key.mv_size = sizeof(int);
 		key.mv_data = kval;
 		data.mv_size = sizeof(sval);

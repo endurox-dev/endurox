@@ -77,36 +77,34 @@ Ensure(test_nstd_mtest6_dupcursor)
 
 	fprintf(stderr, "Adding %d values\n", count);
 	for (i=0;i<count;i++) {
-            sprintf(kval, "%03d", i);
-            sprintf(sval, "%03d %03d foo bar", i, i);
+            snprintf(kval, sizeof(kval), "%03d", i);
+            snprintf(sval, sizeof(sval), "%03d %03d foo bar", i, i);
             RES(0, edb_put(txn, dbi, &key, &data, 0L));
 	}
         
         /* Add some random keys */
         i=5;
-        sprintf(kval, "%03d", i);
-        sprintf(sval, "%03d %03d foo bar", i, 12);
+        snprintf(kval, sizeof(kval), "%03d", i);
+        snprintf(sval, sizeof(sval), "%03d %03d foo bar", i, 12);
         RES(0, edb_put(txn, dbi, &key, &data, 0L));
         
         
-        sprintf(sval, "%03d %03d foo bar", i, 10);
+        snprintf(sval, sizeof(sval), "%03d %03d foo bar", i, 10);
         RES(0, edb_put(txn, dbi, &key, &data, 0L));
                 
                 
-        sprintf(sval, "%03d %03d foo bar", i, 13);
+        snprintf(sval, sizeof(sval), "%03d %03d foo bar", i, 13);
         RES(0, edb_put(txn, dbi, &key, &data, 0L));
                     
         i=16;
-        sprintf(kval, "%03d", i);
-        sprintf(sval, "%03d %03d foo bar", i, 17);
+        snprintf(kval, sizeof(kval), "%03d", i);
+        snprintf(sval, sizeof(sval), "%03d %03d foo bar", i, 17);
         RES(0, edb_put(txn, dbi, &key, &data, 0L));
-        
         
         i=25;
-        sprintf(kval, "%03d", i);
-        sprintf(sval, "%03d %03d foo bar", i, 14);
+        snprintf(kval, sizeof(kval), "%03d", i);
+        snprintf(sval, sizeof(sval), "%03d %03d foo bar", i, 14);
         RES(0, edb_put(txn, dbi, &key, &data, 0L));
-        
         
 	E(edb_txn_commit(txn));
 	E(edb_env_stat(env, &mst));
@@ -130,8 +128,7 @@ Ensure(test_nstd_mtest6_dupcursor)
         fprintf(stderr, "keys in db: %d\n", (int)mst.ms_entries);
         
         /* TODO: get first? */
-        
-        
+
 	edb_cursor_close(cursor);
         
         E(edb_cursor_open(txn, dbi, &cursor));
@@ -139,7 +136,7 @@ Ensure(test_nstd_mtest6_dupcursor)
         /* OK fetch the first rec of cursor, next records we shall kill (if any) */
         /* first: EDB_FIRST_DUP - this we accept and process */
         
-        sprintf(kval, "%03d", 5);
+        snprintf(kval, sizeof(kval), "%03d", 5);
         
         key.mv_size = KEY_SIZE;
 	key.mv_data = kval;

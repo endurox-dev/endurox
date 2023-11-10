@@ -1767,7 +1767,7 @@ edb_assert_fail(EDB_env *env, const char *expr_txt,
 	const char *func, const char *file, int line)
 {
 	char buf[400];
-	sprintf(buf, "%.100s:%d: Assertion '%.200s' failed in %.40s()",
+	snprintf(buf, sizeof(buf), "%.100s:%d: Assertion '%.200s' failed in %.40s()",
 		file, line, expr_txt, func);
 	if (env->me_assert_func)
 		env->me_assert_func(env, buf);
@@ -11084,7 +11084,7 @@ edb_reader_list(EDB_env *env, EDB_msg_func *func, void *ctx)
 	for (i=0; i<rdrs; i++) {
 		if (mr[i].mr_pid) {
 			txnid_t	txnid = mr[i].mr_txnid;
-			sprintf(buf, txnid == (txnid_t)-1 ?
+			snprintf(buf, sizeof(buf), txnid == (txnid_t)-1 ?
 				"%10d %"Z"x -\n" : "%10d %"Z"x %"Yu"\n",
 				(int)mr[i].mr_pid, (size_t)mr[i].mr_tid, txnid);
 			if (first) {

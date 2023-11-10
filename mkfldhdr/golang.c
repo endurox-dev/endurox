@@ -61,9 +61,9 @@
  * Get the c lang output file name
  * @param data
  */
-expublic void go_get_fullname(char *data)
+expublic void go_get_fullname(char *data, size_t datasz)
 {
-    sprintf(data, "%s/%s.go", G_output_dir, G_active_file);
+    snprintf(data, sizeof(data), "%s/%s.go", G_output_dir, G_active_file);
 }
 
 /**

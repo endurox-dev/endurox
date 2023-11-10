@@ -56,6 +56,11 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define XA_RETRIES_DFLT         3   /* number of foreground retries */
 #define TMSRV_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min  */
 
+/** store interface magic */
+#define STOREIF_MAGIC          "TMST"
+
+/** current interface version */
+#define STOREIF_VERSION         1
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -122,7 +127,8 @@ typedef struct ndrx_tms_storage ndrx_tms_storage_t;
  */
 struct ndrx_tms_storage
 {
-    char magic[4];      /**< magic indicator of the plugin struct */
+    char magic[4+1];     /**< magic indicator of the plugin struct */
+    char name[16+1];     /**< Storage engine name */
     int sw_version;      /**< switch version number */
     
     void *custom_block1; /**< custom data storage, used by switch  */
@@ -152,7 +158,7 @@ struct ndrx_tms_storage
      * @param mode open mode, "a" for new transaction, "a+" for recovery
      * @return 0 on success, -1 on error (Nerror is set)
      */
-    int (*pf_storage_open)(ndrx_tms_storage_t  *sw, atmi_xa_log_t* p_tl, char *fname, char *mode);
+    int (*pf_storage_open)(ndrx_tms_storage_t  *sw, atmi_xa_log_t* p_tl, char *mode);
 
     /**
      * close storage file
@@ -165,10 +171,10 @@ struct ndrx_tms_storage
     /**
      * Remove transaction log
      * @param sw switch
-     * @param p_tl transaction log (struct)
+     * @param fname logfile to unlink
      * @return 0 on success, -1 on error (Nerror is set)
      */
-    int (*pf_storage_unlink)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl);
+    int (*pf_storage_unlink)(ndrx_tms_storage_t *sw, char *fname);
 
     /**
      * write async to file. No guarantees are made
@@ -182,7 +188,7 @@ struct ndrx_tms_storage
      * @return 0 on success, -1 on error (Nerror is set)
      */
     int (*pf_storage_write)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
-        char cmdid, long long tstamp, char *buf, int sync);
+        char cmdid, long long tstamp, char *buf, size_t len, int sync);
 
     /** 
      * Start reading of the transaction log for the given file name.
@@ -221,7 +227,7 @@ struct ndrx_tms_storage
      * @param sw switch
      * @param buf buffer to write the transaction name
      * @param bufsz size of the buffer
-     * @return 0 on success, -1 on error (Nerror is set)
+     * @return 0 on success, 1 loaded, -1 on error (Nerror is set)
      */
     int (*pf_storage_list_next)(ndrx_tms_storage_t *sw, char *buf, size_t bufsz);
 
@@ -240,9 +246,23 @@ struct ndrx_tms_storage
      */
     int (*pf_storage_exists)(ndrx_tms_storage_t *sw, char *fname);
 
+    /**
+     * Get record age in seconds
+     * @param sw switch
+     * @param fname file name
+     * @return >=0 age in seconds, -1 if failed.
+     */
+    long (*pf_storage_get_age)(ndrx_tms_storage_t *sw, char *fname);
+
 };
 
 /*---------------------------Prototypes---------------------------------*/
+
+/* interface to storage */
+extern ndrx_tms_storage_t ndrx_G_tms_store_files;
+/* actual engine in use: */
+extern ndrx_tms_storage_t *ndrx_G_tmsrv_storage;
+
 /* init */
 extern void tm_thread_init(void);
 extern void tm_thread_uninit(void);

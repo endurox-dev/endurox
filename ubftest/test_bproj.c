@@ -409,6 +409,36 @@ Ensure(test_projcpy)
 
 }
 
+Ensure(test_Bdelall_large)
+{
+    UBFH *p_ub = (UBFH *)calloc(1024*1024*1024, 1);
+    char temp_val[16+1]="123456789012345";
+    int i;
+    int ret = EXSUCCEED;
+    Bfld_loc_info_t loc;
+
+    assert_not_equal(p_ub, NULL);
+    assert_equal(Binit(p_ub, 1024*1024*102), EXSUCCEED);
+    /*load large amount into buffer */
+    memset(&loc, 0, sizeof(loc));
+
+    for (i=0; i<1048576; i++)
+    {
+        if (EXSUCCEED!=Baddfast(p_ub, T_STRING_FLD, temp_val, 0, &loc))
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
+    assert_equal(Boccur(p_ub, T_STRING_FLD), 1048576);
+
+    /* Delete all ...*/
+    assert_equal(Bdelall(p_ub, T_STRING_FLD), EXSUCCEED);
+    assert_equal(Boccur(p_ub, T_STRING_FLD), 0);
+
+out:
+    assert_equal(ret, EXSUCCEED);
+    free((char*)p_ub);
+}
 /**
  * Test Bdelall function
  */
@@ -565,6 +595,7 @@ TestSuite *ubf_fproj_tests(void)
     add_test(suite, test_proj_simple);
     add_test(suite, test_projcpy);
     add_test(suite, test_Bdelall);
+    add_test(suite, test_Bdelall_large);
     add_test(suite, test_Bdelete);
     
     return suite;

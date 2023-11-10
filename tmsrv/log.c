@@ -128,26 +128,21 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
 expublic int tms_log_exists_file(char *tmxid)
 {
     char fname[PATH_MAX+1];
-    int err=0;
+    int ret=EXSUCCEED;
 
     tms_gen_file_name(fname, sizeof(fname), tmxid);
 
-    if (EXSUCCEED == access(fname, 0))
-    {
-        return EXTRUE;
+    ret=ndrx_G_tmsrv_storage->pf_storage_exists(ndrx_G_tmsrv_storage, fname);
+
+    if (EXFAIL==ret)
+    {   
+        /* log this first, as userlog does not touch Nerror: */
+        userlog("Failed to check file [%s] presence: %s",
+            fname, Nstrerror(Nerror));
+
+        NDRX_LOG(log_error, "Failed to check file [%s] presence: %s",
+            fname, Nstrerror(Nerror));
     }
-
-    err=errno;
-
-    if (ENOENT==err)
-    {
-        return EXFALSE;
-    }
-
-    NDRX_LOG(log_error, "Failed to check file [%s] presence: %s",
-        fname, strerror(err));
-    userlog("Failed to check file [%s] presence: %s",
-        fname, strerror(err));
 
     return EXFAIL;
 }
@@ -220,7 +215,6 @@ restart:
                 /* sleep 100 msec */
                 usleep(100000);
                 goto restart;
-                
             }
             
             NDRX_LOG(log_error, "Transaction [%s] already locked for thread_id: %"
@@ -662,9 +656,9 @@ out_nolock:
  */
 exprivate void tms_gen_file_name(char *fname, size_t fnamesz, char *tmxid)
 {
-        snprintf(fname, fnamesz, "%s/TRN-%ld-%hd-%d-%s",
-            G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid,
-            G_server_conf.srv_id, tmxid);
+    snprintf(fname, fnamesz, "%s/TRN-%ld-%hd-%d-%s",
+        G_tmsrv_cfg.tlog_dir, G_tmsrv_cfg.vnodeid, G_atmi_env.xa_rmid,
+        G_server_conf.srv_id, tmxid);
 }
 
 /**
@@ -699,16 +693,14 @@ expublic int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode)
         goto out;
     }
     
-    /* Try to open the file */
-    if (ndrx_G_systest_lockloss || NULL==(p_tl->f=NDRX_FOPEN(p_tl->fname, mode)))
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_open(ndrx_G_tmsrv_storage, p_tl, mode))
     {
         userlog("Failed to open XA transaction log file: [%s]: %s", 
-                p_tl->fname, strerror(errno));
+                p_tl->fname, Nstrerror(Nerror));
         NDRX_LOG(log_error, "Failed to open XA transaction "
                 "log file: [%s]: %s", 
-                p_tl->fname, strerror(errno));
-        ret=EXFAIL;
-        goto out;
+                p_tl->fname, Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "XA tx log file [%s] open for [%s]", 
@@ -730,18 +722,26 @@ expublic int tms_housekeep(char *logfile)
     int ret = EXFALSE;
 
     /* remove old corrupted logs... */
-    if ((diff=ndrx_file_age(logfile)) > G_tmsrv_cfg.housekeeptime)
+    diff=ndrx_G_tmsrv_storage->pf_storage_get_age(ndrx_G_tmsrv_storage, logfile);
+
+    if (diff<0)
+    {
+        /* failed to read file age */
+        userlog("Failed to get file age [%s]: %s", logfile, Nstrerror(Nerror));
+        NDRX_LOG(log_error, "Failed to get file age [%s]: %s", logfile, Nstrerror(Nerror));
+    }
+    else if ( diff > G_tmsrv_cfg.housekeeptime)
     {
         NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
                 logfile, diff, G_tmsrv_cfg.housekeeptime);
         userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
                 logfile, diff, G_tmsrv_cfg.housekeeptime);
 
-        if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(logfile))
+        if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_unlink(ndrx_G_tmsrv_storage, logfile))
         {
-            err = errno;
-            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", logfile, strerror(err));
-            userlog("Failed to unlink [%s]: %s", logfile, strerror(err));
+            userlog("Failed to unlink [%s]: %s", logfile, Nstrerror(Nerror));
+            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", logfile, Nstrerror(Nerror));
+            
         }
         else
         {
@@ -816,19 +816,21 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
         EXFAIL_OUT(ret);
     }
 
-    /* On mac and freebsd seem that reading happens at end of the
-     * file if file was opened with a+
-     */
-    if (EXSUCCEED!=fseek((*pp_tl)->f, 0, SEEK_SET))
+    /* start to read the file */
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_read_start(ndrx_G_tmsrv_storage, *pp_tl))
     {
-        NDRX_LOG(log_error, "Failed to fseek: %s", strerror(errno));
+        userlog("Failed to start reading transaction file [%s]: %s",
+                    (*pp_tl)->fname, Nstrerror(Nerror));
+        NDRX_LOG(log_error, "Failed to start reading transaction file [%s]: %s",
+                    (*pp_tl)->fname, Nstrerror(Nerror));
         EXFAIL_OUT(ret);
     }
 
     /* Read line by line & call parsing functions 
      * we should also parse start of the transaction (date/time)
      */
-    while (fgets(buf, sizeof(buf), (*pp_tl)->f))
+    while (ndrx_G_tmsrv_storage->pf_storage_read_next(ndrx_G_tmsrv_storage, 
+        *pp_tl, buf, sizeof(buf))>0)
     {
         got_term_last = EXFALSE;
         len = strlen(buf);
@@ -984,14 +986,13 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
     }
     
     /* check was last read OK */
-    if (!feof((*pp_tl)->f))
+    if (NEEOF!=Nerror)
     {
-        err = ferror((*pp_tl)->f);
-        
-        NDRX_LOG(log_error, "TMSRV log file [%s] failed to read: %s", 
-                    logfile, strerror(err));
         userlog("TMSRV log file [%s] failed to read: %s", 
-                    logfile, strerror(err));
+                    logfile, Nstrerror(Nerror));
+        NDRX_LOG(log_error, "TMSRV log file [%s] failed to read: %s", 
+                    logfile, Nstrerror(Nerror));
+        
         EXFAIL_OUT(ret);
     }
     
@@ -1023,23 +1024,14 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
         {
             /* append with \n */
             NDRX_LOG(log_error, "Terminating last line (with out checksum)");
-
-	    if (ndrx_G_systest_lockloss)
-	    {
-                wrote=EXFAIL;
-	    }
-	    else
-	    {
-                wrote=fprintf((*pp_tl)->f, "\n");
-	    }
-
-            if (wrote!=1)
+            if (EXFAIL==ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, 
+                    *pp_tl, 0, 0, "\n", 1, EXFALSE))
             {
-                err = ferror((*pp_tl)->f);
-                NDRX_LOG(log_error, "TMSRV log file [%s] failed to terminate line: %s", 
-                        logfile, strerror(err));
                 userlog("TMSRV log file [%s] failed to terminate line: %s", 
-                        logfile, strerror(err));
+                        logfile, Nstrerror(Nerror));
+                NDRX_LOG(log_error, "TMSRV log file [%s] failed to terminate line: %s", 
+                        logfile, Nstrerror(Nerror));
+                
                 EXFAIL_OUT(ret);
             }
         }
@@ -1089,6 +1081,12 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
     NDRX_LOG(log_debug, "TX [%s] loaded OK", tmxid);
 out:
 
+    /* stop reading anyway */
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_read_end(ndrx_G_tmsrv_storage, *pp_tl))
+    {
+        NDRX_LOG(log_error, "Failed to end read: %s", Nstrerror(Nerror));
+    }
+
     /* Clean up if error. */
     if (EXSUCCEED!=ret)
     {
@@ -1130,9 +1128,13 @@ out:
 expublic int tms_is_logfile_open(atmi_xa_log_t *p_tl)
 {
     if (p_tl->f)
+    {
         return EXTRUE;
+    }
     else
+    {
         return EXFALSE;
+    }
 }
 
 /**
@@ -1141,10 +1143,10 @@ expublic int tms_is_logfile_open(atmi_xa_log_t *p_tl)
  */
 expublic void tms_close_logfile(atmi_xa_log_t *p_tl)
 {
-    if (NULL!=p_tl->f)
+    if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_close(ndrx_G_tmsrv_storage, p_tl))
     {
-        NDRX_FCLOSE(p_tl->f);
-        p_tl->f = NULL;
+        NDRX_LOG(log_error, "Failed to close transaction log file [%s]: %s",
+                p_tl->fname, Nstrerror(Nerror));
     }
 }
 
@@ -1284,11 +1286,11 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
 
 	if (ndrx_G_systest_lockloss)
 	{
-            wrote=EXFAIL;
+        wrote=EXFAIL;
 	}
 	else
 	{
-            wrote=fprintf(p_tl->f, "%s\n", msg2);
+        wrote=fprintf(p_tl->f, "%s\n", msg2);
 	}
 
     }
@@ -1303,14 +1305,14 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
             exp++;
         }
         
-	if (ndrx_G_systest_lockloss)
-	{
+        if (ndrx_G_systest_lockloss)
+        {
             wrote=EXFAIL;
-	}
-	else
-	{
+        }
+        else
+        {
             wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
-	}
+        }
     }
     
     if (wrote != exp)
@@ -1342,7 +1344,7 @@ out:
         int err=errno;
         userlog("ERROR! Failed to fflush(): %s", strerror(err));
         NDRX_LOG(log_error, "ERROR! Failed to fflush(): %s", strerror(err));
-	ret=EXFAIL;
+	    ret=EXFAIL;
     }
     /*fsync(fileno(p_tl->f));*/
     return ret;
@@ -1584,12 +1586,12 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         /* in case if switching to committing, we must sync the log & directory */
         if ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage))
         {
-	    if (ndrx_G_systest_lockloss)
-	    {
-		/*IO fence test */
-	        EXFAIL_OUT(ret);
-	    }
-	    else if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
+            if (ndrx_G_systest_lockloss)
+            {
+            /*IO fence test */
+                EXFAIL_OUT(ret);
+            }
+            else if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
                 EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags))
             {
                 EXFAIL_OUT(ret);

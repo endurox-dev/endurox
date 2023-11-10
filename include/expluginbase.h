@@ -101,6 +101,10 @@ struct ndrx_pluginbase {
     ndrx_plugin_tplogprintubf_hook_t p_ndrx_tplogprintubf_hook;
     /** Provider string for the UBF dump pre-processing */
     char ndrx_tplogprintubf_hook_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+
+    /** TMSRV storage engine plugin */
+    void *p_ndrx_tms_store;
+    char ndrx_tms_sotre_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;

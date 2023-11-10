@@ -1286,8 +1286,8 @@ expublic char * ndrx_poll_strerror(int err)
 {
     NSTD_TLS_ENTRY;
     
-    sprintf(G_nstd_tls->poll_strerr, "%s (last error: %s)", 
-    strerror(err), G_nstd_tls->M_last_err_msg);
+    snprintf(G_nstd_tls->poll_strerr, sizeof(G_nstd_tls->poll_strerr), "%s (last error: %s)", 
+        strerror(err), G_nstd_tls->M_last_err_msg);
     
     return G_nstd_tls->poll_strerr;
 }

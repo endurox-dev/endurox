@@ -360,7 +360,7 @@ exprivate int generate_files(void)
         {
             NDRX_STRCPY_SAFE(G_active_file, get_file_name(fname));
             
-            M_renderer->get_fullname(out_f_name);
+            M_renderer->get_fullname(out_f_name, sizeof(out_f_name));
             
             /* build up path for output file name */
             if (NULL==(G_outf=NDRX_FOPEN(out_f_name, "w")))

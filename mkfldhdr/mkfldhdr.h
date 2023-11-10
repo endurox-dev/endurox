@@ -52,7 +52,7 @@ typedef struct renderer_descr renderer_descr_t;
 struct renderer_descr
 {
     int lang_mode;
-    void (*get_fullname)(char *data); /* Get the full file name (with path) */
+    void (*get_fullname)(char *data, size_t datasz); /* Get the full file name (with path) */
     int (*put_text_line) (char *text); /* callback for putting text line */
     int (*put_def_line) (UBF_field_def_t *def);  /* callback for writting definition */
     int (*put_got_base_line) (char *base); /* callback for base line */
@@ -64,7 +64,7 @@ struct renderer_descr
 /*------------------------------Prototypes------------------------------------*/
 
 /* C lang: */
-extern void c_get_fullname(char *data);
+extern void c_get_fullname(char *data, size_t datasz);
 extern int c_put_text_line (char *text);
 extern int c_put_got_base_line(char *base);
 extern int c_put_def_line (UBF_field_def_t *def);
@@ -72,7 +72,7 @@ extern int c_file_open (char *fname);
 extern int c_file_close (char *fname);
 
 /* GO lang: */
-extern void go_get_fullname(char *data);
+extern void go_get_fullname(char *data, size_t datasz);
 extern int go_put_text_line (char *text);
 extern int go_put_got_base_line(char *base);
 extern int go_put_def_line (UBF_field_def_t *def);
@@ -80,7 +80,7 @@ extern int go_file_open (char *fname);
 extern int go_file_close (char *fname);
 
 /* Java lang: */
-extern void java_get_fullname(char *data);
+extern void java_get_fullname(char *data, size_t datasz);
 extern int java_put_text_line (char *text);
 extern int java_put_got_base_line(char *base);
 extern int java_put_def_line (UBF_field_def_t *def);
@@ -88,7 +88,7 @@ extern int java_file_open (char *fname);
 extern int java_file_close (char *fname);
 
 /* Python lang: */
-extern void python_get_fullname(char *data);
+extern void python_get_fullname(char *data, size_t datasz);
 extern int python_put_text_line (char *text);
 extern int python_put_got_base_line(char *base);
 extern int python_put_def_line (UBF_field_def_t *def);

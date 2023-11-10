@@ -66,7 +66,8 @@ extern "C" {
 #define NEBUSY             20 /**< Resource is busy */
 #define NESTALE            21 /**< Resource is stale */
 #define NEEOF              22 /**< EOF error */
-#define NMAXVAL            22 /**< max error */
+#define NESYNC             23 /**< Synchronization error */
+#define NMAXVAL            23 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 

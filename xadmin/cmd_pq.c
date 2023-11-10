@@ -77,6 +77,7 @@ expublic int pq_rsp_process(command_reply_t *reply, size_t reply_len)
     int i;
     char svc[12+1];
     char q_hist[256] = {EXEOS};
+    int len;
 
     if (NDRXD_CALL_TYPE_PQ==reply->msg_type)
     {
@@ -84,9 +85,13 @@ expublic int pq_rsp_process(command_reply_t *reply, size_t reply_len)
         FIX_SVC_NM(pq_info->service, svc, (sizeof(svc)-1));
         for (i=2; i<PQ_LEN; i++)
         {
-            sprintf(q_hist+strlen(q_hist), "%d", pq_info->pq_info[i]);
+            len=strlen(q_hist);
+            snprintf(q_hist+len,
+                sizeof(q_hist)-len, "%d", pq_info->pq_info[i]);
             if (i<PQ_LEN-1)
-                strcat(q_hist, " ");
+            {
+                NDRX_STRCPY_SAFE_DST(q_hist, " ", sizeof(q_hist));
+            }
         }
         
         fprintf(stdout, "%-12.12s %10d %7d %s\n", 

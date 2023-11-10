@@ -94,7 +94,7 @@ void do_thread_work ( void *ptr )
     if (TPEEVENT==tperrno)
     {
         received++;
-        sprintf(tmp, "CLT: %d", received);
+        snprintf(tmp, sizeof(tmp), "CLT: %d", received);
         
         Badd(p_ub, T_STRING_FLD, tmp, 0L);
         if (TPEV_SENDONLY==revent)

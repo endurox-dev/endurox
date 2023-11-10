@@ -92,7 +92,8 @@ struct err_msg
     {STDE(NEVERSION),     "Invalid version"}, /* 19 */
     {STDE(NEBUSY),        "Resrouce is busy"}, /* 20 */
     {STDE(NESTALE),       "Resrouce is stale"}, /* 21 */
-    {STDE(NEEOF),         "EOF error occurred"} /* 22 */
+    {STDE(NEEOF),         "EOF error occurred"}, /* 22 */
+    {STDE(NESYNC),        "Synchronization error"} /* 23 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
