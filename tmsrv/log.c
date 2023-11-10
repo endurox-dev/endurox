@@ -95,7 +95,8 @@ exprivate atmi_xa_log_t *M_tx_hash = NULL;
 exprivate MUTEX_LOCKDECL(M_tx_hash_lock); /* Operations with hash list            */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *fmt, ...);
+exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, 
+    char command, short stage, const char *fmt, ...);
 exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl);
 exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl);
@@ -1208,8 +1209,10 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
 
 /**
  * We should have universal log writter
+ * @param command Record type identifier
+ * @param stage Stage identifier (if having one) or -1, if not used
  */
-exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *fmt, ...)
+exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage, const char *fmt, ...)
 {
     int ret = EXSUCCEED;
     char msg[LOG_MAX+1] = {EXEOS};
@@ -1218,6 +1221,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     int make_error = EXFALSE;
     unsigned long crc32;
     va_list ap;
+    int do_sync=EXFALSE;
     
     CHK_THREAD_ACCESS;
     
@@ -1226,6 +1230,14 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     {
         return EXSUCCEED;
     }
+
+    /* require sync only of doing commit or abort. */
+    if (LOG_COMMAND_STAGE==command && (XA_TX_STAGE_COMMITTING==stage || XA_TX_STAGE_ABORTING==stage))
+    {
+        do_sync=EXTRUE;
+    }
+
+    NDRX_LOG(log_debug, "command %d stage %d do_sync=%d", command, stage, do_sync);
      
     va_start(ap, fmt);
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -1235,7 +1247,6 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
     len = strlen(msg2);
     
     /* check exactly how much bytes was written */
-    
     if (1==G_atmi_env.test_tmsrv_write_fail)
     {
         make_error = EXTRUE;
@@ -1247,7 +1258,6 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
         {
             make_error = EXTRUE;
         }
-        
     }
     
     crc32 = ndrx_Crc32_ComputeBuf(0, msg2, len);
@@ -1289,14 +1299,11 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
             exp++;
         }
     
-        /* append buffer 
-        wrote=fprintf(p_tl->f, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
-        */
        len=strlen(msg2);
        snprintf(msg2+len, sizeof(msg2)-len, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
     }
 
-    wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, exp, EXTRUE);
+    wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, exp, do_sync);
     
     if (wrote != exp)
     {
@@ -1309,9 +1316,9 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, const char *
             _Nset_error(NENOSPACE);
         }
         
-        NDRX_LOG(log_error, "ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
-                exp, wrote, Nstrerror(err));
         userlog("ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
+                exp, wrote, Nstrerror(err));
+        NDRX_LOG(log_error, "ERROR! Failed to write transaction log file: req_len=%d, written=%d: %s",
                 exp, wrote, Nstrerror(err));
         
         EXFAIL_OUT(ret);
@@ -1355,7 +1362,7 @@ expublic int tms_log_info(atmi_xa_log_t *p_tl)
      *
      */
     
-    if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_J, "%hd:%hd:%hd:%ld:%s", 
+    if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_J, EXFAIL, "%hd:%hd:%hd:%ld:%s", 
             p_tl->tmrmid, p_tl->tmnodeid, p_tl->tmsrvid, p_tl->txtout, rmsbuf))
     {
         ret=EXFAIL;
@@ -1522,13 +1529,13 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
              * other node took over. Thus hardware based fencing is mandatory
              * for production failover modes.
              */
-            int w_cnt=1, i;
+            /* int w_cnt=1, i; - not using, storage mighit crash in
+             * a lot of different ways, thus several line counts
+             * will not  help for this. For GPFS, please use SCSI-3 Persistent Rerserve
+             * to remove broken node from file writting
+             */
 
-            if (XA_TX_STAGE_ABORTING==stage)
-            {
-                w_cnt=3;
-            }
-            else if (XA_TX_STAGE_COMMITTING==stage)
+            if (XA_TX_STAGE_COMMITTING==stage)
             {
                 /* ensure that we are still locked, as we are going to write
                  * commit message down. If the abort was in progress,
@@ -1544,22 +1551,20 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
                 }
             }
 
-            for (i=0; i<w_cnt; i++)
+            if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, stage, "%hd", stage))
             {
-                if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_STAGE, "%hd", stage))
-                {
-                    ret=EXFAIL;
-                    goto out;
-                }
+                ret=EXFAIL;
+                goto out;
             }
         }
 
         /* in case if switching to committing, we must sync the log & directory */
         if ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage))
         {
+#if 0
             if (ndrx_G_systest_lockloss)
             {
-            /*IO fence test */
+                /*IO fence test */
                 EXFAIL_OUT(ret);
             }
             else if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
@@ -1567,6 +1572,7 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
             {
                 EXFAIL_OUT(ret);
             }
+#endif
 
             /* if we are in singleton group mode, validate that we still 
              * own the lock
@@ -1697,7 +1703,7 @@ expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt,
     
     if (do_log)
     {
-        if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_RMSTAT, "%hd:%c:%d:%hd:%ld",
+        if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_RMSTAT, EXFAIL, "%hd:%c:%d:%hd:%ld",
                 bt->rmid, rmstatus, rmerrorcode, rmreason, bt->btid))
         {
             ret=EXFAIL;
