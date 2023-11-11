@@ -182,11 +182,7 @@ exprivate int ndrx_tms_file_storage_close(ndrx_tms_storage_t *sw, atmi_xa_log_t*
 
     if (NULL!=p_tl->f)
     {
-        if (0!=NDRX_FCLOSE(p_tl->f))
-        {
-            _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "fclose() errno=%d: %s", errno, strerror(errno));
-            EXFAIL_OUT(ret);
-        }
+        NDRX_FCLOSE(p_tl->f);
         p_tl->f = NULL;
     }
 

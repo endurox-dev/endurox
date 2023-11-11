@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 
 	fprintf(stderr, "COUNT=%d, After sleep (1) %d sec\n", count, sleeps);
 	for (i=0;i<count;i++) {	
-		sprintf(sval, "%03x %d foo bar %d", values[i], values[i], sleeps);
+		snprintf(sval, sizeof(sval), "%03x %d foo bar %d", values[i], values[i], sleeps);
 		data.mv_size = sizeof(sval);
 		data.mv_data = sval;
 		if (RES(EDB_KEYEXIST, edb_put(txn, dbi, &key, &data, EDB_NOOVERWRITE)))
@@ -135,11 +135,11 @@ int main(int argc, char **argv)
 		j++;
 		txn=NULL;
 
-	    fprintf(stderr, "About to begin RW TRAN....\n");
+	        fprintf(stderr, "About to begin RW TRAN....\n");
 		E(edb_txn_begin(env, NULL, 0, &txn));
-	    fprintf(stderr, "After begin RW TRAN....\n");
+	        fprintf(stderr, "After begin RW TRAN....\n");
 
-		sprintf(sval, "%03x ", values[i]);
+		snprintf(sval, sizeof(sval), "%03x ", values[i]);
 		if (RES(EDB_NOTFOUND, edb_del(txn, dbi, &key, NULL))) {
 			j--;
 	        fprintf(stderr, "About to ABORT RW TRAN....\n");

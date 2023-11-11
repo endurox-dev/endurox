@@ -742,7 +742,6 @@ expublic int tms_housekeep(char *logfile)
         {
             userlog("Failed to unlink [%s]: %s", logfile, Nstrerror(Nerror));
             NDRX_LOG(log_error, "Failed to unlink [%s]: %s", logfile, Nstrerror(Nerror));
-            
         }
         else
         {
@@ -1169,7 +1168,6 @@ expublic void tms_remove_logfree(atmi_xa_log_t *p_tl, int hash_rm)
     }
 
     /* Remove branch TIDs */
-    
     for (i=0; i<NDRX_MAX_RMS; i++)
     {
         EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
@@ -1489,7 +1487,6 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         NDRX_LOG(log_debug, "tms_log_stage: new stage - %hd (cc %d)", 
                 p_tl->txstage, G_atmi_env.test_tmsrv_commit_crash);
         
-        
         /* <Crash testing> */
         
         /* QA: commit crash test point... 
@@ -1561,19 +1558,6 @@ expublic int tms_log_stage(atmi_xa_log_t *p_tl, short stage, int forced)
         /* in case if switching to committing, we must sync the log & directory */
         if ((XA_TX_STAGE_COMMITTING==stage) || (XA_TX_STAGE_ABORTING==stage))
         {
-#if 0
-            if (ndrx_G_systest_lockloss)
-            {
-                /*IO fence test */
-                EXFAIL_OUT(ret);
-            }
-            else if (EXSUCCEED!=ndrx_fsync_fsync(p_tl->f, G_atmi_env.xa_fsync_flags) ||
-                EXSUCCEED!=ndrx_fsync_dsync(G_tmsrv_cfg.tlog_dir, G_atmi_env.xa_fsync_flags))
-            {
-                EXFAIL_OUT(ret);
-            }
-#endif
-
             /* if we are in singleton group mode, validate that we still 
              * own the lock
              */
@@ -1611,7 +1595,6 @@ out:
     return ret;
 }
 
-
 /**
  * Parse stage info from buffer read
  * @param buf - buffer read
@@ -1631,14 +1614,14 @@ exprivate int tms_parse_stage(char *buf, atmi_xa_log_t *p_tl)
     TOKEN_READ("stage", "txstage");
 
     /* In case ... if we are committing, there will be no abort.
-    * and vice versa. that's in case if doing failover
-    * the first state shall live on...
-    * --- not true...
-    * we could go to commit, but just right before logging
-    * other node took over... starts to abort.
-    * and first one wakes up and tries to write the commit stage...
-    * thus we shall allow to go down from commit to abort.
-    */
+     * and vice versa. that's in case if doing failover
+     * the first state shall live on...
+     * --- not true...
+     * we could go to commit, but just right before logging
+     * other node took over... starts to abort.
+     * and first one wakes up and tries to write the commit stage...
+     * thus we shall allow to go down from commit to abort.
+     */
     stage=(short)atoi(p);
 
     if (stage < p_tl->txstage)
@@ -1799,8 +1782,7 @@ expublic atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode)
         MUTEX_LOCK_V(M_tx_hash_lock);
     }
     
-    /* No changes to hash list during the lock. */    
-    
+    /* No changes to hash list during the lock. */
     EXHASH_ITER(hh, M_tx_hash, r, rt)
     {
         /* Only background items... */
