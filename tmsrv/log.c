@@ -1305,7 +1305,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
         }
     
        len=strlen(msg2);
-       snprintf(msg2+len, sizeof(msg2)-len, "%s%c%08lx\n", msg2, LOG_RS_SEP, crc32);
+       snprintf(msg2+len, sizeof(msg2)-len, "%c%08lx\n", LOG_RS_SEP, crc32);
     }
 
     wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, exp, do_sync);
