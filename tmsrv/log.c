@@ -1190,6 +1190,13 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
 {
     int have_file = EXFALSE;
 
+    /* if log file is open, close it firstly */
+    if (tms_is_logfile_open(p_tl))
+    {
+        tms_close_logfile(p_tl);
+    }
+
+    /* regardless exists or not */
     if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_unlink(ndrx_G_tmsrv_storage, p_tl->fname))
     {
         if (NENOENT!=Nerror)
