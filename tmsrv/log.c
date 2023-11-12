@@ -829,8 +829,8 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
     /* Read line by line & call parsing functions 
      * we should also parse start of the transaction (date/time)
      */
-    while (ndrx_G_tmsrv_storage->pf_storage_read_next(ndrx_G_tmsrv_storage, 
-        *pp_tl, buf, sizeof(buf))>0)
+    while (EXSUCCEED==ndrx_G_tmsrv_storage->pf_storage_read_next(ndrx_G_tmsrv_storage, 
+        *pp_tl, buf, sizeof(buf)))
     {
         got_term_last = EXFALSE;
         len = strlen(buf);

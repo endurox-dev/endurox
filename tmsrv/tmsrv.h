@@ -202,7 +202,7 @@ struct ndrx_tms_storage
      * Read next record from the transaction log
      * @param sw switch
      * @param p_tl transaction log (struct)
-     * @return 0 >= succeed (number of bytes read), -1 on error (Nerror is set
+     * @return 0 succeed / string read, -1 on error (Nerror is set
      */
     int (*pf_storage_read_next)(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, char *buf, size_t bufsz);
 

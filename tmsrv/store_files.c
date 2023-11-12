@@ -292,7 +292,7 @@ out:
  * Read next record from the transaction log
  * @param sw switch
  * @param p_tl transaction log (struct)
- * @return 0 >= succeed (number of bytes read), -1 on error (Nerror is set
+ * @return 0 = string read ok, -1 on error (Nerror is set
  */
 exprivate int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_log_t* p_tl, 
     char *buf, size_t bufsz)
@@ -314,7 +314,7 @@ exprivate int ndrx_tms_file_storage_read_next(ndrx_tms_storage_t *sw, atmi_xa_lo
         {
             int err = errno;
             _Nset_error_fmt(ndrx_Nerrno2nerror(err), "fgets() fail errno=%d: %s", 
-                errno, strerror(err));
+                err, strerror(err));
         }
         EXFAIL_OUT(ret);
     }
