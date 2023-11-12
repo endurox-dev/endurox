@@ -423,9 +423,7 @@ exprivate int ndrx_tms_file_storage_list_end(ndrx_tms_storage_t *sw)
         if (0!=closedir((DIR *)sw->custom_block1))
         {
             int err=errno;
-            _Nset_error_fmt(ndrx_Nerrno2nerror(err), "closedir() fail errno=%d: %s", 
-                    errno, strerror(err));
-            EXFAIL_OUT(ret);
+            NDRX_LOG(log_error, "failed to closedir(): %s", strerror(err));
         }
         sw->custom_block1 = NULL;
     }
