@@ -352,12 +352,16 @@ exprivate int ndrx_tms_file_storage_list_start(ndrx_tms_storage_t *sw)
     if (sw->custom_block1 == NULL)
     {
         int err=errno;
-        _Nset_error_fmt(ndrx_Nerrno2nerror(err), "fgets() fail errno=%d: %s", 
+        _Nset_error_fmt(ndrx_Nerrno2nerror(err), "opendir() fail errno=%d: %s", 
                 errno, strerror(err));
         EXFAIL_OUT(ret);
     }
 
 out:
+
+    NDRX_LOG(log_info, "returns, opendir [%s] %p: %d", 
+            G_tmsrv_cfg.tlog_dir, sw->custom_block1, ret);
+
     return ret;
 }
 
@@ -371,17 +375,24 @@ out:
  */
 exprivate int ndrx_tms_file_storage_list_next(ndrx_tms_storage_t *sw, char *buf, size_t bufsz)
 {
-    int ret = EXFALSE;
+    int ret = EXSUCCEED;
     struct dirent *entry;
+    char tranmask[256];
+    int tranmask_len;
 
     _Nunset_error();
 
     NDRX_TEST_LOCKLOSS;
 
+    snprintf(tranmask, sizeof(tranmask), "TRN-%ld-%hd-%d-", G_tmsrv_cfg.vnodeid,
+            G_atmi_env.xa_rmid, G_server_conf.srv_id);
+
+    tranmask_len = strlen(tranmask);
+
     errno=0;
 
     do
-    {        
+    {    
         if (NULL==(entry=readdir((DIR *)sw->custom_block1)))
         {
             if (0!=errno)
@@ -391,18 +402,17 @@ exprivate int ndrx_tms_file_storage_list_next(ndrx_tms_storage_t *sw, char *buf,
                         errno, strerror(err));
                 EXFAIL_OUT(ret);
             }
+            break;
         }
-        else if (0==strcmp(entry->d_name, ".") || 0==strcmp(entry->d_name, ".."))
-        {
-            /* skip . and .. */
-            continue;
-        }
-        else
+        else if (0==strncmp(entry->d_name, tranmask, tranmask_len))
         {
             ret=EXTRUE;
             NDRX_STRCPY_SAFE_DST(buf, entry->d_name, bufsz);
+            break;
         }
-    } while (0);
+        /* else we skip the ., .. and other files (other tms...) */
+
+    } while (1);
 
 out:
     return ret;
@@ -455,7 +465,7 @@ exprivate int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname)
         goto out;
     }
 
-    if (EXSUCCEED!=ret)
+    if (EXFAIL==ret)
     {
         _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "access() fail errno=%d: %s", 
                 errno, strerror(errno));

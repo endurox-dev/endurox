@@ -193,9 +193,6 @@ expublic int background_read_log(void)
 
     atmi_xa_log_t *pp_tl = NULL;
 
-    NDRX_LOG(log_info, "About to recover transaction logs from [%s]", 
-            G_tmsrv_cfg.tlog_dir);
-
     if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_list_start(ndrx_G_tmsrv_storage))
     {
         NDRX_LOG(log_error, "Failed to start storage listing at [%s]: %s",
@@ -391,7 +388,7 @@ exprivate int background_load_attempts(void)
          * otherwise the a+ would create the file if missing.
          * Also remember that files may be removed by houskeeping processes.
          */
-        if (0!=access(filename, 0) && ENOENT==errno)
+        if ( EXFALSE==ndrx_G_tmsrv_storage->pf_storage_exists(ndrx_G_tmsrv_storage, filename))
         {
             NDRX_LOG(log_debug, "Transaction: [%s] does not exist anymore", 
                     el->tmxid);
