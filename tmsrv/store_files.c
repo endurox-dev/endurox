@@ -451,7 +451,7 @@ out:
  */
 exprivate int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname)
 {
-    int ret = EXTRUE;
+    int ret = EXSUCCEED;
 
     _Nunset_error();
 
@@ -465,12 +465,14 @@ exprivate int ndrx_tms_file_storage_exists(ndrx_tms_storage_t *sw, char *fname)
         goto out;
     }
 
-    if (EXFAIL==ret)
+    if (EXSUCCEED!=ret)
     {
         _Nset_error_fmt(ndrx_Nerrno2nerror(errno), "access() fail errno=%d: %s", 
                 errno, strerror(errno));
         EXFAIL_OUT(ret);
     }
+    
+    ret=EXTRUE;
 
 out:
     return ret;
