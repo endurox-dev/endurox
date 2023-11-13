@@ -90,7 +90,7 @@ expublic int pq_rsp_process(command_reply_t *reply, size_t reply_len)
                 sizeof(q_hist)-len, "%d", pq_info->pq_info[i]);
             if (i<PQ_LEN-1)
             {
-                NDRX_STRCPY_SAFE_DST(q_hist, " ", sizeof(q_hist));
+                NDRX_STRCAT_S(q_hist, sizeof(q_hist), " ");
             }
         }
         
