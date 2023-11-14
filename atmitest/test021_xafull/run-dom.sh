@@ -378,8 +378,15 @@ fi
 
 CNT=`grep 'TXAPI LOGGED' RM2/committed/* | wc | awk '{print $1}'`
 
-if [ $CNT -ne 300 ]; then
-    echo "TXAPI LOGGED 300 not found: $CNT"
+# for Darwin it is 200
+TEST_MAX_TRAN=300
+
+if [ "$(uname)" == "Darwin" ]; then
+    TEST_MAX_TRAN=200
+fi
+
+if [ $CNT -ne $TEST_MAX_TRAN ]; then
+    echo "TXAPI LOGGED $TEST_MAX_TRAN not found: $CNT"
     go_out -1
 fi
 

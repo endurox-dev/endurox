@@ -48,6 +48,12 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#ifdef EX_OS_DARWIN
+/* on some Macs ulimit -n is 256...*/
+#define TEST_MAX_TRAN 200
+#else
+#define TEST_MAX_TRAN 300
+#endif
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -340,7 +346,7 @@ int main(int argc, char** argv) {
      * The 1. shall be faster than 3.
      */
     /***************************************************************************/
-    NDRX_LOG(log_debug, "take time for 300txns with logged!");
+    NDRX_LOG(log_debug, "take time for %dtxns with logged!", TEST_MAX_TRAN);
     /***************************************************************************/
     
     /* seems on mac needs more time to complete */
@@ -359,7 +365,7 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
      
-    for (i=0; i<300; i++)
+    for (i=0; i<TEST_MAX_TRAN; i++)
     {
         if (TX_OK!=(ret=tx_begin()))
         {

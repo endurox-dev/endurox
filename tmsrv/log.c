@@ -1237,7 +1237,8 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     }
 
     /* require sync only of doing commit or abort. */
-    if (LOG_COMMAND_STAGE==command && (XA_TX_STAGE_COMMITTING==stage || XA_TX_STAGE_ABORTING==stage))
+    if (LOG_COMMAND_STAGE==command 
+        && (XA_TX_STAGE_COMMITTING==stage || XA_TX_STAGE_ABORTING==stage))
     {
         do_sync=EXTRUE;
     }
