@@ -145,7 +145,7 @@ expublic int tms_log_exists_file(char *tmxid)
             fname, Nstrerror(Nerror));
     }
 
-    return EXFAIL;
+    return ret;
 }
 
 /**

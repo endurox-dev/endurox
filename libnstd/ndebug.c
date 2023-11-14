@@ -112,6 +112,12 @@
     .version=0\
 }
 
+/** append snprintf */
+#define SNPRINTF_CAT(buf, ...) do {\
+        size_t len_tmp_ = strlen(buf);\
+        snprintf (buf + len_tmp_, sizeof(buf)-len_tmp_, __VA_ARGS__);\
+    } while (0)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -1404,8 +1410,8 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
         {
             if (i != 0)
             {
-                sprintf (print_line + strlen(print_line), "  %s", buf);
-                sprintf (print_line2 + strlen(print_line2), "  %s", buf2);
+                SNPRINTF_CAT (print_line, "  %s", buf);
+                SNPRINTF_CAT (print_line2, "  %s", buf2);
 
                 if (0!=strcmp(print_line, print_line2))
                 {
@@ -1426,12 +1432,12 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
                 print_line2[0] = 0;
             }
 
-            sprintf (print_line + strlen(print_line), "  %04x ", i);
-            sprintf (print_line2 + strlen(print_line2), "  %04x ", i);
+            SNPRINTF_CAT (print_line, "  %04x ", i);
+            SNPRINTF_CAT (print_line2, "  %04x ", i);
         }
 
-        sprintf (print_line + strlen(print_line), " %02x", cptr[i]);
-        sprintf (print_line2 + strlen(print_line2), " %02x", cptr2[i]);
+        SNPRINTF_CAT (print_line, " %02x", cptr[i]);
+        SNPRINTF_CAT (print_line2, " %02x", cptr2[i]);
 
         if ((cptr[i] < 0x20) || (cptr[i] > 0x7e))
         {
@@ -1456,13 +1462,13 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
 
     while ((i % 16) != 0)
     {
-        sprintf (print_line + strlen(print_line), "   ");
-        sprintf (print_line2 + strlen(print_line2), "   ");
+        SNPRINTF_CAT (print_line, "   ");
+        SNPRINTF_CAT (print_line2, "   ");
         i++;
     }
 
-    sprintf (print_line + strlen(print_line), "  %s", buf);
-    sprintf (print_line2 + strlen(print_line2), "  %s", buf2);
+    SNPRINTF_CAT (print_line, "  %s", buf);
+    SNPRINTF_CAT (print_line2, "  %s", buf2);
 
     if (0!=strcmp(print_line, print_line2))
     {
@@ -1534,14 +1540,14 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
         {
             if (i != 0)
             {
-                sprintf (print_line + strlen(print_line), "  %s", buf);
+                SNPRINTF_CAT (print_line, "  %s", buf);
                 BUFFERED_PRINT_LINE(dbg_ptr, print_line);
                 print_line[0] = 0;
             }
 
-            sprintf (print_line + strlen(print_line), "  %04x ", i);
+            SNPRINTF_CAT (print_line, "  %04x ", i);
         }
-        sprintf (print_line + strlen(print_line), " %02x", cptr[i]);
+        SNPRINTF_CAT (print_line, " %02x", cptr[i]);
 
         if ((cptr[i] < 0x20) || (cptr[i] > 0x7e))
         {
@@ -1556,12 +1562,12 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
 
     while ((i % 16) != 0)
     {
-        sprintf (print_line + strlen(print_line), "   ");
+        SNPRINTF_CAT (print_line, "   ");
         i++;
     }
 
     /* And print the final ASCII bit. */
-    sprintf (print_line + strlen(print_line), "  %s", buf);
+    SNPRINTF_CAT (print_line, "  %s", buf);
     BUFFERED_PRINT_LINE(dbg_ptr, print_line);
     print_line[0] = 0;
     

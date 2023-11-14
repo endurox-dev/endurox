@@ -42,6 +42,7 @@ Ensure(test_nstd_mtest6)
 	int *values;
 	long kval;
 	char *sval;
+	size_t svalsz;
         char errdet[PATH_MAX];
 
 	srand(time(NULL));
@@ -60,7 +61,8 @@ Ensure(test_nstd_mtest6)
 	E(edb_cursor_open(txn, dbi, &cursor));
 	E(edb_stat(txn, dbi, &mst));
 
-	sval = calloc(1, mst.ms_psize / 4);
+	svalsz= mst.ms_psize / 4;
+	sval = calloc(1, svalsz);
 	key.mv_size = sizeof(long);
 	key.mv_data = &kval;
 	sdata.mv_size = mst.ms_psize / 4 - 30;
@@ -69,21 +71,21 @@ Ensure(test_nstd_mtest6)
 	fprintf(stderr, "Adding 12 values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
 		kval = i*5;
-		sprintf(sval, "%08lx", kval);
+		snprintf(sval, svalsz, "%08lx", kval);
 		data = sdata;
 		(void)RES(EDB_KEYEXIST, edb_cursor_put(cursor, &key, &data, EDB_NOOVERWRITE));
 	}
 	fprintf(stderr, "Adding 12 more values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
 		kval = i*5+4;
-		sprintf(sval, "%08lx", kval);
+		snprintf(sval, svalsz, "%08lx", kval);
 		data = sdata;
 		(void)RES(EDB_KEYEXIST, edb_cursor_put(cursor, &key, &data, EDB_NOOVERWRITE));
 	}
 	fprintf(stderr, "Adding 12 more values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
 		kval = i*5+1;
-		sprintf(sval, "%08lx", kval);
+		snprintf(sval, svalsz, "%08lx", kval);
 		data = sdata;
 		(void)RES(EDB_KEYEXIST, edb_cursor_put(cursor, &key, &data, EDB_NOOVERWRITE));
 	}
