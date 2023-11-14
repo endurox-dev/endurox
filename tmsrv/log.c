@@ -1224,7 +1224,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     char msg2[LOG_MAX+1] = {EXEOS};
     int len, wrote, exp;
     int make_error = EXFALSE;
-    unsigned long crc32;
+    unsigned long crc32=0;
     va_list ap;
     int do_sync=EXFALSE;
     
@@ -1267,11 +1267,6 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     
     crc32 = ndrx_Crc32_ComputeBuf(0, msg2, len);
     
-    /* Simulate that only partial message is written in case
-     * if disk is full or crash happens
-     */
-    wrote=0;
-    
     /* if write file test case - write partially, also omit EOL terminator 
      * Also... needs flag for commit crash simulation... i.e. 
      * So that if commit crash is set, we partially write the command (stage change)
@@ -1284,13 +1279,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
         
         exp = len+1;
 
-        if (make_error)
-        {
-            exp++;
-        }
-
         /* prepare final message */
-
 	    NDRX_STRCAT_S(msg2, sizeof(msg2), "\n");
     }
     else
@@ -1298,18 +1287,19 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
         /* version 2+ */
         exp = len+8+1+1;
         
-        if (make_error)
-        {
-            crc32+=1;
-            exp++;
-        }
-    
-       len=strlen(msg2);
-       snprintf(msg2+len, sizeof(msg2)-len, "%c%08lx\n", LOG_RS_SEP, crc32);
+        len=strlen(msg2);
+        snprintf(msg2+len, sizeof(msg2)-len, "%c%08lx\n", LOG_RS_SEP, crc32);
     }
 
     wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, exp, do_sync);
     
+    /* Q/A testing -> generate error (invalid write) */
+    if (make_error)
+    {
+        crc32+=1;
+        exp++;
+    }
+
     if (wrote != exp)
     {
         int err = Nerror;
