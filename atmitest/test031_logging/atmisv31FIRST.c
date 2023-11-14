@@ -93,7 +93,7 @@ void SETREQFILE(TPSVCINFO *p_svc)
     
     req_no++;
     
-    sprintf(filename, "./logs/request_%d.log", req_no);
+    snprintf(filename, sizeof(filename), "./logs/request_%d.log", req_no);
     
     /* allocate bit space for new file name to be set */
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4000)))

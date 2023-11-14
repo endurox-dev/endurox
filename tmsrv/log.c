@@ -1277,7 +1277,10 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     {
         NDRX_LOG(log_debug, "Log format: v%d", p_tl->log_version);
         
-        exp = len+1;
+        if (!make_error)
+        {
+            exp = len+1;
+        }
 
         /* prepare final message */
 	    NDRX_STRCAT_S(msg2, sizeof(msg2), "\n");
@@ -1285,7 +1288,10 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     else
     {
         /* version 2+ */
-        exp = len+8+1+1;
+        if (!make_error)
+        {
+            exp = len+8+1+1;
+        }
         
         len=strlen(msg2);
         snprintf(msg2+len, sizeof(msg2)-len, "%c%08lx\n", LOG_RS_SEP, crc32);
@@ -1293,14 +1299,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
 
     wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, exp, do_sync);
     
-    /* Q/A testing -> generate error (invalid write) */
-    if (make_error)
-    {
-        crc32+=1;
-        exp++;
-    }
-
-    if (wrote != exp)
+    if (wrote != exp || make_error)
     {
         int err = Nerror;
         
