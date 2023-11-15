@@ -321,39 +321,6 @@ out:
 }
 
 /**
- * Return max file number
- * @return 0 (no files), >=1 got something
- */
-exprivate int get_filenames_max(void)
-{
-    int i=0;
-    char filename_active[PATH_MAX+1];
-    char filename_prepared[PATH_MAX+1];
-    
-    while(1)
-    {
-        snprintf(filename_active, sizeof(filename_active), "%s/%s-%03d", 
-                M_folder_active, G_atmi_tls->qdisk_tls->filename_base, i+1);
-        snprintf(filename_prepared, sizeof(filename_prepared), "%s/%s-%03d", 
-                M_folder_prepared, G_atmi_tls->qdisk_tls->filename_base, i+1);
-        NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, 
-                filename_prepared);
-        if (ndrx_file_exists(filename_active) || 
-                ndrx_file_exists(filename_prepared))
-        {
-            i++;
-        }
-        else
-        {
-            break;
-        }
-    }
-    
-    NDRX_LOG(log_info, "max file names %d", i);
-    return i;
-}
-
-/**
  * Get the full file name for `i' occurrence 
  * @param i
  * @param folder
@@ -1402,7 +1369,6 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
         DL_DELETE(p_tl->cmds, el);
         NDRX_FPFREE(el);
         NDRX_LOG(log_debug, "Abort [%s] OK", fname);
-        
     }
     
     if (NULL!=p_tl->cmds)
