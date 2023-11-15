@@ -1222,7 +1222,7 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     int ret = EXSUCCEED;
     char msg[LOG_MAX+1] = {EXEOS};
     char msg2[LOG_MAX+1] = {EXEOS};
-    int len, wrote, exp;
+    int len, wrote, exp=0, to_write;
     int make_error = EXFALSE;
     unsigned long crc32=0;
     va_list ap;
@@ -1278,9 +1278,12 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     {
         NDRX_LOG(log_debug, "Log format: v%d", p_tl->log_version);
         
-        if (!make_error)
+        to_write = len+1;
+        exp=to_write;
+
+        if (make_error)
         {
-            exp = len+1;
+            exp++;
         }
 
         /* prepare final message */
@@ -1289,16 +1292,20 @@ exprivate int tms_log_write_line(atmi_xa_log_t *p_tl, char command, short stage,
     else
     {
         /* version 2+ */
-        if (!make_error)
+        to_write = len+8+1+1;
+        exp=to_write;
+
+        if (make_error)
         {
-            exp = len+8+1+1;
+            crc32+=1;
+            exp++;
         }
         
         len=strlen(msg2);
         snprintf(msg2+len, sizeof(msg2)-len, "%c%08lx\n", LOG_RS_SEP, crc32);
     }
 
-    wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, exp, do_sync);
+    wrote = ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, p_tl, command, msg2, to_write, do_sync);
     
     if (wrote != exp || make_error)
     {
