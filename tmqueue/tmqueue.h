@@ -257,7 +257,7 @@ extern int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
         union tmq_block **p_block, int state, int seqno), short nodeid, short srvid);
 
 /* transaction management: */
-extern int ndrx_xa_qminiservce(UBFH *p_ub, char cmd);
+extern int ndrx_xa_qminiservce(int cd, UBFH *p_ub, char cmd);
 
 extern int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname, 
         short nodeid, short srvid, char *qspace, long flags);

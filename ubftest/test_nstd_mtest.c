@@ -65,7 +65,7 @@ Ensure(test_nstd_mtest)
 
     fprintf(stderr, "Adding %d values\n", count);
     for (i=0;i<count;i++) {	
-        sprintf(sval, "%03x %d foo bar", values[i], values[i]);
+        snprintf(sval, sizeof(sval), "%03x %d foo bar", values[i], values[i]);
         /* Set <data> in each iteration, since EDB_NOOVERWRITE may modify it */
         data.mv_size = sizeof(sval);
         data.mv_data = sval;
@@ -96,7 +96,7 @@ Ensure(test_nstd_mtest)
         j++;
         txn=NULL;
         E(edb_txn_begin(env, NULL, 0, &txn));
-        sprintf(sval, "%03x ", values[i]);
+        snprintf(sval, sizeof(sval), "%03x ", values[i]);
         if (RES(EDB_NOTFOUND, edb_del(txn, dbi, &key, NULL))) {
                 j--;
                 edb_txn_abort(txn);

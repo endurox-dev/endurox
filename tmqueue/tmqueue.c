@@ -247,11 +247,10 @@ void TMQUEUE_TH (void *ptr, int *p_finish_off)
         case TMQ_CMD_ABORTTRAN:
         case TMQ_CMD_PREPARETRAN:
         case TMQ_CMD_COMMITRAN:
-        case TMQ_CMD_CHK_MEMLOG:
-        case TMQ_CMD_CHK_MEMLOG2:
+        case TMQ_CMD_RECOVERTRANS:
             
             /* start Q space transaction */
-            if (XA_OK!=ndrx_xa_qminiservce(p_ub, cmd))
+            if (XA_OK!=ndrx_xa_qminiservce(cd, p_ub, cmd))
             {
                 EXFAIL_OUT(ret);
             }
@@ -509,9 +508,7 @@ void TMQUEUE (TPSVCINFO *p_svc)
     if (cmd==TMQ_CMD_STARTTRAN||
             cmd==TMQ_CMD_PREPARETRAN||
             cmd==TMQ_CMD_ABORTTRAN||
-            cmd==TMQ_CMD_COMMITRAN || 
-            cmd==TMQ_CMD_CHK_MEMLOG || 
-            cmd==TMQ_CMD_CHK_MEMLOG2)
+            cmd==TMQ_CMD_COMMITRAN)
     {
         ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }

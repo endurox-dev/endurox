@@ -106,13 +106,9 @@ typedef struct
     char filename_prepared[PATH_MAX+1]; /**< prepared file name */
     
     /** List of prepared transactions */
-    struct dirent **recover_namelist;
+    ndrx_growlist_t recover_namelist;
     /** Current iterator of the recover */
     int recover_i;
-    /** last xid recovered in previous scan */
-    XID recover_last;
-    /** is recover last loaded ? */
-    int recover_last_loaded;
     /** Is scanning open ? */
     int recover_open;
     

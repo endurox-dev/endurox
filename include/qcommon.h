@@ -59,8 +59,7 @@ extern "C" {
 #define TMQ_CMD_ABORTTRAN       'a'      /**< Rollback entry              */
 #define TMQ_CMD_PREPARETRAN     'p'      /**< Prepare entry               */
 #define TMQ_CMD_COMMITRAN       'c'      /**< Commit entry                */
-#define TMQ_CMD_CHK_MEMLOG      'v'      /**< Check transaction log       */
-#define TMQ_CMD_CHK_MEMLOG2     'z'      /**< Check log, restart if no fil*/
+#define TMQ_CMD_RECOVERTRANS    'r'      /**< Recover transactions        */
 
 #define TMQ_QDEF_MAX            512      /**< max buffer size for Q def   */
     

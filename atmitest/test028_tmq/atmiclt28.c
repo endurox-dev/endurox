@@ -1483,7 +1483,7 @@ exprivate int basic_autoq_ok(void)
             EXFAIL_OUT(ret);
         }
 
-        sprintf(strbuf, "HELLO FROM SENDER");
+        snprintf(strbuf, sizeof(strbuf), "HELLO FROM SENDER");
         
         if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
         {
@@ -1497,7 +1497,7 @@ exprivate int basic_autoq_ok(void)
 
         qc1.flags|=TPQREPLYQ;
 
-        strcpy(qc1.replyqueue, "REPLYQ");
+        NDRX_STRCPY_SAFE(qc1.replyqueue, "REPLYQ");
 
         if (EXSUCCEED!=tpenqueue("MYSPACE", "OKQ1", &qc1, (char *)buf, 0, TPNOTRAN))
         {
@@ -1533,7 +1533,7 @@ exprivate int basic_autoq_ok(void)
             EXFAIL_OUT(ret);
         }
 
-        sprintf(strbuf, "HELLO FROM SENDER");
+        snprintf(strbuf, sizeof(strbuf), "HELLO FROM SENDER");
         
         if (0!=strcmp(p, strbuf))
         {
@@ -1613,7 +1613,7 @@ exprivate int basic_autoqnr_ok(void)
             EXFAIL_OUT(ret);
         }
 
-        sprintf(strbuf, "HELLO FROM SENDER");
+        snprintf(strbuf, sizeof(strbuf), "HELLO FROM SENDER");
         
         if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
         {
@@ -1687,7 +1687,7 @@ exprivate int basic_autoq_deadq(void)
             EXFAIL_OUT(ret);
         }
 
-        sprintf(strbuf, "HELLO FROM SENDER");
+        snprintf(strbuf, sizeof(strbuf), "HELLO FROM SENDER");
         
         if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
         {
@@ -1701,7 +1701,7 @@ exprivate int basic_autoq_deadq(void)
 
         qc1.flags|=TPQFAILUREQ;
 
-        strcpy(qc1.failurequeue, "DEADQ");
+        NDRX_STRCPY_SAFE(qc1.failurequeue, "DEADQ");
 
         if (EXSUCCEED!=tpenqueue("MYSPACE", "BADQ1", &qc1, (char *)buf, 0, TPNOTRAN))
         {
@@ -1736,7 +1736,7 @@ exprivate int basic_autoq_deadq(void)
             EXFAIL_OUT(ret);
         }
 
-        sprintf(strbuf, "HELLO FROM SENDER");
+        snprintf(strbuf, sizeof(strbuf), "HELLO FROM SENDER");
         
         if (0!=strcmp(p, strbuf))
         {
@@ -1780,7 +1780,7 @@ exprivate int basic_rndfail(void)
             EXFAIL_OUT(ret);
         }
 
-        sprintf(strbuf, "HELLO FROM SENDER");
+        snprintf(strbuf, sizeof(strbuf), "HELLO FROM SENDER");
         
         if (EXSUCCEED!=Bchg(buf, T_STRING_2_FLD, 0, strbuf, 0L))
         {
@@ -1829,7 +1829,7 @@ exprivate int basic_rndfail(void)
             EXFAIL_OUT(ret);
         }
 
-        sprintf(strbuf, "HELLO FROM SENDER");
+        snprintf(strbuf, sizeof(strbuf), "HELLO FROM SENDER");
         
         if (0!=strcmp(p, strbuf))
         {

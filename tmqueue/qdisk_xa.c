@@ -94,6 +94,7 @@
 #include "qtran.h"
 #include <singlegrp.h>
 #include <sys_test.h>
+#include "qdisk_xa.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* #define TXN_TRACE */
@@ -774,10 +775,10 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
     G_atmi_tls->qdisk_tls->filename_active[0]=EXEOS;
     G_atmi_tls->qdisk_tls->filename_prepared[0]=EXEOS;
 
-    G_atmi_tls->qdisk_tls->recover_namelist = NULL;
+    ndrx_growlist_init(&G_atmi_tls->qdisk_tls->recover_namelist, 256, sizeof(XID));
+    
     G_atmi_tls->qdisk_tls->recover_open=EXFALSE;
     G_atmi_tls->qdisk_tls->recover_i=EXFAIL;
-    G_atmi_tls->qdisk_tls->recover_last_loaded=EXFALSE;
             
     G_atmi_tls->qdisk_is_open = EXTRUE;
     G_atmi_tls->qdisk_rmid = rmid;
@@ -956,93 +957,13 @@ out:
 }
 
 /**
- * Minimal XA call to tmqueue, used by external processes.
- * @param tmxid serialized xid
- * @param cmd TMQ_CMD* command code
- * @return XA error code
- */
-exprivate int ndrx_xa_qminicall(char *tmxid, char cmd)
-{
-    long rsplen;
-    UBFH *p_ub = NULL;
-    long ret = XA_OK;
-    short nodeid = (short)tpgetnodeid();
-   
-    p_ub = (UBFH *)tpalloc("UBF", "", 1024 );
-    
-    if (NULL==p_ub)
-    {
-        NDRX_LOG(log_error, "Failed to allocate notif buffer");
-        ret = XAER_RMERR;
-        goto out;
-    }
-    
-    if (EXSUCCEED!=Bchg(p_ub, EX_QCMD, 0, &cmd, 0L))
-    {
-        NDRX_LOG(log_error, "Failed to setup EX_QMSGID!");
-        ret = XAER_RMERR;
-        goto out;
-    }
-    
-    if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmxid, 0L))
-    {
-        NDRX_LOG(log_error, "Failed to setup TMXID!");
-        ret = XAER_RMERR;
-        goto out;
-    }
-
-    if (EXSUCCEED!=Bchg(p_ub, TMNODEID, 0, (char *)&nodeid, 0L))
-    {
-        NDRX_LOG(log_error, "Failed to setup TMNODEID!");
-        ret = XAER_RMERR;
-        goto out;
-    }
-    
-    NDRX_LOG(log_info, "Calling QSPACE [%s] for tmxid [%s], command %c",
-                ndrx_G_qspacesvc, tmxid, cmd);
-    
-    ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
-
-    if (EXFAIL == tpcall(ndrx_G_qspacesvc, (char *)p_ub, 0L, (char **)&p_ub, 
-        &rsplen, TPNOTRAN))
-    {
-        NDRX_LOG(log_error, "%s failed: %s", ndrx_G_qspacesvc, tpstrerror(tperrno));
-        
-        /* best guess -> not available */
-        ret = XAER_RMFAIL;
-        
-        /* anyway if have detailed response, use bellow. */
-    }
-    
-    ndrx_debug_dump_UBF(log_info, "Reply from RM", p_ub);
-    
-    /* try to get the result of the OP */
-    if (Bpres(p_ub, TMTXRMERRCODE, 0) &&
-            EXSUCCEED!=Bget(p_ub, TMTXRMERRCODE, 0, (char *)&ret, 0L))
-    {
-        NDRX_LOG(log_debug, "Failed to get TMTXRMERRCODE: %s", Bstrerror(Berror));
-        ret = XAER_RMERR;
-    }
-    
-out:
-
-    if (NULL!=p_ub)
-    {
-        tpfree((char *)p_ub);
-    }
-
-    NDRX_LOG(log_info, "returns %d", ret);
-    
-    return ret;
-}
-
-/**
  * Serve the transaction call
+ * @param cd call descriptor
  * @param p_ub UBF buffer
  * @param cmd tmq command code
  * @return XA error code
  */
-expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
+expublic int ndrx_xa_qminiservce(int cd, UBFH *p_ub, char cmd)
 {
     long ret = XA_OK;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
@@ -1052,10 +973,10 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
     
     /* 
      * ensure that we are recving requests only from our transaction
-     * manager
+     * manager.
+     * Recover trasnsactoins does not have xid on input.
      */
-
-    if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, &len))
+    if (TMQ_CMD_RECOVERTRANS!=cmd && EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, &len))
     {
         NDRX_LOG(log_error, "Failed to get TMXID!");
         ret = XAER_INVAL;
@@ -1105,30 +1026,8 @@ expublic int ndrx_xa_qminiservce(UBFH *p_ub, char cmd)
         case TMQ_CMD_COMMITRAN:
             ret = xa_commit_entry_tmq(tmxid, 0);
             break;
-            /* these two are not used: */
-        case TMQ_CMD_CHK_MEMLOG:
-        case TMQ_CMD_CHK_MEMLOG2:
-
-            ret = tmq_log_exists_entry(tmxid);
-
-            if (EXTRUE==ret)
-            {
-                ret=XA_OK;
-            }
-            else
-            {
-                ret=XAER_NOTA;
-            }
-
-            if (TMQ_CMD_CHK_MEMLOG2==cmd)
-            {
-                NDRX_LOG(log_error, "Expected transaction to exist in "
-                    "log [%s] but not found - restarting", tmxid);
-                userlog("Expected transaction to exist in "
-                    "log [%s] but not found - restarting", tmxid);
-                M_p_tpexit();
-            }
-            
+        case TMQ_CMD_RECOVERTRANS:
+            ret = xa_recover_entry_tmq(cd, p_ub, 0);
             break;
         default:
             NDRX_LOG(log_error, "Invalid command code [%c]", cmd);
@@ -2833,65 +2732,138 @@ exprivate void dirent_free(struct dirent **namelist, int n)
     NDRX_FREE(namelist);
 }
 
-/**
- * Verify that:
- * - Prepared must exist in the log. If it does not exist,
- *  then verify that file is removed from disk (some concurrent commit...)
- *  if file still exist, then we got a problem and basically we shall
- *  shutdown, as integrity is broken.
- * @param tmxid transaction id
- * @param fname file on disk
- */
-expublic int tmq_check_prepared(char *tmxid, char *fname)
-{
-    int ret = EXSUCCEED;
-    char tmp[PATH_MAX+1];
-
-    /* Check entry by ndrx_xa_qminicall TMQ_CMD_CHK_MEMLOG */
-
-    if (XA_OK!=(ret=ndrx_xa_qminicall(tmxid, TMQ_CMD_CHK_MEMLOG)))
-    {
-        snprintf(tmp, sizeof(tmp), "%s/%s", M_folder_prepared, fname);
-
-        if (ndrx_file_exists(tmp))
-        {
-            /* Request the service to restart if log is missing (it will) */
-            ndrx_xa_qminicall(tmxid, TMQ_CMD_CHK_MEMLOG2);
-
-            NDRX_LOG(log_error, "Storage integrity problem. File [%s] exists, "
-                "but transaction not - XAER_RMFAIL (tmqueue server will reboot)!", 
-                    tmp);
-            userlog("Integrity problem. File [%s] exists, "
-                "but transaction not - XAER_RMFAIL (tmqueue server will reboot)!", 
-                    tmp);
-
-            EXFAIL_OUT(ret);
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "File [%s] does not exists any more", tmp);
-        }
-    }
-out:
-    return ret;
-}
-
 /** continue with dirent free */
 #define RECOVER_CONTINUE \
-	    NDRX_FREE(G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]);\
             continue;\
    
 /** Close cursor */
 #define RECOVER_CLOSE_CURSOR \
         /* reset any stuff left open from previous scan... */\
-        if (NULL!=G_atmi_tls->qdisk_tls->recover_namelist)\
-        {\
-            dirent_free(G_atmi_tls->qdisk_tls->recover_namelist, G_atmi_tls->qdisk_tls->recover_i);\
-            G_atmi_tls->qdisk_tls->recover_namelist = NULL;\
-        }\
+        ndrx_growlist_free(&G_atmi_tls->qdisk_tls->recover_namelist);\
         G_atmi_tls->qdisk_tls->recover_open=EXFALSE;\
-        G_atmi_tls->qdisk_tls->recover_i=EXFAIL;\
-        G_atmi_tls->qdisk_tls->recover_last_loaded=EXFALSE;\
+        G_atmi_tls->qdisk_tls->recover_i=EXFAIL;
+
+/**
+ * In conversational mode, list the prepared transations.
+ * Doing this way, so that switch user (in case if it is not tmq)
+ * does not have to deal with the internals of the storage.
+ * @param cd XATMI service call descriptor
+ * @param p_ub UBF buffer (with request + used for transporting listings)
+ * @param flags call flags, currenty 0
+ * @return 
+ */
+expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
+{
+    int ret = XA_OK;
+    int err, i, cnt;
+    struct dirent **recover_namelist=NULL;
+    char *p, *fname, *prev=NULL;
+    long revent;
+    int do_restart;
+    /* re-use the same request buffer... */
+    i=scandir(M_folder_prepared, &recover_namelist, 0, alphasort);
+        
+    if (i < 0)
+    {
+        err=errno;
+        NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
+                M_folder_prepared, strerror(err));
+        userlog("Failed to scan q directory [%s]: %s", 
+                M_folder_prepared, strerror(err));
+        ret=XAER_RMERR;
+        goto out;
+    }
+
+    /* send the stuff to the caller + sort out
+     * any duplicate names
+     */
+    cnt = i;
+
+    while (i--)
+    {
+        /* loop over... */
+        fname = recover_namelist[i]->d_name;
+        
+        if (0==strcmp(fname, ".") || 
+            0==strcmp(fname, ".."))
+        {
+            continue;
+        }
+
+        p = strchr(fname, '-');
+
+        if (NULL==p)
+        {
+            continue;
+        }
+
+        p++;
+
+        /* check the previous load */
+        if (NULL!=prev && 0==strcmp(prev, p))
+        {
+            /* bypass it too */
+            continue;
+        }
+
+        NDRX_LOG(log_debug, "XID [%s] recovered", p);
+
+        /* 
+         * send back to caller..., in case if buffer, full
+         * send to the caller & flush it...
+         */
+        do
+        {
+            do_restart=EXFALSE;
+            if (EXSUCCEED!=Badd(p_ub, TMXID, p, 0))
+            {
+                if (BNOSPACE==Berror)
+                {
+                    NDRX_LOG(log_debug, "Buffer full - sending to caller");
+                    /* send stuff & reset buffer.. */
+                    if (EXSUCCEED!=tpsend(cd, (char *)p_ub, 0, 0, &revent))
+                    {
+                        NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                                    tpstrerror(tperrno), revent);
+                        ret=XAER_RMFAIL;
+                        goto out;
+                    }
+
+                    if (EXSUCCEED!=Bdelall(p_ub, TMXID))
+                    {
+                        NDRX_LOG(log_error, "Failed to reset call buffer: %s",
+                                    Bstrerror(Berror));
+                        ret=XAER_RMFAIL;
+                        goto out;
+                    }
+
+                    do_restart=EXTRUE;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Failed to add TMXID [%s] to the buffer: %s",
+                                    p, Bstrerror(Berror));
+                    ret=XAER_RMFAIL;
+                    goto out;
+                }
+            }
+        } while (do_restart);
+        prev=p;
+    }
+
+    /* NOTE: that some porition of the data would be received with the tpreturn! */
+out:
+
+    /* clean-up the entries */
+    if (NULL!=recover_namelist)
+    {
+        dirent_free(recover_namelist, cnt);
+    }
+
+    NDRX_LOG(log_info, "%s returns %ld", __func__, ret);
+
+    return ret;
+}
 
 /**
  * Lists currently prepared transactions
@@ -2900,6 +2872,9 @@ out:
  * Might have race condition with in-progress prepare. But I think it is
  * is not a big problem. As anyway we normally will run abort or commit.
  * And commit will require that all is prepared.
+ * ----
+ * This collects the prepard transactions, and reports in conversational mode
+ * back the list to the caller.
  * @param sw XA switch
  * @param xid where to unload the xids
  * @param count positions avaialble
@@ -2912,9 +2887,9 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
     int ret = XA_OK;
     int err;
     XID xtmp;
-    char *p, *fname;
-    char fname_full[PATH_MAX+1];
     int current_unload_pos=0; /* where to unload the stuff.. */
+    int cd = EXFAIL;
+    UBFH *p_ub = NULL;
     
     if (!G_atmi_tls->qdisk_is_open)
     {
@@ -2947,25 +2922,75 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
     /* start the scan if requested so ...  */
     if (flags & TMSTARTRSCAN)
     {
-        G_atmi_tls->qdisk_tls->recover_i = scandir(M_folder_prepared, 
-                &G_atmi_tls->qdisk_tls->recover_namelist, 0, alphasort);
-        
-        if (G_atmi_tls->qdisk_tls->recover_i < 0)
+        long len, revent=0;
+
+        /* Load into memory all prepared XIDs, so that
+         * engine can list them (with the pages)
+         */
+        cd = ndrx_xa_qminiconnect(TMQ_CMD_RECOVERTRANS, &p_ub, TPRECVONLY);
+
+        if (EXFAIL==cd)
         {
-            err=errno;
-            NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
-                    M_folder_prepared, strerror(err));
-            userlog("Failed to scan q directory [%s]: %s", 
-                    M_folder_prepared, strerror(err));
-            ret=XAER_RMERR;
+            NDRX_LOG(log_error, "Failed to tpconnect() for prepared transaction listing");
+            ret=XAER_RMFAIL;
             goto out;
         }
         
-        G_atmi_tls->qdisk_tls->recover_open=EXTRUE;
-    }
+        /* fetch the list... */
+        while (EXSUCCEED==tprecv(cd, (char **)&p_ub, &len, 0, &revent) || TPEV_SVCSUCC==revent)
+        {
+            BFLDOCC occ = Boccur(p_ub, TMXID);
+            char *p;
+            int i;
+
+            /* no close... */
+            if (TPEV_SVCSUCC==revent)
+            {
+                cd=EXFAIL;
+            }
+
+            for (i=0; i<occ; i++)
+            {
+                p = Bfind(p_ub, TMXID, i, NULL);
+
+                if (NULL==p)
+                {
+                    NDRX_LOG(log_error, "Failed to get TMXID[%d]: %s",
+                            i, Bstrerror(Berror));
+                    ret=XAER_RMFAIL;
+                    goto out;
+                }
+
+                NDRX_LOG(log_debug, "Fetch xid_str[ %s] to position %d", p, G_atmi_tls->qdisk_tls->recover_i);
+
+                if (NULL==atmi_xa_deserialize_xid((unsigned char *)p, &xtmp))
+                {
+                    NDRX_LOG(log_error, "Failed to deserialize xid: [%s] - skip", p);
+                    continue;
+                }
+
+                if (EXSUCCEED!=ndrx_growlist_append(&G_atmi_tls->qdisk_tls->recover_namelist, 
+                        &xtmp))
+                {
+                    NDRX_LOG(log_error, "Failed to add xid_str [%s] to growlist - OOM?", p);
+                    ret=XAER_RMFAIL;
+                    goto out;
+                }
+                G_atmi_tls->qdisk_tls->recover_i++;
+            } /* for occ in buffer */
+        }
+
+        if (TPEV_SVCSUCC!=revent)
+        {
+            NDRX_LOG(log_error, "Failed to tprecv(cd=%d) for prepared transaction listing revent=%ld: %s", 
+                cd, revent, tpstrerror(tperrno));
+            ret=XAER_RMFAIL;
+            goto out;
+        }
+    } /* scan start... */
     
     /* nothing to return */
-    if (NULL==G_atmi_tls->qdisk_tls->recover_namelist)
+    if (0==G_atmi_tls->qdisk_tls->recover_i)
     {
         ret=0;
         goto out;
@@ -2975,56 +3000,11 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
     while ((count - current_unload_pos) > 0 && 
             G_atmi_tls->qdisk_tls->recover_i--)
     {
-        fname = G_atmi_tls->qdisk_tls->recover_namelist[G_atmi_tls->qdisk_tls->recover_i]->d_name;
         
-        if (0==strcmp(fname, ".") || 
-            0==strcmp(fname, ".."))
-        {
-            RECOVER_CONTINUE;
-        }
-        
-        p = strchr(fname, '-');
-        
-        /* invalid file name, skip... */
-        if (NULL==p)
-        {
-            NDRX_LOG(log_error, "Invalid prepared name [%s] - skip", fname);
-            RECOVER_CONTINUE;
-        }
-                
-        NDRX_STRCPY_SAFE(fname_full, fname);
-
-        /* terminate so that we have good name */
-        *p = EXEOS;
-        p++;
-        
-        if (NULL==atmi_xa_deserialize_xid((unsigned char *)fname, &xtmp))
-        {
-            NDRX_LOG(log_error, "Failed to deserialize xid: %s - skip", fname);
-            RECOVER_CONTINUE;
-        }
-
-        /* TODO: if we will support several RMIDs in the same folder
-         * then we need to read the file block and check the RMID
-         * currently file blocks does not contain RMID. Thus that would
-         * require to be appended.
-         */
-        
-        /* check is it duplicate? */
-        if ( (current_unload_pos>0 &&
-                0==memcmp(&xid[current_unload_pos-1], &xtmp, sizeof(XID)))
-                /* if it was processed in previous scan: 
-                 */
-                || (G_atmi_tls->qdisk_tls->recover_last_loaded 
-                        && 0==memcmp(&G_atmi_tls->qdisk_tls->recover_last, &xtmp, sizeof(XID)))
-                )
-        {
-            NDRX_LOG(log_debug, "Got part [%s] of xid [%s]", p, fname);
-            RECOVER_CONTINUE;
-        }
-            
         /* Okey unload the xid finally */
-        memcpy(&xid[current_unload_pos], &xtmp, sizeof(XID));
+        memcpy(&xid[current_unload_pos]
+            , (G_atmi_tls->qdisk_tls->recover_namelist.mem + sizeof(XID)*G_atmi_tls->qdisk_tls->recover_i)
+            , sizeof(XID));
 
         /* ensure that have a log entry 
          * probably will not work... as all stuff must go through
@@ -3043,17 +3023,11 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         }
 #endif
         
-        NDRX_LOG(log_debug, "Xid [%s] unload to position %d", fname, current_unload_pos);
+        /* maps against strings fetched in tprecv() */
+        NDRX_LOG(log_debug, "Unload XID position %d", G_atmi_tls->qdisk_tls->recover_i);
         ret++;
         current_unload_pos++;
         RECOVER_CONTINUE;
-    }
-    
-    if (ret>0)
-    {
-        /* save the last xid for reetry skipping.. */
-        memcpy(&G_atmi_tls->qdisk_tls->recover_last, &xid[ret-1], sizeof(XID));
-        G_atmi_tls->qdisk_tls->recover_last_loaded=EXTRUE;
     }
     
 out:
@@ -3070,6 +3044,17 @@ out:
         
         /* if was not open, no problem.. */
         RECOVER_CLOSE_CURSOR;
+    }
+
+    /* terminate conv if left open... */
+    if (EXFAIL!=cd)
+    {
+        tpdiscon(cd);
+    }
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
     }
 
     return ret; /* no transactions found */

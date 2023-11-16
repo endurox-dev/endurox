@@ -65,7 +65,7 @@ void CONVSV (TPSVCINFO *p_svc)
 
     for (i=0; i<100; i++)
     {
-        sprintf(tmp, "SRV SND: %d", i);
+        snprintf(tmp, sizeof(tmp), "SRV SND: %d", i);
         if (EXFAIL==Badd(p_ub, T_STRING_FLD, (char *)tmp, 0))
         {
             ret=EXFAIL;

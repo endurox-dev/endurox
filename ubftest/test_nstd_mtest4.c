@@ -71,7 +71,7 @@ Ensure(test_nstd_mtest4)
 	fprintf(stderr, "Adding %d values\n", count);
 	strcpy(kval, "001");
 	for (i=0;i<count;i++) {
-		sprintf(sval, "%07x", values[i]);
+		snprintf(sval, sizeof(sval), "%07x", values[i]);
 		if (RES(EDB_KEYEXIST, edb_put(txn, dbi, &key, &data, EDB_NODUPDATA)))
 			j++;
 	}
@@ -103,17 +103,17 @@ Ensure(test_nstd_mtest4)
 	data.mv_size = sizeof(sval);
 	data.mv_data = sval;
 
-	sprintf(sval, "%07x", values[3]+1);
+	snprintf(sval, sizeof(sval), "%07x", values[3]+1);
 	E(edb_txn_begin(env, NULL, 0, &txn));
 	(void)RES(EDB_KEYEXIST, edb_put(txn, dbi, &key, &data, EDB_NODUPDATA));
 	edb_txn_abort(txn);
 
-	sprintf(sval, "%07x", values[255]+1);
+	snprintf(sval, sizeof(sval), "%07x", values[255]+1);
 	E(edb_txn_begin(env, NULL, 0, &txn));
 	(void)RES(EDB_KEYEXIST, edb_put(txn, dbi, &key, &data, EDB_NODUPDATA));
 	edb_txn_abort(txn);
 
-	sprintf(sval, "%07x", values[500]+1);
+	snprintf(sval, sizeof(sval), "%07x", values[500]+1);
 	E(edb_txn_begin(env, NULL, 0, &txn));
 	(void)RES(EDB_KEYEXIST, edb_put(txn, dbi, &key, &data, EDB_NODUPDATA));
 	E(edb_txn_commit(txn));
@@ -135,7 +135,7 @@ Ensure(test_nstd_mtest4)
 		j++;
 		txn=NULL;
 		E(edb_txn_begin(env, NULL, 0, &txn));
-		sprintf(sval, "%07x", values[i]);
+		snprintf(sval, sizeof(sval), "%07x", values[i]);
 		key.mv_size = sizeof(int);
 		key.mv_data = kval;
 		data.mv_size = sizeof(sval);
