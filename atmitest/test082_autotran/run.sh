@@ -545,6 +545,9 @@ if [[ "X$CNT" != "X0" ]]; then
 fi
 
 xadmin start -s tmsrv
+# let ndrxd to replicat service tables
+# otherwise getting from node2: Service is not available @TM-1-1-50 by shm
+sleep 5
 
 ################################################################################
 echo "*** Checking commit fails transation timeout..."
