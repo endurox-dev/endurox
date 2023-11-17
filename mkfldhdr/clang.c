@@ -64,7 +64,7 @@
  */
 expublic void c_get_fullname(char *data, size_t datasz)
 {
-    snprintf(data, sizeof(data), "%s/%s.h", G_output_dir, G_active_file);
+    snprintf(data, datasz, "%s/%s.h", G_output_dir, G_active_file);
 }
 
 /**

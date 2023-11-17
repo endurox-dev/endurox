@@ -76,7 +76,7 @@ expublic void python_get_fullname(char *data, size_t datasz)
         *p=EXEOS;
     }
 
-    snprintf(data, sizeof(data), "%s/%s.py", G_output_dir, G_active_file);
+    snprintf(data, datasz, "%s/%s.py", G_output_dir, G_active_file);
 }
 
 /**

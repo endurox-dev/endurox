@@ -176,7 +176,7 @@ exprivate char *get_next_from_env (int *ret)
     {
         snprintf(tmp, sizeof(tmp), "%s/%s", ret_dir, ret_ptr);
         /* maybe use stat here? */
-	if (ndrx_file_exists(tmp))
+        if (ndrx_file_exists(tmp))
         {
             break;
         }
