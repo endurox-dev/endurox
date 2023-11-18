@@ -1255,7 +1255,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     
 out:
 
-    NDRX_LOG(log_info, "%s ret=%d numevents=%d", fn, ret, numevents);
+    NDRX_LOG(log_debug, "%s ret=%d numevents=%d", fn, ret, numevents);
 
     if (EXSUCCEED==ret)
     {

@@ -778,7 +778,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
     ndrx_growlist_init(&G_atmi_tls->qdisk_tls->recover_namelist, 256, sizeof(XID));
     
     G_atmi_tls->qdisk_tls->recover_open=EXFALSE;
-    G_atmi_tls->qdisk_tls->recover_i=EXFAIL;
+    G_atmi_tls->qdisk_tls->recover_i=0;
             
     G_atmi_tls->qdisk_is_open = EXTRUE;
     G_atmi_tls->qdisk_rmid = rmid;
@@ -2741,7 +2741,7 @@ exprivate void dirent_free(struct dirent **namelist, int n)
         /* reset any stuff left open from previous scan... */\
         ndrx_growlist_free(&G_atmi_tls->qdisk_tls->recover_namelist);\
         G_atmi_tls->qdisk_tls->recover_open=EXFALSE;\
-        G_atmi_tls->qdisk_tls->recover_i=EXFAIL;
+        G_atmi_tls->qdisk_tls->recover_i=0;
 
 /**
  * In conversational mode, list the prepared transations.
@@ -2760,9 +2760,15 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
     char *p, *fname, *prev=NULL;
     long revent;
     int do_restart;
+
     /* re-use the same request buffer... */
     i=scandir(M_folder_prepared, &recover_namelist, 0, alphasort);
-        
+    
+    /* send the stuff to the caller + sort out
+     * any duplicate names
+     */
+    cnt = i;
+
     if (i < 0)
     {
         err=errno;
@@ -2773,11 +2779,6 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
         ret=XAER_RMERR;
         goto out;
     }
-
-    /* send the stuff to the caller + sort out
-     * any duplicate names
-     */
-    cnt = i;
 
     while (i--)
     {
@@ -2797,16 +2798,16 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
             continue;
         }
 
-        p++;
+        *p=EXEOS;
 
         /* check the previous load */
-        if (NULL!=prev && 0==strcmp(prev, p))
+        if (NULL!=prev && 0==strcmp(prev, fname))
         {
             /* bypass it too */
             continue;
         }
 
-        NDRX_LOG(log_debug, "XID [%s] recovered", p);
+        NDRX_LOG(log_debug, "XID [%s] recovered", fname);
 
         /* 
          * send back to caller..., in case if buffer, full
@@ -2815,7 +2816,7 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
         do
         {
             do_restart=EXFALSE;
-            if (EXSUCCEED!=Badd(p_ub, TMXID, p, 0))
+            if (EXSUCCEED!=Badd(p_ub, TMXID, fname, 0))
             {
                 if (BNOSPACE==Berror)
                 {
@@ -2848,7 +2849,9 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
                 }
             }
         } while (do_restart);
-        prev=p;
+
+        /* to deal with dulicates (i.e. suffix is seqno in global txn) */
+        prev=fname;
     }
 
     /* NOTE: that some porition of the data would be received with the tpreturn! */
@@ -2857,7 +2860,7 @@ out:
     /* clean-up the entries */
     if (NULL!=recover_namelist)
     {
-        dirent_free(recover_namelist, cnt);
+        dirent_free(recover_namelist, cnt-1);
     }
 
     NDRX_LOG(log_info, "%s returns %ld", __func__, ret);
@@ -2886,7 +2889,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 {
     int ret = XA_OK;
     int err;
-    XID xtmp;
+    XID xtmp, *p_xid;
     int current_unload_pos=0; /* where to unload the stuff.. */
     int cd = EXFAIL;
     UBFH *p_ub = NULL;
@@ -2935,9 +2938,14 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             ret=XAER_RMFAIL;
             goto out;
         }
+
+        G_atmi_tls->qdisk_tls->recover_open=EXTRUE;
         
-        /* fetch the list... */
-        while (EXSUCCEED==tprecv(cd, (char **)&p_ub, &len, 0, &revent) || TPEV_SVCSUCC==revent)
+        /* fetch the list... 
+         * cd is set to EXFAIL in last loop (when server did return)
+         */
+        while (EXFAIL!=cd && (EXSUCCEED==tprecv(cd, (char **)&p_ub, &len, 0, &revent) 
+            || TPEV_SVCSUCC==revent))
         {
             BFLDOCC occ = Boccur(p_ub, TMXID);
             char *p;
@@ -2988,6 +2996,9 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
             goto out;
         }
     } /* scan start... */
+
+    NDRX_LOG(log_info, "Nr of prepared transactions (left in cursor): %d", 
+        G_atmi_tls->qdisk_tls->recover_i);
     
     /* nothing to return */
     if (0==G_atmi_tls->qdisk_tls->recover_i)
@@ -2996,6 +3007,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         goto out;
     }
     
+    p_xid=(XID *)G_atmi_tls->qdisk_tls->recover_namelist.mem;
     /** start to unload xids, we got to match the same names */
     while ((count - current_unload_pos) > 0 && 
             G_atmi_tls->qdisk_tls->recover_i--)
@@ -3003,7 +3015,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
         
         /* Okey unload the xid finally */
         memcpy(&xid[current_unload_pos]
-            , (G_atmi_tls->qdisk_tls->recover_namelist.mem + sizeof(XID)*G_atmi_tls->qdisk_tls->recover_i)
+            , &p_xid[G_atmi_tls->qdisk_tls->recover_i]
             , sizeof(XID));
 
         /* ensure that have a log entry 
@@ -3033,14 +3045,15 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 out:
 
     /* terminate the scan */
-    NDRX_LOG(log_debug, "recover: count=%ld, ret=%d", count, ret);
+    NDRX_LOG(log_info, "recover: count=%ld, ret=%d, flags=%ld", 
+        count, ret, flags);
 
     if (    ret>=0 
-            && ( (flags & TMENDRSCAN)  || ret < count)
+            && ( (flags & TMENDRSCAN) || ret < count)
             && G_atmi_tls->qdisk_tls->recover_open
             )
     {
-        NDRX_LOG(log_debug, "recover: closing cursor");
+        NDRX_LOG(log_info, "recover: closing cursor");
         
         /* if was not open, no problem.. */
         RECOVER_CLOSE_CURSOR;

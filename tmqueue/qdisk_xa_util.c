@@ -166,7 +166,6 @@ out:
 expublic int ndrx_xa_qminiconnect(char cmd, UBFH **pp_ub, long flags)
 {
     long rsplen;
-    UBFH *p_ub = NULL;
     long ret = XA_OK;
     short nodeid = (short)tpgetnodeid();
    
@@ -193,9 +192,9 @@ expublic int ndrx_xa_qminiconnect(char cmd, UBFH **pp_ub, long flags)
     NDRX_LOG(log_info, "Connecting to QSPACE [%s], command %c",
                 ndrx_G_qspacesvc, cmd);
     
-    ndrx_debug_dump_UBF(log_info, "Connecting to Q space with", p_ub);
+    ndrx_debug_dump_UBF(log_info, "Connecting to Q space with", *pp_ub);
 
-    if (EXFAIL == tpconnect(ndrx_G_qspacesvc, (char *)p_ub, 0L, flags|TPNOTRAN))
+    if (EXFAIL == (ret=tpconnect(ndrx_G_qspacesvc, (char *)*pp_ub, 0L, flags|TPNOTRAN)))
     {
         NDRX_LOG(log_error, "%s tpconnect() failed: %s", ndrx_G_qspacesvc, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
@@ -203,13 +202,13 @@ expublic int ndrx_xa_qminiconnect(char cmd, UBFH **pp_ub, long flags)
 
 out:
 
-    if ( EXSUCCEED!=ret && NULL!=p_ub)
+    if ( 0 > ret && NULL!=*pp_ub)
     {
         tpfree((char *)*pp_ub);
         *pp_ub = NULL;
     }
 
-    NDRX_LOG(log_info, "returns %d ubf ptr %p", ret, *pp_ub);
+    NDRX_LOG(log_info, "returns cd=%d, ubf ptr %p", ret, *pp_ub);
     
     return ret;
 }
