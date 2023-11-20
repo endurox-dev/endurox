@@ -70,13 +70,26 @@ exprivate void start_start_info(pm_node_t * p_pm, srv_status_t * srvinfo)
     p_pm->resid = srvinfo->srvinfo.resid;
     p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
 
-    p_pm->state = srvinfo->srvinfo.state;
-    p_pm->state_changed = SANITY_CNT_START;
+    /* if was stopping... keep in that state #501.
+     * so that if we are in the loop of the shutdown,
+     * we do not report, the "started" state.
+     * additionally, we do not reset to the rspstwatch
+     * so that end_max would not be delayed.
+     * ----
+     * the end_max could look on req-state (i.e. if running ,but require
+     * shutdown, then do the kill), however in that case we cannot
+     * side-start the binaries, as they would be killed immediately.
+     */
+    if (NDRXD_PM_STOPPING!=p_pm->state)
+    {
+        p_pm->state = srvinfo->srvinfo.state;
+        p_pm->state_changed = SANITY_CNT_START;
+        p_pm->rspstwatch = SANITY_CNT_START;
+        p_pm->killreq = EXFALSE;
+    }
     /* Assume we inter in running state, thus reset ping timer */
     p_pm->pingtimer = SANITY_CNT_START;
-    p_pm->rspstwatch = SANITY_CNT_START;
     p_pm->pingstwatch = SANITY_CNT_IDLE;
-    p_pm->killreq = EXFALSE;
     p_pm->exec_seq_try = 0;  /* Reset counter as we are good */
     p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
     p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */

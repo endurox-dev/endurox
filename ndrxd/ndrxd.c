@@ -126,7 +126,7 @@ expublic int ndrxd_unlink_pid_file(int second_call)
  * Do receive command.
  * @return
  */
-int main_loop()
+int main_loop(void)
 {
     int finished = EXFALSE;
     int ret=EXSUCCEED;
