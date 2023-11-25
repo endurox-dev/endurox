@@ -1,4 +1,4 @@
-# endurox
+# Enduro/X Core
 
 ## Build (including atmi/ubf tests) status
 
