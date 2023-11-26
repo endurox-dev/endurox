@@ -1968,11 +1968,8 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname,
     if (len > 0)
     {
         READ_BLOCK((block+offset), len);
-        
-        read+=len;
-        
+        read+=len;   
     }
-    
     
 out:
                 
@@ -2149,7 +2146,6 @@ exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_
         /* part of global trn */
         tmxid = G_atmi_tls->qdisk_tls->filename_base;
     }
-    
     
     /* Open file for write... */
     NDRX_LOG(log_info, "Writing command file: [%s] mode: [%s] (seqno: %d)", 

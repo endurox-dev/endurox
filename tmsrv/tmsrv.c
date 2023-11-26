@@ -659,8 +659,27 @@ int tpsvrinit(int argc, char **argv)
         ndrx_G_tmsrv_storage = ndrx_G_plugins.p_ndrx_tms_store;
     }
 
-    NDRX_LOG(log_warn, "Transaction logs storage engine: [%s]", 
-                ndrx_G_tmsrv_storage->name);
+    if (0!=strncmp(ndrx_G_tmsrv_storage->magic, NDRX_TMS_STOREIF_MAGIC, NDRX_TMS_STOREIF_MAGIC_LEN))
+    {
+        NDRX_LOG(log_error, "ERROR ! Invalid data store magic: expected [%s] got [%c%c%c%c]!",
+            NDRX_TMS_STOREIF_MAGIC, 
+            ndrx_G_tmsrv_storage->magic[0], 
+            ndrx_G_tmsrv_storage->magic[1], 
+            ndrx_G_tmsrv_storage->magic[2],
+            ndrx_G_tmsrv_storage->magic[3]);
+        EXFAIL_OUT(ret);
+    }
+
+    /* validate the version */
+    if (ndrx_G_tmsrv_storage->sw_version != NDRX_TMS_STOREIF_VERSION)
+    {
+        NDRX_LOG(log_error, "ERROR ! Invalid data store version: expected [%d] got [%d]!",
+                NDRX_TMS_STOREIF_VERSION, ndrx_G_tmsrv_storage->sw_version);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_warn, "Transaction logs storage engine: [%s], version: %d", 
+                ndrx_G_tmsrv_storage->name, ndrx_G_tmsrv_storage->sw_version);
 
     /* init the storage engine */
     if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_init(ndrx_G_tmsrv_storage, &G_tmsrv_cfg))

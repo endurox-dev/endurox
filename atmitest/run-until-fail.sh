@@ -7,16 +7,28 @@
 
 DONE=0
 
-if [ "$#" -ne 1 ]; then
+fail_out()
+{
+    echo "Failed at loop: $DONE"
+    exit -1
+}
+
+if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <script_name>"
     exit -1
 fi
 
 echo "Running up..."
 
-while $1; do
+while true; do
+
+    for argument in "$@"
+    do
+        echo "Running command [$argument] @ loop $DONE"
+        $argument || fail_out
+    done
+
     DONE=$((DONE+1))
     echo "DONE: $DONE loops"
 done
 
-echo "Failed at loop: $DONE"

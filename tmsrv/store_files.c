@@ -97,23 +97,27 @@ exprivate long ndrx_tms_file_storage_age(ndrx_tms_storage_t *sw, char *fname);
 /** File store switch */
 expublic ndrx_tms_storage_t ndrx_G_tms_store_files =
 {
-    .magic = STOREIF_MAGIC,
-    .name = "file system",
-    .sw_version = TMREGISTER,
-    .pf_storage_init = ndrx_tms_file_storage_init,
-    .pf_storage_uninit = ndrx_tms_file_storage_uninit,
-    .pf_storage_open = ndrx_tms_file_storage_open,
-    .pf_storage_close = ndrx_tms_file_storage_close,
-    .pf_storage_unlink = ndrx_tms_file_storage_unlink,
-    .pf_storage_write = ndrx_tms_file_storage_write,
-    .pf_storage_read_start = ndrx_tms_file_storage_read_start,
-    .pf_storage_read_next = ndrx_tms_file_storage_read_next,
-    .pf_storage_read_end = ndrx_tms_file_storage_read_end,
-    .pf_storage_list_start = ndrx_tms_file_storage_list_start,
-    .pf_storage_list_next=ndrx_tms_file_storage_list_next,
-    .pf_storage_list_end=ndrx_tms_file_storage_list_end,
-    .pf_storage_exists=ndrx_tms_file_storage_exists,
-    .pf_storage_get_age=ndrx_tms_file_storage_age
+    .magic = NDRX_TMS_STOREIF_MAGIC
+    ,.sw_version = NDRX_TMS_STOREIF_VERSION
+    ,.name = "File-system"
+    ,.custom_block1=NULL
+    ,.custom_block2=NULL
+    ,.custom_block3=NULL
+    ,.custom_block4=NULL
+    ,.pf_storage_init = ndrx_tms_file_storage_init
+    ,.pf_storage_uninit = ndrx_tms_file_storage_uninit
+    ,.pf_storage_open = ndrx_tms_file_storage_open
+    ,.pf_storage_close = ndrx_tms_file_storage_close
+    ,.pf_storage_unlink = ndrx_tms_file_storage_unlink
+    ,.pf_storage_write = ndrx_tms_file_storage_write
+    ,.pf_storage_read_start = ndrx_tms_file_storage_read_start
+    ,.pf_storage_read_next = ndrx_tms_file_storage_read_next
+    ,.pf_storage_read_end = ndrx_tms_file_storage_read_end
+    ,.pf_storage_list_start = ndrx_tms_file_storage_list_start
+    ,.pf_storage_list_next=ndrx_tms_file_storage_list_next
+    ,.pf_storage_list_end=ndrx_tms_file_storage_list_end
+    ,.pf_storage_exists=ndrx_tms_file_storage_exists
+    ,.pf_storage_get_age=ndrx_tms_file_storage_age
 };
 
 /** 

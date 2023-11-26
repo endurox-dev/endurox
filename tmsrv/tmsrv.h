@@ -57,10 +57,11 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define TMSRV_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min  */
 
 /** store interface magic */
-#define STOREIF_MAGIC          "TMST"
+#define NDRX_TMS_STOREIF_MAGIC          "TMST"
+#define NDRX_TMS_STOREIF_MAGIC_LEN       4
 
-/** current interface version */
-#define STOREIF_VERSION         1
+/** Switch version. Must match TMS */
+#define NDRX_TMS_STOREIF_VERSION             1
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 

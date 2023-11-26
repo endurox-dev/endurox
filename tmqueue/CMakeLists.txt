@@ -59,6 +59,7 @@ add_library (ndrxxaqdisk SHARED
                 qdisk_xa.c
                 qdisk_xa_util.c
                 qtran.c
+                store_files_tmq.c   
             )
 
 add_library (ndrxxaqdisks SHARED
