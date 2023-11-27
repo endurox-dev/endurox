@@ -105,6 +105,10 @@ struct ndrx_pluginbase {
     /** TMSRV storage engine plugin */
     void *p_ndrx_tms_store;
     char ndrx_tms_sotre_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+
+    /** TMQ storage engine plugin */
+    void *p_ndrx_tmq_store;
+    char ndrx_tmq_sotre_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;

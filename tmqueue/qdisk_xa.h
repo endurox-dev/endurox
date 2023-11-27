@@ -78,7 +78,20 @@ extern "C" {
  */
 typedef struct
 {
-    /* TODO: */
+    /* Passed from tmqueue main entry point: */
+    int setting;
+    int (*pf_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname,
+                                     short nodeid, short srvid, char *qspace, long flags);
+    int (*pf_tmq_dum_add)(char *tmxid);
+    int (*pf_tmq_unlock_msg)(union tmq_upd_block *b);
+    /** returned from tmq_set_tmqueue(): */
+    void (*pf_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
+    int (*pf_tmq_msgid_exists)(char *msgid_str);
+    void (*pf_tpexit)(void);
+
+    /* path to data storage (e.g. directory for files, for SQL ref to connstr): */
+    char data_folder[PATH_MAX+1]; /**< Where to store the q data         */
+
 } ndrx_tmq_qdisk_xa_cfg_t;
 
 typedef struct ndrx_tmq_storage ndrx_tmq_storage_t;
@@ -196,6 +209,9 @@ struct ndrx_tmq_storage
 };
 
 /*---------------------------Globals------------------------------------*/
+
+extern ndrx_tmq_storage_t ndrx_G_tmq_store_files;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 

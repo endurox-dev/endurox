@@ -103,25 +103,16 @@
 /*---------------------------Globals------------------------------------*/
 expublic char ndrx_G_qspace[XATMI_SERVICE_NAME_LENGTH+1];   /**< Name of the queue space  */
 expublic char ndrx_G_qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service name      */
-/*---------------------------Statics------------------------------------*/
 
-exprivate char M_folder[PATH_MAX+1] = {EXEOS}; /**< Where to store the q data         */
-exprivate char M_folder_active[PATH_MAX+1] = {EXEOS}; /**< Active transactions        */
-exprivate char M_folder_prepared[PATH_MAX+1] = {EXEOS}; /**< Prepared transactions    */
-exprivate char M_folder_committed[PATH_MAX+1] = {EXEOS}; /**< Committed transactions  */
+/* default storage engine: */
+expublic ndrx_tmq_storage_t *ndrx_G_tmq_storage = &ndrx_G_tmq_store_files;
+/*---------------------------Statics------------------------------------*/
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
 exprivate MUTEX_LOCKDECL(M_init);   /**< init lock      */
 
 exprivate int M_is_tmqueue = EXFALSE;   /**< is this process a tmqueue ?        */
-
-exprivate  int (*M_p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
-        short nodeid, short srvid, char *qspace, long flags);
-exprivate int (*M_p_tmq_dum_add)(char *tmxid);
-exprivate int (*M_p_tmq_unlock_msg)(union tmq_upd_block *b);
-
-exprivate int (*M_p_tmq_msgid_exists)(char *msgid_str);
-exprivate void (*M_p_tpexit)(void);
+exprivate ndrx_tmq_qdisk_xa_cfg_t *M_qdisk_xa_cfg=NULL; /**< settings for XA engine */
 
 /** stopwatch for triggering disk checks */
 exprivate ndrx_stopwatch_t M_chkdisk_stopwatch;
@@ -212,36 +203,36 @@ struct xa_switch_t ndrxqdynsw =
 
 /**
  * Mark the current instance as part or not as part of tmqueue
- * @param setting EXTRUE/EXFALSE
+ * @param qdisk_xa_cfg ptr to XA library configuration structure
  */
 expublic void tmq_set_tmqueue(
-    int setting
-    , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
-        short nodeid, short srvid, char *qspace, long flags)
-    , int (*p_tmq_dum_add)(char *tmxid)
-    , int (*p_tmq_unlock_msg)(union tmq_upd_block *b)
-    , void (**p_tmq_chkdisk_th)(void *ptr, int *p_finish_off)
-    , int (*p_tmq_msgid_exists)(char *msgid_str)
-    , void (*p_tpexit)(void)
+    ndrx_tmq_qdisk_xa_cfg_t * qdisk_xa_cfg
 )
 {
-    M_is_tmqueue = setting;
-    M_p_tmq_setup_cmdheader_dum = p_tmq_setup_cmdheader_dum;
-    M_p_tmq_dum_add = p_tmq_dum_add;
-    M_p_tmq_unlock_msg = p_tmq_unlock_msg;
-
-    M_p_tmq_msgid_exists=p_tmq_msgid_exists;
-    M_p_tpexit=p_tpexit;
+    M_qdisk_xa_cfg = qdisk_xa_cfg;
     
-    NDRX_LOG(log_debug, "qdisk_xa config: M_is_tmqueue=%d "
-        "M_p_tmq_setup_cmdheader_dum=%p M_p_tmq_dum_add=%p M_p_tmq_unlock_msg=%p "
-        "M_p_tmq_msgid_exists=%p M_p_tpexit=%p",
-        M_is_tmqueue, M_p_tmq_setup_cmdheader_dum, M_p_tmq_dum_add, M_p_tmq_unlock_msg,
-        M_p_tmq_msgid_exists, M_p_tpexit);
+    if (NULL!=M_qdisk_xa_cfg && M_qdisk_xa_cfg->setting)
+    {
+        M_is_tmqueue = EXTRUE;
+    }
+    else
+    {
+        M_is_tmqueue = EXFALSE;
+        NDRX_LOG(log_debug, "tmq_set_tmqueue: not a tmqueue (external XA client)");
+    }
 
-    /* Return some functions from our scope back */
-    *p_tmq_chkdisk_th = tmq_chkdisk_th;
+    if (NULL!=M_qdisk_xa_cfg)
+    {
+        NDRX_LOG(log_debug, "qdisk_xa config: M_is_tmqueue=%d "
+            "pf_tmq_setup_cmdheader_dum=%p pf_tmq_dum_add=%p pf_tmq_unlock_msg=%p "
+            "pf_tmq_msgid_exists=%p pf_tpexit=%p",
+            M_is_tmqueue, M_qdisk_xa_cfg->pf_tmq_setup_cmdheader_dum,
+            M_qdisk_xa_cfg->pf_tmq_dum_add, M_qdisk_xa_cfg->pf_tmq_unlock_msg,
+            M_qdisk_xa_cfg->pf_tmq_msgid_exists, M_qdisk_xa_cfg->pf_tpexit);
 
+        /* Return some functions from our scope back */
+        M_qdisk_xa_cfg->pf_tmq_chkdisk_th = tmq_chkdisk_th;
+    }
 }
 
 /**
@@ -273,456 +264,43 @@ exprivate char *set_filename_base_tmxid(char *tmxid)
 }
 
 /**
- * Get the next file name for current transaction
- * 
- * @return EXSUCCEED (names set) / EXFAIL (transaction not found)
- */
-exprivate int set_filenames(int *p_seqno)
-{
-    /* get next sequence number of tran 
-     * tmxid is encoded in G_atmi_tls->qdisk_tls->filename_base
-     * thus lookup the transaction, and get the next number
-     */
-    int ret = EXSUCCEED;
-    int locke=EXFALSE;
-    int seqno;
-    qtran_log_t * p_tl = tmq_log_get_entry(G_atmi_tls->qdisk_tls->filename_base, 
-        NDRX_LOCK_WAIT_TIME, &locke);
-    
-    if (NULL==p_tl)
-    {
-        NDRX_LOG(log_error, "Transaction [%s] not found", 
-                G_atmi_tls->qdisk_tls->filename_base);
-        EXFAIL_OUT(ret);
-    }
-    
-    seqno = tmq_log_next(p_tl);
-    
-    snprintf(G_atmi_tls->qdisk_tls->filename_active, sizeof(G_atmi_tls->qdisk_tls->filename_active), 
-                "%s/%s-%03d", M_folder_active, G_atmi_tls->qdisk_tls->filename_base, seqno);
-    
-    snprintf(G_atmi_tls->qdisk_tls->filename_prepared, sizeof(G_atmi_tls->qdisk_tls->filename_prepared), 
-            "%s/%s-%03d", M_folder_prepared, G_atmi_tls->qdisk_tls->filename_base, seqno);
-        
-    NDRX_LOG(log_info, "Filenames set to: [%s] [%s] (base: [%s])", 
-                G_atmi_tls->qdisk_tls->filename_active, 
-                G_atmi_tls->qdisk_tls->filename_prepared,
-                G_atmi_tls->qdisk_tls->filename_base);
-    
-    *p_seqno = seqno;
-out:
-                
-    /* if not recursive lock, then release */
-    if (NULL!=p_tl && !locke)
-    {
-        tmq_log_unlock(p_tl);
-    }
-
-    return ret;
-}
-
-/**
- * Get the full file name for `i' occurrence 
- * @param i
- * @param folder
- * @return path to file
- */
-exprivate char *get_filename_i(int i, char *folder, int slot)
-{
-    static __thread char filename[2][PATH_MAX+1];
-    
-    snprintf(filename[slot], sizeof(filename[0]), "%s/%s-%03d", folder, 
-        G_atmi_tls->qdisk_tls->filename_base, i);
-    
-    return filename[slot];
-}
-
-/**
- * Special Q file name
+ * Configure storage engine
  * @param fname
- * @return 
+ * @return EXTRUE/EXFALSE
  */
-exprivate char *get_file_name_final(char *fname)
-{
-    static __thread char buf[PATH_MAX+1];
-    
-    snprintf(buf, sizeof(buf), "%s/%s", M_folder_committed, fname);
-    NDRX_LOG(log_debug, "Filename built: %s", buf);
-    
-    return buf;
-}
-
-/**
- * Rename file from one folder to another...
- * @param xid
- * @param rmid
- * @param from_folder
- * @param to_folder
- * @return 
- */
-exprivate int file_move(int i, char *from_folder, char *to_folder)
+exprivate int configure_storage_engine(void)
 {
     int ret = EXSUCCEED;
-    char *f;
-    char *t;
-    
 
-    f = get_filename_i(i, from_folder, 0);
-    t = get_filename_i(i, to_folder, 1);
-        
-    NDRX_LOG(log_info, "Rename [%s]->[%s]", 
-                f,t);
-
-    /* ndrx_G_systest_lockloss -> IO fence for test */
-    if (ndrx_G_systest_lockloss || EXSUCCEED!=rename(f, t))
+    if (NULL!=ndrx_G_plugins.p_ndrx_tms_store)
     {
-        NDRX_LOG(log_error, "Failed to rename [%s]->[%s]: %s", 
-                f,t,
-                strerror(errno));
+        ndrx_G_tmq_storage = ndrx_G_plugins.p_ndrx_tms_store;
+    }
+
+    if (0!=strncmp(ndrx_G_tmq_storage->magic, NDRX_TMQ_STOREIF_MAGIC, NDRX_TMQ_STOREIF_MAGIC_LEN))
+    {
+        NDRX_LOG(log_error, "ERROR ! Invalid tmq data store magic: expected [%s] got [%c%c%c%c]!",
+            NDRX_TMQ_STOREIF_MAGIC,
+            ndrx_G_tmq_storage->magic[0],
+            ndrx_G_tmq_storage->magic[1],
+            ndrx_G_tmq_storage->magic[2],
+            ndrx_G_tmq_storage->magic[3]);
         EXFAIL_OUT(ret);
     }
-    
-out:
-    return ret;
-}
 
-/**
- * Move the file to committed storage
- * @param from_filename source file name with path
- * @param to_filename_only dest only filename
- * @return final file name
- */
-exprivate char * file_move_final_names(char *from_filename, char *to_filename_only)
-{
-    int ret = EXSUCCEED;
-    
-    char *to_filename = get_file_name_final(to_filename_only);
-    
-    NDRX_LOG(log_debug, "Rename [%s] -> [%s]", from_filename, to_filename);
-
-    return to_filename;
-}
-
-
-/**
- * Send notification to tmqueue server so that we have finished this
- * particular message & we can unlock that for further processing
- * TODO: in case of rename if we get noent, then check the destination
- *  if the destination name exists, then assume that rename was fine.
- *  this is needed to avoid infinte loop when tlog have gone async with disk
- * @param p_hdr
- * @param fname1 filename 1 to unlink (priority 1 - after this message is unblocked)
- * @param fname2 filename 2 to unlink (priority 2)
- * @param fcmd file cmd, if U, then fname1 & 2 is both unlinks, if R, then f1 src name, f2 dest name
- * @param tcmd transaction command
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1, 
-        char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
-{
-    
-    int ret = EXSUCCEED;
-    BFLDOCC occ;
-    char name1[PATH_MAX+1]="";
-    char name2[PATH_MAX+1]="";
-    char *p;
-    char *files[2];
-    
-    /* Load args... */
-    if (NULL!=fname1)
+    /* validate the version */
+    if (ndrx_G_tmq_storage->sw_version != NDRX_TMQ_STOREIF_VERSION)
     {
-        NDRX_STRCPY_SAFE(name1, fname1);
-        files[0]=name1;
+        NDRX_LOG(log_error, "ERROR ! Invalid tmq data store version: expected [%d] got [%d]!",
+                NDRX_TMQ_STOREIF_VERSION, ndrx_G_tmq_storage->sw_version);
+        EXFAIL_OUT(ret);
     }
-    else
-    {
-        files[0]=NULL;
-    }
-    
-    if (NULL!=fname2)
-    {
-        NDRX_STRCPY_SAFE(name2, fname2);
-        files[1]=name2;
-    }
-    else
-    {
-        files[1]=NULL;
-    }    
-    
-    /* rename -> mandatory. Also if on remove file does not exists, this is the
-     *  same as removed OK
-     * first unlink -> mandatory
-     * second unlink -> optional 
-     */
-    if (TMQ_FILECMD_UNLINK==fcmd)
-    {            
-        for (occ=0; occ<N_DIM(files) && NULL!=files[occ]; occ++)
-        {
-            NDRX_LOG(log_debug, "Unlinking file [%s]", files[occ]);
 
-            /* IO fence test */
-            if (ndrx_G_systest_lockloss || EXSUCCEED!=unlink(files[occ]))
-            {
-                if (ENOENT!=errno)
-                {
-                    int err = errno;
-                    NDRX_LOG(log_error, "Failed to unlinking file [%s] occ %d: %s", 
-                            files[occ], occ, strerror(err));
-                    userlog("Failed to unlinking file [%s] occ %d: %s", 
-                            files[occ], occ, strerror(err));
-
-                    if (0==occ)
-                    {
-                        ret=XAER_RMERR;
-                        goto out;
-                    }
-
-                }
-            }
-
-            if (0==occ)
-            {
-                /* get the folder form file name */
-                p=strrchr(files[occ], '/');
-
-                if (NULL!=p)
-                {
-                    *p=EXEOS;
-                }
-
-                /* io fence test */
-                if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(files[occ], G_atmi_env.xa_fsync_flags))
-                {
-                    NDRX_LOG(log_error, "Failed to dsync [%s]", files[occ]);
-                    ret=XAER_RMERR;
-                    goto out;
-                }
-            }
-        }
-    }
-    else if (TMQ_FILECMD_RENAME==fcmd)
-    {
-        if (NULL==files[0] || NULL==files[1])
-        {
-            NDRX_LOG(log_error, "File 1 or 2 is NULL %p %p - cannot rename",
-                    files[0], files[1]);
-            ret=XAER_RMERR;
-            goto out;
-        }
-
-        NDRX_LOG(log_debug, "About to rename: [%s] -> [%s]",
-                name1, name2);
-
-        /* wth io fence test: */
-        if (ndrx_G_systest_lockloss|| EXSUCCEED!=rename(name1, name2))
-        {
-            int err = errno;
-            
-            if (ENOENT==err && ndrx_file_exists(name2))
-            {
-                NDRX_LOG(log_error, "Failed to rename file [%s] -> [%s] occ %d: "
-                        "%s, but dest exists - assume retry", 
-                        name1, name2, occ, strerror(err));
-            }
-            else
-            {
-                NDRX_LOG(log_error, "Failed to rename file [%s] -> [%s] occ %d: %s", 
-                        name1, name2, occ, strerror(err));
-                userlog("Failed to rename file [%s] -> [%s] occ %d: %s", 
-                        name1, name2, occ, strerror(err));
-                ret=XAER_RMERR;
-                goto out;
-            }
-        }
-
-        /* get the folder form file name */
-        p=strrchr(name2, '/');
-
-        if (NULL!=p)
-        {
-            *p=EXEOS;
-        }
-
-        /* write io fence */
-        if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(name2, G_atmi_env.xa_fsync_flags))
-        {
-            NDRX_LOG(log_error, "Failed to dsync [%s]", name2);
-            ret=XAER_RMERR;
-            goto out;
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Unsupported file command %c", fcmd);
-        ret=XAER_RMERR;
-        goto out;
-    }
-    
-    /* If all OK, lets unlock the message. */
-    if (!tcmd->no_unlock && EXSUCCEED!=M_p_tmq_unlock_msg(p_upd))
-    {
-        ret=XAER_RMERR;
-        goto out;
-    }
+    NDRX_LOG(log_warn, "Transactional queue storage engine: [%s], version: %d",
+                ndrx_G_tmq_storage->name, ndrx_G_tmq_storage->sw_version);
 
 out:
     return ret;
-}
-
-/**
- * Finalize files by update block
- * @param p_upd
- * @param fname1 filename1 to unlink
- * @param fname2 filename2 to unlink
- * @param fcmd file cmd
- * @param tcmd transaction command
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int tmq_finalize_files_upd(tmq_msg_upd_t *p_upd, char *fname1, 
-        char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
-{
-    union tmq_upd_block block;
-    
-    memset(&block, 0, sizeof(block));
-    
-    memcpy(&block.upd, p_upd, sizeof(*p_upd));
-    
-    return tmq_finalize_file(&block, fname1, fname2, fcmd, tcmd);
-}
-
-/**
- * Finalize files by header block
- * @param p_hdr
- * @param fname1 filename1 to unlink
- * @param fname2 filename2 to unlink
- * @param fcmd file commmand code
- * @param tcmd tran command
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int tmq_finalize_files_hdr(tmq_cmdheader_t *p_hdr, char *fname1, 
-        char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
-{
-    union tmq_upd_block block;
-    
-    memset(&block, 0, sizeof(block));
-    memcpy(&block.hdr, p_hdr, sizeof(*p_hdr));
-    
-    return tmq_finalize_file(&block, fname1, fname2, fcmd, tcmd);
-}
-
-/**
- * Create required folders
- * @param xa_info root folder
- * @return EXSUCCEED/RM ERR
- */
-expublic int xa_open_entry_mkdir(char *xa_info)
-{
-    int ret;
-    /* The xa_info is directory, where to store the data...*/
-    NDRX_STRNCPY(M_folder, xa_info, sizeof(M_folder)-2);
-    M_folder[sizeof(M_folder)-1] = EXEOS;
-    
-    NDRX_LOG(log_info, "Q data directory: [%s]", xa_info);
-    
-    /* The xa_info is directory, where to store the data...*/
-    NDRX_STRNCPY(M_folder_active, xa_info, sizeof(M_folder_active)-8);
-    M_folder_active[sizeof(M_folder_active)-7] = EXEOS;
-    NDRX_STRCAT_S(M_folder_active, sizeof(M_folder_active), "/active");
-    
-    NDRX_STRNCPY(M_folder_prepared, xa_info, sizeof(M_folder_prepared)-10);
-    M_folder_prepared[sizeof(M_folder_prepared)-9] = EXEOS;
-    NDRX_STRCAT_S(M_folder_prepared, sizeof(M_folder_prepared), "/prepared");
-    
-    NDRX_STRNCPY(M_folder_committed, xa_info, sizeof(M_folder_committed)-11);
-    M_folder_committed[sizeof(M_folder_committed)-10] = EXEOS;
-    NDRX_STRCAT_S(M_folder_committed, sizeof(M_folder_committed), "/committed");
-    
-    /* Test the directories */
-    if (EXSUCCEED!=(ret=mkdir(M_folder, NDRX_DIR_PERM)) && ret!=EEXIST )
-    {
-        int err = errno;
-
-        if (err!=EEXIST)
-        {
-            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder, strerror(err));
-
-            userlog("xa_open_entry() Q driver: failed to create directory "
-                    "[%s] - [%s]!", M_folder, strerror(err));
-            return XAER_RMERR;
-        }
-        else
-        {
-            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder, strerror(err));
-        }
-    }
-    
-    if (EXSUCCEED!=(ret=mkdir(M_folder_active, NDRX_DIR_PERM)) && ret!=EEXIST )
-    {
-        int err = errno;
-        
-        if (err!=EEXIST)
-        {
-            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_active, strerror(err));
-
-            userlog("xa_open_entry() Q driver: failed to create directory "
-                    "[%s] - [%s]!", M_folder_active, strerror(err));
-            return XAER_RMERR;
-        }
-        else
-        {
-            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_active, strerror(err));
-        }
-    }
-    
-    if (EXSUCCEED!=(ret=mkdir(M_folder_prepared, NDRX_DIR_PERM)) && ret!=EEXIST )
-    {
-        int err = errno;
-        
-        if (err!=EEXIST)
-        {
-            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_prepared, strerror(err));
-            userlog("xa_open_entry() Q driver: failed to create directory "
-                    "[%s] - [%s]!", M_folder_prepared, strerror(err));
-            return XAER_RMERR;
-        }
-        else
-        {
-            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_prepared, strerror(err));
-        }
-    }
-    
-    if (EXSUCCEED!=(ret=mkdir(M_folder_committed, NDRX_DIR_PERM)) && ret!=EEXIST )
-    {
-        int err = errno;
-        
-        if (err!=EEXIST)
-        {
-            NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_committed, strerror(err));
-            userlog("xa_open_entry() Q driver: failed to create directory "
-                    "[%s] - [%s]!", M_folder_committed, strerror(err));
-            return XAER_RMERR;
-        }
-        else
-        {
-            NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
-                "[%s] - [%s]!", M_folder_committed, strerror(err));
-        }
-    }
-    
-    NDRX_LOG(log_info, "Prepared M_folder=[%s]", M_folder);
-    NDRX_LOG(log_info, "Prepared M_folder_active=[%s]", M_folder_active);
-    NDRX_LOG(log_info, "Prepared M_folder_prepared=[%s]", M_folder_prepared);
-    NDRX_LOG(log_info, "Prepared M_folder_committed=[%s]", M_folder_committed);
-    
-    
-    return XA_OK;
 }
 
 /**
@@ -730,8 +308,8 @@ expublic int xa_open_entry_mkdir(char *xa_info)
  * Now keeps the settings of the queue space too.
  * @param sw Current switch
  * @param xa_info New format: dir="/path_to_dir",qspace='SAMPLESPACE' (escaped)
- * @param rmid
- * @param flags
+ * @param rmid according to XA spec
+ * @param flags according to XA spec
  * @return XA_ return codes
  */
 expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
@@ -749,6 +327,14 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         {
             ndrx_xa_nosuspend(EXTRUE);
             first=EXFALSE;
+
+            /*  only for tmqueue version  */
+            if (M_is_tmqueue
+                && EXSUCCEED!=configure_storage_engine())
+            {
+                MUTEX_UNLOCK_V(M_init);
+                EXFAIL_OUT(ret);
+            }
         }
         MUTEX_UNLOCK_V(M_init);
     }
@@ -795,7 +381,6 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         
         if (!M_folder_set)
         {
-            
             info_tmp = NDRX_STRDUP(xa_info);
             
             if (NULL==info_tmp)
@@ -822,12 +407,11 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                     val++;
                 }
                 
-                /* set data dir. */
-                if (0==strcmp(ARG_DIR, p))
+                /* set data dir (only for tmq part) */
+                if (0==strcmp(ARG_DIR, p) && M_is_tmqueue)
                 {
-                    /* Do parse of the string... */
-                    ret=xa_open_entry_mkdir(val);
-                    
+                    NDRX_STRCPY_SAFE(M_qdisk_xa_cfg->data_folder, val);
+                    ret = ndrx_G_tmq_storage->pf_storage_init(ndrx_G_tmq_storage, NULL);
                     if (EXSUCCEED!=ret)
                     {
                         NDRX_LOG(log_error, "Failed to prepare data directory [%s]", val);
@@ -847,7 +431,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                 UNLOCK_OUT;
             }
             
-            if (EXEOS==M_folder[0])
+            if (EXEOS==M_qdisk_xa_cfg->data_folder[0])
             {
                 NDRX_LOG(log_error, "[%s] setting not found in open string!", ARG_DIR);
                 UNLOCK_OUT;
