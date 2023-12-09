@@ -52,10 +52,10 @@ Example input (testws.fd file):
 
 -----------------------------------------------------
 $/**
-$ * Web service test ud file.
+$ * Service test ud file.
 $ *
-$ * @file       testws.fd
-$ * @copyright  Mavimax, ltd
+$ * @file       test.fd
+$ * @copyright  Mavimax, SIA
 $ * @version    SVN: $Id$
 $ */
 
@@ -83,21 +83,23 @@ T_SRCHDATE	14	long		- Test field...
 T_SRCHPRM1	15	string		- Test field...
 T_SRCHPRM2	16	string		- Test field...
 T_MYFIELDS	17	string		- Test field...
-SRVCNM		18	string		- Service name to call
-T_CONSTFIELD	19	string		- This is constant.
-T_MYLONGFLDS	20	long		- Long array test
+T_CONSTFIELD	19	string	- This is constant.
+T_MYLONGFLDS	20	long	- Long array test
+T_PTR_FLD		21	ptr		- Pointer to XATMI buffer
+T_UBF_FLD		22	ubf		- Embedded buffer
+T_VIEW_FLD		23	view	- View field
 
 $#endif
 -----------------------------------------------------
 
-Example output after utility run (testws.fd.h):
+Example output after utility run (test.fd.h):
 
 -----------------------------------------------------
 /**
- * Web service test ud file.
+ * Service test ud file.
  *
- * @file       testws.fd
- * @copyright  Mavimax, ltd
+ * @file       test.fd
+ * @copyright  Mavimax, SIA
  * @version    SVN: $Id$
  */
 #ifndef __TEST_FD
@@ -122,9 +124,11 @@ Example output after utility run (testws.fd.h):
 #define	T_SRCHPRM1	((BFLDID32)167773175)	/* number: 1015	 type: string */
 #define	T_SRCHPRM2	((BFLDID32)167773176)	/* number: 1016	 type: string */
 #define	T_MYFIELDS	((BFLDID32)167773177)	/* number: 1017	 type: string */
-#define	SRVCNM	((BFLDID32)167773178)	/* number: 1018	 type: string */
 #define	T_CONSTFIELD	((BFLDID32)167773179)	/* number: 1019	 type: string */
 #define	T_MYLONGFLDS	((BFLDID32)33555452)	/* number: 1020	 type: long */
+#define	T_PTR_FLD	((BFLDID32)301990909)	/* number: 1021	 type: ptr */
+#define	T_UBF_FLD	((BFLDID32)335545342)	/* number: 1022	 type: ubf */
+#define	T_VIEW_FLD	((BFLDID32)369099775)	/* number: 1023	 type: view */
 #endif
 -----------------------------------------------------
 

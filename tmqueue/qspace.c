@@ -156,7 +156,6 @@ exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, i
 {
     int ret = EXSUCCEED;
     
-    
     /* in case if state is prepared or active -> add transaction with given
      * sequence
      */

@@ -847,3 +847,5 @@ static void bsem_wait(bsem* bsem_p)
     bsem_p->v = 0;
     MUTEX_UNLOCK_V(bsem_p->mutex);
 }
+
+/* vim: set ts=4 sw=4 et smartindent: */

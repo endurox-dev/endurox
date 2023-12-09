@@ -47,6 +47,7 @@ extern "C" {
 #include <exthpool.h>
 #include <rbtree.h>
 #include "tmqueue.h"
+#include <thlock.h>
     
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_forward_thread;
@@ -129,6 +130,10 @@ typedef struct
     long vnodeid;            /**< Node id, command id used for failovers    */
 
     int chkdisk_time;        /**< Time by which disk checking shall be excuted (enabled if > 0) */
+
+    /* have handles for checkdisk & txn timouts */
+    ndrx_dmnthread_t tx_timeout_th;    /**< Timeout thread                 */
+    ndrx_dmnthread_t chkdisk_th;        /**< Checkdisk thread (if used)     */
     
 } tmqueue_cfg_t;
 

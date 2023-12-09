@@ -264,9 +264,6 @@ extern int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname,
 
 extern int tmq_lock_msg(char *msgid);
 
-extern long tmq_chkdisk_stopwatch_get_delta_sec(void);
-extern void tmq_chkdisk_stopwatch_reset(void);
-
 #ifdef	__cplusplus
 }
 #endif

@@ -225,6 +225,10 @@ struct ndrx_tms_storage
     /** 
      * list transactions in the storage, next
      * This returns file names of the transactions
+     * Function is not thread safe. But storage listing
+     * is either done at boot by the main thread,
+     * or by background thread periodically.
+     * None of both threads work concurrently.
      * @param sw switch
      * @param buf buffer to write the transaction name
      * @param bufsz size of the buffer

@@ -57,6 +57,7 @@
 #include <atmi_int.h>
 #include <errno.h>
 #include <excrypto.h>
+#include <ndrxdiag.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define _MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -1134,7 +1135,7 @@ expublic uint64_t ndrx_gettid(void)
 /**
  * Tests for file existance
  * @param filename path + filename
- * @return TRUE if exists / FALSE not exists
+ * @return TRUE if exists / FALSE not exists / EXFAIL on error
  */
 expublic int ndrx_file_exists(char *filename)
 {
@@ -2613,15 +2614,7 @@ expublic int ndrx_rand(void)
 expublic int ndrx_realtime_get(struct timespec *tp)
 {
     int ret = EXSUCCEED;
-#if 0
-    clockid_t clk_id=CLOCK_REALTIME;
 
-#ifdef EX_OS_LINUX
-    clk_id=CLOCK_BOOTTIME;
-#endif
-
-    if (EXSUCCEED!=clock_gettime(clk_id, tp))
-#endif
     if (EXSUCCEED!=clock_gettime(CLOCK_MONOTONIC, tp))
     {
         ret = EXFAIL;

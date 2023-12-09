@@ -114,10 +114,6 @@ exprivate MUTEX_LOCKDECL(M_init);   /**< init lock      */
 exprivate int M_is_tmqueue = EXFALSE;   /**< is this process a tmqueue ?        */
 exprivate ndrx_tmq_qdisk_xa_cfg_t *M_qdisk_xa_cfg=NULL; /**< settings for XA engine */
 
-/** stopwatch for triggering disk checks */
-exprivate ndrx_stopwatch_t M_chkdisk_stopwatch;
-exprivate MUTEX_LOCKDECL(M_chkdisk_stopwatch_lock);   /**< init lock      */
-
 /*---------------------------Prototypes---------------------------------*/
 
 expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -153,19 +149,13 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg, 
-        int *err, int *tmq_err);
 exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
         int *tmq_err);
-
-exprivate void dirent_free(struct dirent **namelist, int n);
 
 exprivate int xa_rollback_entry_tmq(char *tmxid, long flags);
 exprivate int xa_prepare_entry_tmq(char *tmxid, long flags);
 exprivate int xa_commit_entry_tmq(char *tmxid, long flags);
-exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_diag);
 exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off);
-exprivate int tmq_check_prepared_exists_on_disk(char *tmxid);
 
 struct xa_switch_t ndrxqstatsw = 
 { 
@@ -722,9 +712,7 @@ out:
  */
 exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
 {
-    union tmq_upd_block b;
     char *fn = "xa_rollback_entry_tmq";
-    qtran_log_cmd_t *el, *elt;
     int ret=XA_OK;
     
     int locke = EXFALSE;
@@ -733,7 +721,8 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! xa_rollback_entry() - XA not open!");
-        return XAER_RMERR;
+        ret=XAER_RMERR;
+        goto out;
     }
     
     set_filename_base_tmxid(tmxid);
@@ -746,7 +735,8 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
         if (locke)
         {
             NDRX_LOG(log_error, "Q transaction [%s] locked", tmxid);
-            return XAER_RMFAIL;
+            ret=XAER_RMFAIL;
+            goto out;
         }
         else
         {
@@ -754,7 +744,7 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
             /* return XAER_NOTA; */
 
             /* TODO: verify the disk... (only in case) sinelgrp ... */
-            ret=tmq_check_prepared_exists_on_disk(tmxid);
+            ret=ndrx_G_tmq_storage->pf_storage_prep_exists(ndrx_G_tmq_storage, tmxid);
 
             if (EXTRUE==ret)
             {
@@ -763,108 +753,55 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
                  * possible concurrent run.
                  * Restart now...
                  */
-               NDRX_LOG(log_error, "(rollback) Integrity problem, transaction [%s] "
+                NDRX_LOG(log_error, "(rollback) Integrity problem, transaction [%s] "
                     "exists on disk, but not in mem-log - restarting", tmxid);
                 userlog("(rollback) Integrity problem, transaction [%s] "
                     "exists on disk, but not in mem-log - restarting", tmxid);
-
-                M_p_tpexit();
-                return XAER_RMFAIL;
+                M_qdisk_xa_cfg->pf_tpexit();
+                ret=XAER_RMFAIL;
+                goto out;
             }
             else if (EXFAIL==ret)
             {
-                return XAER_RMFAIL;
+                ret=XAER_RMFAIL;
+                goto out;
             }
             else
             {
-                return XAER_NOTA;
+                ret=XAER_NOTA;
+                goto out;
             }
         }
     }
     
     p_tl->txstage = XA_TX_STAGE_ABORTING;
     p_tl->is_abort_only=EXTRUE;
+
+    /* call rollback commands */
+    if (XA_OK!=ndrx_G_tmq_storage->pf_storage_rollback_cmds(ndrx_G_tmq_storage, p_tl))
+    {
+        NDRX_LOG(log_error, "Failed to rollback commands for tmxid [%s]", tmxid);
+        ret = XAER_RMFAIL;
+        goto out;
+    }
     
 #ifdef TXN_TRACE
     userlog("ABORT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
     NDRX_LOG(log_error, "ABORT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
 #endif
-
-    /* Process files according to the log... */
-    DL_FOREACH_SAFE(p_tl->cmds, el, elt)
-    {
-        char *fname = NULL;
-        
-#ifdef TXN_TRACE
-        userlog("ABORT_ENT: tmxid=[%s] command_code=[%c]",
-            tmxid, el->b.hdr.command_code);
-        NDRX_LOG(log_error, "ABORT_ENT: tmxid=[%s] command_code=[%c]",
-            tmxid, el->b.hdr.command_code);
-#endif
-
-        if (XA_RM_STATUS_ACTIVE==el->cmd_status)
-        {
-            /* run on active folder */
-            fname = get_filename_i(el->seqno, M_folder_active, 0);
-        }
-        else if (XA_RM_STATUS_PREP==el->cmd_status)
-        {
-            /* run on prepared folder */
-            fname = get_filename_i(el->seqno, M_folder_prepared, 0);
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Invalid QCMD status %c", el->cmd_status);
-            userlog("Invalid QCMD status %c", el->cmd_status);
-            continue;
-        }
-        
-        memcpy(&b, &el->b, sizeof(b));
-        
-        /* Send the notification */
-        if (TMQ_STORCMD_DUM == el->b.hdr.command_code)
-        {
-            /* nothing special here... */
-        }
-        else if (TMQ_STORCMD_NEWMSG == el->b.hdr.command_code)
-        {
-            NDRX_LOG(log_info, "%s: issuing delete command...", fn);
-            b.hdr.command_code = TMQ_STORCMD_DEL;
-        }
-        else
-        {
-            NDRX_LOG(log_info, "%s: unlock command...", fn);
-
-            b.hdr.command_code = TMQ_STORCMD_UNLOCK;
-        }
-
-        /* if tmq server is not working at this moment
-         * then we cannot complete the rollback
-         */
-        if (EXSUCCEED!=tmq_finalize_files_hdr(&b.hdr, fname, 
-                NULL, TMQ_FILECMD_UNLINK, el))
-        {
-            NDRX_LOG(log_error, "Failed to unlink [%s]", fname);
-            continue;
-        }
-        
-        /* Finally remove command entry */
-        DL_DELETE(p_tl->cmds, el);
-        NDRX_FPFREE(el);
-        NDRX_LOG(log_debug, "Abort [%s] OK", fname);
-    }
     
     if (NULL!=p_tl->cmds)
     {
         NDRX_LOG(log_error, "Failed to abort Q transaction [%s] -> commands exists",
                 tmxid);
-        return XAER_RMERR;
+        ret=XAER_RMERR;
+        goto out;
     }
     
     /* delete message from log */
     tmq_remove_logfree(p_tl, EXTRUE);
-    
-    return XA_OK;
+out:
+    return ret;
 }
 
 /**
@@ -977,7 +914,7 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
     if (NULL==p_tl->cmds)
     {
         /* do not write the file, as we will use existing on disk */
-        if (EXSUCCEED!=M_p_tmq_dum_add(p_tl->tmxid))
+        if (EXSUCCEED!=M_qdisk_xa_cfg->pf_tmq_dum_add(p_tl->tmxid))
         {
             ret = XAER_RMERR;
             p_tl->is_abort_only=EXTRUE;
@@ -988,36 +925,11 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
         
     }
     
-    /* process command by command to stage to prepared ... */
-    DL_FOREACH_SAFE(p_tl->cmds, el, elt)
+    /* call rollback commands */
+    if (XA_OK!=(ret=ndrx_G_tmq_storage->pf_storage_prepare_cmds(ndrx_G_tmq_storage, p_tl)))
     {
-        if (EXSUCCEED!=file_move(el->seqno, M_folder_active, M_folder_prepared))
-        {
-            NDRX_LOG(log_error, "Q tran tmxid [%s] seq %d failed to prepare (file move)",
-                    tmxid, el->seqno);
-            p_tl->is_abort_only=EXTRUE;
-            ret=XAER_RMERR;
-            goto out;
-        }
-        
-        el->cmd_status = XA_RM_STATUS_PREP;
-        NDRX_LOG(log_info, "tmxid [%s] seq %d prepared OK", tmxid, el->seqno);
-        did_move=EXTRUE;
-    }
-    
-    if (did_move)
-    {
-        /* sync the  */
-	/* + write io fence */
-        if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_dsync(M_folder_prepared, G_atmi_env.xa_fsync_flags))
-        {
-            NDRX_LOG(log_error, "Failed to dsync [%s]", M_folder_prepared);
-            
-            /* mark transaction for abort only! */
-            p_tl->is_abort_only=EXTRUE;
-            ret=XAER_RMERR;
-            goto out;
-        }
+        NDRX_LOG(log_error, "Failed to prepare commands for tmxid [%s]", tmxid);
+        goto out;
     }
     
     /* If all OK, switch transaction to prepared */
@@ -1069,49 +981,6 @@ out:
 }
 
 /**
- * check the prepard transaction file status
- * @param tmxid transaction id
- * @return EXTRUE if exists, EXFAIL on error, EXFALSE(EXSUCCEED) no file exists
- */
-exprivate int tmq_check_prepared_exists_on_disk(char *tmxid)
-{
-    char tmp[PATH_MAX+1];
-    int i;
-    int ret=EXSUCCEED;
-    DIR *dir=NULL;
-    struct dirent *entry;
-    int len;
-
-    dir = opendir(M_folder_prepared);
-
-    if (dir == NULL) {
-
-        NDRX_LOG(log_error, "opendir [%s] failed: %s", M_folder_prepared, strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-
-    snprintf(tmp, sizeof(tmp), "%s-", tmxid);
-    len = strlen(tmp);
-
-    while ((entry = readdir(dir)) != NULL)
-    {
-        if (0==strncmp(entry->d_name, tmp, len))
-        {
-            ret=EXTRUE;
-            break;
-        }
-    }
-
-out:
-    if (NULL!=dir)
-    {
-        closedir(dir);
-    }
-
-    return ret;
-}
-
-/**
  * Commit the transaction.
  * Move messages from prepared folder to files names with msgid
  * @param tmxid serialized branch xid
@@ -1120,15 +989,9 @@ out:
  */
 exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
 {
-    char msgid_str[TMMSGIDLEN_STR+1];
-    FILE *f = NULL;
-    char *fname;
-    char *fname_msg;
-    int err, tmq_err;
     int locke = EXFALSE;
     qtran_log_t * p_tl = NULL;
     int ret = XA_OK;
-    qtran_log_cmd_t *el, *elt;
 
     if (!G_atmi_tls->qdisk_is_open)
     {
@@ -1154,7 +1017,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
             NDRX_LOG(log_error, "Q transaction [%s] does not exists (in mem log)", tmxid);
             
             /* TODO: perform checks only, if using singleton group. */
-            ret=tmq_check_prepared_exists_on_disk(tmxid);
+            ret=ndrx_G_tmq_storage->pf_storage_prep_exists(ndrx_G_tmq_storage, tmxid);
 
             if (EXTRUE==ret)
             {
@@ -1225,153 +1088,14 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
     userlog("COMMIT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
     NDRX_LOG(log_error, "COMMIT: tmxid=[%s] seqno=%d", tmxid, p_tl->seqno);
 #endif
-    DL_FOREACH_SAFE(p_tl->cmds, el, elt)
+
+    /* commit the commands: */
+    if ((ret=ndrx_G_tmq_storage->pf_storage_commit_cmds(ndrx_G_tmq_storage, p_tl)))
     {
-        /* run on prepared folder */
-        fname = get_filename_i(el->seqno, M_folder_prepared, 0);
-            
-#ifdef TXN_TRACE
-        userlog("COMMIT_ENT: tmxid=[%s] command_code=[%c] fname=[%s]",
-            tmxid, el->b.hdr.command_code, fname);
-        NDRX_LOG(log_error, "COMMIT_ENT: tmxid=[%s] command_code=[%c] fname=[%s]",
-            tmxid, el->b.hdr.command_code, fname);
-#endif
-
-        /* Do the task... */
-        if (TMQ_STORCMD_NEWMSG == el->b.hdr.command_code)
-        {
-             char *to_filename;
-             
-            /* also here  move shall be finalized by tmq
-             * as if move fails, tmsrv could retry
-             * and only after retry to unli
-             */
-             to_filename = file_move_final_names(fname, 
-                    tmq_msgid_serialize(el->b.hdr.msgid, msgid_str));
-            
-            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname,
-                    to_filename, TMQ_FILECMD_RENAME, el))
-            {
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-        }
-        else if (TMQ_STORCMD_UPD == el->b.hdr.command_code)
-        {
-            tmq_msg_t msg_to_upd; /* Message to update */
-            int ret_len;
-            
-            fname_msg = get_file_name_final(tmq_msgid_serialize(el->b.hdr.msgid, 
-                    msgid_str));
-            NDRX_LOG(log_info, "Updating message file: [%s]", fname_msg);
-            
-            if (ndrx_G_systest_lockloss || NULL==(f = NDRX_FOPEN(fname_msg, "r+b")))
-            {
-                int err = errno;
-                NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                        fname_msg, strerror(err));
-
-                userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                        fname_msg, strerror(err));
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-            
-            if (EXFAIL==read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd), 
-                    fname_msg, "xa_commit_entry", &err, &tmq_err))
-            {
-                NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-            
-            /* seek the start */
-            if (EXSUCCEED!=fseek (f, 0 , SEEK_SET ))
-            {
-                NDRX_LOG(log_error, "Seekset failed: %s", strerror(errno));
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-            
-            UPD_MSG((&msg_to_upd), (&el->b.upd));
-            
-            /* Write th block */
-	    /* ndrx_G_systest_lockloss -> IO fence for testing */
-            if (ndrx_G_systest_lockloss || sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, 
-                    sizeof(msg_to_upd), f)))
-            {
-                int err = errno;
-                NDRX_LOG(log_error, "ERROR! Failed to write to msg file [%s]: "
-                        "req_len=%d, written=%d: %s", fname_msg,
-                        sizeof(msg_to_upd), ret_len, strerror(err));
-
-                userlog("ERROR! Failed to write to msg file[%s]: req_len=%d, "
-                        "written=%d: %s",
-                        fname_msg, sizeof(msg_to_upd), ret_len, strerror(err));
-
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-            NDRX_FCLOSE(f);
-            f = NULL;
-            
-            /* remove the update file */
-            NDRX_LOG(log_info, "Removing update command file: [%s]", fname);
-            
-            if (EXSUCCEED!=tmq_finalize_files_upd(&el->b.upd, fname, NULL,
-                    TMQ_FILECMD_UNLINK, el))
-            {
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-            
-        }
-        else if (TMQ_STORCMD_DEL == el->b.hdr.command_code)
-        {
-            fname_msg = get_file_name_final(tmq_msgid_serialize(el->b.hdr.msgid, 
-                    msgid_str));
-            
-            NDRX_LOG(log_info, "Message file to remove: [%s]", fname_msg);
-            NDRX_LOG(log_info, "Command file to remove: [%s]", fname);
-            
-            /* Remove the message (it must be marked for delete)
-             */
-            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname_msg, fname, 
-                    TMQ_FILECMD_UNLINK, el))
-            {
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-        }
-        else if (TMQ_STORCMD_DUM == el->b.hdr.command_code)
-        {
-            NDRX_LOG(log_info, "Dummy command to remove: [%s]", fname);
-            
-            /* Remove the message (it must be marked for delete)
-             */
-            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname, NULL, 
-                    TMQ_FILECMD_UNLINK, el))
-            {
-                ret = XAER_RMFAIL;
-                goto out;
-            }
-        }
-        else
-        {
-            NDRX_LOG(log_error, "ERROR! xa_commit_entry() - invalid command [%c]!",
-                    el->b.hdr.command_code);
-
-            ret = XAER_RMERR;
-            goto out;
-        }
-        
-        /* msg is unlocked, thus just remove ptr  */
-        NDRX_LOG(log_debug, "Commit [%s] sequence OK", tmxid, el->seqno);
-        DL_DELETE(p_tl->cmds, el);
-        NDRX_FPFREE(el);
-        
+        NDRX_LOG(log_error, "Failed to commit commands for tmxid [%s]", tmxid);
+        goto out;
     }
-    
+
     /* delete message from log */
     tmq_remove_logfree(p_tl, EXTRUE);
     p_tl = NULL;
@@ -1379,7 +1103,6 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
     NDRX_LOG(log_info, "tmxid [%s] all sequences committed ok", tmxid);
     
 out:
-
     NDRX_LOG(log_info, "Commit returns %d", ret);
 
     /* unlock if tran is still alive */
@@ -1390,7 +1113,6 @@ out:
 
     return ret;
 }
-
 
 /**
  * Local or remove transaction commit
@@ -1424,899 +1146,11 @@ out:
     return ret;
 }
 
-#define READ_BLOCK(BUF, LEN) do {\
-        if (LEN!=(act_read=fread(BUF, 1, LEN, f)))\
-        {\
-            *err = ferror(f);\
-            \
-            if (EXSUCCEED==*err)\
-            {\
-                *tmq_err = TMQ_ERR_EOF;\
-            }\
-            NDRX_LOG(log_error, "ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s, tmq_err: %d",\
-                    dbg_msg, fname, LEN, act_read, (*err==0?"EOF":strerror(*err)), *tmq_err);\
-            \
-            userlog("ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s, tmq_err: %d",\
-                dbg_msg, fname, LEN, act_read, (*err==0?"EOF":strerror(*err)), *tmq_err);\
-            EXFAIL_OUT(ret);\
-        }\
-    } while (0)
-
-/** verify magic */
-#define VERIFY_MAGIC(FIELD, MAGIC_VAL, LEN, DESCR, ERROR_CODE) do { \
-        /* validate magics and command code... */\
-        if (0!=strncmp(FIELD, MAGIC_VAL, LEN))\
-        {\
-            NDRX_LOG(log_error, "ERROR! file: [%s] invalid %s: expected: [%s] got: [%.*s] command: [%x] error_code: %d", \
-                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code, ERROR_CODE);\
-            NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));\
-            userlog("ERROR! file: [%s] invalid %s: expected: [%s] got: [%.*s] command: [%x] error_code: %d", \
-                    fname, DESCR, MAGIC_VAL, LEN, FIELD, (unsigned int)p_hdr->command_code, ERROR_CODE);\
-            *tmq_err = ERROR_CODE;\
-            EXFAIL_OUT(ret);\
-        }\
-    } while(0)
-
-/**
- * Reads the header block
- * Either full read or partial.
- * - Check header validity if ftell() position is 0.
- * @param block where to unload the data
- * @param p_len for TMQ_STORCMD_NEWMSG this indicates number of mandatory bytes to read
- *  for other message types, validate the read size against the actual structure size.
- * @param fname name for debug
- * @param dbg_msg debug message
- * @param err ptr to error code if failed to read
- * @param tmq_err internal error code
- * @return EXFAIL or number of bytes read
- */
-exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, 
-        char *dbg_msg, int *err, 
-        int *tmq_err)
-{
-    int act_read;
-    int read = 0;
-    int ret = EXSUCCEED;
-    int offset = 0;
-    tmq_cmdheader_t *p_hdr;
-    
-    *err=0;
-    *tmq_err = 0;
-    
-    if (0==ftell(f))
-    {
-        assert(len >= sizeof(tmq_cmdheader_t));
-        /* read header */
-        READ_BLOCK(block, sizeof(tmq_cmdheader_t));
-        
-        read+=sizeof(tmq_cmdheader_t);
-        
-        /* validate header */
-        p_hdr = (tmq_cmdheader_t *)block;
-        
-        /* validate magics and command code... */
-        VERIFY_MAGIC(p_hdr->magic,  TMQ_MAGICBASE,  TMQ_MAGICBASE_LEN,  "base magic1",  TMQ_ERR_CORRUPT);
-        VERIFY_MAGIC(p_hdr->magic2, TMQ_MAGICBASE2, TMQ_MAGICBASE_LEN,  "base magic2",  TMQ_ERR_CORRUPT);
-        VERIFY_MAGIC(p_hdr->magic,  TMQ_MAGIC,      TMQ_MAGIC_LEN,      "magic1",       TMQ_ERR_VERSION);
-        VERIFY_MAGIC(p_hdr->magic2, TMQ_MAGIC2,     TMQ_MAGIC_LEN,      "magic2",       TMQ_ERR_VERSION);
-        
-        /* validate command code */
-        switch (p_hdr->command_code)
-        {
-            case TMQ_STORCMD_NEWMSG:
-                NDRX_LOG(log_debug, "Command: New message");
-                /* as this is biggest message & dynamic size: */
-                len = len - sizeof(tmq_cmdheader_t);
-                break;
-            case TMQ_STORCMD_UPD:
-                
-                NDRX_LOG(log_debug, "Command: Update message");
-                if (len > sizeof(tmq_cmdheader_t))
-                {
-                    len = sizeof(tmq_msg_upd_t) - sizeof(tmq_cmdheader_t);
-                }
-                break;
-            case TMQ_STORCMD_DEL:
-                
-                NDRX_LOG(log_debug, "Command: Delete message");
-                
-                if (len > sizeof(tmq_cmdheader_t))
-                {
-                    len = sizeof(tmq_msg_del_t) - sizeof(tmq_cmdheader_t);
-                }
-                break;
-            case TMQ_STORCMD_UNLOCK:
-                
-                NDRX_LOG(log_debug, "Command: Unlock message");
-                
-                if (len > sizeof(tmq_cmdheader_t))
-                {
-                    len = sizeof(tmq_msg_unl_t) - sizeof(tmq_cmdheader_t);
-                }
-                break;
-            default:
-                NDRX_LOG(log_error, "ERROR! file [%s] invalid command code [%x]", 
-                    fname, (unsigned int)p_hdr->command_code);
-                NDRX_DUMP(log_error, "Invalid header", p_hdr, sizeof(tmq_cmdheader_t));
-                userlog("ERROR! file [%s] invalid command code [%x]", 
-                    fname, (unsigned int)p_hdr->command_code);
-                *tmq_err = TMQ_ERR_CORRUPT;
-                EXFAIL_OUT(ret);
-
-                break;
-        }
-        
-        offset = sizeof(tmq_cmdheader_t);
-    }
-    
-    if (len > 0)
-    {
-        READ_BLOCK((block+offset), len);
-        read+=len;   
-    }
-    
-out:
-                
-    if (EXSUCCEED==ret)
-    {
-        return read;
-    }
-    else
-    {    
-        return ret;
-    }
-}
-
-/**
- * Read the block file file
- * @param fname full path to file
- * @param block buffer where to store the data block
- * @param len length to read.
- * @param err error code
- * @param tmq_err internal error code
- * @return EXFAIL or number of bytes read
- */
-exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
-        int *tmq_err)
-{
-    int ret = EXSUCCEED;
-    FILE *f = NULL;
-    
-    *err=0;
-    if (ndrx_G_systest_lockloss || NULL==(f = NDRX_FOPEN(fname, "r+b")))
-    {
-        *err = errno;
-        NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                fname, strerror(*err));
-
-        userlog( "ERROR! xa_commit_entry() - failed to open file[%s]: %s!", 
-                fname, strerror(*err));
-        EXFAIL_OUT(ret);
-    }
-    
-    ret = read_tx_block(f, block, len, fname, "read_tx_from_file", err, tmq_err);
-    
-out:
-
-    if (NULL!=f)
-    {
-        NDRX_FCLOSE(f);
-    }
-    
-    return ret;
-}
-
-/** Write th block */
-#define WRITE_TO_DISK(PTR, OFFSET, LEN) \
-    ret_len = 0;\
-    if (ndrx_G_systest_lockloss || G_atmi_env.test_qdisk_write_fail || LEN!=(ret_len=fwrite( ((char *)PTR) + OFFSET, 1, LEN, f)))\
-    {\
-        int err = errno;\
-        /* For Q/A purposes - simulate no space error, if requested */\
-        if (G_atmi_env.test_qdisk_write_fail)\
-        {\
-            NDRX_LOG(log_error, "test point: test_qdisk_write_fail TRUE");\
-            err = ENOSPC;\
-        }\
-        NDRX_LOG(log_error, "ERROR! Failed to write to msgblock/tx file [%s]: "\
-                            "offset=%d req_len=%d, written=%d: %s",\
-                            G_atmi_tls->qdisk_tls->filename_active,\
-                            OFFSET, LEN, ret_len, strerror(err));\
-        userlog("ERROR! Failed to write msgblock/tx file [%s]: "\
-                "offset=%d req_len=%d, written=%d: %s",\
-                G_atmi_tls->qdisk_tls->filename_active,\
-                OFFSET, LEN, ret_len, strerror(err));\
-        EXFAIL_OUT(ret);\
-    }
-
-/** flush changes to disk  */
-#define WRITE_FLUSH \
-    ret_len = 0;\
-    if (ndrx_G_systest_lockloss || EXSUCCEED!=fflush(f))\
-    {\
-        int err = errno;\
-        NDRX_LOG(log_error, "ERROR! fflush() on [%s] failed: %s", \
-            G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
-        userlog("ERROR! fflush() on [%s] failed: %s", \
-            G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
-        EXFAIL_OUT(ret);\
-    }
-
-#define WRITE_REWIND \
-        if (EXSUCCEED!=fseek(f, 0L, SEEK_SET))\
-        {\
-            int err = errno;\
-            NDRX_LOG(log_error, "ERROR! fseek() rewind on [%s] failed: %s", \
-                G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
-            userlog("ERROR! fseek() rewind on [%s] failed: %s", \
-                G_atmi_tls->qdisk_tls->filename_active, strerror(err));\
-            EXFAIL_OUT(ret);\
-        }
-
-/**
- * Write data to transaction file.
- * This works only with new files (new transactions)
- * @param block
- * @param len
- * @param cust_tmxid custom tmxid, if not running in global tran
- * @param int_diag internal diagnostics, flags
- * @return SUCCEED/FAIL
- */
-exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_diag)
-{
-    int ret = EXSUCCEED;
-    XID xid;
-    size_t ret_len;
-    FILE *f = NULL;
-    int ax_ret;
-    char mode_str[16];
-    tmq_cmdheader_t dum;
-    int seqno;
-    long xaflags=0;
-    char *tmxid=NULL;
-    
-    NDRX_STRCPY_SAFE(mode_str, "wb");
-    
-    if (ndrx_get_G_atmi_env()->xa_sw->flags & TMREGISTER && !G_atmi_tls->qdisk_tls->is_reg)
-    {
-        ax_ret = ax_reg(G_atmi_tls->qdisk_rmid, &xid, 0);
-                
-        if (TM_JOIN!=ax_ret && TM_OK!=ax_ret)
-        {
-            if (NULL!=int_diag)
-            {
-                *int_diag|=TMQ_INT_DIAG_EJOIN;
-            }
-            
-            NDRX_LOG(log_error, "ERROR! xa_reg() failed!");
-            EXFAIL_OUT(ret);
-        }
-        
-        if (TM_JOIN==ax_ret)
-        {
-            xaflags = TMJOIN;
-        }
-        
-        /* done by ax_reg! */
-        if (XA_OK!=xa_start_entry(ndrx_get_G_atmi_env()->xa_sw, &xid, G_atmi_tls->qdisk_rmid, xaflags))
-        {
-            
-            if (NULL!=int_diag)
-            {
-                *int_diag|=TMQ_INT_DIAG_EJOIN;
-            }
-            
-            NDRX_LOG(log_error, "ERROR! xa_start_entry() failed!");
-            EXFAIL_OUT(ret);
-        }
-        
-        G_atmi_tls->qdisk_tls->is_reg = EXTRUE;
-    }
-    
-    /* get the current transaction? 
-     * If the same thread is locked, then no problem...
-     */
-    if (EXSUCCEED!=set_filenames(&seqno))
-    {
-        EXFAIL_OUT(ret);
-    }
-
-    if (NULL!=cust_tmxid)
-    {
-        tmxid = cust_tmxid;
-    }
-    else
-    {
-        /* part of global trn */
-        tmxid = G_atmi_tls->qdisk_tls->filename_base;
-    }
-    
-    /* Open file for write... */
-    NDRX_LOG(log_info, "Writing command file: [%s] mode: [%s] (seqno: %d)", 
-        G_atmi_tls->qdisk_tls->filename_active, mode_str, seqno);
-    
-    /* io fence test. */
-    if (ndrx_G_systest_lockloss || NULL==(f = NDRX_FOPEN(G_atmi_tls->qdisk_tls->filename_active, mode_str)))
-    {
-        int err = errno;
-        NDRX_LOG(log_error, "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
-                G_atmi_tls->qdisk_tls->filename_active, strerror(err));
-        
-        userlog( "ERROR! write_to_tx_file() - failed to open file[%s]: %s!", 
-                G_atmi_tls->qdisk_tls->filename_active, strerror(err));
-        EXFAIL_OUT(ret);
-    }
-    
-    /* single step write..., as temp files now we discard
-     * no problem with we get temprorary files incomplete...
-     */
-    WRITE_TO_DISK(block, 0, len);
-    
-    WRITE_FLUSH;
-    
-    /* sync the file, if required so... 
-     * file updates are optional..
-     */
-    if (ndrx_G_systest_lockloss || EXSUCCEED!=ndrx_fsync_fsync(f, G_atmi_env.xa_fsync_flags))
-    {
-        NDRX_LOG(log_error, "failed to fsync");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* 
-     * If all OK, add command transaction log 
-     */
-    if (EXSUCCEED!=tmq_log_addcmd(tmxid, seqno, block, XA_RM_STATUS_ACTIVE))
-    {
-        NDRX_LOG(log_error, "Failed to add [%s] seqno %d to transaction log",
-                G_atmi_tls->qdisk_tls->filename_base, seqno);
-        userlog("Failed to add [%s] seqno %d to transaction log",
-                G_atmi_tls->qdisk_tls->filename_base, seqno);
-        EXFAIL_OUT(ret);
-    }
-    
-out:
-    
-    if (NULL!=f)
-    {
-        /* unlink if failed to write to the folder... */
-        if (EXSUCCEED!=ret)
-        {
-            NDRX_LOG(log_error, "Unlink: [%s]", G_atmi_tls->qdisk_tls->filename_active);
-
-            /* io fencing test */
-            if (ndrx_G_systest_lockloss 
-			    || EXSUCCEED!=unlink(G_atmi_tls->qdisk_tls->filename_active))
-            {
-                 int err = errno;
-                 NDRX_LOG(log_error, "Failed to unlink [%s]: %s",
-                    G_atmi_tls->qdisk_tls->filename_active, strerror(err));
-                 userlog("Failed to unlink [%s]: %s",
-                    G_atmi_tls->qdisk_tls->filename_active, strerror(err));
-            }
-        }
-        
-        NDRX_FCLOSE(f);
-    }
-
-    /* mark abort only, if hade issues with disk */
-    if (EXSUCCEED!=ret && NULL!=tmxid)
-    {
-        tmq_log_set_abort_only(tmxid);
-    }
-
-    return ret;
-}
-
-/* COMMANDS:
- * - write qmessage
- * - write status/try update
- * - unlink the message
- * 
- * Read only commands:
- * - Query messages (find first & find next)
- */
-
-/**
- * Write the message data to TX file
- * @param msg message (the structure is projected on larger memory block to fit in the whole msg
- * @param int_diag internal diagnostics, flags
- * @return SUCCEED/FAIL
- */
-expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg, int *int_diag)
-{
-    int ret = EXSUCCEED;
-    char tmp[TMMSGIDLEN_STR+1];
-    size_t len;
-    /*
-    uint64_t lockt =  msg->lockthreadid;
-    
-     do not want to lock be written out to files: 
-    msg->lockthreadid = 0;
-    NO NO NO !!!! We still need a lock!
-    */
-    
-     /* detect the actual len... */
-    len = tmq_get_block_len((char *)msg);
-    
-    NDRX_DUMP(log_debug, "Writing new message to disk", 
-                (char *)msg, len);
-    
-    if (EXSUCCEED!=write_to_tx_file((char *)msg, len, NULL, int_diag))
-    {
-        NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
-                tmq_msgid_serialize(msg->hdr.msgid, tmp));
-        EXFAIL_OUT(ret);
-    }
-    /*
-    msg->lockthreadid = lockt;
-     */
-    
-    NDRX_LOG(log_info, "Message [%s] written ok to active TX file", 
-            tmq_msgid_serialize(msg->hdr.msgid, tmp));
-    
-out:
-
-    return ret;
-}
-
-/**
- * Get the data size from any block
- * @param data generic data block 
- * @return data size or 0 on error (should not happen anyway)
- */
-expublic size_t tmq_get_block_len(char *data)
-{
-    size_t ret = 0;
-    
-    tmq_cmdheader_t *p_hdr = (tmq_cmdheader_t *)data;
-    tmq_msg_t *p_msg;
-    tmq_msg_del_t *p_del;
-    tmq_msg_upd_t *p_upd;
-    tmq_msg_unl_t *p_unl;
-    tmq_msg_dum_t *p_dum;
-    
-    switch (p_hdr->command_code)
-    {
-        case TMQ_STORCMD_NEWMSG:
-            p_msg = (tmq_msg_t *)data;
-            ret = sizeof(*p_msg) + p_msg->len;
-            break;
-        case TMQ_STORCMD_UPD:
-            ret = sizeof(*p_upd);
-            break;
-        case TMQ_STORCMD_DEL:
-            ret = sizeof(*p_del);
-            break;
-        case TMQ_STORCMD_UNLOCK:
-            ret = sizeof(*p_unl);
-            break;
-        case TMQ_STORCMD_DUM:
-            ret = sizeof(*p_dum);
-            break;
-        default:
-            NDRX_LOG(log_error, "Unknown command code: %c", p_hdr->command_code);
-            break;
-    }
-    
-    return ret;
-}
-
-/**
- * Delete/Update message block write
- * @param p_block ptr to union of commands
- * @param cust_tmxid custom transaction id (not part of global tran)
- * @param int_diag internal diagnostics, flags
- * @return SUCCEED/FAIL
- */
-expublic int tmq_storage_write_cmd_block(char *data, char *descr, char *cust_tmxid, int *int_diag)
-{
-    int ret = EXSUCCEED;
-    char msgid_str[TMMSGIDLEN_STR+1];
-    size_t len;
-    tmq_cmdheader_t *p_hdr = (tmq_cmdheader_t *)data;
-    
-    /* detect the actual len... */
-    len = tmq_get_block_len((char *)data);
-    
-    NDRX_LOG(log_info, "Writing command block: %s msg [%s]", descr, 
-            tmq_msgid_serialize(p_hdr->msgid, msgid_str));
-    
-    NDRX_DUMP(log_debug, "Writing command block to disk", 
-                (char *)data, len);
-    
-    if (EXSUCCEED!=write_to_tx_file((char *)data, len, cust_tmxid, int_diag))
-    {
-        NDRX_LOG(log_error, "tmq_storage_write_cmd_block() failed for msg %s", 
-                tmq_msgid_serialize(p_hdr->msgid, msgid_str));
-        EXFAIL_OUT(ret);
-    }
-    
-out:
-    return ret;
-
-}
-
-/**
- * Return msgid from filename
- * @param filename_in
- * @param msgid_out
- * @return SUCCEED/FAIL
- */
-exprivate int tmq_get_msgid_from_filename(char *filename_in, char *msgid_out)
-{
-    int ret = EXSUCCEED;
-    
-    tmq_msgid_deserialize(filename_in, msgid_out);
-    
-out:
-    return ret;    
-}
-
-/** continue with dirent free */
-#define DIRENT_CONTINUE \
-            NDRX_FREE(namelist[n]);\
-            continue;\
-/**
- * Restore messages from storage device.
- * TODO: File naming include 03d so that multiple tasks per file sorts alphabetically.
- * Any active transactions get's aborted automatically.
- * @param process_block callback function to process the data block
- * @return SUCCEED/FAIL
- */
-expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid, 
-        union tmq_block **p_block, int state, int seqno), short nodeid, short srvid)
-{
-    int ret = EXSUCCEED;
-    struct dirent **namelist = NULL;
-    int n, seqno;
-    int j;
-    char *p;
-    union tmq_block *p_block = NULL;
-    FILE *f = NULL;
-    char filename[PATH_MAX+1];
-    char tmxid[PATH_MAX+1];
-    int err, tmq_err;
-    int read;
-    int state;
-    qtran_log_t *p_tl;
-    
-    /* prepared & active messages are all locked
-     * Also if delete command is found in active, this means that committed
-     * message is locked. 
-     * In case if there was concurrent tmsrv operation, then it might move file
-     * from active to prepare and we have finished with prepared, and start to
-     * scan active. Thus we might not see this file. Thus to solve this issue,
-     * the prepared folder is scanned twice. In the second time only markings
-     * are put that message is busy.
-     */
-    char *folders[] = {M_folder_committed, M_folder_prepared, M_folder_active};
-    short msg_nodeid, msg_srvid;
-    char msgid[TMMSGIDLEN];
-    
-    if (!G_atmi_tls->qdisk_is_open)
-    {
-        NDRX_LOG(log_error, "ERROR! tmq_storage_get_blocks() - XA not open!");
-        return XAER_RMERR;
-    }
-    
-    for (j = 0; j < N_DIM(folders); j++)
-    {
-        
-        switch (j)
-        {
-            case 0:
-                /* committed */
-                state=TMQ_TXSTATE_COMMITTED;
-                break;
-            case 1:
-            case 3:
-                /* prepared */
-                state=TMQ_TXSTATE_PREPARED;
-                break;
-            case 2:
-                /* active */
-                state=TMQ_TXSTATE_ACTIVE;
-                break;
-        }
-        
-        n = scandir(folders[j], &namelist, 0, alphasort);
-        if (n < 0)
-        {
-           NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
-                   folders[j], strerror(errno));
-           EXFAIL_OUT(ret);
-        }
-        
-        while (n--)
-        {
-            if (0==strcmp(namelist[n]->d_name, ".") || 
-                0==strcmp(namelist[n]->d_name, ".."))
-            {
-                DIRENT_CONTINUE;
-            }
-
-            /* filter nodeid & serverid from the filename... */
-            if (0==j) /*  For committed folder we can detect stuff from filename */
-            {
-                /* early filter... */
-                if (EXSUCCEED!=tmq_get_msgid_from_filename(namelist[n]->d_name, msgid))
-                {
-                    EXFAIL_OUT(ret);
-                }
-                
-                tmq_msgid_get_info(msgid, &msg_nodeid, &msg_srvid);
-                
-                NDRX_LOG(log_info, "our nodeid/srvid %hd/%hd msg: %hd/%hd",
-                        nodeid, srvid, msg_nodeid, msg_srvid);
-
-                if (nodeid!=msg_nodeid || srvid!=msg_srvid)
-                {
-                    NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
-                        nodeid, srvid, msg_nodeid, msg_srvid);
-                    DIRENT_CONTINUE;
-                }
-            }
-            
-            snprintf(filename, sizeof(filename), "%s/%s", folders[j], 
-                    namelist[n]->d_name);
-            
-            
-            /* In case of active or prepared messages,
-             * extract the sequence number and create transaction
-             * Active messages we do not as there might be incomplete
-             * contents and really what only matters is to rollback
-             * abort only transactions at startup.
-             */
-            NDRX_LOG(log_warn, "Loading [%s]", filename);
-            
-            /* Read header */            
-            if (NULL==(p_block = NDRX_MALLOC(sizeof(*p_block))))
-            {
-                NDRX_LOG(log_error, "Failed to alloc [%s]: %s", 
-                   filename, strerror(errno));
-                EXFAIL_OUT(ret);
-            }
-            
-            /* read only if it is committed or prepared */
-            if (j>0)
-            {
-                NDRX_STRCPY_SAFE(tmxid, namelist[n]->d_name);
-                
-                p = strrchr(tmxid, '-');
-                
-                if (NULL==p)
-                {
-                    NDRX_LOG(log_error, "Invalid file name [%s] missing dash!", 
-                            filename);
-                    userlog("Invalid file name [%s] missing dash!", 
-                            filename);
-                    NDRX_FREE((char *)p_block);
-                    p_block=NULL;
-                    DIRENT_CONTINUE;
-                }
-                
-                *p=EXEOS;
-                p++;
-                
-                seqno = atoi(p);
-                
-                /* get or create a transaction! */
-                p_tl = tmq_log_start_or_get(tmxid);
-                
-                if (NULL==p_tl)
-                {
-                    NDRX_LOG(log_error, "Failed to get transaction object for [%s] seqno %d",
-                            tmxid, seqno);
-                    NDRX_FREE((char *)p_block);
-                    p_block=NULL;
-                    EXFAIL_OUT(ret);
-                }
-                
-                if (2==j)
-                {
-                    /* mark transaction as abort only! */
-                    p_tl->is_abort_only=EXTRUE;
-                    p_tl->txstage=XA_TX_STAGE_ACTIVE;
-                }
-                else
-                {
-                    p_tl->txstage=XA_TX_STAGE_PREPARED;
-                }
-                
-                /* unlock tran */
-                tmq_log_unlock(p_tl);
-            }
-
-            if (j<2)
-            {
-                if (ndrx_G_systest_lockloss || NULL==(f=NDRX_FOPEN(filename, "rb")))
-                {
-                    err = errno;
-                    NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
-                       filename, strerror(err));
-                    userlog("Failed to open for read [%s]: %s", 
-                       filename, strerror(err));
-                    NDRX_FREE((char *)p_block);
-                    p_block=NULL;
-
-                    EXFAIL_OUT(ret);
-                }
-
-                /* here we read maximum header size.
-                 * For smaller messages (fixed struct messages) all data is read
-                 */
-                if (EXFAIL==(read=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
-                        filename, "tmq_storage_get_blocks", &err, &tmq_err)))
-                {
-                    NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
-                       filename, sizeof(*p_block), tmq_err, (err==0?"EOF":strerror(err)) );
-                    userlog("ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
-                       filename, sizeof(*p_block), tmq_err, (err==0?"EOF":strerror(err)) );
-
-                    /* skip & continue with next */
-                    NDRX_FCLOSE(f);
-                    f=NULL;
-
-                    NDRX_FREE((char *)p_block);
-                    p_block = NULL;
-
-                    EXFAIL_OUT(ret);
-                }
-
-                /* Late filter 
-                 * Not sure what will happen if file will be processed/removed
-                 * by other server if for example we boot up...read the folder
-                 * but other server on same qspace/folder will remove the file
-                 * So better use different folder for each server...!
-                 */
-                if (nodeid!=p_block->hdr.nodeid || srvid!=p_block->hdr.srvid)
-                {
-                    NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
-                        nodeid, srvid, p_block->hdr.nodeid, p_block->hdr.srvid);
-
-                    NDRX_FREE((char *)p_block);
-                    p_block = NULL;
-                    NDRX_FCLOSE(f);
-
-                    DIRENT_CONTINUE;
-                }
-
-                NDRX_DUMP(log_debug, "Got command block", p_block, read);
-
-                /* if it is message, the re-alloc  */
-                if (TMQ_STORCMD_NEWMSG==p_block->hdr.command_code)
-                {
-                    int bytes_extra;
-                    int bytes_to_read;
-                    if (NULL==(p_block = NDRX_REALLOC(p_block, sizeof(tmq_msg_t) + p_block->msg.len)))
-                    {
-                        NDRX_LOG(log_error, "Failed to alloc [%d]: %s", 
-                           (sizeof(tmq_msg_t) + p_block->msg.len), strerror(errno));
-                        EXFAIL_OUT(ret);
-                    }
-                    /* Read some more */
-                    /* Bug #178
-                     * Under raspberry-pi looks like msg.msg is closer to the start than
-                     * whole message, and problem is that two bytes gets lost or over
-                     * written. Thus needs some kind of correction - advance the
-                     * pointer to msg over the extra bytes we have read.
-                     * Also needs correction against size to read.
-                     * This assumes that "tmq_msg_t" is largest structure...
-                     */
-                    bytes_extra = sizeof(*p_block)-EXOFFSET(tmq_msg_t, msg);
-                    bytes_to_read = p_block->msg.len - bytes_extra;
-
-                    NDRX_LOG(log_info, "bytes_extra=%d bytes_to_read=%d", 
-                            bytes_extra, bytes_to_read);
-
-                    if (bytes_to_read > 0)
-                    {
-                        if (EXFAIL==read_tx_block(f, 
-                                p_block->msg.msg+bytes_extra, 
-                                bytes_to_read, filename, "tmq_storage_get_blocks 2", &err, &tmq_err))
-                        {
-                            NDRX_LOG(log_error, "ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
-                               filename, bytes_to_read, strerror(err));
-
-                            userlog("ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
-                                    filename, bytes_to_read, strerror(err));
-                                            /* skip & continue with next */
-                            NDRX_FCLOSE(f);
-                            f=NULL;
-                            NDRX_FREE((char *)p_block);
-                            p_block = NULL;
-
-                            EXFAIL_OUT(ret);
-                        }
-                    }
-                    else
-                    {
-                        NDRX_LOG(log_info, "Full message already read by command block!");
-                    }
-
-                    /* any message not committed automatically means locked */
-                    if (0!=j)
-                    {
-                        /* if message is active or prepared, then message is locked */
-                        p_block->msg.lockthreadid = ndrx_gettid();
-                    }
-                    else
-                    {
-                        p_block->msg.lockthreadid = 0;
-                    }
-
-                    NDRX_DUMP(6, "Read message from disk", 
-                            p_block->msg.msg, p_block->msg.len);
-                }
-
-                NDRX_FCLOSE(f);
-                f=NULL;
-            }
-            else
-            {
-                /* just create dummy entry for active transactions */
-                M_p_tmq_setup_cmdheader_dum(&p_block->hdr, NULL, nodeid, 
-                        0, ndrx_G_qspace, 0);
-                p_block->hdr.command_code = TMQ_STORCMD_DUM;
-            }
-            
-            /* Process message block 
-             * It is up to caller to free the mem & make null
-             */
-            if (EXSUCCEED!=process_block(tmxid, &p_block, state, seqno))
-            {
-                NDRX_LOG(log_error, "Failed to process block!");
-                EXFAIL_OUT(ret);
-            }
-
-            NDRX_FREE(namelist[n]);
-        }
-        NDRX_FREE(namelist);
-        namelist = NULL;
-    }
-    
-out:
-
-    /* this will check for struct init or not init */
-    if (NULL!=namelist)
-    {
-        dirent_free(namelist, n);
-        namelist=NULL;
-    }
-
-    if (NULL!=p_block)
-    {
-        NDRX_FREE((char *)p_block);
-    }
-
-    /* close the resources */
-    if (NULL!=f)
-    {
-        NDRX_FCLOSE(f);
-    }
-    return ret;
-}
-
-/**
- * Free up the current scan of the directory entries
- * used by recover
- */
-exprivate void dirent_free(struct dirent **namelist, int n)
-{
-    while (n>=0)
-    {
-        NDRX_FREE(namelist[n]);
-        n--;
-    }
-    NDRX_FREE(namelist);
-}
-
 /** continue with dirent free */
 #define RECOVER_CONTINUE \
             continue;\
    
-/** Close cursor */
+/** Close cursor. */
 #define RECOVER_CLOSE_CURSOR \
         /* reset any stuff left open from previous scan... */\
         ndrx_growlist_free(&G_atmi_tls->qdisk_tls->recover_namelist);\
@@ -2340,53 +1174,23 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
     char *p, *fname, *prev=NULL;
     long revent;
     int do_restart;
+    void *cursor=NULL;
+    char fname[PATH_MAX+1];
 
-    /* re-use the same request buffer... */
-    i=scandir(M_folder_prepared, &recover_namelist, 0, alphasort);
-    
-    /* send the stuff to the caller + sort out
-     * any duplicate names
-     */
-    cnt = i;
+    cursor = ndrx_G_tmq_storage->pf_storage_list_start(ndrx_G_tmq_storage, 
+            NDRX_TMQ_STORAGE_LIST_MODE_PREPARED);
 
-    if (i < 0)
+    if (NULL==cursor)
     {
         err=errno;
-        NDRX_LOG(log_error, "Failed to scan q directory [%s]: %s", 
-                M_folder_prepared, strerror(err));
-        userlog("Failed to scan q directory [%s]: %s", 
-                M_folder_prepared, strerror(err));
+        NDRX_LOG(log_error, "Failed to scan q directory prepared direcotry");
         ret=XAER_RMERR;
         goto out;
     }
 
-    while (i--)
+    /* NOTE: duplciates are not expected to be recieved from list_next */
+    while (EXTRUE==(ret=(ndrx_G_tmq_storage->pf_storage_list_next(ndrx_G_tmq_storage, cursor, fname, sizeof(fname)))))
     {
-        /* loop over... */
-        fname = recover_namelist[i]->d_name;
-        
-        if (0==strcmp(fname, ".") || 
-            0==strcmp(fname, ".."))
-        {
-            continue;
-        }
-
-        p = strchr(fname, '-');
-
-        if (NULL==p)
-        {
-            continue;
-        }
-
-        *p=EXEOS;
-
-        /* check the previous load */
-        if (NULL!=prev && 0==strcmp(prev, fname))
-        {
-            /* bypass it too */
-            continue;
-        }
-
         NDRX_LOG(log_debug, "XID [%s] recovered", fname);
 
         /* 
@@ -2429,18 +1233,20 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
                 }
             }
         } while (do_restart);
+    }
 
-        /* to deal with dulicates (i.e. suffix is seqno in global txn) */
-        prev=fname;
+    if (XA_OK!=ret)
+    {
+        NDRX_LOG(log_error, "pf_storage_list_next() failed: %s", ret);
+        goto out;
     }
 
     /* NOTE: that some porition of the data would be received with the tpreturn! */
 out:
 
-    /* clean-up the entries */
-    if (NULL!=recover_namelist)
+    if (NULL!=cursor)
     {
-        dirent_free(recover_namelist, cnt-1);
+        ndrx_G_tmq_storage->pf_storage_list_end(ndrx_G_tmq_storage, cursor);
     }
 
     NDRX_LOG(log_info, "%s returns %ld", __func__, ret);
@@ -2781,74 +1587,29 @@ expublic int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flag
 }
 
 /**
- * Reset message check stopwatch
- */
-expublic void tmq_chkdisk_stopwatch_reset(void)
-{
-    MUTEX_LOCK_V(M_chkdisk_stopwatch_lock);
-    ndrx_stopwatch_reset(&M_chkdisk_stopwatch);
-    MUTEX_UNLOCK_V(M_chkdisk_stopwatch_lock);
-    
-}
-
-/**
- * Get stopwatch delta in seconds
- * @return current stopwatch value in seconds
- */
-expublic long tmq_chkdisk_stopwatch_get_delta_sec(void)
-{
-    long ret;
-
-    MUTEX_LOCK_V(M_chkdisk_stopwatch_lock);
-    ret=ndrx_stopwatch_get_delta_sec(&M_chkdisk_stopwatch);
-    MUTEX_UNLOCK_V(M_chkdisk_stopwatch_lock);
-
-    return ret;
-}
-
-
-/**
  * Verify that all committed messages on the disk, actually are present
  * in the memory...
  */
 exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off)
 {
-    static int volatile into_func = EXFALSE;
     int *p_chkdisk_time = (int *)ptr;
-
     char tmp[PATH_MAX+1];
     int i;
     int ret=EXSUCCEED;
-    DIR *dir=NULL;
-    struct dirent *entry;
     int len;
-    char tranmask[256];
+    void *cursor=NULL;
 
-    if (EXTRUE==into_func)
+    ret = ndrx_G_tmq_storage->pf_storage_list_start(ndrx_G_tmq_storage, 
+            &cursor, NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED);
+
+    if (cursor == NULL)
     {
-        /* already in function, avoid duplicate run */
-        return;
-    }
-
-    /* Check that any enqueue was in pool, but last call
-     * finished and did reset
-     */
-    if ( tmq_chkdisk_stopwatch_get_delta_sec() <= *p_chkdisk_time)
-    {
-        /* no time from last run... */
-        return;
-    }
-
-    dir = opendir(M_folder_committed);
-
-    if (dir == NULL) {
-
-        NDRX_LOG(log_error, "opendir [%s] failed: %s", 
-            M_folder_committed, strerror(errno));
+        NDRX_LOG(log_error, "pf_storage_list_start failed: %d", ret);
         EXFAIL_OUT(ret);
     }
 
-    while ((entry = readdir(dir)) != NULL)
+    while (EXTRUE==(ret=ndrx_G_tmq_storage->pf_storage_list_next(ndrx_G_tmq_storage, 
+        cursor, tmp, sizeof(tmp))))
     {
         /* for performance reasons which check
          * any file (even if several Q spaces works on the same
@@ -2859,18 +1620,11 @@ exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off)
          * Q space name, thus cannot filter our file or not from the
          * filename.
          */
-        if (entry->d_name[0] == '.')
-        {
-            continue;
-        }
-
         /* try to lookup in message hash */
-        if (!M_p_tmq_msgid_exists(entry->d_name))
+        if (!M_qdisk_xa_cfg->pf_tmq_msgid_exists(tmp))
         {
-            snprintf(tmp, sizeof(tmp), "%s/%s", 
-                M_folder_committed, entry->d_name);
-
-            if (ndrx_file_exists(tmp))
+            /* verify back, that message is not removed form the disk */
+            if (ndrx_G_tmq_storage->pf_storage_comm_exists(ndrx_G_tmq_storage, tmp))
             {
                 NDRX_LOG(log_error, "ERROR: Unkown message file "
                         "exists [%s] (duplicate processes or two Q "
@@ -2880,18 +1634,61 @@ exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off)
                         " [%s] (duplicate processes or two Q "
                         "spaces works in the same directory) - restarting...",
                     tmp);
-                M_p_tpexit();
+                M_qdisk_xa_cfg->pf_tpexit();
                 break;
             }
         }
     }
 
 out:
-    if (NULL!=dir)
+    if (NULL!=cursor)
     {
-        closedir(dir);
+        ndrx_G_tmq_storage->pf_storage_list_end(ndrx_G_tmq_storage, cursor);
     }
+}
 
+/**
+ * Write the message data to TX file
+ * @param msg message (the structure is projected on larger memory block to fit in the whole msg
+ * @param int_diag internal diagnostics, flags
+ * @return SUCCEED/FAIL
+ */
+expublic int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg, int *int_diag)
+{
+    int ret = EXSUCCEED;
+    char tmp[TMMSGIDLEN_STR+1];
+    size_t len;
+    /*
+    uint64_t lockt =  msg->lockthreadid;
+    
+     do not want to lock be written out to files: 
+    msg->lockthreadid = 0;
+    NO NO NO !!!! We still need a lock!
+    */
+    
+     /* detect the actual len... */
+    len = tmq_get_block_len((char *)msg);
+    
+    NDRX_DUMP(log_debug, "Writing new message to disk", 
+                (char *)msg, len);
+    
+    if (EXSUCCEED!=ndrx_G_tmq_storage->pf_storage_write_block(ndrx_G_tmq_storage, 
+            (char *)msg, len, NULL, int_diag))
+    {
+        NDRX_LOG(log_error, "tmq_storage_write_cmd_newmsg() failed for msg %s", 
+                tmq_msgid_serialize(msg->hdr.msgid, tmp));
+        EXFAIL_OUT(ret);
+    }
+    /*
+    msg->lockthreadid = lockt;
+     */
+    
+    NDRX_LOG(log_info, "Message [%s] written ok to active TX file", 
+            tmq_msgid_serialize(msg->hdr.msgid, tmp));
+    
+out:
+
+    return ret;
 }
 
 

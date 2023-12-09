@@ -253,9 +253,38 @@ extern "C" {
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Struct for handling daemon thread shutdowns
+ */
+typedef struct
+{
+    /** is thread stated? */
+    int started;
+    /** 0, if shutdown is not requested */
+    volatile int shutdown_req;
+
+    /* mutex for condition */
+    MUTEX_LOCKDECLN(shutdown_mutex);
+
+    /** wait on shutdown */
+    pthread_cond_t  shutdown_flag_wait;
+
+    /** daemon thread handle */
+    pthread_t thread;
+    
+} ndrx_dmnthread_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/* api for daemon threads: */
+extern NDRX_API int ndrx_dmnthread_init(ndrx_dmnthread_t *w,
+    void *(*start_routine)(void *), void *arg);
+extern NDRX_API int ndrx_dmnthread_is_shutdown(ndrx_dmnthread_t *w);
+extern NDRX_API int ndrx_dmnthread_sleep(ndrx_dmnthread_t *w, int ms);
+extern NDRX_API void* ndrx_dmnthread_shutdown(ndrx_dmnthread_t *w);
 
 #ifdef	__cplusplus
 }

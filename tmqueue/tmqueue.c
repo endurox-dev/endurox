@@ -415,46 +415,62 @@ out:
 }
 
 /**
- * Callback routine for scheduled timeout checks.
- * TODO: if we add shutdown handlers, then check here is all completed
- * before we inject back the shutdown msg...
+ * Transaction timeout monitor thread
+ * @param arg start argument
+ * @return  NULL
+ */
+exprivate void *tx_tout_monitor(void *arg)
+{
+    int finish_off = EXFALSE;
+
+    NDRX_LOG(log_debug, "Boooting up timeout monitor thread...");
+    /* do the daemon loop */
+    do
+    {
+        tx_tout_check_th(NULL, &finish_off);
+    } while (EXSUCCEED==ndrx_dmnthread_sleep(&G_tmqueue_cfg.tx_timeout_th, 
+        1000*G_tmqueue_cfg.tout_check_time));
+
+    NDRX_LOG(log_warn, "Timeout monitor thread finished!");
+
+    return NULL;
+}
+
+/**
+ * Monitor thread for disk verification
+ * @param arg start argument
+ * @return NULL
+ */
+exprivate void *tx_chkdisk_monitor(void *arg)
+{
+    int finish_off = EXFALSE;
+
+    NDRX_LOG(log_debug, "Boooting up timeout checkdisk thread...");
+    /* do the daemon loop */
+    do
+    {
+        G_tmq_chkdisk_th(NULL, &finish_off);
+    } while (EXSUCCEED==ndrx_dmnthread_sleep(&G_tmqueue_cfg.chkdisk_th, 
+        1000*G_tmqueue_cfg.chkdisk_time));
+
+    NDRX_LOG(log_warn, "Checkdisk thread finished!");
+    return NULL;
+}
+
+/**
+ * Periodic checks from main thread
+ * Currently help with shutdown...
  * @return 
  */
-exprivate int tm_tout_check(void)
+exprivate int mainth_periodic(void)
 {
-    NDRX_LOG(log_dump, "Timeout check (submit job...)");
-    
-    /* Check transaction timeouts only if session timeout is not disabled */
-    if (NULL==M_shutdown_ind)
-    {
-
-        if (G_tmqueue_cfg.ses_timeout > 0)
-        {
-            /* no shutdown requested... yet... */
-            ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)tx_tout_check_th, NULL);
-        }
-
-        /* trigger disk checks */
-        if (G_tmqueue_cfg.chkdisk_time > 0 &&
-            tmq_chkdisk_stopwatch_get_delta_sec() >=G_tmqueue_cfg.chkdisk_time )
-        {
-            /* pass th ptr to func, so that it can reset it at the end of the run? */
-            ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)G_tmq_chkdisk_th, 
-                &G_tmqueue_cfg.chkdisk_time);
-
-            /* reset stopwatch to avoid false runs (i.e. if check run is long...) */
-            tmq_chkdisk_stopwatch_reset();
-        }
-
-    }
-    else if (M_shutdown_ok)
+    if (M_shutdown_ok)
     {
         ndrx_sv_do_shutdown("Async shutdown", M_shutdown_ind);
     }
     
     return EXSUCCEED;
 }
-
 
 /**
  * Entry point for service (main thread)
@@ -861,7 +877,7 @@ int tpsvrinit(int argc, char **argv)
     }
     
     /* Register timer check (needed for time-out detection) */
-    if (EXSUCCEED!=tpext_addperiodcb(G_tmqueue_cfg.tout_check_time, tm_tout_check))
+    if (EXSUCCEED!=tpext_addperiodcb(G_tmqueue_cfg.tout_check_time, mainth_periodic))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
                         tpstrerror(tperrno));
@@ -884,7 +900,15 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
-    tmq_chkdisk_stopwatch_reset();
+    if (G_tmqueue_cfg.tx_timeout_th > 0) 
+    {
+        ndrx_dmnthread_init(&G_tmqueue_cfg.tx_timeout_th, tx_tout_monitor);
+    }
+
+    if (G_tmqueue_cfg.chkdisk_th > 0) 
+    {
+        ndrx_dmnthread_init(&G_tmqueue_cfg.chkdisk_th, tx_chkdisk_monitor);
+    }
 
     /* Bug #565 */
     M_init_ok=EXTRUE;
@@ -930,8 +954,14 @@ void tpsvrdone(void)
          * in case of enqueue...
          */
         ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
+
+        /* shutdown monitors... */
+        ndrx_dmnthread_shutdown(&G_tmqueue_cfg.tx_timeout_th);
+        ndrx_dmnthread_shutdown(&G_tmqueue_cfg.chkdisk_th);
         
     }
+
+    /* shutdown monitor threads... */
     
     tpclose();
     

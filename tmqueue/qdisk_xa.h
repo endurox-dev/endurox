@@ -48,19 +48,29 @@ extern "C" {
  * List active records.
  * in buffer transaction id is returned (tmxid_<seq>)
  */
-#define NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE       1
+#define NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE       0x0001
 
 /**
  * List prepared records.
  * in buffer transaction id is returned (tmxid_<seq>)
  */
-#define NDRX_TMQ_STORAGE_LIST_MODE_PREPARED     2 
+#define NDRX_TMQ_STORAGE_LIST_MODE_PREPARED    0x0002
 
 /**
  * List committed records
  * In buffer unique message id is returned.
  */
-#define NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED    3
+#define NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED    0x0004
+
+/**
+ * Shall the listing return duplicate entries?
+ */
+#define NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS    0x0008
+
+/**
+ * fast, no sort access
+ */
+#define NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT      0x0010
 
 
 /** store interface magic */
@@ -128,10 +138,11 @@ struct ndrx_tmq_storage
     /**
      * List message/transaction store.
      * @param sw storage interface
+     * @param ret_cursor pointer to the cursor
      * @param mode mode of the list (see NDRX_TMQ_STORAGE_LIST_MODE_* constants)
-     * @return pointer to the cursor or NULL on error
+     * @return XA_OK/XAER_*
      */
-    void * (*pf_storage_list_start)(ndrx_tmq_storage_t *sw, int mode); 
+    int (*pf_storage_list_start)(ndrx_tmq_storage_t *sw, void **ret_cursor, int mode); 
 
     /**
      * List messages in the store
@@ -139,7 +150,7 @@ struct ndrx_tmq_storage
      * @param cursor cursor returned by pf_storage_list_start
      * @param ref buffer to store the tmxid or unique message id
      * @param refsz size of the buffer (see NDRX_TMQ_STORAGE_LIST_MODE_* constants)
-     * @return EXSUCCEED/EXFAIL
+     * @return EXTRUE (loaded)/EXSUCCEED(eof)/EXFAIL
      */
     int (*pf_storage_list_next)(ndrx_tmq_storage_t *sw, void *cursor, char *ref, size_t refsz); 
 
@@ -147,7 +158,7 @@ struct ndrx_tmq_storage
      * End the scanning of the store
      * @param sw storage interface
      * @param cursor cursor returned by pf_storage_list_start
-     * @return EXSUCCEED/EXFAIL
+     * @return EXTRUE/EXFALSE(EOF)/EXFAIL
      */
     int (*pf_storage_list_end)(ndrx_tmq_storage_t *sw, void *cursor); 
 
@@ -159,16 +170,28 @@ struct ndrx_tmq_storage
      */
     int (*pf_storage_prep_exists)(ndrx_tmq_storage_t *sw, char *tmxid); 
 
+
+    /**
+     * Verify that committed message id exists in the store
+     * @param sw storage interface
+     * @param msgid_str transaction id
+     * @return EXTRUE/EXFALSE/EXFAIL
+     */
+    int (*pf_storage_comm_exists)(ndrx_tmq_storage_t *sw, char *msgid_str); 
+
     /**
      * Read block from the store
      * @param sw storage interface
+     * @param nodeid node id
+     * @param srvid server id
      * @param ref reference to the block (msgid id or transaction id)
+     * @param seqno sequence number of the block (command sequence)
+     * @param p_block allocate and read the block
      * @param mode mode of the list (see NDRX_TMQ_STORAGE_LIST_MODE_* constants)
-     * @param buf buffer to store the data
-     * @param bufsz size of the buffer
      * @return >=0 (number of bytes read) or EXFAIL
      */
-    int (*pf_storage_read_block)(ndrx_tmq_storage_t *sw, char *ref, char *buf, size_t bufsz, int mode);
+    int (*pf_storage_read_block)(ndrx_tmq_storage_t *sw, short nodeid, short srvid, 
+        char *ref, union tmq_block **p_block, int seqno, int mode);
 
     /**
      * Rollback commands
@@ -204,13 +227,14 @@ struct ndrx_tmq_storage
      * @param int_diag internal diagnostic (NULL if not used)
      * @return EXSUCCEED/EXFAIL
      */
-    int (*pf_storage_write_block)(char *block, int len, char *cust_tmxid, int *int_diag);
+    int (*pf_storage_write_block)(ndrx_tmq_storage_t *sw, char *block, int len, char *cust_tmxid, int *int_diag);
 
 };
 
 /*---------------------------Globals------------------------------------*/
 
 extern ndrx_tmq_storage_t ndrx_G_tmq_store_files;
+extern ndrx_tmq_storage_t *ndrx_G_tmq_storage; /**< current interface */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
