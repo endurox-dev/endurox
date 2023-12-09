@@ -201,7 +201,7 @@ expublic void tmq_set_tmqueue(
 {
     M_qdisk_xa_cfg = qdisk_xa_cfg;
     
-    if (NULL!=M_qdisk_xa_cfg && M_qdisk_xa_cfg->setting)
+    if (NULL!=M_qdisk_xa_cfg)
     {
         M_is_tmqueue = EXTRUE;
     }
@@ -1033,7 +1033,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
 
                 ret=XAER_RMFAIL;
 
-                M_p_tpexit();
+                M_qdisk_xa_cfg->pf_tpexit();
                 goto out;
             }
             else if (EXFAIL==ret)
@@ -1170,19 +1170,16 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
 {
     int ret = XA_OK;
     int err, i, cnt;
-    struct dirent **recover_namelist=NULL;
-    char *p, *fname, *prev=NULL;
     long revent;
     int do_restart;
     void *cursor=NULL;
     char fname[PATH_MAX+1];
 
-    cursor = ndrx_G_tmq_storage->pf_storage_list_start(ndrx_G_tmq_storage, 
+    ret = ndrx_G_tmq_storage->pf_storage_list_start(ndrx_G_tmq_storage, &cursor,
             NDRX_TMQ_STORAGE_LIST_MODE_PREPARED);
 
-    if (NULL==cursor)
+    if (XA_OK!=ret)
     {
-        err=errno;
         NDRX_LOG(log_error, "Failed to scan q directory prepared direcotry");
         ret=XAER_RMERR;
         goto out;
@@ -1227,7 +1224,7 @@ expublic int xa_recover_entry_tmq(int cd, UBFH *p_ub, long flags)
                 else
                 {
                     NDRX_LOG(log_error, "Failed to add TMXID [%s] to the buffer: %s",
-                                    p, Bstrerror(Berror));
+                                    fname, Bstrerror(Berror));
                     ret=XAER_RMFAIL;
                     goto out;
                 }

@@ -68,8 +68,6 @@ extern "C" {
 #define TMQ_STORCMD_UNLOCK          'L'     /**< Command code - unlock msg  */
 #define TMQ_STORCMD_DUM             'M'     /**< Command code - dummy msg
                                             for transaction identification  */
-    
-
 /**
  * Status codes of the message
  */
@@ -221,6 +219,29 @@ union tmq_upd_block {
     tmq_msg_dum_t dum;
 };
 
+/**
+ * Module configuration (for xa disk)
+ */
+typedef struct
+{
+    /* Passed from tmqueue main entry point: */
+    int setting;
+    int (*pf_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname,
+                                     short nodeid, short srvid, char *qspace, long flags);
+    int (*pf_tmq_dum_add)(char *tmxid);
+    int (*pf_tmq_unlock_msg)(union tmq_upd_block *b);
+    /** returned from tmq_set_tmqueue(): */
+    void (*pf_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
+    int (*pf_tmq_msgid_exists)(char *msgid_str);
+    void (*pf_tpexit)(void);
+
+    /* path to data storage (e.g. directory for files, for SQL ref to connstr)
+     * updated at server startup (config parsing...)
+     */
+    char data_folder[PATH_MAX+1]; /**< Where to store the q data         */
+
+} ndrx_tmq_qdisk_xa_cfg_t;
+
 /*---------------------------Globals------------------------------------*/
 
 extern char ndrx_G_qspace[];    /**< Name of the queue space            */
@@ -238,16 +259,7 @@ extern char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
 extern void tmq_msgid_get_info(char *msgid, short *p_nodeid, short *p_srvid);
 extern char * tmq_corrid_serialize(char *corrid_in, char *corrid_str_out);
 extern int tmq_finalize_files(UBFH *p_ub);
-extern void tmq_set_tmqueue(
-    int setting
-    , int (*p_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname, 
-        short nodeid, short srvid, char *qspace, long flags)
-    , int (*p_tmq_dum_add)(char *tmxid)
-    , int (*p_tmq_unlock_msg)(union tmq_upd_block *b)
-    , void (**p_tmq_chkdisk_th)(void *ptr, int *p_finish_off)
-    , int (*p_tmq_msgid_exists)(char *msgid_str)
-    , void (*p_tpexit)(void));
-    
+extern void tmq_set_tmqueue(ndrx_tmq_qdisk_xa_cfg_t * qdisk_xa_cfg);
 /* From storage driver: */
 extern size_t tmq_get_block_len(char *data);
 extern int tmq_storage_write_cmd_newmsg(tmq_msg_t *msg, int *int_diag);

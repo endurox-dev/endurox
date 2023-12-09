@@ -40,7 +40,6 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/ubftest
                         )
 
-
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF (ENV{RELEASE_BUILD})

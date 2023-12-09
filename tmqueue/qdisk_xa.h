@@ -83,27 +83,6 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-/**
- * Module configuration (for xa disk)
- */
-typedef struct
-{
-    /* Passed from tmqueue main entry point: */
-    int setting;
-    int (*pf_tmq_setup_cmdheader_dum)(tmq_cmdheader_t *hdr, char *qname,
-                                     short nodeid, short srvid, char *qspace, long flags);
-    int (*pf_tmq_dum_add)(char *tmxid);
-    int (*pf_tmq_unlock_msg)(union tmq_upd_block *b);
-    /** returned from tmq_set_tmqueue(): */
-    void (*pf_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
-    int (*pf_tmq_msgid_exists)(char *msgid_str);
-    void (*pf_tpexit)(void);
-
-    /* path to data storage (e.g. directory for files, for SQL ref to connstr): */
-    char data_folder[PATH_MAX+1]; /**< Where to store the q data         */
-
-} ndrx_tmq_qdisk_xa_cfg_t;
-
 typedef struct ndrx_tmq_storage ndrx_tmq_storage_t;
 
 /**
@@ -119,7 +98,7 @@ struct ndrx_tmq_storage
     void *custom_block2;
     void *custom_block3;
     void *custom_block4;
-    ndrx_tmq_storage_t *cfg; /**< ptr to config, may be optionally set by init... */
+    ndrx_tmq_qdisk_xa_cfg_t *cfg; /**< ptr to config, may be optionally set by init... */
 
     /** init interface
      * @param sw storage interface
@@ -185,13 +164,14 @@ struct ndrx_tmq_storage
      * @param nodeid node id
      * @param srvid server id
      * @param ref reference to the block (msgid id or transaction id)
+     * @param seqno if ref is active/prep, command no in transactions
      * @param seqno sequence number of the block (command sequence)
      * @param p_block allocate and read the block
      * @param mode mode of the list (see NDRX_TMQ_STORAGE_LIST_MODE_* constants)
      * @return >=0 (number of bytes read) or EXFAIL
      */
     int (*pf_storage_read_block)(ndrx_tmq_storage_t *sw, short nodeid, short srvid, 
-        char *ref, union tmq_block **p_block, int seqno, int mode);
+        char *ref, int seqno, union tmq_block **p_block, int mode);
 
     /**
      * Rollback commands

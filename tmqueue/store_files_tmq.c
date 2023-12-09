@@ -1,5 +1,5 @@
 /**
- * @brief Storage interace - file-system
+ * @brief Storage interface - file system queue storage engine
  *
  * @file store_files_tmq.c
  */
@@ -37,6 +37,8 @@
 #include <errno.h>
 #include <utlist.h>
 #include <dirent.h>
+#include <assert.h>
+#include <sys/stat.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -48,11 +50,13 @@
 #include <userlog.h>
 
 #include "qdisk_xa.h"
+#include <xa.h>
 #include <qcommon.h>
 #include <sys_test.h>
 #include <atmi_tls.h>
 
 /*---------------------------Externs------------------------------------*/
+extern int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -93,8 +97,8 @@ exprivate int ndrx_tmq_file_storage_list_end(ndrx_tmq_storage_t *sw, void *curso
 exprivate int ndrx_tmq_file_storage_prep_exists(ndrx_tmq_storage_t *sw, char *tmxid);
 exprivate int ndrx_tmq_file_storage_comm_exists(ndrx_tmq_storage_t *sw, char *msgid_str);
 exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw, 
-    short nodeid, short srvid, char *ref, 
-    union tmq_block **p_block, int seqno, int mode);
+    short nodeid, short srvid, char *ref,  int seqno,
+    union tmq_block **p_block, int mode);
 exprivate int ndrx_tmq_file_storage_rollback_cmds(ndrx_tmq_storage_t *sw, qtran_log_t *p_tl);
 exprivate int ndrx_tmq_file_storage_commit_cmds(ndrx_tmq_storage_t *sw, qtran_log_t *p_tl);
 exprivate int ndrx_tmq_file_storage_prepare_cmds(ndrx_tmq_storage_t *sw, qtran_log_t *p_tl);
@@ -106,6 +110,16 @@ exprivate char *mode_to_filename(ndrx_tmq_storage_t *sw, char *ref, int seqno, i
 exprivate void dirent_free(struct dirent **namelist, int n);
 exprivate int prepare_folders(ndrx_tmq_qdisk_xa_cfg_t *p_tmq_cfg);
 exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_diag);
+exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, 
+        char *dbg_msg, int *err, 
+        int *tmq_err);
+exprivate int tmq_finalize_files_hdr(ndrx_tmq_storage_t *sw, tmq_cmdheader_t *p_hdr, char *fname1, 
+        char *fname2, char fcmd, qtran_log_cmd_t *tcmd);
+exprivate char * file_move_final_names(char *from_filename, char *to_filename_only);
+exprivate char *get_file_name_final(char *fname);
+exprivate int tmq_finalize_files_upd(ndrx_tmq_storage_t *sw, tmq_msg_upd_t *p_upd, char *fname1, 
+        char *fname2, char fcmd, qtran_log_cmd_t *tcmd);
+exprivate int file_move(int i, char *from_folder, char *to_folder);
 
 /** File store switch */
 expublic ndrx_tmq_storage_t ndrx_G_tmq_store_files =
@@ -474,8 +488,8 @@ out:
  * @return EXSUCCEED/EXFAIL.
  */
 exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw, 
-    short nodeid, short srvid, char *ref, 
-    union tmq_block **p_block, int seqno, int mode)
+    short nodeid, short srvid, char *ref, int seqno,
+    union tmq_block **p_block, int mode)
 {
     int ret = EXSUCCEED;
     FILE *f;
@@ -496,7 +510,7 @@ exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw,
     if (mode & NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE)
     {
         /* just create dummy entry for active transactions */
-        M_p_tmq_setup_cmdheader_dum(&(*p_block)->hdr, NULL, tpgetnodeid(), 
+        sw->cfg->pf_tmq_setup_cmdheader_dum(&(*p_block)->hdr, NULL, tpgetnodeid(), 
                 0, ndrx_G_qspace, 0);
         (*p_block)->hdr.command_code = TMQ_STORCMD_DUM;
     }
@@ -575,7 +589,7 @@ exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw,
              * Also needs correction against size to read.
              * This assumes that "tmq_msg_t" is largest structure...
              */
-            bytes_extra = sizeof(*p_block)-EXOFFSET(tmq_msg_t, msg);
+            bytes_extra = sizeof(**p_block)-EXOFFSET(tmq_msg_t, msg);
             bytes_to_read = (*p_block)->msg.len - bytes_extra;
 
             NDRX_LOG(log_info, "bytes_extra=%d bytes_to_read=%d", 
@@ -640,12 +654,13 @@ out:
  * Rollback commands
  * @param sw storage interface
  * @param p_tl transaction log
- * @return EXSUCCEED/EXFAIL
+ * @return XA_OK/XAER*
  */
 exprivate int ndrx_tmq_file_storage_rollback_cmds(ndrx_tmq_storage_t *sw, qtran_log_t *p_tl)
 {
     qtran_log_cmd_t *el, *elt;
     union tmq_upd_block b;
+    int ret = XA_OK;
 
     /* Process files according to the log... */
     DL_FOREACH_SAFE(p_tl->cmds, el, elt)
@@ -698,7 +713,7 @@ exprivate int ndrx_tmq_file_storage_rollback_cmds(ndrx_tmq_storage_t *sw, qtran_
         /* if tmq server is not working at this moment
          * then we cannot complete the rollback
          */
-        if (EXSUCCEED!=tmq_finalize_files_hdr(&b.hdr, fname, 
+        if (EXSUCCEED!=tmq_finalize_files_hdr(sw, &b.hdr, fname, 
                 NULL, TMQ_FILECMD_UNLINK, el))
         {
             NDRX_LOG(log_error, "Failed to unlink [%s]", fname);
@@ -710,7 +725,9 @@ exprivate int ndrx_tmq_file_storage_rollback_cmds(ndrx_tmq_storage_t *sw, qtran_
         NDRX_FPFREE(el);
         NDRX_LOG(log_debug, "Abort [%s] OK", fname);
     }
-
+    
+out:
+    return ret;
 }
 
 /**
@@ -753,7 +770,7 @@ exprivate int ndrx_tmq_file_storage_commit_cmds(ndrx_tmq_storage_t *sw, qtran_lo
              to_filename = file_move_final_names(fname, 
                     tmq_msgid_serialize(el->b.hdr.msgid, msgid_str));
             
-            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname,
+            if (EXSUCCEED!=tmq_finalize_files_hdr(sw, &el->b.hdr, fname,
                     to_filename, TMQ_FILECMD_RENAME, el))
             {
                 ret = XAER_RMFAIL;
@@ -822,7 +839,7 @@ exprivate int ndrx_tmq_file_storage_commit_cmds(ndrx_tmq_storage_t *sw, qtran_lo
             /* remove the update file */
             NDRX_LOG(log_info, "Removing update command file: [%s]", fname);
             
-            if (EXSUCCEED!=tmq_finalize_files_upd(&el->b.upd, fname, NULL,
+            if (EXSUCCEED!=tmq_finalize_files_upd(sw, &el->b.upd, fname, NULL,
                     TMQ_FILECMD_UNLINK, el))
             {
                 ret = XAER_RMFAIL;
@@ -840,7 +857,7 @@ exprivate int ndrx_tmq_file_storage_commit_cmds(ndrx_tmq_storage_t *sw, qtran_lo
             
             /* Remove the message (it must be marked for delete)
              */
-            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname_msg, fname, 
+            if (EXSUCCEED!=tmq_finalize_files_hdr(sw, &el->b.hdr, fname_msg, fname, 
                     TMQ_FILECMD_UNLINK, el))
             {
                 ret = XAER_RMFAIL;
@@ -854,7 +871,7 @@ exprivate int ndrx_tmq_file_storage_commit_cmds(ndrx_tmq_storage_t *sw, qtran_lo
             /* 
              * Remove the message (it must be marked for delete)
              */
-            if (EXSUCCEED!=tmq_finalize_files_hdr(&el->b.hdr, fname, NULL, 
+            if (EXSUCCEED!=tmq_finalize_files_hdr(sw, &el->b.hdr, fname, NULL, 
                     TMQ_FILECMD_UNLINK, el))
             {
                 ret = XAER_RMFAIL;
@@ -1110,7 +1127,8 @@ exprivate char * file_move_final_names(char *from_filename, char *to_filename_on
  * particular message & we can unlock that for further processing
  * TODO: in case of rename if we get noent, then check the destination
  *  if the destination name exists, then assume that rename was fine.
- *  this is needed to avoid infinte loop when tlog have gone async with disk
+ *  this is needed to avoid infinite loop when tlog have gone async with disk
+ * @param sw storange engine
  * @param p_hdr
  * @param fname1 filename 1 to unlink (priority 1 - after this message is unblocked)
  * @param fname2 filename 2 to unlink (priority 2)
@@ -1118,7 +1136,8 @@ exprivate char * file_move_final_names(char *from_filename, char *to_filename_on
  * @param tcmd transaction command
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1, 
+exprivate int tmq_finalize_file(ndrx_tmq_storage_t *sw, 
+        union tmq_upd_block *p_upd, char *fname1, 
         char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
 {
     
@@ -1260,7 +1279,7 @@ exprivate int tmq_finalize_file(union tmq_upd_block *p_upd, char *fname1,
     }
     
     /* If all OK, lets unlock the message. */
-    if (!tcmd->no_unlock && EXSUCCEED!=M_p_tmq_unlock_msg(p_upd))
+    if (!tcmd->no_unlock && EXSUCCEED!=sw->cfg->pf_tmq_unlock_msg(p_upd))
     {
         ret=XAER_RMERR;
         goto out;
@@ -1272,6 +1291,7 @@ out:
 
 /**
  * Finalize files by update block
+ * @param sw storage switch
  * @param p_upd
  * @param fname1 filename1 to unlink
  * @param fname2 filename2 to unlink
@@ -1279,7 +1299,8 @@ out:
  * @param tcmd transaction command
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int tmq_finalize_files_upd(tmq_msg_upd_t *p_upd, char *fname1, 
+exprivate int tmq_finalize_files_upd(ndrx_tmq_storage_t *sw,
+        tmq_msg_upd_t *p_upd, char *fname1, 
         char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
 {
     union tmq_upd_block block;
@@ -1288,11 +1309,12 @@ exprivate int tmq_finalize_files_upd(tmq_msg_upd_t *p_upd, char *fname1,
     
     memcpy(&block.upd, p_upd, sizeof(*p_upd));
     
-    return tmq_finalize_file(&block, fname1, fname2, fcmd, tcmd);
+    return tmq_finalize_file(sw, &block, fname1, fname2, fcmd, tcmd);
 }
 
 /**
  * Finalize files by header block
+ * @param sw storage switch
  * @param p_hdr
  * @param fname1 filename1 to unlink
  * @param fname2 filename2 to unlink
@@ -1300,7 +1322,8 @@ exprivate int tmq_finalize_files_upd(tmq_msg_upd_t *p_upd, char *fname1,
  * @param tcmd tran command
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int tmq_finalize_files_hdr(tmq_cmdheader_t *p_hdr, char *fname1, 
+exprivate int tmq_finalize_files_hdr(ndrx_tmq_storage_t *sw,
+        tmq_cmdheader_t *p_hdr, char *fname1, 
         char *fname2, char fcmd, qtran_log_cmd_t *tcmd)
 {
     union tmq_upd_block block;
@@ -1308,7 +1331,7 @@ exprivate int tmq_finalize_files_hdr(tmq_cmdheader_t *p_hdr, char *fname1,
     memset(&block, 0, sizeof(block));
     memcpy(&block.hdr, p_hdr, sizeof(*p_hdr));
     
-    return tmq_finalize_file(&block, fname1, fname2, fcmd, tcmd);
+    return tmq_finalize_file(sw, &block, fname1, fname2, fcmd, tcmd);
 }
 
 /**
@@ -1821,7 +1844,7 @@ out:
         
         NDRX_FCLOSE(f);
     }
-out:
+
     return ret;
 }
 

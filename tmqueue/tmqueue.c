@@ -900,14 +900,14 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 
-    if (G_tmqueue_cfg.tx_timeout_th > 0) 
+    if (G_tmqueue_cfg.tout_check_time > 0) 
     {
-        ndrx_dmnthread_init(&G_tmqueue_cfg.tx_timeout_th, tx_tout_monitor);
+        ndrx_dmnthread_init(&G_tmqueue_cfg.tx_timeout_th, tx_tout_monitor, NULL);
     }
 
-    if (G_tmqueue_cfg.chkdisk_th > 0) 
+    if (G_tmqueue_cfg.chkdisk_time > 0) 
     {
-        ndrx_dmnthread_init(&G_tmqueue_cfg.chkdisk_th, tx_chkdisk_monitor);
+        ndrx_dmnthread_init(&G_tmqueue_cfg.chkdisk_th, tx_chkdisk_monitor, NULL);
     }
 
     /* Bug #565 */
