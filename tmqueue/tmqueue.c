@@ -650,7 +650,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmqueue_cfg.vnodeid=tpgetnodeid();
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:f:u:c:T:Nn:X:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:l:u:c:T:Nn:X:")) != -1)
     {
         if (optarg)
         {
@@ -708,6 +708,9 @@ int tpsvrinit(int argc, char **argv)
             case 'f': 
                 G_tmqueue_cfg.fwdpoolsize = atol(optarg);
                 break;
+            case 'l': 
+                ndrx_G_qdisk_xa_cfg.loaderpoolsize = atol(optarg);
+                break;
             case 't': 
                 G_tmqueue_cfg.dflt_timeout = atol(optarg);
                 break;
@@ -753,6 +756,11 @@ int tpsvrinit(int argc, char **argv)
     {
         G_tmqueue_cfg.fwdpoolsize = THREADPOOL_DFLT;
     }
+
+    if (0>=ndrx_G_qdisk_xa_cfg.loaderpoolsize)
+    {
+        ndrx_G_qdisk_xa_cfg.loaderpoolsize = THREADPOOL_DFLT;
+    }
     
     if (0>=G_tmqueue_cfg.dflt_timeout)
     {
@@ -780,6 +788,9 @@ int tpsvrinit(int argc, char **argv)
     
     NDRX_LOG(log_info, "Forward pool size [%d] threads",
                             G_tmqueue_cfg.fwdpoolsize);
+
+    NDRX_LOG(log_info, "Load pool size [%d] threads",
+                            ndrx_G_qdisk_xa_cfg.loaderpoolsize);
     
     NDRX_LOG(log_info, "Local transaction tout set to: [%ld]", 
             G_tmqueue_cfg.dflt_timeout );

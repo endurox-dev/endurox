@@ -215,7 +215,11 @@ struct ndrx_tmq_storage
 
 extern ndrx_tmq_storage_t ndrx_G_tmq_store_files;
 extern ndrx_tmq_storage_t *ndrx_G_tmq_storage; /**< current interface */
-
+/**
+ * Settings for XA engine. These are passed from the tmqueue instance.
+ * For TM and other processes using qdisk xa switch, this is generally NULL.
+ */
+extern ndrx_tmq_qdisk_xa_cfg_t *ndrx_G_p_qdisk_xa_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 

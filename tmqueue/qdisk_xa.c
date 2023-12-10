@@ -106,14 +106,13 @@ expublic char ndrx_G_qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service na
 
 /* default storage engine: */
 expublic ndrx_tmq_storage_t *ndrx_G_tmq_storage = &ndrx_G_tmq_store_files;
+expublic ndrx_tmq_qdisk_xa_cfg_t *ndrx_G_p_qdisk_xa_cfg;
 /*---------------------------Statics------------------------------------*/
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
 exprivate MUTEX_LOCKDECL(M_init);   /**< init lock      */
 
 exprivate int M_is_tmqueue = EXFALSE;   /**< is this process a tmqueue ?        */
-exprivate ndrx_tmq_qdisk_xa_cfg_t *M_qdisk_xa_cfg=NULL; /**< settings for XA engine */
-
 /*---------------------------Prototypes---------------------------------*/
 
 expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
@@ -199,9 +198,9 @@ expublic void tmq_set_tmqueue(
     ndrx_tmq_qdisk_xa_cfg_t * qdisk_xa_cfg
 )
 {
-    M_qdisk_xa_cfg = qdisk_xa_cfg;
+    ndrx_G_p_qdisk_xa_cfg = qdisk_xa_cfg;
     
-    if (NULL!=M_qdisk_xa_cfg)
+    if (NULL!=ndrx_G_p_qdisk_xa_cfg)
     {
         M_is_tmqueue = EXTRUE;
     }
@@ -211,17 +210,17 @@ expublic void tmq_set_tmqueue(
         NDRX_LOG(log_debug, "tmq_set_tmqueue: not a tmqueue (external XA client)");
     }
 
-    if (NULL!=M_qdisk_xa_cfg)
+    if (NULL!=ndrx_G_p_qdisk_xa_cfg)
     {
         NDRX_LOG(log_debug, "qdisk_xa config: M_is_tmqueue=%d "
             "pf_tmq_setup_cmdheader_dum=%p pf_tmq_dum_add=%p pf_tmq_unlock_msg=%p "
             "pf_tmq_msgid_exists=%p pf_tpexit=%p",
-            M_is_tmqueue, M_qdisk_xa_cfg->pf_tmq_setup_cmdheader_dum,
-            M_qdisk_xa_cfg->pf_tmq_dum_add, M_qdisk_xa_cfg->pf_tmq_unlock_msg,
-            M_qdisk_xa_cfg->pf_tmq_msgid_exists, M_qdisk_xa_cfg->pf_tpexit);
+            M_is_tmqueue, ndrx_G_p_qdisk_xa_cfg->pf_tmq_setup_cmdheader_dum,
+            ndrx_G_p_qdisk_xa_cfg->pf_tmq_dum_add, ndrx_G_p_qdisk_xa_cfg->pf_tmq_unlock_msg,
+            ndrx_G_p_qdisk_xa_cfg->pf_tmq_msgid_exists, ndrx_G_p_qdisk_xa_cfg->pf_tpexit);
 
         /* Return some functions from our scope back */
-        M_qdisk_xa_cfg->pf_tmq_chkdisk_th = tmq_chkdisk_th;
+        ndrx_G_p_qdisk_xa_cfg->pf_tmq_chkdisk_th = tmq_chkdisk_th;
     }
 }
 
@@ -400,9 +399,9 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                 /* set data dir (only for tmq part) */
                 if (0==strcmp(ARG_DIR, p) && M_is_tmqueue)
                 {
-                    NDRX_STRCPY_SAFE(M_qdisk_xa_cfg->data_folder, val);
+                    NDRX_STRCPY_SAFE(ndrx_G_p_qdisk_xa_cfg->data_folder, val);
                     ret = ndrx_G_tmq_storage->pf_storage_init(ndrx_G_tmq_storage, 
-                        M_qdisk_xa_cfg);
+                        ndrx_G_p_qdisk_xa_cfg);
                         
                     if (EXSUCCEED!=ret)
                     {
@@ -423,7 +422,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                 UNLOCK_OUT;
             }
             
-            if (NULL!=M_qdisk_xa_cfg && EXEOS==M_qdisk_xa_cfg->data_folder[0])
+            if (NULL!=ndrx_G_p_qdisk_xa_cfg && EXEOS==ndrx_G_p_qdisk_xa_cfg->data_folder[0])
             {
                 NDRX_LOG(log_error, "[%s] setting not found in open string!", ARG_DIR);
                 UNLOCK_OUT;
@@ -759,7 +758,7 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
                     "exists on disk, but not in mem-log - restarting", tmxid);
                 userlog("(rollback) Integrity problem, transaction [%s] "
                     "exists on disk, but not in mem-log - restarting", tmxid);
-                M_qdisk_xa_cfg->pf_tpexit();
+                ndrx_G_p_qdisk_xa_cfg->pf_tpexit();
                 ret=XAER_RMFAIL;
                 goto out;
             }
@@ -916,7 +915,7 @@ exprivate int xa_prepare_entry_tmq(char *tmxid, long flags)
     if (NULL==p_tl->cmds)
     {
         /* do not write the file, as we will use existing on disk */
-        if (EXSUCCEED!=M_qdisk_xa_cfg->pf_tmq_dum_add(p_tl->tmxid))
+        if (EXSUCCEED!=ndrx_G_p_qdisk_xa_cfg->pf_tmq_dum_add(p_tl->tmxid))
         {
             ret = XAER_RMERR;
             p_tl->is_abort_only=EXTRUE;
@@ -1035,7 +1034,7 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
 
                 ret=XAER_RMFAIL;
 
-                M_qdisk_xa_cfg->pf_tpexit();
+                ndrx_G_p_qdisk_xa_cfg->pf_tpexit();
                 goto out;
             }
             else if (EXFAIL==ret)
@@ -1620,7 +1619,7 @@ exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off)
          * filename.
          */
         /* try to lookup in message hash */
-        if (!M_qdisk_xa_cfg->pf_tmq_msgid_exists(tmp))
+        if (!ndrx_G_p_qdisk_xa_cfg->pf_tmq_msgid_exists(tmp))
         {
             /* verify back, that message is not removed form the disk */
             if (ndrx_G_tmq_storage->pf_storage_comm_exists(ndrx_G_tmq_storage, tmp))
@@ -1633,7 +1632,7 @@ exprivate void tmq_chkdisk_th(void *ptr, int *p_finish_off)
                         " [%s] (duplicate processes or two Q "
                         "spaces works in the same directory) - restarting...",
                     tmp);
-                M_qdisk_xa_cfg->pf_tpexit();
+                ndrx_G_p_qdisk_xa_cfg->pf_tpexit();
                 break;
             }
         }

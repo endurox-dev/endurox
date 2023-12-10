@@ -50,6 +50,15 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic void (*G_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
+
+ndrx_tmq_qdisk_xa_cfg_t ndrx_G_qdisk_xa_cfg = {
+        .pf_tmq_setup_cmdheader_dum = tmq_setup_cmdheader_dum,
+        .pf_tmq_dum_add = tmq_dum_add,
+        .pf_tmq_unlock_msg = tmq_unlock_msg,
+        .pf_tmq_msgid_exists = tmq_msgid_exists,
+        .pf_tpexit = tpexit
+    };
+
 /*---------------------------Statics------------------------------------*/
 /* Auto generated system advertise table */
 expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
@@ -63,20 +72,13 @@ expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
 int main( int argc, char** argv )
 {
     _tmbuilt_with_thread_option=0;
-    ndrx_tmq_qdisk_xa_cfg_t args = {
-        .pf_tmq_setup_cmdheader_dum = tmq_setup_cmdheader_dum,
-        .pf_tmq_dum_add = tmq_dum_add,
-        .pf_tmq_unlock_msg = tmq_unlock_msg,
-        .pf_tmq_msgid_exists = tmq_msgid_exists,
-        .pf_tpexit = tpexit
-    };
 
     /* mark the qdisk that we are tmqueue
      * for direct log calls
      * So what let to do for others is just to start the transaction
      * join for other is just ignored.
      */
-    tmq_set_tmqueue(&args);
+    tmq_set_tmqueue(&ndrx_G_qdisk_xa_cfg);
     /* do late join, to avoid deadlock betweem tmsrv registration and same tmsrv
      * tran compleation via notifications channel
      */

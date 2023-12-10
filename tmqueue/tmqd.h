@@ -119,6 +119,7 @@ typedef struct
     threadpool notifthpool;   /**< Notify (loop back) threads for service (callbacks from TMSRV) */
     
     int fwdpoolsize;          /**< forwarder thread pool size               */
+    
     threadpool fwdthpool;     /**< threads for forwarder                    */
     
     threadpool shutdownseq;   /**< Shutdown sequencer, we have simpler just to use pool instead of threads  */

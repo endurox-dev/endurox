@@ -68,10 +68,27 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * job for importing message into our memory based queue space
+ * processed by thread pool
+ */
+typedef struct
+{
+    short nodeid;
+    short srvid;
+    char ref[PATH_MAX+1];
+    int seqno;
+    int mode;
+    int state;
+    int (*process_block)(char *tmxid, 
+        union tmq_block **p_block, int state, int seqno);
+} ndrx_tmq_storage_read_block_job_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate int volatile M_loader_error=EXFALSE;  /**< Is startup loader failed */
 /*---------------------------Prototypes---------------------------------*/
-
 
 /**
  * Minimal XA call to tmqueue, used by external processes.
@@ -315,6 +332,50 @@ out:
 }
 
 /**
+ * Thread block loader...
+ * @param ptr job
+ * @param p_finish_off finish offset
+ * @return <N/A>
+ */
+exprivate void block_loader_th(void *ptr, int *p_finish_off)
+{
+    ndrx_tmq_storage_read_block_job_t *job = (ndrx_tmq_storage_read_block_job_t *)ptr;
+    union tmq_block *p_block=NULL;
+    int ret;
+
+    if (EXSUCCEED!=ndrx_G_tmq_storage->pf_storage_read_block(ndrx_G_tmq_storage, 
+        job->nodeid, job->srvid, job->ref, job->seqno, &p_block, job->mode))
+    {
+        NDRX_LOG(log_error, "Failed to read [%s] sequence=%d (mode=%d) -> RAISED LOADER ERROR", 
+            job->ref, job->seqno, job->mode);
+        M_loader_error=EXTRUE;
+        EXFAIL_OUT(ret);
+    }
+    /* 
+        * Process message block 
+        * It is up to caller to free the mem & make null
+        * Note that p_block might be NULL, if message was not for our qspace,
+        * thus just skip it.
+        */
+    if (NULL!=p_block && EXSUCCEED!=job->process_block(job->ref, &p_block, job->state, job->seqno))
+    {
+        NDRX_LOG(log_error, "Failed to process block! -> RAISED LOADER ERROR");
+        M_loader_error=EXTRUE;
+        EXFAIL_OUT(ret);
+    }
+
+out:
+
+    if (NULL!=p_block)
+    {
+        NDRX_FREE((char *)p_block);
+    }
+
+    /* free up the job too */
+    NDRX_FPFREE(job);
+}
+
+/**
  * Restore messages from storage device.
  * TODO: File naming include 03d so that multiple tasks per file sorts alphabetically.
  * Any active transactions get's aborted automatically.
@@ -331,7 +392,6 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
     int n, seqno;
     int j;
     char *p;
-    union tmq_block *p_block = NULL;
     char filename[PATH_MAX+1];
     char ref[PATH_MAX+1];
     int err, tmq_err;
@@ -354,12 +414,26 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
             , NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE | NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS};
     short msg_nodeid, msg_srvid;
     char msgid[TMMSGIDLEN];
+
+    /* prepare thread pool for msg loading... */
+    threadpool loaderpool; 
+    int loaderpool_ok = EXFALSE;
     
     if (!G_atmi_tls->qdisk_is_open)
     {
         NDRX_LOG(log_error, "ERROR! tmq_storage_get_blocks() - XA not open!");
         return XAER_RMERR;
     }
+
+    /* Startup load thread pool... */
+    if (NULL==(loaderpool = ndrx_thpool_init(ndrx_G_p_qdisk_xa_cfg->loaderpoolsize,
+            NULL, NULL, NULL, 0, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize loader thread pool (cnt: %d)!", 
+                ndrx_G_p_qdisk_xa_cfg->loaderpoolsize);
+        EXFAIL_OUT(ret);
+    }
+    loaderpool_ok=EXTRUE;
     
     for (j = 0; j < N_DIM(mode); j++)
     {
@@ -462,22 +536,40 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
                 tmq_log_unlock(p_tl);
             }
 
-            if (EXSUCCEED!=ndrx_G_tmq_storage->pf_storage_read_block(ndrx_G_tmq_storage, 
-                nodeid, srvid, ref, seqno, &p_block, mode[j]))
-            {
-                NDRX_LOG(log_error, "Failed to read [%s] sequence=%d (mode=%d)", 
-                   ref, seqno, mode[j]);
-                EXFAIL_OUT(ret);
-            }
-            /* 
-             * Process message block 
-             * It is up to caller to free the mem & make null
-             * Note that p_block might be NULL, if message was not for our qspace,
-             * thus just skip it.
+            /*
+             * Submit the job...
              */
-            if (NULL!=p_block && EXSUCCEED!=process_block(ref, &p_block, state, seqno))
+            if (!M_loader_error)
             {
-                NDRX_LOG(log_error, "Failed to process block!");
+                /* create job */
+                ndrx_tmq_storage_read_block_job_t *job = NDRX_FPMALLOC(
+                        sizeof(ndrx_tmq_storage_read_block_job_t), 0);
+                if (NULL==job)
+                {
+                    NDRX_LOG(log_error, "Failed to fpallocate job, %d bytes!",
+                            sizeof(ndrx_tmq_storage_read_block_job_t));
+                    EXFAIL_OUT(ret);
+                }
+
+                job->nodeid = nodeid;
+                job->srvid = srvid;
+                NDRX_STRCPY_SAFE(job->ref, ref);
+                job->seqno = seqno;
+                job->mode = mode[j];
+                job->state = state;
+                job->process_block = process_block;
+
+                /* submit job */
+                if (EXSUCCEED!=ndrx_thpool_add_work(loaderpool, block_loader_th, 
+                        (void *)job))
+                {
+                    NDRX_LOG(log_error, "Failed to submit job to block_loader_th!");
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Loader error detected, aborting!");
                 EXFAIL_OUT(ret);
             }
             /* if all ok, process_block() has freed the p_block.. */
@@ -490,7 +582,13 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
             NDRX_LOG(log_error, "Failed to end list!");
             EXFAIL_OUT(ret);
         }
+
         cursor=NULL;
+
+        /* Wait all jobs are finished */
+        ndrx_thpool_wait(loaderpool);
+
+        /* check error flag */
     }
     
 out:
@@ -502,9 +600,11 @@ out:
                 cursor);
     }
 
-    if (NULL!=p_block)
+    /* destroy the pool... */
+    if (loaderpool_ok)
     {
-        NDRX_FREE((char *)p_block);
+        ndrx_thpool_wait(loaderpool);
+        ndrx_thpool_destroy(loaderpool);
     }
 
     return ret;
