@@ -390,7 +390,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
     int ret = EXSUCCEED;
     void *cursor=NULL;
     int n, seqno;
-    int j;
+    int i, j;
     char *p;
     char filename[PATH_MAX+1];
     char ref[PATH_MAX+1];
@@ -589,6 +589,11 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
         ndrx_thpool_wait(loaderpool);
 
         /* check error flag */
+        if (M_loader_error)
+        {
+            NDRX_LOG(log_error, "Loader error was set, terminating store loading!");
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
@@ -603,11 +608,38 @@ out:
     /* destroy the pool... */
     if (loaderpool_ok)
     {
+        /* Load shutdown jobs... */
+        for (i=0; i<ndrx_G_p_qdisk_xa_cfg->loaderpoolsize; i++)
+        {
+            ndrx_thpool_add_work(loaderpool, tmq_thread_shutdown, NULL);
+        }
         ndrx_thpool_wait(loaderpool);
         ndrx_thpool_destroy(loaderpool);
     }
 
     return ret;
+}
+
+/**
+ * Close the thread session
+ */
+expublic void tmq_thread_uninit(void)
+{
+    NDRX_LOG(log_debug, "Into tmq_thread_uninit");
+    tpclose();
+    tpterm();
+}
+
+/**
+ * Shutdown the thread
+ * @param arg
+ * @param p_finish_off
+ */
+expublic void tmq_thread_shutdown(void *ptr, int *p_finish_off)
+{
+    tmq_thread_uninit();
+    
+    *p_finish_off = EXTRUE;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

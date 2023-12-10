@@ -113,15 +113,7 @@ expublic void tmq_thread_init(void)
     
 }
 
-/**
- * Close the thread session
- */
-expublic void tmq_thread_uninit(void)
-{
-    NDRX_LOG(log_debug, "Into tmq_thread_uninit");
-    tpclose();
-    tpterm();
-}
+
 
 /**
  * Tmqueue service entry (working thread)
@@ -433,6 +425,8 @@ exprivate void *tx_tout_monitor(void *arg)
 
     NDRX_LOG(log_warn, "Timeout monitor thread finished!");
 
+    tmq_thread_uninit();
+
     return NULL;
 }
 
@@ -454,6 +448,9 @@ exprivate void *tx_chkdisk_monitor(void *arg)
         1000*G_tmqueue_cfg.chkdisk_time));
 
     NDRX_LOG(log_warn, "Checkdisk thread finished!");
+
+    tmq_thread_uninit();
+
     return NULL;
 }
 
@@ -978,15 +975,4 @@ void tpsvrdone(void)
     
 }
 
-/**
- * Shutdown the thread
- * @param arg
- * @param p_finish_off
- */
-expublic void tmq_thread_shutdown(void *ptr, int *p_finish_off)
-{
-    tmq_thread_uninit();
-    
-    *p_finish_off = EXTRUE;
-}
 /* vim: set ts=4 sw=4 et smartindent: */
