@@ -130,6 +130,10 @@ This is number of threads which are processing callbacks from XA driver
 [*-f* 'FORWARD_THREAD_POOL_SIZE']::
 This is number of worker threads for forwarder. Default value is *10*.
 
+[*-l* 'LOADER_THREAD_POOL_SIZE']::
+This is number of worker threads used at startup for reading
+queue space from disk to memory. Default value is *10*.
+
 [*-t* 'XA_TRANSACTION_TIMEOUT']::
 Maximum number of seconds to wait for XA transaction to be completed. This used 
 internally when global transactions are not used. Default is *30*.
