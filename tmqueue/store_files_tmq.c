@@ -253,6 +253,8 @@ exprivate int ndrx_tmq_file_storage_list_start(ndrx_tmq_storage_t *sw, void **re
         }
     }
 
+    *ret_cursor = cursor;
+
 out:
     NDRX_LOG(log_debug, "%s start: [%s] mode %d ret %d",
             __func__, dir_to_scan?dir_to_scan:"(null)", mode, ret);
@@ -1040,16 +1042,19 @@ exprivate char *mode_to_filename(ndrx_tmq_storage_t *sw, char *ref, int seqno, i
     {
         snprintf(M_filename[0], sizeof(M_filename[0]), "%s/%s-%03d", M_folder_active, 
             ref, seqno);
+        ret=M_filename[0];
     }
     else if (mode & NDRX_TMQ_STORAGE_LIST_MODE_PREPARED)
     {
         snprintf(M_filename[0], sizeof(M_filename[0]), "%s/%s-%03d", M_folder_prepared, 
             ref, seqno);
+        ret=M_filename[0];
     }
     else if (mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED)
     {
         snprintf(M_filename[0], sizeof(M_filename[0]), "%s/%s", M_folder_committed, 
             ref);
+        ret=M_filename[0];
     }
 
     assert(ret!=NULL);
@@ -1377,6 +1382,7 @@ exprivate int prepare_folders(ndrx_tmq_qdisk_xa_cfg_t *p_tmq_cfg)
         {
             NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
                 "[%s] - [%s]!", p_tmq_cfg->data_folder, strerror(err));
+            ret=EXSUCCEED;
         }
     }
     
@@ -1397,6 +1403,7 @@ exprivate int prepare_folders(ndrx_tmq_qdisk_xa_cfg_t *p_tmq_cfg)
         {
             NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
                 "[%s] - [%s]!", M_folder_active, strerror(err));
+            ret=EXSUCCEED;
         }
     }
     
@@ -1416,6 +1423,7 @@ exprivate int prepare_folders(ndrx_tmq_qdisk_xa_cfg_t *p_tmq_cfg)
         {
             NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
                 "[%s] - [%s]!", M_folder_prepared, strerror(err));
+            ret=EXSUCCEED;
         }
     }
     
@@ -1435,6 +1443,7 @@ exprivate int prepare_folders(ndrx_tmq_qdisk_xa_cfg_t *p_tmq_cfg)
         {
             NDRX_LOG(log_info, "xa_open_entry() Q driver: failed to create directory "
                 "[%s] - [%s]!", M_folder_committed, strerror(err));
+            ret=EXSUCCEED;
         }
     }
     

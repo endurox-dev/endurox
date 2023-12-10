@@ -401,7 +401,9 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                 if (0==strcmp(ARG_DIR, p) && M_is_tmqueue)
                 {
                     NDRX_STRCPY_SAFE(M_qdisk_xa_cfg->data_folder, val);
-                    ret = ndrx_G_tmq_storage->pf_storage_init(ndrx_G_tmq_storage, NULL);
+                    ret = ndrx_G_tmq_storage->pf_storage_init(ndrx_G_tmq_storage, 
+                        M_qdisk_xa_cfg);
+                        
                     if (EXSUCCEED!=ret)
                     {
                         NDRX_LOG(log_error, "Failed to prepare data directory [%s]", val);
@@ -421,7 +423,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                 UNLOCK_OUT;
             }
             
-            if (EXEOS==M_qdisk_xa_cfg->data_folder[0])
+            if (NULL!=M_qdisk_xa_cfg && EXEOS==M_qdisk_xa_cfg->data_folder[0])
             {
                 NDRX_LOG(log_error, "[%s] setting not found in open string!", ARG_DIR);
                 UNLOCK_OUT;
@@ -434,7 +436,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
             NDRX_LOG(log_debug, "Qspace svc set to: [%s]", ndrx_G_qspacesvc);
             M_folder_set=EXTRUE;
             
-        }   
+        }
         MUTEX_UNLOCK_V(M_folder_lock);
         
     }

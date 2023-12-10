@@ -71,7 +71,6 @@ int main( int argc, char** argv )
         .pf_tpexit = tpexit
     };
 
-
     /* mark the qdisk that we are tmqueue
      * for direct log calls
      * So what let to do for others is just to start the transaction

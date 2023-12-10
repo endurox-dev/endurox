@@ -11,9 +11,9 @@ DEADQ
 # Where to put OK replies:
 REPLYQ
 # Auto Q 1, for OK service
-OKQ1,svcnm=SVCOK,autoq=y,tries=5,waitinit=1,waitretry=2,waitretryinc=2,waitretrymax=10,memonly=n
+OKQ1,svcnm=SVCOK,autoq=y,tries=5,waitinit=1,waitretry=2,waitretrymax=10,memonly=n
 # Bad service
-BADQ1,svcnm=SVCFAIL,autoq=y,tries=3,waitinit=1,waitretry=2,waitretryinc=2,waitretrymax=3,memonly=n
+BADQ1,svcnm=SVCFAIL,autoq=y,tries=3,waitinit=1,waitretry=2,waitretrymax=3,memonly=n
 # Random Bad, transactional
 RFQ,svcnm=FAILRND,autoq=T,tries=10,waitinit=0,waitretry=0,waitretrymax=0,memonly=n
 
