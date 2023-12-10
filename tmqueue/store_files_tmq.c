@@ -277,6 +277,8 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
     int ret = XA_OK;
     int do_next;
 
+    ref[0]=EXEOS;
+
     do
     {
         do_next=EXFALSE;
@@ -309,6 +311,8 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
             fname=p_cursor->namelist[p_cursor->i]->d_name;
         }
 
+        NDRX_LOG(log_debug, "got entry: [%s]", fname);
+
         if (0==strcmp(fname, ".") || 
             0==strcmp(fname, ".."))
         {
@@ -318,7 +322,8 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
         }
 
         /* if we include duplicates, */
-        if (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS)
+        if ( (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS) ||
+            (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED) )
         {
             /* just return the value */
             NDRX_STRCPY_SAFE_DST(ref, fname, refsz);
@@ -369,7 +374,8 @@ exprivate int ndrx_tmq_file_storage_list_end(ndrx_tmq_storage_t *sw, void *curso
 {
     ndrx_tmq_dir_list_t *p_cursor=(ndrx_tmq_dir_list_t *)cursor;
 
-    if (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED)
+    if ( (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED)
+           || (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT))
     {
         /* free up dir() */
         if (0!=closedir(p_cursor->dirp))
@@ -569,7 +575,7 @@ exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw,
             goto out;
         }
 
-        NDRX_DUMP(log_debug, "Got command block", p_block, read);
+        NDRX_DUMP(log_debug, "Got command block", *p_block, read);
 
         /* if it is message, the re-alloc  */
         if (TMQ_STORCMD_NEWMSG==(*p_block)->hdr.command_code)
