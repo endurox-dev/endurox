@@ -70,6 +70,7 @@ typedef struct
     /* scandir related: */
     int i, cnt, mode;
     struct dirent **namelist;
+    char *prev; /** used for duplicate scan */
 
     /* dir() related */
     DIR *dirp;
@@ -189,6 +190,7 @@ exprivate int ndrx_tmq_file_storage_uninit(ndrx_tmq_storage_t *sw)
  * is required, to avoid duplicates.
  * @param sw storage interface
  * @param mode mode of the list (see NDRX_TMQ_STORAGE_LIST_MODE_* constants)
+ *  WARNING: !NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS && NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT is not allowed
  * @return XA error code
  */
 exprivate int ndrx_tmq_file_storage_list_start(ndrx_tmq_storage_t *sw, void **ret_cursor, int mode)
@@ -209,6 +211,7 @@ exprivate int ndrx_tmq_file_storage_list_start(ndrx_tmq_storage_t *sw, void **re
 
     /* will be needed for looping over */
     cursor->mode = mode;
+    cursor->prev = NULL;
 
     if (NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE & mode)
     {
@@ -228,6 +231,10 @@ exprivate int ndrx_tmq_file_storage_list_start(ndrx_tmq_storage_t *sw, void **re
         ret = XAER_RMERR;
         goto out;
     }
+
+    /* we cannot have unsorted listing without dups */
+    assert (( !(NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS & mode) && 
+        (NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT & mode) ) == EXFALSE);
 
     if ( (NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED & mode) ||
         (NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT & mode) )
@@ -342,7 +349,7 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
             *p=EXEOS;
 
             /* check the previous load */
-            if (NULL!=prev && 0==strcmp(prev, fname))
+            if (NULL!=prev && 0==strcmp(p_cursor->prev, fname))
             {
                 /* bypass it too */
                 do_next=EXTRUE;
@@ -354,7 +361,7 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
             ret=EXTRUE;
         }
         /* to deal with dulicates (i.e. suffix is seqno in global txn) */
-        prev=fname;
+        p_cursor->prev=fname;
     } while (do_next);
 
 out:
