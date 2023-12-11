@@ -49,7 +49,8 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-expublic void (*G_tmq_chkdisk_th)(void *ptr, int *p_finish_off);
+/* checkdisk callback */
+expublic void (*G_tmq_chkdisk_th)(void *ptr, int *p_finish_off) = NULL;
 
 ndrx_tmq_qdisk_xa_cfg_t ndrx_G_qdisk_xa_cfg = {
         .pf_tmq_setup_cmdheader_dum = tmq_setup_cmdheader_dum,
@@ -79,6 +80,7 @@ int main( int argc, char** argv )
      * join for other is just ignored.
      */
     tmq_set_tmqueue(&ndrx_G_qdisk_xa_cfg);
+    G_tmq_chkdisk_th=ndrx_G_qdisk_xa_cfg.pf_tmq_chkdisk_th;
     /* do late join, to avoid deadlock betweem tmsrv registration and same tmsrv
      * tran compleation via notifications channel
      */
