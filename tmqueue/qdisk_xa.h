@@ -67,12 +67,6 @@ extern "C" {
  */
 #define NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS    0x0008
 
-/**
- * fast, no sort access
- */
-#define NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT      0x0010
-
-
 /** store interface magic */
 #define NDRX_TMQ_STOREIF_MAGIC          "TMQS"
 #define NDRX_TMQ_STOREIF_MAGIC_LEN       4

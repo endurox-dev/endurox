@@ -190,7 +190,6 @@ exprivate int ndrx_tmq_file_storage_uninit(ndrx_tmq_storage_t *sw)
  * is required, to avoid duplicates.
  * @param sw storage interface
  * @param mode mode of the list (see NDRX_TMQ_STORAGE_LIST_MODE_* constants)
- *  WARNING: !NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS && NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT is not allowed
  * @return XA error code
  */
 exprivate int ndrx_tmq_file_storage_list_start(ndrx_tmq_storage_t *sw, void **ret_cursor, int mode)
@@ -232,12 +231,9 @@ exprivate int ndrx_tmq_file_storage_list_start(ndrx_tmq_storage_t *sw, void **re
         goto out;
     }
 
-    /* we cannot have unsorted listing without dups */
-    assert (( !(NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS & mode) && 
-        (NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT & mode) ) == EXFALSE);
-
     if ( (NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED & mode) ||
-        (NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT & mode) )
+        ( NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS & mode)
+       )
     {
         /* use readdir() */
         cursor->dirp = opendir(dir_to_scan);
@@ -280,7 +276,7 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
     void *cursor, char *ref, size_t refsz)
 {
     ndrx_tmq_dir_list_t *p_cursor=(ndrx_tmq_dir_list_t *)cursor;
-    char *p, *fname, *prev=NULL;
+    char *p, *fname;
     int ret = XA_OK;
     int do_next;
 
@@ -291,7 +287,7 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
         do_next=EXFALSE;
         /* allow fast access, if not sort requested */
         if ( (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED) ||
-            (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT) )
+            (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS) )
         {
             /* readdir(). Do not sort out dupes */
             struct dirent *ent;
@@ -349,7 +345,7 @@ exprivate int ndrx_tmq_file_storage_list_next(ndrx_tmq_storage_t *sw,
             *p=EXEOS;
 
             /* check the previous load */
-            if (NULL!=prev && 0==strcmp(p_cursor->prev, fname))
+            if (NULL!=p_cursor->prev && 0==strcmp(p_cursor->prev, fname))
             {
                 /* bypass it too */
                 do_next=EXTRUE;
@@ -382,7 +378,7 @@ exprivate int ndrx_tmq_file_storage_list_end(ndrx_tmq_storage_t *sw, void *curso
     ndrx_tmq_dir_list_t *p_cursor=(ndrx_tmq_dir_list_t *)cursor;
 
     if ( (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED)
-           || (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT))
+           || (p_cursor->mode & NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS))
     {
         /* free up dir() */
         if (0!=closedir(p_cursor->dirp))
@@ -416,7 +412,7 @@ exprivate int ndrx_tmq_file_storage_prep_exists(ndrx_tmq_storage_t *sw, char *tm
     int ret;
 
     if (XA_OK!=(ret=ndrx_tmq_file_storage_list_start(sw, &cursor, 
-        NDRX_TMQ_STORAGE_LIST_MODE_PREPARED|NDRX_TMQ_STORAGE_LIST_MODE_NO_SORT)))
+        NDRX_TMQ_STORAGE_LIST_MODE_PREPARED|NDRX_TMQ_STORAGE_LIST_MODE_INCL_DUPS)))
     {
         goto out;
     }
@@ -424,6 +420,13 @@ exprivate int ndrx_tmq_file_storage_prep_exists(ndrx_tmq_storage_t *sw, char *tm
     /* check in the loop presence of the xid */
     while (EXTRUE==(ret=ndrx_tmq_file_storage_list_next(sw, cursor, ref, sizeof(ref))))
     {
+        char *p = strchr(ref,'-');
+        /*  pre-process dups (which includes sequence) */
+        if (NULL!=p)
+        {
+            *p=EXEOS;
+        }
+
         if (0==strcmp(ref, tmxid))
         {
             /* found */
