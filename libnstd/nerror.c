@@ -361,7 +361,9 @@ expublic int ndrx_Nerrno2nerror(int err)
             break;
 #endif
         case ETIMEDOUT:
+#ifdef ETIME
         case ETIME:
+#endif
             ret = NETOUT;
             break;
         default:
