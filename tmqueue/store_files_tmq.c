@@ -396,7 +396,7 @@ exprivate int ndrx_tmq_file_storage_list_end(ndrx_tmq_storage_t *sw, void *curso
         }
     }
 
-    memset(p_cursor, 0, sizeof(*p_cursor));
+    NDRX_FPFREE(cursor);
 
     return EXSUCCEED;
 }
