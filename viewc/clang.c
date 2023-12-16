@@ -68,7 +68,7 @@
 expublic int ndrx_view_plot_c_header(char *outdir, char *basename)
 {
     int ret = EXSUCCEED;
-    char  fname[PATH_MAX+1];
+    char  fname[NDRX_BPATH_MAX+1];
     FILE *f = NULL;
     ndrx_typedview_t * views = ndrx_view_get_handle();
     ndrx_typedview_t * vel, *velt;
