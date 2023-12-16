@@ -62,7 +62,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-expublic char ndrx_G_build_cmd[PATH_MAX+1] = "buildclient";
+expublic char ndrx_G_build_cmd[NDRX_BPATH_MAX+1] = "buildclient";
 /*---------------------------Statics------------------------------------*/
 
 /**
@@ -84,16 +84,16 @@ exprivate void usage(char *progname)
 int main(int argc, char **argv)
 {
     int no_UBF = EXFALSE;
-    char outdir[PATH_MAX+1]="./";
+    char outdir[NDRX_BPATH_MAX+1]="./";
     int i;
     int c;
     int ret = EXSUCCEED;
     int lang_mode = HDR_C_LANG;
-    char basename[PATH_MAX+1];
+    char basename[NDRX_BPATH_MAX+1];
     char *p, *env;
     int was_file = EXFALSE;
-    char Vfile[PATH_MAX+1];
-    char tmp[PATH_MAX];
+    char Vfile[NDRX_BPATH_MAX+1];
+    char tmp[NDRX_BPATH_MAX+1];
     opterr = 0;
     
     NDRX_BANNER("VIEW File Compiler");

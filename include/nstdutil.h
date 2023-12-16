@@ -173,6 +173,7 @@ extern NDRX_API long ndrx_G_apiflags;
  
 /** @} */ /* end of apiflags */
     
+#define NDRX_BPATH_MAX      5120    /**< seems org PATH_MAX might be too short */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
