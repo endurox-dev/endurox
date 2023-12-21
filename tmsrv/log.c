@@ -137,12 +137,13 @@ expublic int tms_log_exists_file(char *tmxid)
 
     if (EXFAIL==ret)
     {   
+        int err=Nerror;
         /* log this first, as userlog does not touch Nerror: */
         userlog("Failed to check file [%s] presence: %s",
-            fname, Nstrerror(Nerror));
+            fname, Nstrerror(err));
 
         NDRX_LOG(log_error, "Failed to check file [%s] presence: %s",
-            fname, Nstrerror(Nerror));
+            fname, Nstrerror(err));
     }
 
     return ret;
@@ -696,11 +697,12 @@ expublic int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode)
     
     if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_open(ndrx_G_tmsrv_storage, p_tl, mode))
     {
+        int err=Nerror;
         userlog("Failed to open XA transaction log file: [%s]: %s", 
-                p_tl->fname, Nstrerror(Nerror));
+                p_tl->fname, Nstrerror(err));
         NDRX_LOG(log_error, "Failed to open XA transaction "
                 "log file: [%s]: %s", 
-                p_tl->fname, Nstrerror(Nerror));
+                p_tl->fname, Nstrerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -727,12 +729,14 @@ expublic int tms_housekeep(char *logfile)
 
     if (diff<0)
     {
+        err=Nerror;
         /* failed to read file age */
-        userlog("Failed to get file age [%s]: %s", logfile, Nstrerror(Nerror));
-        NDRX_LOG(log_error, "Failed to get file age [%s]: %s", logfile, Nstrerror(Nerror));
+        userlog("Failed to get file age [%s]: %s", logfile, Nstrerror(err));
+        NDRX_LOG(log_error, "Failed to get file age [%s]: %s", logfile, Nstrerror(err));
     }
     else if ( diff > G_tmsrv_cfg.housekeeptime)
     {
+        err=Nerror;
         NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
                 logfile, diff, G_tmsrv_cfg.housekeeptime);
         userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
@@ -740,8 +744,8 @@ expublic int tms_housekeep(char *logfile)
 
         if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_unlink(ndrx_G_tmsrv_storage, logfile))
         {
-            userlog("Failed to unlink [%s]: %s", logfile, Nstrerror(Nerror));
-            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", logfile, Nstrerror(Nerror));
+            userlog("Failed to unlink [%s]: %s", logfile, Nstrerror(err));
+            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", logfile, Nstrerror(err));
         }
         else
         {
@@ -819,10 +823,11 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
     /* start to read the file */
     if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_read_start(ndrx_G_tmsrv_storage, *pp_tl))
     {
+        err=Nerror;
         userlog("Failed to start reading transaction file [%s]: %s",
-                    (*pp_tl)->fname, Nstrerror(Nerror));
+                    (*pp_tl)->fname, Nstrerror(err));
         NDRX_LOG(log_error, "Failed to start reading transaction file [%s]: %s",
-                    (*pp_tl)->fname, Nstrerror(Nerror));
+                    (*pp_tl)->fname, Nstrerror(err));
         EXFAIL_OUT(ret);
     }
 
@@ -988,10 +993,11 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
     /* check was last read OK */
     if (NEEOF!=Nerror)
     {
+        err=Nerror;
         userlog("TMSRV log file [%s] failed to read: %s", 
-                    logfile, Nstrerror(Nerror));
+                    logfile, Nstrerror(err));
         NDRX_LOG(log_error, "TMSRV log file [%s] failed to read: %s", 
-                    logfile, Nstrerror(Nerror));
+                    logfile, Nstrerror(err));
         
         EXFAIL_OUT(ret);
     }
@@ -1027,10 +1033,11 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
             if (EXFAIL==ndrx_G_tmsrv_storage->pf_storage_write(ndrx_G_tmsrv_storage, 
                     *pp_tl, 0, "\n", 1, EXFALSE))
             {
+                err=Nerror;
                 userlog("TMSRV log file [%s] failed to terminate line: %s", 
-                        logfile, Nstrerror(Nerror));
+                        logfile, Nstrerror(err));
                 NDRX_LOG(log_error, "TMSRV log file [%s] failed to terminate line: %s", 
-                        logfile, Nstrerror(Nerror));
+                        logfile, Nstrerror(err));
                 
                 EXFAIL_OUT(ret);
             }
@@ -1084,7 +1091,8 @@ out:
     /* stop reading anyway */
     if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_read_end(ndrx_G_tmsrv_storage, *pp_tl))
     {
-        NDRX_LOG(log_error, "Failed to end read: %s", Nstrerror(Nerror));
+        err=Nerror;
+        NDRX_LOG(log_error, "Failed to end read: %s", Nstrerror(err));
     }
 
     /* Clean up if error. */
@@ -1145,8 +1153,9 @@ expublic void tms_close_logfile(atmi_xa_log_t *p_tl)
 {
     if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_close(ndrx_G_tmsrv_storage, p_tl))
     {
+        int err=Nerror;
         NDRX_LOG(log_error, "Failed to close transaction log file [%s]: %s",
-                p_tl->fname, Nstrerror(Nerror));
+                p_tl->fname, Nstrerror(err));
     }
 }
 
@@ -1201,10 +1210,11 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl, int hash_rm)
     {
         if (NENOENT!=Nerror)
         {
+            int err=Nerror;
             userlog("Failed to remove tx log file [%s]: %d (%s)", 
-                    p_tl->fname, Nerror, Nstrerror(Nerror));
+                    p_tl->fname, err, Nstrerror(err));
             NDRX_LOG(log_debug, "Failed to remove tx log file [%s]: %d (%s)", 
-                    p_tl->fname, Nerror, Nstrerror(Nerror));
+                    p_tl->fname, err, Nstrerror(err));
         }
     }
     
