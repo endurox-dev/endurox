@@ -539,7 +539,7 @@ expublic int ndrx_cconfig_load_sections(ndrx_inicfg_t **cfg, char **section_star
         G_cctag = getenv(NDRX_CCTAG);
     }
     
-    return _ndrx_cconfig_load(cfg, EXFALSE, NULL);
+    return _ndrx_cconfig_load(cfg, EXFALSE, section_start_with);
 }
 
 /**
