@@ -112,7 +112,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     char svcnm[MAXTIDENT+1]={EXEOS};
 
     /* Only singleton server sections needed */
-    char *sections[] = {"@singlesv",
+    char *sections[] = {"@exsinglesv",
                     NULL};
 
     memset(&ndrx_G_exsinglesv_conf, 0, sizeof(ndrx_G_exsinglesv_conf));
