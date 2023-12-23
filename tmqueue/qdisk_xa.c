@@ -742,14 +742,25 @@ exprivate int xa_rollback_entry_tmq(char *tmxid, long flags)
         else
         {
             NDRX_LOG(log_info, "Q transaction [%s] does not exists", tmxid);
-            /* return XAER_NOTA; */
 
-            /* TODO: verify the disk... (only in case) sinelgrp ... */
-            ret=ndrx_G_tmq_storage->pf_storage_prep_exists(ndrx_G_tmq_storage, tmxid);
+            /* TODO: verify the disk... (only in case) sinelgrp ... ?
+             * or leave here, to avoid looping of the xa_recover + unsuccesfull rollbacks,
+             * in case if somebody did modify the store?
+             */
+            if (XA_TX_STAGE_ACTIVE==p_tl->txstage)
+            {
+                /* not found */
+                ret=EXFALSE;
+            }
+            else
+            {
+                ret=ndrx_G_tmq_storage->pf_storage_prep_exists(ndrx_G_tmq_storage, tmxid);
+            }
 
             if (EXTRUE==ret)
             {
-                /* it really failure here. transaction must not exists
+                /*
+                 * it really failure here. transaction must not exists
                  * on the disk if log does not exists.
                  * possible concurrent run.
                  * Restart now...

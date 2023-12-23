@@ -341,9 +341,16 @@ exprivate void block_loader_th(void *ptr, int *p_finish_off)
 {
     ndrx_tmq_storage_read_block_job_t *job = (ndrx_tmq_storage_read_block_job_t *)ptr;
     union tmq_block *p_block=NULL;
-    int ret;
+    int ret=EXSUCCEED;
 
-    if (EXSUCCEED!=ndrx_G_tmq_storage->pf_storage_read_block(ndrx_G_tmq_storage, 
+    if (job->mode & NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE)
+    {
+         /* just create dummy entry for active transactions */
+        ndrx_G_p_qdisk_xa_cfg->pf_tmq_setup_cmdheader_dum(&p_block->hdr, NULL, job->nodeid, 
+                0, ndrx_G_qspace, 0);
+        p_block->hdr.command_code = TMQ_STORCMD_DUM;
+    }
+    else if (EXSUCCEED!=ndrx_G_tmq_storage->pf_storage_read_block(ndrx_G_tmq_storage, 
         job->nodeid, job->srvid, job->ref, job->seqno, &p_block, job->mode))
     {
         NDRX_LOG(log_error, "Failed to read [%s] sequence=%d (mode=%d) -> RAISED LOADER ERROR", 
