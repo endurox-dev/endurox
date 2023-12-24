@@ -93,7 +93,10 @@ struct err_msg
     {STDE(NEBUSY),        "Resrouce is busy"}, /* 20 */
     {STDE(NESTALE),       "Resrouce is stale"}, /* 21 */
     {STDE(NEEOF),         "EOF error occurred"}, /* 22 */
-    {STDE(NESYNC),        "Synchronization error"} /* 23 */
+    {STDE(NESYNC),        "Synchronization error"}, /* 23 */
+    {STDE(NECONSTRAINT),  "Constraint error"}, /* 24 */
+    {STDE(NESTATE),       "State error"}, /* 25 */
+    {STDE(NEUNKNOWN),     "Unknown error occurred"} /* 26 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
