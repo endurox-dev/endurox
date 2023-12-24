@@ -235,7 +235,7 @@ expublic void _Nset_error(int error_code)
  * @param msg
  * @return
  */
-expublic void _Nset_error_msg(int error_code, char *msg)
+expublic void _Nset_error_msg(int error_code, const char *msg)
 {
     int msg_len;
     int err_len;

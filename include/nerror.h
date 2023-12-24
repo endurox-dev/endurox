@@ -88,7 +88,7 @@ extern NDRX_API void _Nset_error(int error_code);
 extern NDRX_API char * Nstrerror (int err);
 extern NDRX_API char * Nmsgerror (void);
 extern NDRX_API char * ndrx_Nstrerror2 (int err);
-extern NDRX_API void _Nset_error_msg(int error_code, char *msg);
+extern NDRX_API void _Nset_error_msg(int error_code, const char *msg);
 extern NDRX_API void _Nset_error_fmt(int error_code, const char *fmt, ...);
 /* Is error already set?  */
 extern NDRX_API int _Nis_error(void);
