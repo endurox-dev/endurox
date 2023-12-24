@@ -67,7 +67,10 @@ extern "C" {
 #define NESTALE            21 /**< Resource is stale */
 #define NEEOF              22 /**< EOF error */
 #define NESYNC             23 /**< Synchronization error */
-#define NMAXVAL            23 /**< max error */
+#define NECONSTRAINT       24 /**< Constraint error */
+#define NESTATE            25 /**< State error */
+#define NEUNKNOWN          26 /**< Unknown error occurred */
+#define NMAXVAL            26 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 
