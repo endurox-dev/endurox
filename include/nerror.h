@@ -70,7 +70,9 @@ extern "C" {
 #define NECONSTRAINT       24 /**< Constraint error */
 #define NESTATE            25 /**< State error */
 #define NEUNKNOWN          26 /**< Unknown error occurred */
-#define NMAXVAL            26 /**< max error */
+#define NESTMT             27 /**< Statement error */
+#define NEACCESS           28 /**< Access denied */
+#define NMAXVAL            28 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 

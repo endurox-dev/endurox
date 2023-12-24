@@ -96,7 +96,9 @@ struct err_msg
     {STDE(NESYNC),        "Synchronization error"}, /* 23 */
     {STDE(NECONSTRAINT),  "Constraint error"}, /* 24 */
     {STDE(NESTATE),       "State error"}, /* 25 */
-    {STDE(NEUNKNOWN),     "Unknown error occurred"} /* 26 */
+    {STDE(NEUNKNOWN),     "Unknown error occurred"}, /* 26 */
+    {STDE(NESTMT),        "Statement error"}, /* 27 */
+    {STDE(NEACCESS),      "Access denied"} /* 28 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
