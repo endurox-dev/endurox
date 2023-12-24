@@ -343,6 +343,13 @@ exprivate void block_loader_th(void *ptr, int *p_finish_off)
     union tmq_block *p_block=NULL;
     int ret=EXSUCCEED;
 
+    /* Read header */
+    if (NULL==(p_block = NDRX_MALLOC(sizeof(*p_block))))
+    {
+        NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
     if (job->mode & NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE)
     {
          /* just create dummy entry for active transactions */
@@ -359,11 +366,11 @@ exprivate void block_loader_th(void *ptr, int *p_finish_off)
         EXFAIL_OUT(ret);
     }
     /* 
-        * Process message block 
-        * It is up to caller to free the mem & make null
-        * Note that p_block might be NULL, if message was not for our qspace,
-        * thus just skip it.
-        */
+     * Process message block 
+     * It is up to caller to free the mem & make null
+     * Note that p_block might be NULL, if message was not for our qspace,
+     * thus just skip it.
+     */
     if (NULL!=p_block && EXSUCCEED!=job->process_block(job->ref, &p_block, job->state, job->seqno))
     {
         NDRX_LOG(log_error, "Failed to process block! -> RAISED LOADER ERROR");
