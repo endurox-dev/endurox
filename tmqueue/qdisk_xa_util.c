@@ -357,8 +357,8 @@ exprivate void block_loader_th(void *ptr, int *p_finish_off)
                 0, ndrx_G_qspace, 0);
         p_block->hdr.command_code = TMQ_STORCMD_DUM;
     }
-    else if (EXSUCCEED!=ndrx_G_tmq_storage->pf_storage_read_block(ndrx_G_tmq_storage, 
-        job->nodeid, job->srvid, job->ref, job->seqno, &p_block, job->mode))
+    else if (EXFAIL==(ret=ndrx_G_tmq_storage->pf_storage_read_block(ndrx_G_tmq_storage, 
+        job->nodeid, job->srvid, job->ref, job->seqno, &p_block, job->mode)))
     {
         NDRX_LOG(log_error, "Failed to read [%s] sequence=%d (mode=%d) -> RAISED LOADER ERROR", 
             job->ref, job->seqno, job->mode);
@@ -371,7 +371,7 @@ exprivate void block_loader_th(void *ptr, int *p_finish_off)
      * Note that p_block might be NULL, if message was not for our qspace,
      * thus just skip it.
      */
-    if (NULL!=p_block && EXSUCCEED!=job->process_block(job->ref, &p_block, job->state, job->seqno))
+    if (EXTRUE==ret && EXSUCCEED!=job->process_block(job->ref, &p_block, job->state, job->seqno))
     {
         NDRX_LOG(log_error, "Failed to process block! -> RAISED LOADER ERROR");
         M_loader_error=EXTRUE;

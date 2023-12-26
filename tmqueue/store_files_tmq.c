@@ -503,7 +503,7 @@ out:
  * @param seqno sequence number of the block (command sequence)
  * @param p_block allocate and read the block. Null in case of ignore
  * @param mode mode of the list (see NDRX_TMQ_STORAGE_LIST_MODE_* constants)
- * @return EXSUCCEED/EXFAIL.
+ * @return EXSUCCEED (ignore)/EXFAIL/EXTRUE(loaded to process)
  */
 exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw, 
     short nodeid, short srvid, char *ref, int seqno,
@@ -515,154 +515,116 @@ exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw,
     int read;
     int state;
     char *filename = mode_to_filename(sw, ref, seqno, mode);
+   
 
-    /* Read header */            
-    if (NULL==(*p_block = NDRX_MALLOC(sizeof(union tmq_block))))
+    if (ndrx_G_systest_lockloss || NULL==(f=NDRX_FOPEN(filename, "rb")))
     {
-        NDRX_LOG(log_error, "Failed to alloc [%s]: %s", 
-            filename, strerror(errno));
+        err = errno;
+        NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
+            filename, strerror(err));
+        userlog("Failed to open for read [%s]: %s", 
+            filename, strerror(err));
         EXFAIL_OUT(ret);
     }
-   
-    /* we do not read active blocks.., just prepare dummy rec... */
-    if (mode & NDRX_TMQ_STORAGE_LIST_MODE_ACTIVE)
+
+    /* here we read maximum header size.
+     * For smaller messages (fixed struct messages) all data is read
+     */
+    if (EXFAIL==(read=read_tx_block(f, (char *)(*p_block), sizeof(**p_block), 
+            filename, "tmq_storage_get_blocks", &err, &tmq_err)))
     {
-        /* just create dummy entry for active transactions */
-        sw->cfg->pf_tmq_setup_cmdheader_dum(&(*p_block)->hdr, NULL, tpgetnodeid(), 
-                0, ndrx_G_qspace, 0);
-        (*p_block)->hdr.command_code = TMQ_STORCMD_DUM;
+        NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
+            filename, sizeof(**p_block), tmq_err, (err==0?"EOF":strerror(err)) );
+        userlog("ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
+            filename, sizeof(**p_block), tmq_err, (err==0?"EOF":strerror(err)) );
+
+        /* skip & continue with next */
+        EXFAIL_OUT(ret);
     }
-    else
+
+    /* Late filter 
+        * Not sure what will happen if file will be processed/removed
+        * by other server if for example we boot up...read the folder
+        * but other server on same qspace/folder will remove the file
+        * So better use different folder for each server...!
+        */
+    if (nodeid!=(*p_block)->hdr.nodeid || srvid!=(*p_block)->hdr.srvid)
     {
-        if (ndrx_G_systest_lockloss || NULL==(f=NDRX_FOPEN(filename, "rb")))
-        {
-            err = errno;
-            NDRX_LOG(log_error, "Failed to open for read [%s]: %s", 
-                filename, strerror(err));
-            userlog("Failed to open for read [%s]: %s", 
-                filename, strerror(err));
-            NDRX_FREE((char *)*p_block);
-            *p_block=NULL;
+        NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
+            nodeid, srvid, (*p_block)->hdr.nodeid, (*p_block)->hdr.srvid);
+        goto out;
+    }
 
+    NDRX_DUMP(log_debug, "Got command block", *p_block, read);
+
+    /* if it is message, the re-alloc  */
+    if (TMQ_STORCMD_NEWMSG==(*p_block)->hdr.command_code)
+    {
+        int bytes_extra;
+        int bytes_to_read;
+        if (NULL==((*p_block) = NDRX_REALLOC((*p_block), sizeof(tmq_msg_t) + (*p_block)->msg.len)))
+        {
+            NDRX_LOG(log_error, "Failed to alloc [%d]: %s", 
+                (sizeof(tmq_msg_t) + (*p_block)->msg.len), strerror(errno));
             EXFAIL_OUT(ret);
         }
+        /* Read some more */
+        /* Bug #178
+            * Under raspberry-pi looks like msg.msg is closer to the start than
+            * whole message, and problem is that two bytes gets lost or over
+            * written. Thus needs some kind of correction - advance the
+            * pointer to msg over the extra bytes we have read.
+            * Also needs correction against size to read.
+            * This assumes that "tmq_msg_t" is largest structure...
+            */
+        bytes_extra = sizeof(**p_block)-EXOFFSET(tmq_msg_t, msg);
+        bytes_to_read = (*p_block)->msg.len - bytes_extra;
 
-        /* here we read maximum header size.
-         * For smaller messages (fixed struct messages) all data is read
-         */
-        if (EXFAIL==(read=read_tx_block(f, (char *)(*p_block), sizeof(**p_block), 
-                filename, "tmq_storage_get_blocks", &err, &tmq_err)))
+        NDRX_LOG(log_info, "bytes_extra=%d bytes_to_read=%d", 
+                bytes_extra, bytes_to_read);
+
+        if (bytes_to_read > 0)
         {
-            NDRX_LOG(log_error, "ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
-                filename, sizeof(**p_block), tmq_err, (err==0?"EOF":strerror(err)) );
-            userlog("ERROR! Failed to read [%s] hdr (%d bytes) tmqerr: %d: %s - cannot start, resolve manually", 
-                filename, sizeof(**p_block), tmq_err, (err==0?"EOF":strerror(err)) );
-
-            /* skip & continue with next */
-            NDRX_FCLOSE(f);
-            f=NULL;
-
-            NDRX_FREE((char *)*p_block);
-            *p_block = NULL;
-
-            EXFAIL_OUT(ret);
-        }
-
-        /* Late filter 
-         * Not sure what will happen if file will be processed/removed
-         * by other server if for example we boot up...read the folder
-         * but other server on same qspace/folder will remove the file
-         * So better use different folder for each server...!
-         */
-        if (nodeid!=(*p_block)->hdr.nodeid || srvid!=(*p_block)->hdr.srvid)
-        {
-            NDRX_LOG(log_warn, "our nodeid/srvid %hd/%hd msg: %hd/%hd - IGNORE",
-                nodeid, srvid, (*p_block)->hdr.nodeid, (*p_block)->hdr.srvid);
-
-            NDRX_FREE((char *)*p_block);
-            *p_block = NULL;
-            NDRX_FCLOSE(f);
-            goto out;
-        }
-
-        NDRX_DUMP(log_debug, "Got command block", *p_block, read);
-
-        /* if it is message, the re-alloc  */
-        if (TMQ_STORCMD_NEWMSG==(*p_block)->hdr.command_code)
-        {
-            int bytes_extra;
-            int bytes_to_read;
-            if (NULL==((*p_block) = NDRX_REALLOC((*p_block), sizeof(tmq_msg_t) + (*p_block)->msg.len)))
+            if (EXFAIL==read_tx_block(f, 
+                    (*p_block)->msg.msg+bytes_extra, 
+                    bytes_to_read, filename, "tmq_storage_get_blocks 2", &err, &tmq_err))
             {
-                NDRX_LOG(log_error, "Failed to alloc [%d]: %s", 
-                    (sizeof(tmq_msg_t) + (*p_block)->msg.len), strerror(errno));
+                NDRX_LOG(log_error, "ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
+                    filename, bytes_to_read, strerror(err));
+
+                userlog("ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
+                        filename, bytes_to_read, strerror(err));
+                                /* skip & continue with next */
                 EXFAIL_OUT(ret);
             }
-            /* Read some more */
-            /* Bug #178
-             * Under raspberry-pi looks like msg.msg is closer to the start than
-             * whole message, and problem is that two bytes gets lost or over
-             * written. Thus needs some kind of correction - advance the
-             * pointer to msg over the extra bytes we have read.
-             * Also needs correction against size to read.
-             * This assumes that "tmq_msg_t" is largest structure...
-             */
-            bytes_extra = sizeof(**p_block)-EXOFFSET(tmq_msg_t, msg);
-            bytes_to_read = (*p_block)->msg.len - bytes_extra;
-
-            NDRX_LOG(log_info, "bytes_extra=%d bytes_to_read=%d", 
-                    bytes_extra, bytes_to_read);
-
-            if (bytes_to_read > 0)
-            {
-                if (EXFAIL==read_tx_block(f, 
-                        (*p_block)->msg.msg+bytes_extra, 
-                        bytes_to_read, filename, "tmq_storage_get_blocks 2", &err, &tmq_err))
-                {
-                    NDRX_LOG(log_error, "ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
-                        filename, bytes_to_read, strerror(err));
-
-                    userlog("ERROR! Failed to read [%s] %d bytes: %s - cannot start, resolve manually", 
-                            filename, bytes_to_read, strerror(err));
-                                    /* skip & continue with next */
-                    NDRX_FCLOSE(f);
-                    f=NULL;
-                    NDRX_FREE((char *)(*p_block));
-                    *p_block = NULL;
-
-                    EXFAIL_OUT(ret);
-                }
-            }
-            else
-            {
-                NDRX_LOG(log_info, "Full message already read by command block!");
-            }
-
-            /* any message not committed automatically means locked */
-            if (mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED)
-            {
-                (*p_block)->msg.lockthreadid = 0;
-            }
-            else
-            {
-                /* if message is active or prepared, then message is locked */
-                (*p_block)->msg.lockthreadid = ndrx_gettid();
-            }
-
-            NDRX_DUMP(6, "Read message from disk", 
-                    (*p_block)->msg.msg, (*p_block)->msg.len);
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Full message already read by command block!");
         }
 
-        NDRX_FCLOSE(f);
-        f=NULL;
+        /* any message not committed automatically means locked */
+        if (mode & NDRX_TMQ_STORAGE_LIST_MODE_COMMITTED)
+        {
+            (*p_block)->msg.lockthreadid = 0;
+        }
+        else
+        {
+            /* if message is active or prepared, then message is locked */
+            (*p_block)->msg.lockthreadid = ndrx_gettid();
+        }
+
+        NDRX_DUMP(6, "Read message from disk", 
+                (*p_block)->msg.msg, (*p_block)->msg.len);
     }
+
+    ret=EXTRUE;
 
 out:
 
-    if ( EXSUCCEED!=ret && NULL!=*p_block)
+    if (NULL!=f)
     {
-        NDRX_FREE((char *)(*p_block));
-        *p_block=NULL;
+        NDRX_FCLOSE(f);
     }
 
     return ret;
