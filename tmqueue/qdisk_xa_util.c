@@ -356,6 +356,7 @@ exprivate void block_loader_th(void *ptr, int *p_finish_off)
         ndrx_G_p_qdisk_xa_cfg->pf_tmq_setup_cmdheader_dum(&p_block->hdr, NULL, job->nodeid, 
                 0, ndrx_G_qspace, 0);
         p_block->hdr.command_code = TMQ_STORCMD_DUM;
+        ret=EXTRUE;
     }
     else if (EXFAIL==(ret=ndrx_G_tmq_storage->pf_storage_read_block(ndrx_G_tmq_storage, 
         job->nodeid, job->srvid, job->ref, job->seqno, &p_block, job->mode)))
