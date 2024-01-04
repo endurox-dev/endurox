@@ -2508,7 +2508,7 @@ out:
  * @param argv
  * @return TRUE/FALSE
  */
-expublic int ndrx_chk_confirm(char *message, short is_confirmed)
+expublic int ndrx_chk_confirm(const char *message, short is_confirmed)
 {
     int ret=EXFALSE;
     char buffer[128];

@@ -455,7 +455,7 @@ extern NDRX_API int ndrx_str_valid_alphanumeric_(char *str, int max_len);
 extern NDRX_API int ndrx_str_ends_with(char *str, char *needle);
 extern NDRX_API long ndrx_file_age(char *fname);
 extern NDRX_API char *ndrx_file_read(char *fname, size_t *bytes_loaded);
-extern NDRX_API int ndrx_chk_confirm(char *message, short is_confirmed);
+extern NDRX_API int ndrx_chk_confirm(const char *message, short is_confirmed);
 
 extern NDRX_API void ndrx_stdcfgstr_free(ndrx_stdcfgstr_t* stdcfg);
 extern NDRX_API int ndrx_stdcfgstr_parse(const char *input, ndrx_stdcfgstr_t** parsed);
