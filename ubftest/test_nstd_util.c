@@ -658,7 +658,7 @@ Ensure(test_nstd_file_lock_wait)
 
     /* fork the process */
     pid = fork();
-    
+
     if (pid==0)
     {    
         /* lock the stuff */
@@ -688,6 +688,58 @@ Ensure(test_nstd_file_lock_wait)
     remove_test_temp();
 
 }
+
+/**
+ * Nstd error testing
+ */
+Ensure(test_nstd_error)
+{
+    ndrx_nstd_error_t err;
+    _Nunset_error();
+
+    /* set error ... */
+    _Nset_error_msg(NEMANDATORY, "HELLO ERROR");
+    assert_equal(Nerror, NEMANDATORY);
+    assert_not_equal(strstr(Nstrerror(Nerror), "HELLO ERROR"), NULL);
+
+    /* error does not overwrite in */
+    _Nset_error_msg(NEBUSY, "HELLO2");
+    assert_equal(Nerror, NEMANDATORY);
+    assert_not_equal(strstr(Nstrerror(Nerror), "HELLO ERROR"), NULL);
+
+    /* unset, ensure that error is kept */
+    _Nunset_error();
+    assert_equal(Nerror, NEMANDATORY);
+    assert_not_equal(strstr(Nstrerror(Nerror), "HELLO ERROR"), NULL);
+
+    /* save error. it is un-set, thus new NEBUSY applies.. */
+    ndrx_Nsave_error(&err);
+    _Nset_error_msg(NEBUSY, "HELLO3");
+    assert_equal(Nerror, NEBUSY);
+    assert_not_equal(strstr(Nstrerror(Nerror), "HELLO3"), NULL);
+
+
+    ndrx_Nrestore_error(&err);
+    assert_equal(Nerror, NEMANDATORY);
+    assert_not_equal(strstr(Nstrerror(Nerror), "HELLO ERROR"), NULL);
+
+    /* new error applies, as was unset */
+    _Nset_error_msg(NESYNC, "HELLO4");
+    assert_equal(Nerror, NESYNC);
+    assert_not_equal(strstr(Nstrerror(Nerror), "HELLO4"), NULL);
+
+    /* now saved is set */
+    ndrx_Nsave_error(&err);
+
+    /* ensure that set flag (clear not set) keeps with restore: */
+    _Nunset_error();
+    ndrx_Nrestore_error(&err);
+    _Nset_error_msg(NEBUSY, "HELLO3");
+    /* org error in place, as was not unset: */
+    assert_equal(Nerror, NESYNC);
+    assert_not_equal(strstr(Nstrerror(Nerror), "HELLO4"), NULL);
+
+}
     
 /**
  * Standard library tests
@@ -712,6 +764,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_file_handling);
     add_test(suite, test_nstd_file_lock_nowait);
     add_test(suite, test_nstd_file_lock_wait);
+    add_test(suite, test_nstd_error);
 
     
     return suite;

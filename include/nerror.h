@@ -79,6 +79,17 @@ extern "C" {
    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Enduro/X Standard error handler save/restore
+ */
+typedef struct
+{
+    char nstd_error_msg_buf[MAX_ERROR_LEN+1];
+    int nstd_error;
+    int nstd_error_clear;
+} ndrx_nstd_error_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -98,6 +109,9 @@ extern NDRX_API void _Nunset_error(void);
 
 extern NDRX_API int * _Nget_Nerror_addr (void);
 extern NDRX_API int ndrx_Nerrno2nerror(int err);
+
+extern NDRX_API void ndrx_Nsave_error(ndrx_nstd_error_t *p_err);
+extern NDRX_API void ndrx_Nrestore_error(ndrx_nstd_error_t *p_err);
 
 #ifdef	__cplusplus
 }

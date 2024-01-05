@@ -387,4 +387,30 @@ expublic int ndrx_Nerrno2nerror(int err)
     return ret;
 }
 
+
+/**
+ * Save current error
+ * @param p_err
+ */
+expublic void ndrx_Nsave_error(ndrx_nstd_error_t *p_err)
+{
+    NSTD_TLS_ENTRY;
+    p_err->nstd_error = G_nstd_tls->M_nstd_error;
+    p_err->nstd_error_clear = G_nstd_tls->nstd_error_clear;
+    NDRX_STRCPY_SAFE(p_err->nstd_error_msg_buf, G_nstd_tls->M_nstd_error_msg_buf);
+}
+
+
+/**
+ * Restore current error
+ * @param p_err
+ */
+expublic void ndrx_Nrestore_error(ndrx_nstd_error_t *p_err)
+{
+    NSTD_TLS_ENTRY;
+    G_nstd_tls->M_nstd_error = p_err->nstd_error;
+    G_nstd_tls->nstd_error_clear = p_err->nstd_error_clear;
+    NDRX_STRCPY_SAFE(G_nstd_tls->M_nstd_error_msg_buf, p_err->nstd_error_msg_buf);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
