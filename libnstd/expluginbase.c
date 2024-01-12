@@ -80,7 +80,7 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
     
     /* Standard encryption encryption key function: */
     ,.p_ndrx_crypto_getkey = ndrx_crypto_getkey_std
-    ,.ndrx_crypto_getkey_provider = "built in"
+    ,.ndrx_crypto_getkey_provider = "built-in"
     
     /* UBF log print hooking */
     ,.p_ndrx_tplogprintubf_hook = NULL
@@ -88,11 +88,11 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
 
     /* TMSRV storage engine hook */
     ,.p_ndrx_tms_store = NULL
-    ,.ndrx_tms_sotre_provider = "none"
+    ,.ndrx_tms_sotre_provider = "N/A"
 
     /* TMQ storage engine */
     ,.p_ndrx_tmq_store = NULL
-    ,.ndrx_tmq_sotre_provider = "none"
+    ,.ndrx_tmq_sotre_provider = "N/A"
     };
 
 /*---------------------------Statics------------------------------------*/

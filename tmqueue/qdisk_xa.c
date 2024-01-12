@@ -261,9 +261,9 @@ exprivate int configure_storage_engine(void)
 {
     int ret = EXSUCCEED;
 
-    if (NULL!=ndrx_G_plugins.p_ndrx_tms_store)
+    if (NULL!=ndrx_G_plugins.p_ndrx_tmq_store)
     {
-        ndrx_G_tmq_storage = ndrx_G_plugins.p_ndrx_tms_store;
+        ndrx_G_tmq_storage = ndrx_G_plugins.p_ndrx_tmq_store;
     }
 
     if (0!=strncmp(ndrx_G_tmq_storage->magic, NDRX_TMQ_STOREIF_MAGIC, NDRX_TMQ_STOREIF_MAGIC_LEN))

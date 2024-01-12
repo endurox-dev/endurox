@@ -48,7 +48,6 @@
 #define NDRX_PLUGIN_FUNC_ENCKEY                     0x00000001
 #define NDRX_PLUGIN_FUNC_TPLOGPRINTUBF_HOOK         0x00000002
 
-
 /* symbols: */
 #define NDRX_PLUGIN_INIT_SYMB                   "ndrx_plugin_init"
 
@@ -57,6 +56,7 @@
 
 /** Load hooking functionality expoed */
 #define NDRX_PLUGIN_TPLOGPRINTUBF_HOOK_SYMB     "ndrx_plugin_tplogprintubf_hook"
+
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 

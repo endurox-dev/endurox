@@ -316,6 +316,9 @@ struct atmi_xa_log
     
     char fname[PATH_MAX+1];    /**< Full file name of the transaction log file */
     FILE *f; /* the transaction file descriptor (where stuff is logged) */
+    void *handle1; /**< custom handle 1     */
+    void *handle2; /**< custom handle 2     */
+    void *handle3; /**< custom handle 3     */
     
     /* background processing: */
     long trycount;              /**< Number of attempts */
