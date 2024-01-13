@@ -740,7 +740,21 @@ Ensure(test_nstd_error)
     assert_not_equal(strstr(Nstrerror(Nerror), "HELLO4"), NULL);
 
 }
-    
+
+/**
+ * test of ndrx_get_strtstamp_from_sec + ndrx_parse_strtstamp_to_sec
+ */
+Ensure(test_nstd_strtstamp)
+{
+    /* 1673597273 */
+    assert_string_equal(ndrx_get_strtstamp_from_sec(0, 1673644073), "2023-01-13 21:07:53");
+    assert_equal(ndrx_parse_strtstamp_to_sec("2023-01-13 21:07:53"), 1673644073);
+
+    /* 1705104000 */
+    assert_string_equal(ndrx_get_strtstamp_from_sec(0, 1705104000), "2024-01-13 00:00:00");
+    assert_equal(ndrx_parse_strtstamp_to_sec("2024-01-13 00:00:00"), 1705104000);
+}
+
 /**
  * Standard library tests
  * @return
@@ -765,8 +779,8 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_file_lock_nowait);
     add_test(suite, test_nstd_file_lock_wait);
     add_test(suite, test_nstd_error);
+    add_test(suite, test_nstd_strtstamp);
 
-    
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

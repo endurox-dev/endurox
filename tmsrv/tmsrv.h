@@ -85,8 +85,10 @@ typedef struct
     int ping_mode_jointran; /**< PING with join non existent transaction      */
     threadpool thpool;
     
-    int housekeeptime;        /**< Number of seconds for corrupted log cleanup*/
-    long vnodeid;            /**< Node id, command id used for failovers      */
+    int housekeeptime;     /**< Number of seconds for corrupted log cleanup  */
+
+    long vnodeid;          /**< Node id, command id used for failovers       */
+    int srv_id;            /**< server id, used by plugins                   */
 
     int chkdisk_time;     /**< Check against duplicate process runs, sec      */
 
@@ -136,6 +138,7 @@ struct ndrx_tms_storage
     void *custom_block2; /**< custom data storage, used by switch  */
     void *custom_block3; /**< custom data storage, used by switch  */
     void *custom_block4; /**< custom data storage, used by switch  */
+    tmsrv_cfg_t *p_tmsrv_cfg; /**< maybe used to cache config by drv */
 
     /** init interface 
      * @param sw storage interface

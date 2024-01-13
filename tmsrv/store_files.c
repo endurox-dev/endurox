@@ -104,6 +104,7 @@ expublic ndrx_tms_storage_t ndrx_G_tms_store_files =
     ,.custom_block2=NULL
     ,.custom_block3=NULL
     ,.custom_block4=NULL
+    ,.p_tmsrv_cfg = NULL
     ,.pf_storage_init = ndrx_tms_file_storage_init
     ,.pf_storage_uninit = ndrx_tms_file_storage_uninit
     ,.pf_storage_open = ndrx_tms_file_storage_open

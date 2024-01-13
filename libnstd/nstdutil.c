@@ -253,6 +253,40 @@ expublic char * ndrx_get_strtstamp_from_sec(int slot, long ts)
     return G_nstd_tls->util_buf2[slot];
 }
 
+
+/**
+ * Convert date string YYYY-MM-DD HH:MI:SS to epoch timestamp
+ * @param date_str date string
+ * @return epoch time stamp
+ */
+expublic long ndrx_parse_strtstamp_to_sec(const char *date_str)
+{
+    long ret = EXFAIL;
+    struct tm utc;
+    time_t t;
+
+    /* Parse the date string */
+    if (strptime(date_str, "%Y-%m-%d %H:%M:%S", &utc) == NULL)
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to parse date with strptime() [%s]: %s",
+                date_str, strerror(errno));
+        goto out;
+    }
+
+    t = timegm(&utc);
+
+    if (t == -1)
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to timegm() of [%s]: %s",
+                date_str, strerror(errno));
+        return -1;
+    }
+
+out:
+    return (long)t;
+}
+
+
 /**
  * Get tick count in one second for current platform
  * @return 
