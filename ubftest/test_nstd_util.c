@@ -746,6 +746,7 @@ Ensure(test_nstd_error)
  */
 Ensure(test_nstd_strtstamp)
 {
+    time_t t;
     /* 1673597273 */
     assert_string_equal(ndrx_get_strtstamp_from_sec(0, 1673644073), "2023-01-13 21:07:53");
     assert_equal(ndrx_parse_strtstamp_to_sec("2023-01-13 21:07:53"), 1673644073);
@@ -753,6 +754,11 @@ Ensure(test_nstd_strtstamp)
     /* 1705104000 */
     assert_string_equal(ndrx_get_strtstamp_from_sec(0, 1705104000), "2024-01-13 00:00:00");
     assert_equal(ndrx_parse_strtstamp_to_sec("2024-01-13 00:00:00"), 1705104000);
+
+    /* validate on current date, how about Year 2038 problem ?*/
+    t = time(NULL);
+    assert_equal(ndrx_parse_strtstamp_to_sec(ndrx_get_strtstamp_from_sec(0, t)), t);
+
 }
 
 /**
