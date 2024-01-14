@@ -76,9 +76,9 @@ macro(ex_comp_settings)
     endif()
 
     # set O flag common for all compilers:
-    # was FORCE for both, why?
-    SET ( CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}" CACHE STRING "compile flags")
-    SET ( CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags")
+    # FORCE, why?
+    SET ( CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}" CACHE STRING "compile flags" FORCE)
+    SET ( CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags" FORCE)
 
     # GNU like compiler configuration
     if ( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang" )
