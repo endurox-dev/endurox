@@ -538,7 +538,7 @@ expublic ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str,
     {
         if (EXSUCCEED!=ndrx_setup_queue_attrs(reply_q_attr, q_descr, q_str, flags))
         {
-            NDRX_LOG(log_error, "%s: Failed to setup queue attribs, flags=%ld", flags);
+            NDRX_LOG(log_error, "%s: Failed to setup queue attribs, flags=%ld", __func__, flags);
             EXFAIL_OUT(ret);
         }
     }
