@@ -76,6 +76,7 @@ macro(ex_comp_settings)
     endif()
 
     # set O flag common for all compilers:
+    # FORCE, why?
     SET ( CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}" CACHE STRING "compile flags" FORCE)
     SET ( CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags" FORCE)
 

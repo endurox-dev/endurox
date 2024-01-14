@@ -338,6 +338,7 @@ extern NDRX_API long ndrx_ceil(long x, long y);
 extern NDRX_API unsigned long long ndrx_utc_tstamp(void);
 extern NDRX_API unsigned long long ndrx_utc_tstamp_micro(void);
 extern NDRX_API char * ndrx_get_strtstamp_from_sec(int slot, long ts);
+extern NDRX_API long ndrx_parse_strtstamp_to_sec(const char *date_str);
 extern NDRX_API unsigned long long ndrx_get_micro_resolution_for_sec(void);
 extern NDRX_API char * ndrx_str_env_subs(char * str);
 extern NDRX_API char * ndrx_str_env_subs_len(char * str, int buf_size);
