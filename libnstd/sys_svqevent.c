@@ -131,7 +131,10 @@ typedef struct
 exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=EXFAIL, 
                                     .evpipe[1]=EXFAIL,
                                     .fdtab = NULL,
-                                    .fdtabmo = NULL};
+                                    .fdtabmo = NULL,
+                                    /* ensure that init clears these: */ 
+                                    .mqdhash = 0x0019,
+                                    .fdhash = 0x0017};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
