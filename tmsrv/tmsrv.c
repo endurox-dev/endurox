@@ -478,7 +478,7 @@ int tpsvrinit(int argc, char **argv)
     G_tmsrv_cfg.ping_mode_jointran = EXTRUE;
     G_tmsrv_cfg.housekeeptime = TMSRV_HOUSEKEEP_DEFAULT;
     G_tmsrv_cfg.vnodeid=tpgetnodeid();
-    G_tmsrv_cfg.srv_id=tpgetnodeid();
+    G_tmsrv_cfg.srv_id=tpgetsrvid();
     G_tmsrv_cfg.logparse_attempts=LOGPARSE_ATTEMPTS_DFLT;
     
     /* Parse command line  */
