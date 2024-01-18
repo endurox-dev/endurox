@@ -71,11 +71,6 @@
 /*---------------------------Macros-------------------------------------*/
 #define LOG_MAX         1024
 
-#define LOG_COMMAND_STAGE           'S' /**< Identify stage of txn           */
-#define LOG_COMMAND_I               'I' /**< Info about txn                  */
-#define LOG_COMMAND_J               'J' /**< Version 2 format with checksums */
-#define LOG_COMMAND_RMSTAT          'R' /**< Log the RM status               */
-
 #define LOG_VERSION_1                1   /**< Initial version                  */
 #define LOG_VERSION_2                2   /**< Version 1, contains crc32 checks */
 

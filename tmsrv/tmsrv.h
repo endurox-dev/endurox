@@ -62,6 +62,11 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 
 /** Switch version. Must match TMS */
 #define NDRX_TMS_STOREIF_VERSION             1
+
+#define LOG_COMMAND_STAGE           'S' /**< Identify stage of txn           */
+#define LOG_COMMAND_I               'I' /**< Info about txn                  */
+#define LOG_COMMAND_J               'J' /**< Version 2 format with checksums */
+#define LOG_COMMAND_RMSTAT          'R' /**< Log the RM status               */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
