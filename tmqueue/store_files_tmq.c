@@ -1558,6 +1558,15 @@ exprivate int read_tx_block(FILE *f, char *block, int len, char *fname,
                     len = sizeof(tmq_msg_unl_t) - sizeof(tmq_cmdheader_t);
                 }
                 break;
+            case TMQ_STORCMD_DUM:
+
+                NDRX_LOG(log_debug, "Command: dummy message");
+
+                if (len > sizeof(tmq_cmdheader_t))
+                {
+                    len = sizeof(tmq_msg_dum_t) - sizeof(tmq_cmdheader_t);
+                }
+                break;
             default:
                 NDRX_LOG(log_error, "ERROR! file [%s] invalid command code [%x]", 
                     fname, (unsigned int)p_hdr->command_code);
