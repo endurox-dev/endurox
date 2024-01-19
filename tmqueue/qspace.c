@@ -261,7 +261,8 @@ expublic int tmq_dum_add(char *tmxid)
      * Note that we might not be in transaction mode, in case if
      * doing prepare and we find that there is nothing to prepare.
      */
-    tmq_setup_cmdheader_dum(&dum.hdr, NULL, G_tmqueue_cfg.vnodeid, 0, ndrx_G_qspace, 0);
+    tmq_setup_cmdheader_dum(&dum.hdr, NULL, G_tmqueue_cfg.vnodeid,
+        tpgetsrvid(), ndrx_G_qspace, 0);
     dum.hdr.command_code = TMQ_STORCMD_DUM;
     
     /* this adds transaction to log: */

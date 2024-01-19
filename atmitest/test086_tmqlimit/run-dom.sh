@@ -164,6 +164,38 @@ xadmin ppm
 clean_logs;
 rm ULOG*
 
+if [[ "${NDRX_XA_DRIVERLIB_FILENAME}" == "libndrxxaqdisks"* ]]; then
+
+################################################################################
+echo "Empty prep Q restart - completes OK (static only)"
+################################################################################
+
+    xadmin stop -y
+    xadmin start -y
+    xadmin lcf
+
+    # slow respawn pls, so that tmq gets time to reboot and see the dummy files..
+    xadmin appconfig restart_min 10
+
+    (./atmiclt86 emptyq_commit_crash 2>&1) >> ./atmiclt-dom1.log
+    RET=$?
+    if [[ "X$RET" != "X0" ]]; then
+        echo "emptyq_commit_restart failed"
+        go_out $RET
+    fi
+
+    # prep Q folder must be empty...
+
+    ls -l ./QSPACE1/prepared
+
+    CNT=`ls -1 ./QSPACE1/prepared | wc | awk '{print $1}'`
+
+    if [ "X$CNT" != "X0" ]; then
+        echo "emptyq_commit_restart - empty transactions are not completed"
+        go_out -1
+    fi
+
+fi
 
 ################################################################################
 echo "Transaction timeouts"
