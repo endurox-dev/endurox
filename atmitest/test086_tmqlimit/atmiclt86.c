@@ -71,6 +71,7 @@ exprivate int basic_fwdcrash(int maxmsg);
 exprivate int basic_autoperf(int maxmsg);
 exprivate int basic_txtout(int maxmsg);
 exprivate int basic_seqvalid(int maxmsg);
+exprivate int basic_emptyq_commit_crash(int maxmsg);
 
 extern int basic_abort_rules(int maxmsg);
 extern int basic_errorq(void);
@@ -167,6 +168,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "txtout"))
     {
         return basic_txtout(1);
+    }
+    else if (0==strcmp(argv[1], "emptyq_commit_crash"))
+    {
+        return basic_emptyq_commit_crash(1);
     }
     else if (0==strcmp(argv[1], "seqvalid"))
     {
@@ -2042,7 +2047,8 @@ exprivate int basic_commit_crash(int maxmsg)
     
     if (tperrno!=TPETIME)
     {
-        NDRX_LOG(log_error, "TESTERROR: expected TPETIME got %d", tperrno);
+        NDRX_LOG(log_error, "TESTERROR: expected TPETIME got %d: %s",
+            tperrno, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
@@ -2202,6 +2208,80 @@ out:
     return ret;
 }
 
+/**
+ * Ensure that empty commits at Q can be restared, if they are prepared.
+ * Rollback actually will happen, as tcrash would corrupt the "committing" stage entry
+ * however, after that, there shall be no prepared transactions on the disk
+ * in Q space (i.e. dummy record is rolled back).
+ */
+exprivate int basic_emptyq_commit_crash(int maxmsg)
+{
+
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    int i;
+
+    /* configure short timeout ... */
+    if (EXSUCCEED!=tptoutset(1))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tptoutset failed: %s",
+            tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    for (i=0; i<maxmsg; i++)
+    {
+
+        if (EXSUCCEED!=tpbegin(60, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to begin");
+            EXFAIL_OUT(ret);
+        }
+
+        /*
+         * commit will fail. till the respawn happens, then tmqueue shall be reloaded
+         * external script will verify that no prepared messages are on the disk after the test.
+         */
+        if (EXSUCCEED!=system("xadmin lcf tcrash -A 50 -a"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to enable commit crash");
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED==tpcommit(0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpcommit must fail");
+            EXFAIL_OUT(ret);
+        }
+
+        if (TPETIME!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpcommit expected TPETIME got %d", tperrno);
+            EXFAIL_OUT(ret);
+        }
+
+        /* this shall cleanup empty commits... */
+        if (EXSUCCEED!=system("xadmin sreload tmqueue"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to stop tmqueue");
+            EXFAIL_OUT(ret);
+        }
+
+        /* wait for respawn ... */
+        sleep(15);
+
+    }
+
+    if (EXSUCCEED!=system("xadmin lcf tcrash -A 0 -a"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to disable commit crash");
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    tpterm();
+    return ret;
+}
 
 /**
  * Transaction forward crashes. Also ensure that tmsrv instance does not boot
