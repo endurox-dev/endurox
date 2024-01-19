@@ -68,7 +68,7 @@
 exprivate int ndrx_view_invoke(char *sourcecode, char *ofile)
 {
     int ret = EXSUCCEED;
-    char build_cmd[PATH_MAX+1];
+    char build_cmd[NDRX_BPATH_MAX+1];
     
     
     snprintf(build_cmd, sizeof(build_cmd), "%s -f %s -o %s", 
@@ -109,8 +109,8 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename,
 {
     int ret = EXSUCCEED;
     FILE *f = NULL;
-    char cfile[PATH_MAX+1];
-    char ofile[PATH_MAX+1];
+    char cfile[NDRX_BPATH_MAX+1];
+    char ofile[NDRX_BPATH_MAX+1];
     ndrx_typedview_t * views = ndrx_view_get_handle();
     ndrx_typedview_t * vel, *velt;
     ndrx_typedview_field_t * fld;

@@ -42,7 +42,6 @@
 #define COMPILE_SRV             1       /**< Building the server process    */
 #define COMPILE_CLT             2       /**< Building client process        */
 #define COMPILE_TMS             3       /**< Building transaction manager   */
-#define NDRX_BPATH_MAX		5120    /**< seems org PATH_MAX might be too short */
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 /**
