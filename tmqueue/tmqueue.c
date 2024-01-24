@@ -645,6 +645,10 @@ int tpsvrinit(int argc, char **argv)
      */
     G_tmqueue_cfg.ses_timeout=EXFAIL;
     G_tmqueue_cfg.vnodeid=tpgetnodeid();
+
+    /* copy for xa driver access: */
+    ndrx_G_qdisk_xa_cfg.vnodeid=tpgetnodeid();
+    ndrx_G_qdisk_xa_cfg.srv_id=tpgetsrvid();
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "q:m:s:p:t:f:l:u:c:T:Nn:X:")) != -1)

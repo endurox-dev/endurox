@@ -240,6 +240,12 @@ typedef struct
      */
     char data_folder[PATH_MAX+1]; /**< Where to store the q data         */
     int loaderpoolsize;           /**< Loader pool size                  */
+    
+    long vnodeid;          /**< Node id, command id used for failovers   */
+    int srv_id;            /**< server id, used by plugins               */
+    /* rmid: G_atmi_tls->qdisk_rmid
+       qspace: ndrx_G_qspace
+    */
 
 } ndrx_tmq_qdisk_xa_cfg_t;
 
