@@ -648,7 +648,7 @@ int tpsvrinit(int argc, char **argv)
 
     /* copy for xa driver access: */
     ndrx_G_qdisk_xa_cfg.vnodeid=tpgetnodeid();
-    ndrx_G_qdisk_xa_cfg.srv_id=tpgetsrvid();
+    ndrx_G_qdisk_xa_cfg.srvid=tpgetsrvid();
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "q:m:s:p:t:f:l:u:c:T:Nn:X:")) != -1)
