@@ -403,7 +403,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                     ret = ndrx_G_tmq_storage->pf_storage_init(ndrx_G_tmq_storage, 
                         ndrx_G_p_qdisk_xa_cfg);
                         
-                    if (EXSUCCEED!=ret)
+                    if (XA_OK!=ret)
                     {
                         NDRX_LOG(log_error, "Failed to prepare data directory [%s]", val);
                         UNLOCK_OUT;

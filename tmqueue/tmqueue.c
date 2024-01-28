@@ -974,9 +974,10 @@ void tpsvrdone(void)
     }
 
     /* shutdown monitor threads... */
-    
     tpclose();
     
+    /* shutdown the store */
+    ndrx_G_tmq_storage->ndrx_tmq_sql_storage_uninit();
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
