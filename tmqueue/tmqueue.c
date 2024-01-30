@@ -62,6 +62,7 @@
 #include <thlock.h>
 #include "qtran.h"
 #include "../libatmisrv/srv_int.h"
+#include "qdisk_xa.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -977,7 +978,7 @@ void tpsvrdone(void)
     tpclose();
     
     /* shutdown the store */
-    ndrx_G_tmq_storage->ndrx_tmq_sql_storage_uninit();
+    ndrx_G_tmq_storage->pf_storage_uninit(ndrx_G_tmq_storage);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
