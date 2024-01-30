@@ -57,7 +57,7 @@
 /**
  * API version of USERLOG
  */
-expublic int userlog (char *data, ...)
+expublic int userlog (const char *data, ...)
 {
     int ret=EXSUCCEED;
     /* TODO: Might need semaphore for first init... */
