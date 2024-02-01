@@ -62,6 +62,7 @@
 #include <thlock.h>
 #include "qtran.h"
 #include "../libatmisrv/srv_int.h"
+#include "qdisk_xa.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -645,6 +646,10 @@ int tpsvrinit(int argc, char **argv)
      */
     G_tmqueue_cfg.ses_timeout=EXFAIL;
     G_tmqueue_cfg.vnodeid=tpgetnodeid();
+
+    /* copy for xa driver access: */
+    ndrx_G_qdisk_xa_cfg.vnodeid=tpgetnodeid();
+    ndrx_G_qdisk_xa_cfg.srvid=tpgetsrvid();
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "q:m:s:p:t:f:l:u:c:T:Nn:X:")) != -1)
@@ -970,9 +975,10 @@ void tpsvrdone(void)
     }
 
     /* shutdown monitor threads... */
-    
     tpclose();
     
+    /* shutdown the store */
+    ndrx_G_tmq_storage->pf_storage_uninit(ndrx_G_tmq_storage);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

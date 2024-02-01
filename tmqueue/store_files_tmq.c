@@ -516,7 +516,6 @@ exprivate int ndrx_tmq_file_storage_read_block(ndrx_tmq_storage_t *sw,
     int state;
     char *filename = mode_to_filename(sw, ref, seqno, mode);
    
-
     if (ndrx_G_systest_lockloss || NULL==(f=NDRX_FOPEN(filename, "rb")))
     {
         err = errno;

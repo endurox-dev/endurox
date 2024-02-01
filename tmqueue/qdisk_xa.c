@@ -106,7 +106,7 @@ expublic char ndrx_G_qspacesvc[XATMI_SERVICE_NAME_LENGTH+1];/**< real service na
 
 /* default storage engine: */
 expublic ndrx_tmq_storage_t *ndrx_G_tmq_storage = &ndrx_G_tmq_store_files;
-expublic ndrx_tmq_qdisk_xa_cfg_t *ndrx_G_p_qdisk_xa_cfg;
+expublic ndrx_tmq_qdisk_xa_cfg_t *ndrx_G_p_qdisk_xa_cfg=NULL;
 /*---------------------------Statics------------------------------------*/
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
@@ -403,7 +403,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
                     ret = ndrx_G_tmq_storage->pf_storage_init(ndrx_G_tmq_storage, 
                         ndrx_G_p_qdisk_xa_cfg);
                         
-                    if (EXSUCCEED!=ret)
+                    if (XA_OK!=ret)
                     {
                         NDRX_LOG(log_error, "Failed to prepare data directory [%s]", val);
                         UNLOCK_OUT;

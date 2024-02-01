@@ -2,6 +2,10 @@
  * @brief NDR Debug library routines
  *   Enduro Execution system platform library
  *   TODO: We might want to switch the tplogconfig() to rwlocks
+ *   WARNING ! API Promise: Nerrwillor state will not change after LOG / DUMP function
+ *   execution (so that we can log & trace the errors standard library
+ *   without any interferences). If using any new function during the loggin
+ *   ensure that Nerror is not processed by it, or error is saved/restored.
  *   
  * @file ndebug.c
  */
@@ -311,6 +315,7 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
     static __thread int recursive = EXFALSE;
     long flags = 0;
     char new_file[PATH_MAX];
+    ndrx_nstd_error_t nerr;
     /* If tls is enabled and we run threaded modes */
     if (NULL!=G_nstd_tls && !recursive)
     {
@@ -340,13 +345,15 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
             G_nstd_tls->M_threadnr_logopen = G_nstd_tls->M_threadnr;
             
             recursive = EXTRUE; /* forbid recursive function call.. when doing some logging... */
-            
+
+            ndrx_Nsave_error(&nerr);
             if (EXFAIL==tplogconfig(flags, 
                     dbg_ptr->level, NULL, dbg_ptr->module, new_file))
             {
                 userlog("Failed to configure thread based logger for thread %d file %s: %s",
                         G_nstd_tls->M_threadnr, new_file, Nstrerror(Nerror));
             }
+            ndrx_Nrestore_error(&nerr);
             
             recursive = EXFALSE; /* forbid recursive function call.. when doing some logging... */
             
@@ -1023,7 +1030,9 @@ expublic void ndrx_init_debug(void)
     int do_reply=EXFALSE;
     int did_match = EXFALSE; /**< do we have exact binary name match? */
     char *svname = getenv(CONF_NDRX_SVPROCNAME);
-    
+    ndrx_nstd_error_t nerr;
+
+    ndrx_Nsave_error(&nerr);
     ndrx_dbg_intlock_set();
     
     /*
@@ -1291,6 +1300,9 @@ expublic void ndrx_init_debug(void)
         /* ndrx_init_fail_banner(); this termiantes the binary */
         NDRX_LOG(log_warn, "LCF startup failed -> LCF commands will not be processed");
     }
+
+    /* restore current nerror */
+    ndrx_Nrestore_error(&nerr);
     
 }
 
