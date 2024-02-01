@@ -525,7 +525,22 @@ expublic int ndrx_lcf_run(void)
     long cmdage;
     ndrx_lcf_reg_funch_t* cbfunc;
     ndrx_lcf_command_t cmd_tmp;
-    
+    static __thread volatile int into_func = EXFALSE;
+    ndrx_nstd_error_t nerr;
+
+    /* as lcf run may do logging inside
+     * and shortly after the ndrx_G_shmcfgver_chk the version
+     * might be changed again, avoid recursive execution
+     */
+    if (!into_func)
+    {
+        into_func=EXTRUE;
+    }
+    else
+    {
+        goto out_no_lock;
+    }
+
     /* avoid run by other threads..., thus lock them, but as already
      * as possible we update the shared memory version so that threads
      * does not stuck here, but do the work instead
@@ -638,6 +653,8 @@ expublic int ndrx_lcf_run(void)
             
             if (apply==3)
             {
+                /* what if new command is published while printing this one ? 
+                 * deadlock might happen... */
                 NDRX_LOG(log_debug, "LCF: Slot %d changed command code %d (%s) version %u "
                         "apply: %d flags: 0x%lx age: %ld apply: %d (%s)", 
                         i, cur->command, cur->cmdstr, cur->version, apply, 
@@ -651,6 +668,12 @@ expublic int ndrx_lcf_run(void)
                 memcpy(&cmd_tmp, cur, sizeof(cmd_tmp));
                 
                 flags=0;
+
+                /* save Nerror (if any). Just to ensure that Nerror
+                 * is not changed during the run, as it cannot be handled 
+                 * anyway
+                 */
+                ndrx_Nsave_error(&nerr);
                 if (EXSUCCEED!=cbfunc->cfunc.pf_callback(&cmd_tmp, &flags))
                 {
                     NDRX_ATOMIC_ADD(&cur->failed, 1);
@@ -659,6 +682,8 @@ expublic int ndrx_lcf_run(void)
                 {
                     NDRX_ATOMIC_ADD(&cur->applied, 1);
                 }
+                /* restore error */
+                ndrx_Nrestore_error(&nerr);
                 
                 /* load the responses, if any: */
                 if (flags & NDRX_LCF_FLAG_FBACK_CODE)
@@ -693,8 +718,11 @@ out:
                             
                             
     M_startup_run=EXFALSE;
+    into_func=EXFALSE;
     
     MUTEX_UNLOCK_V(M_lcf_run);
+
+out_no_lock:
     
     return ret;
 }
