@@ -357,11 +357,13 @@ out:
     /* Close down the queue if we fail but queue was opened! */
     if (EXSUCCEED!=ret)
     {
-        if ((mqd_t)EXFAIL!=conv->my_listen_q && 
-            EXFAIL==ndrx_mq_close(conv->my_listen_q))
+        if ((mqd_t)EXFAIL!=conv->my_listen_q)
         {
-            NDRX_LOG(log_warn, "Failed to close %s:%s",
+            if (EXFAIL==ndrx_mq_close(conv->my_listen_q))
+            {
+                NDRX_LOG(log_warn, "Failed to close %s:%s",
                         conv->my_listen_q_str, strerror(errno));
+            }
             conv->my_listen_q=(mqd_t)EXFAIL;
         }
     }
