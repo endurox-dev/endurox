@@ -204,7 +204,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 	int ndrx_I5SmWDM_len = strlen(Y)+1;\
 	if (ndrx_I5SmWDM_len > (N))\
 	{\
-            ndrx_I5SmWDM_len = (N);\
+		ndrx_I5SmWDM_len = (N);\
 	}\
 	memcpy((X), (Y), ndrx_I5SmWDM_len);\
 	} while(0)
@@ -224,7 +224,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
             ndrx_I5SmWDM_len = (N);\
 	}\
         if (ndrx_I5SmWDM_len>=(S)) ndrx_I5SmWDM_len=(S)-1;\
-	memcpy((X), (Y), ndrx_I5SmWDM_len);\
+		memcpy((X), (Y), ndrx_I5SmWDM_len);\
         (X)[ndrx_I5SmWDM_len]=EXEOS;\
 	} while(0)
 

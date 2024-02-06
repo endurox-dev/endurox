@@ -388,7 +388,6 @@ struct tp_tranid_t
 };
 typedef struct tp_tranid_t TPTRANID;
 
-
 struct tpevctl_t
 {
     long flags;

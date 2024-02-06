@@ -57,8 +57,7 @@
 #include <ubf.h>
 #include <Exfields.h>
 
-#include <exnet.h>
-#include <ndrxdcmn.h>
+#include <qcommon.h>
 
 #include "tmqd.h"
 #include "../libatmisrv/srv_int.h"

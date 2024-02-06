@@ -44,6 +44,7 @@
 #include <dirent.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/time.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -53,8 +54,7 @@
 #include <ubf.h>
 #include <Exfields.h>
 #include <tperror.h>
-#include <exnet.h>
-#include <ndrxdcmn.h>
+#include <qcommon.h>
 
 #include "tmqd.h"
 #include "../libatmisrv/srv_int.h"

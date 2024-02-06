@@ -92,7 +92,7 @@ extern NDRX_API int tmq_tpqctl_to_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
 extern NDRX_API int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl);
 
 extern NDRX_API char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out);
-extern NDRX_API char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out);
+extern NDRX_API char * tmq_msgid_deserialize(const char *msgid_str_in, char *msgid_out);
 
 /* API: */
 extern NDRX_API int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 

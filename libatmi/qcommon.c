@@ -324,7 +324,7 @@ expublic char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
  * @param msgid_out
  * @return msgid_out 
  */
-expublic char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
+expublic char * tmq_msgid_deserialize(const char *msgid_str_in, char *msgid_out)
 {
     size_t tot_len = 0;
     
