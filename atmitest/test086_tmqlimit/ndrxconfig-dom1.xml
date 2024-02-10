@@ -31,7 +31,9 @@
         <respawn>1</respawn>
         <!-- The maximum time while process can hang in 'starting' state i.e.
         have not completed initialization, sec -->
-        <start_max>20</start_max>
+        <start_max>30</start_max>
+        <srvstartwait>30</srvstartwait>
+        <srvstopwait>30</srvstopwait>
         <!--
         Ping server in every X seconds (minimum step is <sanity>).
         -->
