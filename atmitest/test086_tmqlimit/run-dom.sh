@@ -814,6 +814,13 @@ fi
 echo "Cannot start as damaged prepared files... (manual resolve)"
 dd if=/dev/zero of=./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-010 count=1024 bs=1
 touch ./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011
+
+# This triggers tmqueue to reboot, as tmrecover has found orphaned transaction
+# but rollback routine will request restart, as file is on the disk
+# but message is not loaded into memory. Thus shutting down tmrecoversv
+# for proper test timing.
+# 
+xadmin stop -s tmrecoversv
 touch ./QSPACE1/prepared/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-012
 
 xadmin stop -s tmqueue
@@ -850,6 +857,7 @@ if [[ -f ./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011 ]]; then
     echo "./QSPACE1/active/YZT3oUBAwBhirg3IRi2wqkSZp6IitwEAAQAy-011 must be removed!"
     go_out -1
 fi
+xadmin start -s tmrecoversv
 
 go_out $RET
 
