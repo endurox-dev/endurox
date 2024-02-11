@@ -2787,5 +2787,14 @@ out:
     return ret;
 }
 
+/**
+ * Checks is terminal input is tty.
+ * @return TRUE (app has TTY) / FALSE (not a TTY input available)
+ */
+expublic int ndrx_is_tty(void)
+{
+    return isatty(0);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
 

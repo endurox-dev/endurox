@@ -840,15 +840,6 @@ expublic void simple_output(char *buf)
 }
 
 /**
- * Checks is terminal tty.
- * @return 
- */
-exprivate int is_tty()
-{
-    return isatty(0);
-}
-
-/**
  * Reads the command either from command line or from stdin.
  * If from stdin, then command gets splitted.
  * @return SUCCEED/FAIL
@@ -880,7 +871,7 @@ exprivate int get_cmd(int *p_have_next)
         memset(M_buffer, 0, sizeof(M_buffer));
 
         /* Welcome only if it is terminal */
-        if (is_tty())
+        if (ndrx_is_tty())
         {
             /* in this case it is interactive session 
              * also we shall save the history file
@@ -913,7 +904,7 @@ exprivate int get_cmd(int *p_have_next)
             while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
             {
                 /* if we do not have tty, then exit */
-                if (!is_tty())
+                if (!ndrx_is_tty())
                 {
                     /* do not have next */
                     *p_have_next = EXFALSE;
@@ -928,7 +919,7 @@ exprivate int get_cmd(int *p_have_next)
             M_buffer[len-1] = EXEOS;
         
         /* Allow repeated commands */
-        if (is_tty())
+        if (ndrx_is_tty())
         {
             if (EXEOS!=M_buffer_prev[0] && '/' == M_buffer[0])
             {
@@ -1280,7 +1271,7 @@ int main(int argc, char** argv) {
     signal(SIGCHLD, SIG_IGN);
     
     /* Print the copyright notice: */
-    if (is_tty())
+    if (ndrx_is_tty())
     {
         NDRX_BANNER("");
     }

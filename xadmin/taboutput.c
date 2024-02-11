@@ -79,7 +79,7 @@ expublic void ndrx_tab_init(ndrx_growlist_t *table)
  * @param str string to add
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_tab_add_col(ndrx_growlist_t *table, int col_nr, char *str)
+expublic int ndrx_tab_add_col(ndrx_growlist_t *table, int col_nr, const char *str)
 {
     ndrx_growlist_t *col_new;
     ndrx_growlist_t **col_cur;

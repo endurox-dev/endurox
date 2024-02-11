@@ -464,6 +464,7 @@ extern NDRX_API int ndrx_stdcfgstr_parse(const char *input, ndrx_stdcfgstr_t** p
 
 extern NDRX_API int ndrx_rand(void);
 extern NDRX_API void ndrx_rand_seedset(unsigned int *seed);
+extern NDRX_API int ndrx_is_tty(void);
 
 /* String handling, where macros does not work: */
 
