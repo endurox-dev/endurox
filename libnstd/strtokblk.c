@@ -51,7 +51,7 @@
  * @param input input string to process
  * @param symbs escaped symbol
  */
-expublic void ndrx_str_unescape(char *input, char *symbs)
+expublic void ndrx_str_unescape(char *input, const char *symbs)
 {
     char *p=input;
     char *output_p=input;
@@ -128,7 +128,7 @@ expublic void ndrx_str_trim_left_single(char *input, char symb)
  * @param qotesymbs list of quote symbols 
  * @return returns token or NULL
  */
-expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
+expublic char *ndrx_strtokblk ( char *input, const char *delimit, const char *qotesymbs)
 {
     /* do stuff per thread, not supported with going up to golang or java 
      * with steps
