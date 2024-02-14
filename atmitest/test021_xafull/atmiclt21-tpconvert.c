@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     NDRX_LOG(log_debug, "Testing tpconvert()");
     /***************************************************************************/
 
-    if (EXSUCCEED!=tpbegin(5, 0))
+    if (EXSUCCEED!=tpbegin(20, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
