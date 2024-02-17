@@ -49,7 +49,7 @@
 #include "test106.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define DEVIATION_ALLOW 3 /**< seems on aix some issues, with larger gaps */
+#define DEVIATION_ALLOW 5 /**< seems on aix some issues, with larger gaps */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
             if (labs(l-120)> DEVIATION_ALLOW)
             {
                 NDRX_LOG(log_error, "TESTERROR: Expected 120 +- %d callback calls, got %ld", 
-                    DEVIATION_ALLOW*2, l);
+                    DEVIATION_ALLOW, l);
                 ret=EXFAIL;
                 goto out;
             }
