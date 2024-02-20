@@ -359,9 +359,9 @@ extern NDRX_API char *ndrx_decode_num(long tt, int slot, int level, int levels);
 extern NDRX_API char *ndrx_decode_str(char *str, char *buf, int buf_sz);
 extern NDRX_API double ndrx_num_dec_parsecfg(char * str);
 extern NDRX_API double ndrx_num_time_parsecfg(char * str);
-extern NDRX_API char *ndrx_str_strip(char *haystack, char *needle);
-extern NDRX_API char* ndrx_str_rstrip(char* s, char *needle);
-extern NDRX_API char* ndrx_str_lstrip_ptr(char* s, char *needle);
+extern NDRX_API char *ndrx_str_strip(char *haystack, const char *needle);
+extern NDRX_API char* ndrx_str_rstrip(char* s, const char *needle);
+extern NDRX_API char* ndrx_str_lstrip_ptr(char* s, const char *needle);
 extern NDRX_API char *ndrx_str_fmtesc(char *dst, size_t dstsz, char *src);
 
 extern NDRX_API int ndrx_isint(char *str);
@@ -410,18 +410,14 @@ extern NDRX_API void * ndrx_nstd_tls_new(int auto_destroy, int auto_set);
 extern NDRX_API long ndrx_platf_stack_get_size(void);
 extern NDRX_API void ndrx_platf_stack_set(void *pthread_custom_attr);
 
-
 extern NDRX_API unsigned long ndrx_Crc32_ComputeBuf( unsigned long inCrc32, const void *buf,
                                        size_t bufLen );
 
-
 extern NDRX_API char *ndrx_strsep(char **s1, char *s2);
-
 
 extern NDRX_API int ndrx_args_loader_get(ndrx_args_loader_t *args, void *obj, 
         char *fldnm, char *value, int valuesz,
         char *errbuf, size_t errbufsz);
-
 
 extern NDRX_API int ndrx_args_loader_set(ndrx_args_loader_t *args, void *obj, 
         char *fldnm, char *value,
@@ -431,7 +427,6 @@ extern NDRX_API int ndrx_args_confirm(char *arg);
 
 extern NDRX_API int ndrx_file_gen_embed(char *in_fname, char *out_fname, 
         char *out_suffix);
-
 
 extern NDRX_API int ndrx_storage_decode(char *bytesenc, long *outnrbytes);
 extern NDRX_API void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz);

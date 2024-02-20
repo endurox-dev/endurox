@@ -954,7 +954,7 @@ expublic char *ndrx_decode_num(long tt, int slot, int level, int levels)
  * @param needle - chars to strip
  * @return 
  */
-expublic char *ndrx_str_strip(char *haystack, char *needle)
+expublic char *ndrx_str_strip(char *haystack, const char *needle)
 {
     char *dest;
     char *src;
@@ -993,7 +993,7 @@ expublic char *ndrx_str_strip(char *haystack, char *needle)
  * @param needle chars to search and strip off from end
  * @return same s string
  */
-expublic char* ndrx_str_rstrip(char* s, char *needle)
+expublic char* ndrx_str_rstrip(char* s, const char *needle)
 { 
     char* p = s + strlen(s);
     while (p > s)
@@ -1019,7 +1019,7 @@ expublic char* ndrx_str_rstrip(char* s, char *needle)
  * @param needle char to strip off
  * @return ptr to start non matched char
  */
-expublic char* ndrx_str_lstrip_ptr(char* s, char *needle)
+expublic char* ndrx_str_lstrip_ptr(char* s, const char *needle)
 {
     int len = strlen(s);
     int i;
