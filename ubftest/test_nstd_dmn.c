@@ -96,8 +96,10 @@ Ensure(test_nstd_dmn_1)
         ndrx_stopwatch_reset(&w);
         ret=(ndrx_longptr_t)ndrx_dmnthread_shutdown(&M_t);
         NDRX_LOG(log_debug, "Shutdown returned: %ld", ret);
-        /* check that finished in time...*/
-        assert_equal(ndrx_stopwatch_get_delta(&w)<1000, EXTRUE);
+        /* check that finished in time...
+         * + 200ms on shutdown if max sleep was performed
+         */
+        assert_equal(ndrx_stopwatch_get_delta(&w)<1200, EXTRUE);
         assert_equal(ret>1, EXTRUE);
         assert_equal(ret<5, EXTRUE);
     }
