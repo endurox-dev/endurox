@@ -166,11 +166,16 @@ expublic void ndrx_tab_print(ndrx_growlist_t *table, ndrx_growlist_t *coltypes)
     long *typ; /* have some align... */
     int first = 0;
             
+     /* empty table ... */
+    if (0>table->maxindexused)
+    {
+        goto out;
+    }
+
     while (1)
     {
         for (col=0; col<=table->maxindexused; col++)
         {
-            
             col_cur = (ndrx_growlist_t **)(table->mem + sizeof(ndrx_growlist_t *)*col);
             typ=(long *)(coltypes->mem + sizeof(long)*col);
             if (row > (*col_cur)->maxindexused)
