@@ -84,6 +84,7 @@ Ensure(test_nstd_dmn_1)
 {
     ndrx_stopwatch_t w;
     int i;
+    long tdiff;
     ndrx_longptr_t ret;
     
     /* do in the loop, measure that we shutdown imediatelly,
@@ -95,11 +96,12 @@ Ensure(test_nstd_dmn_1)
         sleep(3);
         ndrx_stopwatch_reset(&w);
         ret=(ndrx_longptr_t)ndrx_dmnthread_shutdown(&M_t);
-        NDRX_LOG(log_debug, "Shutdown returned: %ld", ret);
+        tdiff=ndrx_stopwatch_get_delta(&w);
+        NDRX_LOG(log_warn, "Shutdown returned: %ld (tdiff=%ld)", ret, tdiff);
         /* check that finished in time...
          * + 200ms on shutdown if max sleep was performed
          */
-        assert_equal(ndrx_stopwatch_get_delta(&w)<1200, EXTRUE);
+        assert_equal(tdiff<1200, EXTRUE);
         assert_equal(ret>1, EXTRUE);
         assert_equal(ret<5, EXTRUE);
     }
