@@ -53,19 +53,19 @@ extern "C" {
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-extern NDRX_API char * ndrx_base64_encode(unsigned char *data, size_t input_length, 
+extern NDRX_API char * ndrx_base64_encode(const unsigned char *data, size_t input_length, 
         size_t *output_length, char *encoded_data);
 
 extern NDRX_API unsigned char *ndrx_base64_decode(const char *data, size_t input_length, 
         size_t *output_length, char *decoded_data);
         
 /* Base64 encode/decode with file system valid output */
-extern NDRX_API char * ndrx_xa_base64_encode(unsigned char *data,
+extern NDRX_API char * ndrx_xa_base64_encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data);
     
-extern NDRX_API unsigned char *ndrx_xa_base64_decode(unsigned char *data,
+extern NDRX_API unsigned char *ndrx_xa_base64_decode(const unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data);

@@ -127,7 +127,7 @@ exprivate char * ndrx_b64encode(const unsigned char *data,
                     char *encoding_table);
 
 
-exprivate unsigned char *ndrx_b64decode(unsigned char *data,
+exprivate unsigned char *ndrx_b64decode(const unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
@@ -142,7 +142,7 @@ exprivate unsigned char *ndrx_b64decode(unsigned char *data,
  * @param encoded_data
  * @return 
  */
-expublic char * ndrx_xa_base64_encode(unsigned char *data,
+expublic char * ndrx_xa_base64_encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data)
@@ -159,7 +159,7 @@ expublic char * ndrx_xa_base64_encode(unsigned char *data,
  * @param decoded_data decoded output data
  * @return NULL in case of error
  */
-expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
+expublic unsigned char *ndrx_xa_base64_decode(const unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data)
@@ -178,7 +178,7 @@ expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
  * @param encoded_data
  * @return 
  */
-char * ndrx_base64_encode(unsigned char *data,
+char * ndrx_base64_encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data) 
@@ -274,7 +274,7 @@ exprivate char * ndrx_b64encode(const unsigned char *data,
  * @param output_length
  * @return 
  */
-exprivate unsigned char *ndrx_b64decode(unsigned char *data,
+exprivate unsigned char *ndrx_b64decode(const unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
@@ -335,45 +335,5 @@ exprivate unsigned char *ndrx_b64decode(unsigned char *data,
 
     return (unsigned char *)decoded_data;
 }
-
-#if 0
-/**
- * Build encoding table
- */
-exprivate char * build_decoding_table(char *encoding_table)
-{
-    int i;
-    char *ptr = NDRX_MALLOC(256);
-
-    memset(ptr, 0, 256);
-
-    for (i = 0; i < 64; i++)
-        ptr[(unsigned char) encoding_table[i]] = i;
-    
-    fprintf(stderr, "START\n");
-    for (i=0; i< 256; i++)
-    {
-        fprintf(stderr, "0x%02x, ", ptr[i]);
-
-        if (0==(i+1)%16)
-        {
-            fprintf(stderr, "\n");
-        }
-
-    }
-    fprintf(stderr, "END\n");
-    return ptr;
-}
-#endif
-
-#if 0
-/**
- * Cleanup table
- */
-exprivate void base64_cleanup(void)
-{
-    NDRX_FREE(decoding_table);
-}
-#endif
 
 /* vim: set ts=4 sw=4 et smartindent: */

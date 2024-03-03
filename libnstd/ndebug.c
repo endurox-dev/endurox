@@ -1385,7 +1385,7 @@ expublic int debug_get_tp_level(void)
  * @param len - buffer size
  */
 expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
-        long line, const char *func, const char *comment, void *ptr, void *ptr2, long len)
+        long line, const char *func, const char *comment, const void *ptr, const void *ptr2, long len)
 {
     
     int i;
@@ -1515,7 +1515,7 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
  * @param len - buffer size
  */
 expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *file, 
-        long line, const char *func, const char *comment, void *ptr, long len)
+        long line, const char *func, const char *comment, const void *ptr, long len)
 {
     int i;
     unsigned char buf[17];
