@@ -103,6 +103,18 @@ int main(int argc, char** argv) {
         
         ret = EXSUCCEED;
 
+
+        /* <Bug #827 - check TPNOREPLY|TPNOTRAN -> tpacall() shall succeed> */
+        ret=tpacall("NOTRANFAIL", (char *)p_ub, 0, TPNOREPLY|TPNOTRAN);
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpacall+TPNOREPLY|TPNOTRAN must "
+                "not fail, but got: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        /*</Bug #827>*/
+
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD COMMIT", 0L);
 
         /* Call Svc1 */
