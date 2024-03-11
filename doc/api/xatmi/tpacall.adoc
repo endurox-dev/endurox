@@ -31,7 +31,7 @@ process is in global transaction, then system will make destination process
 run in same destination process.
 
 tpacall() current does not suspend the global transaction before sending
-the data. If such logic is reuqired, the *tpsuspend(3)* shall be used
+the data. If such logic is required, the *tpsuspend(3)* shall be used
 for this purpose.
 
 *Valid flags*
@@ -51,7 +51,7 @@ return error. The error code for this situation is *TPEBLOCK*.
 This flag cannot be used in global transaction mode.
 
 *TPNOTIME* Do not use timeout setting when sending message to queue,
-process will wait indefinatelly to submit the message to blocking IPC queue.
+process will wait indefinitely to submit the message to blocking IPC queue.
 
 RETURN VALUE
 ------------
@@ -66,7 +66,7 @@ with debug info from last function call.
 
 *TPEINVAL* Invalid parameter is given to function. Either service name is 
 NULL or flags does not allow to change the value. Process is in global
-transaction and *TPNOREPLY* flag is used.
+transaction and *TPNOREPLY* flag was specified and *TPNOTRAN* flag was not specified.
 
 *TPENOENT* No service ('svc' parameter) advertised in system.
 

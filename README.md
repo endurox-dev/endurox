@@ -566,6 +566,8 @@ Feature #715
 
 - Version 7.5.38 released on 12/11/2022 (stable) Bug #794, Bug #801
 
+- Version 7.5.40 logged on 11/03/2024 (stable) Bug #827
+
 # Build configurations
 
 ## Configure make with: 
