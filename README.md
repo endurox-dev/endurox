@@ -654,7 +654,7 @@ Bug #798, Bug #738, Support #448, Bug #125, Bug #202, Bug #799, Bug #801, Suppor
 
 - Version 8.0.10 prepared on 10/08/2023 (stable) Bug #810, Bug #811, Bug #812, Feature #739
 
-- Version 8.0.12 prepared on 19/01/2024 (stable) Bug #822, Bug #824
+- Version 8.0.12 prepared on 19/01/2024 (stable) Bug #822, Bug #824, Bug #827
 
 - Version 7.5.40 logged on 11/03/2024 (stable) Bug #827
 
