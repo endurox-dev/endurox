@@ -38,7 +38,7 @@ project (ENDUROX)
 include(cmake/ex_osver.cmake)
 include(cmake/ex_comp.cmake)
 
-set(VERSION "8.0.10")
+set(VERSION "8.0.12")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
