@@ -143,7 +143,9 @@ expublic int tpacallex (char *svc, char *data,
         goto out;
     }
     
-    if (G_atmi_tls->G_atmi_xa_curtx.txinfo && (flags & TPNOREPLY))
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo && (flags & TPNOREPLY) 
+        /* Bug #827 */
+        && !(flags & TPNOTRAN))
     {
         ndrx_TPset_error_msg(TPEINVAL, "Flag TPNOREPLY is not supported in "
                 "global transaction mode");
