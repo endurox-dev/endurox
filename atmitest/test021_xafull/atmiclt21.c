@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include <atmi.h>
+#include <atmi_int.h>
 #include <ubf.h>
 #include <ndebug.h>
 #include <test.fd.h>
@@ -102,7 +103,7 @@ int main(int argc, char** argv) {
         }
         
         /* Bug #827 tpcallex check too: */
-        ret=tpacallex("RUNTX", (char *)p_ub, 0, TPNOREPLY, NULL, 0, 0, 0, 0);
+        ret=tpacallex("RUNTX", (char *)p_ub, 0, TPNOREPLY, NULL, 0, 0, 0, 0, 0, 0);
 
         if (EXSUCCEED==ret)
         {
@@ -133,7 +134,7 @@ int main(int argc, char** argv) {
         }
 
         ret=tpacallex("NOTRANFAIL", (char *)p_ub, 0, TPNOREPLY|TPNOTRAN,
-            NULL, 0, 0, 0, 0);
+            NULL, 0, 0, 0, 0, 0, 0);
         if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "TESTERROR: tpacall+TPNOREPLY|TPNOTRAN must "
