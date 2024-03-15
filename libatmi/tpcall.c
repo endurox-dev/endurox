@@ -433,7 +433,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     int tout_eff;
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_debug, "%s enter", __func__);
+    NDRX_LOG(log_debug, "%s enter data=%p", __func__, data);
     
     tout_eff = ndrx_tptoutget_eff();
     
@@ -1062,8 +1062,9 @@ out:
         NDRX_SYSBUF_FREE(pbuf);
     }
                 
-    NDRX_LOG(log_debug, "%s return %d tpurcode=%ld tperror=%d", 
-            __func__, ret, G_atmi_tls->M_svc_return_code, G_atmi_tls->M_atmi_error);
+    NDRX_LOG(log_debug, "%s return %d tpurcode=%ld tperror=%d data=%p *data=%p len=%p *len=%ld",
+            __func__, ret, G_atmi_tls->M_svc_return_code, G_atmi_tls->M_atmi_error,
+             data, *data, len, *len);
     /* mvitolin 12/12/2015 - according to spec we must return 
      * service returned return code
      * mvitolin, 18/02/2018 Really? Cannot find any references...
@@ -1099,7 +1100,7 @@ out:
  * @return
  */
 expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
-                char * *odata, long *olen, long flags,
+                char **odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
                 int user1, long user2, int user3, long user4)
 {
@@ -1116,7 +1117,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     cachectl.should_cache = EXFALSE;
     cachectl.cached_rsp = EXFALSE;
 
-        /* In case if not no tran and have global tran */
+    /* In case if not no tran and have global tran */
     if (    !(flags & TPNOTRAN) &&  G_atmi_tls->G_atmi_xa_curtx.txinfo &&
             (
                 /* if forced suspend */
@@ -1182,7 +1183,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
                         * because we do want answer back! */
     
-    /* event posting might be done with out reply... */
+    /* event posting might be done without reply... */
     if (!(flags & TPNOREPLY))
     {
         if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
@@ -1211,8 +1212,6 @@ out:
     {
         ndrx_tpcancel(cd_req);
     }
-    
-    NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
 
     /* tpcall cache implementation: add to cache if required */
     if (!(flags & TPNOCACHEADD) && cachectl.should_cache && !cachectl.cached_rsp)
@@ -1233,6 +1232,8 @@ out:
         }
     }
 
+    NDRX_LOG(log_debug, "%s: return %d cd %d odata=%p *odata=%p olen=%p *olen=%ld",
+                __func__, ret, cd_rply, odata, *odata, olen, *olen);
     return ret;
 }
 
