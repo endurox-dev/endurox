@@ -809,8 +809,8 @@ expublic int ndrx_tpgetrply (int *cd,
     ATMI_TLS_ENTRY;
     
     /* Allocate the buffer, dynamically... */
-    NDRX_LOG(log_debug, "%s enter, flags %ld cd_exp %d", __func__, 
-            flags, cd_exp);
+    NDRX_LOG(log_debug, "%s enter, flags %ld cd_exp %d data=%p *data=%p len=%p",
+             __func__, flags, cd_exp, data, *data, len);
         
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
@@ -915,10 +915,10 @@ expublic int ndrx_tpgetrply (int *cd,
             }
 
             NDRX_LOG(log_debug, "accept any: %s, cd=%d (name: [%s], my_id: [%s]) "
-			"atmi_tls=%p cmd=%hd rplybuf=%p rply_len=%zd",
-			(flags & TPGETANY)?"yes":"no", rply->cd, 
-			rply->my_id, rply->name, G_atmi_tls, rply->command_id, pbuf, 
-			rply_len);
+                "atmi_tls=%p cmd=%hd rplybuf=%p rply_len=%zd",
+                (flags & TPGETANY)?"yes":"no", rply->cd,
+                rply->my_id, rply->name, G_atmi_tls, rply->command_id, pbuf,
+                rply_len);
 
             /* if answer is not expected, then we receive again! */
             if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[rply->cd].status &&
@@ -926,7 +926,7 @@ expublic int ndrx_tpgetrply (int *cd,
                     G_atmi_tls->G_call_state[rply->cd].callseq == rply->callseq)
             {
                 /* Drop if we do not expect it!!! */
-		/* 01/11/2012 - if we have TPGETANY we ignore the cd */
+                /* 01/11/2012 - if we have TPGETANY we ignore the cd */
                 if (/*cd_exp!=FAIL*/ !(flags & TPGETANY) && rply->cd!=cd_exp)
                 {
                     
@@ -1111,8 +1111,10 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     int cache_used = EXFALSE;
     TPTRANID tranid, *p_tranid;
     
-    NDRX_LOG(log_debug, "%s: enter flags=%ld tx=%p xa_flags_sys=%ld", __func__, 
-            flags, G_atmi_tls->G_atmi_xa_curtx.txinfo, G_atmi_env.xa_flags_sys);
+    NDRX_LOG(log_debug, "%s: enter flags=%ld tx=%p xa_flags_sys=%ld "
+            "idata=%p ilen=%ld odata=%p *odata=%p olen=%p",
+            __func__, flags, G_atmi_tls->G_atmi_xa_curtx.txinfo,
+             G_atmi_env.xa_flags_sys, idata, ilen, odata, *odata, olen);
     
     cachectl.should_cache = EXFALSE;
     cachectl.cached_rsp = EXFALSE;
