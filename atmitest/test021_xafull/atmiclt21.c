@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include <atmi.h>
+#include <atmi_int.h>
 #include <ubf.h>
 #include <ndebug.h>
 #include <test.fd.h>
@@ -101,6 +102,24 @@ int main(int argc, char** argv) {
             goto out;
         }
         
+        /* Bug #827 tpcallex check too: */
+        ret=tpacallex("RUNTX", (char *)p_ub, 0, TPNOREPLY, NULL, 0, 0, 0, 0, 0, 0);
+
+        if (EXSUCCEED==ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpacallex+TPNOREPLY must fail");
+            ret=EXFAIL;
+            goto out;
+        }
+
+        if (tperrno!=TPEINVAL)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpacallex+TPNOREPLY: expected TPEINVAL got %d:%s",
+                    tperrno, tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+
         ret = EXSUCCEED;
 
 
@@ -113,6 +132,17 @@ int main(int argc, char** argv) {
             ret=EXFAIL;
             goto out;
         }
+
+        ret=tpacallex("NOTRANFAIL", (char *)p_ub, 0, TPNOREPLY|TPNOTRAN,
+            NULL, 0, 0, 0, 0, 0, 0);
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpacall+TPNOREPLY|TPNOTRAN must "
+                "not fail, but got: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+
         /*</Bug #827>*/
 
         Bchg(p_ub, T_STRING_FLD, 0, "TEST HELLO WORLD COMMIT", 0L);
