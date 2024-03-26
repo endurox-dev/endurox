@@ -433,7 +433,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     int tout_eff;
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_debug, "%s enter", __func__);
+    NDRX_LOG(log_debug, "%s enter data=%p", __func__, data);
     
     tout_eff = ndrx_tptoutget_eff();
     
@@ -809,8 +809,8 @@ expublic int ndrx_tpgetrply (int *cd,
     ATMI_TLS_ENTRY;
     
     /* Allocate the buffer, dynamically... */
-    NDRX_LOG(log_debug, "%s enter, flags %ld cd_exp %d", __func__, 
-            flags, cd_exp);
+    NDRX_LOG(log_debug, "%s enter, flags %ld cd_exp %d data=%p *data=%p len=%p",
+             __func__, flags, cd_exp, data, *data, len);
         
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
@@ -915,10 +915,10 @@ expublic int ndrx_tpgetrply (int *cd,
             }
 
             NDRX_LOG(log_debug, "accept any: %s, cd=%d (name: [%s], my_id: [%s]) "
-			"atmi_tls=%p cmd=%hd rplybuf=%p rply_len=%zd",
-			(flags & TPGETANY)?"yes":"no", rply->cd, 
-			rply->my_id, rply->name, G_atmi_tls, rply->command_id, pbuf, 
-			rply_len);
+                "atmi_tls=%p cmd=%hd rplybuf=%p rply_len=%zd",
+                (flags & TPGETANY)?"yes":"no", rply->cd,
+                rply->my_id, rply->name, G_atmi_tls, rply->command_id, pbuf,
+                rply_len);
 
             /* if answer is not expected, then we receive again! */
             if (CALL_WAITING_FOR_ANS==G_atmi_tls->G_call_state[rply->cd].status &&
@@ -926,7 +926,7 @@ expublic int ndrx_tpgetrply (int *cd,
                     G_atmi_tls->G_call_state[rply->cd].callseq == rply->callseq)
             {
                 /* Drop if we do not expect it!!! */
-		/* 01/11/2012 - if we have TPGETANY we ignore the cd */
+                /* 01/11/2012 - if we have TPGETANY we ignore the cd */
                 if (/*cd_exp!=FAIL*/ !(flags & TPGETANY) && rply->cd!=cd_exp)
                 {
                     
@@ -1062,8 +1062,9 @@ out:
         NDRX_SYSBUF_FREE(pbuf);
     }
                 
-    NDRX_LOG(log_debug, "%s return %d tpurcode=%ld tperror=%d", 
-            __func__, ret, G_atmi_tls->M_svc_return_code, G_atmi_tls->M_atmi_error);
+    NDRX_LOG(log_debug, "%s return %d tpurcode=%ld tperror=%d data=%p *data=%p len=%p *len=%ld",
+            __func__, ret, G_atmi_tls->M_svc_return_code, G_atmi_tls->M_atmi_error,
+             data, *data, len, *len);
     /* mvitolin 12/12/2015 - according to spec we must return 
      * service returned return code
      * mvitolin, 18/02/2018 Really? Cannot find any references...
@@ -1099,7 +1100,7 @@ out:
  * @return
  */
 expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
-                char * *odata, long *olen, long flags,
+                char **odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
                 int user1, long user2, int user3, long user4)
 {
@@ -1110,13 +1111,15 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     int cache_used = EXFALSE;
     TPTRANID tranid, *p_tranid;
     
-    NDRX_LOG(log_debug, "%s: enter flags=%ld tx=%p xa_flags_sys=%ld", __func__, 
-            flags, G_atmi_tls->G_atmi_xa_curtx.txinfo, G_atmi_env.xa_flags_sys);
+    NDRX_LOG(log_debug, "%s: enter flags=%ld tx=%p xa_flags_sys=%ld "
+            "idata=%p ilen=%ld odata=%p *odata=%p olen=%p",
+            __func__, flags, G_atmi_tls->G_atmi_xa_curtx.txinfo,
+             G_atmi_env.xa_flags_sys, idata, ilen, odata, *odata, olen);
     
     cachectl.should_cache = EXFALSE;
     cachectl.cached_rsp = EXFALSE;
 
-        /* In case if not no tran and have global tran */
+    /* In case if not no tran and have global tran */
     if (    !(flags & TPNOTRAN) &&  G_atmi_tls->G_atmi_xa_curtx.txinfo &&
             (
                 /* if forced suspend */
@@ -1182,7 +1185,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
                         * because we do want answer back! */
     
-    /* event posting might be done with out reply... */
+    /* event posting might be done without reply... */
     if (!(flags & TPNOREPLY))
     {
         if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
@@ -1211,8 +1214,6 @@ out:
     {
         ndrx_tpcancel(cd_req);
     }
-    
-    NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
 
     /* tpcall cache implementation: add to cache if required */
     if (!(flags & TPNOCACHEADD) && cachectl.should_cache && !cachectl.cached_rsp)
@@ -1233,6 +1234,8 @@ out:
         }
     }
 
+    NDRX_LOG(log_debug, "%s: return %d cd %d odata=%p *odata=%p olen=%p *olen=%ld",
+                __func__, ret, cd_rply, odata, *odata, olen, *olen);
     return ret;
 }
 
