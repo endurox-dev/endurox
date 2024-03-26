@@ -25,7 +25,7 @@ Call the XATMI service by given 'svc' name. The 'idata' is optional input XATMI
 buffer. If it is not a NULL, then it must be allocated with *tpcalloc()* call, 
 'ilen' is used for buffer types such *CARRAY*, where buffer length is not 
 described by type. When caller receives response, it is stored in 'odata' 
-buffer which must be also allocated by *tpcalloc()*. If the allocated buffer 
+buffer which must be NULL or allocated by *tpcalloc()*. If the allocated buffer 
 size is shorter then received one, then Enduro/X will automatically realloc the 
 buffer to new size. 'olen' is mandatory field, where the received buffer length 
 is stored. If *TPNOTRAN* is not specified and current thread is in global 

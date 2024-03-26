@@ -24,7 +24,7 @@ DESCRIPTION
 Get the response from asynchronous service call. The 'cd' is pointer to call 
 descriptor to which value might be set, in that case only matched reply is 
 returned, other messages are dropped. 'data' and 'len' are field used for 
-storing the reply messages. Fields must be allocated by *tpalloc()*. 
+storing the reply messages. 'data' must be NULL or allocated by *tpalloc(3)*. 
 In case if *TPGETANY* flag is used, then any first response which is 
 received is returned to user application. In case of error, global transaction 
 is marked for abort (if associated with current thread), except if *TPNOABORT* flag was 
