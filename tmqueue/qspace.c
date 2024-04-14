@@ -155,6 +155,8 @@ exprivate int process_block(char *tmxid, union tmq_block **p_block, int state, i
 {
     int ret = EXSUCCEED;
     
+    NDRX_LOG(log_debug, "%s: tmxid=%s state=%d", __func__, tmxid, state);
+
     /* in case if state is prepared or active -> add transaction with given
      * sequence
      */
