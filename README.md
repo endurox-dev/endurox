@@ -658,6 +658,8 @@ Bug #798, Bug #738, Support #448, Bug #125, Bug #202, Bug #799, Bug #801, Suppor
 
 - Version 7.5.40 logged on 11/03/2024 (stable) Bug #827
 
+- Version 8.5.1 logged on 18/05/2024 (development) Bug #831
+
 # Build configurations
 
 ## Configure make with: 
