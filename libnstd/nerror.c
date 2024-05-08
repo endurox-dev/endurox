@@ -98,7 +98,8 @@ struct err_msg
     {STDE(NESTATE),       "State error"}, /* 25 */
     {STDE(NEUNKNOWN),     "Unknown error occurred"}, /* 26 */
     {STDE(NESTMT),        "Statement error"}, /* 27 */
-    {STDE(NEACCESS),      "Access denied"} /* 28 */
+    {STDE(NEACCESS),      "Access denied"}, /* 28 */
+    {STDE(NECONTEXT),     "Invalid context"} /* 29 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**

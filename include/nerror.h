@@ -72,7 +72,8 @@ extern "C" {
 #define NEUNKNOWN          26 /**< Unknown error occurred */
 #define NESTMT             27 /**< Statement error */
 #define NEACCESS           28 /**< Access denied */
-#define NMAXVAL            28 /**< max error */
+#define NECONTEXT          29 /**< Invalid context */
+#define NMAXVAL            29 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 
