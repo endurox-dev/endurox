@@ -503,6 +503,10 @@ Mandatory Env. Variables
     value *1* is present in variable. Note, that during normal
     start/sreload/reload-on-change operations this flag is environment
     variable is not set.
+*NDRX_SECURE*='SECURE_LOGGING'::
+    Enable secure mode. In the current version, this affects debug logging. If set to
+    *1*, sensitive data in log files are masked with asterisks. If set to *0*,
+    no masking is applied. The default value is *1*.
 
 EXAMPLE
 -------
