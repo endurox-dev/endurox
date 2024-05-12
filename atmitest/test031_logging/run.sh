@@ -45,7 +45,6 @@ else
     cd $TESTNAME
 fi;
 
-
 . ../testenv.sh
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
@@ -112,9 +111,6 @@ xadmin killall atmisv31SECOND 2>/dev/null
 xadmin killall exbenchsv 2>/dev/null
 xadmin killall exbenchcl 2>/dev/null
 xadmin killall atmiclt31 2>/dev/null
-
-#killall atmiclt1
-
 
 # Check the log files
 if [ "X`grep 'Hello from NDRX' clt-endurox.log`" == "X" ]; then
@@ -327,11 +323,110 @@ if [[ "`./atmiclt31_cc 2>&1`" != *"This is TP_LOG 4"* ]]; then
     RET=-2
 fi
 
+################################################################################
+# NDRX_SECURE testing (logging)
+################################################################################
+
+export NDRX_DEBUG_CONF="debug.conf"
+unset NDRX_CCONFIG
+
+# secure mode
+function match_secure() {
+    echo "Testing match_secure"
+
+    if [[ "X`grep 'Masking output1\: \[\*\*\*\*\*\*\*\*\*\*\*\*\*\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output1"
+        RET=-2
+    fi
+
+    if [[ "X`grep 'Masking output2\: \[(null)\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output2"
+        RET=-2
+    fi
+
+    if [[ "X`grep 'Masking output3\: \[?\*\*\*\*?\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output3"
+        RET=-2
+    fi
+
+    if [[ "X`grep 'Masking output4\: \[?\*\*\*\*?\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output4"
+        RET=-2
+    fi
+}
+
+# non-secure mocde
+function match_non_secure() {
+    echo "Testing match_non_secure"
+
+    if [[ "X`grep 'Masking output1: \[hello masking\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output1"
+        RET=-2
+    fi
+
+    if [[ "X`grep 'Masking output2: \[(null)\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output2"
+        RET=-2
+    fi
+
+    if [[ "X`grep 'Masking output3: \[invalid slot 1\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output3"
+        RET=-2
+    fi
+
+    if [[ "X`grep 'Masking output4: \[invalid slot 2\]' ./atmiclt31_masking.log`" == "X" ]]; then
+        echo "Missing masking output4"
+        RET=-2
+    fi
+}
+
+################################################################################
+# default is secure
+################################################################################
+./atmiclt31_masking
+
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "atmiclt31_masking 1 failed"
+    RET=$XRET
+fi
+
+match_secure;
+
+################################################################################
+# with disabled secure logging
+################################################################################
+export NDRX_SECURE=0
+./atmiclt31_masking
+
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "atmiclt31_masking 2 failed"
+    RET=$XRET
+fi
+
+match_non_secure;
+
+################################################################################
+# with enabled secure logging
+################################################################################
+export NDRX_SECURE=1
+./atmiclt31_masking
+
+XRET=$?
+if [ "X$XRET" != "X0" ]; then
+    echo "atmiclt31_masking 1 failed"
+    RET=$XRET
+fi
+match_secure;
+
+
 xadmin killall atmisv31FIRST 2>/dev/null
 xadmin killall atmisv31SECOND 2>/dev/null
 xadmin killall exbenchsv 2>/dev/null
 xadmin killall exbenchcl 2>/dev/null
 xadmin killall atmiclt31 2>/dev/null
+xadmin killall atmiclt31_masking 2>/dev/null
 
 popd 2>/dev/null
 

@@ -254,7 +254,16 @@ expublic int ndrx_lcf_init(void)
     ndrx_lcf_reg_func_t creg;
     
     memset(&ndrx_G_libnstd_cfg, 0, sizeof(ndrx_G_libnstd_cfg));
+
+    /* default is secure logging */
+    ndrx_G_libnstd_cfg.secure_mode=EXTRUE;
     
+    tmp = getenv(CONF_NDRX_SECURE);
+    if (NULL!=tmp)
+    {
+        ndrx_G_libnstd_cfg.secure_mode = atol(tmp);
+    }
+
     tmp = getenv(CONF_NDRX_LCFNORUN);
     
     if (NULL!=tmp && (tmp[0]=='y' || tmp[0]=='Y'))
@@ -265,7 +274,6 @@ expublic int ndrx_lcf_init(void)
     {
         ndrx_G_libnstd_cfg.lcf_norun=EXFALSE;
     }
-    
     
    /* Load some minimum env for shared mem processing */
     ndrx_G_libnstd_cfg.qprefix = getenv(CONF_NDRX_QPREFIX);

@@ -63,19 +63,20 @@ extern "C" {
  */
 typedef struct
 {
-    char *qprefix;      /**< Queue prefix used by mappings  */
-    long queuesmax;     /**< Max number of queues           */
+    char *qprefix;      /**< Queue prefix used by mappings        */
+    long queuesmax;     /**< Max number of queues                 */
 
-    int  pgmax;         /**< Max number of singleton-groups */
+    int  pgmax;         /**< Max number of singleton-groups       */
     int  sgrefreshmax;  /**< Expected maximums singleton-group refresh time */
 
-    int  svqreadersmax;    /**< Max number of concurrent lckrds*/
-    int  lcfreadersmax; /**< Max number of concurrent lckrds*/
+    int  svqreadersmax;    /**< Max number of concurrent lckrds   */
+    int  lcfreadersmax; /**< Max number of concurrent lckrdsi     */
     
-    int  lcfmax;        /**< Max number of LCF commands     */
-    key_t ipckey;       /**< Semphoare key                  */
-    int  startcmdexp;   /**< Startup command delay          */
-    int lcf_norun;      /**< LCF is disabled                */
+    int  lcfmax;        /**< Max number of LCF commands           */
+    key_t ipckey;       /**< Semphoare key                        */
+    int  startcmdexp;   /**< Startup command delay                */
+    int lcf_norun;      /**< LCF is disabled                      */
+    int secure_mode;    /**< is secure mode enabled?              */
 } ndrx_nstd_libconfig_t;
 
 /**

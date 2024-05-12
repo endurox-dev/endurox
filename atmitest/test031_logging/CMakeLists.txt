@@ -39,7 +39,6 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/libnstd
 					 ${ENDUROX_SOURCE_DIR}/ubftest)
 
-
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
@@ -57,6 +56,7 @@ add_executable (atmisv31SECOND atmisv31SECOND.c ../../libatmisrv/rawmain_integra
 add_executable (atmiclt31 atmiclt31.c)
 add_executable (atmiclt31_inv atmiclt31_inv.c)
 add_executable (atmiclt31_cc atmiclt31_cc.c)
+add_executable (atmiclt31_masking atmiclt31_masking.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
@@ -65,11 +65,13 @@ target_link_libraries (atmisv31SECOND atmisrvinteg atmi ubf nstd ${RT_LIB} pthre
 target_link_libraries (atmiclt31 atmiclt atmi ubf nstd ${RT_LIB} pthread)
 target_link_libraries (atmiclt31_inv atmiclt atmi ubf nstd ${RT_LIB} pthread)
 target_link_libraries (atmiclt31_cc atmiclt atmi ubf nstd ${RT_LIB} pthread)
+target_link_libraries (atmiclt31_masking atmiclt atmi ubf nstd ${RT_LIB} pthread)
 
 set_target_properties(atmisv31FIRST PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmisv31SECOND PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt31 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt31_inv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt31_cc PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt31_masking PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 # vim: set ts=4 sw=4 et smartindent:

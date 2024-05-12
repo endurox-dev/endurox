@@ -407,6 +407,11 @@ if ( (PTR__ = (TYPE__ *)NDRX_CALLOC(NMEMB__, SIZE__)) == NULL) \
     EXFAIL_OUT(ret);\
 }
 
+/**
+ * Max number of slots for ndrx_dbg_mask()
+ */
+#define NDRX_DBG_MASK_SLOT_MAX        6
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -436,9 +441,9 @@ extern NDRX_API void ndrx_dbg_unlock(void);
 extern NDRX_API void ndrx_dbg_pid_update(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
+extern NDRX_API char* ndrx_dbg_mask(int slot, char *str, void *arg1, long flags);
 
 /* TPLOG: */
-
 extern NDRX_API void tplogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len);
 extern NDRX_API void tplogdump(int lev, const char *comment, void *ptr, int len);
 extern NDRX_API void tplog(int lev, const char *message);
@@ -482,7 +487,6 @@ extern NDRX_API void *ndrx_realloc_dbg(void *ptr, size_t size, long line, const 
 extern NDRX_API FILE *ndrx_fopen_dbg(const char *path, const char *mode, long line, const char *file, const char *func);
 extern NDRX_API int ndrx_fclose_dbg(FILE *fp, long line, const char *file, const char *func);
 extern NDRX_API char *ndrx_strdup_dbg(char *ptr, long line, const char *file, const char *func);
-
 
 /* Bootstrapping: */
 extern NDRX_API int ndrx_dbg_intlock_isset(void);

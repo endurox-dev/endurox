@@ -67,7 +67,6 @@
         ,{&G_nstd_tls->requestlog_ubf, &G_nstd_tls->threadlog_ubf, &G_ubf_debug} \
     }
 
-
 /**
  * Define save fields for module init
  */
@@ -156,7 +155,6 @@ expublic void tplogsetreqfile_direct(const char *filename)
     /* have a scope: */
     do 
     {
-        
         LOGGER_SAVE_FIELDS_DEF;
 
         for (i=0; i<N_DIM(map); i++)

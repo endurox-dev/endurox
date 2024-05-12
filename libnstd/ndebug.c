@@ -136,6 +136,23 @@ typedef struct
 
 } ndrx_debug_rebins_t;
 
+/**
+ * Holds masking buffer allocated buffers
+ * this only grows.
+ */
+typedef struct
+{
+    char *buf;      /**< allocated output buf       */
+
+     /**
+      * Buffer size:
+      * -1 (failed, using ****)
+      * 0 (not allocated)
+      * > 0 allocated size
+      */
+    size_t size;
+
+} ndrx_debug_mask_buf_t;
 /*---------------------------Globals------------------------------------*/
 ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER(LOG_CODE_UBF, "UBF ", (LOG_FACILITY_UBF|LOG_FACILITY_PROCESS));
 ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER(LOG_CODE_NDRX, "NDRX", (LOG_FACILITY_NDRX|LOG_FACILITY_PROCESS));
@@ -1666,7 +1683,6 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     
     if (!M_is_initlock_owner)
     {
-        
         /* last locking */
         ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr);
         
@@ -1724,6 +1740,85 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
 expublic void ndrx_dbg_init(char *module, char *config_key)
 {
    NDRX_DBG_INIT_ENTRY;
+}
+
+/**
+ * Mask input string.
+ * In case if NDRX_SECURE=N, return the string directly.
+ * @param slot slot number used for puting asterix
+ *  slot number 0..(NDRX_DBG_MASK_SLOT_MAX-1)
+ * @param str string to mask.
+ * @param arg1 RFU
+ * @param flags RFU
+ * @return string for logging (read only)
+ */
+expublic char* ndrx_dbg_mask(int slot, char *str, void *arg1, long flags)
+{
+    static char *default_mask = "?****?";
+    static char *null_mask = "(null)";
+    char *ret=str;
+    int len;
+
+    static __thread ndrx_debug_mask_buf_t slots[NDRX_DBG_MASK_SLOT_MAX]=
+    {
+        {NULL, 0}
+        , {NULL, 0}
+        , {NULL, 0}
+        , {NULL, 0}
+        , {NULL, 0}
+        , {NULL, 0}
+    };
+
+    if (!ndrx_G_libnstd_cfg.secure_mode)
+    {
+        /* not special masking applies ...*/
+        goto out;
+    }
+
+    if (NULL==str)
+    {
+        ret=null_mask;
+        goto out;
+    }
+
+    /* fallback the logging if invalid slot specified */
+    if (slot < 0 || slot >=NDRX_DBG_MASK_SLOT_MAX)
+    {
+        ret=default_mask;
+        goto out;
+    }
+
+    len = strlen(str);
+
+    if (slots[slot].size < len+1 && EXFAIL!=slots[slot].size)
+    {
+        /* reallocate slot */
+        slots[slot].buf = NDRX_REALLOC(slots[slot].buf, len+1);
+        if (NULL==slots[slot].buf)
+        {
+            userlog("masking buffer malloc failed: %s", strerror(errno));
+            slots[slot].size=EXFAIL;
+        }
+        else
+        {
+            slots[slot].size = len+1;
+        }
+    }
+
+    if (EXFAIL==slots[slot].size)
+    {
+        ret  = default_mask;
+    }
+    else
+    {
+        memset(slots[slot].buf, '*', len);
+        slots[slot].buf[len]=EXEOS;
+
+        ret = slots[slot].buf;
+    }
+
+out:
+    return ret;
 }
 
 /**

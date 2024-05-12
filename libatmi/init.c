@@ -499,7 +499,7 @@ expublic int ndrx_load_common_env(void)
         NDRX_STRCPY_SAFE(G_atmi_env.xa_open_str, p);
         NDRX_LOG(log_debug, "[%s]: XA Open String: [%s]", 
                 CONF_NDRX_XA_OPEN_STR,
-                G_atmi_env.xa_open_str);
+                ndrx_dbg_mask(0, G_atmi_env.xa_open_str, NULL, 0));
     }
     
     /* Close string: */
@@ -508,14 +508,14 @@ expublic int ndrx_load_common_env(void)
         NDRX_STRCPY_SAFE(G_atmi_env.xa_close_str, p);
         NDRX_LOG(log_debug, "[%s]: XA Close String: [%s]", 
                 CONF_NDRX_XA_CLOSE_STR,
-                G_atmi_env.xa_close_str);
+                ndrx_dbg_mask(0, G_atmi_env.xa_close_str, NULL, 0));
     }
     else
     {
         NDRX_STRCPY_SAFE(G_atmi_env.xa_close_str, G_atmi_env.xa_open_str);
         NDRX_LOG(log_debug, "[%s]: XA Close String defaulted to: [%s]", 
                 CONF_NDRX_XA_CLOSE_STR,
-                G_atmi_env.xa_close_str);
+                ndrx_dbg_mask(0, G_atmi_env.xa_close_str, NULL, 0));
     }
     
     /* Driver lib: */
