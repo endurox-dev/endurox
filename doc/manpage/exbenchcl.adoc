@@ -143,7 +143,10 @@ that performs tpreturn().
 
 [*-e*]::
 Perform *tppost(3)* instead of *tpcall(3)*. If parameter is set, event name
-is set in *-s* parameter.
+is set in *-s* parameter. *-e* flag has precedence of over the *-c*.
+
+[*-c*]::
+Perform *tpconnect(3)* / *tprecv(3)* instead of *tpcall(3)*.
 
 [*-h*]::
 Print usage.
@@ -155,7 +158,6 @@ Success
 
 *1*::
 Failure
-
 
 CONFIGURATION EXAMPLE
 ---------------------

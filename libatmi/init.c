@@ -975,7 +975,6 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                 }
             }
 
-
             /* Read the init cache */
             if (EXSUCCEED!=ndrx_cache_init(NDRX_TPCACH_INIT_NORMAL))
             {

@@ -74,6 +74,7 @@ exprivate char *M_sample_data=NULL;     /**< data to send                    */
 exprivate BFLDID M_fld=BBADFLDID;       /**< field used for random data fill */
 exprivate int M_rndsize=1024;           /**< test data size                  */
 exprivate int M_doplot=EXFALSE;         /**< Do plot the benchmark restulst  */
+exprivate int M_dotpconnect=EXFALSE;    /**< Do tpconnect() instead of the tpcall() */
 exprivate int M_prio=NDRX_MSGPRIO_DEFAULT;  /**< Call priorioty              */
 exprivate typed_buffer_descr_t * M_buftype = NULL;
 exprivate threadpool M_threads; /**< thread pool */
@@ -244,6 +245,28 @@ expublic void thread_process(void *ptr, int *p_finish_off)
                     exit(-1);
                 }
             }
+            else if (M_dotpconnect)
+            {
+                long revent=0;
+                int cd = tpconnect(svcnm, buf, 0, 0);
+                int ret;
+                if (EXFAIL==cd)
+                {
+                    NDRX_LOG(log_error, "Failed to connect [%s]: %s",
+                        svcnm, tpstrerror(tperrno));
+                    exit(-1);
+                }
+
+                /* receive event / succ */
+                ret=tprecv(cd, &rcv_buf, &rcvlen, 0L, &revent);
+
+                if (EXFAIL!=ret || TPEV_SVCSUCC!=revent)
+                {
+                    NDRX_LOG(log_error, "Failed to recv from cd %d [%s]: %s",
+                        cd, svcnm, tpstrerror(tperrno));
+                    exit(-1);
+                }
+            }
             else if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))
             {
                 NDRX_LOG(log_error, "Failed to call [%s]: %s", 
@@ -385,6 +408,7 @@ expublic void usage(char *bin)
     fprintf(stderr, "  -T <tout_sec>    Initiate global transaction for XATMI calls\n");
     fprintf(stderr, "  -I               Wait for client notification\n");
     fprintf(stderr, "  -e               Post the event, -s serves as event\n");
+    fprintf(stderr, "  -c               use tpconnect()/tprecv() instead of tpcall()\n");
 }
 
 /**
@@ -419,7 +443,7 @@ expublic int main( int argc, char** argv )
      */
     M_buftype = ndrx_get_buffer_descr("UBF", NULL);
 
-    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:T:Ie")) != -1)
+    while ((c = getopt (argc, argv, "n:s:t:b:S:p:Pf:FN:Q:AER:T:Iec")) != -1)
     {
         switch (c)
         {
@@ -492,6 +516,9 @@ expublic int main( int argc, char** argv )
             case 'I':
                 M_notify_mode = EXTRUE;
                 break;
+            case 'c':
+                M_dotpconnect = EXTRUE;
+                break;
             default:
                 NDRX_LOG(log_error, "Unknown option %c", c);
                 usage(argv[0]);
@@ -521,6 +548,7 @@ expublic int main( int argc, char** argv )
     NDRX_LOG(log_info, "M_tran=[%d]", M_tran);
     NDRX_LOG(log_info, "M_notify_mode=[%d]", M_notify_mode);
     NDRX_LOG(log_info, "M_event_mode=[%d]", M_event_mode);
+    NDRX_LOG(log_info, "M_dotpconnect=[%d]", M_dotpconnect);
     
     /* allocate the buffer & fill with random data */
     
