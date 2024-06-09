@@ -613,7 +613,7 @@ out:
  * @param[out] trantime transaction timeout setting from services section
  * @return EXTRUE (loaded), EXFALSE (not found), EXFAIL (error!)
  */
-expublic int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned long *trantime)
+expublic int ndrx_ddr_service_get(const char *svcnm, int *autotran, unsigned long *trantime)
 {
     ndrx_services_t *svc;
     int ret = EXFALSE;

@@ -586,7 +586,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
  * @param[in] trantime how long auto-transaction shall live?
  * @return SUCCEED/FAIL
  */
-exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
+exprivate int tpadvertise_full_int(const char *svc_nm, void (*p_func)(TPSVCINFO *), const char *fn_nm)
 {
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL, eltmp;
@@ -818,7 +818,7 @@ out:
  * This returns error (and terminates)
  * @return SUCCEED/FAIL
  */
-expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
+expublic int tpadvertise_full(const char *svc_nm, void (*p_func)(TPSVCINFO *), const char *fn_nm)
 {
     int ret = EXSUCCEED;
     char svcn_nm_full[MAXTIDENT*2]={EXEOS};

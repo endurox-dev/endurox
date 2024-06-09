@@ -187,9 +187,9 @@ expublic int ndrx_ubfdb_Bflddbload(void)
         }
         else
         {
-            UBF_LOG(log_warn, "Ignoring unknown cache configuration param: [%s]", 
+            UBF_LOG(log_warn, "Ignoring unknown ubfdb configuration param: [%s]", 
                     val->key);
-            userlog("Ignoring unknown cache configuration param: [%s]", 
+            userlog("Ignoring unknown ubfdb configuration param: [%s]", 
                     val->key);
         }
     }

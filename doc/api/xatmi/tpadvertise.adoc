@@ -14,7 +14,7 @@ SYNOPSIS
 
 #define tpadvertise('_SVCNM', '_FNADDR') tpadvertise_full(_SVCNM, _FNADDR, #_FNADDR)
 
-int tpadvertise_full (char \*svcnm, void (*)(TPSVCINFO *) 'func', char *'funcname');
+int tpadvertise_full (const char \*svcnm, void (*)(TPSVCINFO *) 'func', const char *'funcname');
 
 Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 

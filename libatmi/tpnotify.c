@@ -153,7 +153,6 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
          * But client could resist on different cluster node
          * Thus we need to check their node...
          */
-        
         if (EXSUCCEED!=ndrx_myid_convert_to_q(p_clientid_myid, send_q, 
                 sizeof(send_q)))
         {
@@ -178,7 +177,6 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
                         nodeid, usrname, cltname,ex_flags | TPCALL_BRCALL);
             /* avoid memory leak */
             goto out;
-            
         }
     }
     

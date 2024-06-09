@@ -284,7 +284,7 @@ extern NDRX_API int pingrsp_to_ndrxd(command_srvping_t *ping);
 /* Advertise & unadvertise */
 extern NDRX_API int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy);
 extern NDRX_API int	dynamic_advertise(svc_entry_fn_t *entry_new, 
-                    char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm);
+                    const char *svc_nm, void (*p_func)(TPSVCINFO *), const char *fn_nm);
 /* We want to re-advertise the stuff, this could be used for race conditions! */
 extern NDRX_API int dynamic_readvertise(char *svcname);
 

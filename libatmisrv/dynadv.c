@@ -294,7 +294,7 @@ out:
  * @return EXSUCCEED/EXFAIL
  */
 expublic int dynamic_advertise(svc_entry_fn_t *entry_new, 
-                    char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
+                    const char *svc_nm, void (*p_func)(TPSVCINFO *), const char *fn_nm)
 {
     int ret=EXSUCCEED;
     int pos, service;

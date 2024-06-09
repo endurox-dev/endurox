@@ -181,7 +181,7 @@ extern NDRX_API int ndrx_ddr_services_put(ndrx_services_t *svc, char *mem, long 
 /** tpcalls shall route to this one... */
 extern NDRX_API int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
         int *prio);
-extern NDRX_API int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned long *trantime);
+extern NDRX_API int ndrx_ddr_service_get(const char *svcnm, int *autotran, unsigned long *trantime);
 
 #ifdef	__cplusplus
 }
