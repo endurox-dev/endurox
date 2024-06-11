@@ -239,16 +239,18 @@ expublic int ndrx_plugins_load(void)
     while (NULL!=p)
     {
         /* trim down ltrim/rtrim the name */
-        
         fname = ndrx_str_lstrip_ptr(p, " \t");
         ndrx_str_rstrip(fname, " \t");
-        
-        NDRX_LOG_EARLY(log_info, "About to load: [%s]", fname);
-        
-        /* Resolve symbols... */
-        if (EXSUCCEED!=ndrx_plugins_loadone(fname))
+
+        if (EXEOS!=fname[0])
         {
-            userlog("Failed to load [%s] plugin...", fname);
+            NDRX_LOG_EARLY(log_info, "About to load: [%s]", fname);
+        
+            /* Resolve symbols... */
+            if (EXSUCCEED!=ndrx_plugins_loadone(fname))
+            {
+                userlog("Failed to load [%s] plugin...", fname);
+            }
         }
         
         p = strtok_r (NULL, ";", &save_ptr);

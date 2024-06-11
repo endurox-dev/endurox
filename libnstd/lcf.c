@@ -32,7 +32,6 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -723,8 +722,7 @@ expublic int ndrx_lcf_run(void)
     }
     
 out:
-                            
-                            
+
     M_startup_run=EXFALSE;
     into_func=EXFALSE;
     
@@ -897,7 +895,6 @@ expublic void ndrx_lcf_xadmin_list(void (*pf_callback)(ndrx_lcf_reg_xadminh_t *x
     }
     
     MUTEX_UNLOCK_V(M_lcf_run);
-    
 }
 
 /**

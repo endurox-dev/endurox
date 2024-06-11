@@ -126,7 +126,6 @@ out:
     
 }
 
-
 /**
  * Register callback function. Uses may only add the functions.
  * No chance to delete to avoid any issues with threads performing the lookups
@@ -178,8 +177,85 @@ expublic int ndrx_lcf_func_add(ndrx_lcf_reg_func_t *cfunc)
     ret = ndrx_lcf_func_add_int(cfunc);
     
 out:
-    return ret;
+
+    return ret;    
+}
+
+/**
+ * Quick add command to LCF (process & xadmin).
+ * Wrapper for ndrx_lcf_func_add() and ndrx_lcf_xadmin_add().
+ * Most sanity checks are done by the wrapped functions.
+ * 
+ * @param cmdstr command name
+ * @param command command code
+ * @param pf_callback callback function
+ * @param dfltslot default slot number
+ * @param dfltflags default flags
+ * @param ptr1 pointer to the data (RFU). Shall be NULL
+ * @param help help string
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_lcf_func_xadmin_add1(const char *cmdstr, int command,
+    int (*pf_callback)(ndrx_lcf_command_t *cmd, long *p_flags),
+    int dfltslot, int dfltflags, void *ptr1, const char *help)
+{
+    int ret = EXSUCCEED;
+    ndrx_lcf_reg_func_t cfunc;
+    ndrx_lcf_reg_xadmin_t xfunc;
+
+    if (NULL==help)
+    {
+        _Nset_error_fmt(NEINVAL, "`help' cannot be NULL");
+        NDRX_LOG_EARLY(log_error, "`help' cannot be NULL");
+        EXFAIL_OUT(ret);
+    }
     
+    if (NULL==cmdstr)
+    {
+        _Nset_error_fmt(NEINVAL, "`cmdstr' cannot be NULL");
+        NDRX_LOG_EARLY(log_error, "`cmdstr' cannot be NULL");
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&cfunc, 0, sizeof(cfunc));
+
+    /* all checks are done by  ndrx_lcf_func_add and ndrx_lcf_xadmin_add
+     * however needs to validate that we do not copy empty stirngs...
+     */
+
+    NDRX_STRCPY_SAFE(cfunc.cmdstr, cmdstr);
+    cfunc.command=command;
+    cfunc.version=NDRX_LCF_CCMD_VERSION;
+    cfunc.pf_callback=pf_callback;
+    
+    if (EXSUCCEED!=ndrx_lcf_func_add(&cfunc))
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to add func %p for "
+            "cmdstr [%s] command %d: %s", 
+            pf_callback, cmdstr, command, Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+
+    memset(&xfunc, 0, sizeof(xfunc));
+    NDRX_STRCPY_SAFE(xfunc.cmdstr, cmdstr);
+    xfunc.command=command;
+    xfunc.version = cfunc.version=NDRX_LCF_XCMD_VERSION;
+    NDRX_STRCPY_SAFE(xfunc.helpstr, help);
+    xfunc.dfltflags=dfltflags;
+    xfunc.dfltslot=dfltslot;
+    
+    if (EXSUCCEED!=ndrx_lcf_xadmin_add(&xfunc))
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to add xadmin "
+            "cmdstr [%s] command %d: %s", 
+            cmdstr, command, Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+
+out:
+
+    NDRX_LOG_EARLY(log_debug, "ndrx_lcf_func_xadmin_add() ret=%d", ret);
+    return ret;
 }
 
 /**
@@ -300,6 +376,5 @@ expublic int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd)
 out:
     return ret;
 }
-
 
 /* vim: set ts=4 sw=4 et smartindent: */

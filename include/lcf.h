@@ -153,13 +153,12 @@ typedef struct
 typedef struct
 {
     int version;    /**< API version                                              */
-    char cmdstr[NDRX_LCF_ADMINCMD_MAX+1]; /**< Command code $ xadmin lcf <code>     */
+    char cmdstr[NDRX_LCF_ADMINCMD_MAX+1]; /**< Command code $ xadmin lcf <code>   */
     int command;    /**< lcf comand code                                          */
-    char helpstr[NDRX_LCF_ADMINDSCR_MAX+1]; /**< Help text for command              */
-    long dfltflags;     /**< ARGA, ARGB, DOSTARTUP, DOSTARTUPDEL                      */
+    char helpstr[NDRX_LCF_ADMINDSCR_MAX+1]; /**< Help text for command            */
+    long dfltflags;     /**< ARGA, ARGB, DOSTARTUP, DOSTARTUPDEL                  */
     int dfltslot;   /**< Default slot numbere wher command shall be installed     */
 } ndrx_lcf_reg_xadmin_t;
-
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
@@ -167,6 +166,10 @@ typedef struct
 
 extern NDRX_API int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *xcmd);
 extern NDRX_API int ndrx_lcf_func_add(ndrx_lcf_reg_func_t *cfunc);
+extern NDRX_API  int ndrx_lcf_func_xadmin_add1(const char *cmdstr, int command,
+    int (*pf_callback)(ndrx_lcf_command_t *cmd, long *p_flags),
+    int dfltslot, int dfltflags, void *ptr1, const char *help);
+
 extern NDRX_API int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd);
 
 #if defined(__cplusplus)
