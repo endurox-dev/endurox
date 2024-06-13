@@ -1752,11 +1752,11 @@ expublic void ndrx_dbg_init(char *module, char *config_key)
  * @param flags RFU
  * @return string for logging (read only)
  */
-expublic char* ndrx_dbg_mask(int slot, char *str, void *arg1, long flags)
+expublic const char* ndrx_dbg_mask(int slot, const char *str, void *arg1, long flags)
 {
     static char *default_mask = "?****?";
     static char *null_mask = "(null)";
-    char *ret=str;
+    const char *ret=str;
     int len;
 
     static __thread ndrx_debug_mask_buf_t slots[NDRX_DBG_MASK_SLOT_MAX]=

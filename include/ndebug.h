@@ -441,7 +441,7 @@ extern NDRX_API void ndrx_dbg_unlock(void);
 extern NDRX_API void ndrx_dbg_pid_update(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
-extern NDRX_API char* ndrx_dbg_mask(int slot, char *str, void *arg1, long flags);
+extern NDRX_API const char* ndrx_dbg_mask(int slot, const char *str, void *arg1, long flags);
 
 /* TPLOG: */
 extern NDRX_API void tplogdumpdiff(int lev, const char *comment, void *ptr1, void *ptr2, int len);
