@@ -1827,8 +1827,6 @@ exprivate int xa_commit_entry_tmq(char *tmxid, long flags)
                 goto out;
             }
 
-            ndrx_fadvise_donotneed(fileno(f));
-            
             if (EXFAIL==read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd), 
                     fname_msg, "xa_commit_entry", &err, &tmq_err))
             {
@@ -2157,8 +2155,6 @@ exprivate int read_tx_from_file(char *fname, char *block, int len, int *err,
         EXFAIL_OUT(ret);
     }
 
-    ndrx_fadvise_donotneed(fileno(f));
-    
     ret = read_tx_block(f, block, len, fname, "read_tx_from_file", err, tmq_err);
     
 out:
@@ -2313,8 +2309,6 @@ exprivate int write_to_tx_file(char *block, int len, char *cust_tmxid, int *int_
         EXFAIL_OUT(ret);
     }
 
-    ndrx_fadvise_donotneed(fileno(f));
-    
     /* single step write..., as temp files now we discard
      * no problem with we get temprorary files incomplete...
      */
@@ -2710,8 +2704,6 @@ expublic int tmq_storage_get_blocks(int (*process_block)(char *tmxid,
 
                     EXFAIL_OUT(ret);
                 }
-
-                ndrx_fadvise_donotneed(fileno(f));
 
                 /* here we read maximum header size.
                  * For smaller messages (fixed struct messages) all data is read
