@@ -481,7 +481,7 @@ extern NDRX_API void ndrx_strcat_s(char *dest, size_t dst_size, const char *src)
 extern NDRX_API int ndrx_fsync_dsync(char *dir, long flags);
 extern NDRX_API int ndrx_fsync_fsync(FILE *file, long flags);
 extern NDRX_API int ndrx_fsync_parse(char *setting_str, long *flags);
-extern NDRX_API int ndrx_fadvise_donotneed(int fd, int len);
+extern NDRX_API int ndrx_fadvise_donotneed(int fd, int offset);
 
 extern NDRX_API void ndrx_cid_generate(unsigned char prefix, exuuid_t out);
 
