@@ -97,6 +97,8 @@ extern "C" {
 #define TMQ_HOUSEKEEP_DEFAULT   (90*60)     /**< houskeep 1 hour 30 min     */
 
 #define TMQ_INT_DIAG_EJOIN      0x00000001  /**< Got join transaction join error */
+
+#define TMQ_FSCACHE_LEN         sizeof(tmq_msg_t) /**< part to cache, for faster counter updates */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
