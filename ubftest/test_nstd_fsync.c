@@ -51,6 +51,23 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * test ndrx_fadvise_donotneed
+ */
+Ensure(test_nstd_fadvise)
+{
+    FILE *f=NULL;
+    char filename[]="/tmp/ubf-test-XXXXXX";
+    char buf[128];
+    assert_not_equal(mkstemp(filename), EXFAIL);
+    assert_not_equal((f=fopen(filename, "w")), NULL);
+
+    assert_equal(ndrx_fadvise_donotneed(fileno(f), 0), EXSUCCEED);
+
+    /* clean-up... */
+    fclose(f);
+    unlink(filename);
+}
 
 /**
  * Basic fsync tests
@@ -88,10 +105,9 @@ Ensure(test_nstd_fsync)
     assert_equal(!!(flags & NDRX_FSYNC_FDATASYNC), EXTRUE);
     assert_equal(!!(flags & NDRX_FSYNC_DSYNC), EXTRUE);
 
-
     assert_equal(ndrx_fsync_fsync(f, flags), EXSUCCEED);
     assert_equal(ndrx_fsync_fsync(NULL, flags), EXFAIL);
-    
+
     /* clean-up... */
     fclose(f);
     unlink(filename);
@@ -136,6 +152,7 @@ TestSuite *ubf_nstd_fsync(void)
 
     add_test(suite, test_nstd_fsync);
     add_test(suite, test_nstd_dsync);
+    add_test(suite, test_nstd_fadvise);
 
     return suite;
 }
