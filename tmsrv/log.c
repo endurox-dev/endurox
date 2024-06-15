@@ -711,7 +711,7 @@ expublic int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode)
         goto out;
     }
 
-    ndrx_fadvise_donotneed(fileno(p_tl->f));
+    ndrx_fadvise_donotneed(fileno(p_tl->f), 0);
     
     NDRX_LOG(log_debug, "XA tx log file [%s] open for [%s]", 
             p_tl->fname, mode);

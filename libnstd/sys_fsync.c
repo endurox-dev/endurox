@@ -235,13 +235,15 @@ out:
 /**
  * Tell kernel that data written to file shall not be cached
  * @param fd file descriptor
+ * @param len to cache
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_fadvise_donotneed(int fd)
+expublic int ndrx_fadvise_donotneed(int fd, int len)
 {
     int ret = EXSUCCEED;
 
 #ifdef EX_HAVE_POSIX_FADVISE
-    if (EXSUCCEED!=posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED))
+    if (EXSUCCEED!=posix_fadvise(fd, 0, len, POSIX_FADV_DONTNEED))
     {
         int err = errno;
         NDRX_LOG(log_error, "%s: posix_fadvise() failed on %d: %s", __func__,
