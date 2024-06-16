@@ -42,6 +42,8 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API int ndrx_G_systest_enabled;
 extern NDRX_API int ndrx_G_systest_lockloss;
+
+extern NDRX_API int ndrx_G_systest_exci_connfail;
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_SYSTEST_ENBLD      (NDRX_UNLIKELY(ndrx_G_systest_enabled))
 

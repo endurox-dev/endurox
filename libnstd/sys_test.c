@@ -52,6 +52,8 @@ expublic int ndrx_G_systest_enabled = EXFALSE;    /**< Is system tests enbld ?*/
 /* Test hook points: */
 expublic int ndrx_G_systest_lockloss = 0;    /**<  Is lock loss test in progress ? */
 
+expublic int ndrx_G_systest_exci_connfail = 0; /**< EE Exci, lost conn */
+
 /*---------------------------Statics------------------------------------*/
 
 exprivate char *M_modebuf = NULL;       /**< Mode buffer of system tests */
