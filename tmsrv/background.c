@@ -321,7 +321,7 @@ expublic int background_chkdisk(void)
                 snprintf(tmp, sizeof(tmp), "%s/%s", G_tmsrv_cfg.tlog_dir, 
                         entry);
 
-                if (ndrx_file_exists(tmp))
+                if (ndrx_G_tmsrv_storage->pf_storage_exists(ndrx_G_tmsrv_storage, tmp))
                 {
                     if (NULL!=(p_reg=ndrx_tms_file_registry_get(&M_broken_tmxids, p_name)))
                     {

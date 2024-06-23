@@ -532,6 +532,7 @@ struct atmi_lib_env
     int    test_tmsrv_write_fail;   /**< Simulate disk write failure, tmsrv    */
     int    test_tmsrv_commit_crash; /**< Simualte commit crash                 */
     void (*test_advertise_crash)(void); /**< XATMI server crash before reaching ndrxd */
+    int    test_atmi_xa_commit_entry_fail; /**< atmi_xa_commit_entry() XAER_RMFAIL */
     
     /**@}*/
 

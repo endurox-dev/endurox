@@ -253,7 +253,6 @@ expublic void _Nset_error_msg(int error_code, const char *msg)
 
         /* no more overwrite, we want first message in buffer */
         G_nstd_tls->nstd_error_clear=EXFALSE;
-
     }
 }
 

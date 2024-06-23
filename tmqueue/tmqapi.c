@@ -247,7 +247,7 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     
     p_msg->status = TMQ_STATUS_ACTIVE;
     
-    NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",
+    NDRX_LOG(log_info, "Message prepared ok, about to enqueue to [%s] Q...",
             p_msg->hdr.qname);
     
     if (EXSUCCEED!=tmq_msg_add(&p_msg, EXFALSE, &qctl_out, int_diag))

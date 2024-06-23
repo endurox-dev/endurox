@@ -78,6 +78,7 @@ expublic atmi_lib_env_t G_atmi_env={
     .test_tmsrv_write_fail=EXFALSE,
     .test_advertise_crash=NULL,
     .test_tmsrv_commit_crash=EXFALSE,
+    .test_atmi_xa_commit_entry_fail=EXFALSE,
     .xa_sw = NULL,
     .time_out=EXFAIL}; /* ATMI library environmental configuration */
 expublic int _tmbuilt_with_thread_option = EXFALSE; /**< by default not MT */
