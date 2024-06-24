@@ -1041,6 +1041,9 @@ expublic int atmi_xa_commit_entry(XID *xid, long flags)
         NDRX_LOG(log_debug, "%s: G_atmi_env.test_atmi_xa_commit_entry_fail "
             "set -> return XAER_RMFAIL", __func__);
         ret=XAER_RMFAIL;
+        ndrx_TPset_error_fmt_rsn(TPERMERR,
+                    ret, " G_atmi_env.test_atmi_xa_commit_entry_fail %d [%s]",
+                    ret, atmi_xa_geterrstr(ret));
         goto out;
     }
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_commit_entry(xid, 
