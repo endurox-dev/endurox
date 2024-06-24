@@ -136,7 +136,6 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
             EXFAIL_OUT(ret);
         }
 
-
         if (NULL==(tmp2 = NDRX_MALLOC(strlen(G_cctag)+1)))
         {
             userlog("%s: tmp2 malloc failed: %s", __func__, strerror(errno));
@@ -144,7 +143,6 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
         }
 
         strcpy(tmp2, G_cctag);
-
 
         token_cctag = strtok_r(tmp2, NDRX_INICFG_SUBSECT_SPERATOR_STR, &saveptr1);
 
@@ -467,6 +465,8 @@ expublic int ndrx_cconfig_load(void)
     static int first = EXTRUE;
     static int first_ret = EXSUCCEED;
     int do_reply = EXFALSE;
+    char *org_plugins=NULL;
+    char *p;
     if (first)
     {
         /* protect against multi-threading */
@@ -479,7 +479,19 @@ expublic int ndrx_cconfig_load(void)
         if (first)
         {
             /* basically at this point we must load the plugins.. */
-            ndrx_plugins_load();
+            p = getenv(CONF_NDRX_PLUGINS);
+            if (NULL!=p)
+            {
+                org_plugins = NDRX_STRDUP(p);
+                if (NULL==org_plugins)
+                {
+                    userlog("NDRX_STRDUP failed (for %s) - not loading plugins (first pass)", p);
+                }
+                else
+                {
+                    ndrx_plugins_load(org_plugins);
+                }
+            }
             
             if (NULL==G_cctag)
             {
@@ -489,8 +501,22 @@ expublic int ndrx_cconfig_load(void)
                         (G_cctag?G_cctag:""));
             }
 
-            first_ret = _ndrx_cconfig_load(&G_cconfig, EXTRUE, NULL);
+            if (EXSUCCEED!=_ndrx_cconfig_load(&G_cconfig, EXTRUE, NULL))
+            {
+                first_ret=EXFAIL;
+            }
+
             first = EXFALSE;
+
+            /* load plugins (2nd pass) */
+            p = getenv(CONF_NDRX_PLUGINS);
+
+            if (NULL!=p && (NULL==org_plugins || 0!=strcmp(p, org_plugins)))
+            {
+                /* load second time (might be set from global section) */
+                ndrx_plugins_load(p);
+            }
+
             /* Load after the ini have been processed, so that
              * these can be set in [@global] section
              */
@@ -501,13 +527,17 @@ expublic int ndrx_cconfig_load(void)
         ndrx_dbg_intlock_unset(&do_reply);
         
         MUTEX_UNLOCK_V(M_load_lock);
-        
     }
     
     /* to avoid deadlocks, do this ouside any load locking */
     if (do_reply)
     {
         ndrx_dbg_reply_memlog_all();
+    }
+
+    if (NULL!=org_plugins)
+    {
+        NDRX_FREE(org_plugins);
     }
     
     return first_ret;

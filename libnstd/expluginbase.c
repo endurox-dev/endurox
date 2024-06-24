@@ -44,6 +44,7 @@
 
 #include "ndebug.h"
 #include "userlog.h"
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /** Offset definition for the function */
@@ -107,6 +108,11 @@ exprivate plugin_loader_map_t M_map_driver[] =
     ,{NULL}
 };
 
+/**
+ * Load only once (per file)
+ */
+exprivate string_hash_t *M_files_loaded = NULL;
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -124,7 +130,6 @@ expublic int ndrx_plugins_loadone(char *fname)
     char provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
     
     plugin_loader_map_t *p = M_map_driver;
-    
     
     handle = dlopen(fname, RTLD_LOCAL | RTLD_LAZY);
     
@@ -208,13 +213,13 @@ out:
  * 
  * In case of failure the init shall return -1. We will print the warning to the
  * ULOG and skip the plugin.
+ * @param plugins_env plugin list from the environment
  * 
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_plugins_load(void)
+expublic int ndrx_plugins_load(char *plugins_env)
 {
     int ret = EXSUCCEED;
-    char *plugins_env = getenv(CONF_NDRX_PLUGINS);
     char *plugins = NULL;
     char *p;
     char *fname;
@@ -242,7 +247,7 @@ expublic int ndrx_plugins_load(void)
         fname = ndrx_str_lstrip_ptr(p, " \t");
         ndrx_str_rstrip(fname, " \t");
 
-        if (EXEOS!=fname[0])
+        if (EXEOS!=fname[0] && NULL==ndrx_string_hash_get(M_files_loaded, fname))
         {
             NDRX_LOG_EARLY(log_info, "About to load: [%s]", fname);
         
@@ -250,6 +255,13 @@ expublic int ndrx_plugins_load(void)
             if (EXSUCCEED!=ndrx_plugins_loadone(fname))
             {
                 userlog("Failed to load [%s] plugin...", fname);
+                ret=EXFAIL;
+            }
+
+            /* save to avoid dup-load */
+            if (NULL==ndrx_string_hash_add(&M_files_loaded, fname))
+            {
+                userlog("Failed to hash plugin file name %s", fname);
             }
         }
         
@@ -261,6 +273,13 @@ out:
     {
         NDRX_FREE(plugins);
     }
+
+    if (EXSUCCEED!=ret)
+    {
+        userlog("One or more plugins failed to load: terminating with failure");
+        exit(EXFAIL);
+    }
+
     return ret;
 }
 

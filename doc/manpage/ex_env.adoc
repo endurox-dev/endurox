@@ -265,6 +265,12 @@ Mandatory Env. Variables
     This is semicolon separated string which denotes the list Enduro/X
     plugins which needs to be loaded at any XATMI program startup. Following plugins
     are provided with Enduro/X: libcryptohost.so - cryptography key by hostname.
+    Plugins are loaded in two passes. Firstly environment variable *NDRX_PLUGINS* is
+    read and plugins loaded before processing the common-configuration. If, after the
+    configuration file processing, *NDRX_PLUGINS* have changed the value, addition plugin
+    load attempt is done. Plugin loader loads only such shared library names, which
+    where not already loaded (regardless of the first or second pass). In case if
+    plugin load fails to load, process will terminate with failure.
 
 *NDRX_SILENT*='SILENT_SETTING'::
     If environment variable is present (and set to *Y*), the *xadmin* tool

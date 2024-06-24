@@ -841,6 +841,13 @@ Ensure(test107_tmsrvhkeep)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test108_plugins)
+{
+    int ret;
+    ret=system_dbg("test108_plugins/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -1031,7 +1038,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test105_respawn);
     add_test(suite, test106_periodcb);
     add_test(suite, test107_tmsrvhkeep);
-    
+    add_test(suite, test108_plugins);
     
     return suite;
 }

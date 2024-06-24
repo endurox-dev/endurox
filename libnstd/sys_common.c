@@ -142,7 +142,7 @@ expublic string_hash_t * ndrx_string_hash_add(string_hash_t **h, char *str)
     if (NULL==tmp)
     {
 #ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_error, "alloc of string_hash_t (%d) failed", 
+        NDRX_LOG_EARLY(log_error, "alloc of string_hash_t (%d) failed", 
                 sizeof(string_hash_t));
 #endif
         EXFAIL_OUT(ret);
@@ -151,14 +151,13 @@ expublic string_hash_t * ndrx_string_hash_add(string_hash_t **h, char *str)
     if (NULL==(tmp->str = strdup(str)))
     {
 #ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_error, "strdup() failed: %s", strerror(errno));
+        NDRX_LOG_EARLY(log_error, "strdup() failed: %s", strerror(errno));
 #endif
         EXFAIL_OUT(ret);
     }
     
     /* Add stuff to hash finally */
     EXHASH_ADD_KEYPTR( hh, (*h), tmp->str, strlen(tmp->str), tmp );
-    
     
 out:
     if (EXSUCCEED==ret)

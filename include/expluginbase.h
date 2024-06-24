@@ -118,8 +118,7 @@ extern ndrx_pluginbase_t ndrx_G_plugins;
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
 
-
-extern NDRX_API int ndrx_plugins_load(void);
+extern NDRX_API int ndrx_plugins_load(char *plugins_env);
 
 #endif /* EXPLUGINBASE_H_ */
 
