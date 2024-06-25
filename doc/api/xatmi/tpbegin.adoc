@@ -63,6 +63,8 @@ time-out time. The state of transaction is unknown.
 *TPESVCERR* Failed to call transaction manager, with service error.
 The state of transaction is unknown.
 
+*TPETRAN* Failed to start transaction.
+
 *TPEPROTO* XA subsystem was not initialized (did not call *tpopen()*) or 
 global transaction already started.
 
