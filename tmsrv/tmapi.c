@@ -1230,6 +1230,7 @@ expublic int tm_proclocal(char cmd, UBFH *p_ub, int cd)
         if (ret < XID_RECOVER_BLOCK_SZ)
         {
             /* this is EOF according to the spec */
+            ret=EXSUCCEED;
             break;
         }
         
@@ -1239,10 +1240,5 @@ out:
 
     return ret;
 }
-
-
-
-
-
 
 /* vim: set ts=4 sw=4 et smartindent: */

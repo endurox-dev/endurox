@@ -147,7 +147,7 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
         }
     }
     
-    if (NULL==(data = Bgetalloc(p_ub, EX_DATA, 0, &len)))
+    if (NULL==(data = Bfind(p_ub, EX_DATA, 0, &len)))
     {
         NDRX_LOG(log_error, "Missing EX_DATA!");
         userlog("Missing EX_DATA!");
@@ -269,11 +269,6 @@ expublic int tmq_enqueue(UBFH *p_ub, int *int_diag)
     Bdel(p_ub, EX_DATA, 0);
     
 out:
-    /* free up the temp memory */
-    if (NULL!=data)
-    {
-        NDRX_FREE(data);
-    }
 
     if (EXSUCCEED!=ret && NULL!=p_msg)
     {

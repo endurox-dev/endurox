@@ -1256,11 +1256,6 @@ inject_message:
                 /* Normal connection shutdown */
                 if (ATMI_COMMAND_TPREPLY==rply->command_id)
                 {
-                    /* Basically we close the connection (normally)
-                     * This means we also needs to close & unlink queues
-                     */
-                    NDRX_LOG(log_info, "Server did tpreturn - closing conversation!");
-
                     /* Save the rcode returned. */
                     G_atmi_tls->M_svc_return_code = rply->rcode;
 
@@ -1272,6 +1267,11 @@ inject_message:
                     {
                         conv->revent = *revent = TPEV_SVCSUCC;
                     }
+                    /* Basically we close the connection (normally)
+                     * This means we also needs to close & unlink queues
+                     */
+                    NDRX_LOG(log_info, "Server did tpreturn - closing conversation. revent=%ld",
+                        conv->revent);
 
                     /*
                      * Gracefully shutdown the connection

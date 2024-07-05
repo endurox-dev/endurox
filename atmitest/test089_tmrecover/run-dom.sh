@@ -210,6 +210,12 @@ set_dom2;
 
 echo "Recovering..."
 xadmin recoverlocal 2>/dev/null
+
+if [ $? -ne 0 ]; then
+    echo "[xadmin recoverlocal] returned invalid status code"
+    go_out 6
+fi
+
 CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 
 echo "Got txns: $CNT"

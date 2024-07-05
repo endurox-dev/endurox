@@ -176,9 +176,10 @@ out:
 
 /**
  * This basically tests the normal case when all have been finished OK!
+ * @param do_reset reset UBF to generic XA command fields
  * @return
  */
-exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
+exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse, int do_reset)
 {
     int ret=EXSUCCEED;
     int cd;
@@ -194,7 +195,7 @@ exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
     }
     
     /* reset the call buffer only to request fields... */
-    if (EXSUCCEED!=atmi_xa_reset_tm_call(p_ub))
+    if (do_reset && EXSUCCEED!=atmi_xa_reset_tm_call(p_ub))
     {
         NDRX_LOG(log_error, "Failed to prepare UBF for TM call!");
         EXFAIL_OUT(ret);
@@ -226,7 +227,9 @@ exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
             if (TPEEVENT == tp_errno)
             {
                     if (TPEV_SVCSUCC == revent)
-                            ret = EXSUCCEED;
+                    {
+                        ret = EXSUCCEED;
+                    }
                     else
                     {
                         NDRX_LOG(log_error,
@@ -311,7 +314,7 @@ expublic int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc,
     if (EXEOS!=svcnm[0])
     {
         NDRX_LOG(log_debug, "TM Service name specified: [%s]", svcnm);
-        ret = call_tm(p_ub, svcnm, parse);
+        ret = call_tm(p_ub, svcnm, parse, EXFALSE);
     }
     else
     {
@@ -321,10 +324,9 @@ expublic int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc,
 
         LL_FOREACH_SAFE(list,el,tmp)
         {
-
             NDRX_LOG(log_info, "About to call service: [%s]\n", el->svcnm);
 
-            ret = call_tm(p_ub, el->svcnm, parse);
+            ret = call_tm(p_ub, el->svcnm, parse, EXTRUE);
             /* Have some housekeep. */
             LL_DELETE(list,el);
             NDRX_FREE(el);
@@ -401,7 +403,6 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
         EXFAIL_OUT(ret);
     }
     
-    
     if (EXEOS!=xid[0] && EXEOS==svcnm[0])
     {
         fprintf(stderr, "ERROR ! If -x is specified, the -s must be set too!\n");
@@ -428,7 +429,7 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
     if (EXEOS!=svcnm[0])
     {
         NDRX_LOG(log_debug, "TM Service name specified: [%s]", svcnm);
-        ret = call_tm(p_ub, svcnm, parse);
+        ret = call_tm(p_ub, svcnm, parse, EXFALSE);
     }
     else
     {
@@ -438,10 +439,9 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
 
         LL_FOREACH_SAFE(list,el,tmp)
         {
-
             NDRX_LOG(log_info, "About to call service: [%s]\n", el->svcnm);
 
-            ret = call_tm(p_ub, el->svcnm, parse);
+            ret = call_tm(p_ub, el->svcnm, parse, EXTRUE);
             /* Have some housekeep. */
             LL_DELETE(list,el);
             NDRX_FREE(el);

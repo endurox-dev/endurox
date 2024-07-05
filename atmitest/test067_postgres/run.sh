@@ -135,7 +135,18 @@ xadmin start -y || go_out 1
 # remove any prep transactions
 
 xadmin recoverlocal -p
+
+if [ $? -ne 0 ]; then
+    echo "[xadmin recoverlocal] failed"
+    go_out -1
+fi
+
 xadmin abortlocal -y
+
+if [ $? -ne 0 ]; then
+    echo "[xadmin abortlocal] failed"
+    go_out -1
+fi
 
 RET=0
 
@@ -218,6 +229,10 @@ xadmin start -y
 # remove any left over
 xadmin abortlocal -y
 
+if [ $? -ne 0 ]; then
+    echo "[xadmin abortlocal] failed"
+    go_out -1
+fi
 
 echo "Do insert..."
 (./atmiclt67 doinsert 2>&1) >> ./atmiclt-dom1.log
@@ -231,7 +246,6 @@ fi
 xadmin recoverlocal
 CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 
-
 if [ "X$CNT" != "X1" ]; then
 
     echo "Expected 1 transaction, got: $CNT"
@@ -241,6 +255,10 @@ fi
 
 xadmin commitlocal -y
 
+if [ $? -ne 0 ]; then
+    echo "[xadmin commitlocal] failed"
+    go_out -1
+fi
 
 echo "Check 50"
 (./atmiclt67 ck50 2>&1) >> ./atmiclt-dom1.log
@@ -250,7 +268,6 @@ RET=$?
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
-
 
 echo "Do insert2..."
 (./atmiclt67 insert2 2>&1) >> ./atmiclt-dom1.log
@@ -262,6 +279,11 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 xadmin abortlocal -y -p
+
+if [ $? -ne 0 ]; then
+    echo "[xadmin abortlocal] failed"
+    go_out -1
+fi
 
 echo "Check 0"
 (./atmiclt67 ck0 2>&1) >> ./atmiclt-dom1.log
