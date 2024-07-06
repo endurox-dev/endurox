@@ -191,11 +191,11 @@ typedef struct
             NDRX_LOG(log_debug, "trycounter [%ld] -> [%ld]",\
                     DEST->trycounter, SRC->trycounter);\
             DEST->trycounter = SRC->trycounter;\
-            NDRX_LOG(log_debug, "trycounter [%ld] -> [%ld]",\
+            NDRX_LOG(log_debug, "trytstamp [%ld] -> [%ld]",\
                     DEST->trytstamp, SRC->trytstamp);\
             DEST->trytstamp = SRC->trytstamp;\
             NDRX_LOG(log_debug, "trycounter_usec [%ld] -> [%ld]",\
-                    DEST->trytstamp, SRC->trytstamp);\
+                    DEST->trytstamp_usec, SRC->trytstamp_usec);\
             DEST->trytstamp_usec = SRC->trytstamp_usec;
 
 /**
