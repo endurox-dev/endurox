@@ -372,7 +372,6 @@ expublic char * tmq_msgid_deserialize(const char *msgid_str_in, char *msgid_out)
  * @param data data to enqueue
  * @param len data len
  * @param flags flags (for tpcall). TPQTIME_ABS and TPQTIME_REL are mutually exclusive
- * @param is_originator set to EXTRUE, in case if originator does enqueue
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
