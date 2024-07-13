@@ -41,13 +41,15 @@ In case of error, global transaction (if associated with current thread) is mark
 abort, except if *TPNOABORT* flag was specified or particular error code
 indicates that global transaction is not marked for abort.
 
-If message is dequeued, the same 'ctl' is returned as used for enqueue, except:
+If message is dequeued, the same 'ctl' is returned as used for *tpenqueue(3)*, except:
 
-- Field 'qdeq_time' value is absent.
+- Field 'qdeq_time' value is not returned (keeps value passed to tpdequeue() call).
 
-- Field 'qexp_time' value is absent.
+- Field 'qexp_time' value is not returned (keeps value passed to tpdequeue() call).    
 
 - Field 'flags', if flag *TPQTIME_REL* was specified, it is changed to *TPQTIME_ABS*.
+
+- Field 'diagnostic' is set to *0*.
 
 Additionally, the field value of 'ctl->cltid' is retained from the original
 enqueue with the message stored in the reply queue (field 'replyqueue', flag *TPQREPLYQ*)
