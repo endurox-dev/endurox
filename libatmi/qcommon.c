@@ -84,19 +84,41 @@ static ubf_c_map_t M_tpqctl_map[] =
 };
 
 /**
- * Enqueue request structure
+ * Enqueue request structure (only for marshal)
  */
-static long M_tpqctl_enqreq[] = 
+static long M_tpqctl_enqreq_to_ubf[] =
 {
-    UBFUTIL_EXPORT,/* 0 - EX_QFLAGS*/
-    UBFUTIL_EXPORT,/* 1 - EX_QDEQ_TIME*/
+    0,             /* 0 - EX_QFLAGS (set manually) */
+    0,             /* 1 - EX_QDEQ_TIME (set manually) */
     UBFUTIL_EXPORT,/* 2 - EX_QPRIORITY*/
     0,             /* 3 - EX_QDIAGNOSTIC*/
     UBFUTIL_EXPORT,/* 4 - EX_QMSGID*/
     UBFUTIL_EXPORT,/* 5 - EX_QCORRID*/
     UBFUTIL_EXPORT,/* 6 - EX_QREPLYQUEUE*/
     UBFUTIL_EXPORT,/* 7 - EX_QFAILUREQUEUE*/
-    UBFUTIL_EXPORT,/* 8 - EX_CLTID*/
+    0,             /* 8 - EX_CLTID (set manually) */
+    UBFUTIL_EXPORT,/* 9 - EX_QURCODE*/
+    UBFUTIL_EXPORT,/* 10 - EX_QAPPKEY*/
+    UBFUTIL_EXPORT,/* 11 - EX_QDELIVERY_QOS*/
+    UBFUTIL_EXPORT,/* 12 - EX_QREPLY_QOS*/
+    UBFUTIL_EXPORT,/* 13 - EX_QEXP_TIME*/
+    0              /* 14 - EX_QDIAGMSG*/
+};
+
+/**
+ * Enqueue request structure (only for unmarshal (including manual fields of above))
+ */
+static long M_tpqctl_enqreq_from_ubf[] =
+{
+    UBFUTIL_EXPORT,/* 0 - EX_QFLAGS */
+    UBFUTIL_EXPORT,/* 1 - EX_QDEQ_TIME */
+    UBFUTIL_EXPORT,/* 2 - EX_QPRIORITY*/
+    0,             /* 3 - EX_QDIAGNOSTIC*/
+    UBFUTIL_EXPORT,/* 4 - EX_QMSGID*/
+    UBFUTIL_EXPORT,/* 5 - EX_QCORRID*/
+    UBFUTIL_EXPORT,/* 6 - EX_QREPLYQUEUE*/
+    UBFUTIL_EXPORT,/* 7 - EX_QFAILUREQUEUE*/
+    UBFUTIL_EXPORT,/* 8 - EX_CLTID */
     UBFUTIL_EXPORT,/* 9 - EX_QURCODE*/
     UBFUTIL_EXPORT,/* 10 - EX_QAPPKEY*/
     UBFUTIL_EXPORT,/* 11 - EX_QDELIVERY_QOS*/
@@ -183,7 +205,7 @@ expublic int tmq_tpqctl_to_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl)
 {
     int ret = EXSUCCEED;
     
-    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, ctl, p_ub, M_tpqctl_enqreq);
+    ret=atmi_cvt_c_to_ubf(M_tpqctl_map, ctl, p_ub, M_tpqctl_enqreq_to_ubf);
     
     return ret;
 }
@@ -198,11 +220,10 @@ expublic int tmq_tpqctl_from_ubf_enqreq(UBFH *p_ub, TPQCTL *ctl)
 {
     int ret = EXSUCCEED;
     
-    ret=atmi_cvt_ubf_to_c(M_tpqctl_map, p_ub, ctl, M_tpqctl_enqreq);
+    ret=atmi_cvt_ubf_to_c(M_tpqctl_map, p_ub, ctl, M_tpqctl_enqreq_from_ubf);
     
     return ret;
 }
-
 
 /**
  * Copy the TPQCTL data to buffer, request data
@@ -264,7 +285,6 @@ expublic int tmq_tpqctl_from_ubf_deqreq(UBFH *p_ub, TPQCTL *ctl)
     return ret;
 }
 
-
 /**
  * Copy the TPQCTL data to buffer, request data
  * @param p_ub destination buffer
@@ -294,7 +314,6 @@ expublic int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
     
     return ret;
 }
-
 
 /**
  * Generate serialized version of the string
@@ -353,11 +372,13 @@ expublic char * tmq_msgid_deserialize(const char *msgid_str_in, char *msgid_out)
  * @param data data to enqueue
  * @param len data len
  * @param flags flags (for tpcall). TPQTIME_ABS and TPQTIME_REL are mutually exclusive
+ * @param is_originator set to EXTRUE, in case if originator does enqueue
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qname, TPQCTL *ctl, 
         char *data, long len, long flags)
 {
+
     int ret = EXSUCCEED;
     long rsplen;
     char cmd = TMQ_CMD_ENQUEUE;
@@ -366,7 +387,9 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     UBFH *p_ub = NULL;
     atmi_error_t errbuf;
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
-    long dec_time_org = ctl->deq_time;
+    long ctl_flags;
+    long ctl_deq_time;
+    char *p_cltid;
     
     NDRX_SYSBUF_MALLOC_WERR_OUT(tmp, tmp_len, ret);
 
@@ -397,19 +420,22 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
         EXFAIL_OUT(ret);
     }
 
-    if (ctl->flags & TPQTIME_ABS && ctl->flags & TPQTIME_REL)
+    /* convert flags field: */
+    ctl_flags = ctl->flags;
+    if ( (ctl_flags & TPQTIME_ABS) && (ctl_flags & TPQTIME_REL))
     {
         ndrx_TPset_error_fmt(TPEINVAL,  
             "%s: TPQTIME_ABS and TPQTIME_REL are mutually exclusive!", __func__);
         EXFAIL_OUT(ret);
     }
-    
+
     /* convert time */
-    if (ctl->flags&TPQTIME_REL)
+    ctl_deq_time = ctl->deq_time;
+    if (ctl_flags & TPQTIME_REL)
     {
-        ctl->deq_time = time(NULL) + ctl->deq_time;
-        ctl->flags&=~TPQTIME_REL;
-        ctl->flags|=TPQTIME_ABS;
+        ctl_deq_time = time(NULL) + ctl_deq_time;
+        ctl_flags &=~ TPQTIME_REL;
+        ctl_flags |= TPQTIME_ABS;
     }
 
     ctl->diagnostic=0;
@@ -420,6 +446,8 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
                 "tpalloc()", __func__);
         EXFAIL_OUT(ret);
     }
+
+    /* set cltid */
     
     /* prepare buffer for call */
     if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing(data, len, tmp, &tmp_len, 0, 
@@ -467,6 +495,40 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     if (EXSUCCEED!=Bchg(p_ub, EX_QNAME, 0, qname, 0L))
     {
         ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set qname field: %s", 
+                __func__, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    /* custom deq time (might be converted) */
+    if (EXSUCCEED!=Bchg(p_ub, EX_QDEQ_TIME, 0, (char *)&ctl_deq_time, 0L))
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set deq_time field: %s",
+                __func__, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    if (ctl_flags & TPQKEEPORIG)
+    {
+        p_cltid = ctl->cltid.clientdata;
+        /* remove flag, used only for enqueueing */
+        ctl_flags &= (~TPQKEEPORIG);
+    }
+    else
+    {
+        p_cltid = G_atmi_tls->G_atmi_conf.my_id;
+    }
+
+    if (EXSUCCEED!=Bchg(p_ub, EX_CLTID, 0, (char *)p_cltid, 0L))
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set cltid field: %s",
+                __func__, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    /* set flags (might be converted, do not want to touch the input struct) */
+    if (EXSUCCEED!=Bchg(p_ub, EX_QFLAGS, 0, (char *)&ctl_flags, 0L))
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set flags field: %s",
                 __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }

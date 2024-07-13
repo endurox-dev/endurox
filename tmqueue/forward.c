@@ -747,6 +747,9 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             
             /* Send response to reply Q (load the data in FB with call details) */
             memset(&ctl, 0, sizeof(ctl));
+            memcpy(&(ctl.cltid), &(msg->qctl.cltid), sizeof(msg->qctl.cltid));
+
+            ctl.flags|=TPQKEEPORIG;
                     
             /* this will add msg to our transaction, if all ok
              * now futher we do not control
@@ -824,11 +827,12 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 NDRX_LOG(log_warn, "TPQFAILUREQ defined and non NULL reply, enqueue answer buffer to "
                     "[%s] q in [%s] namespace", 
                     msg->qctl.failurequeue, msg->hdr.qspace);
-                
 
                 /* Send response to reply Q (load the data in FB with call details)
                  * Keep the original flags... */
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
+
+                ctl.flags|=TPQKEEPORIG;
 
                 /* if local tran expires, the process will be unable to join
                  * transaction 
@@ -875,6 +879,8 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
                 /* Send org msg to error queue.
                  * Keep the original flags... */
                 memcpy(&ctl, &msg->qctl, sizeof(ctl));
+
+                ctl.flags|=TPQKEEPORIG;
 
                 UNLOCK;
                 ret = tpenqueue (msg->hdr.qspace, qconf.errorq, &ctl, call_buf, call_len, 0);

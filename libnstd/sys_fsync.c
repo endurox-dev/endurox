@@ -155,7 +155,8 @@ expublic int ndrx_fsync_fsync(FILE *file, long flags)
     {
 #ifdef EX_OS_DARWIN
         /* no fdatasync (warning) on macos */
-        if (EXSUCCEED!=fsync(fd))
+        /*if (EXSUCCEED!=fsync(fd)) */
+        if (EXFAIL==fcntl(fd, F_FULLFSYNC))
 #else
         if (EXSUCCEED!=fdatasync(fd))
 #endif
@@ -209,6 +210,8 @@ expublic int ndrx_fsync_dsync(char *dir, long flags)
          * thus only what we can do is ignore these errors
          */
         fsync_range(fd, O_DSYNC, 0, 0);
+#elif EX_OS_DARWIN
+        fcntl(fd, F_FULLFSYNC);
 #else
         if (EXSUCCEED!=fsync(fd))
         {

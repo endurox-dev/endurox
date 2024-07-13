@@ -54,8 +54,8 @@ extern "C" {
  */
 #define TMQ_DEFAULT_Q           "@"         /**< Symbol for default Q       */
 
-#define TMQ_MAGIC               "ETQ3"      /**< magic of tmq record        */
-#define TMQ_MAGIC2              "END3"      /**< magic of tmq record, end   */
+#define TMQ_MAGIC               "ETQ4"      /**< magic of tmq record        */
+#define TMQ_MAGIC2              "END4"      /**< magic of tmq record, end   */
 #define TMQ_MAGIC_LEN           4           /**< the len of message magic   */
 
 #define TMQ_MAGICBASE           "ETQ"       /**< magic without version      */

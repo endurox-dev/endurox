@@ -280,16 +280,17 @@ extern "C" {
 #define	TPQREPLYQ	0x00100		/**< set/get reply queue */		
 #define	TPQTIME_ABS	0x00200		/**< RFU, set absolute time */		
 #define	TPQTIME_REL	0x00400		/**< RFU, set relative time */		
-#define	TPQGETBYCORRIDOLD 0x00800	/**< deprecated */		
-#define	TPQPEEK		0x01000		/**< peek */		
+#define	TPQGETBYCORRIDOLD 0x00800	    /**< deprecated */		
+#define	TPQPEEK		0x01000		        /**< peek */		
 #define TPQDELIVERYQOS  0x02000         /**< RFU, delivery quality of service */		
 #define TPQREPLYQOS     0x04000         /**< RFU, reply message quality of service */		
 #define TPQEXPTIME_ABS  0x08000         /**< RFU, absolute expiration time */		
 #define TPQEXPTIME_REL  0x10000         /**< RFU, relative expiration time */		
 #define TPQEXPTIME_NONE 0x20000        	/**< RFU, never expire */		
-#define	TPQGETBYMSGID	0x40008		/**< dequeue by msgid */		
-#define	TPQGETBYCORRID	0x80800		/**< dequeue by corrid */		
+#define	TPQGETBYMSGID	0x40008	        /**< dequeue by msgid */		
+#define	TPQGETBYCORRID	0x80800         /**< dequeue by corrid */		
 #define TPQASYNC        0x100000        /**< Async complete */
+#define TPQKEEPORIG     0x200000        /**< Keep originator data */
 		
 /* Valid flags for the quality of service fileds in the TPQCTLstructure */		
 #define TPQQOSDEFAULTPERSIST  0x00001   /**< queue's default persistence policy */		
@@ -367,8 +368,8 @@ extern "C" {
 /* client/caller identifier */
 struct clientid_t
 {
-    /* TODO! see Support #265 for major release scheduled. +1 for EOS */
-    char    clientdata[NDRX_MAX_ID_SIZE];
+    /* Support #265 and Support #843 */
+    char    clientdata[NDRX_MAX_ID_SIZE+1];
 };
 typedef struct clientid_t CLIENTID;
 
@@ -426,24 +427,27 @@ typedef	struct	tpinfo_t TPINIT;
 typedef void* TPCONTEXT_T; /* Enduro/X full context switching handler */
 
 /* Queue support structure: */
-struct tpqctl_t 
+struct tpqctl_t
 {
-    long flags;         /**< indicates which of the values are set */		
-    long deq_time;      /**< absolute/relative time for dequeuing */		
-    long priority;      /**< enqueue priority */		
-    long diagnostic;    /**< indicates reason for failure */		
-    char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
-    char msgid[TMMSGIDLEN];	/**< id of message before which to queue */		
-    char corrid[TMCORRIDLEN];/**< correlation id used to identify message */		
-    char replyqueue[TMQNAMELEN+1];/**< queue name for reply message */		
-    char failurequeue[TMQNAMELEN+1];/**< queue name for failure message */		
-    CLIENTID cltid;     /**< client identifier for originating client */		
-    long urcode;        /**< application user-return code */		
-    long appkey;        /**< application authentication client key */		
-    long delivery_qos;  /**< delivery quality of service  */		
-    long reply_qos;     /**< reply message quality of service  */		
-    long exp_time;      /**< expiration time  */		
-};		
+    long flags;             /**< queue operation flags */
+    long deq_time;          /**< dequeue time / absolute or relative */
+    long priority;          /**< priority of enqueue, RFU */
+    long diagnostic;        /**< queue error code */
+    char diagmsg[NDRX_QDIAG_MSG_SIZE]; /**< queue error message */
+    char msgid[TMMSGIDLEN]; /**< message id, assigned when enqueued */
+    char corrid[TMCORRIDLEN];/**< correlator of the messages */
+    char replyqueue[TMQNAMELEN+1];  /**< where where automatic Q replies to put */
+    char failurequeue[TMQNAMELEN+1];/**< Q name where failed automatic messages to put */
+    /** client id (which enqueued message).
+     * Kept in dequeued message, replyqueue and failurequeue messages
+     */
+    CLIENTID cltid;
+    long urcode;            /**< application return code, RFU */
+    long appkey;            /**< authenticatino key, RFU */
+    long delivery_qos;      /**< delivery QoS, RFU  */
+    long reply_qos;         /**< reply QoS, RFU  */
+    long exp_time;          /**< message expiry time, RFU  */
+};
 typedef struct tpqctl_t TPQCTL;
 
 

@@ -65,25 +65,28 @@ The *TPQCTL* structure is following:
 --------------------------------------------------------------------------------
 
 /* Queue support structure: */
-struct tpqctl_t 
+struct tpqctl_t
 {
-        long flags;             /* indicates which of the values are set */             
-        long deq_time;          /* absolute/relative  time for dequeuing */             
-        long priority;          /* enqueue priority */          
-        long diagnostic;        /* indicates reason for failure */              
-        char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
-        char msgid[TMMSGIDLEN]; /* id of message before which to queue */               
-        char corrid[TMCORRIDLEN];/* correlation id used to identify message */          
-        char replyqueue[TMQNAMELEN+1];  /* queue name for reply message */              
-        char failurequeue[TMQNAMELEN+1];/* queue name for failure message */            
-        CLIENTID cltid;         /* client identifier for originating client */          
-        long urcode;            /* application user-return code */              
-        long appkey;            /* application authentication client key */             
-        long delivery_qos;      /* delivery quality of service  */              
-        long reply_qos;         /* reply message quality of service  */         
-        long exp_time;          /* expiration time  */          
-};              
-typedef struct tpqctl_t TPQCTL;      
+    long flags;             /**< queue operation flags */
+    long deq_time;          /**< dequeue time / absolute or relative */
+    long priority;          /**< priority of enqueue, RFU */
+    long diagnostic;        /**< queue error code */
+    char diagmsg[NDRX_QDIAG_MSG_SIZE]; /**< queue error message */
+    char msgid[TMMSGIDLEN]; /**< message id, assigned when enqueued */
+    char corrid[TMCORRIDLEN];/**< correlator of the messages */
+    char replyqueue[TMQNAMELEN+1];  /**< where where automatic Q replies to put */
+    char failurequeue[TMQNAMELEN+1];/**< Q name where failed automatic messages to put */
+    /** client id (which enqueued message).
+     * Kept in dequeued message, replyqueue and failurequeue messages
+     */
+    CLIENTID cltid;
+    long urcode;            /**< application return code, RFU */
+    long appkey;            /**< authenticatino key, RFU */
+    long delivery_qos;      /**< delivery QoS, RFU  */
+    long reply_qos;         /**< reply QoS, RFU  */
+    long exp_time;          /**< message expiry time, RFU  */
+};
+typedef struct tpqctl_t TPQCTL;
 
 --------------------------------------------------------------------------------
 
@@ -114,8 +117,8 @@ The `TPQCTL.deq_time` field value set in number of seconds to delay the message 
 
 Fields 'TPQCTL.priority', 'TPQCTL.urcode', 'TPQCTL.appkey', 
 'TPQCTL.delivery_qos', 'TPQCTL.reply_qos', 'TPQCTL.exp_time' are reserved 
-for future use. 'TPQCTL.cltid' is 
-automatically set by Enduro/X system when passing message to *tmqueue* server.
+for future use. 'TPQCTL.cltid' is  automatically set by Enduro/X system when
+passing message to *tmqueue* server.
 
 RETURN VALUE
 ------------

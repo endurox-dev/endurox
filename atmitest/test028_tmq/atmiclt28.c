@@ -38,6 +38,7 @@
 #include <unistd.h>
 
 #include <atmi.h>
+#include <atmi_tls.h>
 #include <ubf.h>
 #include <ndebug.h>
 #include <test.fd.h>
@@ -557,7 +558,7 @@ exprivate int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
                         tpstrerror(tperrno), qc.diagnostic, qc.diagmsg, i, j);
                 EXFAIL_OUT(ret);
             }
-
+            
             ndrx_debug_dump_UBF(log_debug, "TESTC rcv buf", buf);
 
             if (i!=Boccur(buf, T_STRING_FLD))
@@ -775,7 +776,6 @@ exprivate int basic_q_msgid_test(void)
             {
                 NDRX_LOG(log_error, "TESTERROR: Got %d expected 102", buf[0]);
                 EXFAIL_OUT(ret);
-
             }
         }
         
@@ -911,6 +911,14 @@ exprivate int basic_q_corfifo_test(void)
         {
             NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc1.diagnostic, qc1.diagmsg);
+            EXFAIL_OUT(ret);
+        }
+
+        /* add test; ensure that cltid is set & matches */
+        if (0!=strcmp(qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id))
+        {
+            NDRX_LOG(log_error, "TESTERROR: qc1.cltid.clientdata [%s] <> G_atmi_tls->G_atmi_conf.my_id[%s]",
+                qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id);
             EXFAIL_OUT(ret);
         }
 
@@ -1424,6 +1432,14 @@ exprivate int basic_q_corauto_test(void)
             NDRX_ASSERT_VAL_OUT(qc1.corrid[0]==cor, 
                     "Invalid cor %d (exp %d)", 
                     (int)qc1.corrid[0], (int)cor);
+
+            /* validate client data... */
+            if (0!=strcmp(qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id))
+            {
+                NDRX_LOG(log_error, "TESTERROR: qc1.cltid.clientdata [%s] <> G_atmi_tls->G_atmi_conf.my_id[%s]",
+                    qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id);
+                EXFAIL_OUT(ret);
+            }
         }
     }
     
@@ -1744,6 +1760,14 @@ exprivate int basic_autoq_deadq(void)
             EXFAIL_OUT(ret);
         }
 
+        /* validate client data... */
+        if (0!=strcmp(qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id))
+        {
+            NDRX_LOG(log_error, "TESTERROR: qc1.cltid.clientdata [%s] <> G_atmi_tls->G_atmi_conf.my_id[%s]",
+                qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id);
+            EXFAIL_OUT(ret);
+        }
+
         tpfree((char *)buf2);
     }
 
@@ -1850,6 +1874,14 @@ exprivate int basic_rndfail(void)
             NDRX_LOG(log_error, "TESTERROR: Invalid value [%s]", p);
             EXFAIL_OUT(ret);
         }
+
+        if (0!=strcmp(qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id))
+        {
+            NDRX_LOG(log_error, "TESTERROR: qc1.cltid.clientdata [%s] <> G_atmi_tls->G_atmi_conf.my_id[%s]",
+                qc1.cltid.clientdata, G_atmi_tls->G_atmi_conf.my_id);
+            EXFAIL_OUT(ret);
+        }
+
         tpfree((char *)buf2);
     }
 
