@@ -35,7 +35,7 @@ by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid'
 from *ndrxconfig.xml(5).
 
 Functions are transactional and can participate in user's global transaction. 
-It is not possible to enqueue and dequeue message within same global transaction.
+It is not possible to enqueue and dequeue the same message within same global transaction.
 
 In case of error, global transaction (if associated with current thread) is marked for
 abort, except if *TPNOABORT* flag was specified or particular error code

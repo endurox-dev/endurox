@@ -46,7 +46,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     *Y* (*y*) - automatic queue. *T* (*t*) - automatic and call is performed in 
     global transaction. *N*(*n*) - not automatic.
 *TRIES*::
-    Number of tires to send the message to 'SERVICE_NAME' service. I.e retry will be done in case
+    Number of tries to send the message to 'SERVICE_NAME' service. I.e retry will be done in case
     if call returns the error. Parameter is used by automatic queues.
 *INIT_WAIT*::
     Number of seconds to be waited before starting to send the message to service. Node that
@@ -181,8 +181,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)* *common_configuration(guides)*
-*tpenqueue(3)* *tpdequeue(3)*
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)* *tpenqueue(3)* *tpdequeue(3)*
 
 COPYING
 -------
