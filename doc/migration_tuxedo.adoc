@@ -1124,7 +1124,7 @@ TMSYSEVT SRVGRP=ADMINGRP SRVID=11 CLOPT="-A -- -f /user90/conf/TMSYSEVT"
 
 Enduro/X event server does not use control file, so when converting *-f* flag for
 these servers may be ignored. For performance reasons it is recommended to set
-thread dispatch threads to larger number than default *1*.
+dispatch threads to larger number than default *1*.
 
 --------------------------------------------------------------------------------
 
@@ -1356,10 +1356,6 @@ EXBENCH         AUTOTRAN=Y ROUTING=ROUT2 PRIO=10 TRANTIME=40
 
 *ndrxconfig.xml:*
 
-Enduro/X event server does not use control file, so when converting *-f* flag for
-these servers may be ignored. For performance reasons it is recommended to set
-thread dispatch threads to larger number than default *1*.
-
 --------------------------------------------------------------------------------
 <endurox>
 ...
@@ -1403,10 +1399,6 @@ ROUT2   FIELD=T_STRING_10_FLD   BUFTYPE="FML32"  FIELDTYPE=STRING
 --------------------------------------------------------------------------------
 
 *ndrxconfig.xml:*
-
-Enduro/X event server does not use control file, so when converting *-f* flag for
-these servers may be ignored. For performance reasons it is recommended to set
-thread dispatch threads to larger number than default *1*.
 
 --------------------------------------------------------------------------------
 
