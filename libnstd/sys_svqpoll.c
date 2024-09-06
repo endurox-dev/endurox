@@ -385,7 +385,11 @@ expublic void ndrx_epoll_sys_uninit(void)
  */
 expublic char * ndrx_epoll_mode(void)
 {
+#if EX_USE_SYSVQEM
+    static char *mode = "svqem";
+#else
     static char *mode = "SystemV";
+#endif
     
     return mode;
 }
@@ -692,14 +696,14 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
             /* translate the error codes */
             if (ENOMSG==err)
             {
-                NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", M_mainq->qid, 
-                    strerror(err));
+                NDRX_LOG(log_debug, "ndrx_svq_event_sndrcv(mqd=%p qid=%d) failed: %s",
+                    M_mainq, M_mainq->qid, strerror(err));
                 err = EAGAIN;
             }
             else
             {
-                NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", M_mainq->qid, 
-                    strerror(err));
+                NDRX_LOG(log_error, "ndrx_svq_event_sndrcv(mqd=%p qid=%d) failed: %s",
+                    M_mainq, M_mainq->qid, strerror(err));
             }
             EXFAIL_OUT(ret);
         }

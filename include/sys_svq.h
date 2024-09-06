@@ -90,6 +90,35 @@
 #define NDRX_SVQ_INLEN(X)       (X-sizeof(long))    /**< System V input len   */
 #define NDRX_SVQ_OUTLEN(X)       (X+sizeof(long))   /**< System V output len  */
 
+#if defined(EX_USE_SYSVQEM)
+
+/* Emulated SystemV queue via shared memory segments,
+ * one shared memory segment is a queue
+ */
+#define ndrx_svq_key_t  ndrx_svqem_key_t
+#define ndrx_svq_msqid_ds ndrx_svqem_msqid_ds
+#define ndrx_svq_msgsnd(MQD, MSGP, MSGSZ, MSGFLAG) ndrx_svqem_msgsnd(MQD, MSGP, MSGSZ, MSGFLAG)
+#define ndrx_svq_msgrcv(MQD, MSGP, MSGSZ, MSGTYP, MSGFLAG) ndrx_svqem_msgrcv(MQD, MSGP, MSGSZ, MSGTYP, MSGFLAG)
+#define ndrx_svq_msgctl ndrx_svqem_msgctl
+#define ndrx_svq_msgget(key, msgflg, pos) ndrx_svqem_msgget(key, msgflg, pos)
+
+#define ndrx_svq_mqd_open2(mqd) ndrx_svqem_mqd_open2(mqd)
+#define ndrx_svq_mqd_close2(mqd) ndrx_svqem_mqd_close2(mqd)
+#else
+
+/* Standard System V implementation: */
+#define ndrx_svq_key_t  key_t
+#define ndrx_svq_msqid_ds msqid_ds 
+#define ndrx_svq_msgsnd(MQD, MSGP, MSGSZ, MSGFLAG) msgsnd(MQD->qid, MSGP, MSGSZ, MSGFLAG)
+#define ndrx_svq_msgrcv(MQD, MSGP, MSGSZ, MSGTYP, MSGFLAG) msgrcv(MQD->qid, MSGP, MSGSZ, MSGTYP, MSGFLAG)
+#define ndrx_svq_msgctl msgctl
+#define ndrx_svq_msgget(key, msgflg, pos) msgget(key, msgflg)
+
+#define ndrx_svq_mqd_open2(mqd)   do {} while(0)
+#define ndrx_svq_mqd_close2(mqd)  do {} while(0)
+
+#endif
+
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 
@@ -159,6 +188,11 @@ struct ndrx_svq_info
 {
     char qstr[NDRX_MAX_Q_SIZE+1];/**< Posix queue name string               */
     int qid;                    /**< System V Queue ID                      */
+
+#ifdef EX_USE_SYSVQEM
+    /* ptr to shared memory block */
+    ndrx_shm_t shm;
+#endif
     
     mode_t mode;                /**< permissions on new queue               */
     struct mq_attr attr;        /**< attributes for the queue, if creating  */
@@ -223,6 +257,22 @@ typedef struct
     pthread_cond_t *del_cond;     /** conditional variable for delete         */
     
 } ndrx_svq_mon_cmd_t;
+
+#ifdef EX_USE_SYSVQEM
+
+/**
+ * our version of key_t
+ */
+typedef int ndrx_svqem_key_t;
+
+/**
+ * Our version of the _msqid_ds
+ */
+struct ndrx_svqem_msqid_ds
+{
+    int       msg_qnum;     /**< current number of messages in Q        */
+};
+#endif
 
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/
@@ -298,6 +348,16 @@ extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
 extern NDRX_API int ndrx_svqadmin_init(mqd_t adminq);
 extern NDRX_API int ndrx_svqadmin_deinit(void);
 
+#ifdef EX_USE_SYSVQEM
+extern NDRX_API int ndrx_svqem_msgget(ndrx_svqem_key_t key, int msgflg, int pos);
+extern NDRX_API int ndrx_svqem_mqd_open2(mqd_t mqd);
+extern NDRX_API int ndrx_svqem_mqd_close2(mqd_t mqd);
+extern NDRX_API int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int msgflg);
+extern NDRX_API ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
+                long msgtyp, int msgflg);
+extern NDRX_API int ndrx_svqem_msgctl(int msqid, int cmd, struct ndrx_svqem_msqid_ds *buf);
 #endif
+
+#endif /* SYS_SYSVQ_H__ */
 
 /* vim: set ts=4 sw=4 et smartindent: */

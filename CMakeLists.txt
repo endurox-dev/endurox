@@ -75,7 +75,6 @@ SET (NDRX_BLD_BRANCH 	$ENV{NDRX_BLD_BRANCH})
 SET (NDRX_BLD_COMMIT 	$ENV{NDRX_BLD_COMMIT})
 SET (NDRX_BLD_FLAGS 	$ENV{NDRX_BLD_FLAGS})
 
-
 #
 # Get the git version (the version which is
 #
@@ -107,13 +106,18 @@ IF (ENABLE_TEST47)
     set(NDRX_ENABLE_TEST47 "1")
 ENDIF()
 
-IF(EX_USE_SYSVQ)
+IF(EX_USE_SYSVQEM)
+    set(EX_POLLER_STR   "SVQEM")
+ELSEIF(EX_USE_SYSVQ)
     set(EX_POLLER_STR   "SystemV")
 ELSEIF(EX_USE_FDPOLL)
+    # Obsolete:
     set(EX_POLLER_STR   "fdpoll")
 ELSEIF(EX_USE_EMQ)
+    # Obsolete:
     set(EX_POLLER_STR   "emq")
 ELSEIF(EX_USE_POLL)
+    # Obsolete:
     set(EX_POLLER_STR   "poll")
 ELSEIF(EX_USE_EPOLL)
     set(EX_POLLER_STR   "epoll")
@@ -174,7 +178,6 @@ CHECK_C_SOURCE_COMPILES("int main() {int i=0; __sync_fetch_and_add( &i, 1 );}" E
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
 CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)
 	
-
 # To check the size of a primitive type:
 CHECK_TYPE_SIZE("int"   EX_SIZEOF_INT)
 CHECK_TYPE_SIZE("long"  EX_SIZEOF_LONG)

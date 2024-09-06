@@ -65,7 +65,7 @@ typedef struct
 {
     char *qprefix;      /**< Queue prefix used by mappings        */
     long queuesmax;     /**< Max number of queues                 */
-
+    int msg_max;     /**< maximum number of messages in a queue (migt be defaulted)  */
     int  pgmax;         /**< Max number of singleton-groups       */
     int  sgrefreshmax;  /**< Expected maximums singleton-group refresh time */
 

@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <lcfint.h>
 #include <sys_unix.h>
 #include <atmi.h>
 #include <ndrstandard.h>
@@ -205,9 +206,9 @@ expublic void ndrx_mq_fix_mass_send(int *cntr)
 {
     *cntr = *cntr + 1;
     /* Have some backup */
-    if (*cntr >= G_atmi_env.msg_max - Q_SEND_GRACE)
+    if (*cntr >= ndrx_G_libnstd_cfg.msg_max - Q_SEND_GRACE)
     {
-        NDRX_LOG(log_error, "About to sleep! %d %d", *cntr, G_atmi_env.msg_max);
+        NDRX_LOG(log_error, "About to sleep! %d %d", *cntr, ndrx_G_libnstd_cfg.msg_max);
         usleep(SLEEP_ON_FULL_Q);
         *cntr = 0;
     }
@@ -292,7 +293,7 @@ expublic mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode,
     }
 
     if (!p_at->mq_maxmsg)
-        p_at->mq_maxmsg = G_atmi_env.msg_max;
+        p_at->mq_maxmsg = ndrx_G_libnstd_cfg.msg_max;
 
     if (!p_at->mq_msgsize)
         p_at->mq_msgsize = G_atmi_env.msgsize_max;
@@ -314,7 +315,6 @@ expublic mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode,
  */
 expublic mqd_t ndrx_mq_open_at_wrp(char *name, int oflag)
 {
-    
     return ndrx_mq_open_at(name, oflag, 0, NULL);
 }
 

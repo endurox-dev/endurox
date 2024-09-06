@@ -1,0 +1,325 @@
+/**
+ * @brief Emulated System-V message queue
+ *  Emulates: msgget, msgsnd, msgrcv, msgctl
+ *  Will be used as part of the SystemVEM messaging.
+ *
+ * @file sys_svqem.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2023, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
+
+/*---------------------------Includes-----------------------------------*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/time.h>
+#include <sys/sem.h>
+
+#include <ndrstandard.h>
+#include "sys_unix.h"
+#include "ndebug.h"
+
+#include <lcfint.h>
+#include <stddef.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/shm.h>
+#include <sys_svq.h>
+
+/*---------------------------Externs------------------------------------*/
+extern ndrx_sem_t ndrx_G_svqem_sem;
+/*---------------------------Macros-------------------------------------*/
+#define POS_LOCK    0   /**< in pair first is mutex                  */
+#define POS_COND    1   /**< in pair, second is conditional variable */
+
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Message queue header
+ */
+typedef struct
+{
+    int               svqem_pos;   /**< offset from IPC key (shifted)*/
+    struct mq_attr    svqem_attr;  /**< queue attributes             */
+
+    long              svqem_head;  /**< first message index          */
+    long              svqem_free;  /**< first free message index     */
+    long              svqem_nwait; /**< number of threads waiting    */
+
+    /* Journal data: */
+    long              svqem_head_j;  /**< first message index          */
+    long              svqem_free_j;  /**< first free message index     */
+    long              svqem_nwait_j; /**< number of threads waiting    */
+    int               svqem_dirty_j; /**< journal is dirty             */
+
+} ndrx_svqem_hdr_t;
+
+/**
+ * Message header
+ */
+typedef struct
+{
+    long            msg_next;    /**< next msg index                */
+    ssize_t         msg_len;     /**< actual length                 */
+    unsigned int    msg_prio;    /**< priority                      */
+} ndrx_svqem_msg_hdr_t;
+
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ *  ndrx_svqem_msgget, ndrx_svqem_msgsnd, ndrx_svqem_msgrcv, ndrx_svqem_msgctl
+ * - Implements fixed blocks in shared memory, internally linked with header
+ * - Implements journal of last pointer swap
+ * - Uses two seamphores for mutex lock / conditional checks
+ * - In case if condition is signalled more than needed, no problem, the next waiter on q will just consume few more empty reads ?
+ * - shared mems: - Emulation over the system- shared memory, ipckey+20 + Nr of Queues
+ * - msgid => shmid
+ * - Sub Sem_id => stored in header of Q. Sub-sem-id => position in s2p array.
+ */
+
+/**
+ * Perform locking, similar to pthread_mutex_lock
+ * @param hdr queue heqder
+ * @param int pos
+ * @return EXSUCCEED/EXFAIL (errno set)
+ */
+exprivate int ndrx_svqem_lock(ndrx_svqem_hdr_t *hdr)
+{
+    int ret = EXSUCCEED;
+    struct sembuf sops;
+
+    sops.sem_num = hdr->svqem_pos*2 + POS_LOCK;
+    sops.sem_op = -1;   /* Decrement semaphore value */
+    sops.sem_flg = SEM_UNDO;
+
+    if (EXSUCCEED!=semop(ndrx_G_svqem_sem.semid, &sops, 1))
+    {
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+
+}
+
+/**
+ * Function to emulate mutex unlock
+ * @param hdr shm header
+ * @return EXSUCCEED/EXFAIL (errno set)
+ */
+exprivate int ndrx_svqem_unlock(ndrx_svqem_hdr_t *hdr)
+{
+    int ret = EXSUCCEED;
+    struct sembuf sops;
+
+    sops.sem_num = hdr->svqem_pos*2 + POS_LOCK;
+    sops.sem_op = 1;   /* Decrement semaphore value */
+    sops.sem_flg = SEM_UNDO;
+
+    if (EXSUCCEED!=semop(ndrx_G_svqem_sem.semid, &sops, 1))
+    {
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Wait for condition
+ * @param hdr queue header
+ */
+exprivate int ndrx_svqem_condwait(ndrx_svqem_hdr_t *hdr)
+{
+    int ret = EXSUCCEED;
+    struct sembuf sops;
+
+    /* Increment waiter (this is hint, extra loops will cope with interrupted
+     * waiters) */
+    hdr->svqem_nwait++;
+
+    if (EXSUCCEED!=ndrx_svqem_unlock(hdr))
+    {
+        EXFAIL_OUT(ret);
+    }
+
+    sops.sem_num = hdr->svqem_pos*2 + POS_COND;
+    sops.sem_op = -1;   /* Decrement semaphore value */
+    sops.sem_flg = SEM_UNDO;
+
+    if (EXSUCCEED!=semop(ndrx_G_svqem_sem.semid, &sops, 1))
+    {
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=ndrx_svqem_lock(hdr))
+    {
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Send signal to waiter
+ * (no problem if there is actually no waiter, the next cond waiter will just
+ * get some extra loops)
+ * @param hdr queue header
+ */
+exprivate int ndrx_svqem_cond_signal(ndrx_svqem_hdr_t *hdr)
+{
+    int ret = EXSUCCEED;
+    if (hdr->svqem_nwait > 0)
+    {
+        struct sembuf sops;
+
+        sops.sem_num = hdr->svqem_pos*2 + POS_COND;
+        sops.sem_op = 1;    /* Increment semaphore value */
+        sops.sem_flg = SEM_UNDO;
+
+        if (EXSUCCEED!=semop(ndrx_G_svqem_sem.semid, &sops, 1))
+        {
+            EXFAIL_OUT(ret);
+        }
+
+        /* Decrement the count when signaling */
+        hdr->svqem_nwait--;
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Calculate queue size
+ */
+exprivate size_t ndrx_svqem_get_q_size(void)
+{
+    return sizeof(ndrx_svqem_hdr_t) + (ndrx_G_libnstd_cfg.msg_max *
+        (sizeof(ndrx_svqem_msg_hdr_t) + ndrx_msgsizemax() ));
+}
+/**
+ * param get queue id
+ * @param key IPC
+ * @param msgflag IPC_CREAT, IPC_EXCL
+ * @param pos index in p2s memory (their count matches with max shms...)
+ * @return qid -> shared memory segment identifier...
+ */
+expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int msgflg, int pos)
+{
+    int ret = EXSUCCEED;
+
+    if (msgflg & IPC_CREAT)
+    {
+        int key = ndrx_G_libnstd_cfg.ipckey+NDRX_SHM_KEYS_RESERVED+pos;
+        size_t size = (size_t) ndrx_svqem_get_q_size();
+        int flags = msgflg | IPC_EXCL| S_IRWXU | S_IRWXG;
+        ret = shmget(key, size, flags);
+
+        if (EXFAIL==ret)
+        {
+            NDRX_LOG(log_error, "shmget() failed for key: %d, size: %ld, flags: %d: %s",
+                key, size, flags, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Invalid mode %d for key %d", msgflg, (int)key);
+        errno = ENOSPC;
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Attach to shared memory segments
+ */
+expublic int ndrx_svqem_mqd_open2(mqd_t mqd)
+{
+    /* attach on shm... (if asked so, then )*/
+    return ndrx_shm_attach(&mqd->shm);
+}
+
+/**
+ * Close shared memory segments
+ */
+expublic int ndrx_svqem_mqd_close2(mqd_t mqd)
+{
+    return ndrx_shm_close(&mqd->shm);
+}
+
+/**
+ * Send message
+ */
+expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int msgflg)
+{
+
+    /* verify the msgid in range */
+
+    /* check that queue was initialized in header */
+
+    /* */
+
+}
+
+/**
+ *
+ */
+expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
+                long msgtyp, int msgflg)
+{
+
+}
+
+/**
+ *
+ * @param msqid -> shard memory resource identifier
+ */
+expublic int ndrx_svqem_msgctl(int msqid, int cmd, struct ndrx_svqem_msqid_ds *buf)
+{
+
+    /* unlink q -> reset sems, reset shm entry...*/
+
+    /* stats -> return stats from shm... */
+
+}
+
+/* vim: set ts=4 sw=4 et smartindent: */

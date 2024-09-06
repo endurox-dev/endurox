@@ -136,6 +136,10 @@ expublic int ndrx_svq_close(mqd_t mqd)
 #endif
         /* remove from hashes... */
         ndrx_svq_mqd_close(mqd);
+
+        /* for SVQEM -> close shared memory segment */
+        ndrx_svq_mqd_close2(mqd);
+
         NDRX_FPFREE(mqd);
 #endif
 
@@ -163,7 +167,7 @@ expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *attr)
 {
     int ret = EXSUCCEED;
     int err = 0;
-    struct msqid_ds buf;
+    struct ndrx_svq_msqid_ds buf;
     
     VALIDATE_MQD;
     
@@ -177,7 +181,7 @@ expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *attr)
     memcpy(attr, &(mqd->attr), sizeof(*attr));
     
     /* read the queue stats */
-    if (EXSUCCEED!=msgctl(mqd->qid, IPC_STAT, &buf))
+    if (EXSUCCEED!=ndrx_svq_msgctl(mqd->qid, IPC_STAT, &buf))
     {
         err = errno;
         NDRX_LOG(log_debug, "Failed to get queue qid %d stats: %s",
@@ -246,6 +250,15 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
      * - if queue already exists SHM, then we can use that ID directly
      */
     if (EXFAIL==(mq->qid = ndrx_svqshm_get((char *)pathname, mode, oflag)))
+    {
+        errno_save=errno;
+        EXFAIL_OUT(ret);
+    }
+
+    /* For SVQEM -> attach shared memory segment ..
+     * + store shared memory segment into mq
+     */
+    if (EXSUCCEED!=ndrx_svq_mqd_open2(mq))
     {
         errno_save=errno;
         EXFAIL_OUT(ret);
@@ -337,14 +350,14 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
             /* translate the error codes */
             if (ENOMSG==err)
             {
-                NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
-                    strerror(err));
+                NDRX_LOG(log_debug, "ndrx_svq_event_sndrcv(mqd=%p qid=%d) failed: %s",
+                    mqd, mqd->qid, strerror(err));
                 errno = EAGAIN;
             }
             else
             {
-                NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
-                    strerror(err));
+                NDRX_LOG(log_error, "ndrx_svq_event_sndrcv(mqd=%p qid=%d) failed: %s",
+                    mqd->qid, strerror(err));
             }
         }
         
@@ -398,7 +411,7 @@ out:
     l = (long *)ptr;    
     *l = 1;
     
-    ret=msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, IPC_NOWAIT);
+    ret=ndrx_svq_msgrcv(mqd, ptr, NDRX_SVQ_INLEN(maxlen), 0, IPC_NOWAIT);
     
     /* if blocked mode is requested... */
     if (EXFAIL==ret)
@@ -407,8 +420,8 @@ out:
         {
             /* if no msg, then continue with bellow */
             err = errno;
-            NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
-                        strerror(err));
+            NDRX_LOG(log_error, "ndrx_svq_msgrcv(mqd=%p qid=%d) failed: %s",
+                mqd, mqd->qid, strerror(err));
         
             /* translate to posix */
             if (ENOMSG==err)
@@ -444,26 +457,26 @@ out:
         msgs.reqevents = POLLIN;
         msgs.rtnevents = 0;
         
-        NDRX_LOG(log_debug, "wait_left: %d qid: %d", wait_left, mqd->qid);
+        NDRX_LOG(log_debug, "wait_left: %d mqd: %p qid: %d", wait_left, mqd, mqd->qid);
         ret = poll((void *)&msgs, nfd, wait_left);
         err=errno;
-        NDRX_LOG(log_debug, "poll ret: %d qid: %d wait_left: %d", ret, mqd->qid, wait_left);
+        NDRX_LOG(log_debug, "poll ret: mqd: %p %d qid: %d wait_left: %d", ret, mqd, mqd->qid, wait_left);
         if (ret>0)
         {
             /* OK, can try to receive something */
-            if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, IPC_NOWAIT)))
+            if (EXFAIL==(ret = ndrx_svq_msgrcv(mqd, ptr, NDRX_SVQ_INLEN(maxlen), 0, IPC_NOWAIT)))
             {
                 err = errno;
                 /* translate the error codes */
                 if (ENOMSG==err)
                 {
-                    NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    NDRX_LOG(log_debug, "ndrx_svq_msgrcv(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                         strerror(err));
                     /* OK try again, some else downloaded msg.. */
                 }
                 else
                 {
-                    NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    NDRX_LOG(log_error, "ndrx_svq_msgrcv(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                         strerror(err));
                     errno = err;
                     /* terminate the process.. */
@@ -565,13 +578,13 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
             /* translate the error codes */
             if (ENOMSG==err)
             {
-                NDRX_LOG(log_debug, "msgsnd(qid=%d) failed: %s", mqd->qid, 
+                NDRX_LOG(log_debug, "ndrx_svq_event_sndrcv(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                     strerror(err));
                 errno = EAGAIN;
             }
             else
             {
-                NDRX_LOG(log_error, "msgsnd(qid=%d) failed: %s", mqd->qid, 
+                NDRX_LOG(log_error, "ndrx_svq_event_sndrcv(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                     strerror(err));
             }
         }
@@ -623,7 +636,7 @@ out:
     l = (long *)ptr;    
     *l = 1;
     
-    ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), IPC_NOWAIT);
+    ret = ndrx_svq_msgsnd(mqd, ptr, NDRX_SVQ_INLEN(len), IPC_NOWAIT);
     
     /* so if other error, or we get blocking condition when not requested */
     if (EXFAIL == ret)
@@ -632,7 +645,7 @@ out:
         {
             /* if no msg, then continue with bellow */
             err = errno;
-            NDRX_LOG(log_error, "msgsnd(qid=%d) failed: %s", mqd->qid, 
+            NDRX_LOG(log_error, "ndrx_svq_msgsnd(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                         strerror(err));
             errno = err;
             goto out;
@@ -670,7 +683,7 @@ out:
         if (ret>0)
         {
             /* OK, can try to receive something */
-            if (EXFAIL==(ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), IPC_NOWAIT)))
+            if (EXFAIL==(ret = ndrx_svq_msgsnd(mqd, ptr, NDRX_SVQ_INLEN(len), IPC_NOWAIT)))
             {
                 err=errno;
                 
@@ -678,7 +691,7 @@ out:
                 if (EAGAIN==err)
                 {
                     /*
-                    NDRX_LOG(log_debug, "msgsnd(qid=%d) failed: %s", mqd->qid, 
+                    NDRX_LOG(log_debug, "ndrx_svq_msgsnd(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                         strerror(err));
                      */
                     
@@ -691,7 +704,7 @@ out:
                 }
                 else
                 {
-                    NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    NDRX_LOG(log_error, "ndrx_svq_msgsnd(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                         strerror(err));
                     errno = err;
                     
@@ -784,7 +797,7 @@ expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len,
         msgflg = 0;
     }
     
-    ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
+    ret = ndrx_svq_msgsnd(mqd, ptr, NDRX_SVQ_INLEN(len), msgflg);
     
     /* no logging here, as we need to keep errno */
     
@@ -832,21 +845,22 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
     {
         msgflg = 0;
     }
-    
-    if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, msgflg)))
+
+    /* for SVQEM -> pass mqd (to have access to shared memory) */
+    if (EXFAIL==(ret = ndrx_svq_msgrcv(mqd, ptr, NDRX_SVQ_INLEN(maxlen), 0, msgflg)))
     {
         int err = errno;
         
         /* translate the error codes */
         if (ENOMSG==err)
         {
-            NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+            NDRX_LOG(log_debug, "ndrx_svq_msgrcv(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                 strerror(err));
             err = EAGAIN;
         }
         else
         {
-            NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+            NDRX_LOG(log_error, "ndrx_svq_msgrcv(mqd=%p qid=%d) failed: %s", mqd, mqd->qid, 
                 strerror(err));
         }
         

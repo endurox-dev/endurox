@@ -89,11 +89,17 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
 
     /* TMSRV storage engine hook */
     ,.p_ndrx_tms_store = NULL
-    ,.ndrx_tms_sotre_provider = "N/A"
+    ,.ndrx_tms_store_provider = "file-system"
 
     /* TMQ storage engine */
     ,.p_ndrx_tmq_store = NULL
+    ,.ndrx_tmq_store_provider = "file-system"
+
+#if 0
+    /* Chain of installed options` */
+    ,.p_ndrx_tmq_store = NULL
     ,.ndrx_tmq_sotre_provider = "N/A"
+#endif
     };
 
 /*---------------------------Statics------------------------------------*/

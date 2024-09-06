@@ -91,7 +91,8 @@ Mandatory Env. Variables
     range is used.
 
 *NDRX_MSGMAX*='MAX_MSGS_PER_QUEUE'::
-    Posix queue config attrib. Max number of messages that can be put in one queue.
+    Posix and *svqem* queue config attrib. Max number of messages that can be put in one queue.
+    in case if missing, defaults to *100*.
 
 *NDRX_DQMAX*='NDRXD_ACCESS_Q_MSG_MAX'::
     Enduro/X ATMI daemoni 'ndrxd' access Q size. Bigger is better.

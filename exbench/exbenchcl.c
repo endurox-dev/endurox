@@ -205,7 +205,6 @@ expublic void thread_process(void *ptr, int *p_finish_off)
 
             if (!M_autoq && !M_enqonly)
             {
-
                 /* restart the tran if doing deq */
                 if (M_tran && EXSUCCEED!=tpcommit(0))
                 {

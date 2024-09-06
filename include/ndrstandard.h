@@ -574,11 +574,13 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #define NDRX_SHM_ROUTCRIT_SFX   "shm,routcrit"      /**< Routing criteria              */
 #define NDRX_SHM_ROUTCRIT        "%s," NDRX_SHM_ROUTCRIT_SFX
-#define NDRX_SHM_ROUTCRIT_KEYOFSZ   7                 /**< IPC Key offset                */
+#define NDRX_SHM_ROUTCRIT_KEYOFSZ   7                 /**< IPC Key offset              */
     
-#define NDRX_SHM_ROUTSVC_SFX     "shm,routsvc"        /**< Routing services              */
+#define NDRX_SHM_ROUTSVC_SFX     "shm,routsvc"        /**< Routing services            */
 #define NDRX_SHM_ROUTSVC         "%s," NDRX_SHM_ROUTSVC_SFX
-#define NDRX_SHM_ROUTSVC_KEYOFSZ    8                 /**< IPC Key offset                */
+#define NDRX_SHM_ROUTSVC_KEYOFSZ    8                 /**< IPC Key off set             */
+
+#define NDRX_SHM_KEYS_RESERVED      20                /**< Number of reserved keys     */
     
 #define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
 

@@ -671,6 +671,9 @@ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 - To enable System V message queue, pass '-DDEFINE_SYSVQ=ON' to cmake (applies
 to Linux only). Default on AIX and Solaris.
 
+- To enable System V emulated message queue, pass '-DDEFINE_SYSVQEM=ON' to cmake (applies
+to Linux only). Default on MacOS.
+
 - To enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
 (applies to Linux only).
 

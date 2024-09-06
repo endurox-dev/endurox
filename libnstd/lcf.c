@@ -59,6 +59,7 @@
 #define PGMAX_DFLT              64      /**< Maximum number of singleton groups */
 #define PGMAX_MAX               99999   /**< Upper limit of number of process groups */
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
+#define MSG_MAX_DLFT            100     /**< Max number of messages per q */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -375,6 +376,22 @@ expublic int ndrx_lcf_init(void)
     NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_MSGQUEUESMAX, 
             ndrx_G_libnstd_cfg.queuesmax);
     
+    /* nr of msgs per queue */
+    tmp = getenv(CONF_NDRX_MSGMAX);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.msg_max = MSG_MAX_DLFT;
+        NDRX_LOG_EARLY(log_info, "Missing config key %s - defaulting to %d",
+                CONF_NDRX_MSGMAX, ndrx_G_libnstd_cfg.msg_max);
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.msg_max = atol(tmp);
+    }
+
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_MSGMAX,
+            ndrx_G_libnstd_cfg.msg_max);
+
     /* Get SV5 IPC */
     tmp = getenv(CONF_NDRX_IPCKEY);
     if (NULL==tmp)

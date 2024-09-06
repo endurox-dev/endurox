@@ -1799,14 +1799,13 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
      */
     if (!M_signalled)
     {
-
         if (is_send)
         {
-            ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
+            ret=ndrx_svq_msgsnd (mqd, ptr, NDRX_SVQ_INLEN(len), msgflg);
         }
         else
         {
-            ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
+            ret=ndrx_svq_msgrcv (mqd, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
         }
 
         if (EXFAIL==ret)

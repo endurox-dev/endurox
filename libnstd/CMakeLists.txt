@@ -41,7 +41,14 @@ include_directories (. ../include)
 
 SET(NSTD_POLLER "invalid_poller.c")
 
-if(DEFINED EX_USE_SYSVQ)
+if(DEFINED EX_USE_SYSVQEM)
+    SET(NSTD_POLLER "sys_svqpoll.c")
+    SET(NSTD_POLLER_2 "sys_svq.c")
+    SET(NSTD_POLLER_3 "sys_svqshm.c")
+    SET(NSTD_POLLER_4 "sys_svqevent.c")
+    SET(NSTD_POLLER_5 "sys_svqadmin.c")
+    SET(NSTD_POLLER_6 "sys_svqem.c")
+elseif(DEFINED EX_USE_SYSVQ)
     SET(NSTD_POLLER "sys_svqpoll.c")
     SET(NSTD_POLLER_2 "sys_svq.c")
     SET(NSTD_POLLER_3 "sys_svqshm.c")
@@ -91,7 +98,6 @@ elseif (CMAKE_OS_NAME STREQUAL "FREEBSD")
     SET(NSTD_SYS_3 "fmemopen-funopen.c")
 elseif (CMAKE_OS_NAME STREQUAL "DARWIN")
     SET(NSTD_SYS "sys_darwin.c")
-    SET(NSTD_SYS_2 "sys_emqueue.c")
     SET(NSTD_SYS_3 "fmemopen-funopen.c")
 endif ()
 
@@ -103,6 +109,7 @@ add_library (objnstd OBJECT ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.
                         ${NSTD_POLLER_3}
                         ${NSTD_POLLER_4}
                         ${NSTD_POLLER_5}
+                        ${NSTD_POLLER_6}
                         ${NSTD_SYS}
                         sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3} tplog.c
                         exregex.c platform.c msgsizemax.c exaes.c exsha1.c

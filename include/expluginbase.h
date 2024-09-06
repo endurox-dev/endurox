@@ -87,8 +87,30 @@ typedef int (*ndrx_plugin_tplogprintubf_hook_t)(char **buffer, long datalen, voi
         int *do_write, FILE * outf, int fid);
 
 
-/* Have some global variable with pointer to callbacks */
+#if 0
+/**
+ * EE module handle
+ */
+typedef struct
+{
+    char banner[256];
+    void *ptr1; /**< async startup handle, wait needed?     */
+    void *ptr2; /**< async startup handle, do wait          */
+    void *ptr3; /**< big msg sending                        */
+    void *ptr4; /**< big msg receiving                      */
 
+} ndrx_ee_module_t;
+
+/**
+ * Access to libdecimal functions provided by Enduro/X EE
+ */
+typedef struct
+{
+    /* TODO: */
+} ndrx_ee_libdecimal_t;
+#endif
+
+/* Have some global variable with pointer to callbacks */
 struct ndrx_pluginbase {
     int plugins_loaded;
     
@@ -104,11 +126,16 @@ struct ndrx_pluginbase {
 
     /** TMSRV storage engine plugin */
     void *p_ndrx_tms_store;
-    char ndrx_tms_sotre_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+    char ndrx_tms_store_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
 
     /** TMQ storage engine plugin */
     void *p_ndrx_tmq_store;
-    char ndrx_tmq_sotre_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+    char ndrx_tmq_store_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+
+    /** Handle for Enduro/X Enterprise Edition */
+    void *p_ndrx_ee;
+    char ndrx_ee_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;

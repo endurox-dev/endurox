@@ -92,12 +92,11 @@ expublic long ndrx_msgsizemax (void)
             else
             {
                 M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
-                
             }
 
             /* round the max msg size to modulus of 16, to be aligned. */
-            
             M_maxmsgsize = M_maxmsgsize + 16 - M_maxmsgsize % 16;
+
             /* avoid write re-ordering ! */
             __sync_synchronize();
             M_maxmsgsize_loaded=EXTRUE;

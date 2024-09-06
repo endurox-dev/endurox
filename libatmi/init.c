@@ -271,22 +271,6 @@ expublic int ndrx_load_common_env(void)
         NDRX_LOG(log_debug, "Random key set to: [%s]", G_atmi_env.rnd_key);
     }
 
-    p = getenv(CONF_NDRX_MSGMAX);
-    if (NULL==p)
-    {
-        /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_MSGMAX);
-        userlog("Missing config key %s - FAIL", CONF_NDRX_MSGMAX);
-        ret=EXFAIL;
-        goto out;
-    }
-    else
-    {
-        G_atmi_env.msg_max = atoi(p);
-        NDRX_LOG(log_debug, "Posix queue msg_max set to: [%d]",
-                            G_atmi_env.msg_max);
-    }
-
     p = getenv(CONF_NDRX_MSGSIZEMAX);
     if (NULL==p)
     {

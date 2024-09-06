@@ -169,7 +169,8 @@ expublic int ndrx_svqadmin_deinit(void)
     thstop.command_id=NDRX_COM_SVQ_PRIV;
     
     NDRX_LOG(log_debug, "Requesting admin thread shutdown...");
-    if (EXSUCCEED!=msgsnd(M_adminq->qid, &thstop, 
+
+    if (EXSUCCEED!=ndrx_svq_msgsnd(M_adminq, &thstop, 
             NDRX_SVQ_INLEN(sizeof(ndrx_thstop_command_call_t)), 0))
     {
         int err = errno;
@@ -196,7 +197,6 @@ out:
 exprivate void * ndrx_svqadmin_run(void* arg)
 {
     int ret = EXSUCCEED;
-    int qid;
     int sz, len;
     int err;
     ndrx_thstop_command_call_t *p_cmd;
@@ -232,8 +232,6 @@ exprivate void * ndrx_svqadmin_run(void* arg)
      */
     while (1)
     {
-        qid = M_adminq->qid;
-     
         /* Allocate the message size */
         sz = NDRX_MSGSIZEMAX;
         
@@ -253,15 +251,17 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             NDRX_SYSBUF_MALLOC_OUT(buf, tmp_buf_len, ret);
         }
         
-        NDRX_LOG(log_debug, "About to wait for service admin message qid=%d", qid);
+        NDRX_LOG(log_debug, "About to wait for service admin message M_adminq=%p qid=%d",
+            M_adminq, M_adminq->qid);
        
         /* read the message, well we could read it directly from MQD 
          * then we do not need any locks..
          */
-        len = msgrcv(qid, buf, NDRX_SVQ_INLEN(sz), 0, 0);
+        len = ndrx_svq_msgrcv(M_adminq, buf, NDRX_SVQ_INLEN(sz), 0, 0);
         err = errno;
         
-        NDRX_LOG(log_debug, "Admin msgrcv: qid=%d len=%d", qid, len);
+        NDRX_LOG(log_debug, "Admin ndrx_svq_msgrcv: M_adminq=%p qid=%d len=%d",
+            M_adminq, M_adminq->qid, len);
         
         if (EXFAIL==len)
         {

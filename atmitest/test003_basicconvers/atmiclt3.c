@@ -43,6 +43,7 @@
 #include <ndrstandard.h>
 
 #include "exassert.h"
+#include "nstopwatch.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -207,8 +208,10 @@ int main(int argc, char** argv) {
     }
     else if (0==strcmp(argv[1], "echoloop"))
     {
+        ndrx_stopwatch_t w;
+        ndrx_stopwatch_reset(&w);
 
-        for (i=0; i<100000; i++)
+        while (ndrx_stopwatch_get_delta_sec(&w) < 60)
         {
             if (EXFAIL==(cd=tpconnect("ECHO", (char *)p_ub, 0L, TPRECVONLY)))
             {

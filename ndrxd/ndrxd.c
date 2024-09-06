@@ -44,6 +44,7 @@
 #include <ndrxd.h>
 #include <atmi_int.h>
 #include <atmi_shm.h>
+#include <lcfint.h>
 
 #include <ndebug.h>
 #include <cmd_processor.h>
@@ -306,14 +307,14 @@ int main_init(int argc, char** argv)
     if (NULL!=p)
     {
         /* Override MAX Q size */
-        ndrx_get_G_atmi_env()->msg_max = atol(p);
+        ndrx_G_libnstd_cfg.msg_max = atol(p);
         NDRX_LOG(log_debug, "NDRXD Max Q size to: %d (override)",
-                            ndrx_get_G_atmi_env()->msg_max);
+                            ndrx_G_libnstd_cfg.msg_max);
     }
     else
     {
         NDRX_LOG(log_debug, "NDRXD Max Q size to: %d (default)",
-                            ndrx_get_G_atmi_env()->msg_max);
+                            ndrx_G_libnstd_cfg.msg_max);
     }
 
     /* Command wait param */

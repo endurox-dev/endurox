@@ -870,6 +870,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl,
         {
             NDRX_LOG(log_error, "Symbol ':' not found on line [%d]!", 
                     line);
+            do_housekeep=EXTRUE;
             EXFAIL_OUT(ret);
         }
         p++;

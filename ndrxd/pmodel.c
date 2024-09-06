@@ -863,7 +863,7 @@ exprivate int wait_for_status(pm_node_t *p_pm, long *p_processes_started, int *d
         /* check the status? */
     } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstartwait && 
                     NDRXD_PM_STARTING==p_pm->state && !(*doabort));
-
+    /* TODO: in case of parallel startup, check all servers from Q */
     if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
     {
         ndrx_stopwatch_t sleep_timer;
@@ -872,9 +872,9 @@ exprivate int wait_for_status(pm_node_t *p_pm, long *p_processes_started, int *d
         do
         {
             NDRX_LOG(log_debug, "In process after start sleep...");
+            /* TODO: how long it waits? */
             command_wait_and_run(&finished, doabort);
         } while (ndrx_stopwatch_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
-
     }
 
     /* Check for process name & pid */
@@ -1318,7 +1318,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             p_pm->exec_seq_try++;
         }
         
-        /* Do bellow stuff only if we can wait! */
+        /* Do bellow stuff only if we can wait!
+         * TODO: during the parallel startup, wait only on last item:
+         *
+         */
         if (do_wait && EXSUCCEED!=wait_for_status(p_pm, p_processes_started, doabort))
         {
             EXFAIL_OUT(ret);
@@ -1326,6 +1329,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
         /* if was started, and given process provides singleton group lock,
          * update the snapshoot, as normally lock provider would come first
+         * TODO: Move this to wait_for_status() (inside)...
          */
         if (NULL!=sg_snapshoot 
             && p_pm->procgrp_lp_no > 0

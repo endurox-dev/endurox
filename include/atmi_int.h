@@ -228,8 +228,10 @@ extern "C" {
 /**
  * Use silent logging...
  */
-#define NDRX_BANNER(X)                      \
-    if (NULL==getenv(CONF_NDRX_SILENT))     \
+#define NDRX_BANNER(X)                            \
+    /* Log is also used to pull in the LCF init:*/\
+    NDRX_LOG(log_debug, "current tool: %s", X);   \
+    if (NULL==getenv(CONF_NDRX_SILENT))           \
     {\
         if (X[0])\
         {\
@@ -325,6 +327,18 @@ extern "C" {
 #define NDRX_SGCMD_VERIFY           "VERIFY" /**< Verfy the lock i   */
 #define NDRX_SGCMD_QUERY            "QUERY"  /**< Query lock status` */
 #define NDRX_SGMAX_CMDLEN            16      /**< command code buffer sz */
+
+/**
+ * Following IDs are reserved between all the message types used:
+ * - BR_NET_CALL_MSG_TYPE_ATMI (see ATMI_COMMAND* constants)
+ * - BR_NET_CALL_MSG_TYPE_NOTIF (see ATMI_COMMAND* constants)
+ * - BR_NET_CALL_MSG_TYPE_NDRXD (see NDRXD_COM* constants)
+ * thus using the upper range for shared purpose.
+ * @defgroup shared_command_id List of shared command_id for IPC messages
+ */
+#define NDRX_COM_CUSTOMIPC    32767  /**< Custom IPC for message */
+
+/** @} */ /* end of shared_command_id */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -472,7 +486,6 @@ struct atmi_lib_env
     int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX    */
     int     max_clts;    /**< Max number of CPMSRV clients                  */
     char    rnd_key[NDRX_MAX_KEY_SIZE];   /**< random key to be passed to all EnduroX servers in session */
-    int     msg_max;     /**< maximum number of messages in a posix queue   */
     int     msgsize_max; /**< maximum message size for a posix queue        */
     key_t   ipckey;      /**< IPC Key                                       */
     int     time_out;    /**< Timeout in seconds to be applied for calls    */
