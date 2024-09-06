@@ -108,7 +108,7 @@ exprivate MUTEX_LOCKDECL(ndrx_G_svqshm_init_lock);
 exprivate ndrx_shm_t M_map_p2s = {.fd=0, .path=""};   /**< Posix to System V mapping       */
 exprivate ndrx_shm_t M_map_s2p = {.fd=0, .path=""};   /**< System V to Posix mapping       */
 exprivate ndrx_sem_t M_map_sem = {.semid=0};/**< RW semaphore for SHM protection */
-exprivate ndrx_sem_t ndrx_G_svqem_sem= {.semid=0};/**< Array for Q emulation */
+expublic ndrx_sem_t ndrx_G_svqem_sem= {.semid=0};/**< Array for Q emulation */
 
 /* Also we need some array of semaphores for RW locking */
 
@@ -156,6 +156,8 @@ expublic int ndrx_svqshm_down(int force)
         /* remove any queues left open...! */
         for (i=0; i<ndrx_G_libnstd_cfg.queuesmax; i++)
         {
+            struct ndrx_svq_info  mqd;
+
             el = NDRX_SVQ_INDEX(svq, i);
 
             if (el->flags & NDRX_SVQ_MAP_ISUSED)
@@ -164,7 +166,9 @@ expublic int ndrx_svqshm_down(int force)
                         el->qid, el->qstr);
                 userlog("DOWN: Removing QID %d (%s) - should not be present!", 
                         el->qid, el->qstr);
-                if (EXSUCCEED!=ndrx_svq_msgctl(el->qid, IPC_RMID, NULL))
+
+                mqd.qid = el->qid;
+                if (EXSUCCEED!=ndrx_svq_msgctl((mqd_t)&mqd, IPC_RMID, NULL))
                 {
                     int err = errno;
                     NDRX_LOG(log_error, "got error when removing %d: %s - ignore", 
@@ -329,7 +333,7 @@ expublic int ndrx_svqshm_init(int attach_only)
     
 #ifdef EX_USE_SYSVQEM
 
-    memset(&M_map_sem, 0, sizeof(M_map_sem));
+    memset(&ndrx_G_svqem_sem, 0, sizeof(ndrx_G_svqem_sem));
 
     /* Service queue ops */
     ndrx_G_svqem_sem.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_SVQEMLOCKS;
@@ -337,14 +341,13 @@ expublic int ndrx_svqshm_init(int attach_only)
     ndrx_G_svqem_sem.nrsems=ndrx_G_libnstd_cfg.queuesmax*2;
     ndrx_G_svqem_sem.maxreaders=1;
 
-    NDRX_LOG(log_debug, "SVQEM: Using service semaphore key: %d max readers: %d",
-            M_map_sem.key, ndrx_G_libnstd_cfg.svqreadersmax);
+    NDRX_LOG(log_debug, "SVQEM: Using service semaphore key: %d nrsems: %d",
+            ndrx_G_svqem_sem.key, ndrx_G_svqem_sem.nrsems);
 #endif
 
     /* OK, either create or attach... */
     if (attach_only)
     {
-
         if (EXSUCCEED!=ndrx_sem_attach(&M_map_sem))
         {
             NDRX_LOG(log_error, "Failed to attach semaphore for System V queue "
@@ -779,23 +782,24 @@ out:
  * @param mode access mode/permissions
  * @param oflag are we creating a queue?
  * @param remove should we actually remove the queue?
+ * @param p_pos return position in p2s
+ * @param p_msgflg return Q create flags
  * @return resolve queue id
  */
-expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
+expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int *p_msgflg)
 {
     int ret = EXSUCCEED;
     int qid;
     int found;
     int have_value;
-    int pos;
     
     int found_2;
     int have_value_2;
     int pos_2;
     
-    int msgflag;
     int err = 0;
     
+    *p_msgflg=0;
     ndrx_svq_map_t *svq;
     ndrx_svq_map_t *svq2;
     
@@ -822,11 +826,11 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
             goto out;
         }
 
-        found = position_get_qstr(qstr, oflag, &pos, &have_value);
+        found = position_get_qstr(qstr, oflag, p_pos, &have_value);
         
         if (have_value)
         {
-            pm = NDRX_SVQ_INDEX(svq, pos);
+            pm = NDRX_SVQ_INDEX(svq, *p_pos);
             qid = pm->qid;
         }
 
@@ -869,10 +873,9 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
         goto out;
     }
     
-    found = position_get_qstr(qstr, oflag, &pos, &have_value);
+    found = position_get_qstr(qstr, oflag, p_pos, &have_value);
     
     /* check that we have found! */
-    
     if (!found)
     {
         NDRX_LOG(log_error, "Location not found for [%s] - memory full?", qstr);
@@ -881,10 +884,9 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
         EXFAIL_OUT(ret);
     }
     
-    pm = NDRX_SVQ_INDEX(svq, pos);
+    pm = NDRX_SVQ_INDEX(svq, *p_pos);
     
     /* while we were locked, somebody may added such queue already...! */
-
     if (have_value)
     {
         qid = pm->qid;
@@ -925,16 +927,14 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
     
     /* open queue, install mappings in both tables */
     
-    msgflag=0;
-
     if (oflag & O_CREAT)
     {
-        msgflag|=IPC_CREAT;
+        *p_msgflg|=IPC_CREAT;
     }
 
     if (oflag & O_EXCL)
     {
-        msgflag|=IPC_EXCL;
+        *p_msgflg|=IPC_EXCL;
     }
     
     /* extract only known flags.. */
@@ -942,7 +942,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
     /* For SVQEM pass `pos' to the func, so that lower layer 
      * may translate that to the qid
      */
-    if (EXFAIL==(qid = ndrx_svq_msgget(IPC_PRIVATE, msgflag|mode, pos)))
+    if (EXFAIL==(qid = ndrx_svq_msgget(IPC_PRIVATE, *p_pos, *p_msgflg|mode)))
     {
         int err = errno;
         ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
@@ -1169,6 +1169,8 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
             
             if ( EXFAIL==arg1 || delta > arg1)
             {
+                struct ndrx_svq_info mqd;
+
                 NDRX_LOG(log_info, "Unlinking queue: [%s]/%d (delta: %d, limit: %d)",
                         pm->qstr, pm->qid, delta, arg1);
                 
@@ -1181,7 +1183,8 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
                     EXFAIL_OUT(ret);
                 }
                 
-                if (EXSUCCEED!=ndrx_svq_msgctl(pm->qid, IPC_RMID, NULL))
+                mqd.qid = pm->qid;
+                if (EXSUCCEED!=ndrx_svq_msgctl((mqd_t)&mqd, IPC_RMID, NULL))
                 {
                     err = errno;
                     

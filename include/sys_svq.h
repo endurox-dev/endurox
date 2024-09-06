@@ -97,25 +97,25 @@
  */
 #define ndrx_svq_key_t  ndrx_svqem_key_t
 #define ndrx_svq_msqid_ds ndrx_svqem_msqid_ds
-#define ndrx_svq_msgsnd(MQD, MSGP, MSGSZ, MSGFLAG) ndrx_svqem_msgsnd(MQD, MSGP, MSGSZ, MSGFLAG)
-#define ndrx_svq_msgrcv(MQD, MSGP, MSGSZ, MSGTYP, MSGFLAG) ndrx_svqem_msgrcv(MQD, MSGP, MSGSZ, MSGTYP, MSGFLAG)
+#define ndrx_svq_msgsnd(mqd, msgp, msgsz, msgflag) ndrx_svqem_msgsnd(mqd, msgp, msgsz, msgflag)
+#define ndrx_svq_msgrcv(mqd, msgp, msgsz, msgtyp, msgflag) ndrx_svqem_msgrcv(mqd, msgp, msgsz, msgtyp, msgflag)
 #define ndrx_svq_msgctl ndrx_svqem_msgctl
-#define ndrx_svq_msgget(key, msgflg, pos) ndrx_svqem_msgget(key, msgflg, pos)
+#define ndrx_svq_msgget(key, pos, msgflg) ndrx_svqem_msgget(key, msgflg, pos)
 
-#define ndrx_svq_mqd_open2(mqd) ndrx_svqem_mqd_open2(mqd)
+#define ndrx_svq_mqd_open2(mqd, pos, msgflg) ndrx_svqem_mqd_open2(mqd, pos, msgflg)
 #define ndrx_svq_mqd_close2(mqd) ndrx_svqem_mqd_close2(mqd)
 #else
 
 /* Standard System V implementation: */
 #define ndrx_svq_key_t  key_t
 #define ndrx_svq_msqid_ds msqid_ds 
-#define ndrx_svq_msgsnd(MQD, MSGP, MSGSZ, MSGFLAG) msgsnd(MQD->qid, MSGP, MSGSZ, MSGFLAG)
-#define ndrx_svq_msgrcv(MQD, MSGP, MSGSZ, MSGTYP, MSGFLAG) msgrcv(MQD->qid, MSGP, MSGSZ, MSGTYP, MSGFLAG)
-#define ndrx_svq_msgctl msgctl
-#define ndrx_svq_msgget(key, msgflg, pos) msgget(key, msgflg)
+#define ndrx_svq_msgsnd(mqd, msgp, msgsz, msgflag) msgsnd(mqd->qid, msgp, msgsz, msgflag)
+#define ndrx_svq_msgrcv(mqd, msgp, msgsz, msgtyp, msgflag) msgrcv(mqd->qid, msgp, msgsz, msgtyp, msgflag)
+#define ndrx_svq_msgctl(mqd, cmd, buf) msgctl(mqd->qdi, cmd, buf)
+#define ndrx_svq_msgget(key, pos, msgflg) msgget(key, msgflg)
 
-#define ndrx_svq_mqd_open2(mqd)   do {} while(0)
-#define ndrx_svq_mqd_close2(mqd)  do {} while(0)
+#define ndrx_svq_mqd_open2(mqd, pos, msgflg)    do {} while(0)
+#define ndrx_svq_mqd_close2(mqd)        do {} while(0)
 
 #endif
 
@@ -333,7 +333,7 @@ extern NDRX_API int ndrx_svqshm_down(int force);
 extern NDRX_API void ndrx_svqshm_detach(void);
 extern NDRX_API int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p, 
         ndrx_sem_t **map_sem, int *queuesmax);
-extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
+extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int *p_msgflag);
 extern NDRX_API int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
         int (*p_deletecb)(int qid, char *qstr));
@@ -349,13 +349,13 @@ extern NDRX_API int ndrx_svqadmin_init(mqd_t adminq);
 extern NDRX_API int ndrx_svqadmin_deinit(void);
 
 #ifdef EX_USE_SYSVQEM
-extern NDRX_API int ndrx_svqem_msgget(ndrx_svqem_key_t key, int msgflg, int pos);
-extern NDRX_API int ndrx_svqem_mqd_open2(mqd_t mqd);
+extern NDRX_API int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg);
+extern NDRX_API int ndrx_svqem_mqd_open2(mqd_t mqd, int pos, int msgflg);
 extern NDRX_API int ndrx_svqem_mqd_close2(mqd_t mqd);
 extern NDRX_API int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int msgflg);
 extern NDRX_API ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
                 long msgtyp, int msgflg);
-extern NDRX_API int ndrx_svqem_msgctl(int msqid, int cmd, struct ndrx_svqem_msqid_ds *buf);
+extern NDRX_API int ndrx_svqem_msgctl(mqd_t mqd, int cmd, struct ndrx_svqem_msqid_ds *buf);
 #endif
 
 #endif /* SYS_SYSVQ_H__ */

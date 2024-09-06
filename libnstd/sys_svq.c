@@ -181,7 +181,7 @@ expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *attr)
     memcpy(attr, &(mqd->attr), sizeof(*attr));
     
     /* read the queue stats */
-    if (EXSUCCEED!=ndrx_svq_msgctl(mqd->qid, IPC_STAT, &buf))
+    if (EXSUCCEED!=ndrx_svq_msgctl(mqd, IPC_STAT, &buf))
     {
         err = errno;
         NDRX_LOG(log_debug, "Failed to get queue qid %d stats: %s",
@@ -229,6 +229,8 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     mqd_t mq = (mqd_t)EXFAIL;
     int ret = EXSUCCEED;
     int errno_save;
+    int pos; /*< position in p2s shm */
+    int msgflg;
     
     NDRX_LOG(log_debug, "enter");
     mq = NDRX_FPMALLOC(sizeof(struct ndrx_svq_info), 0);
@@ -249,7 +251,7 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
      * - if we create a Q, then alloc new ID
      * - if queue already exists SHM, then we can use that ID directly
      */
-    if (EXFAIL==(mq->qid = ndrx_svqshm_get((char *)pathname, mode, oflag)))
+    if (EXFAIL==(mq->qid = ndrx_svqshm_get((char *)pathname, mode, oflag, &pos, &msgflg)))
     {
         errno_save=errno;
         EXFAIL_OUT(ret);
@@ -258,7 +260,7 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     /* For SVQEM -> attach shared memory segment ..
      * + store shared memory segment into mq
      */
-    if (EXSUCCEED!=ndrx_svq_mqd_open2(mq))
+    if (EXSUCCEED!=ndrx_svq_mqd_open2(mq, pos, msgflg))
     {
         errno_save=errno;
         EXFAIL_OUT(ret);

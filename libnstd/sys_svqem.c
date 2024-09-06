@@ -45,9 +45,11 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/sem.h>
+#include <sys/mman.h>
 
 #include <ndrstandard.h>
 #include "sys_unix.h"
+
 #include "ndebug.h"
 
 #include <lcfint.h>
@@ -71,18 +73,23 @@ extern ndrx_sem_t ndrx_G_svqem_sem;
  */
 typedef struct
 {
-    int               svqem_pos;   /**< offset from IPC key (shifted)*/
-    struct mq_attr    svqem_attr;  /**< queue attributes             */
+    int               svqem_pos;   /**< offset from IPC key (shifted) */
+    long              svqem_head;  /**< first message index           */
+    long              svqem_free;  /**< first free message index      */
+    long              svqem_nwait; /**< number of threads waiting     */
+    long              svqem_curmsgs;  /**< number of messages in Q    */
 
-    long              svqem_head;  /**< first message index          */
-    long              svqem_free;  /**< first free message index     */
-    long              svqem_nwait; /**< number of threads waiting    */
-
-    /* Journal data: */
+    /* Journal data (replicate after msg data installed and all fields set,
+     * flag svqem_nwait_j is set to true. Any operation on Q will
+     * trigger replication (as we do not know at which point the
+     * sender did crash, thus to avoid corruption, data is journaled
+     * and journal is replicated, after that svqem_dirty_j is cleared:
+     */
+    int               svqem_dirty_j; /**< journal is dirty             */
     long              svqem_head_j;  /**< first message index          */
     long              svqem_free_j;  /**< first free message index     */
+    long              svqem_curmsgs_j; /**< journaled number of msgs   */
     long              svqem_nwait_j; /**< number of threads waiting    */
-    int               svqem_dirty_j; /**< journal is dirty             */
 
 } ndrx_svqem_hdr_t;
 
@@ -234,13 +241,13 @@ exprivate size_t ndrx_svqem_get_q_size(void)
         (sizeof(ndrx_svqem_msg_hdr_t) + ndrx_msgsizemax() ));
 }
 /**
- * param get queue id
+ * Get queue id
  * @param key IPC
- * @param msgflag IPC_CREAT, IPC_EXCL
  * @param pos index in p2s memory (their count matches with max shms...)
+ * @param msgflag IPC_CREAT, IPC_EXCL
  * @return qid -> shared memory segment identifier...
  */
-expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int msgflg, int pos)
+expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg)
 {
     int ret = EXSUCCEED;
 
@@ -253,10 +260,32 @@ expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int msgflg, int pos)
 
         if (EXFAIL==ret)
         {
+            int err = errno;
             NDRX_LOG(log_error, "shmget() failed for key: %d, size: %ld, flags: %d: %s",
                 key, size, flags, strerror(errno));
+
+            errno = err;
             EXFAIL_OUT(ret);
         }
+
+        /* TODO: ? IPC_EXCL ? if exists, handle EEXIST ?
+
+
+        if (fd < 0)
+        {
+            if (errno == EEXIST && (oflag & IPC_EXCL) == 0)
+            {
+                goto exists;
+            }
+            else
+            {
+                return((mqd_t) EXFAIL);
+            }
+        }
+
+        ?
+
+         */
 
     }
     else
@@ -271,11 +300,71 @@ out:
 
 /**
  * Attach to shared memory segments
+ * @param mqd queue descriptor
+ * @param pos entry position in p2s array
+ * @param msgflg flags passed to ndrx_svqem_msgget
  */
-expublic int ndrx_svqem_mqd_open2(mqd_t mqd)
+expublic int ndrx_svqem_mqd_open2(mqd_t mqd, int pos, int msgflg)
 {
-    /* attach on shm... (if asked so, then )*/
-    return ndrx_shm_attach(&mqd->shm);
+    int ret = EXSUCCEED;
+    ndrx_svqem_hdr_t *hdr;
+    long msgsize = ndrx_msgsizemax();
+    long filesize, index;
+    int i;
+    ndrx_svqem_msg_hdr_t      *msghdr;
+
+    /* save the key */
+    mqd->shm.key = ndrx_G_libnstd_cfg.ipckey+NDRX_SHM_KEYS_RESERVED+pos;
+    NDRX_STRCPY_SAFE(mqd->shm.path, mqd->qstr)
+
+    mqd->shm.mem = (char *)shmat(mqd->qid, 0, 0);
+
+    if (MAP_FAILED==mqd->shm.mem)
+    {
+        int err=errno;
+
+        NDRX_LOG(log_error, "Failed to shmat memory for fd (qid) %d/%x pos %d: %s",
+                            mqd->qid, mqd->shm.key, pos, strerror(errno));
+        /* if the log rewrite the errno */
+        errno = err;
+        EXFAIL_OUT(ret);
+    }
+
+    if (msgflg & O_CREAT)
+    {
+        hdr = (ndrx_svqem_hdr_t *)mqd->shm.mem;
+
+        hdr->svqem_pos=0;
+        hdr->svqem_head=0;
+
+        hdr->svqem_nwait=0;
+        hdr->svqem_curmsgs=0;
+
+        hdr->svqem_dirty_j=0;
+        hdr->svqem_head_j=0;
+        hdr->svqem_free_j=0;
+        hdr->svqem_curmsgs_j=0;
+        hdr->svqem_nwait_j=0;
+
+        index = sizeof(ndrx_svqem_hdr_t);
+        hdr->svqem_free=index;
+
+        for (i = 0; i < ndrx_G_libnstd_cfg.msg_max - 1; i++)
+        {
+            msghdr = (ndrx_svqem_msg_hdr_t *) &mqd->shm.mem[index];
+            index += sizeof(ndrx_svqem_msg_hdr_t) + msgsize;
+            msghdr->msg_next = index;
+        }
+
+        /* terminate the last one..: */
+        msghdr = (ndrx_svqem_msg_hdr_t *) &mqd->shm.mem[index];
+        msghdr->msg_next = 0;
+
+    }
+
+out:
+
+    return ret;
 }
 
 /**
@@ -310,16 +399,69 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
 }
 
 /**
- *
- * @param msqid -> shard memory resource identifier
+ * Queue control. Get infos or unlink.
+ * @param mqd queue descriptor. In case of remove op -> only qid is set with the descr
+ * @param cmd
+ * @param buf
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svqem_msgctl(int msqid, int cmd, struct ndrx_svqem_msqid_ds *buf)
+expublic int ndrx_svqem_msgctl(mqd_t mqd, int cmd, struct ndrx_svqem_msqid_ds *buf)
 {
+    int ret = EXSUCCEED;
+    ndrx_svqem_hdr_t *hdr;
 
-    /* unlink q -> reset sems, reset shm entry...*/
+    if (NULL==mqd)
+    {
+        NDRX_LOG(log_error, "mqd is NULL");
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
 
-    /* stats -> return stats from shm... */
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "qid=%d, buf == NULL", mqd->qid);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
 
+    if (IPC_STAT==cmd)
+    {
+        if (NULL==mqd->shm.mem)
+        {
+            NDRX_LOG(log_error, "qid=%d, shm.mem == NULL", mqd->qid);
+            errno = EINVAL;
+            EXFAIL_OUT(ret);
+        }
+
+        /* ok, lets lock up and read current counters... (add journal later) */
+        hdr = (ndrx_svqem_hdr_t *) mqd->shm.mem;
+
+        ndrx_svqem_lock(hdr);
+        buf[0].msg_qnum = hdr->svqem_curmsgs;
+        ndrx_svqem_unlock(hdr);
+
+    }
+    else if (IPC_RMID==cmd)
+    {
+        if (EXSUCCEED!=shmctl(mqd->qid, IPC_RMID, NULL))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "Failed to IPC_RMID %d: %s",
+                            mqd->qid, strerror(err));
+            /* restore the error */
+            errno = err;
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Invalid command: %d", cmd);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
