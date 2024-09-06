@@ -100,7 +100,7 @@
 #define ndrx_svq_msgsnd(mqd, msgp, msgsz, msgflag) ndrx_svqem_msgsnd(mqd, msgp, msgsz, msgflag)
 #define ndrx_svq_msgrcv(mqd, msgp, msgsz, msgtyp, msgflag) ndrx_svqem_msgrcv(mqd, msgp, msgsz, msgtyp, msgflag)
 #define ndrx_svq_msgctl ndrx_svqem_msgctl
-#define ndrx_svq_msgget(key, pos, msgflg) ndrx_svqem_msgget(key, msgflg, pos)
+#define ndrx_svq_msgget(key, pos, msgflg) ndrx_svqem_msgget(key, pos, msgflg)
 
 #define ndrx_svq_mqd_open2(mqd, pos, msgflg) ndrx_svqem_mqd_open2(mqd, pos, msgflg)
 #define ndrx_svq_mqd_close2(mqd) ndrx_svqem_mqd_close2(mqd)
