@@ -179,15 +179,15 @@ expublic int ndrx_lh_position_get(ndrx_lh_config_t *conf,
             break;  /* <<< Break! */
         }
         
-	if (oflag & O_CREAT)
-	{
+        if (oflag & O_CREAT)
+        {
             if (!(flags & NDRX_LH_FLAG_ISUSED))
             {
                 /* found used position */
                 ret=NDRX_LH_ENT_OLD;
                 break; /* <<< break! */
             }
-	}
+        }
 
         try++;
         

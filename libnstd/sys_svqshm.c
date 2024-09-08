@@ -624,7 +624,6 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
 
 }
 
-
 /**
  * Get position queue id record
  * @param status status memory block
@@ -823,6 +822,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
         /* ###################### CRITICAL SECTION ############################### */
         if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
         {
+            NDRX_LOG(log_error, "YOOOPT!!! RWLOCK FAIL");
             goto out;
         }
 
@@ -833,6 +833,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
             pm = NDRX_SVQ_INDEX(svq, *p_pos);
             qid = pm->qid;
         }
+        NDRX_LOG(log_error, "YOPT0 pos=%d", *p_pos);
 
         ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
         /* ###################### CRITICAL SECTION, END ########################## */
@@ -875,6 +876,8 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
     
     found = position_get_qstr(qstr, oflag, p_pos, &have_value);
     
+    NDRX_LOG(log_error, "YOPTEL %d!!", *p_pos);
+
     /* check that we have found! */
     if (!found)
     {
@@ -925,6 +928,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
         goto out;
     }
     
+    NDRX_LOG(log_error, "YOPT pos=%d", *p_pos);
     /* open queue, install mappings in both tables */
     
     if (oflag & O_CREAT)

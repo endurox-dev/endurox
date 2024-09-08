@@ -229,7 +229,7 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     mqd_t mq = (mqd_t)EXFAIL;
     int ret = EXSUCCEED;
     int errno_save;
-    int pos; /*< position in p2s shm */
+    int pos=-999999991; /*< position in p2s shm */
     int msgflg;
     
     NDRX_LOG(log_debug, "enter");

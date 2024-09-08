@@ -194,9 +194,14 @@ expublic int pq_run_santiy(int run_hist)
                 }
 #else
                 /* System V approach for queues... quick & easy */
-                struct msqid_ds buf;
+                /*struct msqid_ds buf;*/
+                struct ndrx_svq_msqid_ds buf;
+                struct ndrx_svq_info mqd;
+
+                memset(&mqd, 0, sizeof(mqd));
+                mqd.qid = srvlist[i].resid;
                 
-                if (EXSUCCEED==msgctl(srvlist[i].resid, IPC_STAT, &buf))
+                if (EXSUCCEED==ndrx_svq_msgctl((mqd_t)&mqd, IPC_STAT, &buf))
                 {
                     curmsgs+= buf.msg_qnum;
                 }

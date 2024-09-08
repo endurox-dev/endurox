@@ -570,7 +570,6 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
     
     EXHASH_ITER(hh, (M_mon.mqdhash), r, rt)
     {
-        
         gettimeofday (&timeval, NULL);
         abs_timeout.tv_sec = timeval.tv_sec;
         abs_timeout.tv_nsec = timeval.tv_usec*1000;
