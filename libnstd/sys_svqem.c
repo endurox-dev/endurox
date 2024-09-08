@@ -142,7 +142,9 @@ exprivate int ndrx_svqem_lock(ndrx_svqem_hdr_t *hdr)
 
     if (EXSUCCEED!=semop(ndrx_G_svqem_sem.semid, &sops, 1))
     {
+        int err=errno;
         NDRX_LOG(log_error, "YOPT semop failed sem_num=%d: %s", sops.sem_num, strerror(errno));
+        errno=err;
         EXFAIL_OUT(ret);
     }
 
@@ -211,7 +213,10 @@ exprivate int ndrx_svqem_condwait(ndrx_svqem_hdr_t *hdr, int *p_locked)
 
     if (EXSUCCEED!=semop(ndrx_G_svqem_sem.semid, &sops, 1))
     {
+        int err=errno;
         NDRX_LOG(log_error, "YOPT semop failed sem_num=%d: %s", sops.sem_num, strerror(errno));
+        errno=err;
+
         EXFAIL_OUT(ret);
     }
 
@@ -348,8 +353,6 @@ expublic int ndrx_svqem_mqd_open2(mqd_t mqd, int pos, int msgflg)
     ndrx_svqem_msg_hdr_t      *msghdr;
 
     /* save the key */
-    mqd->shm.key = ndrx_G_libnstd_cfg.ipckey+NDRX_SHM_KEYS_RESERVED+pos;
-    NDRX_STRCPY_SAFE(mqd->shm.path, mqd->qstr)
     NDRX_LOG(log_error, "YOPT [%s] pos=%d", mqd->qstr, pos);
 
     mqd->shm.mem = (char *)shmat(mqd->qid, 0, 0);
@@ -367,6 +370,9 @@ expublic int ndrx_svqem_mqd_open2(mqd_t mqd, int pos, int msgflg)
 
     if (msgflg & O_CREAT)
     {
+        mqd->shm.key = ndrx_G_libnstd_cfg.ipckey+NDRX_SHM_KEYS_RESERVED+pos;
+        NDRX_STRCPY_SAFE(mqd->shm.path, mqd->qstr)
+
         hdr = (ndrx_svqem_hdr_t *)mqd->shm.mem;
 
         hdr->svqem_pos=pos;

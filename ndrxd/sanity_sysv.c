@@ -97,6 +97,13 @@ exprivate int flush_rqaddr(int qid, char *qstr)
     
     /* set attr as non blocked */
     mqd->attr.mq_flags |= O_NONBLOCK;
+
+    /* open the queue... for svqem */
+    if (EXSUCCEED!=ndrx_svqem_mqd_open2(mqd, EXFAIL, 0))
+    {
+        NDRX_LOG(log_error, "Failed to ndrx_svqem_mqd_open2() [%s]/%d", qstr, qid);
+        EXFAIL_OUT(ret);
+    }
     
     /* lets flush the queue now. */
     if (EXSUCCEED!=remove_service_q(NULL, EXFAIL, mqd, qstr))
@@ -108,8 +115,10 @@ out:
     
     if (NULL!=mqd)
     {
+        ndrx_svqem_mqd_close2(mqd);
         NDRX_FREE(mqd);
     }
+
     return ret;
 }
 
