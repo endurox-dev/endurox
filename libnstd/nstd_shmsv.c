@@ -151,8 +151,8 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
             return ndrx_shm_attach(shm);
         }
         
-        NDRX_LOG_EARLY(log_error, "Failed to create shm [%s]: %s",
-                            shm->path, strerror(err));
+        NDRX_LOG_EARLY(log_error, "Failed to create shm [%s] %x bytes %ld: %s",
+                            shm->path, shm->key, shm->size, strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -160,7 +160,7 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
     
     if ((void *)EXFAIL==shm->mem)
     {
-        NDRX_LOG_EARLY(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %d: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %ld: %s",
                             shm->path, shm->fd, shm->key, shm->size, strerror(errno));
         EXFAIL_OUT(ret);
     }
@@ -175,7 +175,7 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
     memset(shm->mem, 0, shm->size);
      * */
     
-    NDRX_LOG_EARLY(log_info, "Shm: [%s] %d/%x created size: %d mem: %p", 
+    NDRX_LOG_EARLY(log_info, "Shm: [%s] %d/%x created size: %ld mem: %p", 
             shm->path, shm->fd, shm->key, shm->size, shm->mem);
     
 out:
@@ -203,7 +203,7 @@ expublic int ndrx_shm_attach(ndrx_shm_t *shm)
     
     if (ndrx_shm_is_attached(shm))
     {
-        NDRX_LOG_EARLY(log_debug, "shm [%s] %d/%x size: %d already attached", shm->path,
+        NDRX_LOG_EARLY(log_debug, "shm [%s] %d/%x size: %ld already attached", shm->path,
                 shm->fd, shm->key, shm->size);
         goto out;
     }
@@ -222,12 +222,12 @@ expublic int ndrx_shm_attach(ndrx_shm_t *shm)
     
     if (MAP_FAILED==shm->mem)
     {
-        NDRX_LOG_EARLY(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %d: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %ld: %s",
                             shm->path, shm->fd, shm->key, shm->size, strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-    NDRX_LOG_EARLY(log_debug, "Shm: [%s] %d/%x attach size: %d mem: %p", 
+    NDRX_LOG_EARLY(log_debug, "Shm: [%s] %d/%x attach size: %ld mem: %p", 
             shm->path, shm->fd, shm->key, shm->size, shm->mem);
 
 out:

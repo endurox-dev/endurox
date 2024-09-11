@@ -133,23 +133,23 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs,
     /* Initialise sizes */
 
     G_srvinfo.size = sizeof(shm_srvinfo_t)*max_servers;
-    NDRX_LOG(log_debug, "G_srvinfo.size = %d (%d * %d)",
+    NDRX_LOG(log_debug, "G_srvinfo.size = %ld (%d * %d)",
                     G_srvinfo.size, sizeof(shm_srvinfo_t), max_servers);
     
     G_svcinfo.size = SHM_SVCINFO_SIZEOF *max_svcs;
-    NDRX_LOG(log_debug, "G_svcinfo.size = %d (%d * %d)",
+    NDRX_LOG(log_debug, "G_svcinfo.size = %ld (%d * %d)",
                     G_svcinfo.size, SHM_SVCINFO_SIZEOF, max_svcs);
    
     G_brinfo.size = sizeof(int)*CONF_NDRX_NODEID_COUNT;
-    NDRX_LOG(log_debug, "G_brinfo.size = %d (%d * %d)",
+    NDRX_LOG(log_debug, "G_brinfo.size = %ld (%d * %d)",
                     G_svcinfo.size, sizeof(int), CONF_NDRX_NODEID_COUNT);
     
     ndrx_G_routcrit.size = rtcrtmax*2;
-    NDRX_LOG(log_debug, "ndrx_G_routcrit.size = %d bytes (%d * 2)",
+    NDRX_LOG(log_debug, "ndrx_G_routcrit.size = %ld bytes (%d * 2)",
                     ndrx_G_routcrit.size, rtcrtmax);
     
     ndrx_G_routsvc.size = rtsvcmax * sizeof(ndrx_services_t) * 2;
-    NDRX_LOG(log_debug, "ndrx_G_routsvc.size = %d (%d * %d * 2)",
+    NDRX_LOG(log_debug, "ndrx_G_routsvc.size = %ld (%d * %d * 2)",
                     ndrx_G_routsvc.size, rtsvcmax, sizeof(ndrx_services_t));
     
     M_init = EXTRUE;

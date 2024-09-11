@@ -60,6 +60,7 @@ RET=$?
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
+    xadmin pqa
 	echo "Test error detected!"
 	RET=-2
 fi

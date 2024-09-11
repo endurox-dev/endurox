@@ -100,19 +100,20 @@ function print_domains {
     xadmin ppm
     xadmin psvc
     xadmin psc
+    xadmin pq
 
     set_dom2;
     xadmin ppm
     xadmin psvc
     xadmin psc
+    xadmin pq
 
     set_dom3;
     xadmin ppm
     xadmin psvc
     xadmin psc
+    xadmin pq
 }
-
-
 
 #
 # Generic exit function
@@ -120,6 +121,8 @@ function print_domains {
 function go_out {
     echo "Test exiting with: $1"
     
+    print_domains;
+
     set_dom1;
     xadmin stop -y
     xadmin down -y

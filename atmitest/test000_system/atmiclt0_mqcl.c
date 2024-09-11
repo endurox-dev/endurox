@@ -670,7 +670,7 @@ int local_test_qfull(char *pfx)
         /* now it test the error code */
         if (ETIMEDOUT!=err)
         {
-            NDRX_LOG(log_error, "Expected error %d (EAGAIN) but got %d",
+            NDRX_LOG(log_error, "Expected error %d (ETIMEDOUT) but got %d",
                     ETIMEDOUT, err);
             EXFAIL_OUT(ret);
         }

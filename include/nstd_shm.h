@@ -49,7 +49,8 @@ extern "C" {
 #define NDRX_SEM_SV5LOCKS            1   /**< System V message queue lockings           */
 #define NDRX_SEM_CPMLOCKS            2   /**< Client process monitor shm lock           */
 #define NDRX_SEM_LCFLOCKS            3   /**< Latent command framework locks            */
-#define NDRX_SEM_SVQEMLOCKS          4   /**< System V emulated message Q locks         */
+#define NDRX_SEM_SVQEMLOCKSC         4   /**< System V emulated message Q locks, cond   */
+#define NDRX_SEM_SVQEMLOCKSL         5   /**< System V emulated message Q locks, lock   */
     
 #define NDRX_SEM_TYP_READ            0   /**< RW Lock - Read                */
 #define NDRX_SEM_TYP_WRITE           1   /**< RW Lock - Write               */
@@ -65,7 +66,7 @@ typedef struct
     char path[NDRX_SHM_PATH_MAX+1];     /**< name of shm                  */
     int fd;                             /**< opened fd                    */
     char *mem;                          /**< mapped memory                */
-    int size;                           /**< size used by this shm block  */
+    long size;                           /**< size used by this shm block  */
     key_t key;                          /**< for APIs who need it         */
 } ndrx_shm_t;
 

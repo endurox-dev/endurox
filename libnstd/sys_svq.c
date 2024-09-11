@@ -359,7 +359,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
             else
             {
                 NDRX_LOG(log_error, "ndrx_svq_event_sndrcv(mqd=%p qid=%d) failed: %s",
-                    mqd->qid, strerror(err));
+                    mqd, mqd->qid, strerror(err));
             }
         }
         

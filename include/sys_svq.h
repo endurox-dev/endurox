@@ -356,6 +356,9 @@ extern NDRX_API int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz,
 extern NDRX_API ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
                 long msgtyp, int msgflg);
 extern NDRX_API int ndrx_svqem_msgctl(mqd_t mqd, int cmd, struct ndrx_svqem_msqid_ds *buf);
+
+extern NDRX_API size_t ndrx_svqem_get_q_size(void);
+
 #endif
 
 #endif /* SYS_SYSVQ_H__ */

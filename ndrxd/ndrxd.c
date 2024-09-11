@@ -302,6 +302,8 @@ int main_init(int argc, char** argv)
         G_sys_config.config_file_short++;
     }
     
+/* svqem we have single pre-initialized queue space..*/
+#ifndef EX_USE_SYSVQEM
     /* Override Q sizes */
     p = getenv(CONF_NDRX_DQMAX);
     if (NULL!=p)
@@ -316,6 +318,7 @@ int main_init(int argc, char** argv)
         NDRX_LOG(log_debug, "NDRXD Max Q size to: %d (default)",
                             ndrx_G_libnstd_cfg.msg_max);
     }
+#endif 
 
     /* Command wait param */
     p = getenv(CONF_NDRX_CMDWAIT);

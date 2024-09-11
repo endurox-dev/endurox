@@ -580,6 +580,11 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_SHM_ROUTSVC         "%s," NDRX_SHM_ROUTSVC_SFX
 #define NDRX_SHM_ROUTSVC_KEYOFSZ    8                 /**< IPC Key off set             */
 
+#define NDRX_SHM_SVQEM_SFX        "shm,svqem"           /**< SVQEM queue space segment */
+#define NDRX_SHM_SVQEM            "%s," NDRX_SHM_SVQEM_SFX
+#define NDRX_SHM_SVQEM_KEYOFSZ      9                   /**< IPC Key offset            */
+
+
 #define NDRX_SHM_KEYS_RESERVED      20                /**< Number of reserved keys     */
     
 #define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */

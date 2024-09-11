@@ -137,7 +137,7 @@ exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=EXFAIL,
                                     .fdhash = (ndrx_svq_fd_hash_t *)0x0017};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
-exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
+expublic int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
 
 exprivate MUTEX_LOCKDECL(M_mon_lock_mq); /**< Mutex lock for shared M_mon access, mq  */
 exprivate MUTEX_LOCKDECL(M_mon_lock_fd); /**< Mutex lock for shared M_mon access, fd  */
@@ -1914,6 +1914,9 @@ out:
     }
 
     errno = err;
+
+    /* Avoid prev value use in case if non blocked attempts used next by svqem */
+    M_signalled=EXFALSE;
 
     return ret;
 }
