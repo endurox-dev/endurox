@@ -100,7 +100,7 @@ typedef struct
     long                        j_svqem_head;
     long                        j_pmsghdr_off;
     long                        j_pmsghdr_msg_next;
-    long                        j_nmsghdr_msg_next_off;
+    long                        j_nmsghdr_off;
     unsigned long               j_svqem_curmsgs;
 
 } ndrx_svqem_hdr_t;
@@ -487,7 +487,7 @@ exprivate void validate_q(ndrx_svqem_hdr_t *hdr)
  */
 exprivate void journal_reply_msgsnd(ndrx_svqem_hdr_t *hdr)
 {
-    unsigned long *p_ulong;
+    ndrx_svqem_msg_hdr_t  *nmsghdr;
     char *mem = (char *) hdr;
 
     hdr->svqem_free=hdr->j_svqem_free;
@@ -506,9 +506,12 @@ exprivate void journal_reply_msgsnd(ndrx_svqem_hdr_t *hdr)
         pmsghdr->msg_next = hdr->j_pmsghdr_msg_next;
     }
 
-    /* Terminate the Q */
-    p_ulong = (unsigned long *)(mem + hdr->j_nmsghdr_msg_next_off);
+    /* Terminate the Q 
+    p_ulong = (unsigned long *)(mem + hdr->j_nmsghdr_off);
     *p_ulong = 0;
+    */
+    nmsghdr = (ndrx_svqem_msg_hdr_t  *)(mem + hdr->j_nmsghdr_off);
+    nmsghdr->msg_next = 0;
 
     hdr->svqem_curmsgs = hdr->j_svqem_curmsgs;
 
@@ -670,7 +673,7 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
      * long nmsghdr_msg_next_off = ((char*)&nmsghdr->msg_next) - mem;
      */
     /* nmsghdr->msg_next=0; */
-    hdr->j_nmsghdr_msg_next_off = ( (char*)(&nmsghdr->msg_next)-mem);
+    hdr->j_nmsghdr_off = ( (char*)(&nmsghdr->msg_len)-mem);
 
     hdr->j_svqem_curmsgs =  hdr->svqem_curmsgs + 1;
 
