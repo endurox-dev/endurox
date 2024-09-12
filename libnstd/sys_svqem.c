@@ -68,6 +68,11 @@ extern int volatile __thread M_signalled;
 #define MSG_OVERHEAD (sizeof(struct ndrx_msgbuf))
 
 /* #define EXTRA_DEBUG 1 */
+
+#define JOURNAL_NONE        0
+#define JOURNAL_SND         1
+#define JOURNAL_RCV         2
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -89,6 +94,14 @@ typedef struct
      * and journal is replicated, after that svqem_dirty_j is cleared:
      */
 
+    /* journal data */
+    int                         j_typ; /* see JOURNAL_* */
+    long                        j_svqem_free;
+    long                        j_svqem_head;
+    long                        j_pmsghdr_msg_next_off;
+    long                        j_pmsghdr_msg_next;
+    long                        j_nmsghdr_msg_next_off;
+    unsigned long               j_svqem_curmsgs;
 
 } ndrx_svqem_hdr_t;
 
@@ -111,6 +124,7 @@ struct ndrx_msgbuf
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate void validate_q(ndrx_svqem_hdr_t *hdr);
+exprivate void journal_reply_msgsnd(ndrx_svqem_hdr_t *hdr);
 
 /**
  *  ndrx_svqem_msgget, ndrx_svqem_msgsnd, ndrx_svqem_msgrcv, ndrx_svqem_msgctl
@@ -153,6 +167,20 @@ exprivate int ndrx_svqem_lock(ndrx_svqem_hdr_t *hdr, int *p_locked)
         EXFAIL_OUT(ret);
     }
     *p_locked=EXTRUE;
+
+    /* reply the logs...
+     * crashed process might left something undone
+     */
+    switch (hdr->j_typ)
+    {
+        case JOURNAL_SND:
+            journal_reply_msgsnd(hdr);
+            break;
+            /*
+        case JOURNAL_RCV:
+            journal_reply_msgrcv(hdr);
+            break;*/
+    }
 
 out:
     /* NDRX_LOG(log_error, "LOCKED: %lu %d", hdr->svqem_pos, ret);*/
@@ -365,6 +393,7 @@ expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg)
         hdr->svqem_head=0;
         hdr->svqem_nwait=0;
         hdr->svqem_curmsgs=0;
+        hdr->j_typ = JOURNAL_NONE;
 
         index = sizeof(ndrx_svqem_hdr_t);
         hdr->svqem_free=index;
@@ -450,6 +479,38 @@ exprivate void validate_q(ndrx_svqem_hdr_t *hdr)
     }
 
     NDRX_LOG(log_error, "DUMP Q END");
+}
+
+/**
+ * Reply the msgsnd journal
+ * @param  hdr queue header
+ */
+exprivate void journal_reply_msgsnd(ndrx_svqem_hdr_t *hdr)
+{
+    unsigned long *p_ulong;
+    char *mem = (char *) hdr;
+
+    hdr->svqem_free=hdr->j_svqem_free;
+
+    if (EXFAIL!=hdr->j_svqem_head)
+    {
+        hdr->svqem_head=hdr->j_svqem_head;
+    }
+    else
+    {
+        p_ulong = (unsigned long *)(mem + hdr->j_pmsghdr_msg_next_off);
+        *p_ulong = hdr->j_pmsghdr_msg_next;
+    }
+
+    /* Terminate the Q */
+    p_ulong = (unsigned long *)(mem + hdr->j_nmsghdr_msg_next_off);
+    *p_ulong = 0;
+
+    hdr->svqem_curmsgs = hdr->j_svqem_curmsgs;
+
+    /* let the previous changes to apply to memory, before we remove journal mark: */
+    __sync_synchronize();
+    hdr->j_typ = JOURNAL_NONE;
 }
 
 /**
@@ -559,11 +620,12 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
 
     nmsghdr->msg_len = msgsz;
     memcpy(nmsghdr + 1, msgp, msgsz + MSG_OVERHEAD);
-    hdr->svqem_free = nmsghdr->msg_next;
+
+    hdr->j_svqem_free = nmsghdr->msg_next;
+    /* hdr->svqem_free = nmsghdr->msg_next; */
 
     /* Search the places for message */
     index = hdr->svqem_head;
-    //pmsghdr = (ndrx_svqem_msg_hdr_t *) &mem[hdr->svqem_head];
 
     /* find end of q: */
     while (index != 0)
@@ -576,15 +638,45 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
     if (0==hdr->svqem_head)
     {
         /* queue was empty (head set to 0...) */
-        hdr->svqem_head = freeindex;
+        hdr->j_svqem_head = freeindex;
+        /* hdr->svqem_head = freeindex;*/
     }
     else
     {
-        pmsghdr->msg_next = freeindex;
+        /* long j_svqem_head = -1; - no setup
+           long j_pmsghdr_msg_next = freeindex
+           long j_pmsghdr_msg_next_off = <mem pos offset of the pmsghdr->msg_next>
+           j_pmsghdr_msg_next_off((char*)&pmsghdr->msg_next) - mem;
+           */
+        /* pmsghdr->msg_next = freeindex; */
+
+        hdr->j_svqem_head = EXFAIL;
+        hdr->j_pmsghdr_msg_next = freeindex;
+        hdr->j_pmsghdr_msg_next_off = ( (char *)(&pmsghdr->msg_next)-mem);
+
     }
 
     /* end of Q */
-    nmsghdr->msg_next=0;
+    /* long nmsghdr_msg_next_off = <mem pos offset of the nmsghdr->msg_next
+     * here just write 0
+     * long nmsghdr_msg_next_off = ((char*)&nmsghdr->msg_next) - mem;
+     */
+    /* nmsghdr->msg_next=0; */
+    hdr->j_nmsghdr_msg_next_off = ( (char*)(&nmsghdr->msg_next)-mem);
+
+    hdr->j_svqem_curmsgs =  hdr->svqem_curmsgs + 1;
+
+    __sync_synchronize();
+
+    /* Only now put the journal mark!
+     * as all data shall be logged
+     */
+    hdr->j_typ = JOURNAL_SND;
+
+    /*
+     * apply journal
+     */
+    journal_reply_msgsnd(hdr);
 
     if (0==hdr->svqem_head)
     {
@@ -595,7 +687,6 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
         exit(-1);
     }
 
-    hdr->svqem_curmsgs++;
     /* validate_q(hdr); */
 
     //NDRX_LOG(log_error, "YOPT ENTER: ndrx_svqem_msgsnd about to signal");
