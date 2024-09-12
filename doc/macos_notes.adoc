@@ -61,10 +61,9 @@ other sources
 $ brew install bison
 ---------------------------------------------------------------------
 
-
 === Getting the source code
 
-For test purposes we will parepare new user for which Enduro/X will built.
+For test purposes we will prepare new user for which Enduro/X will built.
 
 ---------------------------------------------------------------------
 $ sudo -s
@@ -95,7 +94,7 @@ This code bellow creates 'ndrx_home' executable file which loads basic environme
 so that you can use sample configuration provided by Enduro/X in 'sampleconfig' directory. 
 This also assumes that you are going to install to '$HOME/endurox/dist' folder.
 
-NOTE: If we install the libaries in dist/lib64, OS X will still try for to get the the
+NOTE: If we install the libraries in dist/lib64, OS X will still try for to get the the
 shared libraries for origin build folders. Thus it is recommended to configure environment file
 bit more advanced, to enable OS X library loader to search original (build) lib folders firstly.
 

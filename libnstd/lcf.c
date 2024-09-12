@@ -58,7 +58,11 @@
 #define SGMREFRESHMAX_DFLT      30      /**< Number of sec. in which lock stamp must be refreshed */
 #define PGMAX_DFLT              64      /**< Maximum number of singleton groups */
 #define PGMAX_MAX               99999   /**< Upper limit of number of process groups */
+#ifdef EX_USE_SYSVQEM
+#define MAX_QUEUES_DLFT         5000   /**< Max number of queues, dflt */
+#else
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
+#endif
 #define MSG_MAX_DLFT            100     /**< Max number of messages per q */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

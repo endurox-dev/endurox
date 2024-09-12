@@ -396,26 +396,36 @@ After changing the settings, reboot the server.
 
 === MacOS setup
 
-OSX does not use require any kernel parameter changes, as emulated message queue
-is used here. Only it required that sufficient disk space is available to '/tmp'
-directory, as the memory mapped queue files will be stored there. 
+As Enduro/X uses System V shared memory segments (including for queue emulation - *svqem*),
+the default sizes are not sufficient for at least Enduro/X unit testing. 
+Additionally semaphore undo entries per process are increased (kern.sysv.semume),
+as each queue operation by the process, requires changing of two semaphores.
 
-As Enduro/X uses System V shared memory segments, the default sizes are not
-sufficient for the at least Enduro/X unit testing. Thus limits needs to be
-changed:
+The bellow memory sizes are sufficient approx for following 4x Enduro/X instances,
+where each instance has:
 
+- Message size: 64KB
+- Number of messages per queue: 100
+- Number of queues: 5000
 
-Starting from OS X 10.3.9 the config file is */etc/sysctl.conf*, in oder versions
+(i.e.  shmmax = 35840000000 = (64+6)*1024*100*5000, shmall = 35840000000/4096*4 (as
+it is measured in pages, typically sized by 4096 bytes, planning resources 4x instances).
+Note that additional 4k overhead is reserved in each message for other needs of the shared memory).
+
+Thus limits needs to be changed:
+
+Starting from OS X 10.3.9 the config file is */etc/sysctl.conf*, in older versions
 use */boot/loader.conf*:
 
 --------------------------------------------------------------------------------
 $ sudo -s
 # cat << EOF >> /etc/sysctl.conf
-kern.sysv.shmmax=838860800
+kern.sysv.shmmax=35840000000
 kern.sysv.shmmin=1
-kern.sysv.shmmni=10000
+kern.sysv.shmmni=100
 kern.sysv.shmseg=50
-kern.sysv.shmall=204800
+kern.sysv.shmall=35000000
+kern.sysv.semume=10000
 kern.maxfiles=524288
 kern.maxfilesperproc=262144
 
@@ -426,7 +436,7 @@ Starting from Macos version 10.15 (Catalina) or later */boot/loader.conf* does
 not work and plist file needs to be installed. Prior making this file, possibly
 SIP disable is required and root / file system needs to remounted as RW. But firstly
 may try directly setup this file from root user and only if that does not work, change
-the SIP mode and perfrom fs-remount.
+the SIP mode and perform fs-remount.
 
 --------------------------------------------------------------------------------
 
@@ -451,11 +461,12 @@ $ sudo -s
  <array>
  <string>/usr/sbin/sysctl</string>
  <string>-w</string>
- <string>kern.sysv.shmmax=838860800</string>
+ <string>kern.sysv.shmmax=35840000000</string>
  <string>kern.sysv.shmmin=1</string>
  <string>kern.sysv.shmmni=10000</string>
  <string>kern.sysv.shmseg=50</string>
- <string>kern.sysv.shmall=204800</string>
+ <string>kern.sysv.shmall=35000000</string>
+ <string>kern.sysv.semume=10000</string>
  <string>kern.maxfiles=524288</string>
  <string>kern.maxfilesperproc=262144</string>
   </array>

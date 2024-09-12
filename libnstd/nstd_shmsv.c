@@ -81,6 +81,7 @@ exprivate segmap_t M_map[] = {
         ,{NDRX_SHM_LCF_SFX, NDRX_SHM_LCF_KEYOFSZ}
         ,{NDRX_SHM_ROUTCRIT_SFX, NDRX_SHM_ROUTCRIT_KEYOFSZ}
         ,{NDRX_SHM_ROUTSVC_SFX, NDRX_SHM_ROUTSVC_KEYOFSZ}
+        ,{NDRX_SHM_SVQEM_SFX, NDRX_SHM_SVQEM_KEYOFSZ}
         ,{NULL}
     };
 /*---------------------------Prototypes---------------------------------*/    
