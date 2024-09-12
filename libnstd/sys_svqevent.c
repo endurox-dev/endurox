@@ -1681,7 +1681,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     mqd->stamp_seq++;
     cur_stamp.stamp_seq = mqd->stamp_seq;
     
-    memcpy(&(mqd->stamp_time), &cur_stamp.stamp_time, sizeof(cur_stamp.stamp_time));
+    memcpy(&cur_stamp.stamp_time, &(mqd->stamp_time), sizeof(cur_stamp.stamp_time));
     
     NDRX_SPIN_UNLOCK_V(mqd->stamplock);
     
@@ -1875,6 +1875,12 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
                 NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
                 !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
     {
+        /*
+        NDRX_LOG(log_error, "remove %p evseq %d cuseq %d YOPT", mqd->eventq,
+            mqd->eventq->stamp_seq, cur_stamp.stamp_seq);
+        NDRX_DUMP(log_error, "YOPT", &mqd->eventq->stamp_time, sizeof(ndrx_stopwatch_t));
+        NDRX_DUMP(log_error, "YOPT", &cur_stamp.stamp_time, sizeof(ndrx_stopwatch_t));
+        */
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, *ev);

@@ -182,7 +182,8 @@ expublic int self_notify(srv_status_t *status, int block)
                         NULL,
                         NULL,
                         NULL,
-                        EXFALSE, TPNOBLOCK);
+                        EXFALSE,
+                        TPNOBLOCK /*- in case if ndrxd is busy, might skip the status.. (and small queue)*/);
     MUTEX_UNLOCK_V(M_forklock);
     
 out:

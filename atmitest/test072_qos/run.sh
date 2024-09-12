@@ -114,8 +114,8 @@ function go_out {
         xadmin pqa
 
         # TODO: might want to generate only if we have unclear Qs
-        echo "Generating cores..."
-        xadmin ps -p -a tpbridge  | xargs kill -11
+        #echo "Generating cores..."
+        #xadmin ps -p -a tpbridge  | xargs kill -11
     fi
 
     set_dom1;

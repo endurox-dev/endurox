@@ -972,6 +972,9 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
         NDRX_LOG(log_error, "Location not found for [%s] - memory full?", qstr);
         userlog("Location not found for [%s] - memory full?", qstr);
         err = ENOMEM;
+
+        /* ###################### CRITICAL SECTION, END ########################## */
+        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
         EXFAIL_OUT(ret);
     }
     

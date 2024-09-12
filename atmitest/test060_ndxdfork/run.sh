@@ -74,6 +74,13 @@ function go_out {
     echo "Test exiting with: $1"
     
     set_dom1;
+
+    # on small NDRX_DQMAX, the internal notificatoins
+    # might be lost..., thus to avoid slow shutdowns,
+    # let it housekeep.
+    xadmin appconfig sanity 1
+    sleep 5
+
     xadmin stop -y
     xadmin down -y
 

@@ -69,8 +69,15 @@ export NDRX_LOG=$TESTDIR/ndrx.log
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 # Override timeout!
 export NDRX_TOUT=4
-export NDRX_MSGMAX=50
-export NDRX_DQMAX=50
+
+# not for svqem (shall be small Q anyway..)
+
+if [ `xadmin poller` != "svqem" ]; then
+    export NDRX_MSGMAX=50
+    export NDRX_DQMAX=50
+fi
+
+#####
 # For system-v store all qids
 export NDRX_SVCMAX=30
 export NDRX_MAXSVCSRVS=600
