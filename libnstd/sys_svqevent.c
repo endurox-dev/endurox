@@ -137,7 +137,7 @@ exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=EXFAIL,
                                     .fdhash = (ndrx_svq_fd_hash_t *)0x0017};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
-expublic int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
+expublic int volatile __thread ndrx_G_svq_signalled = EXFALSE;/**< Did we got a signal?    */
 
 exprivate MUTEX_LOCKDECL(M_mon_lock_mq); /**< Mutex lock for shared M_mon access, mq  */
 exprivate MUTEX_LOCKDECL(M_mon_lock_fd); /**< Mutex lock for shared M_mon access, fd  */
@@ -799,7 +799,7 @@ exprivate void ndrx_svq_signal_action(int sig)
     NDRX_LOG(log_debug, "Signal action");
      * !!!! Bug #530 Signal handler - not safe functions used.
      * */
-    M_signalled = sig;
+    ndrx_G_svq_signalled = sig;
     return;
 }
 
@@ -1784,7 +1784,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
      */
     /* set thread id.. */
     mqd->thread = pthread_self();
-    M_signalled = EXFALSE;
+    ndrx_G_svq_signalled = EXFALSE;
     /* here is no interrupt, as pthread locks are imune to signals */
     NDRX_SPIN_LOCK_V((mqd->rcvlock));    
     /* unlock queue  */
@@ -1796,7 +1796,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
      * to process...
      * send until both are unlocked or stamp is changed.
      */
-    if (!M_signalled)
+    if (!ndrx_G_svq_signalled)
     {
         if (is_send)
         {
@@ -1915,14 +1915,14 @@ out:
      */
     if (EXSUCCEED==ret && NULL==*ev && EINTR==err)
     {
-        NDRX_LOG(log_error, "Interrupted by external signal, M_signalled=%d", M_signalled);
+        NDRX_LOG(log_error, "Interrupted by external signal, ndrx_G_svq_signalled=%d", ndrx_G_svq_signalled);
         ret=EXFAIL;
     }
 
     errno = err;
 
     /* Avoid prev value use in case if non blocked attempts used next by svqem */
-    M_signalled=EXFALSE;
+    ndrx_G_svq_signalled=EXFALSE;
 
     return ret;
 }
