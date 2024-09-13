@@ -1,8 +1,10 @@
 /**
- * @brief Emulated System-V message queue
- *  Emulates: msgget, msgsnd, msgrcv, msgctl
- *  Will be used as part of the SystemVEM messaging.
- *  + journal...
+ * @brief Emulated System-V message queue (SVQEM)
+ *  Emulates: msgget(), msgsnd(), msgrcv(), msgctl()
+ *  Timeout handling is done as part of the standard SystemV poller implementation.
+ *  For queue space we open one large shared memory segment. Eeach queue is
+ *  protected by individual 2x semaphores.
+ *
  * @file sys_svqem.c
  */
 /* -----------------------------------------------------------------------------
