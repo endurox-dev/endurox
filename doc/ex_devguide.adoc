@@ -4,12 +4,11 @@ Enduro/X Internal/External Developer Guide
 
 == Enduro/X Development standard
 
-Enduro/X build system is CMake. Version used should be 2.8 and above. It uses
-Flex and Bison for building UBF (FML) Expressions.
+Enduro/X build system is CMake. Version used should be 3.5 and above. It uses
+Flex and Bison for building grammar parsers, such as UBF (FML) expressions.
 
-Enduro/X is programmed in NetBeans C/C++ project. NetBeans supports CMake projects.
-Some command line editing usually is done by using VIM editor. The source code is
-appended with mode line settings. Thus to get the proper indention enabled, configure
+The source code is appended with mode line settings. If using *vim*, to 
+get the proper indention enabled, configure
 VIM editor before doing any edits append ~/.vimrc with following commands:
 
 --------------------------------------------------------------------------------
@@ -18,7 +17,7 @@ filetype plugin on
 set modeline 
 --------------------------------------------------------------------------------
 
-Project also uses 'libxml2' (provided by system), 'exhash' (already included 
+Project uses 'libxml2' (provided by system), 'exhash' (already included 
 in 'include' dir) and cgreen (integrated into Enduro/X) for unit testing.
 
 === C Programming style
@@ -76,7 +75,6 @@ if (SOME_CONST==i)
 }
 
 --------------------------------------------------------------------------------
-
 
 ==== Error handling
 
@@ -924,7 +922,7 @@ In case of System V mode, one-queue-multiple servers does not work for different
 set of services if advertised by binaries advertising also common services.
 
 Thus by default each XATMI server process opens it's own job request queue, and
-service requests are dispatched in round robin patter. How ever if set of binaries
+service requests are dispatched in round robin patter. However, if set of binaries
 same set of queues, then it is possible to configure shared queue for these
 server processes. The shared queue is specified as "request address". 
 It defines one queue name on which all XATMI servers must advertise
@@ -934,6 +932,11 @@ The implementation for System V is quite complicated, because these queues (
 see msgrcv(), msgsnd() system calls) does not offer any timeout control and
 secondly no form of polling on multiple queues are allowed. Thus these additional
 work semantics must be emulated.
+
+Additionally, if System V queues are not available on given platform (such as MacOS),
+Enduro/X implements System V queue emulation, such mode name is *svqem*.
+In *svqem* mode, all other parts for message handling are the same as described
+for *SystemV* mode in this chapter.
 
 Common approaches for *XATMI clients and servers* are following:
 

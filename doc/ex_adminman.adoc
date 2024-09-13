@@ -72,26 +72,31 @@ additional thread per XATMI participant for handling message send/receive time-o
 In case if XATMI server, additional more thread is used for administrative message
 handling and dispatching to main server thread. Thus compiler must support
 the multi-threaded operations for user applications (transport code "SystemV").
-SystemV Enduro/X builds can be used as alternative for *kqueue* or *svapoll* modes,
-to avoid the CPU wasting associate with extra wakups for idle load balanced
-same XATMI service servers.
+SystemV Enduro/X builds can be used as alternative for *epoll*/*kqueue* or *svapoll* modes,
+to avoid the CPU wasting associate with extra wakeups for idle load balanced
+same XATMI service servers. On platforms where System V queues are not available,
+but shared memory and semaphores are available, emulation of the queues via
+shared memory can be enabled. Such mode name is *svqem* (System V Queues EMulation)
+and is used on MacOS by default.
 
 - The third option if POLL over the Posix queues. This uses round-robin approach
 for message delivery to load balanced servers. One additional thread is used
 for server process to monitor queues (transport code "poll").
 
 - The forth option is emulated message queue which uses shared memory and process
-shared Posix locks to emulate the message queue (transport code "emq").
+shared Posix locks to emulate the message queue (transport code "emq"). This mode
+is obsolete and subject for future removal, as effectively it is replaced by
+*svqem*.
 
 .Enduro/X IPC transport sub-systems
-[width="80%",cols="^2,^2,^2,^2,^2,^2, ^2",options="header"]
+[width="80%",cols="^2,^2,^2,^2,^2,^2,^2,^2",options="header"]
 |=========================================================
-|Operating System/IPC Transport|epoll |kqueue |systemv |poll |emq |svapoll
-|GNU/Linux|R |X |R |S |S |X
-|FreeBSD|X |R |S |S |S |X
-|IBM AIX|X |X |S |S |S |R
-|Oracle Solaris|X |X |R |S |S |X
-|MacOS|X |X |X |X |R |X
+|Operating System/IPC Transport|epoll |kqueue |systemv |poll |emq |svapoll |svqem
+|GNU/Linux|R |X |R |S |O |X |S
+|FreeBSD|X |R |S |S |O |X |X
+|IBM AIX|X |X |S |S |O |R |X
+|Oracle Solaris|X |X |R |S |O |X |X
+|MacOS|X |X |X |X |O |X|R
 |=========================================================
 
 Legend:
@@ -101,6 +106,8 @@ Legend:
 'R' - supported and release provided.
 
 'X' - not supported.
+
+'O' - obsolete, may be removed in future version.
 
 Each of these IPC transports for particular operating system requires specific
 approach for configuring the limits and other attributes for runtime.
@@ -115,18 +122,18 @@ application is not required to be rebuilt.
 The release file for Enduro/X encodes different information. For example
 file names 
 
-. endurox-5.4.1-1.ubuntu18_04_GNU_epoll.x86_64_64.deb 
+. endurox-8.0.10-2.el9_gnu_epoll.x86_64.rpm
 
-. endurox-5.4.1-1.SUNOS5_10_GNU_SystemV.sparc_64
+. endurox-8.0.10-2.solaris11_sunpro_systemv.x86_64.tar.gz
 
 encodes following information:
 
 .Enduro/X distribution file name naming conventions
 [width="80%", options="header"]
 |=========================================================
-|Product name|Version|Release|OS Name|C Compiler ID|OS Version|IPC Transport|CPU Arch|Target 
-|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode
-|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode
+|Product name|Version|Release|OS Name|C Compiler ID|OS Version|IPC Transport|CPU Arch 
+|endurox |8.0.10 |2 |Red Hat Enterprise Linux / Oracle Linux |9 | GNU GCC| epoll |x86_64
+|endurox |8.0.10 |2 |Solaris |11 |SunPro |System V queues | x86_64
 |=========================================================
 
 === Linux setup
