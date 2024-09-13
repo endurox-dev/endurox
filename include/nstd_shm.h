@@ -49,8 +49,10 @@ extern "C" {
 #define NDRX_SEM_SV5LOCKS            1   /**< System V message queue lockings           */
 #define NDRX_SEM_CPMLOCKS            2   /**< Client process monitor shm lock           */
 #define NDRX_SEM_LCFLOCKS            3   /**< Latent command framework locks            */
-#define NDRX_SEM_SVQEMLOCKSC         4   /**< System V emulated message Q locks, cond   */
-#define NDRX_SEM_SVQEMLOCKSL         5   /**< System V emulated message Q locks, lock   */
+#define NDRX_SEM_SVQEMLOCKSL         4   /**< System V emulated message Q locks, lock   */
+#define NDRX_SEM_SVQEMLOCKSCSW       5   /**< System V emulated message Q locks, cond send wait   */
+#define NDRX_SEM_SVQEMLOCKSCRW       6   /**< System V emulated message Q locks, cond rcv wait    */
+
     
 #define NDRX_SEM_TYP_READ            0   /**< RW Lock - Read                */
 #define NDRX_SEM_TYP_WRITE           1   /**< RW Lock - Write               */

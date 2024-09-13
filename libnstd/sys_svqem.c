@@ -62,7 +62,8 @@
 #include <sys_svq.h>
 
 /*---------------------------Externs------------------------------------*/
-extern ndrx_sem_t ndrx_G_svqem_semc;
+extern ndrx_sem_t ndrx_G_svqem_semcsw;
+extern ndrx_sem_t ndrx_G_svqem_semcrw;
 extern ndrx_sem_t ndrx_G_svqem_seml;
 extern ndrx_shm_t ndrx_G_svqem_shm;
 extern int volatile __thread ndrx_G_svq_signalled;
@@ -71,10 +72,12 @@ extern int volatile __thread ndrx_G_svq_signalled;
 
 /* #define EXTRA_DEBUG 1 */
 
-#define JOURNAL_NONE        0
-#define JOURNAL_SND         1
-#define JOURNAL_RCV         2
+#define JOURNAL_NONE            0
+#define JOURNAL_SND             1
+#define JOURNAL_RCV             2
 
+#define COND_TYP_SND            0   /**< send wait              */
+#define COND_TYP_RCV            1   /**< receive wait           */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -86,7 +89,8 @@ typedef struct
     unsigned long              svqem_pos;   /**< offset from IPC key (shifted) */
     unsigned long              svqem_head;  /**< first message index           */
     unsigned long              svqem_free;  /**< first free message index      */
-    unsigned long              svqem_nwait; /**< number of threads waiting     */
+    unsigned long              svqem_nwaits; /**< number of threads waiting   (send)  */
+    unsigned long              svqem_nwaitr; /**< number of threads waiting   (rcv)  */
     unsigned long              svqem_curmsgs;  /**< number of messages in Q    */
 
     /* Journal data (replicate after msg data installed and all fields set,
@@ -125,7 +129,7 @@ struct ndrx_msgbuf
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-exprivate void validate_q(ndrx_svqem_hdr_t *hdr);
+exprivate void dump_q(ndrx_svqem_hdr_t *hdr);
 exprivate void journal_reply_msgsnd(ndrx_svqem_hdr_t *hdr);
 exprivate void journal_reply_msgrcv(ndrx_svqem_hdr_t *hdr);
 
@@ -165,7 +169,6 @@ exprivate int ndrx_svqem_lock(ndrx_svqem_hdr_t *hdr, int *p_locked)
     if (EXSUCCEED!=semop(ndrx_G_svqem_seml.semid, &sops, 1))
     {
         int err=errno;
-        /* NDRX_LOG(log_error, "YOPT semop failed sem_num=%d: %s", sops.sem_num, strerror(errno)); */
         errno=err;
         EXFAIL_OUT(ret);
     }
@@ -185,7 +188,6 @@ exprivate int ndrx_svqem_lock(ndrx_svqem_hdr_t *hdr, int *p_locked)
     }
 
 out:
-    /* NDRX_LOG(log_error, "LOCKED: %lu %d", hdr->svqem_pos, ret);*/
     return ret;
 
 }
@@ -215,21 +217,6 @@ exprivate int ndrx_svqem_unlock(ndrx_svqem_hdr_t *hdr, int eintr_ignr, int *p_lo
         EXFAIL_OUT(ret);
     }
 
-    //It must be 0 here
-    int sem_value = semctl(ndrx_G_svqem_seml.semid, hdr->svqem_pos, GETVAL);
-
-    if (sem_value!=0)
-    {
-        NDRX_LOG(log_error, "YOPT sem_value!=0 => %d", sem_value);
-        exit(-1);
-    }
-
-    if (!eintr_ignr && ndrx_G_svq_signalled)
-    {
-        errno=EINTR;
-        EXFAIL_OUT(ret);
-    }
-
     while (EXSUCCEED!=(ret=semop(ndrx_G_svqem_seml.semid, &sops, 1))
         && EINTR==errno && eintr_ignr)
     {
@@ -240,6 +227,13 @@ exprivate int ndrx_svqem_unlock(ndrx_svqem_hdr_t *hdr, int eintr_ignr, int *p_lo
     {
         *p_locked=EXFALSE;
     }
+    else
+    {
+        int err=errno;
+        NDRX_LOG(log_error, "ndrx_svqem_unlock: semop failed sem_num=%d: %s",
+                sops.sem_num, strerror(errno));
+        errno=err;
+    }
 
     if (EXSUCCEED==ret && was_intr || ndrx_G_svq_signalled)
     {
@@ -249,8 +243,6 @@ exprivate int ndrx_svqem_unlock(ndrx_svqem_hdr_t *hdr, int eintr_ignr, int *p_lo
 
 out:
 
-    /* NDRX_LOG(log_error, "UNLOCKED: %d %d", hdr->svqem_pos, ret);*/
-
     return ret;
 }
 
@@ -258,17 +250,28 @@ out:
  * Wait for condition
  * @param hdr queue header]
  * @param p_locked are we still locked?
+ * @param cond_typ COND_TYP*
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate int ndrx_svqem_condwait(ndrx_svqem_hdr_t *hdr, int *p_locked)
+exprivate int ndrx_svqem_condwait(ndrx_svqem_hdr_t *hdr, int *p_locked, int cond_typ)
 {
     int ret = EXSUCCEED;
     struct sembuf sops;
-
+    ndrx_sem_t *p_cond;
     /* Increment waiter (this is hint, extra loops will cope with interrupted
      * waiters)
      * we are locked here.
      */
-    hdr->svqem_nwait++;
+    if (COND_TYP_SND==cond_typ)
+    {
+        hdr->svqem_nwaits++;
+        p_cond=&ndrx_G_svqem_semcsw;
+    }
+    else
+    {
+        hdr->svqem_nwaitr++;
+        p_cond=&ndrx_G_svqem_semcrw;
+    }
 
     if (EXSUCCEED!=ndrx_svqem_unlock(hdr, EXFALSE, p_locked))
     {
@@ -279,19 +282,22 @@ exprivate int ndrx_svqem_condwait(ndrx_svqem_hdr_t *hdr, int *p_locked)
     sops.sem_op = -1;   /* Decrement semaphore value */
     sops.sem_flg = SEM_UNDO;
 
-    //NDRX_LOG(log_error, "YOPT ndrx_svqem_condwait: semid=%d pos =%d",
-    //            ndrx_G_svqem_semc.semid, hdr->svqem_pos);
-
     if (ndrx_G_svq_signalled)
     {
         errno=EINTR;
         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED!=semop(ndrx_G_svqem_semc.semid, &sops, 1))
+    if (EXSUCCEED!=semop(p_cond->semid, &sops, 1))
     {
         int err=errno;
-        NDRX_LOG(log_error, "YOPT semop failed sem_num=%d: %s", sops.sem_num, strerror(errno));
+
+        if (EINTR!=err)
+        {
+            NDRX_LOG(log_error, "cond_wait: semop failed sem_num=%d cond_typ=%d: %s",
+                sops.sem_num, cond_typ, strerror(errno));
+        }
+
         errno=err;
         EXFAIL_OUT(ret);
     }
@@ -309,16 +315,28 @@ out:
  * (no problem if there is actually no waiter, the next cond waiter will just
  * get some extra loops)
  * @param hdr queue header
+ * @param cond_typ COND_TYP*
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate int ndrx_svqem_cond_signal(ndrx_svqem_hdr_t *hdr)
+exprivate int ndrx_svqem_cond_signal(ndrx_svqem_hdr_t *hdr, int cond_typ)
 {
     int ret = EXSUCCEED;
     int was_intr = EXFALSE;
+    unsigned long *w;
+    ndrx_sem_t *p_cond;
 
-   // NDRX_LOG(log_error, "YOPT ndrx_svqem_cond_signal svqem_nwait=%d pos=%d",
-   //             hdr->svqem_nwait, hdr->svqem_pos);
+    if (COND_TYP_SND==cond_typ)
+    {
+        w = &hdr->svqem_nwaits;
+        p_cond=&ndrx_G_svqem_semcsw;
+    }
+    else
+    {
+        w = &hdr->svqem_nwaitr;
+        p_cond=&ndrx_G_svqem_semcrw;
+    }
 
-    if (hdr->svqem_nwait > 0)
+    if (*w > 0)
     {
         struct sembuf sops;
         int sem_value;
@@ -326,27 +344,25 @@ exprivate int ndrx_svqem_cond_signal(ndrx_svqem_hdr_t *hdr)
         sops.sem_op = 1;    /* Increment semaphore value */
         sops.sem_flg = SEM_UNDO;
 
-        //sem_value = semctl(ndrx_G_svqem_semc.semid, sops.sem_num, GETVAL);
-       // NDRX_LOG(log_error, "YOPT ndrx_svqem_cond_signal: semid=%d pos=%d val=%d",
-       //             ndrx_G_svqem_semc.semid, hdr->svqem_pos, sem_value);
-
-        while (EXSUCCEED!=(ret=semop(ndrx_G_svqem_semc.semid, &sops, 1)) && EINTR==errno)
+        while (EXSUCCEED!=(ret=semop(p_cond->semid, &sops, 1)) && EINTR==errno)
         {
-            NDRX_LOG(log_error, "YOPT semop failed sem_num=%d: %s", sops.sem_num, strerror(errno));
             ret=EXSUCCEED;
             was_intr=EXTRUE;
         }
 
-        //sem_value = semctl(ndrx_G_svqem_semc.semid, sops.sem_num, GETVAL);
-        //NDRX_LOG(log_error, "YOPT ndrx_svqem_cond_signal AFTER: pos=%d val=%d", hdr->svqem_pos, sem_value);
-
         if (EXSUCCEED!=ret)
         {
+            int err = errno;
+
+            NDRX_LOG(log_error, "cond_wait: semop failed sem_num=%d type=%d: %s",
+                sops.sem_num, cond_typ, strerror(errno));
+
+            errno = err;
             goto out;
         }
 
         /* it shall be locked here, so safe */
-        hdr->svqem_nwait--;
+        (*w)--;
 
     }
 
@@ -359,7 +375,6 @@ out:
  */
 expublic unsigned long ndrx_svqem_get_q_size(void)
 {
-    /* TODO: the msgsize also shall be modulus of 4 or 8! */
     return sizeof(ndrx_svqem_hdr_t) + (ndrx_G_libnstd_cfg.msg_max *
         (sizeof(ndrx_svqem_msg_hdr_t) + ndrx_msgsizemax() ));
 }
@@ -393,7 +408,8 @@ expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg)
 
         hdr->svqem_pos=pos;
         hdr->svqem_head=0;
-        hdr->svqem_nwait=0;
+        hdr->svqem_nwaits=0;
+        hdr->svqem_nwaitr=0;
         hdr->svqem_curmsgs=0;
         hdr->j_typ = JOURNAL_NONE;
 
@@ -405,7 +421,6 @@ expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg)
             msghdr = (ndrx_svqem_msg_hdr_t *) &mem[index];
             index += sizeof(ndrx_svqem_msg_hdr_t) + msgsize;
 
-            /* NDRX_LOG(log_error, "YOPT index %ld msgsize %ld", index, msgsize);*/
             msghdr->msg_next = index;
         }
 
@@ -413,10 +428,11 @@ expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg)
         msghdr = (ndrx_svqem_msg_hdr_t *) &mem[index];
         msghdr->msg_next = 0;
 
-        /*validate_q(hdr);*/
+        /*dump_q(hdr);*/
 
         /* configure locks */
-        semctl(ndrx_G_svqem_semc.semid, hdr->svqem_pos, SETVAL, 0);
+        semctl(ndrx_G_svqem_semcsw.semid, hdr->svqem_pos, SETVAL, 0);
+        semctl(ndrx_G_svqem_semcrw.semid, hdr->svqem_pos, SETVAL, 0);
         semctl(ndrx_G_svqem_seml.semid, hdr->svqem_pos, SETVAL, 1);
 
     }
@@ -451,7 +467,7 @@ expublic int ndrx_svqem_mqd_close2(mqd_t mqd)
     return EXSUCCEED;
 }
 
-exprivate void validate_q(ndrx_svqem_hdr_t *hdr)
+exprivate void dump_q(ndrx_svqem_hdr_t *hdr)
 {
     int i;
     char *mem = (char *)hdr;
@@ -463,7 +479,8 @@ exprivate void validate_q(ndrx_svqem_hdr_t *hdr)
     NDRX_LOG(log_error, "svqem_pos=%lu", hdr->svqem_pos);
     NDRX_LOG(log_error, "svqem_head=%lu", hdr->svqem_head);
     NDRX_LOG(log_error, "svqem_free=%lu", hdr->svqem_free);
-    NDRX_LOG(log_error, "svqem_nwait=%lu", hdr->svqem_nwait);
+    NDRX_LOG(log_error, "svqem_nwaits=%lu", hdr->svqem_nwaits);
+    NDRX_LOG(log_error, "svqem_nwaitr=%lu", hdr->svqem_nwaitr);
     NDRX_LOG(log_error, "svqem_curmsgs=%lu", hdr->svqem_curmsgs);
 
     for (i=0; i<ndrx_G_libnstd_cfg.msg_max; i++)
@@ -538,7 +555,6 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
 
     errno = 0;
 
-    //NDRX_LOG(log_error, "YOPT ENTER: ndrx_svqem_msgsnd");
     if (EXSUCCEED!=ndrx_svqem_lock(hdr, &locked))
     {
         EXFAIL_OUT(ret);
@@ -546,7 +562,8 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
 
     if (msgsz > ndrx_msgsizemax()-MSG_OVERHEAD)
     {
-        NDRX_LOG(log_error, "YOPT msgsz=%d > limit: %d", msgsz, ndrx_msgsizemax()-MSG_OVERHEAD);
+        NDRX_LOG(log_error, "error: msgsz=%d > limit: %d",
+            msgsz, ndrx_msgsizemax()-MSG_OVERHEAD);
         errno = E2BIG;
         EXFAIL_OUT(ret);
     }
@@ -563,38 +580,10 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
         /* wait for room for one message on the queue */
         while (hdr->svqem_curmsgs >= ndrx_G_libnstd_cfg.msg_max)
         {
-#if 0
-            //NDRX_LOG(log_error, "YOPT Q is full: %d", hdr->svqem_curmsgs);
-            if (EXSUCCEED!=ndrx_svqem_condwait(hdr, &locked))
-            {
-                //NDRX_LOG(log_error, "YOPT Q is full AFTER failed: %d", hdr->svqem_curmsgs);
-                EXFAIL_OUT(ret);
-            }
-#endif
-            /* above can cause some sort of the deadlock?
-             * possibly need seperate set of semaphores for send block / wait / signal
-             */
-            if (EXSUCCEED!=ndrx_svqem_unlock(hdr, EXTRUE, &locked))
+            if (EXSUCCEED!=ndrx_svqem_condwait(hdr, &locked, COND_TYP_SND))
             {
                 EXFAIL_OUT(ret);
             }
-
-            if (ndrx_G_svq_signalled)
-            {
-                errno=EINTR;
-                EXFAIL_OUT(ret);
-            }
-
-            if (EXSUCCEED!=usleep(1000))
-            {
-                EXFAIL_OUT(ret);
-            }
-
-            if (EXSUCCEED!=ndrx_svqem_lock(hdr, &locked))
-            {
-                EXFAIL_OUT(ret);
-            }
-
         }
     }
 
@@ -610,7 +599,7 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
          * 2x queues might end with 0
          * all offset shall be in boundry of the Q size
          */
-        validate_q(hdr);
+        dump_q(hdr);
 
         exit(-1);
     }
@@ -623,7 +612,7 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
          * 2x queues might end with 0
          * all offset shall be in boundry of the Q size
          */
-        validate_q(hdr);
+        dump_q(hdr);
 
         exit(-1);
     }
@@ -634,7 +623,6 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
     memcpy(nmsghdr + 1, msgp, msgsz + MSG_OVERHEAD);
 
     hdr->j_svqem_free = nmsghdr->msg_next;
-    /* hdr->svqem_free = nmsghdr->msg_next; */
 
     /* Search the places for message */
     index = hdr->svqem_head;
@@ -651,17 +639,9 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
     {
         /* queue was empty (head set to 0...) */
         hdr->j_svqem_head = freeindex;
-        /* hdr->svqem_head = freeindex;*/
     }
     else
     {
-        /* long j_svqem_head = -1; - no setup
-           long j_pmsghdr_msg_next = freeindex
-           long j_pmsghdr_msg_next_off = <mem pos offset of the pmsghdr->msg_next>
-           j_pmsghdr_msg_next_off((char*)&pmsghdr->msg_next) - mem;
-           */
-        /* pmsghdr->msg_next = freeindex; */
-
         hdr->j_svqem_head = EXFAIL;
         hdr->j_pmsghdr_msg_next = freeindex;
         /* offset of the first field of the struct: */
@@ -695,15 +675,12 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
     {
         NDRX_LOG(log_error, "unexpected (after send) svqem_head==0, svqem_curmsgs: %ld svqem_free: %ld",
                 hdr->svqem_curmsgs, hdr->svqem_free);
-        validate_q(hdr);
+        dump_q(hdr);
 
         exit(-1);
     }
 
-    /* validate_q(hdr); */
-
-    //NDRX_LOG(log_error, "YOPT ENTER: ndrx_svqem_msgsnd about to signal");
-    ndrx_svqem_cond_signal(hdr);
+    ndrx_svqem_cond_signal(hdr, COND_TYP_RCV);
 
 out:
 
@@ -713,8 +690,6 @@ out:
         ndrx_svqem_unlock(hdr, EXTRUE, &locked);
         errno = err;
     }
-
-    //NDRX_LOG(log_error, "YOPT ENTER: ndrx_svqem_msgsnd ret %d", ret);
 
     return ret;
 }
@@ -757,8 +732,6 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
     ndrx_svqem_msg_hdr_t  *pmsghdr;
     int locked = EXFALSE;
 
-
-    //NDRX_LOG(log_error, "YOPT ENTER: ndrx_svqem_msgrcv");
     errno = 0;
 
     if (EXSUCCEED!=ndrx_svqem_lock(hdr, &locked))
@@ -777,7 +750,7 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
 
         while (hdr->svqem_curmsgs == 0)
         {
-            if (EXSUCCEED!=ndrx_svqem_condwait(hdr, &locked))
+            if (EXSUCCEED!=ndrx_svqem_condwait(hdr, &locked, COND_TYP_RCV))
             {
                 EXFAIL_OUT(ret);
             }
@@ -789,7 +762,7 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
         /* abort();*/
         NDRX_LOG(log_error, "unexpected svqem_head==0, svqem_curmsgs: %ld svqem_free: %ld",
                 hdr->svqem_curmsgs, hdr->svqem_free);
-        validate_q(hdr);
+        dump_q(hdr);
 
         exit(-1);
     }
@@ -802,7 +775,7 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
          * 2x queues might end with 0
          * all offset shall be in boundry of the Q size
          */
-        validate_q(hdr);
+        dump_q(hdr);
 
         exit(-1);
     }
@@ -813,14 +786,13 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
 
     if (msgsz < ret - MSG_OVERHEAD)
     {
-        //NDRX_LOG(log_error, "YOPT msgsz=%d < limit: %d", msgsz, ndrx_msgsizemax()-MSG_OVERHEAD);
+        NDRX_LOG(log_error, "msgrcv failed on msg: msgsz=%d < limit: %d",
+            msgsz, ndrx_msgsizemax()-MSG_OVERHEAD);
         errno = E2BIG;
         EXFAIL_OUT(ret);
     }
 
     memcpy(msgp, pmsghdr + 1, ret + MSG_OVERHEAD);
-
-    /* hdr->svqem_head = pmsghdr->msg_next;*/
 
     hdr->j_svqem_head = pmsghdr->msg_next;
 
@@ -848,8 +820,8 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
     /* apply changes: */
     journal_reply_msgrcv(hdr);
 
-    /* validate_q(hdr); */
-    /* ndrx_svqem_cond_signal(hdr);*/
+    /* dump_q(hdr); */
+    ndrx_svqem_cond_signal(hdr, COND_TYP_SND);
 
 out:
 
@@ -860,7 +832,6 @@ out:
         errno = err;
     }
 
-    //NDRX_LOG(log_error, "ret=%d errno=%d %d %d: %s", ret, errno, msgsz, (int)ndrx_msgsizemax(), strerror(errno));
     return ret;
 }
 
@@ -894,24 +865,6 @@ expublic int ndrx_svqem_msgctl(mqd_t mqd, int cmd, struct ndrx_svqem_msqid_ds *b
             errno = EINVAL;
             EXFAIL_OUT(ret);
         }
-#if 0
-        if (NULL==mqd->shm.mem)
-        {
-           /* try by qid*/
-            mqd->shm.mem = (char *)shmat(mqd->qid, 0, 0);
-
-            if (MAP_FAILED==mqd->shm.mem)
-            {
-                int err=errno;
-
-                NDRX_LOG(log_error, "Failed to shmat memory for fd (qid) %d: %s",
-                                    mqd->qid, strerror(errno));
-                errno = err;
-                EXFAIL_OUT(ret);
-            }
-            we_open=EXTRUE;
-        }
-#endif
 
         /* ok, lets lock up and read current counters... (add journal later) */
         hdr = (ndrx_svqem_hdr_t *) NDRX_HDR_GET(mqd->qid);
@@ -922,26 +875,11 @@ expublic int ndrx_svqem_msgctl(mqd_t mqd, int cmd, struct ndrx_svqem_msqid_ds *b
             ndrx_svqem_unlock(hdr, EXTRUE, &locked);
         }
 
-#if 0
-        if (we_open)
-        {
-            shmdt(mqd->shm.mem);
-        }
-#endif
     }
     else if (IPC_RMID==cmd)
     {
 #if 0
-        //Nothing to unnlink...
-        if (EXSUCCEED!=shmctl(mqd->qid, IPC_RMID, NULL))
-        {
-            int err = errno;
-            NDRX_LOG(log_error, "Failed to IPC_RMID %d: %s",
-                            mqd->qid, strerror(err));
-            /* restore the error */
-            errno = err;
-            EXFAIL_OUT(ret);
-        }
+        /* Nothing to unlink, all is in s2p/p2s maps */
 #endif
     }
     else

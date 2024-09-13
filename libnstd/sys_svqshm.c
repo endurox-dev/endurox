@@ -109,7 +109,8 @@ exprivate ndrx_shm_t M_map_p2s = {.fd=0, .path=""};   /**< Posix to System V map
 exprivate ndrx_shm_t M_map_s2p = {.fd=0, .path=""};   /**< System V to Posix mapping       */
 exprivate ndrx_sem_t M_map_sem = {.semid=0};/**< RW semaphore for SHM protection */
 
-expublic ndrx_sem_t ndrx_G_svqem_semc= {.semid=0};/**< Array for Q emulation, cond */
+expublic ndrx_sem_t ndrx_G_svqem_semcrw= {.semid=0};/**< Array for Q emulation, cond, rcv wait */
+expublic ndrx_sem_t ndrx_G_svqem_semcsw= {.semid=0};/**< Send wait */
 expublic ndrx_sem_t ndrx_G_svqem_seml= {.semid=0};/**< Array for Q emulation, lock */
 expublic ndrx_shm_t ndrx_G_svqem_shm = {.fd=0, .path=""};   /**< Large queue space...      */
 
@@ -225,12 +226,22 @@ expublic int ndrx_svqshm_down(int force)
         ret = EXFAIL;
     }
 
-    if (EXSUCCEED!=ndrx_sem_close(&ndrx_G_svqem_semc))
+    if (EXSUCCEED!=ndrx_sem_close(&ndrx_G_svqem_semcsw))
     {
         ret = EXFAIL;
     }
 
-    if (EXSUCCEED!=ndrx_sem_remove(&ndrx_G_svqem_semc, EXTRUE))
+    if (EXSUCCEED!=ndrx_sem_remove(&ndrx_G_svqem_semcsw, EXTRUE))
+    {
+        ret = EXFAIL;
+    }
+
+    if (EXSUCCEED!=ndrx_sem_close(&ndrx_G_svqem_semcrw))
+    {
+        ret = EXFAIL;
+    }
+
+    if (EXSUCCEED!=ndrx_sem_remove(&ndrx_G_svqem_semcrw, EXTRUE))
     {
         ret = EXFAIL;
     }
@@ -390,17 +401,27 @@ expublic int ndrx_svqshm_init(int attach_only)
     
 #ifdef EX_USE_SYSVQEM
 
-    /* Conditionals: */
-    memset(&ndrx_G_svqem_semc, 0, sizeof(ndrx_G_svqem_semc));
+    /* Conditionals (send wait): */
+    memset(&ndrx_G_svqem_semcsw, 0, sizeof(ndrx_G_svqem_semcsw));
 
     /* Service queue ops */
-    ndrx_G_svqem_semc.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_SVQEMLOCKSC;
+    ndrx_G_svqem_semcsw.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_SVQEMLOCKSCSW;
+    ndrx_G_svqem_semcsw.nrsems=ndrx_G_libnstd_cfg.queuesmax;
+    ndrx_G_svqem_semcsw.maxreaders=0;
 
-    ndrx_G_svqem_semc.nrsems=ndrx_G_libnstd_cfg.queuesmax;
-    ndrx_G_svqem_semc.maxreaders=0;
+    NDRX_LOG(log_debug, "SVQEM CSW: Using service semaphore key: %d nrsems: %d",
+            ndrx_G_svqem_semcsw.key, ndrx_G_svqem_semcsw.nrsems);
 
-    NDRX_LOG(log_debug, "SVQEM C: Using service semaphore key: %d nrsems: %d",
-            ndrx_G_svqem_semc.key, ndrx_G_svqem_semc.nrsems);
+    /* Conditionals (send wait): */
+    memset(&ndrx_G_svqem_semcrw, 0, sizeof(ndrx_G_svqem_semcrw));
+
+    /* Service queue ops */
+    ndrx_G_svqem_semcrw.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_SVQEMLOCKSCRW;
+    ndrx_G_svqem_semcrw.nrsems=ndrx_G_libnstd_cfg.queuesmax;
+    ndrx_G_svqem_semcrw.maxreaders=0;
+
+    NDRX_LOG(log_debug, "SVQEM CRW: Using service semaphore key: %d nrsems: %d",
+            ndrx_G_svqem_semcrw.key, ndrx_G_svqem_semcrw.nrsems);
 
     /* locks: */
     memset(&ndrx_G_svqem_seml, 0, sizeof(ndrx_G_svqem_seml));
@@ -412,7 +433,7 @@ expublic int ndrx_svqshm_init(int attach_only)
     ndrx_G_svqem_seml.maxreaders=1;
 
     NDRX_LOG(log_debug, "SVQEM L: Using service semaphore key: %d nrsems: %d",
-            ndrx_G_svqem_semc.key, ndrx_G_svqem_semc.nrsems);
+            ndrx_G_svqem_seml.key, ndrx_G_svqem_seml.nrsems);
 #endif
 
     /* OK, either create or attach... */
@@ -426,10 +447,18 @@ expublic int ndrx_svqshm_init(int attach_only)
         }
 
 #ifdef EX_USE_SYSVQEM
-        if (EXSUCCEED!=ndrx_sem_attach(&ndrx_G_svqem_semc))
+
+        if (EXSUCCEED!=ndrx_sem_attach(&ndrx_G_svqem_semcsw))
         {
             NDRX_LOG(log_error, "Failed to attach semaphore for System V queue "
-                    "emulation");
+                    "emulation (send wait conditionals)");
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED!=ndrx_sem_attach(&ndrx_G_svqem_semcrw))
+        {
+            NDRX_LOG(log_error, "Failed to attach semaphore for System V queue "
+                    "emulation (receive wait conditionals)");
             EXFAIL_OUT(ret);
         }
 
@@ -439,6 +468,7 @@ expublic int ndrx_svqshm_init(int attach_only)
                     "emulation");
             EXFAIL_OUT(ret);
         }
+
 #endif
 
     }
@@ -451,12 +481,20 @@ expublic int ndrx_svqshm_init(int attach_only)
         EXFAIL_OUT(ret);
     }
 #ifdef EX_USE_SYSVQEM
-    else if (EXSUCCEED!=ndrx_sem_open(&ndrx_G_svqem_semc, EXTRUE))
+    else if (EXSUCCEED!=ndrx_sem_open(&ndrx_G_svqem_semcsw, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to open semaphore for System V queue "
-                "emulation");
+                "emulation C (send wait)");
         userlog("Failed to open semaphore for System V queue "
-                "emulation C");
+                "emulation C (send wait)");
+        EXFAIL_OUT(ret);
+    }
+    else if (EXSUCCEED!=ndrx_sem_open(&ndrx_G_svqem_semcrw, EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to open semaphore for System V queue "
+                "emulation C (receive wait)");
+        userlog("Failed to open semaphore for System V queue "
+                "emulation C (receive wait)");
         EXFAIL_OUT(ret);
     }
     else if (EXSUCCEED!=ndrx_sem_open(&ndrx_G_svqem_seml, EXTRUE))
@@ -526,7 +564,8 @@ expublic void ndrx_svqshm_detach(void)
 
 #ifdef EX_USE_SYSVQEM
     ndrx_shm_close(&ndrx_G_svqem_shm);
-    ndrx_sem_close(&ndrx_G_svqem_semc);
+    ndrx_sem_close(&ndrx_G_svqem_semcsw);
+    ndrx_sem_close(&ndrx_G_svqem_semcrw);
     ndrx_sem_close(&ndrx_G_svqem_seml);
 #endif
     
@@ -910,7 +949,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
         /* ###################### CRITICAL SECTION ############################### */
         if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
         {
-            NDRX_LOG(log_error, "YOPT!!! RWLOCK FAIL");
+            NDRX_LOG(log_error, "ndrx_sem_rwlock() failed for M_map_sem, NDRX_SEM_TYP_READ");
             goto out;
         }
 
@@ -921,7 +960,6 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
             pm = NDRX_SVQ_INDEX(svq, *p_pos);
             qid = pm->qid;
         }
-        /* NDRX_LOG(log_error, "YOPT0 pos=%d", *p_pos); */
 
         ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
         /* ###################### CRITICAL SECTION, END ########################## */
@@ -964,8 +1002,6 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
     
     found = position_get_qstr(qstr, oflag, p_pos, &have_value);
     
-    /* NDRX_LOG(log_error, "YOPTEL %d!!", *p_pos); */
-
     /* check that we have found! */
     if (!found)
     {
@@ -1019,7 +1055,6 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
         goto out;
     }
     
-    /* NDRX_LOG(log_error, "YOPT pos=%d", *p_pos); */
     /* open queue, install mappings in both tables */
     
     if (oflag & O_CREAT)
