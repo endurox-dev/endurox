@@ -2556,12 +2556,12 @@ expublic int ndrx_chk_confirm(const char *message, short is_confirmed)
             {
                 /* Ask Are you sure */
                 fprintf(stderr, "%s [Y/N]: ", message);
-                while (NULL==fgets(buffer, sizeof(buffer), stdin))
+                if (NULL==fgets(buffer, sizeof(buffer), stdin))
                 {
-                    /* do nothing */
+                    ret=EXFALSE;
+                    ans_ok=EXTRUE;
                 }
-
-                if (toupper(buffer[0])=='Y' && '\n'==buffer[1] && EXEOS==buffer[2])
+                else if (toupper(buffer[0])=='Y' && '\n'==buffer[1] && EXEOS==buffer[2])
                 {
                     ret=EXTRUE;
                     ans_ok=EXTRUE;
