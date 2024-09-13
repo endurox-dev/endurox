@@ -62,11 +62,6 @@
 #include <sys_svq.h>
 
 /*---------------------------Externs------------------------------------*/
-extern ndrx_sem_t ndrx_G_svqem_semcsw;
-extern ndrx_sem_t ndrx_G_svqem_semcrw;
-extern ndrx_sem_t ndrx_G_svqem_seml;
-extern ndrx_shm_t ndrx_G_svqem_shm;
-extern int volatile __thread ndrx_G_svq_signalled;
 /*---------------------------Macros-------------------------------------*/
 #define MSG_OVERHEAD (sizeof(struct ndrx_msgbuf))
 
@@ -88,6 +83,7 @@ typedef struct
 {
     unsigned long              svqem_pos;   /**< offset from IPC key (shifted) */
     unsigned long              svqem_head;  /**< first message index           */
+    unsigned long              svqem_last;  /**< last message index           */
     unsigned long              svqem_free;  /**< first free message index      */
     unsigned long              svqem_nwaits; /**< number of threads waiting   (send)  */
     unsigned long              svqem_nwaitr; /**< number of threads waiting   (rcv)  */
@@ -145,7 +141,8 @@ exprivate void journal_reply_msgrcv(ndrx_svqem_hdr_t *hdr);
  */
 
 /**
- * Perform locking, similar to pthread_mutex_lock
+ * Queueu lock (exclusive)
+ *
  * @param hdr queue heqder
  * @param int pos
  * @param p_locked is locked result or no
@@ -193,9 +190,8 @@ out:
 }
 
 /**
- * Function to emulate mutex unlock
- * TODO: in case of intr... -> we shall unlock, but still report EINTR (
- * so that we do not consume the timeout by our selves).
+ * Unlock the queue (exclusive lock)
+ *
  * @param hdr shm header
  * @param eintr_ignr ingnore EINTR (doing exit... of this module)
  * @param p_locked is locked result or no
@@ -408,6 +404,7 @@ expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg)
 
         hdr->svqem_pos=pos;
         hdr->svqem_head=0;
+        hdr->svqem_last=0;
         hdr->svqem_nwaits=0;
         hdr->svqem_nwaitr=0;
         hdr->svqem_curmsgs=0;
@@ -428,13 +425,10 @@ expublic int ndrx_svqem_msgget(ndrx_svqem_key_t key, int pos, int msgflg)
         msghdr = (ndrx_svqem_msg_hdr_t *) &mem[index];
         msghdr->msg_next = 0;
 
-        /*dump_q(hdr);*/
-
         /* configure locks */
         semctl(ndrx_G_svqem_semcsw.semid, hdr->svqem_pos, SETVAL, 0);
         semctl(ndrx_G_svqem_semcrw.semid, hdr->svqem_pos, SETVAL, 0);
         semctl(ndrx_G_svqem_seml.semid, hdr->svqem_pos, SETVAL, 1);
-
     }
     else
     {
@@ -514,15 +508,15 @@ exprivate void journal_reply_msgsnd(ndrx_svqem_hdr_t *hdr)
     if (EXFAIL!=hdr->j_svqem_head)
     {
         hdr->svqem_head=hdr->j_svqem_head;
+        hdr->svqem_last=hdr->j_svqem_head;
     }
     else
     {
-        /*
-        p_ulong = (unsigned long *)(mem + hdr->j_pmsghdr_msg_next_off);
-        *p_ulong = hdr->j_pmsghdr_msg_next;
-        */
         ndrx_svqem_msg_hdr_t  *pmsghdr = (ndrx_svqem_msg_hdr_t  *)(mem + hdr->j_pmsghdr_off);
         pmsghdr->msg_next = hdr->j_pmsghdr_msg_next;
+
+        /* cache the last entry (for quick add): */
+        hdr->svqem_last= hdr->j_pmsghdr_msg_next;
     }
 
     /* Terminate the Q 
@@ -547,11 +541,12 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
 {
     int ret = EXSUCCEED;
     int              n;
-    unsigned long    index, freeindex;
+    unsigned long    freeindex;
     ndrx_svqem_hdr_t   *hdr = NDRX_HDR_GET(mqd->qid);
     char *mem = (char *) hdr;
     ndrx_svqem_msg_hdr_t  *msghdr, *nmsghdr, *pmsghdr=NULL;
     int locked=EXFALSE;
+    unsigned long qsize = ndrx_svqem_get_q_size();
 
     errno = 0;
 
@@ -595,23 +590,24 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
         NDRX_LOG(log_error, "unexpected freeindex==0, svqem_curmsgs: %lu svqem_head: %lu",
                 hdr->svqem_curmsgs, hdr->svqem_head);
 
-        /* iterate through, validate each message offsets
-         * 2x queues might end with 0
-         * all offset shall be in boundry of the Q size
-         */
         dump_q(hdr);
 
         exit(-1);
     }
-    else if (freeindex > ndrx_svqem_get_q_size())
+    else if (freeindex > qsize)
     {
-        NDRX_LOG(log_error, "unexpected freeindex==%lu, svqem_curmsgs: %lu svqem_head: %lu",
-                freeindex, hdr->svqem_curmsgs, hdr->svqem_head);
+        NDRX_LOG(log_error, "unexpected freeindex==%lu > qsize (%lu), "
+                "svqem_curmsgs: %lu svqem_head: %lu",
+                freeindex, qsize, hdr->svqem_curmsgs, hdr->svqem_head);
+        dump_q(hdr);
 
-        /* iterate through, validate each message offsets
-         * 2x queues might end with 0
-         * all offset shall be in boundry of the Q size
-         */
+        exit(-1);
+    }
+    else if (hdr->svqem_last > qsize)
+    {
+        NDRX_LOG(log_error, "unexpected svqem_last==%lu > qsize (%lu), "
+                "svqem_curmsgs: %lu svqem_head: %lu",
+                hdr->svqem_last, qsize, hdr->svqem_curmsgs, hdr->svqem_head);
         dump_q(hdr);
 
         exit(-1);
@@ -624,17 +620,6 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
 
     hdr->j_svqem_free = nmsghdr->msg_next;
 
-    /* Search the places for message */
-    index = hdr->svqem_head;
-
-    /* find end of q: */
-    while (index != 0)
-    {
-        msghdr = (ndrx_svqem_msg_hdr_t *) &mem[index];
-        index = msghdr->msg_next;
-        pmsghdr = msghdr;
-    }
-
     if (0==hdr->svqem_head)
     {
         /* queue was empty (head set to 0...) */
@@ -642,11 +627,13 @@ expublic int ndrx_svqem_msgsnd(mqd_t mqd, const void *msgp, size_t msgsz, int ms
     }
     else
     {
+        /* last msg... */
+        pmsghdr = (ndrx_svqem_msg_hdr_t *) &mem[hdr->svqem_last];
+
         hdr->j_svqem_head = EXFAIL;
         hdr->j_pmsghdr_msg_next = freeindex;
         /* offset of the first field of the struct: */
         hdr->j_pmsghdr_off = ( (char *)(&pmsghdr->msg_len)-mem);
-
     }
 
     /* end of Q */
@@ -731,6 +718,7 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
     char *mem = (char *) hdr;
     ndrx_svqem_msg_hdr_t  *pmsghdr;
     int locked = EXFALSE;
+    unsigned long qsize = ndrx_svqem_get_q_size();
 
     errno = 0;
 
@@ -766,10 +754,11 @@ expublic ssize_t ndrx_svqem_msgrcv(mqd_t mqd, void *msgp, size_t msgsz,
 
         exit(-1);
     }
-    else if (hdr->svqem_head > ndrx_svqem_get_q_size())
+    else if (hdr->svqem_head > qsize)
     {
-        NDRX_LOG(log_error, "unexpected svqem_head==%ld, svqem_curmsgs: %ld svqem_head: %ld",
-                hdr->svqem_head, hdr->svqem_curmsgs, hdr->svqem_head);
+        NDRX_LOG(log_error, "unexpected svqem_head==%lu > qsize (%lu), "
+                "svqem_curmsgs: %ld svqem_head: %ld",
+                hdr->svqem_head, qsize, hdr->svqem_curmsgs, hdr->svqem_head);
 
         /* iterate through, validate each message offsets
          * 2x queues might end with 0

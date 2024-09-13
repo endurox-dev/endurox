@@ -49,6 +49,16 @@
 #include <nstd_shm.h>
 
 /*------------------------------Externs---------------------------------------*/
+
+#ifdef EX_USE_SYSVQEM
+extern ndrx_sem_t ndrx_G_svqem_semcsw;
+extern ndrx_sem_t ndrx_G_svqem_semcrw;
+extern ndrx_sem_t ndrx_G_svqem_seml;
+extern ndrx_shm_t ndrx_G_svqem_shm;
+#endif
+
+extern int volatile __thread ndrx_G_svq_signalled;
+
 /*------------------------------Macros----------------------------------------*/
 
 #define NDRX_SVQ_EV_NONE    0   /**< No event received, just normal msg */
