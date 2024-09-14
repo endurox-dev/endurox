@@ -433,6 +433,7 @@ kern.sysv.shmmni=100
 kern.sysv.shmseg=50
 kern.sysv.shmall=35000000
 kern.sysv.semume=10000
+kern.sysv.semmns=115000
 kern.maxfiles=524288
 kern.maxfilesperproc=262144
 
@@ -474,6 +475,7 @@ $ sudo -s
  <string>kern.sysv.shmseg=50</string>
  <string>kern.sysv.shmall=35000000</string>
  <string>kern.sysv.semume=10000</string>
+ <string>kern.sysv.semmns=115000</string>
  <string>kern.maxfiles=524288</string>
  <string>kern.maxfilesperproc=262144</string>
   </array>
