@@ -741,7 +741,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         {
             TPQCTL ctl;
         
-            NDRX_LOG(log_warn, "TPQREPLYQ defined, sending answer buffer to "
+            NDRX_LOG(log_info, "TPQREPLYQ defined, sending answer buffer to "
                     "[%s] q in [%s] namespace", 
                     msg->qctl.replyqueue, msg->hdr.qspace);
             
