@@ -731,7 +731,6 @@ expublic int tms_housekeep(char *logfile)
     }
     else if ( diff > G_tmsrv_cfg.housekeeptime)
     {
-        err=Nerror;
         NDRX_LOG(log_error, "Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
                 logfile, diff, G_tmsrv_cfg.housekeeptime);
         userlog("Corrupted log file [%s] age %ld sec (housekeep %d) - removing",
@@ -739,6 +738,7 @@ expublic int tms_housekeep(char *logfile)
 
         if (EXSUCCEED!=ndrx_G_tmsrv_storage->pf_storage_unlink(ndrx_G_tmsrv_storage, logfile))
         {
+            err=Nerror;
             userlog("Failed to unlink [%s]: %s", logfile, Nstrerror(err));
             NDRX_LOG(log_error, "Failed to unlink [%s]: %s", logfile, Nstrerror(err));
         }

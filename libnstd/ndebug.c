@@ -4,7 +4,7 @@
  *   TODO: We might want to switch the tplogconfig() to rwlocks
  *   WARNING ! API Promise: Nerrwillor state will not change after LOG / DUMP function
  *   execution (so that we can log & trace the errors standard library
- *   without any interferences). If using any new function during the loggin
+ *   without any interferences). If using any new function during the logging
  *   ensure that Nerror is not processed by it, or error is saved/restored.
  *   
  * @file ndebug.c

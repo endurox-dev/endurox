@@ -280,7 +280,6 @@ expublic void _Nset_error_fmt(int error_code, const char *fmt, ...)
 
         /* no more overwrite, we want first message in buffer */
         G_nstd_tls->nstd_error_clear=EXFALSE;
-
     }
 }
 
