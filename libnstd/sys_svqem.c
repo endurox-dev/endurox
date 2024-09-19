@@ -276,7 +276,7 @@ exprivate int ndrx_svqem_condwait(ndrx_svqem_hdr_t *hdr, int *p_locked, int cond
 
     sops.sem_num = hdr->svqem_pos;
     sops.sem_op = -1;   /* Decrement semaphore value */
-    sops.sem_flg = SEM_UNDO;
+    /* sops.sem_flg = SEM_UNDO; not need*/
 
     if (ndrx_G_svq_signalled)
     {
@@ -338,7 +338,7 @@ exprivate int ndrx_svqem_cond_signal(ndrx_svqem_hdr_t *hdr, int cond_typ)
         int sem_value;
         sops.sem_num = hdr->svqem_pos;
         sops.sem_op = 1;    /* Increment semaphore value */
-        sops.sem_flg = SEM_UNDO;
+        /* sops.sem_flg = SEM_UNDO; */
 
         while (EXSUCCEED!=(ret=semop(p_cond->semid, &sops, 1)) && EINTR==errno)
         {
