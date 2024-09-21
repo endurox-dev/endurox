@@ -288,7 +288,7 @@ expublic int tmq_setup_cmdheader_dum(tmq_cmdheader_t *hdr, char *qname,
     int ret = EXSUCCEED;
     
     NDRX_STRCPY_SAFE(hdr->qspace, qspace);
-   /* strcpy(hdr->qname, qname); same object, causes core dumps on osx */
+    hdr->qname[0]=EXEOS;
     hdr->command_code = TMQ_STORCMD_NEWMSG;
     NDRX_STRNCPY(hdr->magic, TMQ_MAGIC, TMQ_MAGIC_LEN);
     
