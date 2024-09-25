@@ -924,6 +924,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
     int pos_2;
     
     int err = 0;
+    int is_locked = EXFALSE;
     
     *p_msgflg=0;
     ndrx_svq_map_t *svq;
@@ -999,6 +1000,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
     {
         goto out;
     }
+    is_locked=EXTRUE;
     
     found = position_get_qstr(qstr, oflag, p_pos, &have_value);
     
@@ -1008,9 +1010,6 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
         NDRX_LOG(log_error, "Location not found for [%s] - memory full?", qstr);
         userlog("Location not found for [%s] - memory full?", qstr);
         err = ENOMEM;
-
-        /* ###################### CRITICAL SECTION, END ########################## */
-        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
         EXFAIL_OUT(ret);
     }
     
@@ -1023,8 +1022,6 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
         
         if ( (oflag & O_CREAT)  &&  (oflag & O_EXCL))
         {
-            /* ###################### CRITICAL SECTION, END ########################## */
-            ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
             NDRX_LOG(log_error, "Queue [%s] was requested with O_CREAT | O_EXCL, but "
                     "it already exists at position with qid %d", qstr, qid);
             err = EEXIST;
@@ -1046,6 +1043,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
             sm->ctime = pm->ctime;
             
             ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
+            is_locked=EXFALSE;
             /* ###################### CRITICAL SECTION, END ########################## */
             
             NDRX_LOG(log_info, "Queue [%s] mapped to qid %d", 
@@ -1075,9 +1073,6 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
     if (EXFAIL==(qid = ndrx_svq_msgget(IPC_PRIVATE, *p_pos, *p_msgflg|mode)))
     {
         int err = errno;
-        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
-        /* ###################### CRITICAL SECTION, END ########################## */
-        
         NDRX_LOG(log_error, "Failed msgget: %s for [%s]", strerror(err), qstr);
         userlog("Failed msgget: %s for [%s]", strerror(err), qstr);
         EXFAIL_OUT(ret);
@@ -1115,12 +1110,19 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag, int *p_pos, int
     sm->ctime = pm->ctime;
     
     ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
+    is_locked=EXFALSE;
     /* ###################### CRITICAL SECTION, END ########################## */
     
     NDRX_LOG(log_debug, "Open queue: [%s] to system v: [%d]", qstr, qid);
     
 out:
     
+    if (is_locked)
+    {
+        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
+        /* ###################### CRITICAL SECTION, END ########################## */
+    }
+
     if (EXSUCCEED!=ret)
     {
         errno = err;

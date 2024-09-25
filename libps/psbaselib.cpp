@@ -1012,6 +1012,7 @@ static PSInteger thread_call(HPSCRIPTVM v)
     PSObjectPtr o = stack_get(v,1);
     if(type(o) == OT_THREAD) {
         PSInteger nparams = ps_gettop(v);
+        ps_reservestack(_thread(o), nparams + 3);
         _thread(o)->Push(_thread(o)->_roottable);
         for(PSInteger i = 2; i<(nparams+1); i++)
             ps_move(_thread(o),v,i);
