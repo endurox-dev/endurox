@@ -471,8 +471,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
     
 #define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"      /**< notify/broadcast remote dispatcher       */
 #define NDRX_SVC_TMIB     ".TMIB"               /**< Tp Management information base           */
-#define NDRX_SVC_TMIBNODE ".TMIB-%ld"         /**< Tp Management information base, node */
-#define NDRX_SVC_TMIBNODESV ".TMIB-%ld-%d"        /**< Tp Management information base, node, server */
+#define NDRX_SVC_TMIBNODE ".TMIB-%ld"         	/**< Tp Management information base, node */
+#define NDRX_SVC_TMIBNODESV ".TMIB-%ld-%d"      /**< Tp Management information base, node, server */
 
 #define NDRX_SVC_RM       "@TM-%d"              /**< resource_id */
 #define NDRX_SVC_TM       "@TM-%d-%d"           /**< Node_idresource_id */
@@ -488,8 +488,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_SVC_ADMIN    "@ADMINSVC"           /**< Admin service for atmiservices, logical */
 #define NDRX_SVC_REPLY    "@REPLYSVC"           /**< Reply service for atmiservices, logical */
 
-#define NDRX_SVC_SGLOC      "@SGLOC-%ld-%d"         /**< singleton grp local checks */
-#define NDRX_SVC_SGREM      "@SGREM-%ld-%d"         /**< singleton grp remote checks */
+#define NDRX_SVC_SGLOC      "@SGLOC-%ld-%d"     /**< singleton grp local checks */
+#define NDRX_SVC_SGREM      "@SGREM-%ld-%d"     /**< singleton grp remote checks */
+#define NDRX_SVC_DLM		"@DLM-%ld-%d"       /**< distributed lock manager, node-grpno */
 
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
 #define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */

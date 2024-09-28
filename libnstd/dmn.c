@@ -63,9 +63,14 @@
  * Init daemon shutdown flag checking struct
  * @param w shutdown wait object
  * @param argr arg to pass to the thread
+ * @param pf_can_sleep optional callback (can be NULL), on check shall thread
+ *  go into sleep (no work posted).
+ *  Where arg is passed to the callback. Where the return of EXFAIL indicates failure
+ *  EXSUCCEED (no sleep needed), EXTRUE (sleep OK).
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_dmnthread_init(ndrx_dmnthread_t *w, void *(*start_routine)(void *), void *arg)
+expublic int ndrx_dmnthread_init(ndrx_dmnthread_t *w, void *(*start_routine)(void *), 
+             int (*pf_can_sleep)(void *), void *arg)
 {
     int ret = EXSUCCEED;
     pthread_attr_t pthread_custom_attr;
@@ -79,6 +84,9 @@ expublic int ndrx_dmnthread_init(ndrx_dmnthread_t *w, void *(*start_routine)(voi
     }
 
     w->shutdown_req = EXFALSE;
+    w->pf_can_sleep = pf_can_sleep;
+    w->n_wait = 0;
+    w->arg = arg;
 
     /* prepare the thread */
     pthread_attr_init(&pthread_custom_attr);
@@ -127,6 +135,9 @@ expublic int ndrx_dmnthread_is_shutdown(ndrx_dmnthread_t *w)
  * daemon does sleep, but can be woken up by shutdown request
  * @param w shutdown wait object
  * @param ms milliseconds to sleep
+ * @param work_chk callback for checking the work, do we really need to go to sleep?
+ *  this is done after the mutex lock has got, so that:
+ *  we do not go to sleep, if work has arrived.
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_dmnthread_sleep(ndrx_dmnthread_t *w, int ms)
@@ -143,7 +154,16 @@ expublic int ndrx_dmnthread_sleep(ndrx_dmnthread_t *w, int ms)
 
     MUTEX_LOCK_V(w->shutdown_mutex);
 
-    if (!w->shutdown_req &&
+    w->n_wait++;
+
+    /* 
+     * Have a callback to check for wait need...
+     * thus we synchronize with any job published
+     * to this thread.
+     * + have a volatile flag of indicating are we in wait or not.
+     * to avoid any extra singalling (for performance reasons).
+     */
+    if (!w->shutdown_req && (NULL==w->pf_can_sleep || EXTRUE==(ret=w->pf_can_sleep(w->arg) )) &&
         EXSUCCEED!=(ret=pthread_cond_timedwait(&w->shutdown_flag_wait, 
         &w->shutdown_mutex, &wait_time)))
     {
@@ -158,14 +178,47 @@ expublic int ndrx_dmnthread_sleep(ndrx_dmnthread_t *w, int ms)
         }
     }
 
+    if (EXSUCCEED!=ret)
+    {
+        /* can_sleep failed */
+        NDRX_LOG(log_error, "pf_can_sleep() (%p) failed: %d",
+            w->pf_can_sleep, ret);
+        EXFAIL_OUT(ret);
+    }
+
     /* if we are locked, get the status & unlock. */
     ret=w->shutdown_req;
 
 out:
 
+    w->n_wait--;
+
     /* unlock anyway.. */
     MUTEX_UNLOCK_V(w->shutdown_mutex);
 
+    return ret;
+}
+
+/**
+ * Notify the daemon, that there are some work todo
+ * @param w daemon handle
+ * @param EXSUCCEED
+ */
+expublic int ndrx_dmnthread_notify(ndrx_dmnthread_t *w)
+{
+    int ret = EXSUCCEED;
+
+    /* signal for shutdown */
+    MUTEX_LOCK_V(w->shutdown_mutex);
+
+    if (w->n_wait)
+    {
+        pthread_cond_signal(&w->shutdown_flag_wait);
+    }
+
+    MUTEX_UNLOCK_V(w->shutdown_mutex);
+
+out:
     return ret;
 }
 

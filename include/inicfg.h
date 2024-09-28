@@ -133,7 +133,7 @@ extern NDRX_API  void ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h);
 extern NDRX_API  int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
         ndrx_inicfg_section_keyval_t **out);
 extern NDRX_API  int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
-        char **resources, char *section, ndrx_inicfg_section_keyval_t **out);
+        char **resources, const char *section, ndrx_inicfg_section_keyval_t **out);
 extern NDRX_API  int ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
         char **resources,
         char **section_start_with, 

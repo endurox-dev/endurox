@@ -915,12 +915,12 @@ int tpsvrinit(int argc, char **argv)
 
     if (G_tmqueue_cfg.tout_check_time > 0) 
     {
-        ndrx_dmnthread_init(&G_tmqueue_cfg.tx_timeout_th, tx_tout_monitor, NULL);
+        ndrx_dmnthread_init(&G_tmqueue_cfg.tx_timeout_th, tx_tout_monitor, NULL, NULL);
     }
 
     if (G_tmqueue_cfg.chkdisk_time > 0) 
     {
-        ndrx_dmnthread_init(&G_tmqueue_cfg.chkdisk_th, tx_chkdisk_monitor, NULL);
+        ndrx_dmnthread_init(&G_tmqueue_cfg.chkdisk_th, tx_chkdisk_monitor, NULL, NULL);
     }
 
     /* Bug #565 */

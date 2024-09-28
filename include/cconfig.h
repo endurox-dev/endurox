@@ -85,7 +85,7 @@ extern NDRX_API int ndrx_cconfig_reload(void);
 /* for user: */
 extern NDRX_API int ndrx_cconfig_load_general(ndrx_inicfg_t **cfg);
 extern NDRX_API int ndrx_cconfig_load_sections(ndrx_inicfg_t **cfg, char **section_start_with);
-extern NDRX_API int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, 
+extern NDRX_API int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, const char *section, 
         ndrx_inicfg_section_keyval_t **out);
 
 #ifdef	__cplusplus

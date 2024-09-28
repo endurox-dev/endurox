@@ -1310,7 +1310,7 @@ out:
  * @param title title of the dump
  * @param p_ub UBF buffer
  */
-expublic void tplogprintubf(int lev, char *title, UBFH *p_ub)
+expublic void tplogprintubf(int lev, const char *title, UBFH *p_ub)
 {
     ndrx_tplogprintubf(lev, title, p_ub);
 }

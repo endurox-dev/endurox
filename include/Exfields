@@ -301,6 +301,12 @@ EX_LCKSTATUS                702         char   -       Lock status
 EX_PROCGRP_NO               703         long   -       Process group number
 EX_SEQUENCE                 704         long   -       Sequence number (e.g. lock)
 
+################################################################################
+# DLM fields (EE)
+################################################################################
+
+EX_DLM_SRC                  700         char   -       caller source ('C' - client, 'P' - peer)
+
 $#endif
 
 $/* vim: set ts=4 sw=4 et smartindent: */

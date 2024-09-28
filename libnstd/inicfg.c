@@ -877,7 +877,7 @@ out:
  * @return 
  */
 expublic int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg, 
-        char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
+        char **resources, const char *section, ndrx_inicfg_section_keyval_t **out)
 {
     int ret = EXSUCCEED;
     char *tmp = NULL;
@@ -1269,7 +1269,7 @@ expublic int ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *sec
  * @return 
  */
 expublic int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
-        char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
+        char **resources, const char *section, ndrx_inicfg_section_keyval_t **out)
 {
     API_ENTRY;
     

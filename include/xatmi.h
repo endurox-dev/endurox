@@ -636,7 +636,7 @@ extern int ndrx_tpgetctxt(TPCONTEXT_T *context, long flags, long priv_flags);
 extern NDRX_API int tplogsetreqfile(char **data, char *filename, char *filesvc);
 extern NDRX_API int tploggetbufreqfile(char *data, char *filename, int bufsize);
 extern NDRX_API int tplogdelbufreqfile(char *data);
-extern NDRX_API void tplogprintubf(int lev, char *title, UBFH *p_ub);
+extern NDRX_API void tplogprintubf(int lev, const char *title, UBFH *p_ub);
 
 /* ATMI library TLS: */
 extern NDRX_API void * ndrx_atmi_tls_get(long priv_flags);

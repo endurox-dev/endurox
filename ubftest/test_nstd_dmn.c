@@ -54,6 +54,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 exprivate ndrx_dmnthread_t M_t;
+exprivate volatile int M_nr_invocations; /**< number of times callback called */
 /*---------------------------Prototypes---------------------------------*/
 
 void *start_routine(void *arg)
@@ -92,7 +93,7 @@ Ensure(test_nstd_dmn_1)
      */
     for (i=0; i<10; i++)
     {
-        ndrx_dmnthread_init(&M_t, start_routine, (void *)0x1234);
+        ndrx_dmnthread_init(&M_t, start_routine, NULL, (void *)0x1234);
         sleep(3);
         ndrx_stopwatch_reset(&w);
         ret=(ndrx_longptr_t)ndrx_dmnthread_shutdown(&M_t);
@@ -108,6 +109,97 @@ Ensure(test_nstd_dmn_1)
 }
 
 /**
+ * Daemon routine
+ */
+void *start_routine2(void *arg)
+{
+    ndrx_longptr_t ret=EXSUCCEED;
+    int sleep_ret;
+
+    /* do the daemon loop */
+    while (EXSUCCEED==ret && !ndrx_dmnthread_is_shutdown(&M_t))
+    {
+        ret = ndrx_dmnthread_sleep(&M_t, 1000);
+    }
+
+    return (void*)ret;
+}
+
+/**
+ * Count till 100, then we can sleep..
+ * @param arg ptr to int. In case if containing
+ *  -1, will return EXFAIL.
+ * @return EXFAIL on failure, EXFALSE/EXSUCCEED (no sleep OK),
+ *  EXTRUE(sleep)
+ */
+exprivate int can_sleep(void *arg)
+{
+    int ret =  EXSUCCEED;
+    int *p_int = (int *)arg;
+
+    M_nr_invocations++;
+
+    if (EXFAIL==*p_int)
+    {
+        EXFAIL_OUT(ret);
+    }
+    else if (*p_int  < 100)
+    {
+        (*p_int)++;
+    }
+    else
+    {
+        ret=EXTRUE; /* do some sleep */
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Verify that can_sleep() actually functions (i.e. does not sleep when instructed)
+ */
+Ensure(test_nstd_dmn_2)
+{
+    int cntr = 0;
+    /* Let the thread to count to 100 in the 
+     * and the we are doing the exit call.
+     */
+    M_nr_invocations=0;
+
+    assert_equal(ndrx_dmnthread_init(&M_t, start_routine2, can_sleep, (void *)&cntr), EXSUCCEED);
+    sleep(4);
+
+    /* the above shall manage to count to 100 (100 invocation), + approx 4 invocation of sleep
+     * however depends how system fast is...
+     * ---
+     * Shutdown was requested, thus EXTRUE.
+     */
+    assert_equal(ndrx_dmnthread_shutdown(&M_t), EXTRUE);
+
+    assert_equal(cntr, 100);
+    assert_true(M_nr_invocations >= 100);
+    assert_true(M_nr_invocations <= 105);
+}
+
+/**
+ * Verify that in case of can_sleep error, we return error
+ */
+Ensure(test_nstd_dmn_3)
+{
+    int cntr = EXFAIL;
+    M_nr_invocations=0;
+
+    assert_equal(ndrx_dmnthread_init(&M_t, start_routine2, can_sleep, (void *)&cntr), EXSUCCEED);
+    sleep(4);
+    /* the above shall manage to count to 100 (100 invocation), + approx 4 invocation of sleep
+     * however depends how system fast is...
+     */
+    assert_equal(ndrx_dmnthread_shutdown(&M_t), EXFAIL);
+    assert_true(M_nr_invocations == 1);
+}
+
+/**
  * Standard library tests
  * @return
  */
@@ -116,7 +208,10 @@ TestSuite *ubf_nstd_dmn(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_nstd_dmn_1);
+    add_test(suite, test_nstd_dmn_2);
+    add_test(suite, test_nstd_dmn_3);
     
     return suite;
 }
+
 /* vim: set ts=4 sw=4 et smartindent: */

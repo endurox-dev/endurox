@@ -121,7 +121,7 @@ typedef struct
 /*---------------------------Prototypes---------------------------------*/
     
 extern NDRX_API int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg, 
-        char **resources, char *section, ndrx_inicfg_section_keyval_t **out);
+        char **resources, const char *section, ndrx_inicfg_section_keyval_t **out);
 
 extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 

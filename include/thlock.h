@@ -273,6 +273,22 @@ typedef struct
     /** daemon thread handle */
     pthread_t thread;
     
+    /** 
+     *  Callback to check can we got to sleep or not,
+     *  so that in case of race condition
+     *  if daemon is suspended by the OS
+     *  and worker publishes the work and
+     *  and goes throuh the signalling, but
+     *  dmn thread is not yet in condwait.
+     */
+    int (*pf_can_sleep)(void *);
+
+    /** Number threads in wait */
+    int n_wait;
+
+    /** as passed to init */
+    void *arg;
+    
 } ndrx_dmnthread_t;
 
 /*---------------------------Globals------------------------------------*/
@@ -281,7 +297,7 @@ typedef struct
 
 /* api for daemon threads: */
 extern NDRX_API int ndrx_dmnthread_init(ndrx_dmnthread_t *w,
-    void *(*start_routine)(void *), void *arg);
+    void *(*start_routine)(void *), int (*pf_can_sleep)(void *), void *arg);
 extern NDRX_API int ndrx_dmnthread_is_shutdown(ndrx_dmnthread_t *w);
 extern NDRX_API int ndrx_dmnthread_sleep(ndrx_dmnthread_t *w, int ms);
 extern NDRX_API void* ndrx_dmnthread_shutdown(ndrx_dmnthread_t *w);
