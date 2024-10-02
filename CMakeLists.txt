@@ -32,7 +32,7 @@
 ## -----------------------------------------------------------------------------
 ##
 
-cmake_minimum_required (VERSION 3.5) 
+cmake_minimum_required (VERSION 3.8) 
 project (ENDUROX)
 
 include(cmake/ex_osver.cmake)
@@ -70,7 +70,7 @@ SET (NDRX_BLD_SYSTEM 	$ENV{NDRX_BLD_SYSTEM})
 SET (NDRX_BLD_CONFIG 	$ENV{NDRX_BLD_CONFIG})
 SET (NDRX_BLD_VERSION 	$ENV{NDRX_BLD_VERSION})
 SET (NDRX_BLD_RELEASE 	$ENV{NDRX_BLD_RELEASE})
-SET (NDRX_BLD_TAG 	$ENV{NDRX_BLD_TAG})
+SET (NDRX_BLD_TAG 	    $ENV{NDRX_BLD_TAG})
 SET (NDRX_BLD_BRANCH 	$ENV{NDRX_BLD_BRANCH})
 SET (NDRX_BLD_COMMIT 	$ENV{NDRX_BLD_COMMIT})
 SET (NDRX_BLD_FLAGS 	$ENV{NDRX_BLD_FLAGS})
@@ -137,6 +137,9 @@ message("ALIGNMENT_FORCE  = ${EX_ALIGNMENT_FORCE}")
 # "Configure"
 ################################################################################
 
+# use compiler settings for checking.
+cmake_policy(SET CMP0067 NEW)
+
 # In this file we are doing all of our 'configure' checks. Things like checking
 # for headers, functions, libraries, types and size of types.
 
@@ -173,6 +176,16 @@ endif()
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
 CHECK_C_SOURCE_COMPILES("#include <stdatomic.h> \n int main() {int i=0; atomic_fetch_add( &i, 1 );}" EX_HAVE_STDATOMIC)
 CHECK_C_SOURCE_COMPILES("int main() {int i=0; __sync_fetch_and_add( &i, 1 );}" EX_HAVE_SYNCFETCHADD)
+
+CHECK_CXX_SOURCE_COMPILES(
+"
+void noexceptFunction() noexcept {}
+
+int main() {
+    static_assert(noexcept(noexceptFunction()), \"noexcept is not working\");
+    return 0;
+}
+" HAVE_NOEXCEPT)
 
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)

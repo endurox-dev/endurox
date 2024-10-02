@@ -1117,7 +1117,7 @@ expublic int ndrx_nr_chars(char *str, char chkchar)
  * @param endval - List end/default value
  * @return ptr to maping str
  */
-expublic char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval)
+expublic const char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval)
 {
     do 
     {
@@ -1139,7 +1139,7 @@ expublic char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval)
  * @param endval - List end/default value
  * @return ptr to maping str
  */
-expublic char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval)
+expublic const char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval)
 {
     do 
     {

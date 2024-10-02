@@ -181,14 +181,14 @@ typedef struct longstrmap longstrmap_t;
 struct longstrmap
 {
     long from;
-    char *to;
+    const char *to;
 };
 
 typedef struct charstrmap charstrmap_t;
 struct charstrmap
 {
     long from;
-    char *to;
+    const char *to;
 };
 
 /** Keeps the growing list */
@@ -391,8 +391,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 extern NDRX_API double ndrx_atof(char *str);
 
 /* Mapping functions: */
-extern NDRX_API char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);
-extern NDRX_API char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval);
+extern NDRX_API const char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);
+extern NDRX_API const char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval);
 
 /* Threading functions */
 extern NDRX_API uint64_t ndrx_gettid(void);

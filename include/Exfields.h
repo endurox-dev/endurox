@@ -192,6 +192,13 @@
 #define	EX_LCKSTATUS	((BFLDID32)67109666)	/* number: 802	 type: char */
 #define	EX_PROCGRP_NO	((BFLDID32)33555235)	/* number: 803	 type: long */
 #define	EX_SEQUENCE	((BFLDID32)33555236)	/* number: 804	 type: long */
-#define	EX_DLM_SRC	((BFLDID32)67109664)	/* number: 800	 type: char */
+#define	EX_DLM_CMD	((BFLDID32)167772980)	/* number: 820	 type: string */
+#define	EX_DLM_DST_NODEID	((BFLDID32)33555253)	/* number: 821	 type: long */
+#define	EX_DLM_SRC_NODEID	((BFLDID32)33555254)	/* number: 822	 type: long */
+#define	EX_DLM_PREVOTE	((BFLDID32)33555255)	/* number: 823	 type: long */
+#define	EX_DLM_TERM	((BFLDID32)33555256)	/* number: 824	 type: long */
+#define	EX_DLM_CANDIDATE_ID	((BFLDID32)33555257)	/* number: 825	 type: long */
+#define	EX_DLM_LAST_LOG_IDX	((BFLDID32)33555258)	/* number: 826	 type: long */
+#define	EX_DLM_LAST_LOG_TERM	((BFLDID32)33555259)	/* number: 827	 type: long */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */

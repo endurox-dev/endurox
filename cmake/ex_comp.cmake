@@ -42,8 +42,11 @@ macro(ex_comp_settings)
     # Force C++ for C
     #SET(CMAKE_C_COMPILER ${CMAKE_CXX_COMPILER})
 
-    set (CMAKE_C_STANDARD 11)
-    set (CMAKE_C_STANDARD_REQUIRED 99)
+    set(CMAKE_C_STANDARD 11)
+    set(CMAKE_C_STANDARD_REQUIRED 99)
+
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD_REQUIRED 11)
 
     message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
     message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")

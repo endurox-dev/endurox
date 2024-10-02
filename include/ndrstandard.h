@@ -299,6 +299,12 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #endif
 
+#if HAVE_NOEXCEPT
+#define NDRX_NOEXCEPT noexcept
+#else
+#define NDRX_NOEXCEPT 
+#endif
+
 #define NDRX_DIR_PERM 0775  /**< user and group have write perm, use umask to limit */
 #define NDRX_COM_SVQ_PRIV   999 /**< This is private command id use by system v */
 
