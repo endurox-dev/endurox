@@ -200,7 +200,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr)
  * @param subtype - may be NULL
  * @return NULL/or ptr to G_buf_descr[X]
  */
-expublic typed_buffer_descr_t * ndrx_get_buffer_descr(char *type, char *subtype)
+expublic typed_buffer_descr_t * ndrx_get_buffer_descr(const char *type, const char *subtype)
 {
     typed_buffer_descr_t *p=G_buf_descr;
     typed_buffer_descr_t *ret = NULL;
@@ -228,7 +228,7 @@ expublic typed_buffer_descr_t * ndrx_get_buffer_descr(char *type, char *subtype)
  * @return
  */
 expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
-                    char *type, char *subtype, long len)
+                    const char *type, const char *subtype, long len)
 {
     char *ret=NULL;
     typed_buffer_descr_t *usr_type = NULL;

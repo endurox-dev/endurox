@@ -213,7 +213,7 @@ out:
  * @param len
  * @return
  */
-expublic char * CARRAY_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len)
+expublic char * CARRAY_tpalloc (typed_buffer_descr_t *descr, const char *subtype, long *len)
 {
     char *ret;
 

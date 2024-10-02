@@ -95,7 +95,7 @@ expublic void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str, int len)
  * @param vname view name
  * @return  NULL or ptr to view object
  */
-expublic ndrx_typedview_t * ndrx_view_get_view(char *vname)
+expublic ndrx_typedview_t * ndrx_view_get_view(const char *vname)
 {
     ndrx_typedview_t *ret;
     

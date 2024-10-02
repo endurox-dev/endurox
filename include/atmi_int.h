@@ -404,7 +404,7 @@ struct typed_buffer_descr
      * this function by it self.
      * On error NULL shall be returned.
      */
-    char *(*pf_alloc) (typed_buffer_descr_t *descr, char *subtype, long *len);
+    char *(*pf_alloc) (typed_buffer_descr_t *descr, const char *subtype, long *len);
 
     /*
      * Reallocate memory
@@ -943,7 +943,7 @@ extern NDRX_API void ndrx_process_notif(char *buf, ssize_t len);
 extern NDRX_API char * ndrx_tprealloc (char *buf, long len);
 extern NDRX_API long	ndrx_tptypes (char *ptr, char *type, char *subtype);
 extern NDRX_API char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
-                    char *type, char *subtype, long len);
+                    const char *type, const char *subtype, long len);
 extern NDRX_API void free_auto_buffers(void);
 extern NDRX_API int tp_internal_init(atmi_lib_conf_t *init_data);
 extern NDRX_API void ndrx_libatmi_deinit(void);

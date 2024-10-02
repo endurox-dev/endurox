@@ -55,7 +55,7 @@
  * @return
  */
 expublic char	* TPNULL_tpalloc (typed_buffer_descr_t *descr, 
-        char *subtype, long *len)
+        const char *subtype, long *len)
 {
     char *ret=NULL;
     char fn[] = "TPNULL_tpalloc";

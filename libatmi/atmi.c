@@ -172,7 +172,7 @@ out:
  * @param len
  * @return
  */
-expublic char * tpalloc (char *type, char *subtype, long len)
+expublic char * tpalloc (const char *type, const char *subtype, long len)
 {
     char *ret=NULL;
     /* int entry_status=EXSUCCEED; */

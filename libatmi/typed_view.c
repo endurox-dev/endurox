@@ -81,7 +81,7 @@
  * @param len
  * @return 
  */
-expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len)
+expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, const char *subtype, long *len)
 {
     char *ret=NULL;
     ndrx_typedview_t *v;

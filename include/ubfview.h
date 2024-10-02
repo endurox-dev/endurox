@@ -203,7 +203,7 @@ extern NDRX_API int ndrx_view_load_directory(char *dir);
 extern NDRX_API int ndrx_view_init(void);
 extern NDRX_API int ndrx_view_chkload_directories(void);
 extern NDRX_API void ndrx_view_deleteall(void);
-extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(char *vname);
+extern NDRX_API ndrx_typedview_t * ndrx_view_get_view(const char *vname);
 extern NDRX_API ndrx_typedview_field_t * ndrx_view_get_field(ndrx_typedview_t *v, char *cname);
 extern NDRX_API void ndrx_view_cksum_update(ndrx_typedview_t *v, char *str, int len);
 

@@ -515,7 +515,7 @@ extern NDRX_API struct xa_switch_t tmnull_switch; /**< null switch            */
  */
 extern NDRX_API int tpacall(char *svc, char *data, long len, long flags);
 extern NDRX_API int tpadvertise_full (const char *svc_nm, void (*p_func)(TPSVCINFO *), const char *fn_nm);
-extern NDRX_API char *tpalloc(char *type, char *subtype, long size);
+extern NDRX_API char *tpalloc(const char *type, const char *subtype, long size);
 extern NDRX_API int tpcall(char *svc, char *idata, long ilen, char **odata, long *olen, long flags);
 extern NDRX_API int tpcancel(int cd);
 extern NDRX_API int tpconnect(char *svc, char *data, long len, long flags);
