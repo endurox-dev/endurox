@@ -44,6 +44,7 @@
 #include <ndebug.h>
 #include <exbase64.h>
 #include <nstdutil.h>
+#include "cgreen/assertions.h"
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "xatmi.h"
@@ -762,6 +763,52 @@ Ensure(test_nstd_strtstamp)
 }
 
 /**
+ * Verify string mapping functions
+ */
+Ensure(test_nstd_longstrmap)
+{
+    longstrmap_t strmap [] = {
+        {1,     "HELLO"}
+        , {2,   "WORLD"}
+        , {3,   "WORLD2"}
+    };
+
+    /* forward map: */
+    assert_string_equal(ndrx_dolongstrgmap(strmap, 3, 3),       "WORLD2");
+    assert_string_equal(ndrx_dolongstrgmap(strmap, -1, 3),      "WORLD2");
+    assert_string_equal(ndrx_dolongstrgmap(strmap, 1, 3),       "HELLO");
+
+    /* reverse map: */
+    assert_equal(ndrx_dolongstrgrevmap(strmap, "WORLD2", 3),            3);
+    assert_equal(ndrx_dolongstrgrevmap(strmap, "NO SUCH STRING", 3),    3);
+    assert_equal(ndrx_dolongstrgrevmap(strmap, "HELLO", 3),             1);
+
+}
+
+/**
+ * Verify string mapping functions
+ */
+Ensure(test_nstd_chrstrmap)
+{
+    longstrmap_t strmap [] = {
+        {'a',   "HELLO"}
+        , {'b', "WORLD"}
+        , {'c', "WORLD2"}
+    };
+
+    /* forward map: */
+    assert_string_equal(ndrx_docharstrgmap(strmap, 'c', 'c'), "WORLD2");
+    assert_string_equal(ndrx_docharstrgmap(strmap, 'd', 'c'), "WORLD2");
+    assert_string_equal(ndrx_docharstrgmap(strmap, 'a', 'c'), "HELLO");
+
+    /* reverse map: */
+    assert_equal(ndrx_docharstrgrevmap(strmap, "WORLD2", 'c'),          'c');
+    assert_equal(ndrx_docharstrgrevmap(strmap, "NO SUCH STRING", 'c'),  'c');
+    assert_equal(ndrx_docharstrgrevmap(strmap, "HELLO", 'c'),           'a');
+
+}
+
+/**
  * Standard library tests
  * @return
  */
@@ -786,6 +833,9 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_file_lock_wait);
     add_test(suite, test_nstd_error);
     add_test(suite, test_nstd_strtstamp);
+    add_test(suite, test_nstd_longstrmap);
+    add_test(suite, test_nstd_chrstrmap);
+
 
     return suite;
 }

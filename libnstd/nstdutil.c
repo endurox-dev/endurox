@@ -1131,6 +1131,26 @@ expublic const char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval
     return map->to;
 }
 
+/**
+ * Reverse search of the long/string map
+ * @param map mapping table
+ * @param to reverse search for
+ * @param endval long terminator in the table
+ * @return mapped long value
+ */
+expublic long ndrx_dolongstrgrevmap(longstrmap_t *map, const char *to, long endval)
+{
+    do
+    {
+        if (0==strcmp(map->to, to))
+        {
+            return map->from;
+        }
+        map++;
+    } while (endval!=map->from);
+
+    return map->from;
+}
 
 /**
  * Returns the string mapped to long value
@@ -1141,18 +1161,20 @@ expublic const char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval
  */
 expublic const char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval)
 {
-    do 
-    {
-        if (map->from == val)
-        {
-            return map->to;
-        }
-        map++;
-    } while (endval!=map->from);
-    
-    return map->to;
+    return ndrx_dolongstrgmap(map, (long)val, (long)endval);
 }
 
+/**
+ * Reverse search of the char/string map
+ * @param map mapping table
+ * @param to reverse search for
+ * @param endval long terminator in the table
+ * @return mapped long value
+ */
+expublic char ndrx_docharstrgrevmap(longstrmap_t *map, const char *to, char endval)
+{
+    return (char)ndrx_dolongstrgrevmap(map, to, (long )endval);
+}
 
 /**
  * Get thread id (not the very portable way...)

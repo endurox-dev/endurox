@@ -392,7 +392,9 @@ extern NDRX_API double ndrx_atof(char *str);
 
 /* Mapping functions: */
 extern NDRX_API const char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);
+extern NDRX_API long ndrx_dolongstrgrevmap(longstrmap_t *map, const char *to, long endval);
 extern NDRX_API const char *ndrx_docharstrgmap(longstrmap_t *map, char val, char endval);
+extern NDRX_API char ndrx_docharstrgrevmap(longstrmap_t *map, const char *to, char endval);
 
 /* Threading functions */
 extern NDRX_API uint64_t ndrx_gettid(void);

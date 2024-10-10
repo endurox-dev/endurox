@@ -200,5 +200,18 @@
 #define	EX_DLM_CANDIDATE_ID	((BFLDID32)33555257)	/* number: 825	 type: long */
 #define	EX_DLM_LAST_LOG_IDX	((BFLDID32)33555258)	/* number: 826	 type: long */
 #define	EX_DLM_LAST_LOG_TERM	((BFLDID32)33555259)	/* number: 827	 type: long */
+#define	EX_DLM_REQUEST_ID	((BFLDID32)167772988)	/* number: 828	 type: string */
+#define	EX_DLM_LEADER_ID	((BFLDID32)33555261)	/* number: 829	 type: long */
+#define	EX_DLM_PREV_LOG_INDEX	((BFLDID32)33555262)	/* number: 830	 type: long */
+#define	EX_DLM_PREV_LOG_TERM	((BFLDID32)33555263)	/* number: 831	 type: long */
+#define	EX_DLM_LEADER_COMMIT	((BFLDID32)33555264)	/* number: 832	 type: long */
+#define	EX_DLM_MSG_ID	((BFLDID32)167772993)	/* number: 833	 type: string */
+#define	EX_DLM_REQUEST_TERM	((BFLDID32)33555266)	/* number: 834	 type: long */
+#define	EX_DLM_VOTE_GRANTED	((BFLDID32)33555267)	/* number: 835	 type: long */
+#define	EX_DLM_ENTRY_TERM	((BFLDID32)33555268)	/* number: 836	 type: long */
+#define	EX_DLM_ENTRY_ID	((BFLDID32)33555269)	/* number: 837	 type: long */
+#define	EX_DLM_ENTRY_SESSION	((BFLDID32)33555270)	/* number: 838	 type: long */
+#define	EX_DLM_ENTRY_TYPE	((BFLDID32)33555271)	/* number: 839	 type: long */
+#define	EX_DLM_ENTRY_DATA	((BFLDID32)335545160)	/* number: 840	 type: ubf */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */

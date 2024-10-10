@@ -313,6 +313,19 @@ EX_DLM_TERM                 724         long    -       currentTerm, to force ot
 EX_DLM_CANDIDATE_ID         725         long    -       candidate requesting vote
 EX_DLM_LAST_LOG_IDX         726         long    -       index of candidate's last log entry
 EX_DLM_LAST_LOG_TERM        727         long    -       term of candidate's last log entry
+EX_DLM_REQUEST_ID           728         string  -       DLM request id
+EX_DLM_LEADER_ID            729         long    -       Raft leader ID
+EX_DLM_PREV_LOG_INDEX       730         long    -       Previous log index
+EX_DLM_PREV_LOG_TERM        731         long    -       Previous log term
+EX_DLM_LEADER_COMMIT        732         long    -       Majority applied index
+EX_DLM_MSG_ID               733         string  -       Raft message ID
+EX_DLM_REQUEST_TERM         734         long    -       Term received
+EX_DLM_VOTE_GRANTED         735         long    -       true if candidate received vote
+EX_DLM_ENTRY_TERM           736         long    -       log entry term
+EX_DLM_ENTRY_ID             737         long    -       log entry id
+EX_DLM_ENTRY_SESSION        738         long    -       log entry session
+EX_DLM_ENTRY_TYPE           739         long    -       entry type
+EX_DLM_ENTRY_DATA           740         ubf     -       entry data buffer
 
 $#endif
 

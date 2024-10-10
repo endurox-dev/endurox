@@ -497,6 +497,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_SVC_SGLOC      "@SGLOC-%ld-%d"     /**< singleton grp local checks */
 #define NDRX_SVC_SGREM      "@SGREM-%ld-%d"     /**< singleton grp remote checks */
 #define NDRX_SVC_DLM		"@DLM-%ld-%d"       /**< distributed lock manager, node-grpno */
+#define NDRX_SVC_DLMU		"@DLMU-%ld-%d"      /**< utility access, distributed lock manager, node-grpno */
 
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
 #define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
