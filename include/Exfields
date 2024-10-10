@@ -308,13 +308,13 @@ EX_SEQUENCE                 704         long   -       Sequence number (e.g. loc
 EX_DLM_CMD                  720         string  -       DLM command code
 EX_DLM_DST_NODEID           721         long    -       Target node id
 EX_DLM_SRC_NODEID           722         long    -       Source node id
-EX_DLM_PREVOTE              723         long    -       Raft pre-vote
+EX_DLM_PREVOTE              723         long    -       Pre-vote
 EX_DLM_TERM                 724         long    -       currentTerm, to force other leader/candidate to step down
 EX_DLM_CANDIDATE_ID         725         long    -       candidate requesting vote
 EX_DLM_LAST_LOG_IDX         726         long    -       index of candidate's last log entry
 EX_DLM_LAST_LOG_TERM        727         long    -       term of candidate's last log entry
 EX_DLM_REQUEST_ID           728         string  -       DLM request id
-EX_DLM_LEADER_ID            729         long    -       Raft leader ID
+EX_DLM_LEADER_ID            729         long    -       Leader ID
 EX_DLM_PREV_LOG_INDEX       730         long    -       Previous log index
 EX_DLM_PREV_LOG_TERM        731         long    -       Previous log term
 EX_DLM_LEADER_COMMIT        732         long    -       Majority applied index
