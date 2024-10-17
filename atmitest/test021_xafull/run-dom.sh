@@ -60,6 +60,8 @@ export NDRX_TOUT=20
 export NDRX_ULOG=$TESTDIR
 export NDRX_SILENT=Y
 
+# might be leftover from tests bellow
+chmod a+rwx $TESTDIR/RM1 2>/dev/null
 rm -rf $TESTDIR/RM1
 rm -rf $TESTDIR/RM2
 
@@ -270,13 +272,13 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryok"* ]]; then
         # there should be no TRN- files at top level
 
         if [ -f ./RM1/TRN-* ]; then
-                echo "Transaction must be completed!"
-                RET=-2
+            echo "Transaction must be completed!"
+            RET=-2
         fi
 
         if [ ! -f ./RM1/committed/* ]; then
-                echo "Transaction must be committed!"
-                RET=-3
+            echo "Transaction must be committed!"
+            RET=-3
         fi
 
     fi
@@ -294,35 +296,35 @@ fi
 
 if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"startfail"* ]]; then
 
-	echo ">>> XA Start fail/retry, flags [$NDRX_XA_FLAGS]"
+    echo ">>> XA Start fail/retry, flags [$NDRX_XA_FLAGS]"
 
-	(./atmiclt21-startfail $TEST160_FLAG 2>&1) > ./atmiclt-startfail-dom1.log
-	RET=$?
+    (./atmiclt21-startfail $TEST160_FLAG 2>&1) > ./atmiclt-startfail-dom1.log
+    RET=$?
 
         echo "Wait 25 sec for abort..."
         sleep 25
-	#
-	# If all ok, test for transaction files.
-	#
-	if [ $RET == 0 ]; then
-	
-            # test for transaction to be aborted..
-            # there should be no TRN- files at top level
+    #
+    # If all ok, test for transaction files.
+    #
+    if [ $RET == 0 ]; then
 
-            logfiles=(./RM1/TRN-*)
-            if [[ -f ${logfiles[0]} ]]; then
-                    echo "Transaction must be completed!"
-                    RET=-2
-            fi
+        # test for transaction to be aborted..
+        # there should be no TRN- files at top level
 
-            #if [ ! -f ./RM1/aborted/* ]; then
-            #	echo "Transaction must be aborted!"
-            #	RET=-3
-            #fi
+        logfiles=(./RM1/TRN-*)
+        if [[ -f ${logfiles[0]} ]]; then
+                echo "Transaction must be completed!"
+                RET=-2
+        fi
 
-	fi
+        #if [ ! -f ./RM1/aborted/* ]; then
+        #	echo "Transaction must be aborted!"
+        #	RET=-3
+        #fi
 
-	go_out $RET
+    fi
+
+    go_out $RET
 fi
 
 ################################################################################
@@ -348,19 +350,45 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"105"* ]]; then
         # there should be no TRN- files at top level
 
         if [ -f ./RM1/TRN-* ]; then
-                echo "Transaction must be completed!"
-                RET=-2
+            echo "Transaction must be completed!"
+            RET=-2
         fi
 
         if [ ! -f ./RM1/aborted/* ]; then
-                echo "Transaction must be aborted!"
-                RET=-3
+            echo "Transaction must be aborted!"
+            RET=-3
         fi
 
     fi
 
     go_out $RET
 
+fi
+
+################################################################################
+echo  "Test journal (fs) failure test"
+################################################################################
+
+# log directory does not work...
+chmod a-rwx $TESTDIR/RM1
+
+(./atmiclt21_tpbegin 2>&1) > ./atmiclt21_tpbegin.log
+RET=$?
+
+if [[ $RET -ne 14 ]]; then
+    echo "Expected error 14 if log folder is not writtable... got $RET"
+    go_out -1
+fi
+
+# log directory does not work...
+chmod a+rwx $TESTDIR/RM1
+
+(./atmiclt21_tpbegin 2>&1) >> ./atmiclt21_tpbegin.log
+RET=$?
+
+if [[ $RET -ne 0 ]]; then
+    echo "Expected succeed if log folder is writtable... got $RET"
+    go_out $RET
 fi
 
 ################################################################################

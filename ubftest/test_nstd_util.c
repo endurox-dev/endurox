@@ -743,6 +743,21 @@ Ensure(test_nstd_error)
 }
 
 /**
+ * Nerror tests
+ */
+Ensure(test_nstd_nerror)
+{
+    assert_equal(ndrx_Nerrno2nerror(EAGAIN), NEBUSY);
+    assert_equal(ndrx_Nerrno2nerror(0), 0);
+
+    /* for some platfrom that could be normal error (some of the mapped),
+     * thus just make sure it passes OK
+     */
+    assert_equal( (ndrx_Nerrno2nerror(999999)<=NMAXVAL), 1);
+    assert_equal( (ndrx_Nerrno2nerror(999999)>0), 1);
+}
+
+/**
  * test of ndrx_get_strtstamp_from_sec + ndrx_parse_strtstamp_to_sec
  */
 Ensure(test_nstd_strtstamp)
@@ -835,7 +850,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_strtstamp);
     add_test(suite, test_nstd_longstrmap);
     add_test(suite, test_nstd_chrstrmap);
-
+    add_test(suite, test_nstd_nerror);
 
     return suite;
 }

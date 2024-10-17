@@ -28,8 +28,17 @@ and *persistent_message_queues_overview(guides)*) must be configured before usin
 this function. 'qspace' is queue space name (logical queue sub-system name, 
 that can be shared between multiple *tmqueue* servers). 'qname' is queue name, 
 'ctl' is control structure that contains various details for message, how it 
-shall be enqueued. Also 'ctl' returns some diagnostics information. 'data'/'len' 
-pair is XATMI buffer containing the message that must be enqueued. *tpenqueueex()* 
+shall be enqueued. Also 'ctl' returns diagnostics information. 'ctl' must be fully initialized before use e.g.
+---------------------------------------------------------------------------------
+
+TPQCTL qc;
+memset(&qc, 0, sizeof(TPQCTL));
+
+/* qc parameter setup and function call... */
+
+---------------------------------------------------------------------------------
+
+'data'/'len' pair is XATMI buffer containing the message that must be enqueued. *tpenqueueex()* 
 allows to specify exactly which *tmqueue* server will process the request, 
 by giving the Enduro/X cluster node id in 'nodeid' field and 'srvid' 
 from *ndrxconfig.xml(5).

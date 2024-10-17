@@ -333,7 +333,7 @@ expublic int ndrx_Nerrno2nerror(int err)
 {
     int ret;
 
-    switch (ret)
+    switch (err)
     {
         case 0:
             ret = 0;
@@ -372,7 +372,7 @@ expublic int ndrx_Nerrno2nerror(int err)
             break;
         default:
             /* may be alias of the error code, thus cannot case: */
-            if (ret==EWOULDBLOCK)
+            if (EWOULDBLOCK==err)
             {
                 ret=NEBUSY;
             }
@@ -398,7 +398,6 @@ expublic void ndrx_Nsave_error(ndrx_nstd_error_t *p_err)
     p_err->nstd_error_clear = G_nstd_tls->nstd_error_clear;
     NDRX_STRCPY_SAFE(p_err->nstd_error_msg_buf, G_nstd_tls->M_nstd_error_msg_buf);
 }
-
 
 /**
  * Restore current error

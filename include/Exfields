@@ -315,7 +315,7 @@ EX_DLM_LAST_LOG_IDX         726         long    -       index of candidate's las
 EX_DLM_LAST_LOG_TERM        727         long    -       term of candidate's last log entry
 EX_DLM_REQUEST_ID           728         string  -       DLM request id
 EX_DLM_LEADER_ID            729         long    -       Leader ID
-EX_DLM_PREV_LOG_INDEX       730         long    -       Previous log index
+EX_DLM_PREV_LOG_IDX         730         long    -       Previous log index
 EX_DLM_PREV_LOG_TERM        731         long    -       Previous log term
 EX_DLM_LEADER_COMMIT        732         long    -       Majority applied index
 EX_DLM_MSG_ID               733         string  -       Raft message ID
@@ -326,6 +326,8 @@ EX_DLM_ENTRY_ID             737         long    -       log entry id
 EX_DLM_ENTRY_SESSION        738         long    -       log entry session
 EX_DLM_ENTRY_TYPE           739         long    -       entry type
 EX_DLM_ENTRY_DATA           740         ubf     -       entry data buffer
+EX_DLM_SUCCESS              741         long    -       set to 1, if follower contained matching prevLogidx and prevLogTerm
+EX_DLM_CUR_LOG_IDX          742         long    -       Current log index
 
 $#endif
 
