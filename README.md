@@ -10,6 +10,8 @@
 |Solaris 11| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris11_x86)](http://www.silodev.com:9090/jenkins/job/endurox-solaris11_x86/)|Ubuntu 14.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu14)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu14/)|Ubuntu 18.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu18)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu18/)|
 |RHEL/Oracle Linux 8| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol8)](http://www.silodev.com:9090/jenkins/job/endurox-ol8/)|Ubuntu 22.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu22)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu22/)|Ubuntu 20.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu20)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu20/)|
 
+`NOTE: Enduro/X for non-Linux versions is available only under commercial license from Mavimax SIA`
+
 ## Overview
 
 Enduro/X is Open Source Middleware Platform for Distributed Transaction 
