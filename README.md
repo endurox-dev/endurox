@@ -1,4 +1,4 @@
-# Mavimax Enduro/X® Core
+# Mavimax Enduro/X® Community Edition
 
 ## Build (including atmi/ubf tests) status
 
